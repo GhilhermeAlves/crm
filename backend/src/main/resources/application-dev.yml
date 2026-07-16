@@ -13,8 +13,19 @@ spring:
   flyway:
     enabled: true
 
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+
 logging:
   level:
     com.becommerce.crm: DEBUG
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
+
+app:
+  security:
+    reset-token:
+      expiration-hours: 1

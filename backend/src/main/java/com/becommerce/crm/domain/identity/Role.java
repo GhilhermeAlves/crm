@@ -9,9 +9,13 @@ import java.util.UUID;
 public class Role {
     private UUID id;
     private RoleName name;
+    private String description;
     private UUID companyId;
+    private boolean isSystem;
+    private boolean isActive;
     private Set<String> permissions;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public Role() {
     }
@@ -21,8 +25,26 @@ public class Role {
         role.id = UUID.randomUUID();
         role.name = name;
         role.companyId = companyId;
+        role.description = name.getDisplayName();
+        role.isSystem = false;
+        role.isActive = true;
         role.permissions = new HashSet<>();
         role.createdAt = LocalDateTime.now();
+        role.updatedAt = LocalDateTime.now();
+        return role;
+    }
+
+    public static Role createSystem(RoleName name) {
+        Role role = new Role();
+        role.id = UUID.randomUUID();
+        role.name = name;
+        role.companyId = null;
+        role.description = name.getDisplayName() + " (System Role)";
+        role.isSystem = true;
+        role.isActive = true;
+        role.permissions = new HashSet<>();
+        role.createdAt = LocalDateTime.now();
+        role.updatedAt = LocalDateTime.now();
         return role;
     }
 
@@ -54,12 +76,36 @@ public class Role {
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public UUID getCompanyId() {
         return companyId;
     }
 
     public void setCompanyId(UUID companyId) {
         this.companyId = companyId;
+    }
+
+    public boolean isSystem() {
+        return isSystem;
+    }
+
+    public void setSystem(boolean system) {
+        isSystem = system;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
     }
 
     public Set<String> getPermissions() {
@@ -76,5 +122,13 @@ public class Role {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

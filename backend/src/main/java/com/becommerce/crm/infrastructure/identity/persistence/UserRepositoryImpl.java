@@ -2,7 +2,12 @@ package com.becommerce.crm.infrastructure.identity.persistence;
 
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.domain.identity.User;
+import com.becommerce.crm.domain.identity.UserStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,10 +41,15 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByInviteToken(String token) {
+        return repository.findByInviteToken(token).map(mapper::toDomainEntity);
+    }
+
+    @Override
     public List<User> findAllByCompanyId(UUID companyId) {
         return repository.findByCompanyId(companyId).stream()
-            .map(mapper::toDomainEntity)
-            .toList();
+                .map(mapper::toDomainEntity)
+                .toList();
     }
 
     @Override
@@ -48,7 +58,29 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public boolean existsByEmailAndIdNot(String email, UUID id) {
+        return repository.existsByEmailAndIdNot(email, id);
+    }
+
+    @Override
     public void deleteById(UUID id) {
         repository.deleteById(id);
+    }
+
+    @Override
+    public PageResult findByCompanyIdWithFilters(UUID companyId, String search, UserStatus status,
+                                                  int page, int pageSize, String sortBy, String sortDirection) {
+        Sort sort = Sort.by("desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC,
+                sortBy != null ? sortBy : "createdAt");
+        PageRequest pageRequest = PageRequest.of(page, pageSize, sort);
+
+        String statusStr = status != null ? status.name() : null;
+        Page<UserJpaEntity> result = repository.findByCompanyIdWithFilters(companyId, search, statusStr, pageRequest);
+
+        List<User> users = result.getContent().stream()
+                .map(mapper::toDomainEntity)
+                .toList();
+
+        return new PageResult(users, result.getTotalElements());
     }
 }

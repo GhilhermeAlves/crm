@@ -69,6 +69,15 @@ services:
     networks:
       - crm-network-dev
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: crm-mailhog-dev
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - crm-network-dev
+
 volumes:
   postgres_data:
   redis_data:

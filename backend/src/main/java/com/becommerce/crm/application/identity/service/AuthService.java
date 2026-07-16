@@ -9,30 +9,47 @@ import com.becommerce.crm.domain.identity.exception.*;
 import com.becommerce.crm.domain.identity.valueobject.*;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthService implements AuthUseCase {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final RolePermissionRepository rolePermissionRepository;
+    private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final EventPublisher eventPublisher;
+    private final EmailService emailService;
 
     private static final int REFRESH_TOKEN_EXPIRY_DAYS = 7;
-    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final int RESET_TOKEN_EXPIRY_MINUTES = 60;
 
     public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
-                       RoleRepository roleRepository, PasswordEncoder passwordEncoder,
-                       JwtProvider jwtProvider, EventPublisher eventPublisher) {
+                       PasswordResetTokenRepository passwordResetTokenRepository,
+                       RoleRepository roleRepository, UserRoleRepository userRoleRepository,
+                       RolePermissionRepository rolePermissionRepository,
+                       PermissionRepository permissionRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtProvider jwtProvider, EventPublisher eventPublisher,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.roleRepository = roleRepository;
+        this.userRoleRepository = userRoleRepository;
+        this.rolePermissionRepository = rolePermissionRepository;
+        this.permissionRepository = permissionRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
         this.eventPublisher = eventPublisher;
+        this.emailService = emailService;
     }
 
     @Override
@@ -48,8 +65,38 @@ public class AuthService implements AuthUseCase {
             throw new InvalidCredentialsException("Account is deactivated");
         }
 
-        List<String> roles = List.of("USER");
-        List<String> permissions = List.of("read", "write");
+        List<String> roles = userRoleRepository.findByUserIdAndCompanyId(user.getId(), user.getCompanyId()).stream()
+                .map(ur -> roleRepository.findById(ur.getRoleId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(role -> role.getName().name())
+                .collect(Collectors.toList());
+
+        List<String> permissions = roles.stream()
+                .flatMap(roleName -> {
+                    try {
+                        var role = roleRepository.findByNameAndCompanyId(
+                                com.becommerce.crm.domain.identity.valueobject.RoleName.valueOf(roleName),
+                                user.getCompanyId());
+                        return role.map(r -> rolePermissionRepository.findByRoleId(r.getId()).stream()
+                                .map(rp -> permissionRepository.findById(rp.getPermissionId()))
+                                .filter(Optional::isPresent)
+                                .map(Optional::get)
+                                .map(Permission::getName))
+                                .orElse(java.util.stream.Stream.empty());
+                    } catch (Exception e) {
+                        return java.util.stream.Stream.empty();
+                    }
+                })
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (roles.isEmpty()) {
+            roles = List.of("USER");
+        }
+        if (permissions.isEmpty()) {
+            permissions = List.of("dashboard:view");
+        }
 
         String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getCompanyId(), roles, permissions);
         String family = UUID.randomUUID().toString();
@@ -81,8 +128,38 @@ public class AuthService implements AuthUseCase {
 
         refreshTokenRepository.revokeByToken(request.refreshToken());
 
-        List<String> roles = List.of("USER");
-        List<String> permissions = List.of("read", "write");
+        List<String> roles = userRoleRepository.findByUserIdAndCompanyId(user.getId(), user.getCompanyId()).stream()
+                .map(ur -> roleRepository.findById(ur.getRoleId()))
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
+                .map(role -> role.getName().name())
+                .collect(Collectors.toList());
+
+        List<String> permissions = roles.stream()
+                .flatMap(roleName -> {
+                    try {
+                        var role = roleRepository.findByNameAndCompanyId(
+                                com.becommerce.crm.domain.identity.valueobject.RoleName.valueOf(roleName),
+                                user.getCompanyId());
+                        return role.map(r -> rolePermissionRepository.findByRoleId(r.getId()).stream()
+                                .map(rp -> permissionRepository.findById(rp.getPermissionId()))
+                                .filter(java.util.Optional::isPresent)
+                                .map(java.util.Optional::get)
+                                .map(Permission::getName))
+                                .orElse(java.util.stream.Stream.empty());
+                    } catch (Exception e) {
+                        return java.util.stream.Stream.empty();
+                    }
+                })
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (roles.isEmpty()) {
+            roles = List.of("USER");
+        }
+        if (permissions.isEmpty()) {
+            permissions = List.of("dashboard:view");
+        }
 
         String newAccessToken = jwtProvider.generateAccessToken(user.getId(), user.getCompanyId(), roles, permissions);
         String newFamily = UUID.randomUUID().toString();
@@ -112,7 +189,7 @@ public class AuthService implements AuthUseCase {
         Email email = new Email(request.email());
         Password password = new Password(request.password());
 
-        User user = User.create(email, password, request.name(), request.companyId());
+        User user = User.create(email, password, request.name(), "", request.companyId());
         userRepository.save(user);
 
         eventPublisher.publish(UserCreatedEvent.create(user.getId(), request.email(), request.companyId()));
@@ -122,12 +199,32 @@ public class AuthService implements AuthUseCase {
     public void forgotPassword(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
             String token = UUID.randomUUID().toString();
-            eventPublisher.publish(PasswordResetRequestedEvent.create(user.getId(), user.getCompanyId()));
+            PasswordResetToken resetToken = PasswordResetToken.create(token, user.getId(), RESET_TOKEN_EXPIRY_MINUTES);
+            passwordResetTokenRepository.save(resetToken);
+            eventPublisher.publish(PasswordResetRequestedEvent.create(user.getId(), user.getCompanyId(), email, token));
         });
     }
 
     @Override
     public void resetPassword(String token, String newPassword) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+            .orElseThrow(() -> new InvalidTokenException("Invalid reset token"));
+
+        if (!resetToken.isValid()) {
+            throw new InvalidTokenException("Reset token has expired or already been used");
+        }
+
+        User user = userRepository.findById(resetToken.getUserId())
+            .orElseThrow(UserNotFoundException::new);
+
+        Password password = new Password(newPassword);
+        user.updatePassword(password);
+        userRepository.save(user);
+
+        resetToken.markAsUsed();
+        passwordResetTokenRepository.save(resetToken);
+
+        eventPublisher.publish(PasswordChangedEvent.create(user.getId(), user.getCompanyId()));
     }
 
     @Override

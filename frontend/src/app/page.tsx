@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ROUTES } from "@/lib/constants";
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -9,7 +11,7 @@ export default function Home() {
       </p>
       <div className="flex gap-4">
         <Link
-          href="/login"
+          href={ROUTES.LOGIN}
           className="rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           Entrar

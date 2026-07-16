@@ -6,9 +6,11 @@ import java.util.UUID;
 public record PasswordResetRequestedEvent(
     UUID userId,
     UUID companyId,
+    String email,
+    String resetToken,
     LocalDateTime occurredAt
 ) {
-    public static PasswordResetRequestedEvent create(UUID userId, UUID companyId) {
-        return new PasswordResetRequestedEvent(userId, companyId, LocalDateTime.now());
+    public static PasswordResetRequestedEvent create(UUID userId, UUID companyId, String email, String resetToken) {
+        return new PasswordResetRequestedEvent(userId, companyId, email, resetToken, LocalDateTime.now());
     }
 }

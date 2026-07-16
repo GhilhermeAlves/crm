@@ -4,6 +4,8 @@ import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,36 +20,57 @@ public class RoleRepositoryImpl implements RoleRepository {
 
     @Override
     public Role save(Role role) {
-        RoleJpaEntity entity = new RoleJpaEntity();
-        entity.setName(role.getName().name());
-        entity.setCompanyId(role.getCompanyId());
-        entity.setCreatedAt(role.getCreatedAt());
-
+        RoleJpaEntity entity = toJpaEntity(role);
         RoleJpaEntity saved = repository.save(entity);
-
-        Role roleDomain = Role.create(RoleName.valueOf(saved.getName()), saved.getCompanyId());
-        roleDomain.setId(saved.getId());
-        roleDomain.setCreatedAt(saved.getCreatedAt());
-        return roleDomain;
+        return toDomainEntity(saved);
     }
 
     @Override
     public Optional<Role> findById(UUID id) {
-        return repository.findById(id).map(entity -> {
-            Role role = Role.create(RoleName.valueOf(entity.getName()), entity.getCompanyId());
-            role.setId(entity.getId());
-            role.setCreatedAt(entity.getCreatedAt());
-            return role;
-        });
+        return repository.findById(id).map(this::toDomainEntity);
     }
 
     @Override
     public Optional<Role> findByNameAndCompanyId(RoleName name, UUID companyId) {
-        return repository.findByNameAndCompanyId(name.name(), companyId).map(entity -> {
-            Role role = Role.create(RoleName.valueOf(entity.getName()), entity.getCompanyId());
-            role.setId(entity.getId());
-            role.setCreatedAt(entity.getCreatedAt());
-            return role;
-        });
+        return repository.findByNameAndCompanyId(name.name(), companyId).map(this::toDomainEntity);
+    }
+
+    @Override
+    public List<Role> findAllByCompanyId(UUID companyId) {
+        return repository.findByCompanyId(companyId).stream().map(this::toDomainEntity).toList();
+    }
+
+    @Override
+    public boolean existsByNameAndCompanyId(String name, UUID companyId) {
+        return repository.existsByNameAndCompanyId(name, companyId);
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        repository.deleteById(id);
+    }
+
+    private RoleJpaEntity toJpaEntity(Role role) {
+        RoleJpaEntity entity = new RoleJpaEntity();
+        entity.setId(role.getId());
+        entity.setName(role.getName().name());
+        entity.setDescription(role.getDescription());
+        entity.setCompanyId(role.getCompanyId());
+        entity.setSystem(role.isSystem());
+        entity.setActive(role.isActive());
+        entity.setCreatedAt(role.getCreatedAt());
+        entity.setUpdatedAt(role.getUpdatedAt() != null ? role.getUpdatedAt() : role.getCreatedAt());
+        return entity;
+    }
+
+    private Role toDomainEntity(RoleJpaEntity entity) {
+        Role role = Role.create(RoleName.valueOf(entity.getName()), entity.getCompanyId());
+        role.setId(entity.getId());
+        role.setDescription(entity.getDescription());
+        role.setSystem(entity.isSystem());
+        role.setActive(entity.isActive());
+        role.setCreatedAt(entity.getCreatedAt());
+        role.setUpdatedAt(entity.getUpdatedAt());
+        return role;
     }
 }
