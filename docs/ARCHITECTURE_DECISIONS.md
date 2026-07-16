@@ -18,6 +18,8 @@ Consolidar todas as decisões arquiteturais (Architecture Decision Records) em u
 - [ADR-009: Monolito Modular First](#adr-009-monolito-modular-first)
 - [ADR-010: Containerização com Docker](#adr-010-containerização-com-docker)
 - [ADR-011: Validação de Input com Bean Validation + Zod](#adr-011-validação-de-input-com-bean-validation---zod)
+- [ADR-012: Roles/Permissions Hardcoded no Login (Placeholder)](#adr-012-rolespermissions-hardcoded-no-login-placeholder)
+- [ADR-013: Password Reset Placeholder](#adr-013-password-reset-placeholder)
 - [Resumo das Decisões](#resumo-das-decisões)
 - [Referências](#referências)
 - [Histórico de Revisão](#histórico-de-revisão)
@@ -464,6 +466,68 @@ Se precisar de regras compartilhadas, usar JSON Schema (futuro).
 
 ---
 
+---
+
+## ADR-012: Roles/Permissions Hardcoded no Login (Placeholder)
+
+**Status:** Aceita (Temporária)
+**Data:** 2026-07-15
+**Decisor:** Architect
+
+### Contexto
+
+O método `AuthService.login()` e `AuthService.refreshTokens()` utilizam `List.of("USER")` e `List.of("read", "write")` em vez de buscar as roles e permissões do banco de dados. O `RoleRepository` está injetado mas nunca é chamado.
+
+### Decisão
+
+Manter hardcoded temporariamente como placeholder. As roles e permissões reais devem ser resolvidas a partir do banco quando o RBAC completo for implementado (Sprint 4.2 — User Identity).
+
+### Alternativas Consideradas
+
+| Alternativa | Prós | Contras | Motivo da Rejeição |
+|---|---|---|---|
+| Resolver roles do banco agora | Correto, completo | Role-permission resolution não está wireada | Depende de Sprint 4.2 |
+| **Hardcoded temporário** | **Simples, não bloqueia** | **Incompleto** | **Escolhido — placeholder documentado** |
+
+### Impactos
+
+- **Positivo:** Login funcional sem depender de 4.2
+- **Negativo:** Tokens JWT não contêm as roles/permissões reais do usuário
+
+### Consequências
+
+Na Sprint 4.2 a resolução de roles deve ser implementada e o hardcoded removido.
+
+---
+
+## ADR-013: Password Reset Placeholder
+
+**Status:** Aceita (Temporária)
+**Data:** 2026-07-15
+**Decisor:** Architect
+
+### Contexto
+
+O método `AuthService.resetPassword()` está vazio (sem implementação), e `forgotPassword()` gera um token mas nunca o persiste. O fluxo completo de reset de senha requer email delivery e armazenamento de tokens.
+
+### Decisão
+
+Manter como placeholder. A implementação real será feita quando o módulo de notificações (email) for implementado.
+
+### Alternativas Consideradas
+
+| Alternativa | Prós | Contras | Motivo da Rejeição |
+|---|---|---|---|
+| Implementar completo agora | Fluxo funcional | Sem email delivery, complexidade | Email não está pronto |
+| **Placeholder** | **Não bloqueia** | **Endpoint não funcional** | **Escolhido** |
+
+### Impactos
+
+- **Positivo:** Sprint não bloqueada
+- **Negativo:** Reset de senha não funcional até implementação futura
+
+---
+
 ## Resumo das Decisões
 
 | # | Decisão | Escolha | Status |
@@ -479,6 +543,8 @@ Se precisar de regras compartilhadas, usar JSON Schema (futuro).
 | ADR-009 | Arquitetura Deploy | Monolito Modular | ✅ Aceita |
 | ADR-010 | Containerização | Docker | ✅ Aceita |
 | ADR-011 | Validação | Bean Validation + Zod | ✅ Aceita |
+| ADR-012 | Roles/Login Placeholder | Hardcoded temporário | ⏳ Temporária |
+| ADR-013 | Password Reset Placeholder | Placeholder vazio | ⏳ Temporária |
 
 ---
 
@@ -499,3 +565,4 @@ Se precisar de regras compartilhadas, usar JSON Schema (futuro).
 | Versão | Data | Autor | Descrição |
 |---|---|---|---|
 | 1.0.0 | 2026-07-15 | Architect | Criação inicial da consolidação de ADRs |
+| 1.1.0 | 2026-07-15 | Architect | ADR-012 (Roles Hardcoded) e ADR-013 (Password Reset Placeholder) — Sprint 4.3 |

@@ -1,0 +1,12 @@
+**/target/
+**/.mvn/repository/
+**/.idea/
+**/*.iml
+**/*.class
+**/*.jar
+**/*.war
+**/logs/
+**/node_modules/
+**/.env
+**/docker-compose*.yml
+**/README.md

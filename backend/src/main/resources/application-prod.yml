@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${CRM_DATABASE_HOST:localhost}:${CRM_DATABASE_PORT:5432}/${CRM_DATABASE_NAME:crm}
+    username: ${CRM_DATABASE_USERNAME}
+    password: ${CRM_DATABASE_PASSWORD}
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    com.becommerce.crm: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
