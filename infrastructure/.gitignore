@@ -1,0 +1,30 @@
+# =============================================================================
+# Infrastructure — Git Ignore
+# =============================================================================
+# Ignora dados persistidos localmente para não commitar volumes de banco,
+# cache e armazenamento de arquivos no repositório.
+# =============================================================================
+
+# Dados do PostgreSQL
+postgres/data/
+
+# Dados do Redis
+redis/data/
+
+# Dados do RabbitMQ
+rabbitmq/data/
+
+# Dados do MinIO
+minio/data/
+
+# Dados do Keycloak
+keycloak/data/
+
+# Exceto scripts de init e import
+!postgres/init/
+!postgres/init/*
+!keycloak/import/
+!keycloak/import/*
+
+# Arquivos .env (contém senhas)
+.env

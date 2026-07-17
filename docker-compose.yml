@@ -1,0 +1,251 @@
+# =============================================================================
+# CRM SaaS Omnichannel — Infraestrutura de Produção
+# =============================================================================
+# Arquitetura: Microserviços com Docker Compose
+# Ambiente: Produção — Ubuntu 24.04
+# Versão: 1.0.0
+#
+# Serviços:
+#   - PostgreSQL 17     (Banco de dados relacional)
+#   - Redis 7           (Cache e sessões)
+#   - RabbitMQ 4        (Message broker)
+#   - MinIO             (Armazenamento S3)
+#   - Keycloak          (Identity & Access Management)
+#
+# Uso:
+#   docker compose --env-file .env up -d
+# =============================================================================
+
+name: crm-infrastructure
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 17 — Banco de dados relacional principal
+  # ---------------------------------------------------------------------------
+  # Hospeda todos os bancos do CRM: auth, tenant, employee, student, finance,
+  # billing, academic, enrollment. O Keycloak também utiliza esta instância
+  # com seu próprio banco (keycloak_db).
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    container_name: crm-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-crm_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-crm_main}
+    volumes:
+      # Persistência dos dados
+      - ./infrastructure/postgres/data:/var/lib/postgresql/data
+      # Script init opcional para criar bancos futuros
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm_admin} -d ${POSTGRES_DB:-crm_main}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - crm-network
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEMORY_LIMIT:-2G}
+          cpus: ${POSTGRES_CPU_LIMIT:-2.0}
+
+  # ---------------------------------------------------------------------------
+  # Redis 7 — Cache e gerenciamento de sessões
+  # ---------------------------------------------------------------------------
+  # Utilizado para cache de consultas, sessões JWT, rate limiting e filas
+  # leves. Persistência RDB + AOF habilitada para recovery.
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: crm-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - ./infrastructure/redis/data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - crm-network
+    deploy:
+      resources:
+        limits:
+          memory: ${REDIS_MEMORY_LIMIT:-512M}
+          cpus: ${REDIS_CPU_LIMIT:-1.0}
+
+  # ---------------------------------------------------------------------------
+  # RabbitMQ 4 — Message broker / Event bus
+  # ---------------------------------------------------------------------------
+  # Responsável pela comunicação assíncrona entre microsserviços, filas de
+  # eventos de domínio, processamento de campanhas e notificações.
+  # Inclui plugin de management para monitoramento via web.
+  # ---------------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: crm-rabbitmq
+    restart: unless-stopped
+    ports:
+      # AMQP — protocolo principal
+      - "5672:5672"
+      # Management UI — http://localhost:15672
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-crm_rabbitmq}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+    volumes:
+      - ./infrastructure/rabbitmq/data:/var/lib/rabbitmq
+      - ./infrastructure/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - crm-network
+    deploy:
+      resources:
+        limits:
+          memory: ${RABBITMQ_MEMORY_LIMIT:-512M}
+          cpus: ${RABBITMQ_CPU_LIMIT:-1.0}
+
+  # ---------------------------------------------------------------------------
+  # MinIO — Armazenamento de objetos compatível com S3
+  # ---------------------------------------------------------------------------
+  # Utilizado para upload de avatares, anexos de mensagens, documentos de
+  # contratos/propostas, backups e arquivos de relatórios.
+  # Console web disponível para administração.
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:RELEASE.2025-06-13T11-33-47Z
+    container_name: crm-minio
+    restart: unless-stopped
+    ports:
+      # S3-compatible API
+      - "9000:9000"
+      # Console web — http://localhost:9001
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_DOMAIN: ${MINIO_DOMAIN:-minio.local}
+    volumes:
+      - ./infrastructure/minio/data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - crm-network
+    deploy:
+      resources:
+        limits:
+          memory: ${MINIO_MEMORY_LIMIT:-512M}
+          cpus: ${MINIO_CPU_LIMIT:-1.0}
+
+  # ---------------------------------------------------------------------------
+  # Keycloak — Identity & Access Management
+  # ---------------------------------------------------------------------------
+  # SSO, autenticação centralizada, federação de identidades, suporte a
+  # OAuth 2.0 / OpenID Connect, LDAP e SAML. Utiliza o PostgreSQL como
+  # banco de dados (keycloak_db).
+  #
+  # Modo produção com HTTPS via proxy reverso (Nginx/Traefik).
+  # Para primeiro acesso, o usuário admin é criado via variáveis de ambiente.
+  # Após o primeiro start, remova KC_BOOTSTRAP_ADMIN e KC_BOOTSTRAP_ADMIN_PASSWORD
+  # e utilize o console web para gerenciamento.
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    command: start
+    container_name: crm-keycloak
+    restart: unless-stopped
+    ports:
+      # HTTP — atrás de proxy reverso (Nginx/Traefik) com TLS
+      - "8080:8080"
+      # JGroups — clustering (descomentar se usar mais de 1 réplica)
+      # - "7800:7800"
+    environment:
+      # Admin inicial (remover após primeiro login)
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+
+      # Modo produção         
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_PROXY_HEADERS: "xforwarded"
+      KC_HOSTNAME: "76.13.237.238"
+      KC_HEALTH_ENABLED: "true"
+
+      # Database — PostgreSQL
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: keycloak_db
+      KC_DB_USERNAME: ${POSTGRES_USER:-crm_admin}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+
+      # Cache (descomentar para clusters)
+      # KC_CACHE: ispn
+      # KC_CACHE_STACK: kubernetes
+    volumes:
+      # Persistência de temas e provedores customizados
+      - ./infrastructure/keycloak/data:/opt/keycloak/data
+      # Importar realm automaticamente (opcional)
+      - ./infrastructure/keycloak/import:/opt/keycloak/data/import:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e 'GET /auth/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q 'UP'"
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - crm-network
+    deploy:
+      resources:
+        limits:
+          memory: ${KEYCLOAK_MEMORY_LIMIT:-1G}
+          cpus: ${KEYCLOAK_CPU_LIMIT:-1.0}
+
+# =============================================================================
+# Rede compartilhada entre todos os serviços
+# =============================================================================
+networks:
+  crm-network:
+    name: crm-network
+    driver: bridge
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

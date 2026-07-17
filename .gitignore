@@ -23,8 +23,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Local env files
-.env*.local
+# Environment files
+.env
+.env.*
+!.env.example
 
 # Vercel
 .vercel
@@ -55,6 +57,18 @@ logs/
 
 # Docker
 docker/.env
+
+# Docker volumes
+**/data/
+**/postgres/
+**/redis/
+**/rabbitmq/
+**/minio/
+
+#Backup files
+*.sql
+*.dump
+*.bak
 
 # OS
 Thumbs.db
