@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json .
-RUN sed -i '/@next\/swc-win32/d' package-lock.json && npm install --legacy-peer-deps --ignore-scripts
+RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
