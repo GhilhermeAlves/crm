@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { loginSchema, type LoginFormData } from "../schemas/auth.schema";
 import { useLogin } from "../hooks/useAuthMutations";
@@ -15,6 +18,7 @@ import { ROUTES } from "@/lib/constants";
 export function LoginForm() {
   const loginMutation = useLogin();
   const { loginKeycloak } = useAuth();
+  const [rememberMe, setRememberMe] = useState(false);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -24,7 +28,20 @@ export function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("remembered_email");
+    if (savedEmail) {
+      form.setValue("email", savedEmail);
+      setRememberMe(true);
+    }
+  }, [form]);
+
   function onSubmit(data: LoginFormData) {
+    if (rememberMe) {
+      localStorage.setItem("remembered_email", data.email);
+    } else {
+      localStorage.removeItem("remembered_email");
+    }
     loginMutation.mutate(data);
   }
 
@@ -84,7 +101,17 @@ export function LoginForm() {
               </FormItem>
             )}
           />
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="rememberMe"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+              />
+              <Label htmlFor="rememberMe" className="text-sm cursor-pointer">
+                Lembrar usuário
+              </Label>
+            </div>
             <Link href={ROUTES.FORGOT_PASSWORD} className="text-sm text-primary hover:underline">
               Esqueceu a senha?
             </Link>
