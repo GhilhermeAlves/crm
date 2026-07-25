@@ -46,7 +46,7 @@ O TechStack define a base tecnológica do CRM SaaS Omnichannel. Cada tecnologia 
 
 | Tecnologia | Versão | Finalidade | Justificativa |
 |---|---|---|---|
-| Java | 21 LTS | Linguagem principal | LTS, records, sealed classes, virtual threads |
+| Java | 25 LTS | Linguagem principal | LTS, records, sealed classes, virtual threads |
 | Spring Boot | 3.x | Framework principal | Ecossistema maduro, convention over configuration |
 | PostgreSQL | 16.x | Database relacional | Robusto, extensível, open source, battle-tested |
 | Redis | 7.x | Cache e sessões | Performance, estruturas de dados ricas, pub/sub |
@@ -58,7 +58,7 @@ O TechStack define a base tecnológica do CRM SaaS Omnichannel. Cada tecnologia 
 
 ### Justificativa do Backend
 
-- **Java 21 + Spring Boot 3**: LTS com recursos modernos (virtual threads para I/O intensivo)
+- **Java 25 + Spring Boot 3**: LTS com recursos modernos (virtual threads para I/O intensivo)
 - **PostgreSQL**: Suporta JSON, partitioning, full-text search — reduz dependências externas
 - **Redis**: Cache distribuído, rate limiting, pub/sub para eventos em tempo real
 - **RabbitMQ**: Desacoplamento de serviços, retry logic, dead letter queues
@@ -124,7 +124,6 @@ O TechStack define a base tecnológica do CRM SaaS Omnichannel. Cada tecnologia 
 
 ## Futuras Melhorias
 
-- Avaliar migração para Java 25 quando disponível
 - Considerar GraalVM para native image em produção
 - Avaliar Edge Runtime para Next.js em produção
 - Considerar CockroachDB para distribuição geográfica de dados

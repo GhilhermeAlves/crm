@@ -33,6 +33,7 @@ public class UserMapper {
         entity.setInviteToken(user.getInviteToken());
         entity.setInvitedAt(user.getInvitedAt());
         entity.setInvitedBy(user.getInvitedBy());
+        entity.setKeycloakSub(user.getKeycloakSub());
         entity.setCreatedAt(user.getCreatedAt());
         entity.setUpdatedAt(user.getUpdatedAt());
         entity.setDeletedAt(user.getDeletedAt());
@@ -60,6 +61,7 @@ public class UserMapper {
         user.setInviteToken(entity.getInviteToken());
         user.setInvitedAt(entity.getInvitedAt());
         user.setInvitedBy(entity.getInvitedBy());
+        user.setKeycloakSub(entity.getKeycloakSub());
         user.setCreatedAt(entity.getCreatedAt());
         user.setUpdatedAt(entity.getUpdatedAt());
         user.setDeletedAt(entity.getDeletedAt());

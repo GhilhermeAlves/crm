@@ -8,10 +8,10 @@ import java.util.UUID;
 @Table(name = "user_roles")
 public class UserRoleJpaEntity {
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false, insertable = false, updatable = false)
     private UUID userId;
 
-    @Column(name = "role_id", nullable = false)
+    @Column(name = "role_id", nullable = false, insertable = false, updatable = false)
     private UUID roleId;
 
     @Column(name = "company_id", nullable = false)

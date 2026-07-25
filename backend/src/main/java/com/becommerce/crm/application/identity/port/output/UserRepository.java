@@ -12,6 +12,7 @@ public interface UserRepository {
     Optional<User> findById(UUID id);
     Optional<User> findByEmail(String email);
     Optional<User> findByInviteToken(String token);
+    Optional<User> findByKeycloakSub(String keycloakSub);
     List<User> findAllByCompanyId(UUID companyId);
     boolean existsByEmail(String email);
     boolean existsByEmailAndIdNot(String email, UUID id);

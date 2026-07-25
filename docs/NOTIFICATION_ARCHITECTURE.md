@@ -144,7 +144,7 @@ flowchart TD
 | SMTP/Amazon SES | Envio de emails transacionais |
 | WebSocket (STOMP/SockJS) | Push de notificações in-app em tempo real |
 | Spring Boot 3 | Framework de orquestração |
-| Java 21 | Linguagem de implementação |
+| Java 25 | Linguagem de implementação |
 
 ## Boas Práticas
 

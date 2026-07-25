@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/auth/callback"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -23,5 +23,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|docs).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|docs|silent-check-sso\\.html).*)"],
 };

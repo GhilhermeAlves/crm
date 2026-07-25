@@ -35,7 +35,7 @@ graph TB
     end
 
     subgraph "BACKEND"
-        BE[Spring Boot 3<br/>Java 21<br/>Clean Architecture]
+        BE[Spring Boot 3<br/>Java 25<br/>Clean Architecture]
     end
 
     subgraph "BANCO DE DADOS"

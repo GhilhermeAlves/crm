@@ -52,6 +52,6 @@ This script:
 ## Prerequisites
 
 - Docker and Docker Compose
-- Java 21
+- Java 25
 - Node.js 20+
 - npm

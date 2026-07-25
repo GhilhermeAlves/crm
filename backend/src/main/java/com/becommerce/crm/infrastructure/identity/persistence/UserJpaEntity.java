@@ -67,6 +67,9 @@ public class UserJpaEntity {
     @Column(name = "invited_by")
     private UUID invitedBy;
 
+    @Column(name = "keycloak_sub")
+    private String keycloakSub;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -118,6 +121,8 @@ public class UserJpaEntity {
     public void setInvitedAt(LocalDateTime invitedAt) { this.invitedAt = invitedAt; }
     public UUID getInvitedBy() { return invitedBy; }
     public void setInvitedBy(UUID invitedBy) { this.invitedBy = invitedBy; }
+    public String getKeycloakSub() { return keycloakSub; }
+    public void setKeycloakSub(String keycloakSub) { this.keycloakSub = keycloakSub; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

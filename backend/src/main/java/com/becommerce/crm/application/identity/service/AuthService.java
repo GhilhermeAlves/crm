@@ -228,6 +228,19 @@ public class AuthService implements AuthUseCase {
     }
 
     @Override
+    public LoginResponse handleKeycloakLogin(UUID userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(UserNotFoundException::new);
+
+        user.recordLogin();
+        userRepository.save(user);
+
+        eventPublisher.publish(UserLoggedInEvent.create(user.getId(), user.getCompanyId(), "keycloak"));
+
+        return new LoginResponse(null, null, user.getId().toString(), user.getEmail().value(), user.getName());
+    }
+
+    @Override
     public void changePassword(UUID userId, String oldPassword, String newPassword) {
         User user = userRepository.findById(userId)
             .orElseThrow(UserNotFoundException::new);

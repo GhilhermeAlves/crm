@@ -42,7 +42,7 @@ Documentar todos os módulos, funcionalidades e fluxos do backend do CRM SaaS Om
 
 ## Descrição
 
-O backend é construído com Java 21, Spring Boot 3, seguindo Clean Architecture e DDD. Cada documento nesta pasta representa um módulo ou funcionalidade do sistema.
+O backend é construído com Java 25, Spring Boot 3, seguindo Clean Architecture e DDD. Cada documento nesta pasta representa um módulo ou funcionalidade do sistema.
 
 ## Regras
 

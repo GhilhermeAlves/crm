@@ -26,6 +26,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String header = request.getHeader("Authorization");
 
         if (header != null && header.startsWith("Bearer ")) {
@@ -45,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     permissions.forEach(perm -> authorities.add(new SimpleGrantedAuthority(perm)));
                 }
 
-                JwtUserPrincipal principal = new JwtUserPrincipal(userId, companyId, roles, permissions);
+                CrmPrincipal principal = CrmPrincipal.fromLegacy(userId, companyId, roles, permissions);
 
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(principal, token, authorities);

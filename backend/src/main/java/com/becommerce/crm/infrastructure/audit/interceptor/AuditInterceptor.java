@@ -1,6 +1,7 @@
 package com.becommerce.crm.infrastructure.audit.interceptor;
 
 import com.becommerce.crm.infrastructure.audit.context.AuditContext;
+import com.becommerce.crm.infrastructure.security.filter.CrmPrincipal;
 import com.becommerce.crm.infrastructure.security.filter.JwtUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,6 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.UUID;
+
 @Component
 public class AuditInterceptor implements HandlerInterceptor {
 
@@ -16,12 +19,26 @@ public class AuditInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication != null && authentication.getPrincipal() instanceof JwtUserPrincipal principal) {
+        UUID userId = null;
+        UUID companyId = null;
+
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof CrmPrincipal crmPrincipal) {
+                userId = crmPrincipal.userId();
+                companyId = crmPrincipal.companyId();
+            } else if (principal instanceof JwtUserPrincipal jwtPrincipal) {
+                userId = jwtPrincipal.userId();
+                companyId = jwtPrincipal.companyId();
+            }
+        }
+
+        if (userId != null) {
             AuditContext.set(
-                principal.userId(),
+                userId,
                 null,
                 null,
-                principal.companyId(),
+                companyId,
                 getClientIpAddress(request),
                 request.getHeader("User-Agent")
             );

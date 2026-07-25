@@ -167,7 +167,7 @@ flowchart TD
 | Redis 7 | Locking distribuído; leader election; rate limiting de jobs |
 | RabbitMQ 3 | Filas de jobs assíncronos; dead letter queue |
 | Spring Boot 3 | Framework de orquestração e scheduling |
-| Java 21 | Linguagem de implementação |
+| Java 25 | Linguagem de implementação |
 | Spring Scheduler / Quartz | Agendamento de triggers cron e one-time |
 | Prometheus + Grafana | Métricas e monitoramento de jobs |
 

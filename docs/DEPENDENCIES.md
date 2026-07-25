@@ -198,7 +198,7 @@ graph TB
 
 | Componente | Tecnologia | Obrigatório |
 |---|---|---|
-| Runtime Java | JDK 21 | Sim |
+| Runtime Java | JDK 25 | Sim |
 | Build Tool | Maven | Sim |
 | Node.js | Node 20+ | Sim (frontend) |
 | Docker | Docker 24+ | Sim |

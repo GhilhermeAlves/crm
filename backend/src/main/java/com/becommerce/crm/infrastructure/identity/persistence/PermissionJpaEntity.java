@@ -9,7 +9,6 @@ import java.util.UUID;
 public class PermissionJpaEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, unique = true)

@@ -18,6 +18,7 @@ public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, U
     boolean existsByEmail(String email);
     boolean existsByEmailAndIdNot(String email, UUID id);
     Optional<UserJpaEntity> findByInviteToken(String token);
+    Optional<UserJpaEntity> findByKeycloakSub(String keycloakSub);
 
     @Query("SELECT u FROM UserJpaEntity u WHERE u.companyId = :companyId AND u.deletedAt IS NULL " +
             "AND (:search IS NULL OR :search = '' OR " +

@@ -68,7 +68,7 @@ O sistema é um CRM SaaS com foco em WhatsApp que centraliza comunicação multi
 
 | Tecnologia | Versão | Finalidade |
 |---|---|---|
-| Java | 21 LTS | Linguagem principal |
+| Java | 25 LTS | Linguagem principal |
 | Spring Boot | 3.x | Framework principal |
 | PostgreSQL | 16 | Database relacional |
 | Redis | 7 | Cache e sessões |

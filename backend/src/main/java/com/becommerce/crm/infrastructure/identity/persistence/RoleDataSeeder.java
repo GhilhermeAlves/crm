@@ -14,6 +14,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import com.becommerce.crm.domain.identity.Role;
 
 @Component
 @Order(1)
@@ -92,7 +93,7 @@ public class RoleDataSeeder implements CommandLineRunner {
             RoleName roleName = entry.getKey();
             List<String> permNames = entry.getValue();
 
-            Role role = roleRepository.findByNameAndCompanyId(roleName, null).orElseGet(() -> {
+            Role role = roleRepository.findByNameAndCompanyId(roleName, Role.SYSTEM_COMPANY_ID).orElseGet(() -> {
                 Role newRole = Role.createSystem(roleName);
                 newRole.setDescription(roleName.getDisplayName());
                 newRole.setSystem(true);

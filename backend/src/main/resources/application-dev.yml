@@ -19,6 +19,13 @@ spring:
     username: ""
     password: ""
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://76.13.237.238:8080/realms/CRM
+          jwk-set-uri: http://76.13.237.238:8080/realms/CRM/protocol/openid-connect/certs
+
 logging:
   level:
     com.becommerce.crm: DEBUG
@@ -26,6 +33,8 @@ logging:
     org.hibernate.SQL: DEBUG
 
 app:
+  cors:
+    allowed-origins: http://localhost:3000
   security:
     reset-token:
       expiration-hours: 1

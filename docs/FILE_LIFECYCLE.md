@@ -153,7 +153,7 @@ flowchart LR
 | S3/MinIO | Object storage para arquivos e thumbnails |
 | ClamAV | Verificação de vírus |
 | Spring Boot 3 | Framework de orquestração |
-| Java 21 | Linguagem de implementação |
+| Java 25 | Linguagem de implementação |
 | Apache Tika | Detecção de tipo MIME real (bypass de extensão) |
 | Thumbnailator / imgscalr | Geração de thumbnails |
 | Next.js 14 (frontend) | Interface de upload e preview de arquivos |

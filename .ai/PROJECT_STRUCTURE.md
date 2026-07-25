@@ -21,7 +21,7 @@ crm/
 
 ### `backend/`
 - **Responsabilidade:** Código-fonte Java do backend
-- **Tecnologias:** Java 21, Spring Boot 3.4.1, Maven, Clean Architecture
+- **Tecnologias:** Java 25, Spring Boot 3.5.16, Maven, Clean Architecture
 - **Estrutura:** domain/, application/, infrastructure/, presentation/, shared/
 - **Regra:** NUNCA duplicar lógica de negócio — sempre implementar aqui
 

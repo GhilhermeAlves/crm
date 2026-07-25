@@ -3,7 +3,7 @@ package com.becommerce.crm.presentation.rest.identity;
 import com.becommerce.crm.application.identity.dto.*;
 import com.becommerce.crm.application.identity.port.input.AuthUseCase;
 import com.becommerce.crm.application.identity.port.input.UserUseCase;
-import com.becommerce.crm.infrastructure.security.filter.JwtUserPrincipal;
+import com.becommerce.crm.infrastructure.security.filter.CrmPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,6 +21,15 @@ public class AuthController {
         this.userUseCase = userUseCase;
     }
 
+    @PostMapping("/keycloak/callback")
+    public ResponseEntity<LoginResponse> keycloakCallback(@AuthenticationPrincipal CrmPrincipal principal) {
+        if (principal.userId() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var response = authUseCase.handleKeycloakLogin(principal.userId());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         LoginResponse response = authUseCase.login(request);
@@ -34,7 +43,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal JwtUserPrincipal principal,
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal CrmPrincipal principal,
                                        @RequestBody RefreshTokenRequest request) {
         authUseCase.logout(principal.userId(), request.refreshToken());
         return ResponseEntity.noContent().build();
@@ -59,14 +68,14 @@ public class AuthController {
     }
 
     @PutMapping("/change-password")
-    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal JwtUserPrincipal principal,
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal CrmPrincipal principal,
                                                @RequestBody ChangePasswordRequest request) {
         authUseCase.changePassword(principal.userId(), request.oldPassword(), request.newPassword());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal JwtUserPrincipal principal) {
+    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal CrmPrincipal principal) {
         UserResponse response = userUseCase.getUserById(principal.userId());
         return ResponseEntity.ok(response);
     }

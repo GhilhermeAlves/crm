@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useKeycloak } from "@/providers/KeycloakProvider";
+import { TokenManager } from "@/store/token-manager";
 import { LoadingScreen } from "./LoadingScreen";
 import { ROUTES } from "@/lib/constants";
 
@@ -12,24 +14,29 @@ type ProtectedRouteProps = {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
+  const keycloakCtx = useKeycloak();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+
+  const hasKcToken = TokenManager.isKeycloakAuth();
+  const waitingForKeycloak = hasKcToken && !keycloakCtx.initialized;
+  const isEffectiveAuthenticated = isAuthenticated || (hasKcToken && keycloakCtx.authenticated);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (mounted && !isLoading && !isAuthenticated) {
+    if (mounted && !waitingForKeycloak && !isLoading && !isEffectiveAuthenticated) {
       router.push(ROUTES.LOGIN);
     }
-  }, [mounted, isAuthenticated, isLoading, router]);
+  }, [mounted, waitingForKeycloak, isEffectiveAuthenticated, isLoading, router]);
 
-  if (!mounted || isLoading) {
+  if (!mounted || waitingForKeycloak || (isLoading && !keycloakCtx.authenticated)) {
     return <LoadingScreen />;
   }
 
-  if (!isAuthenticated) {
+  if (!isEffectiveAuthenticated) {
     return null;
   }
 

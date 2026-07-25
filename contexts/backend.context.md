@@ -1,7 +1,7 @@
 # Backend Context
 
 ## Resumo do Módulo
-Arquitetura Clean + Hexagonal + DDD. 4 camadas: Presentation→Application→Domain→Infrastructure. 8 bounded contexts. Java 21, Spring Boot 3, Maven. Modular monolith first.
+Arquitetura Clean + Hexagonal + DDD. 4 camadas: Presentation→Application→Domain→Infrastructure. 8 bounded contexts. Java 25, Spring Boot 3, Maven. Modular monolith first.
 
 ## Objetivo
 Fornecer API RESTful robusta com arquitetura limpa e separação de responsabilidades.
@@ -11,7 +11,7 @@ Fornecer API RESTful robusta com arquitetura limpa e separação de responsabili
 - DDD com 8 bounded contexts
 - REST API com Spring Boot 3
 - Modular monolith (monolito modular)
-- Java 21 com virtual threads
+- Java 25 com virtual threads
 
 ## Camadas (Clean Architecture)
 ```
@@ -33,7 +33,7 @@ Presentation → Application → Domain → Infrastructure
 ## Stack
 | Tecnologia | Versão | Uso |
 |------------|--------|-----|
-| Java | 21 | Linguagem principal |
+| Java | 25 | Linguagem principal |
 | Spring Boot | 3.x | Framework |
 | Maven | 3.9+ | Build tool |
 | Flyway | 10+ | Migrations |
@@ -67,7 +67,7 @@ crm-backend/
 3. Domain → entidades, regras, events → Infrastructure persiste
 
 ## Checklist de Implementação
-- [ ] Java 21 com virtual threads
+- [ ] Java 25 com virtual threads
 - [ ] Spring Boot 3 configurado
 - [ ] 8 bounded contexts organizados
 - [ ] Clean Architecture em cada contexto

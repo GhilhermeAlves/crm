@@ -46,6 +46,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByKeycloakSub(String keycloakSub) {
+        return repository.findByKeycloakSub(keycloakSub).map(mapper::toDomainEntity);
+    }
+
+    @Override
     public List<User> findAllByCompanyId(UUID companyId) {
         return repository.findByCompanyId(companyId).stream()
                 .map(mapper::toDomainEntity)

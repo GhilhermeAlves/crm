@@ -1,6 +1,8 @@
 const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 const AUTH_COOKIE_KEY = "accessToken";
+const KC_TOKEN_KEY = "kc_accessToken";
+const KC_REFRESH_TOKEN_KEY = "kc_refreshToken";
 
 function setCookie(name: string, value: string, days: number) {
   if (typeof document === "undefined") return;
@@ -33,12 +35,12 @@ function parseJwtPayload(token: string): Record<string, unknown> | null {
 export const TokenManager = {
   getAccessToken(): string | null {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
+    return localStorage.getItem(KC_TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY);
   },
 
   getRefreshToken(): string | null {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
+    return localStorage.getItem(KC_REFRESH_TOKEN_KEY) || localStorage.getItem(REFRESH_TOKEN_KEY);
   },
 
   setTokens(accessToken: string, refreshToken: string): void {
@@ -48,15 +50,33 @@ export const TokenManager = {
     setCookie(AUTH_COOKIE_KEY, accessToken, 7);
   },
 
+  setKeycloakToken(token: string): void {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(KC_TOKEN_KEY, token);
+    setCookie(AUTH_COOKIE_KEY, token, 7);
+  },
+
+  setKeycloakRefreshToken(token: string): void {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(KC_REFRESH_TOKEN_KEY, token);
+  },
+
   clearTokens(): void {
     if (typeof window === "undefined") return;
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(KC_TOKEN_KEY);
+    localStorage.removeItem(KC_REFRESH_TOKEN_KEY);
     deleteCookie(AUTH_COOKIE_KEY);
   },
 
   hasTokens(): boolean {
-    return !!this.getAccessToken() && !!this.getRefreshToken();
+    return !!this.getAccessToken();
+  },
+
+  isKeycloakAuth(): boolean {
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem(KC_TOKEN_KEY);
   },
 
   getRoles(): string[] {
@@ -64,6 +84,8 @@ export const TokenManager = {
     if (!token) return [];
     const payload = parseJwtPayload(token);
     if (!payload) return [];
+    const realmRoles = payload["realm_access"] as { roles?: string[] } | undefined;
+    if (realmRoles?.roles) return realmRoles.roles;
     const roles = payload["roles"];
     return Array.isArray(roles) ? (roles as string[]) : [];
   },

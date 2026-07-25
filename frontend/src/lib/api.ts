@@ -1,5 +1,6 @@
 import axios from "axios";
 import { TokenManager } from "@/store/token-manager";
+import { refreshKeycloakToken } from "@/lib/keycloak";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1",
@@ -39,6 +40,22 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    if (TokenManager.isKeycloakAuth()) {
+      const refreshed = await refreshKeycloakToken();
+      if (refreshed) {
+        const newToken = TokenManager.getAccessToken();
+        if (newToken) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        }
+      }
+      TokenManager.clearTokens();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
       return Promise.reject(error);
     }
 

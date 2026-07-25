@@ -4,12 +4,14 @@ import { createContext, useContext, useCallback, useState, useEffect, type React
 import { useMe, useLogout } from "./useAuthMutations";
 import { TokenManager } from "@/store/token-manager";
 import type { User } from "../types/auth.types";
+import { useKeycloak } from "@/providers/KeycloakProvider";
 
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   logout: () => void;
+  loginKeycloak: (redirectPath?: string) => Promise<void>;
   roles: string[];
   permissions: string[];
 };
@@ -20,19 +22,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const { data, isLoading: isMeLoading, isError } = useMe();
   const logoutMutation = useLogout();
+  const keycloakCtx = useKeycloak();
 
   useEffect(() => {
     if (data) {
       setUser(data);
     } else if (!isMeLoading && (isError || !TokenManager.hasTokens())) {
-      TokenManager.clearTokens();
+      if (!TokenManager.isKeycloakAuth()) {
+        TokenManager.clearTokens();
+      }
       setUser(null);
     }
   }, [data, isMeLoading, isError]);
 
   const logout = useCallback(() => {
-    logoutMutation.mutate();
-  }, [logoutMutation]);
+    if (TokenManager.isKeycloakAuth()) {
+      keycloakCtx.logout();
+    } else {
+      logoutMutation.mutate();
+    }
+  }, [keycloakCtx, logoutMutation]);
+
+  const loginKeycloak = useCallback(async (redirectPath?: string) => {
+    if (keycloakCtx.initialized) {
+      await keycloakCtx.login(redirectPath);
+    }
+  }, [keycloakCtx]);
 
   const roles = TokenManager.getRoles();
   const permissions = TokenManager.getPermissions();
@@ -44,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isLoading: isMeLoading,
         logout,
+        loginKeycloak,
         roles,
         permissions,
       }}

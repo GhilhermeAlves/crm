@@ -2,7 +2,7 @@ package com.becommerce.crm.presentation.rest.identity;
 
 import com.becommerce.crm.application.identity.dto.*;
 import com.becommerce.crm.application.identity.port.input.RoleUseCase;
-import com.becommerce.crm.infrastructure.security.filter.JwtUserPrincipal;
+import com.becommerce.crm.infrastructure.security.filter.CrmPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +26,7 @@ public class RoleController {
     @GetMapping
     @PreAuthorize("hasAuthority('role:read')")
     public ResponseEntity<List<RoleResponse>> listRoles(
-            @AuthenticationPrincipal JwtUserPrincipal principal) {
+            @AuthenticationPrincipal CrmPrincipal principal) {
         return ResponseEntity.ok(roleUseCase.listRoles(principal.companyId()));
     }
 
@@ -39,7 +39,7 @@ public class RoleController {
     @PostMapping
     @PreAuthorize("hasAuthority('role:create')")
     public ResponseEntity<RoleResponse> createRole(
-            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @AuthenticationPrincipal CrmPrincipal principal,
             @Valid @RequestBody CreateRoleRequest request) {
         RoleResponse response = roleUseCase.createRole(principal.companyId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -83,7 +83,7 @@ public class RoleController {
     public ResponseEntity<Void> assignRoleToUser(
             @PathVariable UUID userId,
             @Valid @RequestBody AssignRoleRequest request,
-            @AuthenticationPrincipal JwtUserPrincipal principal) {
+            @AuthenticationPrincipal CrmPrincipal principal) {
         roleUseCase.assignRoleToUser(userId, UUID.fromString(request.roleId()), principal.companyId());
         return ResponseEntity.ok().build();
     }
@@ -101,7 +101,7 @@ public class RoleController {
     @PreAuthorize("hasAuthority('role:read')")
     public ResponseEntity<List<RoleResponse>> getUserRoles(
             @PathVariable UUID userId,
-            @AuthenticationPrincipal JwtUserPrincipal principal) {
+            @AuthenticationPrincipal CrmPrincipal principal) {
         return ResponseEntity.ok(roleUseCase.getUserRoles(userId, principal.companyId()));
     }
 }

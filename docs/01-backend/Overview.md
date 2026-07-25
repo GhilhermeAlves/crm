@@ -22,7 +22,7 @@ Fornecer uma visão geral do backend do CRM SaaS Omnichannel, incluindo arquitet
 
 ## Descrição
 
-O backend é uma aplicação Java 21 com Spring Boot 3, construída seguindo Clean Architecture e DDD (Domain-Driven Design). O sistema opera como um monolito modular com boundaries claros, preparado para decomposição em microsserviços quando necessário.
+O backend é uma aplicação Java 25 com Spring Boot 3, construída seguindo Clean Architecture e DDD (Domain-Driven Design). O sistema opera como um monolito modular com boundaries claros, preparado para decomposição em microsserviços quando necessário.
 
 ## Arquitetura
 
@@ -38,7 +38,7 @@ O backend é uma aplicação Java 21 com Spring Boot 3, construída seguindo Cle
 
 | Aspecto | Especificação |
 |---|---|
-| Linguagem | Java 21 LTS |
+| Linguagem | Java 25 LTS |
 | Framework | Spring Boot 3.x |
 | Build Tool | Maven |
 | Database | PostgreSQL 16 |
@@ -81,7 +81,7 @@ O backend é uma aplicação Java 21 com Spring Boot 3, construída seguindo Cle
 
 | Componente | Tecnologia | Versão | Finalidade |
 |---|---|---|---|
-| Runtime | Java | 21 LTS | Execução da aplicação |
+| Runtime | Java | 25 LTS | Execução da aplicação |
 | Framework | Spring Boot | 3.x | Framework principal |
 | Build | Maven | 3.9+ | Build e dependências |
 | ORM | Hibernate/JPA | 6.x | Mapeamento objeto-relacional |

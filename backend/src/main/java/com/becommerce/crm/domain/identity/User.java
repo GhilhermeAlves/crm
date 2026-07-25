@@ -26,6 +26,7 @@ public class User {
     private String inviteToken;
     private LocalDateTime invitedAt;
     private UUID invitedBy;
+    private String keycloakSub;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
@@ -176,6 +177,14 @@ public class User {
     public void setInvitedAt(LocalDateTime invitedAt) { this.invitedAt = invitedAt; }
     public UUID getInvitedBy() { return invitedBy; }
     public void setInvitedBy(UUID invitedBy) { this.invitedBy = invitedBy; }
+    public String getKeycloakSub() { return keycloakSub; }
+    public void setKeycloakSub(String keycloakSub) { this.keycloakSub = keycloakSub; }
+
+    public void linkKeycloak(String keycloakSub) {
+        this.keycloakSub = keycloakSub;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

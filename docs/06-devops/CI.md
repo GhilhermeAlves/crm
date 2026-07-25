@@ -35,7 +35,7 @@ Push to main → CI Pipeline + Build Image
 ```
 1. Checkout
         │
-2. Setup (Java 21, Node 20, PostgreSQL)
+2. Setup (Java 25, Node 20, PostgreSQL)
         │
 3. Cache Dependencies
         │
@@ -85,7 +85,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '25'
       - run: ./mvnw verify
       - run: ./mvnw checkstyle:check
 

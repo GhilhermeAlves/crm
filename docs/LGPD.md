@@ -174,7 +174,7 @@ flowchart TD
 | Redis 7 | Cache de consentimentos para verificação rápida |
 | RabbitMQ 3 | Eventos de consentimento e incidentes |
 | Spring Boot 3 | Framework de implementação |
-| Java 21 | Linguagem de implementação |
+| Java 25 | Linguagem de implementação |
 | Flyway 10 | Migrações de schema para audit logs e consent records |
 | Next.js 14 (frontend) | Interface de consentimento e portal do titular |
 

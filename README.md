@@ -4,7 +4,7 @@ Sistema CRM Omnichannel para gestão de leads, contatos, pipeline de vendas e co
 
 ## Arquitetura
 
-- **Backend**: Java 21 + Spring Boot 3 (Clean Architecture + DDD)
+- **Backend**: Java 25 + Spring Boot 3 (Clean Architecture + DDD)
 - **Frontend**: Next.js 14 + React 18 + TypeScript
 - **Database**: PostgreSQL 16
 - **Cache**: Redis 7
@@ -28,7 +28,7 @@ crm/
 
 ### Pré-requisitos
 
-- Java 21
+- Java 25 LTS
 - Node.js 20+
 - Docker & Docker Compose
 

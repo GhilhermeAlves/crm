@@ -14,4 +14,5 @@ public interface AuthUseCase {
     void forgotPassword(String email);
     void resetPassword(String token, String newPassword);
     void changePassword(UUID userId, String oldPassword, String newPassword);
+    LoginResponse handleKeycloakLogin(UUID userId);
 }

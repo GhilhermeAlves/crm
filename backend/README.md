@@ -2,7 +2,7 @@
 
 ## Tech Stack
 
-- Java 21 LTS
+- Java 25 LTS
 - Spring Boot 3.x
 - Maven
 - PostgreSQL 16
@@ -30,7 +30,7 @@ presentation/   → REST Controllers, Request/Response DTOs
 
 ### Prerequisites
 
-- Java 21
+- Java 25
 - Maven 3.9+
 - PostgreSQL 16
 - Redis 7
