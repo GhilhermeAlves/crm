@@ -12,6 +12,7 @@ export default function LoginPage() {
           <p className="text-sm text-muted-foreground">
             Acesse sua conta para continuar
           </p>
+          <p className="text-xs text-muted-foreground/60">v1.0.1</p>
         </div>
         <LoginForm />
       </div>
