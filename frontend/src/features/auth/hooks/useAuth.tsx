@@ -44,14 +44,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [keycloakCtx, logoutMutation]);
 
   const loginKeycloak = useCallback(async (redirectPath?: string) => {
+    let target = redirectPath;
+    if (!target && typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      target = params.get("redirect") || "/dashboard";
+    }
+    if (target && typeof window !== "undefined") {
+      sessionStorage.setItem("login_redirect", target);
+    }
     if (keycloakCtx.initialized) {
-      await keycloakCtx.login(redirectPath);
+      await keycloakCtx.login();
     } else {
-      const target = redirectPath || "/dashboard";
       const keycloakUrl = process.env.NEXT_PUBLIC_KEYCLOAK_URL || "https://76.13.237.238/auth";
       const realm = process.env.NEXT_PUBLIC_KEYCLOAK_REALM || "CRM";
       const clientId = process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID || "crm-frontend";
-      const redirectUri = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(target)}`;
+      const redirectUri = `${window.location.origin}/auth/callback`;
       window.location.href = `${keycloakUrl}/realms/${realm}/protocol/openid-connect/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid`;
     }
   }, [keycloakCtx]);

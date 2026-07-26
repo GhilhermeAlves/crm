@@ -10,7 +10,6 @@ import {
   Calendar,
   Megaphone,
   TrendingUp,
-  TrendingDown,
   ArrowRight,
   Clock,
   CheckCircle2,
@@ -24,64 +23,14 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BadgeStatus } from "@/components/common/BadgeStatus";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useKeycloak } from "@/providers/KeycloakProvider";
 import { TokenManager } from "@/store/token-manager";
 import { ROUTES } from "@/lib/constants";
-
-const stats = [
-  {
-    title: "Usuários",
-    value: "12",
-    description: "Total ativos",
-    icon: Users,
-    trend: { value: 8, isPositive: true },
-  },
-  {
-    title: "Clientes",
-    value: "248",
-    description: "Cadastrados",
-    icon: Contact,
-    trend: { value: 12, isPositive: true },
-  },
-  {
-    title: "Leads",
-    value: "86",
-    description: "Em pipeline",
-    icon: TrendingUp,
-    trend: { value: 24, isPositive: true },
-  },
-  {
-    title: "Negócios",
-    value: "34",
-    description: "Em andamento",
-    icon: GitBranch,
-    trend: { value: -3, isPositive: false },
-  },
-  {
-    title: "Financeiro",
-    value: "R$ 45.2k",
-    description: "Receita do mês",
-    icon: DollarSign,
-    trend: { value: 15, isPositive: true },
-  },
-  {
-    title: "Campanhas",
-    value: "5",
-    description: "Ativas",
-    icon: Megaphone,
-    trend: { value: 2, isPositive: true },
-  },
-];
-
-const recentActivities = [
-  { id: "1", text: "João Silva aceitou a proposta", time: "Há 5 min", type: "success" as const },
-  { id: "2", text: "Novo lead: Maria Santos", time: "Há 15 min", type: "info" as const },
-  { id: "3", text: "Reunião com Empresa X cancelada", time: "Há 1 hora", type: "warning" as const },
-  { id: "4", text: "Campanha Black Friday iniciada", time: "Há 2 horas", type: "info" as const },
-  { id: "5", text: "Negócio perdido: Tech Corp", time: "Há 3 horas", type: "danger" as const },
-];
+import { useDashboardKpis, useRecentActivities } from "@/features/dashboard/hooks/useDashboard";
+import { KpiGrid } from "@/features/dashboard/components/KpiGrid";
+import { ActivitiesFeed } from "@/features/dashboard/components/ActivitiesFeed";
+import { DashboardSkeleton } from "@/features/dashboard/components/DashboardSkeleton";
 
 const quickActions = [
   { label: "Novo Lead", href: ROUTES.LEADS, icon: Plus },
@@ -90,16 +39,11 @@ const quickActions = [
   { label: "Relatórios", href: ROUTES.REPORTS, icon: TrendingUp },
 ];
 
-const activityDotColors = {
-  success: "bg-emerald-500",
-  info: "bg-blue-500",
-  warning: "bg-amber-500",
-  danger: "bg-red-500",
-};
-
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const keycloakCtx = useKeycloak();
+  const { data: kpis, isLoading: kpisLoading } = useDashboardKpis();
+  const { data: activities, isLoading: activitiesLoading } = useRecentActivities();
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -122,6 +66,10 @@ export default function DashboardPage() {
       return null;
     }
   }, [keycloakCtx.token]);
+
+  if (kpisLoading || activitiesLoading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -177,8 +125,14 @@ export default function DashboardPage() {
               {greeting}, {user?.name?.split(" ")[0] || kcTokenPayload?.name || "usuário"}!
             </h2>
             <p className="text-muted-foreground">
-              Aqui está o resumo do seu CRM. Você tem{" "}
-              <span className="font-medium text-foreground">3 pendências</span> para hoje.
+              Aqui está o resumo do seu CRM.{" "}
+              {kpis && kpis.activeUsers > 0 ? (
+                <span>
+                  Você tem <span className="font-medium text-foreground">{kpis.activeUsers} usuário{kpis.activeUsers > 1 ? "s" : ""} ativo{kpis.activeUsers > 1 ? "s" : ""}</span> na plataforma.
+                </span>
+              ) : (
+                <span>Bem-vindo ao CRM.</span>
+              )}
             </p>
           </div>
           <div className="flex gap-2">
@@ -192,75 +146,15 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.title} className="transition-shadow hover:shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`flex items-center gap-1 text-xs font-medium ${
-                          stat.trend.isPositive
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        {stat.trend.isPositive ? (
-                          <TrendingUp className="h-3 w-3" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3" />
-                        )}
-                        {stat.trend.isPositive ? "+" : ""}
-                        {stat.trend.value}%
-                      </span>
-                      <p className="text-xs text-muted-foreground">{stat.description}</p>
-                    </div>
-                  </div>
-                  <div className="rounded-lg bg-muted p-3">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* KPI Grid */}
+      {kpis && <KpiGrid kpis={kpis} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Activities */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-base font-semibold">Atividades Recentes</CardTitle>
-            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" asChild>
-              <Link href={ROUTES.REPORTS}>
-                Ver todas
-                <ArrowRight className="ml-1 h-3 w-3" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${activityDotColors[activity.type]}`} />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm">{activity.text}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <ActivitiesFeed activities={activities || []} />
 
-        {/* Quick Actions + Day Summary */}
         <div className="space-y-6">
+          {/* Quick Actions */}
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-semibold">Ações Rápidas</CardTitle>
@@ -287,6 +181,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* Day Summary */}
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-semibold">Resumo do Dia</CardTitle>
@@ -295,31 +190,31 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    Tarefas concluídas
+                    <Users className="h-4 w-4 text-blue-500" />
+                    Usuários ativos
                   </div>
-                  <span className="text-sm font-medium">8/12</span>
+                  <span className="text-sm font-medium">{kpis?.activeUsers ?? "—"}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-amber-500" />
-                    Reuniões hoje
+                    <UserIcon className="h-4 w-4 text-emerald-500" />
+                    Novos usuários (mês)
                   </div>
-                  <span className="text-sm font-medium">3</span>
+                  <span className="text-sm font-medium">{kpis?.newUsersThisMonth ?? "—"}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
-                    <AlertCircle className="h-4 w-4 text-blue-500" />
-                    Leads pendentes
+                    <Shield className="h-4 w-4 text-amber-500" />
+                    Eventos de auditoria
                   </div>
-                  <span className="text-sm font-medium">5</span>
+                  <span className="text-sm font-medium">{kpis?.auditEventsThisMonth ?? "—"}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
-                    <Zap className="h-4 w-4 text-purple-500" />
-                    Conversões hoje
+                    <Clock className="h-4 w-4 text-purple-500" />
+                    Atividades recentes
                   </div>
-                  <span className="text-sm font-medium">2</span>
+                  <span className="text-sm font-medium">{activities?.length ?? 0}</span>
                 </div>
               </div>
             </CardContent>

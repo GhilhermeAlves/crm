@@ -11,11 +11,21 @@ export function AuthCallbackContent() {
   const { initialized, authenticated } = useKeycloak();
   const [status, setStatus] = useState("Processando autenticação...");
 
+  function validateRedirect(dest: string | null): string | null {
+    if (!dest) return null;
+    if (!dest.startsWith("/")) return null;
+    if (dest.startsWith("//")) return null;
+    if (dest.length < 1) return null;
+    return dest;
+  }
+
   useEffect(() => {
     if (!initialized) return;
 
     if (authenticated) {
-      const redirect = searchParams.get("redirect") || "/dashboard";
+      const stored = sessionStorage.getItem("login_redirect");
+      sessionStorage.removeItem("login_redirect");
+      const redirect = validateRedirect(stored) || validateRedirect(searchParams.get("redirect")) || "/dashboard";
       setStatus("Autenticação concluída. Redirecionando...");
       router.replace(redirect);
     } else {

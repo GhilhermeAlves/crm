@@ -20,9 +20,6 @@ export async function initKeycloak(): Promise<Keycloak> {
   if (!kc.authenticated) {
     try {
       await kc.init({
-        onLoad: "check-sso",
-        silentCheckSsoRedirectUri:
-          window.location.origin + "/silent-check-sso.html",
         pkceMethod: "S256",
         checkLoginIframe: false,
       });
@@ -35,9 +32,8 @@ export async function initKeycloak(): Promise<Keycloak> {
 
 export async function loginKeycloak(redirectPath?: string): Promise<void> {
   const kc = getKeycloakInstance();
-  const target = redirectPath || "/dashboard";
   await kc.login({
-    redirectUri: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(target)}`,
+    redirectUri: `${window.location.origin}/auth/callback`,
   });
 }
 

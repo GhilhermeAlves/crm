@@ -62,6 +62,24 @@ public class AuditLogRepositoryImpl implements AuditLogRepository {
         return repository.findById(id).map(this::toDomainEntity).orElse(null);
     }
 
+    @Override
+    public long countByCompanyId(UUID companyId) {
+        return repository.countByCompanyId(companyId);
+    }
+
+    @Override
+    public long countByCompanyIdAndCreatedAtAfter(UUID companyId, LocalDateTime since) {
+        return repository.countByCompanyIdAndCreatedAtAfter(companyId, since);
+    }
+
+    @Override
+    public List<AuditLog> findRecentByCompanyId(UUID companyId, int limit) {
+        return repository.findByCompanyIdOrderByCreatedAtDesc(companyId, PageRequest.of(0, limit))
+            .stream()
+            .map(this::toDomainEntity)
+            .toList();
+    }
+
     private AuditLogJpaEntity toJpaEntity(AuditLog auditLog) {
         AuditLogJpaEntity entity = new AuditLogJpaEntity();
         entity.setId(auditLog.getId());

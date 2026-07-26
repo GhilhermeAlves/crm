@@ -3,7 +3,7 @@ import { TokenManager } from "@/store/token-manager";
 import { refreshKeycloakToken } from "@/lib/keycloak";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://76.13.237.238:8081/api/v1",
   headers: {
     "Content-Type": "application/json",
   },

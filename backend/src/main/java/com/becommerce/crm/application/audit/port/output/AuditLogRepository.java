@@ -21,4 +21,10 @@ public interface AuditLogRepository {
                      String entityId, String search,
                      LocalDateTime startDate, LocalDateTime endDate);
     AuditLog findById(UUID id);
+
+    long countByCompanyId(UUID companyId);
+
+    long countByCompanyIdAndCreatedAtAfter(UUID companyId, LocalDateTime since);
+
+    List<AuditLog> findRecentByCompanyId(UUID companyId, int limit);
 }

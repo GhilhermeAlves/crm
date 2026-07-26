@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,6 +20,15 @@ public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, U
     boolean existsByEmailAndIdNot(String email, UUID id);
     Optional<UserJpaEntity> findByInviteToken(String token);
     Optional<UserJpaEntity> findByKeycloakSub(String keycloakSub);
+
+    long countByCompanyIdAndDeletedAtIsNull(UUID companyId);
+
+    long countByCompanyIdAndStatusAndDeletedAtIsNull(UUID companyId, String status);
+
+    long countByCompanyIdAndCreatedAtAfterAndDeletedAtIsNull(UUID companyId, LocalDateTime since);
+
+    @Query("SELECT u.department, COUNT(u) FROM UserJpaEntity u WHERE u.companyId = :companyId AND u.deletedAt IS NULL AND u.department IS NOT NULL GROUP BY u.department ORDER BY COUNT(u) DESC")
+    List<Object[]> countByCompanyIdGroupByDepartment(@Param("companyId") UUID companyId);
 
     @Query("SELECT u FROM UserJpaEntity u WHERE u.companyId = :companyId AND u.deletedAt IS NULL " +
             "AND (:search IS NULL OR :search = '' OR " +

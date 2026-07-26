@@ -34,7 +34,7 @@ logging:
 
 app:
   cors:
-    allowed-origins: http://localhost:3000
+    allowed-origins: http://localhost:3000,http://76.13.237.238:3000
   security:
     reset-token:
       expiration-hours: 1

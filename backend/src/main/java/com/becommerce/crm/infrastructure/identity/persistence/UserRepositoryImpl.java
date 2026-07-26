@@ -8,7 +8,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -87,5 +90,30 @@ public class UserRepositoryImpl implements UserRepository {
                 .toList();
 
         return new PageResult(users, result.getTotalElements());
+    }
+
+    @Override
+    public long countByCompanyId(UUID companyId) {
+        return repository.countByCompanyIdAndDeletedAtIsNull(companyId);
+    }
+
+    @Override
+    public long countByCompanyIdAndStatus(UUID companyId, UserStatus status) {
+        return repository.countByCompanyIdAndStatusAndDeletedAtIsNull(companyId, status.name());
+    }
+
+    @Override
+    public long countByCompanyIdAndCreatedAtAfter(UUID companyId, LocalDateTime since) {
+        return repository.countByCompanyIdAndCreatedAtAfterAndDeletedAtIsNull(companyId, since);
+    }
+
+    @Override
+    public Map<String, Long> countByCompanyIdGroupByDepartment(UUID companyId) {
+        List<Object[]> results = repository.countByCompanyIdGroupByDepartment(companyId);
+        Map<String, Long> map = new LinkedHashMap<>();
+        for (Object[] row : results) {
+            map.put((String) row[0], (Long) row[1]);
+        }
+        return map;
     }
 }

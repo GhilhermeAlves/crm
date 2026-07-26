@@ -4,6 +4,16 @@ WORKDIR /app
 COPY package*.json .
 RUN npm ci --legacy-peer-deps
 COPY . .
+
+# Build-time environment variables (passed via docker-compose build.args)
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WS_URL
+ARG NEXT_PUBLIC_KEYCLOAK_URL
+ARG NEXT_PUBLIC_KEYCLOAK_REALM
+ARG NEXT_PUBLIC_KEYCLOAK_CLIENT_ID
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_APP_NAME
+
 RUN npm run build
 
 # Runtime stage
