@@ -2,9 +2,10 @@
 FROM eclipse-temurin:25-jdk AS builder
 WORKDIR /app
 COPY pom.xml .
-COPY mvnw .
+COPY mvnw ./
+RUN chmod +x mvnw
 COPY .mvn .mvn
-RUN chmod +x mvnw && ./mvnw dependency:go-offline
+RUN ./mvnw dependency:go-offline
 COPY src ./src
 RUN ./mvnw package -DskipTests
 
