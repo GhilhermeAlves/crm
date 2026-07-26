@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: crm-backend
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - CRM_DATABASE_HOST=postgres
+      - CRM_DATABASE_PORT=5432
+      - CRM_DATABASE_NAME=crm_main
+      - CRM_DATABASE_USERNAME=${POSTGRES_USER}
+      - CRM_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
+      - CRM_REDIS_HOST=redis
+      - CRM_REDIS_PORT=6379
+      - CRM_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CRM_RABBITMQ_HOST=rabbitmq
+      - CRM_RABBITMQ_PORT=5672
+      - CRM_RABBITMQ_USERNAME=${RABBITMQ_USER}
+      - CRM_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - KEYCLOAK_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
+      - KEYCLOAK_JWKS_URI=http://keycloak:8080/realms/CRM/protocol/openid-connect/certs
+      - JWT_SECRET=${JWT_SECRET:-TWVsbG9uU2VjcmV0S2V5Rm9yQ3JtQmFja0VuZEFwcGxpY2F0aW9uVGhpc0lzQmFzZTY0}
+      - CORS_ALLOWED_ORIGINS=*
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - crm-network
+    restart: unless-stopped
+
+networks:
+  crm-network:
+    external: true
