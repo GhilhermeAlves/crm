@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: crm-backend
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - CRM_DATABASE_HOST=postgres
@@ -19,9 +19,16 @@ services:
       - CRM_REDIS_PORT=6379
       - CRM_RABBITMQ_HOST=rabbitmq
       - CRM_RABBITMQ_PORT=5672
-      - CRM_RABBITMQ_USERNAME=guest
-      - CRM_RABBITMQ_PASSWORD=guest
+      - CRM_RABBITMQ_USERNAME=${CRM_RABBITMQ_USERNAME}
+      - CRM_RABBITMQ_PASSWORD=${CRM_RABBITMQ_PASSWORD}
       - TENANT_ID=public
+      - APP_CORS_ALLOWED_ORIGINS=https://srv1348261.hstgr.cloud,http://localhost:3000
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - CRM_REDIS_PASSWORD=${CRM_REDIS_PASSWORD}
+      - CRM_REDIS_HOST=redis
+      - CRM_REDIS_PORT=6379
     depends_on:
       postgres:
         condition: service_healthy
