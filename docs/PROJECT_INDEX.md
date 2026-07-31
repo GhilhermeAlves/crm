@@ -170,6 +170,7 @@ Use `Ctrl+F` para buscar por palavra-chave. Cada linha contém o caminho relativ
 | [Payment.md](./04-integrations/Payment.md) | Pagamentos | v1.1 |
 | [Webhooks.md](./04-integrations/Webhooks.md) | Webhooks | v1.1 |
 | [Storage.md](./04-integrations/Storage.md) | Armazenamento | v1.1 |
+| [KEYCLOAK_INTEGRATION.md](./04-integrations/KEYCLOAK_INTEGRATION.md) | Integração Keycloak (OIDC/OAuth 2.0) | v1.0 |
 
 ---
 
@@ -220,22 +221,39 @@ Use `Ctrl+F` para buscar por palavra-chave. Cada linha contém o caminho relativ
 
 ---
 
+## 📁 docs/08-auth-refactor/
+
+| Arquivo | Descrição | Status |
+|---|---|---|
+| [README.md](./08-auth-refactor/README.md) | Índice da refatoração de autenticação (Keycloak único emissor) | v1.1 |
+| [OVERVIEW.md](./08-auth-refactor/OVERVIEW.md) | Visão geral da nova arquitetura (Keycloak IdP + Authorization Server; auth-service como identidade de aplicação) | v1.1 |
+| [AUTH_FLOWS.md](./08-auth-refactor/AUTH_FLOWS.md) | Fluxos OIDC + PKCE, primeiro login, refresh/SSO e logout | v1.1 |
+| [PROVISIONING.md](./08-auth-refactor/PROVISIONING.md) | Provisionamento automático e sincronização Keycloak ↔ CRM | v1.1 |
+| [CURRENT_USER.md](./08-auth-refactor/CURRENT_USER.md) | Modelo CurrentUser e propagação via gateway | v1.1 |
+| [AUTHORIZATION.md](./08-auth-refactor/AUTHORIZATION.md) | Estratégia RBAC resolvida pelo auth-service | v1.1 |
+| [AUTH_SERVICE_API.md](./08-auth-refactor/AUTH_SERVICE_API.md) | APIs do crm-auth-service (sem emissão de tokens/JWKS) | v1.1 |
+| [EVENTS.md](./08-auth-refactor/EVENTS.md) | Eventos e integrações futuras | v1.1 |
+| [MIGRATION_PLAN.md](./08-auth-refactor/MIGRATION_PLAN.md) | Plano de migração, rollback, critérios, riscos e regra de sprint | v1.1 |
+
+---
+
 ## Estatísticas
 
 | Métrica | Valor |
 |---|---|
-| Total de arquivos | 147 |
+| Total de arquivos | 157 |
 | Documentos de Síntese (raiz) | 35 |
 | 00-core | 11 |
 | 01-backend | 30 |
 | 02-frontend | 23 |
 | 03-database | 12 |
-| 04-integrations | 10 |
+| 04-integrations | 11 |
 | 05-business-rules | 11 |
 | 06-devops | 9 |
 | 07-roadmap | 6 |
-| Diretórios com conteúdo | 8 |
-| Diagramas Mermaid | 145+ |
+| 08-auth-refactor | 9 |
+| Diretórios com conteúdo | 9 |
+| Diagramas Mermaid | 155+ |
 | Endpoints documentados | 100+ |
 
 ---
@@ -244,9 +262,12 @@ Use `Ctrl+F` para buscar por palavra-chave. Cada linha contém o caminho relativ
 
 | Assunto | Documento(s) |
 |---|---|
-| **Autenticação** | `01-backend/Auth.md`, `SECURITY_MAP.md` |
-| **JWT** | `01-backend/Auth.md`, `SECURITY_MAP.md` |
-| **RBAC** | `05-business-rules/Permissions.md`, `SECURITY_MAP.md` |
+| **Autenticação** | `01-backend/Auth.md`, `SECURITY_MAP.md`, `08-auth-refactor/` |
+| **JWT** | `01-backend/Auth.md`, `SECURITY_MAP.md`, `08-auth-refactor/CURRENT_USER.md`, `08-auth-refactor/AUTH_FLOWS.md` |
+| **Keycloak / OIDC** | `04-integrations/KEYCLOAK_INTEGRATION.md`, `08-auth-refactor/OVERVIEW.md`, `08-auth-refactor/AUTH_FLOWS.md` |
+| **RBAC** | `05-business-rules/Permissions.md`, `SECURITY_MAP.md`, `08-auth-refactor/AUTHORIZATION.md` |
+| **Provisionamento de usuários** | `08-auth-refactor/PROVISIONING.md` |
+| **Migração de autenticação** | `08-auth-refactor/MIGRATION_PLAN.md` |
 | **Multi-tenancy** | `MULTI_TENANCY.md`, `03-database/Overview.md`, `01-backend/Companies.md` |
 | **WhatsApp** | `04-integrations/WhatsApp.md`, `04-integrations/EvolutionAPI.md` |
 | **Pipeline** | `01-backend/Pipeline.md`, `01-backend/Kanban.md` |
