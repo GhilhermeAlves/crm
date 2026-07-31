@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: crm-auth-service
+
+  profiles:
+    active: dev
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/crm}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # O schema de identidade pertence ao crm-backend (Flyway); o auth-service
+  # apenas lê o banco CRM compartilhado.
+  flyway:
+    enabled: false
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # JWKS sempre do Keycloak — o auth-service não possui JWKS próprio.
+          issuer-uri: ${AUTH_KEYCLOAK_ISSUER_URI:}
+          jwk-set-uri: ${AUTH_KEYCLOAK_JWKS_URI:}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    db:
+      enabled: true
+
+logging:
+  level:
+    com.becommerce.auth: INFO
+    org.springframework.security: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

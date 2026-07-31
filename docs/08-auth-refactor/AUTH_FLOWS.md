@@ -76,7 +76,9 @@ sequenceDiagram
 
 O primeiro login **não falha mais** quando o usuário não existe no banco CRM (comportamento atual: 500). O auth-service provisiona o usuário automaticamente.
 
-> **Sprint 1 (implementado)**: no `crm-backend`, o provisionamento ocorre dentro da cadeia de segurança — o `KeycloakJwtAuthenticationConverter` chama `AuthService.provisionKeycloakUser` (após a validação do JWT pelo resource server) e só então monta o `CrmPrincipal` com `userId`/`companyId` não nulos. O Sprint 2 absorve esta lógica no `crm-auth-service` (PROVISIONING.md §4.1).
+> **Sprint 1 (implementado)**: no `crm-backend`, o provisionamento ocorre dentro da cadeia de segurança — o `KeycloakJwtAuthenticationConverter` chama `AuthService.provisionKeycloakUser` (após a validação do JWT pelo resource server) e só então monta o `CrmPrincipal` com `userId`/`companyId` não nulos. A migração desta lógica para o `crm-auth-service` está planejada para sprint futuro (PROVISIONING.md §4.2).
+>
+> **Sprint 2 (fundação — implementado)**: o `crm-auth-service` (novo serviço, porta 8082) resolve o `CurrentUser` a partir do JWT e do banco CRM; identidade autenticada sem usuário CRM retorna **`PROVISIONING_REQUIRED`** (200 discriminado) e usuário desativado → **401 `USER_INACTIVE`** — sem duplicar o provisionamento, que permanece no backend.
 >
 > **Comportamento (validado em produção, 2026-07-31)**: primeiro login → `/auth/me` **200** com usuário provisionado (role default `AGENT`); logins seguintes reusam o mesmo registro (idempotente); usuário `INACTIVE` → **401** ("Usuário desativado: contate o administrador.") mesmo com JWT válido.
 

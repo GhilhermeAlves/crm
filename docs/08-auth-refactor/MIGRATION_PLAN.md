@@ -94,30 +94,42 @@ Eliminar o erro `500` de `GET /api/v1/auth/me` quando o usuário autenticado ain
 
 ---
 
-## 5. Sprint 2 — Estrutura do crm-auth-service
+## 5. Sprint 2 — Fundação do crm-auth-service
 
 ### Objetivo
 
-Criar o `crm-auth-service` como camada de identidade da aplicação e o shared starter, **sem emissão de tokens nem JWKS próprio**.
+Criar o `crm-auth-service` como camada de identidade da aplicação, **sem quebrar o sistema atual** (o backend continua operando integralmente) e **sem emissão de tokens nem JWKS próprio**.
+
+### Status — Sprint 2 fundação implementado (2026-07-31)
+
+- **Módulo criado**: `auth-service/` (artefato `crm-auth-service`, Clean Architecture + DDD + Hexagonal no mesmo padrão do backend).
+- **Domínio de identidade**: `CurrentUser` (compatível com `CrmPrincipal`), `AuthenticatedIdentity` (identidade derivada do JWT), `CurrentUserResolution` (RESOLVED / PROVISIONING_REQUIRED), read model `User`, exceções (`UserInactiveException`).
+- **API interna**: `GET /internal/auth/current-user` (Bearer JWT do Keycloak) → resolve identidade → usuário → empresa/tenant → roles → permissions → `CurrentUser`. Contrato discriminado: `RESOLVED` (200) ou `PROVISIONING_REQUIRED` (200, identidade autenticada sem usuário CRM). Usuário desativado → `401 USER_INACTIVE`. Sem identidade → `401`.
+- **Segurança**: resource server valida o JWT via **JWKS do Keycloak** (`AUTH_KEYCLOAK_ISSUER_URI`/`AUTH_KEYCLOAK_JWKS_URI`). A identidade é sempre derivada do contexto autenticado — o endpoint não aceita `userId`/`companyId`/`roles`/`permissions` como entrada (Teste 7 cobre a tentativa de `userId` arbitrário).
+- **Provisionamento NÃO duplicado**: o auth-service não cria usuários; identidade sem usuário CRM retorna o contrato `PROVISIONING_REQUIRED`. A única fonte de verdade do provisionamento permanece no crm-backend (`AuthService.provisionKeycloakUser` — Sprint 1). Migração planejada para sprint futuro.
+- **Infra**: Dockerfile (multistage, mesmo padrão do backend), serviço no `docker/docker-compose.yml` (porta `8082:8080`, network `crm-network`), `/auth/health` + `/actuator/health`, `flyway.enabled=false` (schema do backend), sem Redis/RabbitMQ nesta fundação.
+- **Testes**: 14 testes (unidade + slice web) cobrindo os 7 cenários obrigatórios; regressão do Sprint 1 (47 testes do backend) mantida em 0 falhas.
 
 ### Escopo
 
-- Repositório/módulo `crm-auth-service` (Clean Architecture, mesmo padrão do backend).
-- Serviço no `docker/docker-compose.yml` (porta dedicada, network `crm-network`, Redis/RabbitMQ).
-- Validação do JWT do Keycloak (JWKS do Keycloak) e extração de claims.
-- Módulos: provisioning, sync, resolução de usuário/empresa, RBAC resolver e `CurrentUser` service.
-- `GET /auth/me` e `POST /auth/current-user` (resolve `CurrentUser`; não emite token).
-- Biblioteca `crm-security-spring-boot-starter`: validação via JWKS do Keycloak + mapeamento do `CurrentUser` recebido do gateway.
-- Gateway passa a resolver e propagar o `CurrentUser` (flag `AUTH_CURRENT_USER_ENABLED`).
+- Repositório/módulo `crm-auth-service` (Clean Architecture, mesmo padrão do backend). ✅
+- Serviço no `docker/docker-compose.yml` (porta dedicada `8082`, network `crm-network`). ✅ *(Redis/RabbitMQ adiados para o sprint de eventos/observabilidade)*
+- Validação do JWT do Keycloak (JWKS do Keycloak) e extração de claims. ✅
+- Módulos: resolução de usuário/empresa, RBAC resolver e `CurrentUser` service. ✅ *(provisioning/sync permanecem no backend — ver PROVISIONING.md)*
+- `GET /internal/auth/current-user` (resolução; não emite token). ✅ *(endpoints públicos `/auth/me` e `POST /auth/current-user` adiados)*
+- Biblioteca `crm-security-spring-boot-starter`: adiado para sprint de integração (Sprint 4).
+- Gateway passa a resolver e propagar o `CurrentUser` (flag `AUTH_CURRENT_USER_ENABLED`): adiado.
 
 ### Critérios de Aceite
 
-- [ ] `crm-auth-service` sobe via Docker Compose e responde `/auth/health` (200).
-- [ ] `POST /auth/current-user` retorna `CurrentUser` válido a partir de um JWT real do Keycloak.
-- [ ] Gateway enriquece a requisição com `CurrentUser` (flag on) e o starter o mapeia corretamente.
-- [ ] `GET /auth/me` no auth-service retorna 200 (usuário existente e recém-provisionado).
-- [ ] **Nenhum endpoint de emissão de token/JWKS existe no auth-service** (grep ausente).
-- [ ] Rollback: `AUTH_CURRENT_USER_ENABLED=false` mantém o backend validando Keycloak normalmente.
+- [x] Build e testes do `crm-auth-service` (14 testes) passam; regressão do Sprint 1 (47 testes do backend) mantida em 0 falhas.
+- [x] `GET /internal/auth/current-user` resolve o `CurrentUser` a partir de um JWT válido (testes de slice com claims de Keycloak): usuário existente → `RESOLVED`; inexistente → `PROVISIONING_REQUIRED`.
+- [x] **Nenhum endpoint de emissão de token/JWKS existe no auth-service** (grep ausente).
+- [x] Usuário desativado → `401 USER_INACTIVE`; sem identidade → `401`; `userId` arbitrário na entrada é ignorado (identidade derivada do JWT).
+- [ ] `crm-auth-service` sobe via Docker Compose e responde `/auth/health` (200). *(deploy e validação na VPS após aprovação do commit — fora deste sprint)*
+- [ ] Gateway enriquece a requisição com `CurrentUser` (flag on) e o starter o mapeia corretamente. *(sprint futuro)*
+- [ ] `GET /auth/me` e `POST /auth/current-user` públicos no auth-service (200). *(sprint futuro)*
+- [ ] Rollback: `AUTH_CURRENT_USER_ENABLED=false` mantém o backend validando Keycloak normalmente. *(depende do gateway — sprint futuro)*
 
 ---
 

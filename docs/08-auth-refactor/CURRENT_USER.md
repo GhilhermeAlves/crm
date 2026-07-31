@@ -36,6 +36,8 @@ O `CurrentUser` é um objeto imutável, **resolvido pelo `crm-auth-service`** a 
 
 > **Nota:** o campo `userId` é o **UUID interno do CRM**, não o `sub` do Keycloak. O `sub` é preservado em `keycloakSub` (paridade com o `CrmPrincipal` atual).
 
+> **Status Sprint 2 (fundação — 2026-07-31):** o `CurrentUser` está implementado como record imutável no `crm-auth-service` (`domain/identity/CurrentUser.java`) com esta mesma tabela de campos. Na implementação atual: `tenantId` deriva de `companyId` (default), `provider` default `keycloak`, listas `roles`/`permissions` defensivas (nunca `null`), `sessionId`/`displayName` opcionais. A representação JSON atual do serviço é **camelCase** (`userId`, `keycloakSub`, ...); o payload snake_case (`keycloak_sub`, ...) continua valendo como contrato de propagação via gateway/starter (sprint de integração).
+
 ---
 
 ## 2. Origem dos Campos
@@ -137,3 +139,4 @@ A migração mantém o nome de método `getUserId()`/`getCompanyId()` idêntico,
 |---|---|---|---|
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — modelo CurrentUser e propagação |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: CurrentUser resolvido pelo auth-service e distribuído pelo gateway; sem claims em token próprio |
+| 1.2.0 | 2026-07-31 | Architect | Sprint 2 — CurrentUser implementado no crm-auth-service (record imutável, tenantId=companyId, provider=keycloak, listas defensivas); JSON atual camelCase |

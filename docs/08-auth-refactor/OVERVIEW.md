@@ -139,16 +139,18 @@ flowchart TB
 
 ### crm-auth-service (identidade da aplicação)
 
-| Responsabilidade | Detalhes |
-|---|---|
-| Validação do JWT | Recebe e valida o JWT oficial do Keycloak (OIDC client público, PKCE) |
-| Provisionamento | Cria/vincula o usuário CRM no primeiro login (ver PROVISIONING.md) |
-| Sincronização | Mantém dados Keycloak ↔ CRM atualizados (email, nome, status) |
-| Resolução de usuário/empresa | Mapeia `sub`/`email` → usuário interno CRM e empresa/tenant |
-| Resolução RBAC | Carrega roles/permissões do banco CRM e monta o `CurrentUser` |
-| `CurrentUser` | Gera e distribui o `CurrentUser` (ver CURRENT_USER.md) |
-| Auditoria | Registra logins, falhas e eventos de autenticação (ver EVENTS.md) |
-| **Não faz** | **Não emite Access/Refresh tokens; não possui JWKS próprio; não é Authorization Server** |
+| Responsabilidade | Detalhes | Status (Sprint 2) |
+|---|---|---|
+| Validação do JWT | Recebe e valida o JWT oficial do Keycloak (OIDC client público, PKCE) | **Implementado** (resource server + JWKS do Keycloak) |
+| Resolução de usuário/empresa | Mapeia `sub`/`email` → usuário interno CRM e empresa/tenant | **Implementado** (`GET /internal/auth/current-user`) |
+| Resolução RBAC | Carrega roles/permissões do banco CRM e monta o `CurrentUser` | **Implementado** (`CurrentUser` record, listas defensivas) |
+| `CurrentUser` | Gera e distribui o `CurrentUser` (ver CURRENT_USER.md) | **Implementado** (via API interna; distribuição via gateway é futura) |
+| Provisionamento | Cria/vincula o usuário CRM no primeiro login (ver PROVISIONING.md) | Futuro (permanece no crm-backend — Sprint 1); contrato `PROVISIONING_REQUIRED` implementado |
+| Sincronização | Mantém dados Keycloak ↔ CRM atualizados (email, nome, status) | Futuro |
+| Auditoria | Registra logins, falhas e eventos de autenticação (ver EVENTS.md) | Futuro |
+| **Não faz** | **Não emite Access/Refresh tokens; não possui JWKS próprio; não é Authorization Server** | Desde o Sprint 2 |
+
+> **Status Sprint 2 (2026-07-31):** o serviço está operacional na porta `8082` (VPS), validando JWT via JWKS do Keycloak e resolvendo `CurrentUser`/`PROVISIONING_REQUIRED`. Provisionamento e sincronização permanecem no crm-backend — ver PROVISIONING.md §4.2.
 
 ### crm-security-spring-boot-starter (biblioteca compartilhada)
 
@@ -216,9 +218,11 @@ Não existem tokens emitidos pelo `crm-auth-service`.
 
 1. Keycloak autentica e emite o JWT oficial (OIDC + PKCE).
 2. Gateway recebe o JWT e consulta o `crm-auth-service` para obter/resolver o `CurrentUser`.
-3. Auth-service provisiona/sincroniza o usuário, resolve empresa e RBAC e retorna o `CurrentUser`.
+3. Auth-service resolve o usuário (empresa/tenant) e RBAC e retorna o `CurrentUser`; identidade sem usuário CRM → `PROVISIONING_REQUIRED` (o provisionamento é feito hoje no crm-backend na entrada — Sprint 1 — e migrará em sprint futuro, ver PROVISIONING.md §4.2).
 4. Gateway enriquece a requisição e propaga o `CurrentUser` aos microsserviços.
 5. Serviços validam a assinatura/issuer do JWT via JWKS do Keycloak e consomem o `CurrentUser` para autorização (via starter).
+
+> **Nota Sprint 2:** os passos 2–5 (gateway, propagação e starter) dependem de sprints futuros. Atualmente o serviço já resolve `CurrentUser`/`PROVISIONING_REQUIRED` via `GET /internal/auth/current-user`, e o crm-backend continua como único validador do fluxo de requisições reais.
 
 ---
 
@@ -234,6 +238,8 @@ Não existem tokens emitidos pelo `crm-auth-service`.
 | Validação nos serviços | JWKS do Keycloak | JWKS do Keycloak (mantido) |
 | Módulos envolvidos | `infrastructure/security`, `application/identity`, `presentation/rest/identity` | Novo serviço + shared starter |
 | Usuário inexistente | `GET /auth/me` → 500 (`InvalidDataAccessApiUsageException`) | Provisionado automaticamente → 200 |
+
+> **Status Sprint 2 (fundação — 2026-07-31):** o `crm-auth-service` já executa a resolução de `CurrentUser`/RBAC (identidade de aplicação em construção); provisionamento e sync permanecem no backend até a migração; o crm-backend segue íntegro e operacional (Sprint 1).
 
 ---
 
@@ -265,3 +271,4 @@ Esta arquitetura **não** define, nesta sprint:
 |---|---|---|---|
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — visão geral da arquitetura alvo de autenticação |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: Keycloak como único Authorization Server/emissor de JWT; auth-service sem emissão de tokens nem JWKS próprio |
+| 1.2.0 | 2026-07-31 | Architect | Sprint 2 — fundação do crm-auth-service (validação JWT/JWKS, resolução de usuário/empresa/RBAC e CurrentUser via `GET /internal/auth/current-user`, porta 8082); provisionamento/sync permanecem no backend; tabela §3 com status |
