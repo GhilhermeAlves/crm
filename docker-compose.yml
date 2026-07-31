@@ -197,7 +197,7 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_PROXY_HEADERS: "xforwarded"
-      KC_HOSTNAME: "76.13.237.238"
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-srv1348261.hstgr.cloud}
       KC_HEALTH_ENABLED: "true"
 
       # Database — PostgreSQL
