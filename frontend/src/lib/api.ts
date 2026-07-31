@@ -9,24 +9,12 @@ const api = axios.create({
   },
 });
 
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (error: unknown) => void;
-}> = [];
-
-function processQueue(error: unknown, token: string | null) {
-  failedQueue.forEach((prom) => {
-    if (error || !token) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-}
-
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
+  if (TokenManager.isKeycloakAuth()) {
+    // Renova proativamente se o token expirar em breve (minValidity) —
+    // evita enviar token expirado; o keycloak-js deduplica refreshes.
+    await refreshKeycloakToken(30);
+  }
   const token = TokenManager.getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -39,19 +27,33 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    if (error.response?.status !== 401) {
+      return Promise.reject(error);
+    }
+
+    if (originalRequest._retry) {
+      // Já renovamos o token e o backend voltou a rejeitar: sessão inválida.
+      // Sem novo refresh nem retry — evita loop de 401.
+      TokenManager.clearTokens();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
       return Promise.reject(error);
     }
 
     if (TokenManager.isKeycloakAuth()) {
-      const refreshed = await refreshKeycloakToken();
-      if (refreshed) {
-        const newToken = TokenManager.getAccessToken();
-        if (newToken) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return api(originalRequest);
-        }
+      originalRequest._retry = true;
+      const previousToken = TokenManager.getAccessToken();
+      const refreshed = await refreshKeycloakToken(30);
+      const newToken = TokenManager.getAccessToken();
+
+      if (refreshed && newToken && newToken !== previousToken) {
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
       }
+
+      // Sessão do Keycloak inválida/expirada: limpa e volta ao login uma
+      // única vez (sem loop de retry, graças ao guard `_retry`).
       TokenManager.clearTokens();
       if (typeof window !== "undefined") {
         window.location.href = "/login";
@@ -59,58 +61,11 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const refreshToken = TokenManager.getRefreshToken();
-    if (!refreshToken) {
-      TokenManager.clearTokens();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
-      return Promise.reject(error);
+    TokenManager.clearTokens();
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
     }
-
-    if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        })
-        .catch((err) => Promise.reject(err));
-    }
-
-    originalRequest._retry = true;
-    isRefreshing = true;
-
-    try {
-      const { data } = await axios.post(
-        `${api.defaults.baseURL}/auth/refresh`,
-        { refreshToken },
-      );
-
-      const accessToken: string | undefined = data?.accessToken;
-      const newRefreshToken: string | undefined = data?.refreshToken;
-
-      if (!accessToken || !newRefreshToken) {
-        throw new Error("Invalid refresh response");
-      }
-
-      TokenManager.setTokens(accessToken, newRefreshToken);
-
-      processQueue(null, accessToken);
-
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-      return api(originalRequest);
-    } catch (refreshError) {
-      processQueue(refreshError, null);
-      TokenManager.clearTokens();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
-      return Promise.reject(refreshError);
-    } finally {
-      isRefreshing = false;
-    }
+    return Promise.reject(error);
   },
 );
 

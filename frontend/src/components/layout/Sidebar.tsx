@@ -107,6 +107,9 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
 
   const hasPermission = (permission?: string) => {
     if (!permission) return true;
+    // UX apenas: sem permissões de negócio carregadas (CurrentUser ainda não
+    // está disponível via endpoint público), mantém tudo visível. A autorização
+    // final é sempre validada pelo backend. Vira gating real no Sprint 4.
     if (!permissions || permissions.length === 0) return true;
     return permissions.includes(permission);
   };

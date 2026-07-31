@@ -1,4 +1,5 @@
 import Keycloak from "keycloak-js";
+import { TokenManager } from "@/store/token-manager";
 
 const keycloakConfig = {
   url: process.env.NEXT_PUBLIC_KEYCLOAK_URL || "http://localhost:8080",
@@ -48,11 +49,23 @@ export async function logoutKeycloak(): Promise<void> {
   });
 }
 
+/**
+ * Renova o token do Keycloak quando necessário (dentro de `minValidity`
+ * segundos da expiração) e sincroniza o token atualizado no TokenManager,
+ * garantindo que as próximas requisições usem o token novo. O keycloak-js
+ * deduplica refreshes concorrentes internamente.
+ */
 export async function refreshKeycloakToken(minValidity: number = 30): Promise<boolean> {
   const kc = getKeycloakInstance();
   if (!kc.authenticated) return false;
   try {
     await kc.updateToken(minValidity);
+    if (kc.token) {
+      TokenManager.setKeycloakToken(kc.token);
+    }
+    if (kc.refreshToken) {
+      TokenManager.setKeycloakRefreshToken(kc.refreshToken);
+    }
     return true;
   } catch {
     return false;

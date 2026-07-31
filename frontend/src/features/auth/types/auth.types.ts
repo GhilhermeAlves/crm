@@ -8,22 +8,6 @@ export type User = {
   updatedAt: string;
 };
 
-export type AuthTokens = {
-  accessToken: string;
-  refreshToken: string;
-};
-
-export type LoginResponse = AuthTokens & {
-  userId: string;
-  email: string;
-  name: string;
-};
-
-export type LoginRequest = {
-  email: string;
-  password: string;
-};
-
 export type RegisterRequest = {
   name: string;
   email: string;

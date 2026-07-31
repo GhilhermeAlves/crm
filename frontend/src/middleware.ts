@@ -1,25 +1,30 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/auth/callback"];
+import { resolveAuthRedirect } from "@/lib/middleware-auth";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get("accessToken")?.value;
-
-  const isPublicPath = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
-
-  if (!accessToken && !isPublicPath && pathname !== "/") {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+  const rawCookie = request.cookies.get("accessToken")?.value;
+  let accessToken: string | null = rawCookie ?? null;
+  if (accessToken) {
+    try {
+      accessToken = decodeURIComponent(accessToken);
+    } catch {
+      // mantém o valor cru se não estiver URL-encoded
+    }
   }
 
-  if (accessToken && isPublicPath) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  const decision = resolveAuthRedirect({ pathname, accessToken });
+
+  const response = decision.redirectTo
+    ? NextResponse.redirect(new URL(decision.redirectTo, request.url))
+    : NextResponse.next();
+
+  if (decision.clearCookie) {
+    response.cookies.delete("accessToken");
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

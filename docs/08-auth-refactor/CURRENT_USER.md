@@ -38,6 +38,8 @@ O `CurrentUser` é um objeto imutável, **resolvido pelo `crm-auth-service`** a 
 
 > **Status Sprint 2 (fundação — 2026-07-31):** o `CurrentUser` está implementado como record imutável no `crm-auth-service` (`domain/identity/CurrentUser.java`) com esta mesma tabela de campos. Na implementação atual: `tenantId` deriva de `companyId` (default), `provider` default `keycloak`, listas `roles`/`permissions` defensivas (nunca `null`), `sessionId`/`displayName` opcionais. A representação JSON atual do serviço é **camelCase** (`userId`, `keycloakSub`, ...); o payload snake_case (`keycloak_sub`, ...) continua valendo como contrato de propagação via gateway/starter (sprint de integração).
 
+> **Status Sprint 3 (frontend — 2026-07-31):** o frontend **não reconstrói** o `CurrentUser` a partir de claims. A identidade de negócio usada hoje vem de `GET /api/v1/auth/me` do backend (Sprint 1), que retorna `UserResponse` (`id`, `email`, `name`, `companyId`, `isActive`, ...) — compatível em campos com `CurrentUser`, mas **não** inclui `permissions` nem `roles` do banco. O `permissions: []` no `AuthContext` é placeholder até o `CurrentUser` público existir. O endpoint interno `/internal/auth/current-user` do auth-service (Sprint 2) **não é exposto ao navegador**; a exposição ao frontend depende do gateway/BFF e está planejada no Sprint 4 (ver MIGRATION_PLAN.md §6).
+
 ---
 
 ## 2. Origem dos Campos
@@ -123,6 +125,17 @@ O gateway valida o JWT do Keycloak, resolve o `CurrentUser` no auth-service e o 
 
 A migração mantém o nome de método `getUserId()`/`getCompanyId()` idêntico, reduzindo o impacto nos controllers existentes.
 
+### 6.1 Frontend — Onde o CurrentUser é (e não é) usado (Sprint 3)
+
+| Camada | Usa CurrentUser? | Detalhe |
+|---|---|---|
+| Backend (`/api/v1/auth/me`) | Parcial | Retorna `UserResponse` (id, email, name, companyId, isActive) — subset sem roles/permissions |
+| Frontend `useAuth` | Não | `permissions: []` (placeholder até Sprint 4); roles exibidas vêm do `realm_access` do JWT (UX) |
+| Frontend `Sidebar`/menus | Não (UX-only) | Gating real só quando houver permissões de negócio (Sprint 4); backend sempre autoriza |
+| Gateway/BFF | Sprint 4 | Ponto que resolverá o `CurrentUser` público para o navegador |
+
+> **Regra do Sprint 3:** o frontend nunca decodifica claims de permissão/empresa de um token (eles não existem no JWT do Keycloak). Decodificação de JWT no cliente é limitada a campos OIDC de exibição (`sub`, `name`, `realm_access.roles`) em `lib/jwt.ts`.
+
 ## Referências
 
 | Documento | Relação |
@@ -140,3 +153,4 @@ A migração mantém o nome de método `getUserId()`/`getCompanyId()` idêntico,
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — modelo CurrentUser e propagação |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: CurrentUser resolvido pelo auth-service e distribuído pelo gateway; sem claims em token próprio |
 | 1.2.0 | 2026-07-31 | Architect | Sprint 2 — CurrentUser implementado no crm-auth-service (record imutável, tenantId=companyId, provider=keycloak, listas defensivas); JSON atual camelCase |
+| 1.3.0 | 2026-07-31 | Architect | Sprint 3 — frontend: identidade de negócio via /auth/me (UserResponse); permissions placeholder; /internal/auth/current-user não exposto ao navegador |

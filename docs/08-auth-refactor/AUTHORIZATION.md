@@ -124,6 +124,13 @@ public ResponseEntity<List<UserResponse>> list() { ... }
 
 O starter garante **fail-closed**: sem `CurrentUser` válido, a requisição é rejeitada (401); sem a permissão, 403.
 
+### 6.1 Autorização no Frontend (UX-only — Sprint 3)
+
+- O frontend **oculta/mostra menus e botões** com base em roles/permissões **apenas para UX** — **nunca é autoridade de autorização**; o backend permanece fail-closed.
+- Sprint 3: o frontend **deixou de ler** claims inexistentes de permissão/empresa do JWT (o Keycloak não emite `permissions`/`company_id`). Restou apenas a leitura de `realm_access.roles` (OIDC, via `TokenManager.getRoles`) para exibição.
+- `permissions` no `AuthContext` = `[]` (placeholder) até o `CurrentUser` público do auth-service (Sprint 4). Enquanto isso, a `Sidebar` exibe tudo e o **backend autoriza**.
+- Quando o `CurrentUser` público existir (via gateway/BFF), o frontend passa a consumir **permissões de negócio do `CurrentUser`**, não de claims.
+
 ---
 
 ## 7. Bootstrap e Multi-tenancy
@@ -164,3 +171,4 @@ O starter garante **fail-closed**: sem `CurrentUser` válido, a requisição é 
 |---|---|---|---|
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — estratégia de autorização RBAC |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: RBAC resolvido no CurrentUser (sem claims em token próprio); Keycloak único emissor |
+| 1.2.0 | 2026-07-31 | Architect | Sprint 3 — frontend: autorização UX-only (sem claims de permissão/empresa no JWT); permissions placeholder até o CurrentUser público (Sprint 4) |

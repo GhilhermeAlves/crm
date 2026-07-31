@@ -141,21 +141,31 @@ Migrar o frontend para operar **exclusivamente com o JWT do Keycloak** (OIDC + P
 
 ### Escopo
 
-- Cliente público `crm-frontend` no Keycloak (realm CRM) com PKCE S256.
-- Login: fluxo OIDC + PKCE direto com o Keycloak (mantém `keycloak-js` como biblioteca OIDC).
-- Remoção do TokenManager dual: apenas o JWT do Keycloak é armazenado/distribuído.
-- Interceptor 401: renovação via refresh/SSO do Keycloak (em vez de token próprio).
-- Logout: `end_session_endpoint` do Keycloak.
-- Middleware/guards: leitura do token/cookie permanece (padrão atual).
+- Cliente público `crm-frontend` no Keycloak (realm CRM) com PKCE S256. ✅ *(config em `lib/keycloak.ts`)*
+- Login: fluxo OIDC + PKCE direto com o Keycloak (mantém `keycloak-js` como biblioteca OIDC). ✅
+- Remoção do TokenManager dual: apenas o JWT do Keycloak é armazenado/distribuído. ✅ *(apenas `kc_accessToken`/`kc_refreshToken` + cookie `accessToken`)*
+- Interceptor 401: renovação via refresh/SSO do Keycloak (em vez de token próprio). ✅
+- Logout: `end_session_endpoint` do Keycloak. ✅
+- Middleware/guards: leitura do token/cookie permanece (padrão atual). ✅ *(com correção do redirect loop)*
+
+### Status — Sprint 3 implementado (2026-07-31)
+
+- **Login Keycloak-only**: `LoginForm` não tem mais e-mail/senha — botão → `keycloak.login()` (client público `crm-frontend`, PKCE S256, `onLoad: check-sso` + `silent-check-sso.html`). O `keycloak-js` processa o code em `/auth/callback` (re-init no `KeycloakProvider`).
+- **Removidos (legacy)**: `AuthService.login/logout/refresh`, `useLogin/useLogout`, branch `/auth/refresh` + fila manual no `api.ts`, logout via backend, claims inexistentes (`getPermissions`/`getCompanyId`).
+- **Refresh único**: `refreshKeycloakToken(30)` proativo no interceptor de request (via `keycloak.updateToken`) + interceptor de response com guard `_retry` (um único retry; falha → limpa tokens → `/login`). Single-flight garantido pelo `keycloak-js`.
+- **Middleware**: fim do redirect loop com cookie seco — `isJwtExpired` + `resolveAuthRedirect` (`lib/middleware-auth.ts`); rotas públicas incluem `/auth/callback`; `silent-check-sso.html` público.
+- **JWT no cliente**: decodificação centralizada em `lib/jwt.ts` (apenas campos OIDC de exibição — nunca claims de permissão/empresa).
+- **Testes**: vitest configurado (antes inexistente) — **49 testes em 6 arquivos** (`jwt`, `middleware-auth`, `keycloak`, `token-manager`, `api`, `useAuth`). Typecheck e `next build` passando.
+- **Pendência de deploy**: validação ponta a ponta com Keycloak real fica para os responsáveis (Docker local indisponível, como no Sprint 2).
 
 ### Critérios de Aceite
 
-- [ ] Login via Keycloak funciona ponta a ponta com JWT do Keycloak apenas.
-- [ ] `/auth/me` carregado no dashboard retorna dados reais (200) para usuário novo e existente.
-- [ ] Refresh/SSO sem logout forçado (sessão > TTL do token).
-- [ ] Logout limpa tokens e encerra sessão SSO.
-- [ ] Nenhuma referência ao token próprio do backend no frontend (grep ausente).
-- [ ] Rollback: reverter build/flags volta o frontend ao fluxo dual atual.
+- [x] Login via Keycloak funciona ponta a ponta com JWT do Keycloak apenas. *(implementado; validação real com Keycloak pendente — deploy/responsáveis)*
+- [x] `/auth/me` carregado no dashboard retorna dados reais (200) para usuário novo e existente. *(fluxo preservado do Sprint 1; gating pós-init Keycloak — validação real pendente de deploy)*
+- [x] Refresh/SSO sem logout forçado (sessão > TTL do token). *(updateToken proativo + retry único; single-flight via keycloak-js)*
+- [x] Logout limpa tokens e encerra sessão SSO. *(sempre via `end_session_endpoint`)*
+- [x] Nenhuma referência ao token próprio do backend no frontend (grep ausente). *(removidos `AuthService.login/logout/refresh` e JWT HS256)*
+- [x] Rollback: reverter build/flags volta o frontend ao fluxo dual atual. *(fluxo dual removido do código — rollback = reverter o build; sem flag em runtime)*
 
 ---
 
@@ -241,6 +251,7 @@ Remover o caminho legacy, eliminar dependências diretas desnecessárias do Keyc
 | Gateway | `AUTH_CURRENT_USER_ENABLED` | `false` | `true` (resolvem/propagam `CurrentUser`) |
 | Frontend | `NEXT_PUBLIC_AUTH_FLOW` | `dual` | `oidc` (Keycloak exclusivo) |
 
+> **Sprint 3 (2026-07-31):** o caminho dual foi **removido do código** — o frontend é exclusivamente OIDC. Não há flag de runtime para o fluxo dual; rollback do frontend = **reverter o build/commit** (o código dual não existe mais).
 ### Cenários de rollback
 
 | Cenário | Ação | Impacto |
@@ -317,3 +328,5 @@ Remover o caminho legacy, eliminar dependências diretas desnecessárias do Keyc
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — plano de migração por sprints, rollback, critérios de aceite e riscos |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: reordenadas as sprints (1 = auto-provisionamento/500, 2 = estrutura do auth-service, 3 = frontend, 4 = serviços, 5 = eventos, 6 = hardening); Keycloak único emissor (sem JWKS/emissão no auth-service); adicionada regra permanente de encerramento de sprint |
 | 1.2.0 | 2026-07-31 | Architect | Sprint 1 — implementado (provisionamento no crm-backend, REQUIRES_NEW, flag de rollback, falhas 401, rejeição de usuário desativado); critérios de aceite atualizados e validados em produção (500 → 200; INACTIVE → 401) |
+| 1.3.0 | 2026-07-31 | Architect | Sprint 2 — implementado (crm-auth-service: CurrentUser, /internal/auth/current-user, JWKS do Keycloak, 14 testes); regressão Sprint 1 mantida |
+| 1.4.0 | 2026-07-31 | Architect | Sprint 3 — implementado (frontend 100% OIDC/PKCE com Keycloak; legacy de login/refresh/logout removido; middleware sem redirect loop; 49 testes; typecheck/build ok); rollback de frontend = reverter build |

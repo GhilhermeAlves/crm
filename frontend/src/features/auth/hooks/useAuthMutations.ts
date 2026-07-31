@@ -4,30 +4,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthService } from "../services/auth.service";
-import { TokenManager } from "@/store/token-manager";
 import type {
-  LoginRequest,
   RegisterRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
 } from "../types/auth.types";
-
-export function useLogin() {
-  const router = useRouter();
-
-  return useMutation({
-    mutationFn: (data: LoginRequest) => AuthService.login(data),
-    onSuccess: (response) => {
-      TokenManager.setTokens(response.accessToken, response.refreshToken);
-      toast.success("Login realizado com sucesso");
-      router.push("/dashboard");
-    },
-    onError: (error: { response?: { data?: { message?: string } } }) => {
-      const message = error.response?.data?.message || "Credenciais inválidas";
-      toast.error(message);
-    },
-  });
-}
 
 export function useRegister() {
   const router = useRouter();
@@ -41,24 +22,6 @@ export function useRegister() {
     onError: (error: { response?: { data?: { message?: string } } }) => {
       const message = error.response?.data?.message || "Erro ao criar conta";
       toast.error(message);
-    },
-  });
-}
-
-export function useLogout() {
-  const router = useRouter();
-
-  return useMutation({
-    mutationFn: () => AuthService.logout(),
-    onSuccess: () => {
-      TokenManager.clearTokens();
-      toast.success("Logout realizado");
-      router.push("/login");
-    },
-    onError: () => {
-      TokenManager.clearTokens();
-      toast.success("Logout realizado");
-      router.push("/login");
     },
   });
 }
@@ -91,11 +54,17 @@ export function useResetPassword() {
   });
 }
 
-export function useMe() {
+/**
+ * Busca a identidade de negócio no crm-backend (`/api/v1/auth/me` — Sprint 1).
+ * Só é habilitado depois que o Keycloak está inicializado e autenticado, para
+ * não disparar chamadas com token antigo ou antes do init (race condition).
+ * Dependência futura: migrar para o CurrentUser público do crm-auth-service.
+ */
+export function useMe(enabled: boolean) {
   return useQuery({
     queryKey: ["me"],
     queryFn: () => AuthService.me(),
-    enabled: typeof window !== "undefined" && TokenManager.hasTokens(),
+    enabled,
     retry: false,
     staleTime: 5 * 60 * 1000,
   });

@@ -1,19 +1,17 @@
 import api from "@/lib/api";
 import type {
-  LoginResponse,
   User,
-  LoginRequest,
   RegisterRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
 } from "../types/auth.types";
 
+/**
+ * Serviços de autenticação. O login é exclusivo via Keycloak (OIDC + PKCE);
+ * os métodos restantes são fluxos legados de gerenciamento de conta mantidos
+ * no crm-backend (Sprint 1) até a decisão de migração (ver MIGRATION_PLAN.md).
+ */
 export const AuthService = {
-  async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await api.post<LoginResponse>("/auth/login", data);
-    return response.data;
-  },
-
   async register(data: RegisterRequest): Promise<void> {
     await api.post("/auth/register", {
       name: data.name,
@@ -21,10 +19,6 @@ export const AuthService = {
       password: data.password,
       companyId: data.companyId ?? "",
     });
-  },
-
-  async logout(): Promise<void> {
-    await api.post("/auth/logout", {});
   },
 
   async forgotPassword(_data: ForgotPasswordRequest): Promise<void> {
@@ -38,11 +32,7 @@ export const AuthService = {
     });
   },
 
-  async refresh(refreshToken: string): Promise<LoginResponse> {
-    const response = await api.post<LoginResponse>("/auth/refresh", { refreshToken });
-    return response.data;
-  },
-
+  /** Identidade de negócio vinda do crm-backend (Sprint 1). */
   async me(): Promise<User> {
     const response = await api.get<User>("/auth/me");
     return response.data;

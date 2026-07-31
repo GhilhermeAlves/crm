@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { initKeycloak, loginKeycloak, logoutKeycloak, refreshKeycloakToken } from "@/lib/keycloak";
+import { initKeycloak, loginKeycloak, logoutKeycloak } from "@/lib/keycloak";
 import { TokenManager } from "@/store/token-manager";
 import type Keycloak from "keycloak-js";
 
@@ -18,7 +18,6 @@ type KeycloakContextType = {
   authenticated: boolean;
   login: (redirectPath?: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshToken: () => Promise<boolean>;
   token: string | null;
 };
 
@@ -29,7 +28,10 @@ export function KeycloakProvider({ children }: { children: ReactNode }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
+    let disposed = false;
+
     initKeycloak().then((kc) => {
+      if (disposed) return;
       setKeycloak(kc);
       setInitialized(true);
 
@@ -37,7 +39,28 @@ export function KeycloakProvider({ children }: { children: ReactNode }) {
         TokenManager.setKeycloakToken(kc.token);
         TokenManager.setKeycloakRefreshToken(kc.refreshToken || "");
       }
+
+      // Renova automaticamente quando o token expira — evita enviar token
+      // expirado e mantém localStorage/cookie sincronizados.
+      kc.onTokenExpired = () => {
+        kc.updateToken(30)
+          .then(() => {
+            if (kc.token) {
+              TokenManager.setKeycloakToken(kc.token);
+            }
+            if (kc.refreshToken) {
+              TokenManager.setKeycloakRefreshToken(kc.refreshToken);
+            }
+          })
+          .catch(() => {
+            TokenManager.clearTokens();
+          });
+      };
     });
+
+    return () => {
+      disposed = true;
+    };
   }, []);
 
   const login = useCallback(async (redirectPath?: string) => {
@@ -50,17 +73,6 @@ export function KeycloakProvider({ children }: { children: ReactNode }) {
     window.location.href = "/login";
   }, []);
 
-  const refreshToken = useCallback(async () => {
-    const success = await refreshKeycloakToken();
-    if (success && keycloak?.token) {
-      TokenManager.setKeycloakToken(keycloak.token);
-      if (keycloak.refreshToken) {
-        TokenManager.setKeycloakRefreshToken(keycloak.refreshToken);
-      }
-    }
-    return success;
-  }, [keycloak]);
-
   return (
     <KeycloakContext.Provider
       value={{
@@ -69,7 +81,6 @@ export function KeycloakProvider({ children }: { children: ReactNode }) {
         authenticated: keycloak?.authenticated ?? false,
         login,
         logout,
-        refreshToken,
         token: keycloak?.token ?? null,
       }}
     >

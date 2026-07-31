@@ -28,6 +28,7 @@ import { BadgeStatus } from "@/components/common/BadgeStatus";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useKeycloak } from "@/providers/KeycloakProvider";
 import { TokenManager } from "@/store/token-manager";
+import { decodeJwtPayload } from "@/lib/jwt";
 import { ROUTES } from "@/lib/constants";
 
 const stats = [
@@ -108,19 +109,9 @@ export default function DashboardPage() {
     return "Boa noite";
   }, []);
 
+  // Identidade OIDC do JWT do Keycloak (exibição UX — não é autorização).
   const kcTokenPayload = useMemo(() => {
-    if (!keycloakCtx.token) return null;
-    try {
-      const base64Url = keycloakCtx.token.split(".")[1];
-      if (!base64Url) return null;
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64).split("").map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
-      );
-      return JSON.parse(jsonPayload) as Record<string, string | undefined>;
-    } catch {
-      return null;
-    }
+    return decodeJwtPayload<Record<string, string | undefined>>(keycloakCtx.token);
   }, [keycloakCtx.token]);
 
   return (
