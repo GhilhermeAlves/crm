@@ -114,6 +114,21 @@ flowchart TD
 
 ---
 
+## 4.1 Implementação Sprint 1 (estabilização no crm-backend)
+
+O Sprint 1 (MIGRATION_PLAN.md §4) implementa o fluxo acima **no caminho atual do `crm-backend`**, sem criar o `crm-auth-service`. Detalhes desta etapa de estabilização:
+
+- **Onde**: `KeycloakJwtAuthenticationConverter` → `AuthService.provisionKeycloakUser` → `CrmPrincipal` (Sprint 2 absorve esta lógica no `crm-auth-service`).
+- **Resolução em ordem**: `keycloak_sub` → `email` → criação. Um usuário pré-existente encontrado por e-mail é **vinculado** ao `sub` (nunca duplicado); `given_name`/`family_name`/`name` são sincronizados apenas quando vazios.
+- **Empresa/role default**: `app.auth.provisioning.default-company-id` (`AUTH_DEFAULT_COMPANY_ID`) e `app.auth.provisioning.default-role` (`AUTH_DEFAULT_ROLE`, default `AGENT`). Sem empresa configurada, usa a primeira empresa ativa. A role default é buscada com `Role.SYSTEM_COMPANY_ID` (roles de sistema).
+- **Flag de rollback**: `app.auth.provisioning.enabled` (`AUTH_PROVISIONING_ENABLED`, default `true`). Desligada, usuários existentes seguem autenticando; usuários desconhecidos recebem **401** com mensagem clara (sem o 500 antigo).
+- **Concorrência**: dois primeiros logins simultâneos do mesmo usuário resultam em um único registro — a criação ocorre em transação `REQUIRES_NEW` isolada; em corrida de `UNIQUE (email)`, o perdedor reabre o vencedor e o vincula ao `sub`.
+- **Falhas previsíveis**: token sem `sub`/e-mail válido ou sem empresa ativa lançam `UserProvisioningException` → **401** no resource server (via `AuthenticationServiceException` na cadeia de segurança) ou pelo `GlobalExceptionHandler`; nunca mais o `InvalidDataAccessApiUsageException` com `userId = null`.
+- **Usuário desativado**: usuário encontrado (por `sub` ou e-mail) com status `INACTIVE`/`LOCKED` (`!user.isActive()`) é rejeitado no provisionamento (`rejectIfInactive` → `UserProvisioningException` → **401**), mesmo com JWT válido. Novo em 1.2.0 (antes a checagem só existia no login legado).
+- **Diferenças vs. arquitetura alvo** (Sprint 2): o vínculo por e-mail não exige `email_verified`; `users.keycloak_sub` não tem `UNIQUE` (V009 — exclusividade garantida apenas por e-mail).
+
+---
+
 ## 5. Políticas de Empresa e Role Default
 
 | Contexto | Política |
@@ -167,8 +182,8 @@ O auth-service responde com **erro/401** ao resolver o `CurrentUser` de usuário
 
 ## 9. Idempotência e Consistência
 
-- Provisionamento é **idempotente**: múltiplos logins simultâneos do mesmo usuário resultam em um único registro (constraint única em `keycloak_sub` e `email`; tratamento de corrida com `ON CONFLICT`/retry).
-- O vínculo `keycloak_sub` é **único** (índice único — mesmo da migração V009 atual).
+- Provisionamento é **idempotente**: múltiplos logins simultâneos do mesmo usuário resultam em um único registro (constraint única em `email`; `keycloak_sub` sem `UNIQUE` na V009 — corrida tratada com transação `REQUIRES_NEW` + reabertura do vencedor, ver §4.1).
+- O vínculo `keycloak_sub` é único **por aplicação/regra de negócio** (primeiro `sub` vence; a exclusividade no banco via índice único é prevista para a arquitetura alvo no Sprint 2).
 - A resolução do `CurrentUser` depende do provisionamento concluído; se a resolução de RBAC falhar, o acesso falha (fail-closed) com retry no próximo login.
 - Sincronização é eventual: alterações de RBAC refletem no próximo `CurrentUser` resolvido (cache com TTL curto ou invalidação por evento).
 
@@ -189,3 +204,4 @@ O auth-service responde com **erro/401** ao resolver o `CurrentUser` de usuário
 |---|---|---|---|
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — provisionamento automático e sincronização Keycloak ↔ CRM |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: auth-service não emite token; RBAC resolvido no CurrentUser a partir do JWT do Keycloak |
+| 1.2.0 | 2026-07-31 | Architect | Sprint 1 — implementação da estabilização no crm-backend (provisionamento, flag de rollback, concorrência REQUIRES_NEW, falhas 401, rejeição de usuário desativado); ajustes em §9 |

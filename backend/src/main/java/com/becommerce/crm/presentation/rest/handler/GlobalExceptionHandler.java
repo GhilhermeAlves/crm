@@ -22,6 +22,7 @@ import com.becommerce.crm.domain.identity.exception.PermissionNotFoundException;
 import com.becommerce.crm.domain.identity.exception.RoleNotFoundException;
 import com.becommerce.crm.domain.identity.exception.TokenExpiredException;
 import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
+import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -195,6 +196,17 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 409,
                 "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(UserProvisioningException.class)
+    public ResponseEntity<Map<String, Object>> handleUserProvisioningException(UserProvisioningException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of(
+                "status", 401,
+                "error", "Unauthorized",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

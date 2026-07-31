@@ -24,10 +24,15 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
+        String message = authException != null && authException.getMessage() != null
+                && !authException.getMessage().isBlank()
+                ? authException.getMessage()
+                : "Authentication is required to access this resource";
+
         mapper.writeValue(response.getWriter(), Map.of(
             "status", 401,
             "error", "Unauthorized",
-            "message", "Authentication is required to access this resource",
+            "message", message,
             "timestamp", LocalDateTime.now().toString()
         ));
     }

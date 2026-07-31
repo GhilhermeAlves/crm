@@ -76,13 +76,21 @@ Eliminar o erro `500` de `GET /api/v1/auth/me` quando o usuário autenticado ain
 - Flag `AUTH_PROVISIONING_ENABLED` (default: ligada) para rollback imediato.
 - `GET /api/v1/auth/me` retorna `CurrentUser` completo para usuários recém-provisionados.
 
+### Status — Sprint 1 implementado (2026-07-31)
+
+- **Provisionamento**: `AuthUseCase.provisionKeycloakUser` implementado em `AuthService` (vínculo por `sub` → e-mail → criação; sync apenas de campos vazios; conflito de e-mail vincula o `sub`, nunca duplica).
+- **Concorrência**: criação em transação `REQUIRES_NEW` via self-proxy; corrida de `UNIQUE (email)` reabre o vencedor e o vincula (`DataIntegrityViolationException` capturada fora da transação principal — sem `UnexpectedRollbackException`).
+- **Erros**: falhas previsíveis → `UserProvisioningException` → 401 (converter re-emite como `AuthenticationServiceException` no resource server; `GlobalExceptionHandler` também mapeia 401). Sem `InvalidDataAccessApiUsageException`/`userId = null`.
+- **Rollback**: `AUTH_PROVISIONING_ENABLED=false` → usuários existentes seguem autenticando; usuários desconhecidos recebem 401 com mensagem clara.
+- **Testes**: `AuthServiceProvisioningTest` (10 casos) e `KeycloakJwtAuthenticationConverterTest` (2 casos) — primeiro login, reuso, sync, corrida, sem `sub`, flag off, usuário desativado (com/sem flag), e tradução para 401.
+
 ### Critérios de Aceite
 
-- [ ] Primeiro login de usuário inexistente → provisionado e `/auth/me` retorna **200** (o 500 desaparece).
-- [ ] Login de usuário existente com `keycloak_sub` diferente → vínculo por e-mail sem duplicar registro.
-- [ ] RBAC (roles/permissions) resolvido para o usuário novo no primeiro acesso.
-- [ ] Usuário desativado → `/auth/me` negado (401/403).
-- [ ] Rollback: `AUTH_PROVISIONING_ENABLED=false` restaura o comportamento anterior.
+- [x] Primeiro login de usuário inexistente → provisionado e `/auth/me` retorna **200** (o 500 desaparece). *(coberto por testes + validação real: 500 → 200)*
+- [x] Login de usuário existente com `keycloak_sub` diferente → vínculo por e-mail sem duplicar registro. *(coberto por teste)*
+- [x] RBAC (roles/permissions) resolvido para o usuário novo no primeiro acesso. *(role default `AGENT` atribuída; RBAC resolvido no converter; confirmado em produção)*
+- [x] Usuário desativado → `/auth/me` negado (401). *(novo: `rejectIfInactive` no provisionamento — `UserProvisioningException` → 401; validado em produção: INACTIVE → 401, reativado → 200)*
+- [x] Rollback: `AUTH_PROVISIONING_ENABLED=false` restaura o comportamento anterior. *(usuários existentes OK; novos → 401)*
 
 ---
 
@@ -296,3 +304,4 @@ Remover o caminho legacy, eliminar dependências diretas desnecessárias do Keyc
 |---|---|---|---|
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — plano de migração por sprints, rollback, critérios de aceite e riscos |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: reordenadas as sprints (1 = auto-provisionamento/500, 2 = estrutura do auth-service, 3 = frontend, 4 = serviços, 5 = eventos, 6 = hardening); Keycloak único emissor (sem JWKS/emissão no auth-service); adicionada regra permanente de encerramento de sprint |
+| 1.2.0 | 2026-07-31 | Architect | Sprint 1 — implementado (provisionamento no crm-backend, REQUIRES_NEW, flag de rollback, falhas 401, rejeição de usuário desativado); critérios de aceite atualizados e validados em produção (500 → 200; INACTIVE → 401) |

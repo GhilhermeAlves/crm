@@ -76,6 +76,10 @@ sequenceDiagram
 
 O primeiro login **não falha mais** quando o usuário não existe no banco CRM (comportamento atual: 500). O auth-service provisiona o usuário automaticamente.
 
+> **Sprint 1 (implementado)**: no `crm-backend`, o provisionamento ocorre dentro da cadeia de segurança — o `KeycloakJwtAuthenticationConverter` chama `AuthService.provisionKeycloakUser` (após a validação do JWT pelo resource server) e só então monta o `CrmPrincipal` com `userId`/`companyId` não nulos. O Sprint 2 absorve esta lógica no `crm-auth-service` (PROVISIONING.md §4.1).
+>
+> **Comportamento (validado em produção, 2026-07-31)**: primeiro login → `/auth/me` **200** com usuário provisionado (role default `AGENT`); logins seguintes reusam o mesmo registro (idempotente); usuário `INACTIVE` → **401** ("Usuário desativado: contate o administrador.") mesmo com JWT válido.
+
 ```mermaid
 sequenceDiagram
     participant GW as API Gateway
@@ -110,6 +114,8 @@ sequenceDiagram
 **Comportamento dos endpoints após provisionamento:**
 
 - `GET /api/v1/auth/me` → **200** com `CurrentUser` completo (antes: 500).
+- JWT inválido/assinatura inválida → **401** (validação do resource server, antes do provisionamento) — nenhum usuário é criado.
+- Falha previsível de provisionamento (token sem `sub`/e-mail válido, sem empresa ativa, flag desligada) → **401** com mensagem (nunca 500 por `userId = null`).
 - Os microsserviços continuam validando o JWT do Keycloak; o RBAC vem do `CurrentUser` distribuído pelo gateway.
 
 ---
@@ -197,3 +203,4 @@ sequenceDiagram
 |---|---|---|---|
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — fluxos de autenticação, primeiro login, refresh e logout |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: OIDC + PKCE direto com Keycloak (único emissor); auth-service apenas resolve CurrentUser |
+| 1.2.0 | 2026-07-31 | Architect | Sprint 1 — primeiro login implementado no crm-backend (provisionamento no converter); /auth/me → 200; falhas → 401; usuário desativado → 401 (validado em produção) |

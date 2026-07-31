@@ -4,6 +4,7 @@ import com.becommerce.crm.application.identity.dto.LoginRequest;
 import com.becommerce.crm.application.identity.dto.LoginResponse;
 import com.becommerce.crm.application.identity.dto.RefreshTokenRequest;
 import com.becommerce.crm.application.identity.dto.RegisterRequest;
+import com.becommerce.crm.domain.identity.User;
 import java.util.UUID;
 
 public interface AuthUseCase {
@@ -15,4 +16,7 @@ public interface AuthUseCase {
     void resetPassword(String token, String newPassword);
     void changePassword(UUID userId, String oldPassword, String newPassword);
     LoginResponse handleKeycloakLogin(UUID userId);
+
+    User provisionKeycloakUser(String keycloakSub, String email, String preferredUsername,
+                               String givenName, String familyName);
 }

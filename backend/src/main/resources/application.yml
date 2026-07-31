@@ -72,6 +72,11 @@ jwt:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+  auth:
+    provisioning:
+      enabled: ${AUTH_PROVISIONING_ENABLED:true}
+      default-company-id: ${AUTH_DEFAULT_COMPANY_ID:}
+      default-role: ${AUTH_DEFAULT_ROLE:AGENT}
 
 springdoc:
   api-docs:
