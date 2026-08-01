@@ -29,8 +29,7 @@ export function AuthCallbackContent() {
         });
 
         if (kc.authenticated) {
-          TokenManager.setKeycloakToken(kc.token || "");
-          TokenManager.setKeycloakRefreshToken(kc.refreshToken || "");
+          TokenManager.setTokens(kc.token || "", kc.refreshToken || null);
 
           const redirect = searchParams.get("redirect") || "/dashboard";
           setStatus("Autenticação concluída. Redirecionando...");

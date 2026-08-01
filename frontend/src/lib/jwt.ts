@@ -18,14 +18,16 @@ export function decodeJwtPayload<T extends Record<string, unknown> = Record<stri
   }
 }
 
-export function getJwtExpiration(token: string | null | undefined): number | null {
+/**
+ * Roles do realm do Keycloak (claims OIDC de identidade). Uso exclusivo de UX
+ * (menus/badges de exibição) — nunca é autorização de negócio, que é resolvida
+ * no backend/CurrentUser.
+ */
+export function getRealmRoles(token: string | null | undefined): string[] {
   const payload = decodeJwtPayload(token);
-  const exp = payload?.exp;
-  return typeof exp === "number" ? exp : null;
-}
-
-export function isJwtExpired(token: string | null | undefined, nowSeconds = Math.floor(Date.now() / 1000)): boolean {
-  const exp = getJwtExpiration(token);
-  if (exp === null) return true;
-  return exp <= nowSeconds;
+  if (!payload) return [];
+  const realmRoles = payload["realm_access"] as { roles?: string[] } | undefined;
+  if (realmRoles?.roles) return realmRoles.roles;
+  const roles = payload["roles"];
+  return Array.isArray(roles) ? (roles as string[]) : [];
 }

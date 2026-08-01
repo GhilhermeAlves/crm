@@ -28,7 +28,9 @@ Descrever em detalhe os fluxos de autenticação da nova arquitetura: login OIDC
 
 O fluxo é **OIDC Authorization Code + PKCE** com client **público** no browser. O `crm-auth-service` **não participa da troca de código** e **não emite tokens**: ele recebe o JWT já emitido pelo Keycloak para provisionar e resolver o `CurrentUser`.
 
-> **Sprint 3 (implementado — frontend, 2026-07-31):** o fluxo real do frontend usa **`keycloak-js` v26** com `pkceMethod: "S256"`, `onLoad: "check-sso"` e `silent-check-sso.html`. O `keycloak-js` inicia o login (Authorization Code + PKCE), processa o retorno em `/auth/callback` e troca o code pelos tokens do Keycloak. O JWT é armazenado no `TokenManager` (localStorage) e espelhado num cookie `accessToken` (mesma origem) apenas para o middleware do Next.js decidir rotas protegidas no servidor. Nenhum token é emitido pelo `crm-auth-service` nem pelo backend para login.
+> **Sprint 3 (implementado — frontend, 2026-07-31):** o fluxo real do frontend usa **`keycloak-js` v26** com `pkceMethod: "S256"`, `onLoad: "check-sso"` e `silent-check-sso.html`. O `keycloak-js` inicia o login (Authorization Code + PKCE), processa o retorno em `/auth/callback` e troca o code pelos tokens do Keycloak. O JWT é armazenado no `TokenManager` (localStorage). Nenhum token é emitido pelo `crm-auth-service` nem pelo backend para login.
+>
+> **Sprint 3.1 (simplificado — 2026-07-31):** o JWT **não** é mais espelhado em cookie. O cookie passou a carregar apenas a flag `kc_authenticated=1` (sessão potencialmente autenticada), e o middleware apenas a verifica — sem ler, decodificar ou validar o JWT. Validação de token continua no Keycloak e no backend.
 >
 > **Removido no Sprint 3:** o login legado com e-mail/senha do frontend (`POST /auth/login` → JWT HS256 do backend) e a lógica duplicada de refresh via `/auth/refresh`. O Keycloak é o **único** caminho de login no frontend.
 
@@ -79,7 +81,7 @@ sequenceDiagram
 1. Usuário clica "Entrar" em `LoginForm` → `keycloak.login()` (client público `crm-frontend`, PKCE S256) → UI do Keycloak.
 2. Keycloak redireciona para `/auth/callback?code=...&state=...`; o `KeycloakProvider` chama `keycloak.init` no montar, que processa o code e troca pelos tokens (o `keycloak-js` gerencia o verifier PKCE).
 3. Pós-init autenticado: `useMe` habilita e chama `GET /api/v1/auth/me` do backend (Sprint 1) com o Bearer do JWT do Keycloak — usado para exibir nome/e-mail e para o middleware/autorização de tela.
-4. O JWT é persistido no `TokenManager` (`kc_accessToken`/`kc_refreshToken`) e o `accessToken` é refletido num cookie de mesma origem para o middleware.
+4. O JWT é persistido no `TokenManager` (`kc_accessToken`/`kc_refreshToken`) e a flag `kc_authenticated=1` é setada no cookie (mesma origem) para o middleware.
 5. Sessão SSO ativa + sem tokens → `check-sso` reautentica silenciosamente sem redirecionar para login.
 
 > A resolução de `CurrentUser` pelo gateway/auth-service (Sprint 4) **ainda não** acontece no frontend: hoje a identidade de negócio vem do `GET /api/v1/auth/me` do backend. Nenhuma etapa atual do frontend depende do auth-service.
@@ -162,11 +164,13 @@ sequenceDiagram
 
 **Sprint 3 — refresh real implementado no frontend (2026-07-31):**
 
-- O interceptor de **request** do axios chama `refreshKeycloakToken(30)` (envolve `keycloak.updateToken(30)`) quando o JWT vai expirar em < 30 s — refresh **proativo**, evitando 401 desnecessários.
-- O interceptor de **response** trata 401 com guard `_retry`: em caso de **um** 401, tenta `refreshKeycloakToken` e repete a requisição uma única vez. Se o refresh falhar ou o retry 401 novamente, limpa os tokens e redireciona para `/login`.
+- O interceptor de **request** do axios chama `refreshAccessToken(30)` (envolve `keycloak.updateToken(30)`) quando o JWT vai expirar em < 30 s — refresh **proativo**, evitando 401 desnecessários.
+- O interceptor de **response** trata 401 com guard `_retry`: em caso de **um** 401, tenta `refreshAccessToken` e repete a requisição uma única vez. Se o refresh falhar ou o retry 401 novamente, limpa os tokens e redireciona para `/login`.
 - **Single-flight garantido pelo próprio `keycloak-js`** (chamadas concorrentes de `updateToken` se unificam).
 - **Removido:** a rota legada `/auth/refresh` do backend e a fila manual de refresh (`api.ts`).
-- A sincronização é bidirecional: o refresh do `keycloak-js` atualiza `kc.token`/`kc.refreshToken`, que o `refreshKeycloakToken` persiste de volta no `TokenManager`/cookie.
+- A sincronização é bidirecional: o refresh do `keycloak-js` atualiza `kc.token`/`kc.refreshToken`, que o `refreshAccessToken` persiste de volta no `TokenManager`.
+
+> **Sprint 3.1 — refresh consolidado (2026-07-31):** `refreshAccessToken` é o **único** ponto de renovação do frontend e o **único** chamador de `keycloak.updateToken`. Ele sincroniza o resultado via `TokenManager.setTokens` (único escritor). Os três gatilhos — interceptor de request, interceptor de response e `onTokenExpired` — apenas delegam a essa função; nenhum deles escreve estado diretamente.
 
 ---
 
@@ -197,7 +201,7 @@ sequenceDiagram
 **Sprint 3 — logout real implementado no frontend (2026-07-31):**
 
 - `AuthProvider.logout` → `KeycloakProvider.logout` → `keycloak.logout()` (RP-initiated logout, `end_session_endpoint` do Keycloak).
-- Antes de chamar o Keycloak, os tokens do `TokenManager` e o cookie `accessToken` são limpos localmente.
+- Antes de chamar o Keycloak, os tokens do `TokenManager` (e a flag de sessão no cookie) são limpos via `clearTokens`.
 - **Removido:** o logout legado via `POST /auth/logout` do backend. Não existe mais caminho de logout fora do Keycloak.
 
 ---
@@ -215,7 +219,15 @@ sequenceDiagram
 | Algoritmo do JWT | RS256 (chaves RSA do Keycloak) |
 | Emissor | Keycloak (realm CRM) — **único emissor** |
 | Validação nos serviços | JWKS do Keycloak |
-| Armazenamento no frontend | TokenManager (`kc_accessToken`/`kc_refreshToken`) + cookie `accessToken` (mesma origem) para o middleware |
+| Armazenamento no frontend | TokenManager (`kc_accessToken`/`kc_refreshToken` em localStorage) + flag `kc_authenticated=1` no cookie (mesma origem) para o middleware |
+
+> **Sprint 3.1 — simplificação do armazenamento (2026-07-31):**
+>
+> - **Um único escritor**: `TokenManager.setTokens(accessToken, refreshToken)` grava localmente access/refresh token e a flag de sessão. Nenhum outro módulo escreve localStorage/cookie de token.
+> - **O cookie nunca carrega o JWT**: o cookie é apenas a flag `kc_authenticated=1` ("existe uma sessão potencialmente autenticada"). O antigo cookie `accessToken=<JWT>` foi removido.
+> - **Middleware não interpreta JWT**: o middleware apenas verifica a existência da flag; não decodifica, não valida `exp`, não lê claims. Rotas protegidas sem flag → `/login?redirect=...`; rotas públicas passam. A autoridade real segue sendo o Keycloak (SSO) e o backend.
+> - **Sem validação de token no cliente**: `isJwtExpired`/`getJwtExpiration` foram removidos (usados apenas pelo middleware). Toda validação de token permanece no Keycloak e no backend.
+> - **Keycloak continua a autoridade**: `keycloak-js` (PKCE S256, `check-sso`, `updateToken`) continua sendo o único responsável por autenticar e renovar; o `TokenManager` apenas guarda/remove/expoe o estado.
 
 ## Referências
 
@@ -235,3 +247,4 @@ sequenceDiagram
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: OIDC + PKCE direto com Keycloak (único emissor); auth-service apenas resolve CurrentUser |
 | 1.2.0 | 2026-07-31 | Architect | Sprint 1 — primeiro login implementado no crm-backend (provisionamento no converter); /auth/me → 200; falhas → 401; usuário desativado → 401 (validado em produção) |
 | 1.3.0 | 2026-07-31 | Architect | Sprint 3 — fluxo real do frontend documentado: keycloak-js (PKCE S256) no login; refresh proativo + retry único; logout sempre via Keycloak; removido login/refresh/logout legados |
+| 1.4.0 | 2026-07-31 | Architect | Sprint 3.1 — simplificação: TokenManager.setTokens = único escritor; cookie vira flag kc_authenticated (sem JWT); middleware só checa flag; isJwtExpired removido; refresh consolidado em refreshAccessToken |

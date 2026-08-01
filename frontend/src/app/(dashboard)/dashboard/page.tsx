@@ -117,7 +117,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Keycloak Validation Banner */}
-      {TokenManager.isKeycloakAuth() && (
+      {TokenManager.getAccessToken() && (
         <Card className="border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/50">
           <CardContent className="flex items-start gap-4 p-6">
             <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { decodeJwtPayload, getJwtExpiration, isJwtExpired } from "./jwt";
+import { decodeJwtPayload, getRealmRoles } from "./jwt";
 
 export function makeToken(payload: Record<string, unknown>): string {
   const enc = (value: Record<string, unknown>) =>
@@ -23,21 +23,16 @@ describe("jwt helpers", () => {
     expect(decodeJwtPayload("a..b")).toBeNull();
   });
 
-  it("reads the expiration claim", () => {
-    const now = Math.floor(Date.now() / 1000);
-    expect(getJwtExpiration(makeToken({ exp: now + 600 }))).toBe(now + 600);
-    expect(getJwtExpiration(null)).toBeNull();
+  it("extracts realm roles from the token (OIDC identity, UX only)", () => {
+    expect(getRealmRoles(makeToken({ realm_access: { roles: ["admin", "AGENT"] } }))).toEqual([
+      "admin",
+      "AGENT",
+    ]);
   });
 
-  it("detects expired and valid tokens", () => {
-    const now = Math.floor(Date.now() / 1000);
-    expect(isJwtExpired(makeToken({ exp: now + 600 }), now)).toBe(false);
-    expect(isJwtExpired(makeToken({ exp: now - 10 }), now)).toBe(true);
-    expect(isJwtExpired(makeToken({ exp: now }), now)).toBe(true);
-  });
-
-  it("treats a token without exp as expired (defensive)", () => {
-    expect(isJwtExpired(makeToken({ sub: "x" }), 1000)).toBe(true);
-    expect(isJwtExpired(null)).toBe(true);
+  it("returns empty roles when the roles claim is absent", () => {
+    expect(getRealmRoles(makeToken({ sub: "x" }))).toEqual([]);
+    expect(getRealmRoles(null)).toEqual([]);
+    expect(getRealmRoles("garbage")).toEqual([]);
   });
 });

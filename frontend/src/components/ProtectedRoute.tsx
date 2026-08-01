@@ -18,7 +18,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
-  const hasKcToken = TokenManager.isKeycloakAuth();
+  const hasKcToken = !!TokenManager.getAccessToken();
   const waitingForKeycloak = hasKcToken && !keycloakCtx.initialized;
   const isEffectiveAuthenticated = isAuthenticated || (hasKcToken && keycloakCtx.authenticated);
 

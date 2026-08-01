@@ -3,6 +3,7 @@
 import { createContext, useContext, useCallback, useState, useEffect, type ReactNode } from "react";
 import { useMe } from "./useAuthMutations";
 import { TokenManager } from "@/store/token-manager";
+import { getRealmRoles } from "@/lib/jwt";
 import type { User } from "../types/auth.types";
 import { useKeycloak } from "@/providers/KeycloakProvider";
 
@@ -35,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (data) {
       setUser(data);
-    } else if (!isMeLoading && (isError || !TokenManager.hasTokens())) {
+    } else if (!isMeLoading && (isError || !TokenManager.getAccessToken())) {
       setUser(null);
     }
   }, [data, isMeLoading, isError]);
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [keycloakCtx],
   );
 
-  const roles = TokenManager.getRoles();
+  const roles = getRealmRoles(TokenManager.getAccessToken());
 
   return (
     <AuthContext.Provider

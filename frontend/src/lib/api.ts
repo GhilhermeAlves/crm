@@ -1,6 +1,6 @@
 import axios from "axios";
 import { TokenManager } from "@/store/token-manager";
-import { refreshKeycloakToken } from "@/lib/keycloak";
+import { refreshAccessToken } from "@/lib/keycloak";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1",
@@ -10,10 +10,10 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  if (TokenManager.isKeycloakAuth()) {
+  if (TokenManager.getAccessToken()) {
     // Renova proativamente se o token expirar em breve (minValidity) —
     // evita enviar token expirado; o keycloak-js deduplica refreshes.
-    await refreshKeycloakToken(30);
+    await refreshAccessToken(30);
   }
   const token = TokenManager.getAccessToken();
   if (token) {
@@ -41,10 +41,10 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (TokenManager.isKeycloakAuth()) {
+    if (TokenManager.getAccessToken()) {
       originalRequest._retry = true;
       const previousToken = TokenManager.getAccessToken();
-      const refreshed = await refreshKeycloakToken(30);
+      const refreshed = await refreshAccessToken(30);
       const newToken = TokenManager.getAccessToken();
 
       if (refreshed && newToken && newToken !== previousToken) {

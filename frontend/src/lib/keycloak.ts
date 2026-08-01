@@ -50,21 +50,18 @@ export async function logoutKeycloak(): Promise<void> {
 }
 
 /**
- * Renova o token do Keycloak quando necessário (dentro de `minValidity`
- * segundos da expiração) e sincroniza o token atualizado no TokenManager,
- * garantindo que as próximas requisições usem o token novo. O keycloak-js
- * deduplica refreshes concorrentes internamente.
+ * Único ponto de renovação de token do frontend. Usa exclusivamente
+ * `keycloak.updateToken` (o Keycloak é o único responsável pelo refresh) e
+ * sincroniza o resultado no TokenManager via `setTokens` (único escritor).
+ * O keycloak-js deduplica refreshes concorrentes internamente.
  */
-export async function refreshKeycloakToken(minValidity: number = 30): Promise<boolean> {
+export async function refreshAccessToken(minValidity: number = 30): Promise<boolean> {
   const kc = getKeycloakInstance();
   if (!kc.authenticated) return false;
   try {
     await kc.updateToken(minValidity);
     if (kc.token) {
-      TokenManager.setKeycloakToken(kc.token);
-    }
-    if (kc.refreshToken) {
-      TokenManager.setKeycloakRefreshToken(kc.refreshToken);
+      TokenManager.setTokens(kc.token, kc.refreshToken || null);
     }
     return true;
   } catch {

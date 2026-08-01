@@ -3,11 +3,11 @@ import axios from "axios";
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import api from "./api";
 import { TokenManager } from "@/store/token-manager";
-import { refreshKeycloakToken } from "./keycloak";
+import { refreshAccessToken } from "./keycloak";
 
 const { refreshMock } = vi.hoisted(() => ({ refreshMock: vi.fn() }));
 
-vi.mock("@/lib/keycloak", () => ({ refreshKeycloakToken: refreshMock }));
+vi.mock("@/lib/keycloak", () => ({ refreshAccessToken: refreshMock }));
 
 type AdapterHandler = (
   config: InternalAxiosRequestConfig,
@@ -49,6 +49,7 @@ function serverError(config: InternalAxiosRequestConfig) {
 describe("api interceptors", () => {
   beforeEach(() => {
     localStorage.clear();
+    document.cookie = "kc_authenticated=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
     refreshMock.mockReset();
     requestCount = 0;
     adapterHandler = async () => okResponse({} as InternalAxiosRequestConfig, {});
@@ -63,13 +64,13 @@ describe("api interceptors", () => {
   });
 
   it("refreshes on a real 401 and retries with the new token", async () => {
-    TokenManager.setKeycloakToken("old.token");
+    TokenManager.setTokens("old.token", "refresh");
 
     let refreshCalls = 0;
     refreshMock.mockImplementation(async () => {
       refreshCalls += 1;
       if (refreshCalls > 1) {
-        TokenManager.setKeycloakToken("new.token");
+        TokenManager.setTokens("new.token", "refresh");
       }
       return true;
     });
@@ -93,13 +94,13 @@ describe("api interceptors", () => {
   });
 
   it("does not loop when the backend keeps rejecting after a refresh", async () => {
-    TokenManager.setKeycloakToken("old.token");
+    TokenManager.setTokens("old.token", "refresh");
 
     let refreshCalls = 0;
     refreshMock.mockImplementation(async () => {
       refreshCalls += 1;
       if (refreshCalls === 2) {
-        TokenManager.setKeycloakToken("new.token");
+        TokenManager.setTokens("new.token", "refresh");
       }
       return true;
     });
@@ -117,7 +118,7 @@ describe("api interceptors", () => {
   });
 
   it("clears tokens and redirects to login when the refresh fails", async () => {
-    TokenManager.setKeycloakToken("old.token");
+    TokenManager.setTokens("old.token", "refresh");
     refreshMock.mockResolvedValue(false);
 
     adapterHandler = async (config) => {
@@ -131,7 +132,7 @@ describe("api interceptors", () => {
   });
 
   it("does not trigger a refresh on non-401 errors", async () => {
-    TokenManager.setKeycloakToken("old.token");
+    TokenManager.setTokens("old.token", "refresh");
 
     adapterHandler = async (config) => {
       throw serverError(config);

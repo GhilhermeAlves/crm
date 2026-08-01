@@ -100,7 +100,7 @@ describe("AuthProvider", () => {
 
   it("exposes keycloak realm roles (OIDC identity) and no business permissions yet", async () => {
     meMock.mockResolvedValue(mockUser);
-    TokenManager.setKeycloakToken(makeToken({ realm_access: { roles: ["AGENT"] } }));
+    TokenManager.setTokens(makeToken({ realm_access: { roles: ["AGENT"] } }), null);
     kcState.initialized = true;
     kcState.authenticated = true;
 

@@ -1,30 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { resolveAuthRedirect } from "@/lib/middleware-auth";
+import { resolveAuthRedirect, SESSION_COOKIE } from "@/lib/middleware-auth";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const rawCookie = request.cookies.get("accessToken")?.value;
-  let accessToken: string | null = rawCookie ?? null;
-  if (accessToken) {
-    try {
-      accessToken = decodeURIComponent(accessToken);
-    } catch {
-      // mantém o valor cru se não estiver URL-encoded
-    }
-  }
+  const hasSession = !!request.cookies.get(SESSION_COOKIE)?.value;
 
-  const decision = resolveAuthRedirect({ pathname, accessToken });
+  const decision = resolveAuthRedirect({ pathname, hasSession });
 
-  const response = decision.redirectTo
+  return decision.redirectTo
     ? NextResponse.redirect(new URL(decision.redirectTo, request.url))
     : NextResponse.next();
-
-  if (decision.clearCookie) {
-    response.cookies.delete("accessToken");
-  }
-
-  return response;
 }
 
 export const config = {

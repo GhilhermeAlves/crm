@@ -1,27 +1,52 @@
-import { decodeJwtPayload } from "@/lib/jwt";
-
 const KC_TOKEN_KEY = "kc_accessToken";
 const KC_REFRESH_TOKEN_KEY = "kc_refreshToken";
-const AUTH_COOKIE_KEY = "accessToken";
 
-function setCookie(name: string, value: string, days: number) {
+/**
+ * Flag de sessão no cookie (mesma origem). Nunca carrega o JWT: indica apenas
+ * "existe uma sessão potencialmente autenticada" para o middleware do Next.js
+ * decidir roteamento SSR. A autoridade da autenticação é o Keycloak/backend.
+ */
+const SESSION_COOKIE = "kc_authenticated";
+const SESSION_COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
+
+function setSessionCookie() {
   if (typeof document === "undefined") return;
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+  document.cookie = `${SESSION_COOKIE}=1; max-age=${SESSION_COOKIE_MAX_AGE}; path=/; SameSite=Lax`;
 }
 
-function deleteCookie(name: string) {
+function deleteSessionCookie() {
   if (typeof document === "undefined") return;
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+  document.cookie = `${SESSION_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 }
 
 /**
- * Armazenamento do token emitido pelo Keycloak (único emissor). O token e o
- * refresh token são guardados em localStorage e o access token também é
- * espelhado num cookie (mesma origem) para o middleware do Next.js decidir o
- * roteamento protegido no servidor.
+ * Estado de token da sessão. Responsabilidades limitadas a: atualizar tokens,
+ * remover tokens e fornecer acesso ao estado. Nenhuma decisão de autenticação
+ * ou regra de autorização vive aqui.
  */
 export const TokenManager = {
+  /**
+   * Único ponto de escrita do estado de token: grava access/refresh token no
+   * localStorage e a flag de sessão no cookie. Todo componente que precisar
+   * persistir tokens deve chamar este método.
+   */
+  setTokens(accessToken: string, refreshToken: string | null): void {
+    if (typeof window === "undefined") return;
+    if (!accessToken) return;
+    localStorage.setItem(KC_TOKEN_KEY, accessToken);
+    if (refreshToken) {
+      localStorage.setItem(KC_REFRESH_TOKEN_KEY, refreshToken);
+    }
+    setSessionCookie();
+  },
+
+  clearTokens(): void {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(KC_TOKEN_KEY);
+    localStorage.removeItem(KC_REFRESH_TOKEN_KEY);
+    deleteSessionCookie();
+  },
+
   getAccessToken(): string | null {
     if (typeof window === "undefined") return null;
     return localStorage.getItem(KC_TOKEN_KEY);
@@ -30,48 +55,5 @@ export const TokenManager = {
   getRefreshToken(): string | null {
     if (typeof window === "undefined") return null;
     return localStorage.getItem(KC_REFRESH_TOKEN_KEY);
-  },
-
-  setKeycloakToken(token: string): void {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(KC_TOKEN_KEY, token);
-    setCookie(AUTH_COOKIE_KEY, token, 7);
-  },
-
-  setKeycloakRefreshToken(token: string): void {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(KC_REFRESH_TOKEN_KEY, token);
-  },
-
-  clearTokens(): void {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem(KC_TOKEN_KEY);
-    localStorage.removeItem(KC_REFRESH_TOKEN_KEY);
-    deleteCookie(AUTH_COOKIE_KEY);
-  },
-
-  hasTokens(): boolean {
-    return !!this.getAccessToken();
-  },
-
-  isKeycloakAuth(): boolean {
-    if (typeof window === "undefined") return false;
-    return !!localStorage.getItem(KC_TOKEN_KEY);
-  },
-
-  /**
-   * Roles do realm do Keycloak (claims OIDC de identidade). Usadas apenas
-   * para UX (menus/badges). Autorização de negócio é resolvida no backend e,
-   * futuramente, via CurrentUser (endpoint público do auth-service).
-   */
-  getRoles(): string[] {
-    const token = this.getAccessToken();
-    if (!token) return [];
-    const payload = decodeJwtPayload(token);
-    if (!payload) return [];
-    const realmRoles = payload["realm_access"] as { roles?: string[] } | undefined;
-    if (realmRoles?.roles) return realmRoles.roles;
-    const roles = payload["roles"];
-    return Array.isArray(roles) ? (roles as string[]) : [];
   },
 };

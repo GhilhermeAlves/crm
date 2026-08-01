@@ -1,48 +1,49 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { TokenManager } from "./token-manager";
-import { makeToken } from "@/lib/jwt.test";
 
 describe("TokenManager", () => {
   beforeEach(() => {
     localStorage.clear();
-    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    document.cookie = "kc_authenticated=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
   });
 
-  it("stores and reads the keycloak access/refresh tokens", () => {
-    TokenManager.setKeycloakToken("access");
-    TokenManager.setKeycloakRefreshToken("refresh");
+  it("setTokens is the single writer: stores access/refresh tokens and the session flag", () => {
+    TokenManager.setTokens("access", "refresh");
 
     expect(TokenManager.getAccessToken()).toBe("access");
     expect(TokenManager.getRefreshToken()).toBe("refresh");
-    expect(TokenManager.hasTokens()).toBe(true);
-    expect(TokenManager.isKeycloakAuth()).toBe(true);
-    expect(document.cookie).toContain("accessToken=");
+    // O cookie carrega apenas a flag de sessão — nunca o JWT.
+    expect(document.cookie).toContain("kc_authenticated=1");
+    expect(document.cookie).not.toContain("access=");
   });
 
-  it("clears tokens and the auth cookie", () => {
-    TokenManager.setKeycloakToken("access");
-    expect(document.cookie).toContain("accessToken=");
+  it("sets the session flag without storing the token value in the cookie", () => {
+    TokenManager.setTokens("access.token.value", "refresh");
+
+    expect(document.cookie).toContain("kc_authenticated=1");
+    expect(document.cookie).not.toContain("access.token.value");
+  });
+
+  it("ignores empty tokens", () => {
+    TokenManager.setTokens("", null);
+
+    expect(TokenManager.getAccessToken()).toBeNull();
+    expect(document.cookie).not.toContain("kc_authenticated");
+  });
+
+  it("clearTokens removes tokens and the session flag", () => {
+    TokenManager.setTokens("access", "refresh");
+    expect(document.cookie).toContain("kc_authenticated=");
 
     TokenManager.clearTokens();
 
     expect(TokenManager.getAccessToken()).toBeNull();
     expect(TokenManager.getRefreshToken()).toBeNull();
-    expect(TokenManager.hasTokens()).toBe(false);
-    expect(TokenManager.isKeycloakAuth()).toBe(false);
-    expect(document.cookie).not.toContain("accessToken=");
+    expect(document.cookie).not.toContain("kc_authenticated=");
   });
 
-  it("returns empty list before any token is stored", () => {
-    expect(TokenManager.getRoles()).toEqual([]);
-  });
-
-  it("extracts realm roles from the keycloak token (OIDC identity)", () => {
-    TokenManager.setKeycloakToken(makeToken({ realm_access: { roles: ["admin", "AGENT"] } }));
-    expect(TokenManager.getRoles()).toEqual(["admin", "AGENT"]);
-  });
-
-  it("returns empty roles when the roles claim is absent", () => {
-    TokenManager.setKeycloakToken(makeToken({ sub: "x" }));
-    expect(TokenManager.getRoles()).toEqual([]);
+  it("returns null for both tokens before anything is stored", () => {
+    expect(TokenManager.getAccessToken()).toBeNull();
+    expect(TokenManager.getRefreshToken()).toBeNull();
   });
 });

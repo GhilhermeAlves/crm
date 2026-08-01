@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { initKeycloak, loginKeycloak, logoutKeycloak } from "@/lib/keycloak";
+import { initKeycloak, loginKeycloak, logoutKeycloak, refreshAccessToken } from "@/lib/keycloak";
 import { TokenManager } from "@/store/token-manager";
 import type Keycloak from "keycloak-js";
 
@@ -36,25 +36,20 @@ export function KeycloakProvider({ children }: { children: ReactNode }) {
       setInitialized(true);
 
       if (kc.authenticated && kc.token) {
-        TokenManager.setKeycloakToken(kc.token);
-        TokenManager.setKeycloakRefreshToken(kc.refreshToken || "");
+        // Persiste a sessão (único escritor: TokenManager.setTokens).
+        TokenManager.setTokens(kc.token, kc.refreshToken || null);
+      } else {
+        // Sem SSO ativo: remove tokens/flag de sessão obsoletos de visitas antigas.
+        TokenManager.clearTokens();
       }
 
-      // Renova automaticamente quando o token expira — evita enviar token
-      // expirado e mantém localStorage/cookie sincronizados.
+      // Renova automaticamente quando o token expira (sempre via keycloak-js).
       kc.onTokenExpired = () => {
-        kc.updateToken(30)
-          .then(() => {
-            if (kc.token) {
-              TokenManager.setKeycloakToken(kc.token);
-            }
-            if (kc.refreshToken) {
-              TokenManager.setKeycloakRefreshToken(kc.refreshToken);
-            }
-          })
-          .catch(() => {
+        refreshAccessToken(30).then((ok) => {
+          if (!ok) {
             TokenManager.clearTokens();
-          });
+          }
+        });
       };
     });
 

@@ -1,4 +1,11 @@
-import { isJwtExpired } from "@/lib/jwt";
+/**
+ * Decisão de roteamento de autenticação para o middleware do Next.js.
+ * O middleware NÃO interpreta/decodifica JWT: apenas verifica a existência da
+ * flag de sessão no cookie (`kc_authenticated`), que indica uma sessão
+ * potencialmente autenticada. A autoridade real é o Keycloak (SSO) e o backend.
+ * Rotas protegidas sem a flag redirecionam para o login preservando o destino.
+ */
+export const SESSION_COOKIE = "kc_authenticated";
 
 export const PUBLIC_PATHS = [
   "/login",
@@ -11,48 +18,23 @@ export const PUBLIC_PATHS = [
 export type AuthDecision = {
   /** Path para redirecionar, se houver. */
   redirectTo?: string;
-  /** True quando o cookie de token existe mas está expirado/inválido. */
-  clearCookie: boolean;
 };
 
-/**
- * Decisão de roteamento de autenticação para o middleware do Next.js.
- * O cookie `accessToken` espelha o JWT do Keycloak para proteção SSR; a
- * validade é checada apenas pelo `exp` (decodificação stateless, sem JWKS) —
- * a assinatura continua sendo verificada pelo backend. Isso evita o redirect
- * loop entre `/login` e `/dashboard` quando o token já expirou.
- */
 export function resolveAuthRedirect(input: {
   pathname: string;
-  accessToken: string | null;
-  nowSeconds?: number;
+  hasSession: boolean;
 }): AuthDecision {
-  const { pathname, accessToken } = input;
-  const nowSeconds = input.nowSeconds ?? Math.floor(Date.now() / 1000);
+  const { pathname, hasSession } = input;
+
+  if (pathname === "/") {
+    return {};
+  }
 
   const isPublicPath = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
-  if (pathname === "/") {
-    return {
-      clearCookie: !!accessToken && isJwtExpired(accessToken, nowSeconds),
-    };
+  if (!hasSession && !isPublicPath) {
+    return { redirectTo: `/login?redirect=${encodeURIComponent(pathname)}` };
   }
 
-  const tokenValid = !!accessToken && !isJwtExpired(accessToken, nowSeconds);
-
-  if (!tokenValid) {
-    if (isPublicPath) {
-      return { clearCookie: !!accessToken };
-    }
-    return {
-      redirectTo: `/login?redirect=${encodeURIComponent(pathname)}`,
-      clearCookie: !!accessToken,
-    };
-  }
-
-  if (isPublicPath) {
-    return { redirectTo: "/dashboard", clearCookie: false };
-  }
-
-  return { clearCookie: false };
+  return {};
 }

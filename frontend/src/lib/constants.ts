@@ -38,9 +38,3 @@ export const AUTH_ROUTES = [
   ROUTES.FORGOT_PASSWORD,
   ROUTES.RESET_PASSWORD,
 ] as const;
-
-export const STORAGE_KEYS = {
-  ACCESS_TOKEN: "accessToken",
-  REFRESH_TOKEN: "refreshToken",
-  THEME: "theme",
-} as const;

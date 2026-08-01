@@ -3,7 +3,7 @@ import {
   initKeycloak,
   loginKeycloak,
   logoutKeycloak,
-  refreshKeycloakToken,
+  refreshAccessToken,
 } from "./keycloak";
 
 const { mockKc } = vi.hoisted(() => ({
@@ -29,6 +29,7 @@ describe("keycloak lib", () => {
     mockKc.authenticated = false;
     vi.clearAllMocks();
     localStorage.clear();
+    document.cookie = "kc_authenticated=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
   });
 
   it("initializes with PKCE S256 and silent check-sso", async () => {
@@ -66,22 +67,24 @@ describe("keycloak lib", () => {
 
   it("refresh returns false when not authenticated", async () => {
     mockKc.authenticated = false;
-    await expect(refreshKeycloakToken(30)).resolves.toBe(false);
+    await expect(refreshAccessToken(30)).resolves.toBe(false);
     expect(mockKc.updateToken).not.toHaveBeenCalled();
   });
 
-  it("refresh syncs the updated token to the TokenManager", async () => {
+  it("refresh syncs the updated token to the TokenManager (single writer)", async () => {
     mockKc.authenticated = true;
     mockKc.updateToken.mockResolvedValue(true);
-    await expect(refreshKeycloakToken(30)).resolves.toBe(true);
+    await expect(refreshAccessToken(30)).resolves.toBe(true);
     expect(mockKc.updateToken).toHaveBeenCalledWith(30);
     expect(localStorage.getItem("kc_accessToken")).toBe("access.token");
     expect(localStorage.getItem("kc_refreshToken")).toBe("refresh.token");
+    expect(document.cookie).toContain("kc_authenticated=1");
+    expect(document.cookie).not.toContain("access.token");
   });
 
   it("refresh returns false when the token cannot be refreshed", async () => {
     mockKc.authenticated = true;
     mockKc.updateToken.mockRejectedValue(new Error("refresh failed"));
-    await expect(refreshKeycloakToken(30)).resolves.toBe(false);
+    await expect(refreshAccessToken(30)).resolves.toBe(false);
   });
 });
