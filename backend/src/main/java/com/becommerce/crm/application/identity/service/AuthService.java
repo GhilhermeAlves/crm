@@ -1,15 +1,31 @@
 package com.becommerce.crm.application.identity.service;
 
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
-import com.becommerce.crm.application.identity.dto.*;
+import com.becommerce.crm.application.identity.dto.RegisterRequest;
 import com.becommerce.crm.application.identity.port.input.AuthUseCase;
-import com.becommerce.crm.application.identity.port.output.*;
+import com.becommerce.crm.application.identity.port.output.EmailService;
+import com.becommerce.crm.application.identity.port.output.EventPublisher;
+import com.becommerce.crm.application.identity.port.output.PasswordEncoder;
+import com.becommerce.crm.application.identity.port.output.PasswordResetTokenRepository;
+import com.becommerce.crm.application.identity.port.output.RoleRepository;
+import com.becommerce.crm.application.identity.port.output.UserRepository;
+import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.company.CompanyStatus;
-import com.becommerce.crm.domain.identity.*;
-import com.becommerce.crm.domain.identity.event.*;
-import com.becommerce.crm.domain.identity.exception.*;
-import com.becommerce.crm.domain.identity.valueobject.*;
+import com.becommerce.crm.domain.identity.PasswordResetToken;
+import com.becommerce.crm.domain.identity.Role;
+import com.becommerce.crm.domain.identity.User;
+import com.becommerce.crm.domain.identity.UserRole;
+import com.becommerce.crm.domain.identity.event.PasswordChangedEvent;
+import com.becommerce.crm.domain.identity.event.PasswordResetRequestedEvent;
+import com.becommerce.crm.domain.identity.event.UserCreatedEvent;
+import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
+import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
+import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
+import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
+import com.becommerce.crm.domain.identity.valueobject.Email;
+import com.becommerce.crm.domain.identity.valueobject.Password;
+import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -21,10 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class AuthService implements AuthUseCase {
@@ -32,19 +46,14 @@ public class AuthService implements AuthUseCase {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
-    private final RolePermissionRepository rolePermissionRepository;
-    private final PermissionRepository permissionRepository;
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtProvider jwtProvider;
     private final EventPublisher eventPublisher;
     private final EmailService emailService;
 
-    private static final int REFRESH_TOKEN_EXPIRY_DAYS = 7;
     private static final int RESET_TOKEN_EXPIRY_MINUTES = 60;
 
     @Value("${app.auth.provisioning.enabled:true}")
@@ -60,155 +69,20 @@ public class AuthService implements AuthUseCase {
     @Autowired
     private AuthService self;
 
-    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
+    public AuthService(UserRepository userRepository,
                        PasswordResetTokenRepository passwordResetTokenRepository,
                        RoleRepository roleRepository, UserRoleRepository userRoleRepository,
-                       RolePermissionRepository rolePermissionRepository,
-                       PermissionRepository permissionRepository,
                        CompanyRepository companyRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtProvider jwtProvider, EventPublisher eventPublisher,
+                       PasswordEncoder passwordEncoder, EventPublisher eventPublisher,
                        EmailService emailService) {
         this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
-        this.rolePermissionRepository = rolePermissionRepository;
-        this.permissionRepository = permissionRepository;
         this.companyRepository = companyRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jwtProvider = jwtProvider;
         this.eventPublisher = eventPublisher;
         this.emailService = emailService;
-    }
-
-    @Override
-    public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
-            .orElseThrow(InvalidCredentialsException::new);
-
-        if (!passwordEncoder.matches(request.password(), user.getPassword().value())) {
-            throw new InvalidCredentialsException();
-        }
-
-        if (!user.isActive()) {
-            throw new InvalidCredentialsException("Account is deactivated");
-        }
-
-        List<String> roles = userRoleRepository.findByUserIdAndCompanyId(user.getId(), user.getCompanyId()).stream()
-                .map(ur -> roleRepository.findById(ur.getRoleId()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(role -> role.getName().name())
-                .collect(Collectors.toList());
-
-        List<String> permissions = roles.stream()
-                .flatMap(roleName -> {
-                    try {
-                        var role = roleRepository.findByNameAndCompanyId(
-                                com.becommerce.crm.domain.identity.valueobject.RoleName.valueOf(roleName),
-                                user.getCompanyId());
-                        return role.map(r -> rolePermissionRepository.findByRoleId(r.getId()).stream()
-                                .map(rp -> permissionRepository.findById(rp.getPermissionId()))
-                                .filter(Optional::isPresent)
-                                .map(Optional::get)
-                                .map(Permission::getName))
-                                .orElse(java.util.stream.Stream.empty());
-                    } catch (Exception e) {
-                        return java.util.stream.Stream.empty();
-                    }
-                })
-                .distinct()
-                .collect(Collectors.toList());
-
-        if (roles.isEmpty()) {
-            roles = List.of("USER");
-        }
-        if (permissions.isEmpty()) {
-            permissions = List.of("dashboard:view");
-        }
-
-        String accessToken = jwtProvider.generateAccessToken(user.getId(), user.getCompanyId(), roles, permissions);
-        String family = UUID.randomUUID().toString();
-        String refreshToken = jwtProvider.generateRefreshToken(user.getId(), family);
-
-        refreshTokenRepository.save(RefreshToken.create(user.getId(), refreshToken, family, REFRESH_TOKEN_EXPIRY_DAYS));
-
-        eventPublisher.publish(UserLoggedInEvent.create(user.getId(), user.getCompanyId(), "unknown"));
-
-        return new LoginResponse(accessToken, refreshToken, user.getId().toString(), user.getEmail().value(), user.getName());
-    }
-
-    @Override
-    public LoginResponse refreshTokens(RefreshTokenRequest request) {
-        if (!jwtProvider.validateToken(request.refreshToken())) {
-            throw new TokenExpiredException();
-        }
-
-        UUID userId = jwtProvider.extractUserId(request.refreshToken());
-        User user = userRepository.findById(userId)
-            .orElseThrow(UserNotFoundException::new);
-
-        RefreshToken oldToken = refreshTokenRepository.findByToken(request.refreshToken())
-            .orElseThrow(() -> new TokenExpiredException("Refresh token not found"));
-
-        if (oldToken.isRevoked() || oldToken.isExpired()) {
-            throw new TokenExpiredException("Refresh token has been revoked or expired");
-        }
-
-        refreshTokenRepository.revokeByToken(request.refreshToken());
-
-        List<String> roles = userRoleRepository.findByUserIdAndCompanyId(user.getId(), user.getCompanyId()).stream()
-                .map(ur -> roleRepository.findById(ur.getRoleId()))
-                .filter(java.util.Optional::isPresent)
-                .map(java.util.Optional::get)
-                .map(role -> role.getName().name())
-                .collect(Collectors.toList());
-
-        List<String> permissions = roles.stream()
-                .flatMap(roleName -> {
-                    try {
-                        var role = roleRepository.findByNameAndCompanyId(
-                                com.becommerce.crm.domain.identity.valueobject.RoleName.valueOf(roleName),
-                                user.getCompanyId());
-                        return role.map(r -> rolePermissionRepository.findByRoleId(r.getId()).stream()
-                                .map(rp -> permissionRepository.findById(rp.getPermissionId()))
-                                .filter(java.util.Optional::isPresent)
-                                .map(java.util.Optional::get)
-                                .map(Permission::getName))
-                                .orElse(java.util.stream.Stream.empty());
-                    } catch (Exception e) {
-                        return java.util.stream.Stream.empty();
-                    }
-                })
-                .distinct()
-                .collect(Collectors.toList());
-
-        if (roles.isEmpty()) {
-            roles = List.of("USER");
-        }
-        if (permissions.isEmpty()) {
-            permissions = List.of("dashboard:view");
-        }
-
-        String newAccessToken = jwtProvider.generateAccessToken(user.getId(), user.getCompanyId(), roles, permissions);
-        String newFamily = UUID.randomUUID().toString();
-        String newRefreshToken = jwtProvider.generateRefreshToken(user.getId(), newFamily);
-
-        refreshTokenRepository.save(RefreshToken.create(user.getId(), newRefreshToken, newFamily, REFRESH_TOKEN_EXPIRY_DAYS));
-
-        eventPublisher.publish(TokenRefreshedEvent.create(user.getId(), user.getCompanyId()));
-
-        return new LoginResponse(newAccessToken, newRefreshToken, user.getId().toString(), user.getEmail().value(), user.getName());
-    }
-
-    @Override
-    public void logout(UUID userId, String refreshToken) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(UserNotFoundException::new);
-        refreshTokenRepository.revokeByToken(refreshToken);
-        eventPublisher.publish(UserLoggedOutEvent.create(userId, user.getCompanyId()));
     }
 
     @Override
@@ -256,19 +130,6 @@ public class AuthService implements AuthUseCase {
         passwordResetTokenRepository.save(resetToken);
 
         eventPublisher.publish(PasswordChangedEvent.create(user.getId(), user.getCompanyId()));
-    }
-
-    @Override
-    public LoginResponse handleKeycloakLogin(UUID userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(UserNotFoundException::new);
-
-        user.recordLogin();
-        userRepository.save(user);
-
-        eventPublisher.publish(UserLoggedInEvent.create(user.getId(), user.getCompanyId(), "keycloak"));
-
-        return new LoginResponse(null, null, user.getId().toString(), user.getEmail().value(), user.getName());
     }
 
     @Override

@@ -26,6 +26,8 @@ O `crm-auth-service` expõe:
 - **Internos** (`/internal/...`): consumidos pelo gateway e serviços de negócio (resolução de `CurrentUser`, revogação de sessão) — acessíveis apenas na rede interna (network docker) e/ou mTLS.
 
 > **Status Sprint 2 (fundação — 2026-07-31):** implementado `GET /internal/auth/current-user` e `/auth/health` (+ actuator health/info). Os demais endpoints desta seção permanecem planejados para sprints futuros (ver marcas "planejado" ao longo do documento).
+>
+> **Status Sprint 4 (integração — 2026-08-01):** o `crm-backend` passou a **consumir** `GET /internal/auth/current-user` como camada de identidade (via `AuthServiceClient`, flag `AUTH_IDENTITY_LAYER_ENABLED=true`, com fallback local). A emissão própria de tokens do backend (login/refresh/logout) foi removida — autenticação é exclusiva do Keycloak.
 
 **Login, refresh, logout e emissão de JWT são feitos diretamente com o Keycloak** (ver AUTH_FLOWS.md). Toda resposta de erro segue o padrão atual (`GlobalExceptionHandler`): `{ status, error, message, timestamp }`.
 
@@ -185,7 +187,7 @@ Response `200` (shape compatível com `UserResponse` atual):
 |---|---|
 | Services → Keycloak (JWKS) | Validação stateless do JWT (sem chamada extra) |
 | Gateway → `/auth/current-user`, `/auth/me` | Bearer JWT do Keycloak (validado) — *planejado* |
-| Services → `/internal/auth/current-user` | Bearer JWT do Keycloak (validado via JWKS) — *implementado (Sprint 2)* |
+| Services → `/internal/auth/current-user` | Bearer JWT do Keycloak (validado via JWKS) — *implementado (Sprint 2); consumido pelo crm-backend (Sprint 4)* |
 | Services → `/internal/*` (demais) | mTLS ou service-to-service token (escopo `auth:internal`) — *planejado* |
 | Frontend → Keycloak | OIDC + PKCE (client público), sem segredo no browser |
 | Keycloak → auth-service | N/A (auth-service não troca código; apenas valida JWT e resolve) |
@@ -196,11 +198,11 @@ Response `200` (shape compatível com `UserResponse` atual):
 
 | Endpoint atual (crm-backend) | Destino na nova arquitetura |
 |---|---|
-| `POST /auth/login` (email/senha) | Removido (autenticação via Keycloak) |
-| `POST /auth/refresh` | Removido (renovação via Keycloak/SSO no frontend) |
-| `POST /auth/logout` | Removido (logout via `end_session_endpoint` do Keycloak) |
-| `GET /auth/me` | Movido para `crm-auth-service /auth/me` (*planejado*; o `crm-backend` mantém `/api/v1/auth/me` operacional — Sprint 1) |
-| `POST /auth/keycloak/callback` | Substituído pelo fluxo OIDC + PKCE direto com o Keycloak |
+| `POST /auth/login` (email/senha) | **Removido no backend (Sprint 4)** — autenticação via Keycloak |
+| `POST /auth/refresh` | **Removido no backend (Sprint 4)** — renovação via Keycloak/SSO no frontend |
+| `POST /auth/logout` | **Removido no backend (Sprint 4)** — logout via `end_session_endpoint` do Keycloak |
+| `GET /auth/me` | Movido para `crm-auth-service /auth/me` (*planejado*; o `crm-backend` mantém `/api/v1/auth/me` operacional — Sprint 1, agora resolvendo via `CurrentUser`) |
+| `POST /auth/keycloak/callback` | **Removido no backend (Sprint 4)** — substituído pelo fluxo OIDC + PKCE direto com o Keycloak |
 | `POST /auth/register`, `forgot-password`, `reset-password`, `change-password` | Avaliados: senhas não são mais geridas pelo CRM (Keycloak é IdP); decisão documentada no MIGRATION_PLAN.md |
 | `POST /auth/register` (conta local) | Não recomendado manter; usuários devem ser provisionados via Keycloak |
 | `GET/PUT /users/profile`, `/roles/**`, `/permissions/**` | Permanecem nos serviços de negócio (CRUD de usuários/roles/permissões é administração, não autenticação) |
@@ -222,3 +224,4 @@ Response `200` (shape compatível com `UserResponse` atual):
 | 1.0.0 | 2026-07-31 | Architect | Sprint 0 — APIs públicas e internas do auth-service |
 | 1.1.0 | 2026-07-31 | Architect | Ajuste: sem login/refresh/logout/JWKS no auth-service; autenticação exclusiva via Keycloak |
 | 1.2.0 | 2026-07-31 | Architect | Sprint 2 — implementado `GET /internal/auth/current-user` (RESOLVED / PROVISIONING_REQUIRED / 401 USER_INACTIVE) e `/auth/health`; demais endpoints marcados como planejados |
+| 1.3.0 | 2026-08-01 | Architect | Sprint 4 — crm-backend consome `/internal/auth/current-user` (flag `AUTH_IDENTITY_LAYER_ENABLED`, fallback local); emissão própria de tokens removida (login/refresh/logout/keycloak-callback); `/auth/me` mantido no backend |

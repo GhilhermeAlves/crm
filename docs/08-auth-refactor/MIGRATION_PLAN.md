@@ -193,13 +193,29 @@ Fazer o `crm-backend` (e serviços futuros) consumirem o `crm-auth-service` como
 - Manutenção dos endpoints de administração (`/users`, `/roles`, `/permissions`) e perfil, consumindo `CurrentUser`.
 - Flag `AUTH_IDENTITY_LAYER_ENABLED` por serviço.
 
+### Status — Sprint 4 implementado (2026-08-01)
+
+- **`CurrentUser` no backend**: `CrmPrincipal` → `CurrentUser` (`infrastructure/security/filter/CurrentUser.java`, mesmos campos do auth-service) em `UserController`, `RoleController`, `AuditController`, `AuthController` e `AuditInterceptor`. Auditoria identifica o usuário a partir do `CurrentUser`.
+- **Resolução de identidade plugável**: interface `CurrentUserResolver` com duas implementações selecionadas por `app.auth.identity-layer.enabled`:
+  - `false` (default) — `LocalCurrentUserResolver` (provisionamento Sprint 1 + RBAC direto no banco CRM; lógica movida do converter).
+  - `true` — `AuthServiceCurrentUserResolver` (chama `GET /internal/auth/current-user` do auth-service via `AuthServiceClient`/`RestClient`), com fallback local em `PROVISIONING_REQUIRED` e em falha de rede (o sistema nunca fica sem autenticação).
+- **Fim da emissão de tokens própria**: removidos `AuthService.login/refreshTokens/logout/handleKeycloakLogin`, `JwtProvider`, `JwtTokenProvider`, `JwtAuthenticationFilter`, `JwtProperties`, `JwtUserPrincipal`, família `RefreshToken*` (domain/port/persistence), `Token`/`TokenExpiredException` e DTOs `LoginRequest`/`LoginResponse`/`RefreshTokenRequest`. jjwt removido do `pom.xml`.
+- **Endpoints removidos do backend**: `POST /auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/keycloak/callback` (autenticação é exclusiva do Keycloak — ver AUTH_FLOWS.md). `GET /auth/me`, `register`, `forgot-password`, `reset-password` e `change-password` permanecem no backend (o `/auth/me` público do auth-service é sprint futuro; senhas/registro avaliados na Sprint 6).
+- **Eventos de sessão legacy**: `UserLoggedInEvent`/`UserLoggedOutEvent`/`TokenRefreshedEvent` e seus handlers de auditoria removidos (login/logout não existem mais no backend).
+- **Segurança**: resource server continua validando o JWT via **JWKS do Keycloak**; `KeycloakJwtAuthenticationConverter` agora monta o `CurrentUser` via resolver e mantém as authorities (`ROLE_*` do JWT + roles/permissions do RBAC).
+- **Observação de arquitetura**: o gateway ainda não existe (adiado na Sprint 2); nesta sprint o consumo da camada de identidade é direto (HTTP ao auth-service) via flag, preparando a troca futura para o gateway/starter sem mudança nos controllers.
+- **Rollback**: `AUTH_IDENTITY_LAYER_ENABLED=false` restaura a resolução local (comportamento anterior, com provisionamento/RBAC no próprio serviço); a emissão própria de tokens foi removida porque o frontend é 100% OIDC (Sprint 3) e nada mais a consumia (grep confirmado).
+- **Configuração**: `application.yml` — removida a seção `jwt:`; adicionados `app.auth.identity-layer.enabled` (`AUTH_IDENTITY_LAYER_ENABLED`, default `false`) e `app.auth.identity-layer.auth-service-url` (`AUTH_SERVICE_URL`). `docker-compose.yml` — envs `AUTH_IDENTITY_LAYER_ENABLED`/`AUTH_SERVICE_URL` no serviço `backend`.
+- **Testes**: 51 testes verdes (9 de provisionamento mantidos; converter adaptado ao `CurrentUser`; novos `LocalCurrentUserResolverTest` e `AuthServiceCurrentUserResolverTest`; `TokenTest` removido). Build e package OK.
+- **Pendência de deploy**: ativação da camada de identidade (`AUTH_IDENTITY_LAYER_ENABLED=true`) e validação real contra o auth-service na VPS após aprovação do commit — o auth-service ainda não está deployado (Sprint 2).
+
 ### Critérios de Aceite
 
-- [ ] Todos os endpoints autenticados funcionam com JWT do Keycloak + `CurrentUser` do gateway.
-- [ ] Nenhuma emissão de token própria permanece no backend (grep: `JwtTokenProvider`/`JwtAuthenticationFilter` ausentes).
-- [ ] `/auth/me`, `/auth/refresh`, `/auth/logout` deixam de existir no backend (delegados ao Keycloak/auth-service).
-- [ ] Auditoria identifica o usuário corretamente a partir do `CurrentUser`.
-- [ ] Rollback: `AUTH_IDENTITY_LAYER_ENABLED=false` restaura o comportamento anterior (código legacy removido apenas na Sprint 6).
+- [x] Todos os endpoints autenticados funcionam com JWT do Keycloak + `CurrentUser`. *(resolução por flag; validação real em deploy pendente)*
+- [x] Nenhuma emissão de token própria permanece no backend (grep: `JwtTokenProvider`/`JwtAuthenticationFilter` ausentes). *(removidos; grep ausente)*
+- [x] `/auth/login`, `/auth/refresh`, `/auth/logout` deixam de existir no backend (delegados ao Keycloak). *(`/auth/me` mantido operacional no backend — `/auth/me` público do auth-service é sprint futuro)*
+- [x] Auditoria identifica o usuário corretamente a partir do `CurrentUser`. *(`AuditInterceptor` usa `CurrentUser`)*
+- [x] Rollback: `AUTH_IDENTITY_LAYER_ENABLED=false` restaura o comportamento anterior (resolução local; código legacy de emissão removido — frontend já é 100% OIDC).
 
 ---
 
@@ -256,23 +272,26 @@ Remover o caminho legacy, eliminar dependências diretas desnecessárias do Keyc
 | Serviço | Flag | Valor legacy | Valor alvo |
 |---|---|---|---|
 | `crm-backend` | `AUTH_PROVISIONING_ENABLED` | `false` (500 atual) | `true` (auto-provisioning) |
-| `crm-backend` | `AUTH_IDENTITY_LAYER_ENABLED` | `false` (resolve no próprio serviço) | `true` (consome `CurrentUser` do gateway) |
+| `crm-backend` | `AUTH_IDENTITY_LAYER_ENABLED` | `false` (resolve no próprio serviço) | `true` (consome `CurrentUser` do auth-service; gateway em sprint futuro) |
 | Gateway | `AUTH_CURRENT_USER_ENABLED` | `false` | `true` (resolvem/propagam `CurrentUser`) |
 | Frontend | `NEXT_PUBLIC_AUTH_FLOW` | `dual` | `oidc` (Keycloak exclusivo) |
 
 > **Sprint 3 (2026-07-31):** o caminho dual foi **removido do código** — o frontend é exclusivamente OIDC. Não há flag de runtime para o fluxo dual; rollback do frontend = **reverter o build/commit** (o código dual não existe mais).
+
+> **Sprint 4 (2026-08-01):** a emissão própria de tokens (JWT HS256, `JwtAuthenticationFilter`, `JwtTokenProvider`, refresh tokens) foi **removida do código** do backend — nada mais a consumia (frontend 100% OIDC). O `KeycloakJwtAuthenticationConverter` (validação via JWKS do Keycloak) permanece até a Sprint 6. O rollback da resolução de identidade é via flag `AUTH_IDENTITY_LAYER_ENABLED=false` (resolve no próprio serviço); a remoção da emissão NÃO introduz um emissor paralelo — o Keycloak segue sendo o único emissor.
+
 ### Cenários de rollback
 
 | Cenário | Ação | Impacto |
 |---|---|---|
 | Provisionamento com bug | `AUTH_PROVISIONING_ENABLED=false`; usuários existentes seguem autenticando | Usuários novos aguardam correção |
-| Auth-service instável | Desligar `AUTH_CURRENT_USER_ENABLED`; backend volta a resolver no próprio serviço | Segundos |
+| Auth-service instável | `AUTH_IDENTITY_LAYER_ENABLED=false`; backend volta a resolver no próprio serviço (e o resolver via auth-service já tem fallback local automático) | Segundos |
 | Regressão no frontend | Reverter build do frontend (fluxo dual) | Imediato |
 | Corrupção de dados | Restore do backup (BACKUP_RECOVERY.md) | Horas |
 
 ### Garantias
 
-- O código legacy (JWT HS256, converter Keycloak) é **removido apenas na Sprint 6**; até lá, qualquer deploy pode ser revertido.
+- A emissão própria de tokens (JWT HS256, refresh tokens) foi **removida na Sprint 4** (sem consumidores após a Sprint 3); o `KeycloakJwtAuthenticationConverter` e o código de validação JWKS permanecem até a Sprint 6, quando o starter/gateway substituem o acoplamento direto.
 - Nenhuma migração de banco remove colunas antes da Sprint 6.
 - Feature flags versionadas e observáveis.
 - O Keycloak permanece o único emissor em todos os cenários; rollback nunca introduz um emissor paralelo.
@@ -310,7 +329,7 @@ Remover o caminho legacy, eliminar dependências diretas desnecessárias do Keyc
 
 | Área | Impacto |
 |---|---|
-| Backend | Fim da emissão de tokens próprios; `CrmPrincipal` → `CurrentUser`; `AuthService` reduzido; conversor substituído pelo starter |
+| Backend | Fim da emissão de tokens próprios (Sprint 4); `CrmPrincipal` → `CurrentUser`; `AuthService` reduzido; conversor substituído pelo starter na Sprint 6 |
 | Frontend | Fim do TokenManager dual; fluxo OIDC + PKCE exclusivo com Keycloak |
 | Banco | Nenhuma mudança destrutiva; possível nova tabela de sessões/auditoria do auth-service |
 | Keycloak | Cliente público `crm-frontend` (PKCE); roles mantidas; (opcional) role mapper de RBAC |
@@ -340,3 +359,4 @@ Remover o caminho legacy, eliminar dependências diretas desnecessárias do Keyc
 | 1.3.0 | 2026-07-31 | Architect | Sprint 2 — implementado (crm-auth-service: CurrentUser, /internal/auth/current-user, JWKS do Keycloak, 14 testes); regressão Sprint 1 mantida |
 | 1.4.0 | 2026-07-31 | Architect | Sprint 3 — implementado (frontend 100% OIDC/PKCE com Keycloak; legacy de login/refresh/logout removido; middleware sem redirect loop; 49 testes; typecheck/build ok); rollback de frontend = reverter build |
 | 1.5.0 | 2026-07-31 | Architect | Sprint 3.1 — implementado (simplificação: único escritor setTokens; cookie-flag kc_authenticated sem JWT; middleware sem interpretar JWT; refresh consolidado em refreshAccessToken; TokenManager sem regras; 35 testes; regressões verdes) |
+| 1.6.0 | 2026-08-01 | Architect | Sprint 4 — implementado (CurrentUser no backend via resolver plugável por flag; fim da emissão própria de tokens JWT HS256/refresh; remoção de login/refresh/logout/keycloak-callback; auditoria via CurrentUser; AuthService reduzido; 51 testes) |

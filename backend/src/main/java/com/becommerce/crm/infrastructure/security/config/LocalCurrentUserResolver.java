@@ -1,0 +1,125 @@
+package com.becommerce.crm.infrastructure.security.config;
+
+import com.becommerce.crm.application.identity.port.input.AuthUseCase;
+import com.becommerce.crm.application.identity.port.output.PermissionRepository;
+import com.becommerce.crm.application.identity.port.output.RolePermissionRepository;
+import com.becommerce.crm.application.identity.port.output.RoleRepository;
+import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.domain.identity.Permission;
+import com.becommerce.crm.domain.identity.Role;
+import com.becommerce.crm.domain.identity.User;
+import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
+import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.oauth2.jwt.Jwt;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * Resolução local do {@link CurrentUser} a partir do banco CRM: provisiona o
+ * usuário Keycloak (Sprint 1) e resolve roles/permissions do RBAC. Usada por
+ * padrão (flag {@code app.auth.identity-layer.enabled=false}) e como fallback
+ * da resolução via crm-auth-service.
+ */
+public class LocalCurrentUserResolver implements CurrentUserResolver {
+
+    private final AuthUseCase authUseCase;
+    private final UserRoleRepository userRoleRepository;
+    private final RoleRepository roleRepository;
+    private final RolePermissionRepository rolePermissionRepository;
+    private final PermissionRepository permissionRepository;
+
+    public LocalCurrentUserResolver(
+            AuthUseCase authUseCase,
+            UserRoleRepository userRoleRepository,
+            RoleRepository roleRepository,
+            RolePermissionRepository rolePermissionRepository,
+            PermissionRepository permissionRepository) {
+        this.authUseCase = authUseCase;
+        this.userRoleRepository = userRoleRepository;
+        this.roleRepository = roleRepository;
+        this.rolePermissionRepository = rolePermissionRepository;
+        this.permissionRepository = permissionRepository;
+    }
+
+    @Override
+    public CurrentUser resolve(Jwt jwt) {
+        String keycloakSub = jwt.getSubject();
+        String email = jwt.getClaimAsString("email");
+        String preferredUsername = jwt.getClaimAsString("preferred_username");
+        String givenName = jwt.getClaimAsString("given_name");
+        String familyName = jwt.getClaimAsString("family_name");
+        String name = jwt.getClaimAsString("name");
+
+        if (givenName == null && familyName == null && name != null && !name.isBlank()) {
+            List<String> parts = Arrays.stream(name.trim().split("\\s+"))
+                    .filter(part -> !part.isBlank())
+                    .collect(Collectors.toList());
+            if (!parts.isEmpty()) {
+                givenName = parts.get(0);
+                if (parts.size() > 1) {
+                    familyName = String.join(" ", parts.subList(1, parts.size()));
+                }
+            }
+        }
+
+        User user;
+        try {
+            user = authUseCase.provisionKeycloakUser(
+                    keycloakSub, email, preferredUsername, givenName, familyName);
+        } catch (UserProvisioningException e) {
+            throw new AuthenticationServiceException(e.getMessage());
+        }
+
+        UUID userId = user.getId();
+        UUID companyId = user.getCompanyId();
+
+        List<String> roleNames = userRoleRepository.findByUserIdAndCompanyId(userId, companyId).stream()
+                .map(ur -> roleRepository.findById(ur.getRoleId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(role -> role.getName().name())
+                .collect(Collectors.toList());
+
+        List<String> permissions = roleNames.stream()
+                .flatMap(roleName -> permissionsForRole(roleName, companyId))
+                .distinct()
+                .collect(Collectors.toList());
+
+        String displayName = buildDisplayName(name, givenName, familyName, email);
+
+        return CurrentUser.fromKeycloak(userId, email, companyId, roleNames, permissions, keycloakSub, displayName);
+    }
+
+    private Stream<String> permissionsForRole(String roleName, UUID companyId) {
+        try {
+            Optional<Role> roleOpt = roleRepository.findByNameAndCompanyId(RoleName.valueOf(roleName), companyId);
+            return roleOpt.map(role -> rolePermissionRepository.findByRoleId(role.getId()).stream()
+                            .map(rp -> permissionRepository.findById(rp.getPermissionId()))
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .map(Permission::getName))
+                    .orElse(Stream.empty());
+        } catch (Exception e) {
+            return Stream.empty();
+        }
+    }
+
+    private String buildDisplayName(String name, String givenName, String familyName, String email) {
+        if (name != null && !name.isBlank()) {
+            return name;
+        }
+        if (givenName != null && !givenName.isBlank()) {
+            return familyName != null && !familyName.isBlank()
+                    ? givenName + " " + familyName
+                    : givenName;
+        }
+        return email;
+    }
+}

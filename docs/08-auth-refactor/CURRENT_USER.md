@@ -41,6 +41,8 @@ O `CurrentUser` é um objeto imutável, **resolvido pelo `crm-auth-service`** a 
 > **Status Sprint 3 (frontend — 2026-07-31):** o frontend **não reconstrói** o `CurrentUser` a partir de claims. A identidade de negócio usada hoje vem de `GET /api/v1/auth/me` do backend (Sprint 1), que retorna `UserResponse` (`id`, `email`, `name`, `companyId`, `isActive`, ...) — compatível em campos com `CurrentUser`, mas **não** inclui `permissions` nem `roles` do banco. O `permissions: []` no `AuthContext` é placeholder até o `CurrentUser` público existir. O endpoint interno `/internal/auth/current-user` do auth-service (Sprint 2) **não é exposto ao navegador**; a exposição ao frontend depende do gateway/BFF e está planejada no Sprint 4 (ver MIGRATION_PLAN.md §6).
 
 > **Status Sprint 3.1 (simplificação — 2026-07-31):** nenhuma mudança no `CurrentUser` nem no frontend a respeito de identidade de negócio. Apenas a gestão do **token de transporte** foi simplificada: `TokenManager.setTokens` é o **único escritor** do estado de token; o **cookie não carrega mais o JWT** (vira a flag `kc_authenticated=1`); o **middleware não interpreta/decodifica JWT** (apenas verifica a flag); e o refresh foi consolidado em `refreshAccessToken` (único chamador de `keycloak.updateToken`). Validação/autorização continuam no Keycloak e no backend.
+>
+> **Status Sprint 4 (integração — 2026-08-01):** o `crm-backend` passou a usar o **`CurrentUser`** como identidade de aplicação: `CrmPrincipal` foi substituído nos controllers e na auditoria; a resolução é plugável por flag `AUTH_IDENTITY_LAYER_ENABLED` (`LocalCurrentUserResolver` no próprio serviço — provisionamento Sprint 1 + RBAC — ou `AuthServiceCurrentUserResolver` consumindo `GET /internal/auth/current-user`, com fallback local). A emissão própria de tokens foi removida (login/refresh/logout/keycloak-callback). O `/auth/me` público do auth-service continua planejado; o frontend segue consumindo `GET /api/v1/auth/me` do backend.
 
 ---
 
@@ -121,7 +123,7 @@ O gateway valida o JWT do Keycloak, resolve o `CurrentUser` no auth-service e o 
 | Modelo atual | Modelo alvo | Mapeamento |
 |---|---|---|
 | `CrmPrincipal(userId, companyId, roles, permissions, keycloakSub)` | `CurrentUser` | Campos 1:1; novos campos: `tenantId`, `sessionId`, `provider`, `email`, `displayName` |
-| `CrmPrincipal.fromKeycloak(...)` | `CurrentUserMapper.fromContext(...)` | Construtor pelo starter |
+| `CrmPrincipal.fromKeycloak(...)` | `CurrentUser.fromKeycloak(...)` | Factory no backend (Sprint 4) / `CurrentUserMapper.fromContext(...)` pelo starter |
 | `CrmPrincipal.fromLegacy(...)` | removido (legacy eliminado) | — |
 | `@AuthenticationPrincipal CrmPrincipal` | `@AuthenticationPrincipal CurrentUser` | Assinatura dos controllers |
 
@@ -157,3 +159,4 @@ A migração mantém o nome de método `getUserId()`/`getCompanyId()` idêntico,
 | 1.2.0 | 2026-07-31 | Architect | Sprint 2 — CurrentUser implementado no crm-auth-service (record imutável, tenantId=companyId, provider=keycloak, listas defensivas); JSON atual camelCase |
 | 1.3.0 | 2026-07-31 | Architect | Sprint 3 — frontend: identidade de negócio via /auth/me (UserResponse); permissions placeholder; /internal/auth/current-user não exposto ao navegador |
 | 1.4.0 | 2026-07-31 | Architect | Sprint 3.1 — simplificação do transporte de token: único escritor (setTokens), cookie-flag sem JWT, middleware sem interpretar JWT, refresh consolidado; Keycloak continua autoridade |
+| 1.5.0 | 2026-08-01 | Architect | Sprint 4 — crm-backend usa CurrentUser (substitui CrmPrincipal); resolução plugável por flag (local / auth-service com fallback); fim da emissão própria de tokens; /auth/me do backend mantido |

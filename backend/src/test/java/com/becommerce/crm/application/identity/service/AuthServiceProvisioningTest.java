@@ -3,12 +3,8 @@ package com.becommerce.crm.application.identity.service;
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
 import com.becommerce.crm.application.identity.port.output.EmailService;
 import com.becommerce.crm.application.identity.port.output.EventPublisher;
-import com.becommerce.crm.application.identity.port.output.JwtProvider;
 import com.becommerce.crm.application.identity.port.output.PasswordEncoder;
 import com.becommerce.crm.application.identity.port.output.PasswordResetTokenRepository;
-import com.becommerce.crm.application.identity.port.output.PermissionRepository;
-import com.becommerce.crm.application.identity.port.output.RefreshTokenRepository;
-import com.becommerce.crm.application.identity.port.output.RolePermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
@@ -52,15 +48,11 @@ class AuthServiceProvisioningTest {
     private static final String PREFERRED_USERNAME = "ghilherme007";
 
     @Mock private UserRepository userRepository;
-    @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private RoleRepository roleRepository;
     @Mock private UserRoleRepository userRoleRepository;
-    @Mock private RolePermissionRepository rolePermissionRepository;
-    @Mock private PermissionRepository permissionRepository;
     @Mock private CompanyRepository companyRepository;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock private JwtProvider jwtProvider;
     @Mock private EventPublisher eventPublisher;
     @Mock private EmailService emailService;
 

@@ -4,7 +4,7 @@ import com.becommerce.crm.application.audit.dto.AuditLogPageResponse;
 import com.becommerce.crm.application.audit.dto.AuditLogResponse;
 import com.becommerce.crm.application.audit.dto.AuditLogSearchRequest;
 import com.becommerce.crm.application.audit.port.input.AuditUseCase;
-import com.becommerce.crm.infrastructure.security.filter.CrmPrincipal;
+import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,7 +27,7 @@ public class AuditController {
     @GetMapping
     @PreAuthorize("hasAuthority('audit:read')")
     public ResponseEntity<AuditLogPageResponse> search(
-            @AuthenticationPrincipal CrmPrincipal principal,
+            @AuthenticationPrincipal CurrentUser principal,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer pageSize,
             @RequestParam(required = false) String module,
@@ -52,7 +52,7 @@ public class AuditController {
     @PreAuthorize("hasAuthority('audit:read')")
     public ResponseEntity<AuditLogResponse> getById(
             @PathVariable UUID id,
-            @AuthenticationPrincipal CrmPrincipal principal) {
+            @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(auditUseCase.getById(id, principal.companyId()));
     }
 }

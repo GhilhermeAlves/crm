@@ -22,7 +22,8 @@ services:
       - CRM_RABBITMQ_PORT=5672
       - CRM_RABBITMQ_USERNAME=${CRM_RABBITMQ_USERNAME}
       - CRM_RABBITMQ_PASSWORD=${CRM_RABBITMQ_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - AUTH_IDENTITY_LAYER_ENABLED=${AUTH_IDENTITY_LAYER_ENABLED:-false}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:8080}
     depends_on:
       postgres:
         condition: service_healthy

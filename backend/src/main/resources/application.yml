@@ -64,11 +64,6 @@ server:
   servlet:
     context-path: /api/v1
 
-jwt:
-  secret: ${JWT_SECRET:TWVsbG9uU2VjcmV0S2V5Rm9yQ3JtQmFja0VuZEFwcGxpY2F0aW9uVGhpc0lzQmFzZTY0}
-  access-token-expiry: 900000
-  refresh-token-expiry: 604800000
-
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
@@ -77,6 +72,9 @@ app:
       enabled: ${AUTH_PROVISIONING_ENABLED:true}
       default-company-id: ${AUTH_DEFAULT_COMPANY_ID:}
       default-role: ${AUTH_DEFAULT_ROLE:AGENT}
+    identity-layer:
+      enabled: ${AUTH_IDENTITY_LAYER_ENABLED:false}
+      auth-service-url: ${AUTH_SERVICE_URL:}
 
 springdoc:
   api-docs:

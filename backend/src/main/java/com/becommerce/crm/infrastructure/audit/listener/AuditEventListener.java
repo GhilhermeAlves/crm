@@ -49,45 +49,6 @@ public class AuditEventListener {
 
     @Async
     @EventListener
-    public void handleUserLoggedIn(UserLoggedInEvent event) {
-        AuditContextData context = AuditContext.get();
-
-        AuditLog auditLog = AuditLog.create(event.companyId(), AuditAction.LOGIN, AuditModule.AUTH);
-        auditLog.setUserId(event.userId());
-        auditLog.setEntityName("User");
-        auditLog.setEntityId(event.userId().toString());
-        auditLog.setDescription("Login realizado com sucesso");
-        auditLog.setIpAddress(event.ipAddress());
-
-        if (context != null) {
-            auditLog.setUserAgent(context.userAgent());
-        }
-
-        auditService.recordAudit(auditLog);
-    }
-
-    @Async
-    @EventListener
-    public void handleUserLoggedOut(UserLoggedOutEvent event) {
-        AuditContextData context = AuditContext.get();
-        UUID companyId = context != null ? context.companyId() : event.companyId();
-
-        AuditLog auditLog = AuditLog.create(companyId, AuditAction.LOGOUT, AuditModule.AUTH);
-        auditLog.setUserId(event.userId());
-        auditLog.setEntityName("User");
-        auditLog.setEntityId(event.userId().toString());
-        auditLog.setDescription("Logout realizado");
-
-        if (context != null) {
-            auditLog.setIpAddress(context.ipAddress());
-            auditLog.setUserAgent(context.userAgent());
-        }
-
-        auditService.recordAudit(auditLog);
-    }
-
-    @Async
-    @EventListener
     public void handlePasswordChanged(PasswordChangedEvent event) {
         AuditLog auditLog = AuditLog.create(event.companyId(), AuditAction.CHANGE_PASSWORD, AuditModule.AUTH);
         auditLog.setUserId(event.userId());
@@ -112,18 +73,6 @@ public class AuditEventListener {
         auditLog.setEntityName("User");
         auditLog.setEntityId(event.userId().toString());
         auditLog.setDescription("Solicitação de redefinição de senha");
-
-        auditService.recordAudit(auditLog);
-    }
-
-    @Async
-    @EventListener
-    public void handleTokenRefreshed(TokenRefreshedEvent event) {
-        AuditLog auditLog = AuditLog.create(event.companyId(), AuditAction.LOGIN, AuditModule.AUTH);
-        auditLog.setUserId(event.userId());
-        auditLog.setEntityName("User");
-        auditLog.setEntityId(event.userId().toString());
-        auditLog.setDescription("Token renovado com sucesso");
 
         auditService.recordAudit(auditLog);
     }

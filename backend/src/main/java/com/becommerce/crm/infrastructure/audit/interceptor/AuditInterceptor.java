@@ -1,8 +1,7 @@
 package com.becommerce.crm.infrastructure.audit.interceptor;
 
 import com.becommerce.crm.infrastructure.audit.context.AuditContext;
-import com.becommerce.crm.infrastructure.security.filter.CrmPrincipal;
-import com.becommerce.crm.infrastructure.security.filter.JwtUserPrincipal;
+import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -22,15 +21,9 @@ public class AuditInterceptor implements HandlerInterceptor {
         UUID userId = null;
         UUID companyId = null;
 
-        if (authentication != null) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof CrmPrincipal crmPrincipal) {
-                userId = crmPrincipal.userId();
-                companyId = crmPrincipal.companyId();
-            } else if (principal instanceof JwtUserPrincipal jwtPrincipal) {
-                userId = jwtPrincipal.userId();
-                companyId = jwtPrincipal.companyId();
-            }
+        if (authentication != null && authentication.getPrincipal() instanceof CurrentUser currentUser) {
+            userId = currentUser.userId();
+            companyId = currentUser.companyId();
         }
 
         if (userId != null) {

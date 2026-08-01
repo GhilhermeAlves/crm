@@ -262,10 +262,18 @@ spring:
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
-jwt:
-  secret: ${JWT_SECRET}
-  access-token-expiration: 900000  # 15 min
-  refresh-token-expiration: 604800000  # 7 days
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWKS_URI}
+
+app:
+  auth:
+    identity-layer:
+      enabled: ${AUTH_IDENTITY_LAYER_ENABLED:false}
+      auth-service-url: ${AUTH_SERVICE_URL:}
 
 integration:
   whatsapp:

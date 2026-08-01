@@ -20,7 +20,6 @@ import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
 import com.becommerce.crm.domain.identity.exception.PermissionNotFoundException;
 import com.becommerce.crm.domain.identity.exception.RoleNotFoundException;
-import com.becommerce.crm.domain.identity.exception.TokenExpiredException;
 import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 
@@ -97,17 +96,6 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 400,
                 "error", "Bad Request",
-                "message", ex.getMessage(),
-                "timestamp", LocalDateTime.now().toString()
-            ));
-    }
-
-    @ExceptionHandler(TokenExpiredException.class)
-    public ResponseEntity<Map<String, Object>> handleTokenExpiredException(TokenExpiredException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(Map.of(
-                "status", 401,
-                "error", "Token Expired",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

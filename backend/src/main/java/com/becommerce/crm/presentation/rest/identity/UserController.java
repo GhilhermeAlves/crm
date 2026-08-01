@@ -3,7 +3,7 @@ package com.becommerce.crm.presentation.rest.identity;
 import com.becommerce.crm.application.identity.dto.*;
 import com.becommerce.crm.application.identity.port.input.RoleUseCase;
 import com.becommerce.crm.application.identity.port.input.UserUseCase;
-import com.becommerce.crm.infrastructure.security.filter.CrmPrincipal;
+import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +29,7 @@ public class UserController {
     @GetMapping
     @PreAuthorize("hasAuthority('user:read')")
     public ResponseEntity<PageResponse<UserResponse>> listUsers(
-            @AuthenticationPrincipal CrmPrincipal principal,
+            @AuthenticationPrincipal CurrentUser principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String search,
@@ -55,7 +55,7 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasAuthority('user:create')")
     public ResponseEntity<UserResponse> createUser(
-            @AuthenticationPrincipal CrmPrincipal principal,
+            @AuthenticationPrincipal CurrentUser principal,
             @Valid @RequestBody CreateUserRequest request) {
         UserResponse response = userUseCase.createUser(principal.companyId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -92,7 +92,7 @@ public class UserController {
     @PostMapping("/invite")
     @PreAuthorize("hasAuthority('user:invite')")
     public ResponseEntity<UserResponse> inviteUser(
-            @AuthenticationPrincipal CrmPrincipal principal,
+            @AuthenticationPrincipal CurrentUser principal,
             @Valid @RequestBody InviteUserRequest request) {
         UserResponse response = userUseCase.inviteUser(principal.companyId(), principal.userId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -105,13 +105,13 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal CrmPrincipal principal) {
+    public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(userUseCase.getProfile(principal.userId()));
     }
 
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateProfile(
-            @AuthenticationPrincipal CrmPrincipal principal,
+            @AuthenticationPrincipal CurrentUser principal,
             @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userUseCase.updateProfile(principal.userId(), request));
     }
@@ -120,7 +120,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('role:read')")
     public ResponseEntity<List<RoleResponse>> getUserRoles(
             @PathVariable UUID id,
-            @AuthenticationPrincipal CrmPrincipal principal) {
+            @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(roleUseCase.getUserRoles(id, principal.companyId()));
     }
 
@@ -129,7 +129,7 @@ public class UserController {
     public ResponseEntity<Void> assignRoleToUser(
             @PathVariable UUID id,
             @Valid @RequestBody AssignRoleRequest request,
-            @AuthenticationPrincipal CrmPrincipal principal) {
+            @AuthenticationPrincipal CurrentUser principal) {
         roleUseCase.assignRoleToUser(id, UUID.fromString(request.roleId()), principal.companyId());
         return ResponseEntity.ok().build();
     }
