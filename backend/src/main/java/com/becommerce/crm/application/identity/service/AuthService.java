@@ -88,16 +88,17 @@ public class AuthService implements AuthUseCase {
     @Override
     public void register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new IllegalStateException("Email already exists");
         }
 
         Email email = new Email(request.email());
         Password password = new Password(request.password());
 
-        User user = User.create(email, password, request.name(), "", request.companyId());
+        UUID companyId = resolveCompanyForRegistration(request.companyId());
+        User user = User.create(email, password, request.name(), "", companyId);
         userRepository.save(user);
 
-        eventPublisher.publish(UserCreatedEvent.create(user.getId(), request.email(), request.companyId()));
+        eventPublisher.publish(UserCreatedEvent.create(user.getId(), request.email(), companyId));
     }
 
     @Override
@@ -265,6 +266,16 @@ public class AuthService implements AuthUseCase {
         } catch (DataIntegrityViolationException e) {
             // Atribuição concorrente já realizada por outra requisição do mesmo usuário.
         }
+    }
+
+    private UUID resolveCompanyForRegistration(UUID requestedCompanyId) {
+        if (requestedCompanyId != null) {
+            return companyRepository.findById(requestedCompanyId)
+                    .map(Company::getId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Empresa informada não existe: " + requestedCompanyId));
+        }
+        return resolveDefaultCompanyId();
     }
 
     private UUID resolveDefaultCompanyId() {

@@ -21,6 +21,9 @@ public class AuditLogRepositoryImpl implements AuditLogRepository {
     @Override
     public AuditLog save(AuditLog auditLog) {
         AuditLogJpaEntity entity = toJpaEntity(auditLog);
+        if (auditLog.getId() == null || !repository.existsById(auditLog.getId())) {
+            entity.setId(null);
+        }
         AuditLogJpaEntity saved = repository.save(entity);
         return toDomainEntity(saved);
     }

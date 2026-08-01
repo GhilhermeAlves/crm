@@ -17,7 +17,7 @@ export const AuthService = {
       name: data.name,
       email: data.email,
       password: data.password,
-      companyId: data.companyId ?? "",
+      ...(data.companyId ? { companyId: data.companyId } : {}),
     });
   },
 
