@@ -65,7 +65,6 @@ export function KeycloakProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     TokenManager.clearTokens();
     await logoutKeycloak();
-    window.location.href = "/login";
   }, []);
 
   return (
