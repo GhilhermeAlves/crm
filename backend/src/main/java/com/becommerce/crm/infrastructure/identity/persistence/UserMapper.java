@@ -26,6 +26,7 @@ public class UserMapper {
         entity.setCompanyId(user.getCompanyId());
         entity.setStatus(user.getStatus().name());
         entity.setActive(user.isActive());
+        entity.setCrmEnabled(user.isCrmEnabled());
         entity.setLanguage(user.getLanguage());
         entity.setTimezone(user.getTimezone());
         entity.setNotes(user.getNotes());
@@ -54,6 +55,7 @@ public class UserMapper {
         user.setAvatarUrl(entity.getAvatarUrl());
         user.setStatus(UserStatus.valueOf(entity.getStatus()));
         user.setActive(entity.isActive());
+        user.setCrmEnabled(entity.isCrmEnabled());
         user.setLanguage(entity.getLanguage());
         user.setTimezone(entity.getTimezone());
         user.setNotes(entity.getNotes());

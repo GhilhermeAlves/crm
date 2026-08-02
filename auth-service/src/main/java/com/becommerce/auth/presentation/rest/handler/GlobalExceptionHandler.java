@@ -1,6 +1,6 @@
 package com.becommerce.auth.presentation.rest.handler;
 
-import com.becommerce.auth.domain.identity.exception.UserInactiveException;
+import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,12 +16,12 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserInactiveException.class)
-    public ResponseEntity<Map<String, Object>> handleUserInactive(UserInactiveException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "status", 401,
-                "code", "USER_INACTIVE",
-                "error", "Unauthorized",
+    @ExceptionHandler(CrmAccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleCrmAccessDenied(CrmAccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "status", 403,
+                "code", "CRM_ACCESS_DENIED",
+                "error", "Forbidden",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()));
     }

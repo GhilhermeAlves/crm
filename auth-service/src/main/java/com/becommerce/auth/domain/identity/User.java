@@ -14,5 +14,6 @@ public record User(
         String name,
         String keycloakSub,
         UUID companyId,
-        boolean active) {
+        boolean active,
+        boolean crmEnabled) {
 }

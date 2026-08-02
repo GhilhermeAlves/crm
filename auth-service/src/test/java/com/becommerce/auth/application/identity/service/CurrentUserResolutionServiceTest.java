@@ -1,13 +1,15 @@
 package com.becommerce.auth.application.identity.service;
 
+import com.becommerce.auth.application.company.port.output.CompanyRepository;
 import com.becommerce.auth.application.identity.port.output.PermissionRepository;
 import com.becommerce.auth.application.identity.port.output.RoleRepository;
 import com.becommerce.auth.application.identity.port.output.UserRepository;
+import com.becommerce.auth.domain.company.CompanyStatus;
 import com.becommerce.auth.domain.identity.AuthenticatedIdentity;
 import com.becommerce.auth.domain.identity.CurrentUser;
 import com.becommerce.auth.domain.identity.CurrentUserResolution;
 import com.becommerce.auth.domain.identity.User;
-import com.becommerce.auth.domain.identity.exception.UserInactiveException;
+import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,25 +40,35 @@ class CurrentUserResolutionServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private RoleRepository roleRepository;
     @Mock private PermissionRepository permissionRepository;
+    @Mock private CompanyRepository companyRepository;
 
     private CurrentUserResolutionService service;
 
     @BeforeEach
     void setUp() {
-        service = new CurrentUserResolutionService(userRepository, roleRepository, permissionRepository);
+        service = new CurrentUserResolutionService(userRepository, roleRepository, permissionRepository, companyRepository);
     }
 
     private AuthenticatedIdentity identity() {
         return new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "session-1");
     }
 
+    private User user(boolean active, boolean crmEnabled) {
+        return new User(USER_ID, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", SUB, COMPANY_ID, active, crmEnabled);
+    }
+
     private User activeUser() {
-        return new User(USER_ID, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", SUB, COMPANY_ID, true);
+        return user(true, true);
+    }
+
+    private void allowActiveCompany() {
+        when(companyRepository.findStatusById(COMPANY_ID)).thenReturn(Optional.of(CompanyStatus.ACTIVE));
     }
 
     @Test
     void shouldResolveCurrentUserForExistingAuthenticatedUser() {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        allowActiveCompany();
         when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of("AGENT"));
         when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID))
                 .thenReturn(List.of("contact:read", "dashboard:view"));
@@ -91,19 +104,62 @@ class CurrentUserResolutionServiceTest {
         verify(roleRepository, never()).findRoleNamesByUserIdAndCompanyId(any(), any());
     }
 
+    // ------------------------------------------------------------- gates (Sprint 6)
+
     @Test
-    void shouldRejectInactiveUser() {
-        User inactive = new User(USER_ID, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", SUB, COMPANY_ID, false);
-        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(inactive));
+    void shouldDenyInactiveUser() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(user(false, true)));
 
-        assertThrows(UserInactiveException.class, () -> service.resolve(identity()));
+        CrmAccessDeniedException ex = assertThrows(CrmAccessDeniedException.class, () -> service.resolve(identity()));
 
+        assertTrue(ex.getMessage().contains("inativo"));
         verify(roleRepository, never()).findRoleNamesByUserIdAndCompanyId(any(), any());
+    }
+
+    @Test
+    void shouldDenyUserWithoutCrmAccess() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(user(true, false)));
+
+        CrmAccessDeniedException ex = assertThrows(CrmAccessDeniedException.class, () -> service.resolve(identity()));
+
+        assertTrue(ex.getMessage().contains("crm_enabled"));
+        verify(roleRepository, never()).findRoleNamesByUserIdAndCompanyId(any(), any());
+    }
+
+    @Test
+    void shouldDenyUserWhenCompanySuspended() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        when(companyRepository.findStatusById(COMPANY_ID)).thenReturn(Optional.of(CompanyStatus.SUSPENDED));
+
+        CrmAccessDeniedException ex = assertThrows(CrmAccessDeniedException.class, () -> service.resolve(identity()));
+
+        assertTrue(ex.getMessage().contains("SUSPENDED"));
+        verify(roleRepository, never()).findRoleNamesByUserIdAndCompanyId(any(), any());
+    }
+
+    @Test
+    void shouldDenyUserWhenCompanyInactive() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        when(companyRepository.findStatusById(COMPANY_ID)).thenReturn(Optional.of(CompanyStatus.INACTIVE));
+
+        CrmAccessDeniedException ex = assertThrows(CrmAccessDeniedException.class, () -> service.resolve(identity()));
+
+        assertTrue(ex.getMessage().contains("INACTIVE"));
+        verify(roleRepository, never()).findRoleNamesByUserIdAndCompanyId(any(), any());
+    }
+
+    @Test
+    void shouldDenyUserWhenCompanyDoesNotExist() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        when(companyRepository.findStatusById(COMPANY_ID)).thenReturn(Optional.empty());
+
+        assertThrows(CrmAccessDeniedException.class, () -> service.resolve(identity()));
     }
 
     @Test
     void shouldResolveRolesAndPermissionsFromCrm() {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        allowActiveCompany();
         when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID))
                 .thenReturn(List.of("AGENT", "MANAGER"));
         when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID))
@@ -121,6 +177,7 @@ class CurrentUserResolutionServiceTest {
     @Test
     void shouldResolveCompanyAndDeriveTenantFromCompany() {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        allowActiveCompany();
         when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
         when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
 
@@ -135,6 +192,7 @@ class CurrentUserResolutionServiceTest {
     void shouldResolveUserByEmailWhenSubIsUnknown() {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(activeUser()));
+        allowActiveCompany();
         when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of("AGENT"));
         when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
 

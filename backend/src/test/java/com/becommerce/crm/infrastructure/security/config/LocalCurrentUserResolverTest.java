@@ -10,6 +10,7 @@ import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.RolePermission;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.UserRole;
+import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
 import com.becommerce.crm.domain.identity.valueobject.Password;
@@ -138,5 +139,22 @@ class LocalCurrentUserResolverTest {
                 .build();
 
         assertThrows(AuthenticationServiceException.class, () -> resolver.resolve(jwt));
+    }
+
+    @Test
+    void shouldTranslateCrmAccessDeniedToCrmAccessDeniedAuthenticationException() {
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any()))
+                .thenThrow(new CrmAccessDeniedException("Usuário sem acesso ao CRM (crm_enabled=false)"));
+
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .issuer("http://keycloak")
+                .subject(SUB)
+                .claim("email", EMAIL)
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+
+        assertThrows(CrmAccessDeniedAuthenticationException.class, () -> resolver.resolve(jwt));
     }
 }

@@ -30,42 +30,43 @@
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 5 | Tenant | ⏳ Pendente | — | — | 4.1 |
+| 5 | Tenant | ✅ Concluída | 2026-08-01 | AI Agent | 4.1 |
+| 6 | Access Gateway | 🚧 Em andamento | 2026-08-02 | AI Agent | 5 |
 
 ## SaaS
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 6 | Empresas | ⏳ Pendente | — | — | 5 |
+| 7 | Empresas | ⏳ Pendente | — | — | 6 |
 
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 7 | Contatos | ⏳ Pendente | — | — | 6 |
-| 8 | Leads | ⏳ Pendente | — | — | 7 |
-| 9 | Pipeline | ⏳ Pendente | — | — | 7 |
-| 10 | Conversas | ⏳ Pendente | — | — | 7 |
+| 8 | Contatos | ⏳ Pendente | — | — | 7 |
+| 9 | Leads | ⏳ Pendente | — | — | 8 |
+| 10 | Pipeline | ⏳ Pendente | — | — | 8 |
+| 11 | Conversas | ⏳ Pendente | — | — | 8 |
 
 ## Omnichannel
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 11 | WhatsApp | ⏳ Pendente | — | — | 10 |
-| 12 | Campanhas | ⏳ Pendente | — | — | 10 |
-| 13 | Automações | ⏳ Pendente | — | — | 12 |
+| 12 | WhatsApp | ⏳ Pendente | — | — | 11 |
+| 13 | Campanhas | ⏳ Pendente | — | — | 11 |
+| 14 | Automações | ⏳ Pendente | — | — | 13 |
 
 ## Analytics
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 14 | Dashboard | ⏳ Pendente | — | — | 8, 9, 10 |
+| 15 | Dashboard | ⏳ Pendente | — | — | 9, 10, 11 |
 
 ## IA
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 15 | IA | ⏳ Pendente | — | — | 10 |
+| 16 | IA | ⏳ Pendente | — | — | 11 |
 
 ---
 
@@ -76,14 +77,14 @@
 | Planejamento | 3 | 3 | 0 | 0 |
 | Knowledge Layer | 3 | 3 | 0 | 0 |
 | Infraestrutura | 5 | 0 | 1 | 4 |
-| Segurança | 1 | 0 | 0 | 1 |
+| Segurança | 2 | 1 | 1 | 0 |
 | SaaS | 1 | 0 | 0 | 1 |
 | CRM | 4 | 0 | 0 | 4 |
 | Omnichannel | 3 | 0 | 0 | 3 |
 | Analytics | 1 | 0 | 0 | 1 |
 | IA | 1 | 0 | 0 | 1 |
-| **Total** | **22** | **6** | **1** | **15** |
+| **Total** | **23** | **7** | **2** | **14** |
 
 ---
 
-*Última atualização: 2026-07-15*
+*Última atualização: 2026-08-02*

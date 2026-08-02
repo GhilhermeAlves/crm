@@ -15,6 +15,7 @@ import com.becommerce.crm.application.audit.service.AuditLogNotFoundException;
 import com.becommerce.crm.domain.company.CompanyAlreadyExistsException;
 import com.becommerce.crm.domain.company.CompanyNotFoundException;
 import com.becommerce.crm.domain.identity.exception.DuplicateEmailException;
+import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.exception.DuplicateRoleException;
 import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
@@ -184,6 +185,18 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 409,
                 "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(CrmAccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleCrmAccessDenied(CrmAccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(Map.of(
+                "status", 403,
+                "code", "CRM_ACCESS_DENIED",
+                "error", "Forbidden",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

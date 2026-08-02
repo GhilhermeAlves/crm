@@ -46,6 +46,9 @@ public class UserJpaEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    @Column(name = "crm_enabled", nullable = false)
+    private boolean crmEnabled;
+
     @Column(nullable = false)
     private String language;
 
@@ -107,6 +110,8 @@ public class UserJpaEntity {
     public void setStatus(String status) { this.status = status; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    public boolean isCrmEnabled() { return crmEnabled; }
+    public void setCrmEnabled(boolean crmEnabled) { this.crmEnabled = crmEnabled; }
     public String getLanguage() { return language; }
     public void setLanguage(String language) { this.language = language; }
     public String getTimezone() { return timezone; }

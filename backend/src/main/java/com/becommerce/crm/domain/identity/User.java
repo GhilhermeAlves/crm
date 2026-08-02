@@ -19,6 +19,7 @@ public class User {
     private UUID companyId;
     private UserStatus status;
     private boolean isActive;
+    private boolean crmEnabled;
     private String language;
     private String timezone;
     private String notes;
@@ -45,6 +46,7 @@ public class User {
         user.companyId = companyId;
         user.status = UserStatus.ACTIVE;
         user.isActive = true;
+        user.crmEnabled = false;
         user.language = "pt-BR";
         user.timezone = "America/Sao_Paulo";
         user.createdAt = LocalDateTime.now();
@@ -62,6 +64,7 @@ public class User {
         user.companyId = companyId;
         user.status = UserStatus.PENDING;
         user.isActive = false;
+        user.crmEnabled = false;
         user.language = "pt-BR";
         user.timezone = "America/Sao_Paulo";
         user.inviteToken = UUID.randomUUID().toString();
@@ -81,6 +84,16 @@ public class User {
     public void activate() {
         this.status = UserStatus.ACTIVE;
         this.isActive = true;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void grantCrmAccess() {
+        this.crmEnabled = true;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void revokeCrmAccess() {
+        this.crmEnabled = false;
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -163,6 +176,8 @@ public class User {
     public void setStatus(UserStatus status) { this.status = status; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    public boolean isCrmEnabled() { return crmEnabled; }
+    public void setCrmEnabled(boolean crmEnabled) { this.crmEnabled = crmEnabled; }
     public String getLanguage() { return language; }
     public void setLanguage(String language) { this.language = language; }
     public String getTimezone() { return timezone; }

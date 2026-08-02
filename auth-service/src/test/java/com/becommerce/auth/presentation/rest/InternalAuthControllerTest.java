@@ -4,7 +4,7 @@ import com.becommerce.auth.application.identity.port.input.CurrentUserResolution
 import com.becommerce.auth.domain.identity.AuthenticatedIdentity;
 import com.becommerce.auth.domain.identity.CurrentUser;
 import com.becommerce.auth.domain.identity.CurrentUserResolution;
-import com.becommerce.auth.domain.identity.exception.UserInactiveException;
+import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.auth.infrastructure.config.SecurityConfig;
 import com.becommerce.auth.infrastructure.security.JwtAuthenticationEntryPoint;
 import com.becommerce.auth.infrastructure.security.KeycloakIdentityConverter;
@@ -111,15 +111,16 @@ class InternalAuthControllerTest {
     }
 
     @Test
-    void shouldRejectInactiveUser() throws Exception {
+    void shouldRejectUserWithoutCrmAccess() throws Exception {
         when(currentUserResolutionUseCase.resolve(any(AuthenticatedIdentity.class)))
-                .thenThrow(new UserInactiveException("Usuário desativado: contate o administrador."));
+                .thenThrow(new CrmAccessDeniedException("Usuário sem acesso ao CRM (crm_enabled=false): conceda acesso explicitamente."));
 
         mockMvc.perform(get("/internal/auth/current-user")
                         .header("Authorization", "Bearer token"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("USER_INACTIVE"))
-                .andExpect(jsonPath("$.message").value("Usuário desativado: contate o administrador."));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("CRM_ACCESS_DENIED"))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Usuário sem acesso ao CRM (crm_enabled=false): conceda acesso explicitamente."));
     }
 
     @Test

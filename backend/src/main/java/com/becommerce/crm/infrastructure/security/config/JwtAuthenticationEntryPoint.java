@@ -21,13 +21,26 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
         String message = authException != null && authException.getMessage() != null
                 && !authException.getMessage().isBlank()
                 ? authException.getMessage()
                 : "Authentication is required to access this resource";
+
+        if (authException instanceof CrmAccessDeniedAuthenticationException) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            mapper.writeValue(response.getWriter(), Map.of(
+                "status", 403,
+                "code", "CRM_ACCESS_DENIED",
+                "error", "Forbidden",
+                "message", message,
+                "timestamp", LocalDateTime.now().toString()
+            ));
+            return;
+        }
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         mapper.writeValue(response.getWriter(), Map.of(
             "status", 401,

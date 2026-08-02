@@ -14,6 +14,7 @@ import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.event.UserCreatedEvent;
+import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
 import com.becommerce.crm.domain.identity.valueobject.Password;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,6 +35,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,6 +65,8 @@ class AuthServiceProvisioningTest {
     @InjectMocks
     private AuthService authService;
 
+    private CrmAccessService crmAccessService;
+
     private Company activeCompany;
     private Role agentRole;
 
@@ -70,6 +75,8 @@ class AuthServiceProvisioningTest {
         ReflectionTestUtils.setField(authService, "self", authService);
         ReflectionTestUtils.setField(authService, "provisioningEnabled", true);
         ReflectionTestUtils.setField(authService, "defaultRoleName", "AGENT");
+        crmAccessService = new CrmAccessService(companyRepository);
+        ReflectionTestUtils.setField(authService, "crmAccessService", crmAccessService);
 
         activeCompany = Company.create(
                 "Empresa LTDA", "Empresa", "12345678000190",
@@ -88,8 +95,20 @@ class AuthServiceProvisioningTest {
         TenantContext.clear();
     }
 
+    private User existingUser() {
+        User existing = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"),
+                "Ghilherme", "Santos", activeCompany.getId());
+        existing.linkKeycloak(SUB);
+        existing.grantCrmAccess();
+        return existing;
+    }
+
+    private void allowActiveCompany() {
+        when(companyRepository.findById(activeCompany.getId())).thenReturn(Optional.of(activeCompany));
+    }
+
     @Test
-    void shouldProvisionNewUserOnFirstLogin() {
+    void shouldProvisionIdentityButDenyAccessUntilCrmAccessGranted() {
         ReflectionTestUtils.setField(authService, "defaultCompanyId", activeCompany.getId().toString());
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
@@ -99,17 +118,18 @@ class AuthServiceProvisioningTest {
         when(userRoleRepository.existsByUserIdAndRoleId(any(UUID.class), any(UUID.class))).thenReturn(false);
         when(userRoleRepository.save(any(UserRole.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        User result = authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos");
+        // Identidade é provisionada (usuário criado no CRM)...
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        CrmAccessDeniedException ex = assertThrows(CrmAccessDeniedException.class,
+                () -> authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos"));
 
-        assertNotNull(result.getId());
-        assertEquals(SUB, result.getKeycloakSub());
-        assertEquals(EMAIL, result.getEmail().value());
-        assertEquals(activeCompany.getId(), result.getCompanyId());
-        assertEquals("Ghilherme", result.getFirstName());
-        assertEquals("Santos", result.getLastName());
-        assertEquals("Ghilherme Santos", result.getName());
-
-        verify(userRepository, times(1)).save(any(User.class));
+        // ...mas o acesso ao CRM NÃO é concedido automaticamente (crm_enabled = false).
+        assertTrue(ex.getMessage().contains("crm_enabled"));
+        verify(userRepository, times(1)).save(captor.capture());
+        User provisioned = captor.getValue();
+        assertEquals(SUB, provisioned.getKeycloakSub());
+        assertEquals(activeCompany.getId(), provisioned.getCompanyId());
+        assertFalse(provisioned.isCrmEnabled());
         verify(userRoleRepository, times(1)).save(any(UserRole.class));
         verify(eventPublisher).publish(any(UserCreatedEvent.class));
 
@@ -119,10 +139,9 @@ class AuthServiceProvisioningTest {
     }
 
     @Test
-    void shouldReuseExistingUserOnSubsequentLogin() {
-        User existing = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"),
-                "Ghilherme", "Santos", activeCompany.getId());
-        existing.linkKeycloak(SUB);
+    void shouldReuseExistingUserWithCrmAccessOnSubsequentLogin() {
+        User existing = existingUser();
+        allowActiveCompany();
 
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(existing));
 
@@ -133,9 +152,23 @@ class AuthServiceProvisioningTest {
     }
 
     @Test
-    void shouldLinkAndSyncExistingUserFoundByEmail() {
+    void shouldDenyExistingUserWithoutCrmAccess() {
         User existing = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"),
                 "Ghilherme", "Santos", activeCompany.getId());
+        existing.linkKeycloak(SUB);
+
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(existing));
+
+        assertThrows(CrmAccessDeniedException.class,
+                () -> authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos"));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void shouldLinkAndSyncExistingUserFoundByEmail() {
+        User existing = existingUser();
+        existing.setKeycloakSub(null);
+        allowActiveCompany();
 
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existing));
@@ -152,9 +185,8 @@ class AuthServiceProvisioningTest {
 
     @Test
     void shouldReturnWinnerWhenConcurrentCreationRaces() {
-        User winner = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"),
-                "Ghilherme", "Santos", activeCompany.getId());
-        winner.linkKeycloak(SUB);
+        User winner = existingUser();
+        allowActiveCompany();
 
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty(), Optional.of(winner));
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
@@ -182,9 +214,8 @@ class AuthServiceProvisioningTest {
     @Test
     void shouldReturnExistingUserWhenProvisioningDisabled() {
         ReflectionTestUtils.setField(authService, "provisioningEnabled", false);
-        User existing = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"),
-                "Ghilherme", "Santos", activeCompany.getId());
-        existing.linkKeycloak(SUB);
+        User existing = existingUser();
+        allowActiveCompany();
 
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(existing));
 
@@ -195,29 +226,25 @@ class AuthServiceProvisioningTest {
     }
 
     @Test
-    void shouldRejectInactiveUserFoundBySub() {
-        User existing = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"),
-                "Ghilherme", "Santos", activeCompany.getId());
-        existing.linkKeycloak(SUB);
+    void shouldDenyInactiveUserFoundBySub() {
+        User existing = existingUser();
         existing.deactivate();
 
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(existing));
 
-        assertThrows(UserProvisioningException.class,
+        assertThrows(CrmAccessDeniedException.class,
                 () -> authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos"));
     }
 
     @Test
-    void shouldRejectInactiveUserWhenProvisioningDisabled() {
+    void shouldDenyInactiveUserWhenProvisioningDisabled() {
         ReflectionTestUtils.setField(authService, "provisioningEnabled", false);
-        User existing = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"),
-                "Ghilherme", "Santos", activeCompany.getId());
-        existing.linkKeycloak(SUB);
+        User existing = existingUser();
         existing.deactivate();
 
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(existing));
 
-        assertThrows(UserProvisioningException.class,
+        assertThrows(CrmAccessDeniedException.class,
                 () -> authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos"));
     }
 

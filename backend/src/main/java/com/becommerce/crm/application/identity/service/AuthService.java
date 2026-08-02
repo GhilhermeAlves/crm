@@ -50,6 +50,7 @@ public class AuthService implements AuthUseCase {
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
     private final CompanyRepository companyRepository;
+    private final CrmAccessService crmAccessService;
     private final PasswordEncoder passwordEncoder;
     private final EventPublisher eventPublisher;
     private final EmailService emailService;
@@ -73,6 +74,7 @@ public class AuthService implements AuthUseCase {
                        PasswordResetTokenRepository passwordResetTokenRepository,
                        RoleRepository roleRepository, UserRoleRepository userRoleRepository,
                        CompanyRepository companyRepository,
+                       CrmAccessService crmAccessService,
                        PasswordEncoder passwordEncoder, EventPublisher eventPublisher,
                        EmailService emailService) {
         this.userRepository = userRepository;
@@ -80,6 +82,7 @@ public class AuthService implements AuthUseCase {
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
         this.companyRepository = companyRepository;
+        this.crmAccessService = crmAccessService;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
         this.emailService = emailService;
@@ -142,7 +145,7 @@ public class AuthService implements AuthUseCase {
         if (!provisioningEnabled) {
             User existing = findExistingKeycloakUser(keycloakSub, resolvedEmail);
             if (existing != null) {
-                rejectIfInactive(existing);
+                crmAccessService.assertCrmAccess(existing);
                 return existing;
             }
             throw new UserProvisioningException(
@@ -153,7 +156,7 @@ public class AuthService implements AuthUseCase {
         if (existing != null) {
             boolean changed = syncKeycloakIdentity(existing, keycloakSub, resolvedEmail, givenName, familyName);
             User resolved = changed ? userRepository.save(existing) : existing;
-            rejectIfInactive(resolved);
+            crmAccessService.assertCrmAccess(resolved);
             return resolved;
         }
 
@@ -167,12 +170,16 @@ public class AuthService implements AuthUseCase {
         }
 
         try {
-            return self.createProvisionedUser(keycloakSub, resolvedEmail, givenName, familyName);
+            User created = self.createProvisionedUser(keycloakSub, resolvedEmail, givenName, familyName);
+            crmAccessService.assertCrmAccess(created);
+            return created;
         } catch (DataIntegrityViolationException e) {
             User raced = findExistingKeycloakUser(keycloakSub, resolvedEmail);
             if (raced != null) {
                 boolean changed = syncKeycloakIdentity(raced, keycloakSub, resolvedEmail, givenName, familyName);
-                return changed ? userRepository.save(raced) : raced;
+                User resolved = changed ? userRepository.save(raced) : raced;
+                crmAccessService.assertCrmAccess(resolved);
+                return resolved;
             }
             throw new UserProvisioningException(
                 "Não foi possível provisionar o usuário após conflito de criação: " + resolvedEmail);
@@ -253,12 +260,6 @@ public class AuthService implements AuthUseCase {
             user.setName((user.getFirstName() + " " + user.getLastName()).trim());
         }
         return changed;
-    }
-
-    private void rejectIfInactive(User user) {
-        if (!user.isActive()) {
-            throw new UserProvisioningException("Usuário desativado: contate o administrador.");
-        }
     }
 
     private void assignDefaultRole(User user) {

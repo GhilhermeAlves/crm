@@ -43,6 +43,9 @@ public class UserJpaEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    @Column(name = "crm_enabled", nullable = false)
+    private boolean crmEnabled;
+
     public UserJpaEntity() {
     }
 
@@ -108,5 +111,13 @@ public class UserJpaEntity {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+    public boolean isCrmEnabled() {
+        return crmEnabled;
+    }
+
+    public void setCrmEnabled(boolean crmEnabled) {
+        this.crmEnabled = crmEnabled;
     }
 }

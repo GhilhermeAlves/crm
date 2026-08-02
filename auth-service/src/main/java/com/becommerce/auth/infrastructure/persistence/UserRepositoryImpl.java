@@ -34,6 +34,7 @@ public class UserRepositoryImpl implements UserRepository {
                 entity.getName(),
                 entity.getKeycloakSub(),
                 entity.getCompanyId(),
-                entity.isActive());
+                entity.isActive(),
+                entity.isCrmEnabled());
     }
 }
