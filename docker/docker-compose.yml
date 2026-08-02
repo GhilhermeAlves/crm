@@ -166,4 +166,5 @@ volumes:
 
 networks:
   crm-network:
-    driver: bridge
+    external: true
+    name: crm-network
