@@ -11,7 +11,6 @@ import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.domain.company.Company;
-import com.becommerce.crm.domain.company.CompanyStatus;
 import com.becommerce.crm.domain.identity.PasswordResetToken;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
@@ -26,6 +25,7 @@ import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
 import com.becommerce.crm.domain.identity.valueobject.Password;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -179,9 +179,27 @@ public class AuthService implements AuthUseCase {
         }
     }
 
+    /**
+     * Cria o usuário provisionado a partir do Keycloak.
+     *
+     * <p>Sob RLS FORCE, o INSERT em {@code users} exige
+     * {@code company_id = app.current_tenant_id()} (WITH CHECK). O tenant do
+     * usuário novo vem EXCLUSIVAMENTE de fonte confiável
+     * ({@code app.auth.provisioning.default-company-id}); se não estiver
+     * configurado, o provisionamento NÃO inventa um tenant e sinaliza
+     * {@code PROVISIONING_REQUIRED} explicitamente.
+     *
+     * <p>O {@code company_id} é definido no {@link TenantContext} antes do
+     * primeiro acesso ao banco, para que o GUC {@code app.current_company_id}
+     * seja aplicado à conexão da transação (o datasource aplica o GUC na
+     * aquisição da conexão, no primeiro statement JDBC). Assim o
+     * {@code WITH CHECK} é satisfeito legitimamente para o usuário recém-criado,
+     * sem bypass de RLS — mesmo padrão do RoleDataSeeder.
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public User createProvisionedUser(String keycloakSub, String email, String givenName, String familyName) {
         UUID companyId = resolveDefaultCompanyId();
+        TenantContext.setCompanyId(companyId);
         String firstName = givenName != null && !givenName.isBlank() ? givenName : email.substring(0, email.indexOf('@'));
         String lastName = familyName != null && !familyName.isBlank() ? familyName : "";
 
@@ -252,7 +270,7 @@ public class AuthService implements AuthUseCase {
                 "Role padrão de provisionamento inválida: " + defaultRoleName);
         }
 
-        Optional<Role> roleOpt = roleRepository.findByNameAndCompanyId(roleName, Role.SYSTEM_COMPANY_ID);
+        Optional<Role> roleOpt = roleRepository.findByNameAndCompanyId(roleName, user.getCompanyId());
         if (roleOpt.isEmpty()) {
             throw new UserProvisioningException(
                 "Role padrão não encontrada no banco: " + roleName);
@@ -278,21 +296,26 @@ public class AuthService implements AuthUseCase {
         return resolveDefaultCompanyId();
     }
 
+    /**
+     * Resolve o tenant de provisionamento de forma confiável: apenas a fonte
+     * explícita {@code app.auth.provisioning.default-company-id}. Não há
+     * fallback para "primeira empresa ativa", pois escolheria um tenant
+     * arbitrariamente (proibido). Se o tenant não for determinável, o
+     * provisionamento é bloqueado explicitamente ({@code PROVISIONING_REQUIRED})
+     * em vez de inventar um tenant.
+     */
     private UUID resolveDefaultCompanyId() {
-        if (defaultCompanyId != null && !defaultCompanyId.isBlank()) {
-            try {
-                return UUID.fromString(defaultCompanyId);
-            } catch (IllegalArgumentException e) {
-                throw new UserProvisioningException(
-                    "ID da empresa padrão inválido: " + defaultCompanyId);
-            }
+        if (defaultCompanyId == null || defaultCompanyId.isBlank()) {
+            throw new UserProvisioningException(
+                "PROVISIONING_REQUIRED: nenhum tenant determinável para provisionar o usuário. "
+                    + "Configure app.auth.provisioning.default-company-id (AUTH_DEFAULT_COMPANY_ID).");
         }
-        return companyRepository.findAll().stream()
-                .filter(company -> company.getStatus() == CompanyStatus.ACTIVE)
-                .findFirst()
-                .map(Company::getId)
-                .orElseThrow(() -> new UserProvisioningException(
-                    "Não foi possível provisionar o usuário: nenhuma empresa ativa disponível."));
+        try {
+            return UUID.fromString(defaultCompanyId);
+        } catch (IllegalArgumentException e) {
+            throw new UserProvisioningException(
+                "ID da empresa padrão inválido: " + defaultCompanyId);
+        }
     }
 
     private String resolveEmail(String email, String preferredUsername) {

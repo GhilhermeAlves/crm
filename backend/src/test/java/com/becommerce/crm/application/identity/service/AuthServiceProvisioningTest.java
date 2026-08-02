@@ -18,6 +18,8 @@ import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
 import com.becommerce.crm.domain.identity.valueobject.Password;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,13 +29,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -80,13 +83,18 @@ class AuthServiceProvisioningTest {
         agentRole = Role.createSystem(RoleName.AGENT);
     }
 
+    @AfterEach
+    void tearDown() {
+        TenantContext.clear();
+    }
+
     @Test
     void shouldProvisionNewUserOnFirstLogin() {
+        ReflectionTestUtils.setField(authService, "defaultCompanyId", activeCompany.getId().toString());
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
-        when(companyRepository.findAll()).thenReturn(List.of(activeCompany));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT, Role.SYSTEM_COMPANY_ID))
+        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT, activeCompany.getId()))
                 .thenReturn(Optional.of(agentRole));
         when(userRoleRepository.existsByUserIdAndRoleId(any(UUID.class), any(UUID.class))).thenReturn(false);
         when(userRoleRepository.save(any(UserRole.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -104,6 +112,10 @@ class AuthServiceProvisioningTest {
         verify(userRepository, times(1)).save(any(User.class));
         verify(userRoleRepository, times(1)).save(any(UserRole.class));
         verify(eventPublisher).publish(any(UserCreatedEvent.class));
+
+        // O tenant foi definido no TenantContext ANTES do INSERT, garantindo que
+        // o GUC app.current_company_id satisfaça o WITH CHECK do RLS (sem bypass).
+        assertEquals(activeCompany.getId(), TenantContext.getCompanyId());
     }
 
     @Test
@@ -146,7 +158,7 @@ class AuthServiceProvisioningTest {
 
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty(), Optional.of(winner));
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
-        when(companyRepository.findAll()).thenReturn(List.of(activeCompany));
+        ReflectionTestUtils.setField(authService, "defaultCompanyId", activeCompany.getId().toString());
         when(userRepository.save(any(User.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate key"));
 
@@ -217,5 +229,31 @@ class AuthServiceProvisioningTest {
 
         assertThrows(UserProvisioningException.class,
                 () -> authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos"));
+    }
+
+    @Test
+    void shouldSignalProvisioningRequiredWhenNoTenantConfigured() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        UserProvisioningException ex = assertThrows(UserProvisioningException.class,
+                () -> authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos"));
+
+        assertTrue(ex.getMessage().contains("PROVISIONING_REQUIRED"));
+        verify(userRepository, never()).save(any(User.class));
+        assertNull(TenantContext.getCompanyId());
+    }
+
+    @Test
+    void shouldSignalProvisioningRequiredWhenConfiguredTenantInvalid() {
+        ReflectionTestUtils.setField(authService, "defaultCompanyId", "not-a-uuid");
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThrows(UserProvisioningException.class,
+                () -> authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos"));
+
+        verify(userRepository, never()).save(any(User.class));
+        assertNull(TenantContext.getCompanyId());
     }
 }
