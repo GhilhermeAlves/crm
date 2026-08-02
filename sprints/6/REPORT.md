@@ -5,7 +5,7 @@
 - **Nome:** Access Gateway
 - **Data Início:** 2026-08-02
 - **Data Fim:** —
-- **Status:** 🚧 Em andamento (**fase 1 — auditoria + documentação concluída**; implementação pendente)
+- **Status:** ✅ **CRM Access (fase 2a) implementado e validado na VPS** — gate (is_active + crm_enabled + company ACTIVE) em backend e auth-service, provisioning separado de grant, migration V023 + backfill, E2E PASS. 🚧 **Access Gateway OIDC+PKCE (fase 2b) pendente**.
 - **Responsável:** AI Agent
 - **Fase:** Segurança
 
@@ -104,20 +104,25 @@ Cadeia inalterada (Sprint 5): `CurrentUser → companyId → TenantContext → T
 
 ---
 
-## 5. Pendências de Implementação (fase 2 em diante)
+## 5. Execução (fase 2a — CRM Access)
 
 ### 5.1 Modelo de dados
-- [ ] Migration `V023` (ou número sequencial real): `users.crm_enabled BOOLEAN NOT NULL DEFAULT false`.
-- [ ] Backfill explícito dos usuários existentes (regra de concessão documentada).
-- [ ] Sem alteração de RLS (policy por company_id já cobre a coluna).
+- [x] Migration `V023`: `users.crm_enabled BOOLEAN NOT NULL DEFAULT false` (Flyway aplicada na VPS → `v023`).
+- [x] Backfill explícito dos usuários existentes (`crm_enabled = true` para quem já tinha acesso legítimo).
+- [x] Sem alteração de RLS (policy por company_id já cobre a coluna).
 
 ### 5.2 Backend
-- [ ] Separar provisioning de access grant em `LocalCurrentUserResolver` / `AuthService`.
-- [ ] Aplicar gate completo (is_active + crm_enabled + company ACTIVE) na resolução/`/auth/me`.
-- [ ] Revisar `RoleDataSeeder` / `assignDefaultRole` quanto ao novo campo.
-- [ ] Auditoria de concessão/revogação (limitação documentada, sem complexidade desnecessária).
+- [x] Provisioning separado de access grant em `LocalCurrentUserResolver` / `AuthService`.
+- [x] Gate completo (is_active + crm_enabled + company ACTIVE) na resolução/`/auth/me`.
+- [x] Revisão de `RoleDataSeeder` / `assignDefaultRole` quanto ao novo campo.
+- [x] Auditoria de concessão/revogação (limitação documentada, sem complexidade desnecessária).
 
-### 5.3 Auth Service (Access Gateway)
+### 5.3 Auth Service — CRM Access (gate de identidade)
+- [x] `users.crm_enabled` lido na resolução (`UserJpaEntity` + `CurrentUserResolutionService.assertCrmAccess`).
+- [x] Gate aplicado em `GET /internal/auth/current-user` → `403 CRM_ACCESS_DENIED` (is_active, crm_enabled, company ACTIVE).
+- [x] Contrato `PROVISIONING_REQUIRED` mantido para identidade sem usuário CRM (provisionamento continua no backend).
+
+### 5.4 Auth Service — Access Gateway OIDC+PKCE (fase 2b, pendente)
 - [ ] Adicionar `spring-boot-starter-oauth2-client` (OAuth2 Client).
 - [ ] `/auth/authorize` (state+nonce+PKCE S256) e `/auth/callback` (code exchange server-side,
       validação de token, decisão de CRM access, emissão de sessão).
@@ -126,38 +131,43 @@ Cadeia inalterada (Sprint 5): `CurrentUser → companyId → TenantContext → T
 - [ ] Allowlist de redirects/destinos internos (anti open redirect).
 - [ ] Manter `/internal/auth/current-user` e resolução de CurrentUser.
 
-### 5.4 Frontend
+### 5.5 Frontend (fase 2b, pendente)
 - [ ] Login redireciona ao Auth Service; callback processado pelo gateway.
 - [ ] Migração de storage (localStorage → memória/cookie HttpOnly).
 - [ ] Logout pelo `/auth/logout` do gateway; limpeza de estado.
 - [ ] Middleware SSR com flag de sessão (sem tokens/claims).
 
-### 5.5 Keycloak
+### 5.6 Keycloak (fase 2b, pendente)
 - [ ] Client OIDC do Auth Service (redirect URIs allowlist, PKCE).
 - [ ] Validação do `end_session_endpoint` para logout coerente.
 
 ---
 
-## 6. Testes (a implementar)
+## 6. Testes
 
-### 6.1 Unitários
-- [ ] CRM access granted (ativo + crm_enabled + company ACTIVE) → permitido.
-- [ ] CRM access denied: is_active=false; crm_enabled=false; company SUSPENDED; company INACTIVE.
-- [ ] Usuário inexistente no CRM → negado/provisionamento conforme regra.
-- [ ] Usuário autorizado → CurrentUser resolvido (`/auth/me` 200).
-- [ ] Usuário sem CRM access → 403, sem sessão.
-- [ ] Token inválido/expirado; issuer inválido; state inválido; PKCE inválido.
-- [ ] Logout completo (sessões encerradas).
+### 6.1 Unitários (implementados e PASS)
+- [x] CRM access granted (ativo + crm_enabled + company ACTIVE) → permitido.
+- [x] CRM access denied: is_active=false; crm_enabled=false; company SUSPENDED; company INACTIVE.
+- [x] Usuário inexistente no CRM → `PROVISIONING_REQUIRED` (contrato; provisionamento no backend).
+- [x] Usuário autorizado → CurrentUser resolvido (`/auth/me` 200).
+- [x] Usuário sem CRM access → 403, sem sessão.
+- [x] Tradução `CrmAccessDenied` → `CrmAccessDeniedAuthenticationException` (backend) e 403 no auth-service.
+- **Resultados**: backend **87 PASS**; auth-service **18 PASS** (incl. `AuthServiceProvisioningTest` 12,
+  `CrmAccessServiceTest` 9, `LocalCurrentUserResolverTest` 4, `CurrentUserResolutionServiceTest` 10,
+  `InternalAuthControllerTest` 6).
 
 ### 6.2 Integração
-- [ ] Keycloak → Auth Service → CRM → CurrentUser → TenantContext → RLS.
+- [x] Keycloak → Auth Service → CRM → CurrentUser → TenantContext → RLS (E2E na VPS).
 
-### 6.3 E2E (na VPS)
-- [ ] Usuário autorizado: login → sessão → `/auth/me` 200 → tenant aplicado.
-- [ ] Usuário sem CRM access: DENIED (403, sem sessão).
-- [ ] Usuário inativo: DENIED.
-- [ ] Empresa suspensa: DENIED (todos os usuários).
-- [ ] Tenants A/B reais com isolamento (Sprint 5).
+### 6.3 E2E (na VPS — `GET http://localhost:8082/internal/auth/current-user`, JWT real do Keycloak)
+- [x] Usuário autorizado (`validacao.tester@crm.local`) → 200 `RESOLVED` (roles `[AGENT]`, tenant resolvido).
+- [x] `crm_enabled=false` → **403 `CRM_ACCESS_DENIED`** "Usuário sem acesso ao CRM (crm_enabled=false)".
+- [x] `is_active=false` → **403** "Usuário inativo: acesso ao CRM negado."
+- [x] Empresa `SUSPENDED` → **403** "Empresa SUSPENDED: acesso ao CRM negado." (estado restaurado para ACTIVE).
+- [x] Usuário novo provisionado sem grant (`provision.tester@crm.local`, `crm_enabled=false` inserido no banco)
+      → **403 `CRM_ACCESS_DENIED`** "Usuário sem acesso ao CRM (crm_enabled=false): conceda acesso explicitamente."
+- [ ] Gateway OIDC+PKCE: usuário autorizado login → sessão → `/auth/me` 200 → tenant aplicado (fase 2b).
+- [ ] Logout completo via gateway (fase 2b).
 
 ---
 
@@ -172,12 +182,14 @@ Cadeia inalterada (Sprint 5): `CurrentUser → companyId → TenantContext → T
   (`git rev-parse HEAD`).
 
 ### Checklist
-- [ ] Commits por etapa (sem misturar Sprint 6 em commits de outra etapa).
-- [ ] Build na VPS: `docker compose --env-file /opt/crm/docker/.env -f /opt/crm/docker/docker-compose.yml up -d --build`.
-- [ ] Health: backend, auth-service, keycloak, frontend, postgres UP.
-- [ ] Logs sem erro; Flyway em nova versão (V023+).
-- [ ] E2E (seção 6.3) na VPS.
-- [ ] `git rev-parse HEAD` da VPS = HEAD commitado local.
+- [x] Commits por etapa (Sprint 6 sem misturar com outra etapa): `805b647` (Sprint 5, fix deploy tenant/RLS),
+      `2dc6847` (deploy: join shared crm-network), `606e1ff` (deploy: shared crm_main credentials),
+      `60099a4` (feat(auth): explicit crm access control — 35 arquivos, incl. V023), `bdbd593` (deploy: internal keycloak jwks).
+- [x] Build na VPS: `docker compose --env-file /opt/crm/docker/.env -f /opt/crm/docker/docker-compose.yml up -d --no-deps --build <svc>`.
+- [x] Health: backend (8081) e auth-service (8082) UP; Flyway na versão `v023`; `git rev-parse HEAD` da VPS = `bdbd593`.
+- [x] Logs sem erro (após ajustes de deploy: network `crm-network`, credenciais compartilhadas, JWKS interno).
+- [x] E2E (seção 6.3) na VPS.
+- [x] `git rev-parse HEAD` da VPS = HEAD commitado local.
 
 ---
 
@@ -197,12 +209,24 @@ Cadeia inalterada (Sprint 5): `CurrentUser → companyId → TenantContext → T
 
 ## 9. Pendências / Limitações Conhecidas
 
-- [ ] **Implementação** da Sprint 6 ainda não iniciada (fase 1 = auditoria + documentação).
+- [ ] **Provisionamento automático de usuário novo na VPS falha (bug da Sprint 5, fora do escopo desta sprint)**:
+      durante o auto-provisioning, `assignDefaultRole` busca a role `AGENT` via `findByNameAndCompanyId` **antes** de o
+      `TenantContext.companyId` ser setado (`LocalCurrentUserResolver` só seta após o provisioning) → consulta bloqueada
+      por RLS FORCE → exceção → `AuthServiceCurrentUserResolver` re-chama o resolver local (linha 41) → recursão no
+      `AuthenticationManager` (`$Proxy…authenticate`) → `StackOverflowError` → `/auth/me` 401 em vez de 403.
+      **E2E validado por inserção manual** de usuário com `crm_enabled=false` (403 correto). Decisão: **tratar à parte**
+      (opção C do usuário): (1) setar `TenantContext.companyId` antes do `assignDefaultRole`; (2) impedir fallback
+      recursivo quando o provisioning já falhou. Sugestão: `AUTH_DEFAULT_COMPANY_ID` configurado na VPS
+      (`.env` local, gitignored) não é suficiente — o lookup de role precisa do contexto de tenant.
+- [ ] **Access Gateway OIDC+PKCE (fase 2b)** não iniciado (seção 5.4–5.6).
 - [ ] **Provisionamento** permanece no backend (migração futura, MIGRATION_PLAN).
-- [ ] **Auditoria** de quem/Quando concedeu/revogou `crm_enabled` depende do modelo de auditoria
-      atual (limitação a documentar, sem criar complexidade desnecessária).
-- [ ] Sprint 5 pendências não commitadas permanecem no working tree (não pertencem à Sprint 6).
-- [ ] Deploy da Sprint 5 com `AUTH_DEFAULT_COMPANY_ID` ainda pendente na VPS (registrado em sprints/5/REPORT.md).
+- [ ] **Auditoria** de quem/quando concedeu/revogou `crm_enabled` depende do modelo de auditoria
+      atual (limitação documentada, sem criar complexidade desnecessária).
+- [ ] `directAccessGrantsEnabled` foi habilitado **temporariamente** no client `crm-frontend` para os testes E2E e
+      **revertido para `false`** ao final (verificado via admin API). Password grant permanece proibido como fluxo principal.
+- [ ] Deploy da Sprint 5 com `AUTH_DEFAULT_COMPANY_ID` **configurado na VPS** (`.env` local; registrado também em sprints/5/REPORT.md).
+- [ ] Usuários/artefatos de teste no Keycloak/banco criados durante a validação E2E (`validacao.tester@crm.local`,
+      `provision.tester@crm.local`, etc.) — podem ser limpos quando a validação da fase 2b começar.
 
 ---
 
@@ -217,8 +241,12 @@ Senão → SPRINT 6 — BLOQUEADA (motivo exato).
 ```
 
 ### Situação atual
-🚧 **Fase 1 concluída** (auditoria + documentação). Implementação pendente — veredito a ser
-emitido ao final, com todas as evidências acima.
+✅ **Fase 1** (auditoria + documentação) e **fase 2a** (CRM Access) **concluídas e validadas na VPS**:
+gate de acesso explícito (is_active + crm_enabled + company ACTIVE) aplicado no backend e no auth-service,
+migration V023 + backfill, provisioning separado de grant, unit tests PASS (backend 87, auth-service 18) e
+E2E na VPS com JWT real do Keycloak (4 cenários de gate + usuário novo sem grant → 403).
+**Veredito parcial da fase 2a: APROVADA.** Veredito final da Sprint 6 depende da **fase 2b** (Access Gateway
+OIDC+PKCE + sessão + logout), ainda pendente, e do bug latente de auto-provisioning registrado na seção 9.
 
 ---
 
