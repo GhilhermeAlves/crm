@@ -58,9 +58,9 @@ services:
       - "8082:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/crm
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - AUTH_KEYCLOAK_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
       - AUTH_KEYCLOAK_JWKS_URI=https://srv1348261.hstgr.cloud/realms/CRM/protocol/openid-connect/certs
     depends_on:
