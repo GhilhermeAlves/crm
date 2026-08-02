@@ -67,6 +67,9 @@ server:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+  tenant:
+    header: ${TENANT_HEADER:X-Tenant-ID}
+    resolver: ${TENANT_RESOLVER:jwt}
   auth:
     provisioning:
       enabled: ${AUTH_PROVISIONING_ENABLED:true}

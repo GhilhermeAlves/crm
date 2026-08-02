@@ -37,10 +37,14 @@ public class Role {
     public static final UUID SYSTEM_COMPANY_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     public static Role createSystem(RoleName name) {
+        return createSystem(name, SYSTEM_COMPANY_ID);
+    }
+
+    public static Role createSystem(RoleName name, UUID companyId) {
         Role role = new Role();
         role.id = UUID.randomUUID();
         role.name = name;
-        role.companyId = SYSTEM_COMPANY_ID;
+        role.companyId = companyId;
         role.description = name.getDisplayName() + " (System Role)";
         role.isSystem = true;
         role.isActive = true;

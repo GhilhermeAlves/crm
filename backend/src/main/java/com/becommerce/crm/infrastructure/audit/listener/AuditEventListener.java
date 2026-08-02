@@ -10,6 +10,7 @@ import com.becommerce.crm.domain.company.event.CompanyUpdatedEvent;
 import com.becommerce.crm.domain.identity.event.*;
 import com.becommerce.crm.infrastructure.audit.context.AuditContext;
 import com.becommerce.crm.infrastructure.audit.context.AuditContext.AuditContextData;
+import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -44,7 +45,7 @@ public class AuditEventListener {
             auditLog.setUserAgent(context.userAgent());
         }
 
-        auditService.recordAudit(auditLog);
+        recordWithTenantContext(companyId, auditLog);
     }
 
     @Async
@@ -62,7 +63,7 @@ public class AuditEventListener {
             auditLog.setUserAgent(context.userAgent());
         }
 
-        auditService.recordAudit(auditLog);
+        recordWithTenantContext(event.companyId(), auditLog);
     }
 
     @Async
@@ -74,7 +75,7 @@ public class AuditEventListener {
         auditLog.setEntityId(event.userId().toString());
         auditLog.setDescription("Solicitação de redefinição de senha");
 
-        auditService.recordAudit(auditLog);
+        recordWithTenantContext(event.companyId(), auditLog);
     }
 
     @Async
@@ -101,7 +102,7 @@ public class AuditEventListener {
             auditLog.setUserAgent(context.userAgent());
         }
 
-        auditService.recordAudit(auditLog);
+        recordWithTenantContext(companyId, auditLog);
     }
 
     @Async
@@ -124,7 +125,7 @@ public class AuditEventListener {
             auditLog.setUserAgent(context.userAgent());
         }
 
-        auditService.recordAudit(auditLog);
+        recordWithTenantContext(companyId, auditLog);
     }
 
     @Async
@@ -146,6 +147,17 @@ public class AuditEventListener {
             auditLog.setUserAgent(context.userAgent());
         }
 
-        auditService.recordAudit(auditLog);
+        recordWithTenantContext(companyId, auditLog);
+    }
+
+    private void recordWithTenantContext(UUID companyId, AuditLog auditLog) {
+        try {
+            if (companyId != null) {
+                TenantContext.setCompanyId(companyId);
+            }
+            auditService.recordAudit(auditLog);
+        } finally {
+            TenantContext.clear();
+        }
     }
 }

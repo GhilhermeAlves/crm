@@ -1,5 +1,7 @@
 package com.becommerce.crm.infrastructure.identity.persistence;
 
+import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.identity.Permission;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.RolePermission;
@@ -7,8 +9,10 @@ import com.becommerce.crm.application.identity.port.output.PermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RolePermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -25,21 +29,52 @@ public class RoleDataSeeder implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final RolePermissionRepository rolePermissionRepository;
+    private final CompanyRepository companyRepository;
+
+    @Value("${app.auth.provisioning.default-company-id:}")
+    private String defaultCompanyId;
 
     public RoleDataSeeder(RoleRepository roleRepository,
                           PermissionRepository permissionRepository,
-                          RolePermissionRepository rolePermissionRepository) {
+                          RolePermissionRepository rolePermissionRepository,
+                          CompanyRepository companyRepository) {
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.rolePermissionRepository = rolePermissionRepository;
+        this.companyRepository = companyRepository;
     }
 
     @Override
     public void run(String... args) {
-        seedRoles();
+        UUID systemCompanyId = resolveSystemCompanyId();
+        if (systemCompanyId == null) {
+            log.warn("Nenhuma empresa disponível para o seed de roles de sistema; pulando.");
+            return;
+        }
+        TenantContext.setCompanyId(systemCompanyId);
+        try {
+            seedRoles(systemCompanyId);
+        } finally {
+            TenantContext.clear();
+        }
     }
 
-    private void seedRoles() {
+    private UUID resolveSystemCompanyId() {
+        if (defaultCompanyId != null && !defaultCompanyId.isBlank()) {
+            try {
+                return UUID.fromString(defaultCompanyId);
+            } catch (IllegalArgumentException e) {
+                log.warn("AUTH_DEFAULT_COMPANY_ID inválido ({}); usando primeira empresa ativa", defaultCompanyId);
+            }
+        }
+        return companyRepository.findAll().stream()
+                .filter(company -> company.getStatus() != null && company.getStatus().isActive())
+                .findFirst()
+                .map(Company::getId)
+                .orElse(null);
+    }
+
+    private void seedRoles(UUID companyId) {
         Map<RoleName, List<String>> rolePermissions = new EnumMap<>(RoleName.class);
         rolePermissions.put(RoleName.SUPER_ADMIN, List.of("*"));
         rolePermissions.put(RoleName.ADMIN, List.of(
@@ -93,12 +128,12 @@ public class RoleDataSeeder implements CommandLineRunner {
             RoleName roleName = entry.getKey();
             List<String> permNames = entry.getValue();
 
-            Role role = roleRepository.findByNameAndCompanyId(roleName, Role.SYSTEM_COMPANY_ID).orElseGet(() -> {
-                Role newRole = Role.createSystem(roleName);
+            Role role = roleRepository.findByNameAndCompanyId(roleName, companyId).orElseGet(() -> {
+                Role newRole = Role.createSystem(roleName, companyId);
                 newRole.setDescription(roleName.getDisplayName());
                 newRole.setSystem(true);
                 Role saved = roleRepository.save(newRole);
-                log.info("Seeded system role: {}", roleName);
+                log.info("Seeded system role: {} (company={})", roleName, companyId);
                 return saved;
             });
 
@@ -116,6 +151,6 @@ public class RoleDataSeeder implements CommandLineRunner {
             }
         }
 
-        log.info("Role seeding completed");
+        log.info("Role seeding completed (company={})", companyId);
     }
 }

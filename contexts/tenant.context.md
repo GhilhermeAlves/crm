@@ -1,14 +1,15 @@
 # Tenant Context (Company/Multi-tenancy)
 
 ## Resumo do Módulo
-Multi-tenancy via schema-per-tenant com isolamento completo de dados. Cada empresa possui configurações independentes e plano de assinatura.
+Multi-tenancy com isolamento de dados via Row Level Security (RLS) no PostgreSQL com `FORCE ROW LEVEL SECURITY`, usando uma role não-superuser (`crm_app`) e contexto de tenant propagado pela aplicação (`SET app.current_company_id`). Cada empresa possui configurações independentes e plano de assinatura.
 
 ## Objetivo
-Garantir isolamento total entre empresas com schema dedicado e configurações independentes.
+Garantir isolamento total entre empresas via RLS no banco de dados, com contexto de tenant por requisição e configurações independentes.
 
 ## Responsabilidades
 - Criação e gerenciamento de empresas (tenants)
-- Schema-per-tenant com PostgreSQL schemas
+- Isolamento via RLS (FORCE RLS) + role não-superuser `crm_app`
+- Contexto de tenant por requisição (TenantContext + SET app.current_company_id)
 - Configurações por empresa (timezone, idioma, etc.)
 - Gestão de planos de assinatura
 - Onboarding de novos tenants
@@ -41,8 +42,9 @@ Garantir isolamento total entre empresas com schema dedicado e configurações i
 
 ## Componentes Backend
 - `company` module (Controllers, Services, Domain, Infrastructure)
-- `tenant` package (schema resolver, connection pool per tenant)
+- `tenant` package: TenantDataSourcePostProcessor, TenantAwareDataSource (SET/RESET `app.current_company_id` e `app.current_keycloak_sub`), TenantContext (ThreadLocal com companyId + keycloakSub), TenantFilter (ancorado após `BearerTokenAuthenticationFilter` no chain de segurança)
 - `subscription` module
+- Bootstrap de identidade sob RLS FORCE: policy `identity_bootstrap_policy` em `users` (V022) permite ler a própria linha via `app.current_keycloak_sub` antes de o tenant ser conhecido
 
 ## Eventos
 - `CompanyCreated` - Nova empresa criada
@@ -58,30 +60,30 @@ Garantir isolamento total entre empresas com schema dedicado e configurações i
 - `company:subscription` - SUPER_ADMIN
 
 ## Dependências
-- **Auth** (company_id no JWT, schema resolution)
+- **Auth** (company_id no JWT, resolução de tenant)
 - **Users** (usuários vinculados à empresa)
-- **Database** (schema-per-tenant, migrations)
+- **Database** (RLS, migrations)
 
 ## Fluxo Resumido
-1. SUPER_ADMIN cria empresa → schema PostgreSQL criado → migrations executadas
-2. Usuário faz login → JWT contém company_id → schema resolution automático
-3. Todas as queries rodam no schema da empresa → isolamento garantido
+1. SUPER_ADMIN cria empresa → registrada em `companies` (tenant)
+2. Autenticação: resolvers definem `app.current_keycloak_sub` (do `sub` do JWT) para o bootstrap de identidade em `users` (V022)
+3. Usuário faz login → JWT contém company_id → TenantFilter define TenantContext
+4. Conexões do pool emitem `SET app.current_company_id` → RLS isola todas as queries por tenant
 
 ## Checklist de Implementação
-- [ ] Schema-per-tenant com PostgreSQL
-- [ ] Schema resolver via JWT claim
-- [ ] Configurações por empresa (timezone, idioma)
-- [ ] Planos: PLANE/STARTER/PROFESSIONAL/ENTERPRISE
-- [ ] Onboarding automático (schema + migrations)
-- [ ] Limite de usuários por plano
-- [ ] Hard delete após 90 dias de inatividade
-- [ ] Isolamento de dados entre tenants
+- [x] RLS + FORCE RLS em 18 tabelas tenant-scoped
+- [x] Role `crm_app` não-superuser (NOBYPASSRLS) com privilégios mínimos
+- [x] Resolução de tenant via JWT claim (companyId)
+- [x] Configurações por empresa (timezone, idioma)
+- [x] Planos: PLANE/STARTER/PROFESSIONAL/ENTERPRISE
+- [x] Limite de usuários por plano
+- [x] Isolamento de dados entre tenants (validado cross-tenant + concorrência)
 
 ## Checklist de Testes
-- [ ] Dados de empresa A não aparecem para empresa B
-- [ ] Schema criado corretamente no onboarding
-- [ ] Configurações são isoladas por empresa
-- [ ] Migrações rodam em todos os schemas
+- [x] Dados de empresa A não aparecem para empresa B
+- [x] Cross SELECT/INSERT/UPDATE/DELETE bloqueados por RLS
+- [x] Configurações são isoladas por empresa
+- [x] Migrations rodam sem quebrar o boot
 
 ## Documentação Oficial Relacionada
 - `docs/tenant/MULTI-TENANCY.md`

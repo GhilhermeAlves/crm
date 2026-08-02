@@ -1,6 +1,8 @@
 package com.becommerce.crm.infrastructure.security.config;
 
+import com.becommerce.crm.infrastructure.tenant.filter.TenantFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,14 +29,17 @@ public class SecurityConfig {
 
     private final ObjectMapper objectMapper;
     private final KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter;
+    private final TenantFilter tenantFilter;
 
     @Value("${app.cors.allowed-origins:*}")
     private String corsAllowedOrigins;
 
     public SecurityConfig(ObjectMapper objectMapper,
-                          KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter) {
+                          KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter,
+                          TenantFilter tenantFilter) {
         this.objectMapper = objectMapper;
         this.keycloakJwtAuthenticationConverter = keycloakJwtAuthenticationConverter;
+        this.tenantFilter = tenantFilter;
     }
 
     @Bean
@@ -62,7 +67,8 @@ public class SecurityConfig {
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint(objectMapper))
                 .accessDeniedHandler(jwtAccessDeniedHandler(objectMapper))
-            );
+            )
+            .addFilterAfter(tenantFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }
