@@ -5,7 +5,7 @@
 - **Nome:** Access Gateway
 - **Data Início:** 2026-08-02
 - **Data Fim:** —
-- **Status:** ✅ **CRM Access (fase 2a) implementado e validado na VPS** — gate (is_active + crm_enabled + company ACTIVE) em backend e auth-service, provisioning separado de grant, migration V023 + backfill, E2E PASS. 🚧 **Access Gateway OIDC+PKCE (fase 2b) pendente**.
+- **Status:** ✅ **CRM Access (fase 2a) implementado e validado na VPS** — gate (is_active + crm_enabled + company ACTIVE) em backend e auth-service, provisioning separado de grant, migration V023 + backfill, E2E PASS. ✅ **Núcleo do Access Gateway OIDC+PKCE (fase 2b / Sprint 6.1) implementado** — authorize/callback, token exchange server-side, validação de tokens, sessão cookie HttpOnly, CRM Access reutilizado (ver `sprints/6.1/REPORT.md`). 🚧 **Logout + configuração definitiva do client `crm-gateway` (6.2/6.3) pendentes**.
 - **Responsável:** AI Agent
 - **Fase:** Segurança
 
@@ -122,14 +122,14 @@ Cadeia inalterada (Sprint 5): `CurrentUser → companyId → TenantContext → T
 - [x] Gate aplicado em `GET /internal/auth/current-user` → `403 CRM_ACCESS_DENIED` (is_active, crm_enabled, company ACTIVE).
 - [x] Contrato `PROVISIONING_REQUIRED` mantido para identidade sem usuário CRM (provisionamento continua no backend).
 
-### 5.4 Auth Service — Access Gateway OIDC+PKCE (fase 2b, pendente)
-- [ ] Adicionar `spring-boot-starter-oauth2-client` (OAuth2 Client).
-- [ ] `/auth/authorize` (state+nonce+PKCE S256) e `/auth/callback` (code exchange server-side,
-      validação de token, decisão de CRM access, emissão de sessão).
-- [ ] Sessão de browser (cookie HttpOnly/SameSite/Secure) — só após acesso liberado.
-- [ ] `/auth/logout` (end_session_endpoint + id_token_hint + post_logout_redirect allowlist).
-- [ ] Allowlist de redirects/destinos internos (anti open redirect).
-- [ ] Manter `/internal/auth/current-user` e resolução de CurrentUser.
+### 5.4 Auth Service — Access Gateway OIDC+PKCE (fase 2b — núcleo feito na Sprint 6.1)
+- [x] Adicionar `spring-boot-starter-oauth2-client` (OAuth2 Client).
+- [x] `/auth/authorize` (state+nonce+PKCE S256) e `/auth/callback` (code exchange server-side,
+      validação de token, decisão de CRM access, emissão de sessão). Detalhes: `sprints/6.1/REPORT.md`.
+- [x] Sessão de browser (cookie HttpOnly/SameSite/Secure) — só após acesso liberado.
+- [x] Allowlist de redirects/destinos internos (anti open redirect).
+- [x] Manter `/internal/auth/current-user` e resolução de CurrentUser.
+- [ ] `/auth/logout` (end_session_endpoint + id_token_hint + post_logout_redirect allowlist) — **Sprint 6.2**.
 
 ### 5.5 Frontend (fase 2b, pendente)
 - [ ] Login redireciona ao Auth Service; callback processado pelo gateway.

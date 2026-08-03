@@ -44,6 +44,27 @@ spring:
           issuer-uri: ${AUTH_KEYCLOAK_ISSUER_URI:}
           jwk-set-uri: ${AUTH_KEYCLOAK_JWKS_URI:}
 
+# Access Gateway OIDC (Sprint 6.1). O auth-service é o OAuth2 Client: inicia o
+# Authorization Code + PKCE S256 no Keycloak, troca o code no servidor e cria a
+# sessão de browser (cookie HttpOnly). redirect-uri fixa (paridade Keycloak) e
+# allowlist de redirect pós-login via AUTH_GATEWAY_ALLOWED_REDIRECT_URIS.
+auth:
+  gateway:
+    enabled: ${AUTH_GATEWAY_ENABLED:true}
+    issuer-uri: ${AUTH_GATEWAY_ISSUER_URI:${AUTH_KEYCLOAK_ISSUER_URI:}}
+    authorization-endpoint: ${AUTH_GATEWAY_AUTHORIZATION_ENDPOINT:${AUTH_KEYCLOAK_ISSUER_URI:}/protocol/openid-connect/auth}
+    token-endpoint: ${AUTH_GATEWAY_TOKEN_ENDPOINT:${AUTH_KEYCLOAK_ISSUER_URI:}/protocol/openid-connect/token}
+    jwks-uri: ${AUTH_GATEWAY_JWKS_URI:${AUTH_KEYCLOAK_JWKS_URI:}}
+    client-id: ${AUTH_GATEWAY_CLIENT_ID:crm-gateway}
+    client-secret: ${AUTH_GATEWAY_CLIENT_SECRET:}
+    redirect-uri: ${AUTH_GATEWAY_REDIRECT_URI:http://localhost:8082/auth/callback}
+    allowed-redirect-uris: ${AUTH_GATEWAY_ALLOWED_REDIRECT_URIS:http://localhost:3000,https://srv1348261.hstgr.cloud}
+    cookie-name: ${AUTH_GATEWAY_COOKIE_NAME:crm_session}
+    secure-cookie: ${AUTH_GATEWAY_SECURE_COOKIE:true}
+    session-ttl: ${AUTH_GATEWAY_SESSION_TTL:8h}
+    authorization-request-ttl: ${AUTH_GATEWAY_AUTHORIZATION_REQUEST_TTL:10m}
+    token-exchange-timeout: ${AUTH_GATEWAY_TOKEN_EXCHANGE_TIMEOUT:10s}
+
 server:
   port: 8080
 

@@ -1,5 +1,6 @@
 package com.becommerce.auth.presentation.rest.handler;
 
+import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,16 @@ public class GlobalExceptionHandler {
                 "status", 403,
                 "code", "CRM_ACCESS_DENIED",
                 "error", "Forbidden",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()));
+    }
+
+    @ExceptionHandler(OidcGatewayException.class)
+    public ResponseEntity<Map<String, Object>> handleOidcGateway(OidcGatewayException ex) {
+        return ResponseEntity.status(ex.getStatus()).body(Map.of(
+                "status", ex.getStatus(),
+                "code", ex.getCode(),
+                "error", HttpStatus.resolve(ex.getStatus()) == null ? "Error" : HttpStatus.resolve(ex.getStatus()).getReasonPhrase(),
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()));
     }

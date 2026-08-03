@@ -38,6 +38,11 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/actuator/info",
                                 "/actuator/metrics").permitAll()
+                        // Access Gateway OIDC (Sprint 6.1): entrada de login e callback
+                        // do Keycloak — públicos por definição.
+                        .requestMatchers(
+                                "/auth/authorize",
+                                "/auth/callback").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
