@@ -16,13 +16,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GatewaySessionStoreTest {
+class InMemoryGatewaySessionStoreTest {
 
     private static final UUID USER_ID = UUID.fromString("974bbedb-298d-4ec6-a037-514b24c248e4");
     private static final UUID COMPANY_ID = UUID.fromString("11111111-2222-3333-4444-555555555555");
 
     private final OidcGatewayProperties properties = new OidcGatewayProperties();
-    private final GatewaySessionStore store = new GatewaySessionStore(properties);
+    private final GatewaySessionStore store = new InMemoryGatewaySessionStore(properties);
 
     private GatewaySession session(String token, Instant createdAt, Instant expiresAt,
                                    Instant lastAccessedAt, Instant revokedAt) {

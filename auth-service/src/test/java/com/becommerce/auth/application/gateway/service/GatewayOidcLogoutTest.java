@@ -8,6 +8,7 @@ import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.gateway.SessionStatus;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionStore;
+import com.becommerce.auth.infrastructure.gateway.InMemoryGatewaySessionStore;
 import com.becommerce.auth.infrastructure.gateway.OidcAuthorizationRequestStore;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import com.becommerce.auth.infrastructure.gateway.OidcProviderMetadata;
@@ -62,7 +63,7 @@ class GatewayOidcLogoutTest {
         properties.setDefaultRedirect("/");
         properties.setSessionTtl(java.time.Duration.ofHours(8));
 
-        sessionStore = new GatewaySessionStore(properties);
+        sessionStore = new InMemoryGatewaySessionStore(properties);
         service = new GatewayOidcService(properties,
                 new SecureTokenGenerator(),
                 new PkceGenerator(new SecureTokenGenerator()),

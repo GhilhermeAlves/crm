@@ -1,5 +1,7 @@
 package com.becommerce.auth.domain.gateway;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -89,6 +91,7 @@ public record GatewaySession(
         return revokedAt == null && now.isBefore(effectiveExpiration(idleTimeout));
     }
 
+    @JsonIgnore
     public boolean isRevoked() {
         return revokedAt != null;
     }

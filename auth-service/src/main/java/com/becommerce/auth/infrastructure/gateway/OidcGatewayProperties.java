@@ -36,6 +36,9 @@ public class OidcGatewayProperties {
     private Duration authorizationRequestTtl = Duration.ofMinutes(10);
     private Duration tokenExchangeTimeout = Duration.ofSeconds(10);
     private Duration clockSkew = Duration.ofSeconds(30);
+    private String sessionStore = "memory";
+    private Duration sessionLockTtl = Duration.ofSeconds(30);
+    private Duration sessionLockAcquireTimeout = Duration.ofSeconds(5);
 
     public boolean isConfigured() {
         return StringUtils.hasText(clientId)
@@ -220,5 +223,35 @@ public class OidcGatewayProperties {
 
     public void setClockSkew(Duration clockSkew) {
         this.clockSkew = clockSkew;
+    }
+
+    /**
+     * Implementação do {@code GatewaySessionStore}: {@code memory} (padrão) ou
+     * {@code redis} (distribuído, Sprint 6.3).
+     */
+    public String getSessionStore() {
+        return sessionStore;
+    }
+
+    public void setSessionStore(String sessionStore) {
+        this.sessionStore = sessionStore;
+    }
+
+    /** TTL do lock distribuído por sessão (default 30s). */
+    public Duration getSessionLockTtl() {
+        return sessionLockTtl;
+    }
+
+    public void setSessionLockTtl(Duration sessionLockTtl) {
+        this.sessionLockTtl = sessionLockTtl;
+    }
+
+    /** Tempo máximo de espera para adquirir o lock de sessão (default 5s). */
+    public Duration getSessionLockAcquireTimeout() {
+        return sessionLockAcquireTimeout;
+    }
+
+    public void setSessionLockAcquireTimeout(Duration sessionLockAcquireTimeout) {
+        this.sessionLockAcquireTimeout = sessionLockAcquireTimeout;
     }
 }

@@ -11,6 +11,7 @@ import com.becommerce.auth.domain.identity.CurrentUserResolution;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionStore;
+import com.becommerce.auth.infrastructure.gateway.InMemoryGatewaySessionStore;
 import com.becommerce.auth.infrastructure.gateway.OidcAuthorizationRequestStore;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import com.becommerce.auth.infrastructure.gateway.OidcProviderMetadata;
@@ -76,7 +77,7 @@ class GatewayOidcServiceTest {
         properties.setAuthorizationRequestTtl(java.time.Duration.ofMinutes(10));
 
         requestStore = new OidcAuthorizationRequestStore();
-        sessionStore = new GatewaySessionStore(properties);
+        sessionStore = new InMemoryGatewaySessionStore(properties);
 
         service = new GatewayOidcService(properties,
                 new SecureTokenGenerator(),

@@ -44,6 +44,23 @@ spring:
           issuer-uri: ${AUTH_KEYCLOAK_ISSUER_URI:}
           jwk-set-uri: ${AUTH_KEYCLOAK_JWKS_URI:}
 
+  # Redis — usado pelo RedisGatewaySessionStore (auth.gateway.session-store=redis).
+  # A conexão é lazy (Lettuce); o store em memória não a utiliza. Atenção: o
+  # Spring Boot ignora host/port/password/database quando spring.data.redis.url
+  # está preenchido — por isso usamos host/port/password (o password não vai na
+  # URL, evitando expô-lo em métricas/logs).
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+      connect-timeout: 2s
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 16
+
 # Access Gateway OIDC (Sprint 6.1). O auth-service é o OAuth2 Client: inicia o
 # Authorization Code + PKCE S256 no Keycloak, troca o code no servidor e cria a
 # sessão de browser (cookie HttpOnly). redirect-uri fixa (paridade Keycloak) e
@@ -65,9 +82,11 @@ auth:
     session-idle-timeout: ${AUTH_GATEWAY_SESSION_IDLE_TIMEOUT:0s}
     csrf-cookie-name: ${AUTH_GATEWAY_CSRF_COOKIE_NAME:XSRF-TOKEN}
     csrf-header-name: ${AUTH_GATEWAY_CSRF_HEADER_NAME:X-XSRF-TOKEN}
-    app-base-url: ${AUTH_GATEWAY_APP_BASE_URL:}
-    authorization-request-ttl: ${AUTH_GATEWAY_AUTHORIZATION_REQUEST_TTL:10m}
-    token-exchange-timeout: ${AUTH_GATEWAY_TOKEN_EXCHANGE_TIMEOUT:10s}
+    # Storage das sessões de browser do gateway (Sprint 6.3): 'memory' (padrão,
+    # nó único) ou 'redis' (distribuído, compartilhado entre réplicas).
+    session-store: ${AUTH_GATEWAY_SESSION_STORE:memory}
+    session-lock-ttl: ${AUTH_GATEWAY_SESSION_LOCK_TTL:30s}
+    session-lock-acquire-timeout: ${AUTH_GATEWAY_SESSION_LOCK_ACQUIRE_TIMEOUT:5s}
 
 server:
   port: 8080

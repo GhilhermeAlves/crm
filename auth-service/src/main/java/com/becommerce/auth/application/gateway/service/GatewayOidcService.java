@@ -12,6 +12,7 @@ import com.becommerce.auth.domain.identity.AuthenticatedIdentity;
 import com.becommerce.auth.domain.identity.CurrentUser;
 import com.becommerce.auth.domain.identity.CurrentUserResolution;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.auth.infrastructure.gateway.GatewaySessionLock;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionStore;
 import com.becommerce.auth.infrastructure.gateway.OidcAuthorizationRequestStore;
@@ -224,8 +225,7 @@ public class GatewayOidcService implements GatewayOidcUseCase {
             }
         }
 
-        Object lock = sessionStore.lockFor(sessionToken);
-        synchronized (lock) {
+        try (GatewaySessionLock ignored = sessionStore.lockFor(sessionToken)) {
             return refreshLocked(sessionToken);
         }
     }
