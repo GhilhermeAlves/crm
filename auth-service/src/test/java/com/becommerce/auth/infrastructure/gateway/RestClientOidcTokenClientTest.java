@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -155,5 +156,82 @@ class RestClientOidcTokenClientTest {
                 client.exchange(new OidcTokenClient.ExchangeRequest("code", "verifier"));
 
         assertNull(response.refreshToken());
+    }
+
+    // --------------------------------------------------------------- refresh
+
+    private RestClientOidcTokenClient client() {
+        return new RestClientOidcTokenClient(properties);
+    }
+
+    @Test
+    void shouldRefreshTokensWithoutRedirectUri() throws Exception {
+        properties.setClientSecret("secret");
+        server.createContext("/token", exchange -> {
+            lastBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            respond(exchange, 200, """
+                    {"access_token":"at2","refresh_token":"rt2","id_token":"idt2","expires_in":600}
+                    """, 0);
+        });
+
+        OidcTokenClient.TokenResponse response =
+                client().refresh(new OidcTokenClient.RefreshRequest("rt1"));
+
+        assertEquals("at2", response.accessToken());
+        assertEquals("rt2", response.refreshToken());
+        assertEquals("idt2", response.idToken());
+        assertEquals(600, response.expiresInSeconds());
+        String body = decode(lastBody);
+        assertTrue(body.contains("grant_type=refresh_token"));
+        assertTrue(body.contains("refresh_token=rt1"));
+        assertTrue(body.contains("client_id=crm-gateway"));
+        assertTrue(body.contains("client_secret=secret"));
+        assertFalse(body.contains("redirect_uri"), "refresh não deve enviar redirect_uri");
+    }
+
+    @Test
+    void shouldThrowRefreshTokenInvalidOnInvalidGrant() throws Exception {
+        server.createContext("/token", exchange ->
+                respond(exchange, 400, "{\"error\":\"invalid_grant\",\"error_description\":\"expired\"}", 0));
+
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> client().refresh(new OidcTokenClient.RefreshRequest("rt")));
+
+        assertEquals("REFRESH_TOKEN_INVALID", ex.getCode());
+        assertEquals(401, ex.getStatus());
+    }
+
+    @Test
+    void shouldThrowRefreshFailedOnOtherOidcError() throws Exception {
+        server.createContext("/token", exchange ->
+                respond(exchange, 400, "{\"error\":\"invalid_scope\"}", 0));
+
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> client().refresh(new OidcTokenClient.RefreshRequest("rt")));
+
+        assertEquals("REFRESH_FAILED", ex.getCode());
+    }
+
+    @Test
+    void shouldThrowProviderUnavailableOnRefreshTimeout() throws Exception {
+        properties.setTokenExchangeTimeout(Duration.ofMillis(300));
+        server.createContext("/token", exchange ->
+                respond(exchange, 200, "{\"access_token\":\"at2\"}", 2000));
+
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> client().refresh(new OidcTokenClient.RefreshRequest("rt")));
+
+        assertEquals("OIDC_PROVIDER_UNAVAILABLE", ex.getCode());
+    }
+
+    @Test
+    void shouldThrowRefreshFailedWhenResponseHasNoAccessToken() throws Exception {
+        server.createContext("/token", exchange ->
+                respond(exchange, 200, "{\"id_token\":\"idt\"}", 0));
+
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> client().refresh(new OidcTokenClient.RefreshRequest("rt")));
+
+        assertEquals("REFRESH_FAILED", ex.getCode());
     }
 }

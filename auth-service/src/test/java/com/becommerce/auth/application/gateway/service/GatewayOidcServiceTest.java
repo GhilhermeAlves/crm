@@ -9,9 +9,11 @@ import com.becommerce.auth.domain.identity.AuthenticatedIdentity;
 import com.becommerce.auth.domain.identity.CurrentUser;
 import com.becommerce.auth.domain.identity.CurrentUserResolution;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.auth.infrastructure.gateway.GatewaySessionResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionStore;
 import com.becommerce.auth.infrastructure.gateway.OidcAuthorizationRequestStore;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
+import com.becommerce.auth.infrastructure.gateway.OidcProviderMetadata;
 import com.becommerce.auth.infrastructure.gateway.OidcTokenValidator;
 import com.becommerce.auth.infrastructure.gateway.PkceGenerator;
 import com.becommerce.auth.infrastructure.gateway.RedirectUriValidator;
@@ -74,7 +76,7 @@ class GatewayOidcServiceTest {
         properties.setAuthorizationRequestTtl(java.time.Duration.ofMinutes(10));
 
         requestStore = new OidcAuthorizationRequestStore();
-        sessionStore = new GatewaySessionStore();
+        sessionStore = new GatewaySessionStore(properties);
 
         service = new GatewayOidcService(properties,
                 new SecureTokenGenerator(),
@@ -85,7 +87,9 @@ class GatewayOidcServiceTest {
                 tokenValidator,
                 identityConverter,
                 currentUserResolutionUseCase,
-                sessionStore);
+                sessionStore,
+                new GatewaySessionResolver(sessionStore),
+                new OidcProviderMetadata(properties));
     }
 
     private AuthenticatedIdentity identity() {
@@ -261,7 +265,9 @@ class GatewayOidcServiceTest {
                 tokenValidator,
                 identityConverter,
                 currentUserResolutionUseCase,
-                sessionStore);
+                sessionStore,
+                new GatewaySessionResolver(sessionStore),
+                new OidcProviderMetadata(properties));
 
         assertThrows(OidcGatewayException.class, () -> serviceWithSpy.completeAuthorization("code-1", state));
     }

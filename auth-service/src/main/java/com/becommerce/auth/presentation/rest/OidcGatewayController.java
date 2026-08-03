@@ -3,18 +3,20 @@ package com.becommerce.auth.presentation.rest;
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 
 /**
- * Access Gateway OIDC (Sprint 6.1).
+ * Access Gateway OIDC (Sprints 6.1/6.2).
  *
  * <ul>
  *   <li>{@code GET /auth/authorize} — inicia o fluxo: valida redirect, gera
@@ -23,7 +25,14 @@ import java.net.URI;
  *   <li>{@code GET /auth/callback} — recebe {@code code}+{@code state} do
  *       Keycloak, troca o código no servidor, valida os tokens, decide CRM
  *       Access e, em caso positivo, cria a sessão de browser (cookie
- *       HttpOnly/SameSite/Secure) e redireciona para o alvo permitido.</li>
+ *       HttpOnly/SameSite/Secure + cookie CSRF) e redireciona para o alvo
+ *       permitido;</li>
+ *   <li>{@code GET /auth/logout} — invalida a sessão local (idempotente),
+ *       limpa o cookie e redireciona para o {@code end_session_endpoint} do
+ *       provedor;</li>
+ *   <li>{@code POST /auth/refresh} — renova os tokens no servidor (protegido
+ *       por CSRF cookie-to-header via {@code GatewayCsrfFilter}); nunca devolve
+ *       tokens ao browser (resposta 204).</li>
  * </ul>
  */
 @RestController
@@ -59,7 +68,27 @@ public class OidcGatewayController {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(result.redirectTarget()))
                 .header(HttpHeaders.SET_COOKIE, cookieFactory.createSessionCookie(result.session().sessionToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.createCsrfCookie(result.session().csrfToken()).toString())
                 .build();
+    }
+
+    @GetMapping("/auth/logout")
+    public ResponseEntity<Void> logout(
+            HttpServletRequest request,
+            @RequestParam(value = "post_logout_redirect_uri", required = false) String postLogoutRedirectUri) {
+        String sessionToken = cookieFactory.readSessionToken(request.getCookies()).orElse(null);
+        GatewayOidcUseCase.LogoutResult result = gatewayOidcUseCase.logout(sessionToken, postLogoutRedirectUri);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(result.redirectUri()))
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpiredSessionCookie().toString())
+                .build();
+    }
+
+    @PostMapping("/auth/refresh")
+    public ResponseEntity<Void> refresh(HttpServletRequest request) {
+        String sessionToken = cookieFactory.readSessionToken(request.getCookies()).orElse(null);
+        gatewayOidcUseCase.refresh(sessionToken);
+        return ResponseEntity.noContent().build();
     }
 
     private String errorMessage(String error) {

@@ -33,6 +33,7 @@
 | 5 | Tenant | ✅ Concluída | 2026-08-01 | AI Agent | 4.1 |
 | 6 | Access Gateway | 🚧 Em andamento | 2026-08-02 | AI Agent | 5 |
 | 6.1 | Gateway OIDC (authorize/callback) | ✅ Concluída | 2026-08-02 | AI Agent | 6 |
+| 6.2 | Gateway OIDC (logout + ciclo de vida da sessão) | ✅ Concluída | 2026-08-02 | AI Agent | 6.1 |
 
 ## SaaS
 
@@ -78,13 +79,13 @@
 | Planejamento | 3 | 3 | 0 | 0 |
 | Knowledge Layer | 3 | 3 | 0 | 0 |
 | Infraestrutura | 5 | 0 | 1 | 4 |
-| Segurança | 3 | 2 | 1 | 0 |
+| Segurança | 4 | 3 | 1 | 0 |
 | SaaS | 1 | 0 | 0 | 1 |
 | CRM | 4 | 0 | 0 | 4 |
 | Omnichannel | 3 | 0 | 0 | 3 |
 | Analytics | 1 | 0 | 0 | 1 |
 | IA | 1 | 0 | 0 | 1 |
-| **Total** | **24** | **8** | **2** | **14** |
+| **Total** | **25** | **9** | **2** | **14** |
 
 ---
 

@@ -62,6 +62,10 @@ auth:
     cookie-name: ${AUTH_GATEWAY_COOKIE_NAME:crm_session}
     secure-cookie: ${AUTH_GATEWAY_SECURE_COOKIE:true}
     session-ttl: ${AUTH_GATEWAY_SESSION_TTL:8h}
+    session-idle-timeout: ${AUTH_GATEWAY_SESSION_IDLE_TIMEOUT:0s}
+    csrf-cookie-name: ${AUTH_GATEWAY_CSRF_COOKIE_NAME:XSRF-TOKEN}
+    csrf-header-name: ${AUTH_GATEWAY_CSRF_HEADER_NAME:X-XSRF-TOKEN}
+    app-base-url: ${AUTH_GATEWAY_APP_BASE_URL:}
     authorization-request-ttl: ${AUTH_GATEWAY_AUTHORIZATION_REQUEST_TTL:10m}
     token-exchange-timeout: ${AUTH_GATEWAY_TOKEN_EXCHANGE_TIMEOUT:10s}
 

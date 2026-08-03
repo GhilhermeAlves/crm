@@ -29,6 +29,10 @@ public class OidcGatewayProperties {
     private String cookieName = "crm_session";
     private boolean secureCookie = true;
     private Duration sessionTtl = Duration.ofHours(8);
+    private Duration sessionIdleTimeout = Duration.ZERO;
+    private String csrfCookieName = "XSRF-TOKEN";
+    private String csrfHeaderName = "X-XSRF-TOKEN";
+    private String appBaseUrl = "";
     private Duration authorizationRequestTtl = Duration.ofMinutes(10);
     private Duration tokenExchangeTimeout = Duration.ofSeconds(10);
     private Duration clockSkew = Duration.ofSeconds(30);
@@ -160,6 +164,38 @@ public class OidcGatewayProperties {
 
     public void setSessionTtl(Duration sessionTtl) {
         this.sessionTtl = sessionTtl;
+    }
+
+    public Duration getSessionIdleTimeout() {
+        return sessionIdleTimeout;
+    }
+
+    public void setSessionIdleTimeout(Duration sessionIdleTimeout) {
+        this.sessionIdleTimeout = sessionIdleTimeout;
+    }
+
+    public String getCsrfCookieName() {
+        return csrfCookieName;
+    }
+
+    public void setCsrfCookieName(String csrfCookieName) {
+        this.csrfCookieName = csrfCookieName;
+    }
+
+    public String getCsrfHeaderName() {
+        return csrfHeaderName;
+    }
+
+    public void setCsrfHeaderName(String csrfHeaderName) {
+        this.csrfHeaderName = csrfHeaderName;
+    }
+
+    public String getAppBaseUrl() {
+        return appBaseUrl;
+    }
+
+    public void setAppBaseUrl(String appBaseUrl) {
+        this.appBaseUrl = appBaseUrl;
     }
 
     public Duration getAuthorizationRequestTtl() {
