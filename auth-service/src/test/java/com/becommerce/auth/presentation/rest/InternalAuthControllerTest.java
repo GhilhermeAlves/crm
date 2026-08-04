@@ -6,6 +6,7 @@ import com.becommerce.auth.domain.identity.CurrentUser;
 import com.becommerce.auth.domain.identity.CurrentUserResolution;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.auth.infrastructure.config.SecurityConfig;
+import com.becommerce.auth.infrastructure.health.DependencyProbe;
 import com.becommerce.auth.infrastructure.security.JwtAuthenticationEntryPoint;
 import com.becommerce.auth.infrastructure.security.KeycloakIdentityConverter;
 import com.becommerce.auth.presentation.rest.handler.GlobalExceptionHandler;
@@ -48,6 +49,7 @@ class InternalAuthControllerTest {
 
     @MockBean private JwtDecoder jwtDecoder;
     @MockBean private CurrentUserResolutionUseCase currentUserResolutionUseCase;
+    @MockBean private DependencyProbe dependencyProbe;
 
     @BeforeEach
     void setUp() {

@@ -2,6 +2,7 @@ package com.becommerce.auth.presentation.rest;
 
 import com.becommerce.auth.infrastructure.gateway.GatewayApiRelay;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
+import com.becommerce.auth.infrastructure.observability.CorrelationIdContext;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,12 @@ public class ApiRelayController {
             if (value != null) {
                 headers.put(name, value);
             }
+        }
+        // Propaga o correlation ID normalizado (nunca o valor bruto do cliente)
+        // ao backend para rastreabilidade ponta-a-ponta (Sprint 6.6).
+        String correlationId = CorrelationIdContext.get();
+        if (correlationId != null) {
+            headers.put("X-Correlation-Id", correlationId);
         }
         return relay.forward(
                 HttpMethod.valueOf(request.getMethod()),

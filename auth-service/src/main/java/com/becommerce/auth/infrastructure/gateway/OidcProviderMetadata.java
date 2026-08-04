@@ -47,15 +47,40 @@ public class OidcProviderMetadata {
         return refreshCache();
     }
 
+    /**
+     * Sonda o provedor com uma descoberta OIDC <b>fresca</b> (ignora o cache de
+     * 5m) e sem lançar exceção — usado pelo readiness (Sprint 6.6) para
+     * detectar rapidamente a indisponibilidade/recuperação do Keycloak sem
+     * compartilhar outro mecanismo de discovery.
+     */
+    public boolean isReachable() {
+        try {
+            fetchDiscovery();
+            return true;
+        } catch (OidcGatewayException e) {
+            return false;
+        }
+    }
+
     private synchronized String refreshCache() {
         String cached = endSessionEndpoint;
         if (cached != null && isFresh(cachedAt)) {
             return cached;
         }
+        Map<String, Object> metadata = fetchDiscovery();
+        Object endpoint = metadata == null ? null : metadata.get("end_session_endpoint");
+        if (endpoint == null || !(endpoint instanceof String value) || value.isBlank()) {
+            throw unavailable();
+        }
+        endSessionEndpoint = value;
+        cachedAt = Instant.now();
+        return value;
+    }
+
+    private Map<String, Object> fetchDiscovery() {
         String discoveryUri = properties.getIssuerUri() + "/.well-known/openid-configuration";
-        Map<String, Object> metadata;
         try {
-            metadata = restClient.get()
+            return restClient.get()
                     .uri(discoveryUri)
                     .retrieve()
                     .onStatus(status -> status.isError(), (request, response) -> {
@@ -66,14 +91,6 @@ public class OidcProviderMetadata {
         } catch (RestClientException e) {
             throw unavailable();
         }
-
-        Object endpoint = metadata == null ? null : metadata.get("end_session_endpoint");
-        if (endpoint == null || !(endpoint instanceof String value) || value.isBlank()) {
-            throw unavailable();
-        }
-        endSessionEndpoint = value;
-        cachedAt = Instant.now();
-        return value;
     }
 
     private boolean isFresh(Instant cachedAt) {

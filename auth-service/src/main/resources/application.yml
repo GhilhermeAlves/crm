@@ -93,6 +93,15 @@ auth:
     api-backend-url: ${AUTH_GATEWAY_API_BACKEND_URL:http://localhost:8081}
     api-connect-timeout: ${AUTH_GATEWAY_API_CONNECT_TIMEOUT:5s}
     api-read-timeout: ${AUTH_GATEWAY_API_READ_TIMEOUT:30s}
+    # Rate limiting distribuído (Sprint 6.6): janela fixa em Redis sobre os
+    # endpoints sensíveis de autenticação. Política Redis down = fail-controlled
+    # (permite a requisição com warning; nunca bloqueia o fluxo legítimo).
+    rate-limit-enabled: ${AUTH_GATEWAY_RATE_LIMIT_ENABLED:true}
+    rate-limit-window: ${AUTH_GATEWAY_RATE_LIMIT_WINDOW:60s}
+    rate-limit-authorize: ${AUTH_GATEWAY_RATE_LIMIT_AUTHORIZE:20}
+    rate-limit-callback: ${AUTH_GATEWAY_RATE_LIMIT_CALLBACK:20}
+    rate-limit-refresh: ${AUTH_GATEWAY_RATE_LIMIT_REFRESH:30}
+    rate-limit-logout: ${AUTH_GATEWAY_RATE_LIMIT_LOGOUT:20}
 
 server:
   port: 8080
@@ -114,4 +123,4 @@ logging:
     com.becommerce.auth: INFO
     org.springframework.security: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} %X{correlationId:-} [%thread] %-5level %logger{36} - %msg%n"

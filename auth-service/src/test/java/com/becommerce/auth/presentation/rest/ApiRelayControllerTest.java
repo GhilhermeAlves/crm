@@ -4,6 +4,7 @@ import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.infrastructure.config.SecurityConfig;
 import com.becommerce.auth.infrastructure.gateway.GatewayApiRelay;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
+import com.becommerce.auth.infrastructure.observability.CorrelationIdContext;
 import com.becommerce.auth.infrastructure.security.JwtAuthenticationEntryPoint;
 import com.becommerce.auth.infrastructure.security.KeycloakIdentityConverter;
 import com.becommerce.auth.presentation.rest.handler.GlobalExceptionHandler;
@@ -96,5 +97,25 @@ class ApiRelayControllerTest {
                                 && !headers.containsKey("Cookie")
                                 && "application/json".equals(headers.get("Accept"))),
                 any());
+    }
+
+    @Test
+    void shouldPropagateCorrelationIdToBackend() throws Exception {
+        CorrelationIdContext.set("corr-12345678");
+        try {
+            when(cookieFactory.readSessionToken(any())).thenReturn(Optional.of("opaque-session-token"));
+            when(relay.forward(any(), any(), any(), any(), any(), any()))
+                    .thenReturn(ResponseEntity.ok(new byte[0]));
+
+            mockMvc.perform(get("/api/v1/users").cookie(sessionCookie()))
+                    .andExpect(status().isOk());
+
+            verify(relay).forward(any(), any(), any(), any(),
+                    org.mockito.ArgumentMatchers.<Map<String, String>>argThat(headers ->
+                            headers != null && "corr-12345678".equals(headers.get("X-Correlation-Id"))),
+                    any());
+        } finally {
+            CorrelationIdContext.clear();
+        }
     }
 }

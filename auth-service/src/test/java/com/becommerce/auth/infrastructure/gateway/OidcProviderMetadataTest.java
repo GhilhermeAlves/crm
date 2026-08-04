@@ -14,7 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OidcProviderMetadataTest {
 
@@ -96,5 +98,43 @@ class OidcProviderMetadataTest {
         OidcProviderMetadata metadata = new OidcProviderMetadata(properties);
 
         assertThrows(OidcGatewayException.class, metadata::endSessionEndpoint);
+    }
+
+    @Test
+    void isReachableShouldReturnTrueWhenDiscoverySucceeds() throws Exception {
+        server.createContext("/realms/CRM/.well-known/openid-configuration", exchange -> {
+            discoveryHits.incrementAndGet();
+            respond(exchange, 200, "{\"issuer\":\"%s\"}".formatted(baseUrl));
+        });
+
+        OidcProviderMetadata metadata = new OidcProviderMetadata(properties);
+
+        assertTrue(metadata.isReachable());
+    }
+
+    @Test
+    void isReachableShouldReturnFalseWhenDiscoveryFails() throws Exception {
+        server.createContext("/realms/CRM/.well-known/openid-configuration", exchange ->
+                respond(exchange, 503, "{}"));
+
+        OidcProviderMetadata metadata = new OidcProviderMetadata(properties);
+
+        assertFalse(metadata.isReachable(), "indisponibilidade do provedor não deve lançar, apenas reportar");
+    }
+
+    @Test
+    void isReachableShouldRecoverAfterFailure() throws Exception {
+        server.createContext("/realms/CRM/.well-known/openid-configuration", exchange -> {
+            if (discoveryHits.getAndIncrement() == 0) {
+                respond(exchange, 503, "{}");
+            } else {
+                respond(exchange, 200, "{\"issuer\":\"%s\"}".formatted(baseUrl));
+            }
+        });
+
+        OidcProviderMetadata metadata = new OidcProviderMetadata(properties);
+
+        assertFalse(metadata.isReachable());
+        assertTrue(metadata.isReachable(), "recuperação do provedor deve ser refletida na próxima sondagem");
     }
 }

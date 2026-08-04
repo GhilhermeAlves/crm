@@ -70,6 +70,14 @@ services:
     networks:
       - crm-network
     restart: unless-stopped
+    # Liveness (Sprint 6.6): /auth/health não depende de Redis/Keycloak — o
+    # container só marca unhealthy se o processo parar. O readiness de
+    # dependências é exposto em /auth/health/ready para monitoramento.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/auth/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   frontend:
     build:
