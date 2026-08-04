@@ -1,8 +1,11 @@
 package com.becommerce.auth.presentation.rest.handler;
 
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
+import com.becommerce.auth.domain.gateway.RateLimitExceededException;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.auth.infrastructure.observability.CorrelationIdContext;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
@@ -71,5 +74,40 @@ class GlobalExceptionHandlerTest {
         assertFalse(body.containsKey("code"), "erro genérico não deve expor código interno");
         assertTrue(body.values().stream().noneMatch(v -> String.valueOf(v).contains("hunter2")),
                 "detalhes da exceção não devem vazar na resposta");
+    }
+
+    @Test
+    void shouldReturn429WithRetryAfterOnRateLimitExceeded() {
+        ResponseEntity<Map<String, Object>> response =
+                handler.handleRateLimit(new RateLimitExceededException(37));
+
+        assertEquals(429, response.getStatusCode().value());
+        assertEquals("37", response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER));
+        Map<String, Object> body = response.getBody();
+        assertNotNull(body);
+        assertEquals("RATE_LIMIT_EXCEEDED", body.get("code"));
+        assertEquals(429, body.get("status"));
+        assertNotNull(body.get("message"));
+    }
+
+    @Test
+    void shouldIncludeCorrelationIdInErrorBodyWhenPresent() {
+        CorrelationIdContext.set("corr-12345678");
+        try {
+            ResponseEntity<Map<String, Object>> response =
+                    handler.handleOidcGateway(new OidcGatewayException("TOKEN_EXCHANGE_FAILED", 502, "falha no IdP"));
+
+            assertEquals("corr-12345678", response.getBody().get("correlationId"));
+        } finally {
+            CorrelationIdContext.clear();
+        }
+    }
+
+    @Test
+    void shouldOmitCorrelationIdWhenContextIsEmpty() {
+        ResponseEntity<Map<String, Object>> response =
+                handler.handleOidcGateway(new OidcGatewayException("TOKEN_EXCHANGE_FAILED", 502, "falha no IdP"));
+
+        assertFalse(response.getBody().containsKey("correlationId"));
     }
 }

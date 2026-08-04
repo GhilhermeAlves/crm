@@ -1,7 +1,11 @@
 package com.becommerce.auth.infrastructure.config;
 
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
+import com.becommerce.auth.infrastructure.gateway.GatewayRateLimiter;
+import com.becommerce.auth.infrastructure.gateway.GatewayRateLimitFilter;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
+import com.becommerce.auth.infrastructure.gateway.SecureTokenGenerator;
+import com.becommerce.auth.infrastructure.observability.CorrelationIdFilter;
 import com.becommerce.auth.infrastructure.security.GatewayCsrfFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -45,6 +49,37 @@ public class GatewayConfig {
                 new FilterRegistrationBean<>(new GatewayCsrfFilter(cookieFactory, properties, objectMapper));
         registration.setUrlPatterns(List.of("/auth/refresh"));
         registration.setOrder(Ordered.LOWEST_PRECEDENCE - 100);
+        return registration;
+    }
+
+    /**
+     * {@link CorrelationIdFilter} (Sprint 6.6): roda antes de toda a cadeia
+     * (inclusive Spring Security) para que toda requisição — incluindo erros
+     * 401/403/429 — tenha {@code X-Correlation-Id} na resposta e no log.
+     */
+    @Bean
+    FilterRegistrationBean<CorrelationIdFilter> correlationIdFilter(SecureTokenGenerator tokenGenerator) {
+        FilterRegistrationBean<CorrelationIdFilter> registration =
+                new FilterRegistrationBean<>(new CorrelationIdFilter(tokenGenerator));
+        registration.setUrlPatterns(List.of("/*"));
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
+
+    /**
+     * {@link GatewayRateLimitFilter} (Sprint 6.6): limita os endpoints sensíveis
+     * de autenticação com contador distribuído em Redis. Executa antes do
+     * Spring Security (limita também requisições anônimas).
+     */
+    @Bean
+    FilterRegistrationBean<GatewayRateLimitFilter> gatewayRateLimitFilter(GatewayRateLimiter rateLimiter,
+                                                                          GatewayCookieFactory cookieFactory,
+                                                                          OidcGatewayProperties properties,
+                                                                          ObjectMapper objectMapper) {
+        FilterRegistrationBean<GatewayRateLimitFilter> registration =
+                new FilterRegistrationBean<>(new GatewayRateLimitFilter(rateLimiter, cookieFactory, properties, objectMapper));
+        registration.setUrlPatterns(List.of("/auth/authorize", "/auth/callback", "/auth/refresh", "/auth/logout"));
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return registration;
     }
 }

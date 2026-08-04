@@ -42,6 +42,12 @@ public class OidcGatewayProperties {
     private String apiBackendUrl = "";
     private Duration apiConnectTimeout = Duration.ofSeconds(5);
     private Duration apiReadTimeout = Duration.ofSeconds(30);
+    private boolean rateLimitEnabled = true;
+    private Duration rateLimitWindow = Duration.ofSeconds(60);
+    private int rateLimitAuthorize = 20;
+    private int rateLimitCallback = 20;
+    private int rateLimitRefresh = 30;
+    private int rateLimitLogout = 20;
 
     public boolean isConfigured() {
         return StringUtils.hasText(clientId)
@@ -287,5 +293,59 @@ public class OidcGatewayProperties {
 
     public void setApiReadTimeout(Duration apiReadTimeout) {
         this.apiReadTimeout = apiReadTimeout;
+    }
+
+    /** Habilita o rate limiting distribuído do Gateway (Sprint 6.6). */
+    public boolean isRateLimitEnabled() {
+        return rateLimitEnabled;
+    }
+
+    public void setRateLimitEnabled(boolean rateLimitEnabled) {
+        this.rateLimitEnabled = rateLimitEnabled;
+    }
+
+    /** Janela fixa do rate limiting (default 60s). */
+    public Duration getRateLimitWindow() {
+        return rateLimitWindow;
+    }
+
+    public void setRateLimitWindow(Duration rateLimitWindow) {
+        this.rateLimitWindow = rateLimitWindow;
+    }
+
+    /** Limite por janela de {@code /auth/authorize} (por IP real). */
+    public int getRateLimitAuthorize() {
+        return rateLimitAuthorize;
+    }
+
+    public void setRateLimitAuthorize(int rateLimitAuthorize) {
+        this.rateLimitAuthorize = rateLimitAuthorize;
+    }
+
+    /** Limite por janela de {@code /auth/callback} (por IP real). */
+    public int getRateLimitCallback() {
+        return rateLimitCallback;
+    }
+
+    public void setRateLimitCallback(int rateLimitCallback) {
+        this.rateLimitCallback = rateLimitCallback;
+    }
+
+    /** Limite por janela de {@code /auth/refresh} (por sessão). */
+    public int getRateLimitRefresh() {
+        return rateLimitRefresh;
+    }
+
+    public void setRateLimitRefresh(int rateLimitRefresh) {
+        this.rateLimitRefresh = rateLimitRefresh;
+    }
+
+    /** Limite por janela de {@code /auth/logout} (por sessão). */
+    public int getRateLimitLogout() {
+        return rateLimitLogout;
+    }
+
+    public void setRateLimitLogout(int rateLimitLogout) {
+        this.rateLimitLogout = rateLimitLogout;
     }
 }
