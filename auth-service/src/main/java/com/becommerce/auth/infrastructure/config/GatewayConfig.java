@@ -1,9 +1,13 @@
 package com.becommerce.auth.infrastructure.config;
 
+import com.becommerce.auth.infrastructure.gateway.ApiRateLimitFilter;
+import com.becommerce.auth.infrastructure.gateway.ClientIpResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
 import com.becommerce.auth.infrastructure.gateway.GatewayRateLimiter;
 import com.becommerce.auth.infrastructure.gateway.GatewayRateLimitFilter;
+import com.becommerce.auth.infrastructure.gateway.GatewaySessionResolver;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
+import com.becommerce.auth.infrastructure.gateway.RateLimitErrorResponse;
 import com.becommerce.auth.infrastructure.gateway.SecureTokenGenerator;
 import com.becommerce.auth.infrastructure.observability.CorrelationIdFilter;
 import com.becommerce.auth.infrastructure.security.GatewayCsrfFilter;
@@ -74,11 +78,34 @@ public class GatewayConfig {
     @Bean
     FilterRegistrationBean<GatewayRateLimitFilter> gatewayRateLimitFilter(GatewayRateLimiter rateLimiter,
                                                                           GatewayCookieFactory cookieFactory,
+                                                                          ClientIpResolver clientIpResolver,
+                                                                          RateLimitErrorResponse errorResponse,
                                                                           OidcGatewayProperties properties,
                                                                           ObjectMapper objectMapper) {
         FilterRegistrationBean<GatewayRateLimitFilter> registration =
-                new FilterRegistrationBean<>(new GatewayRateLimitFilter(rateLimiter, cookieFactory, properties, objectMapper));
+                new FilterRegistrationBean<>(new GatewayRateLimitFilter(
+                        rateLimiter, cookieFactory, clientIpResolver, errorResponse, properties, objectMapper));
         registration.setUrlPatterns(List.of("/auth/authorize", "/auth/callback", "/auth/refresh", "/auth/logout"));
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+        return registration;
+    }
+
+    /**
+     * {@link ApiRateLimitFilter} (Sprint 6.7): limita o relay {@code /api/**}
+     * por usuário autenticado ({@code userId} da sessão) com fallback para IP
+     * real — antes do encaminhamento ao backend.
+     */
+    @Bean
+    FilterRegistrationBean<ApiRateLimitFilter> apiRateLimitFilter(GatewayRateLimiter rateLimiter,
+                                                                  GatewayCookieFactory cookieFactory,
+                                                                  GatewaySessionResolver sessionResolver,
+                                                                  ClientIpResolver clientIpResolver,
+                                                                  RateLimitErrorResponse errorResponse,
+                                                                  OidcGatewayProperties properties) {
+        FilterRegistrationBean<ApiRateLimitFilter> registration =
+                new FilterRegistrationBean<>(new ApiRateLimitFilter(
+                        rateLimiter, cookieFactory, sessionResolver, clientIpResolver, errorResponse, properties));
+        registration.setUrlPatterns(List.of("/api/*"));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return registration;
     }

@@ -48,6 +48,7 @@ public class OidcGatewayProperties {
     private int rateLimitCallback = 20;
     private int rateLimitRefresh = 30;
     private int rateLimitLogout = 20;
+    private int rateLimitApi = 60;
 
     public boolean isConfigured() {
         return StringUtils.hasText(clientId)
@@ -347,5 +348,18 @@ public class OidcGatewayProperties {
 
     public void setRateLimitLogout(int rateLimitLogout) {
         this.rateLimitLogout = rateLimitLogout;
+    }
+
+    /**
+     * Limite por janela do relay {@code /api/**} (Sprint 6.7): por usuário
+     * autenticado ({@code userId} da sessão) com fallback para IP real. {@code 0}
+     * desativa o rate limiting do relay sem afetar os demais endpoints.
+     */
+    public int getRateLimitApi() {
+        return rateLimitApi;
+    }
+
+    public void setRateLimitApi(int rateLimitApi) {
+        this.rateLimitApi = rateLimitApi;
     }
 }

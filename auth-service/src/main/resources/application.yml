@@ -102,6 +102,7 @@ auth:
     rate-limit-callback: ${AUTH_GATEWAY_RATE_LIMIT_CALLBACK:20}
     rate-limit-refresh: ${AUTH_GATEWAY_RATE_LIMIT_REFRESH:30}
     rate-limit-logout: ${AUTH_GATEWAY_RATE_LIMIT_LOGOUT:20}
+    rate-limit-api: ${AUTH_GATEWAY_RATE_LIMIT_API:60}
 
 server:
   port: 8080

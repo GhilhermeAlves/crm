@@ -1,20 +1,14 @@
 package com.becommerce.auth.infrastructure.gateway;
 
 import com.becommerce.auth.domain.gateway.RateLimitExceededException;
-import com.becommerce.auth.infrastructure.observability.CorrelationIdContext;
-import com.becommerce.auth.infrastructure.observability.CorrelationIdFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Rate limiting do Access Gateway (Sprint 6.6). Protege os endpoints sensíveis
@@ -25,8 +19,8 @@ import java.util.Map;
  * <p>Chave por endpoint:
  * <ul>
  *   <li>{@code authorize}/{@code callback} (sem sessão ainda) → IP real do
- *       cliente (nginx sobrescreve {@code X-Forwarded-For} com
- *       {@code $remote_addr});</li>
+ *       cliente ({@link ClientIpResolver} — resolve respeitando a cadeia de
+ *       proxies e ignorando spoofing de {@code X-Forwarded-For});</li>
  *   <li>{@code refresh}/{@code logout} → {@code sessionToken} opaco do cookie
  *       (sessões diferentes não se bloqueiam) com fallback para IP quando não
  *       há sessão.</li>
@@ -40,15 +34,21 @@ public class GatewayRateLimitFilter extends OncePerRequestFilter {
 
     private final GatewayRateLimiter rateLimiter;
     private final GatewayCookieFactory cookieFactory;
+    private final ClientIpResolver clientIpResolver;
+    private final RateLimitErrorResponse errorResponse;
     private final OidcGatewayProperties properties;
     private final ObjectMapper objectMapper;
 
     public GatewayRateLimitFilter(GatewayRateLimiter rateLimiter,
                                   GatewayCookieFactory cookieFactory,
+                                  ClientIpResolver clientIpResolver,
+                                  RateLimitErrorResponse errorResponse,
                                   OidcGatewayProperties properties,
                                   ObjectMapper objectMapper) {
         this.rateLimiter = rateLimiter;
         this.cookieFactory = cookieFactory;
+        this.clientIpResolver = clientIpResolver;
+        this.errorResponse = errorResponse;
         this.properties = properties;
         this.objectMapper = objectMapper;
     }
@@ -66,16 +66,16 @@ public class GatewayRateLimitFilter extends OncePerRequestFilter {
             rateLimiter.enforce(target.bucket(), target.key(), target.limit(), properties.getRateLimitWindow());
             filterChain.doFilter(request, response);
         } catch (RateLimitExceededException e) {
-            writeTooManyRequests(response, e);
+            errorResponse.write(response, e);
         }
     }
 
     private RateLimitTarget resolveTarget(HttpServletRequest request) {
         return switch (request.getRequestURI()) {
             case "/auth/authorize" -> new RateLimitTarget(
-                    "authorize", clientIp(request), properties.getRateLimitAuthorize());
+                    "authorize", clientIpResolver.resolve(request), properties.getRateLimitAuthorize());
             case "/auth/callback" -> new RateLimitTarget(
-                    "callback", clientIp(request), properties.getRateLimitCallback());
+                    "callback", clientIpResolver.resolve(request), properties.getRateLimitCallback());
             case "/auth/refresh" -> new RateLimitTarget(
                     "refresh", sessionKeyOrIp(request), properties.getRateLimitRefresh());
             case "/auth/logout" -> new RateLimitTarget(
@@ -86,47 +86,7 @@ public class GatewayRateLimitFilter extends OncePerRequestFilter {
 
     private String sessionKeyOrIp(HttpServletRequest request) {
         String sessionToken = cookieFactory.readSessionToken(request.getCookies()).orElse(null);
-        return sessionToken != null ? sessionToken : clientIp(request);
-    }
-
-    private String clientIp(HttpServletRequest request) {
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (StringUtils.hasText(forwardedFor)) {
-            String first = forwardedFor.split(",", 2)[0].trim();
-            if (isPlausibleIp(first)) {
-                return first;
-            }
-        }
-        String realIp = request.getHeader("X-Real-IP");
-        if (StringUtils.hasText(realIp) && isPlausibleIp(realIp)) {
-            return realIp;
-        }
-        return request.getRemoteAddr();
-    }
-
-    private boolean isPlausibleIp(String value) {
-        if (!StringUtils.hasText(value)) {
-            return false;
-        }
-        return value.matches("\\d{1,3}(\\.\\d{1,3}){3}") || value.matches("[0-9a-fA-F:]+");
-    }
-
-    private void writeTooManyRequests(HttpServletResponse response, RateLimitExceededException e) throws IOException {
-        response.setStatus(RateLimitExceededException.STATUS);
-        response.setHeader("Retry-After", String.valueOf(e.getRetryAfterSeconds()));
-        response.setContentType("application/json");
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", RateLimitExceededException.STATUS);
-        body.put("code", RateLimitExceededException.CODE);
-        body.put("error", "Too Many Requests");
-        body.put("message", e.getMessage());
-        body.put("timestamp", LocalDateTime.now().toString());
-        String correlationId = CorrelationIdContext.get();
-        if (correlationId != null) {
-            response.setHeader(CorrelationIdFilter.HEADER, correlationId);
-            body.put("correlationId", correlationId);
-        }
-        response.getWriter().write(objectMapper.writeValueAsString(body));
+        return sessionToken != null ? sessionToken : clientIpResolver.resolve(request);
     }
 
     private record RateLimitTarget(String bucket, String key, int limit) {

@@ -39,7 +39,9 @@ class GatewayRateLimitFilterTest {
         MockitoAnnotations.openMocks(this);
         properties.setCookieName("crm_session");
         properties.setRateLimitEnabled(true);
-        filter = new GatewayRateLimitFilter(rateLimiter, cookieFactory, properties, new ObjectMapper());
+        filter = new GatewayRateLimitFilter(
+                rateLimiter, cookieFactory, new ClientIpResolver(), new RateLimitErrorResponse(new ObjectMapper()),
+                properties, new ObjectMapper());
     }
 
     private MockHttpServletRequest get(String path) {
