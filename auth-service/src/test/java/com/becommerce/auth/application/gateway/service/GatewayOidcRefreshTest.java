@@ -34,8 +34,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -248,5 +250,100 @@ class GatewayOidcRefreshTest {
 
         assertEquals(SessionStatus.ACTIVE, sessionStore.findByToken("tc").status());
         assertEquals("access-2", sessionStore.findByToken("tc").session().accessToken());
+    }
+
+    @Test
+    void shouldSerializeConcurrentRefreshesWithoutReusingRefreshToken() throws Exception {
+        sessionStore.put(activeSession("tx"));
+        List<String> presented = java.util.Collections.synchronizedList(new ArrayList<>());
+        AtomicInteger exchange = new AtomicInteger();
+        when(tokenClient.refresh(any(OidcTokenClient.RefreshRequest.class)))
+                .thenAnswer(invocation -> {
+                    OidcTokenClient.RefreshRequest request = invocation.getArgument(0);
+                    presented.add(request.refreshToken());
+                    int n = exchange.incrementAndGet();
+                    return new OidcTokenClient.TokenResponse(
+                            "rotated-access-" + n, "rotated-refresh-" + n, "rotated-hint-" + n, 600);
+                });
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<GatewayOidcUseCase.RefreshResult>> futures = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            futures.add(pool.submit(() -> {
+                start.await();
+                return service.refresh("tx");
+            }));
+        }
+        start.countDown();
+        pool.shutdown();
+        assertTrue(pool.awaitTermination(10, TimeUnit.SECONDS));
+
+        GatewaySession stored = sessionStore.findByToken("tx").session();
+        assertEquals(SessionStatus.ACTIVE, sessionStore.findByToken("tx").status());
+
+        assertEquals(presented.size(), new java.util.HashSet<>(presented).size(),
+                "nenhum refresh token pode ser apresentado ao IdP mais de uma vez (anti-replay)");
+        assertEquals("refresh-1", presented.get(0),
+                "o token original deve ser o primeiro (e único) uso do token antigo");
+        assertTrue(presented.size() == 2, "os 2 refreshes concorrentes devem trocar tokens em sequência");
+
+        for (Future<GatewayOidcUseCase.RefreshResult> future : futures) {
+            GatewaySession result = future.get(1, TimeUnit.SECONDS).session();
+            assertNotEquals("access-1", result.accessToken(),
+                    "nenhuma chamada pode devolver o access token antigo (a perdedora vê o rotacionado)");
+        }
+        assertEquals("rotated-refresh-2", stored.refreshToken(),
+                "a sessão final deve armazenar o último refresh token rotacionado");
+    }
+
+    @Test
+    void shouldRefreshTwoDifferentSessionsConcurrentlyWithoutCrossTalk() throws Exception {
+        Instant now = Instant.now();
+        GatewaySession first = new GatewaySession("s1", USER_ID, "a@b.com", COMPANY_ID, COMPANY_ID,
+                List.of("AGENT"), List.of(), "sub", "sid", "keycloak", "Ghilherme",
+                now, now.plusSeconds(3600), now, "hint-a", "access-A", "refresh-A",
+                now.plusSeconds(300), "csrf", null);
+        GatewaySession second = new GatewaySession("s2", USER_ID, "a@b.com", COMPANY_ID, COMPANY_ID,
+                List.of("AGENT"), List.of(), "sub", "sid", "keycloak", "Ghilherme",
+                now, now.plusSeconds(3600), now, "hint-b", "access-B", "refresh-B",
+                now.plusSeconds(300), "csrf", null);
+        sessionStore.put(first);
+        sessionStore.put(second);
+
+        List<String> presented = java.util.Collections.synchronizedList(new ArrayList<>());
+        when(tokenClient.refresh(any(OidcTokenClient.RefreshRequest.class)))
+                .thenAnswer(invocation -> {
+                    OidcTokenClient.RefreshRequest request = invocation.getArgument(0);
+                    presented.add(request.refreshToken());
+                    return new OidcTokenClient.TokenResponse(
+                            "access-" + request.refreshToken(), "refresh-" + request.refreshToken() + "-new",
+                            "hint", 600);
+                });
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<GatewayOidcUseCase.RefreshResult>> futures = new ArrayList<>();
+        futures.add(pool.submit(() -> {
+            start.await();
+            return service.refresh("s1");
+        }));
+        futures.add(pool.submit(() -> {
+            start.await();
+            return service.refresh("s2");
+        }));
+        start.countDown();
+        pool.shutdown();
+        assertTrue(pool.awaitTermination(10, TimeUnit.SECONDS));
+        for (Future<GatewayOidcUseCase.RefreshResult> future : futures) {
+            future.get(1, TimeUnit.SECONDS);
+        }
+
+        assertEquals(SessionStatus.ACTIVE, sessionStore.findByToken("s1").status());
+        assertEquals(SessionStatus.ACTIVE, sessionStore.findByToken("s2").status());
+        assertTrue(presented.containsAll(List.of("refresh-A", "refresh-B")),
+                "cada sessão deve usar exclusivamente o seu próprio refresh token");
+        assertEquals("access-refresh-A", sessionStore.findByToken("s1").session().accessToken());
+        assertEquals("access-refresh-B", sessionStore.findByToken("s2").session().accessToken());
     }
 }

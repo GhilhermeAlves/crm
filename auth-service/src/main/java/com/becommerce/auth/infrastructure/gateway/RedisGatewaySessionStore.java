@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
@@ -78,7 +79,7 @@ public class RedisGatewaySessionStore implements GatewaySessionStore {
     @Override
     public void put(GatewaySession session) {
         String key = sessionKey(session.sessionToken());
-        redis.opsForValue().set(key, serialize(session), redisTtl(session));
+        redisRun(() -> redis.opsForValue().set(key, serialize(session), redisTtl(session)));
     }
 
     @Override
@@ -103,11 +104,11 @@ public class RedisGatewaySessionStore implements GatewaySessionStore {
         }
         Instant now = Instant.now();
         if (!session.isActive(now, idleTimeout())) {
-            redis.delete(key);
+            redisOps(() -> redis.delete(key));
             return SessionLookup.expired(session);
         }
         GatewaySession touched = session.withLastAccessed(now);
-        redis.opsForValue().set(key, serialize(touched), redisTtl(touched));
+        redisRun(() -> redis.opsForValue().set(key, serialize(touched), redisTtl(touched)));
         return SessionLookup.active(touched);
     }
 
@@ -122,13 +123,13 @@ public class RedisGatewaySessionStore implements GatewaySessionStore {
             return;
         }
         GatewaySession revoked = found.get().withRevokedAt(Instant.now());
-        redis.opsForValue().set(key, serialize(revoked), redisTtl(revoked));
+        redisRun(() -> redis.opsForValue().set(key, serialize(revoked), redisTtl(revoked)));
     }
 
     @Override
     public void remove(String sessionToken) {
         if (sessionToken != null) {
-            redis.delete(sessionKey(sessionToken));
+            redisOps(() -> redis.delete(sessionKey(sessionToken)));
         }
     }
 
@@ -139,7 +140,7 @@ public class RedisGatewaySessionStore implements GatewaySessionStore {
         Duration lockTtl = properties.getSessionLockTtl();
         long deadlineNanos = System.nanoTime() + properties.getSessionLockAcquireTimeout().toNanos();
         while (true) {
-            Boolean acquired = redis.opsForValue().setIfAbsent(lockKey, owner, lockTtl);
+            Boolean acquired = redisOps(() -> redis.opsForValue().setIfAbsent(lockKey, owner, lockTtl));
             if (Boolean.TRUE.equals(acquired)) {
                 return () -> releaseLock(lockKey, owner);
             }
@@ -168,16 +169,54 @@ public class RedisGatewaySessionStore implements GatewaySessionStore {
 
     @Override
     public int size() {
-        Set<String> keys = redis.keys(SESSION_KEY_PREFIX + "*");
+        Set<String> keys = redisOps(() -> redis.keys(SESSION_KEY_PREFIX + "*"));
         return keys == null ? 0 : keys.size();
     }
 
     private void releaseLock(String lockKey, String owner) {
         try {
-            redis.execute(RELEASE_LOCK_SCRIPT, List.of(lockKey), owner);
-        } catch (RuntimeException e) {
+            redisOps(() -> redis.execute(RELEASE_LOCK_SCRIPT, List.of(lockKey), owner));
+        } catch (OidcGatewayException e) {
             log.warn("Failed to release gateway session lock; TTL will expire: key={}", lockKey);
         }
+    }
+
+    /**
+     * Falhas de conexão/comando do Redis (RedisConnectionFailureException,
+     * QueryTimeoutException etc. — todos {@link DataAccessException}) são
+     * traduzidas para o erro de domínio {@code REDIS_UNAVAILABLE} (503). O
+     * auth-service também acessa o banco relacional via JPA; traduzir aqui, no
+     * adapter Redis, mantém a mensagem verdadeira sem contaminar outros
+     * DataAccessException do web layer.
+     */
+    private <T> T redisOps(RedisOperation<T> operation) {
+        try {
+            return operation.execute();
+        } catch (DataAccessException e) {
+            log.warn("Redis unavailable during session operation: {}", e.getClass().getSimpleName());
+            throw new OidcGatewayException("REDIS_UNAVAILABLE", 503,
+                    "Dependência de sessão indisponível (Redis).");
+        }
+    }
+
+    private void redisRun(RedisAction action) {
+        try {
+            action.execute();
+        } catch (DataAccessException e) {
+            log.warn("Redis unavailable during session operation: {}", e.getClass().getSimpleName());
+            throw new OidcGatewayException("REDIS_UNAVAILABLE", 503,
+                    "Dependência de sessão indisponível (Redis).");
+        }
+    }
+
+    @FunctionalInterface
+    private interface RedisOperation<T> {
+        T execute();
+    }
+
+    @FunctionalInterface
+    private interface RedisAction {
+        void execute();
     }
 
     /**
@@ -201,7 +240,7 @@ public class RedisGatewaySessionStore implements GatewaySessionStore {
     }
 
     private Optional<GatewaySession> readValue(String key) {
-        String json = redis.opsForValue().get(key);
+        String json = redisOps(() -> redis.opsForValue().get(key));
         if (json == null) {
             return Optional.empty();
         }
@@ -209,7 +248,7 @@ public class RedisGatewaySessionStore implements GatewaySessionStore {
             return Optional.of(objectMapper.readValue(json, GatewaySession.class));
         } catch (JsonProcessingException e) {
             log.error("Failed to deserialize gateway session, removing key={}", key);
-            redis.delete(key);
+            redisOps(() -> redis.delete(key));
             return Optional.empty();
         }
     }

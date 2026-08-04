@@ -210,4 +210,27 @@ class RedisGatewaySessionStoreTest {
         store.purgeExpired();
         verify(valueOps, never()).set(anyString(), anyString());
     }
+
+    @Test
+    void shouldTranslateRedisFailureToDomainUnavailableError() {
+        when(valueOps.get("gateway:session:tX"))
+                .thenThrow(new org.springframework.data.redis.RedisConnectionFailureException("Connection refused"));
+
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class, () -> store.findByToken("tX"));
+        assertEquals("REDIS_UNAVAILABLE", ex.getCode());
+        assertEquals(503, ex.getStatus());
+        assertFalse(ex.getMessage().contains("refused"),
+                "não deve vazar detalhes da exceção de infraestrutura");
+    }
+
+    @Test
+    void shouldTranslateRedisFailureOnWriteToDomainUnavailableError() {
+        org.mockito.Mockito.doThrow(new org.springframework.dao.QueryTimeoutException("connection timed out after 2000 ms"))
+                .when(valueOps).set(anyString(), anyString(), any(Duration.class));
+
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> store.put(activeSession("tY", Instant.now().plusSeconds(3600))));
+        assertEquals("REDIS_UNAVAILABLE", ex.getCode());
+        assertEquals(503, ex.getStatus());
+    }
 }

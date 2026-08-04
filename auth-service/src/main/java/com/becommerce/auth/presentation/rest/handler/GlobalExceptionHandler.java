@@ -4,6 +4,7 @@ import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -34,6 +35,16 @@ public class GlobalExceptionHandler {
                 "code", ex.getCode(),
                 "error", HttpStatus.resolve(ex.getStatus()) == null ? "Error" : HttpStatus.resolve(ex.getStatus()).getReasonPhrase(),
                 "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(Map.of(
+                "status", 405,
+                "code", "METHOD_NOT_ALLOWED",
+                "error", "Method Not Allowed",
+                "message", "Método HTTP não permitido para este recurso.",
                 "timestamp", LocalDateTime.now().toString()));
     }
 
