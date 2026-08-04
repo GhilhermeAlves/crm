@@ -37,6 +37,7 @@
 | 6.3 | Gateway OIDC (integração de produção / E2E) | ✅ Concluída | 2026-08-03 | AI Agent | 6.2 |
 | 6.4 | Migração do frontend para o Access Gateway (BFF relay) | ✅ Concluída | 2026-08-04 | AI Agent | 6.3 |
 | 6.5 | Gateway OIDC (hardening, observabilidade e correções) | ✅ Concluída | 2026-08-04 | AI Agent | 6.4 |
+| 6.6 | Gateway OIDC (health/readiness, correlation ID e rate limiting) | ✅ Concluída | 2026-08-04 | AI Agent | 6.5 |
 
 ## SaaS
 
@@ -82,14 +83,14 @@
 | Planejamento | 3 | 3 | 0 | 0 |
 | Knowledge Layer | 3 | 3 | 0 | 0 |
 | Infraestrutura | 5 | 0 | 1 | 4 |
-| Segurança | 7 | 6 | 1 | 0 |
+| Segurança | 8 | 7 | 1 | 0 |
 | SaaS | 1 | 0 | 0 | 1 |
 | CRM | 4 | 0 | 0 | 4 |
 | Omnichannel | 3 | 0 | 0 | 3 |
 | Analytics | 1 | 0 | 0 | 1 |
 | IA | 1 | 0 | 0 | 1 |
-| **Total** | **28** | **12** | **2** | **14** |
+| **Total** | **29** | **13** | **2** | **14** |
 
 ---
 
-*Última atualização: 2026-08-04*
+*Última atualização: 2026-08-04 (Sprint 6.6)*
