@@ -39,6 +39,9 @@ public class OidcGatewayProperties {
     private String sessionStore = "memory";
     private Duration sessionLockTtl = Duration.ofSeconds(30);
     private Duration sessionLockAcquireTimeout = Duration.ofSeconds(5);
+    private String apiBackendUrl = "";
+    private Duration apiConnectTimeout = Duration.ofSeconds(5);
+    private Duration apiReadTimeout = Duration.ofSeconds(30);
 
     public boolean isConfigured() {
         return StringUtils.hasText(clientId)
@@ -253,5 +256,36 @@ public class OidcGatewayProperties {
 
     public void setSessionLockAcquireTimeout(Duration sessionLockAcquireTimeout) {
         this.sessionLockAcquireTimeout = sessionLockAcquireTimeout;
+    }
+
+    /**
+     * Base URL do crm-backend (ex.: {@code http://localhost:8081}) usada pelo
+     * BFF relay ({@code /api/**}) para repassar as requisições com o access
+     * token da sessão — o browser nunca detém o token.
+     */
+    public String getApiBackendUrl() {
+        return apiBackendUrl;
+    }
+
+    public void setApiBackendUrl(String apiBackendUrl) {
+        this.apiBackendUrl = apiBackendUrl;
+    }
+
+    /** Timeout de conexão do BFF relay ao backend (default 5s). */
+    public Duration getApiConnectTimeout() {
+        return apiConnectTimeout;
+    }
+
+    public void setApiConnectTimeout(Duration apiConnectTimeout) {
+        this.apiConnectTimeout = apiConnectTimeout;
+    }
+
+    /** Timeout de leitura do BFF relay ao backend (default 30s). */
+    public Duration getApiReadTimeout() {
+        return apiReadTimeout;
+    }
+
+    public void setApiReadTimeout(Duration apiReadTimeout) {
+        this.apiReadTimeout = apiReadTimeout;
     }
 }

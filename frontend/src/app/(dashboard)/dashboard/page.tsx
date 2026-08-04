@@ -19,16 +19,11 @@ import {
   Plus,
   LogOut,
   CheckCircle,
-  Shield,
   User as UserIcon,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from "lucide-react";import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BadgeStatus } from "@/components/common/BadgeStatus";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useKeycloak } from "@/providers/KeycloakProvider";
-import { TokenManager } from "@/store/token-manager";
-import { decodeJwtPayload } from "@/lib/jwt";
 import { ROUTES } from "@/lib/constants";
 
 const stats = [
@@ -100,7 +95,6 @@ const activityDotColors = {
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
-  const keycloakCtx = useKeycloak();
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -109,63 +103,40 @@ export default function DashboardPage() {
     return "Boa noite";
   }, []);
 
-  // Identidade OIDC do JWT do Keycloak (exibição UX — não é autorização).
-  const kcTokenPayload = useMemo(() => {
-    return decodeJwtPayload<Record<string, string | undefined>>(keycloakCtx.token);
-  }, [keycloakCtx.token]);
-
   return (
     <div className="space-y-6">
-      {/* Keycloak Validation Banner */}
-      {TokenManager.getAccessToken() && (
-        <Card className="border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/50">
-          <CardContent className="flex items-start gap-4 p-6">
-            <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <div className="flex-1 space-y-2">
-              <p className="font-semibold text-emerald-800 dark:text-emerald-300">
-                Autenticação Keycloak realizada com sucesso
-              </p>
-              <div className="grid gap-x-8 gap-y-1 text-sm text-emerald-700 dark:text-emerald-400 sm:grid-cols-2">
-                <div className="flex items-center gap-2">
-                  <UserIcon className="h-3.5 w-3.5" />
-                  <span>Nome: {kcTokenPayload?.name as string || user?.name || "—"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <UserIcon className="h-3.5 w-3.5" />
-                  <span>Username: {kcTokenPayload?.preferred_username as string || "—"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <UserIcon className="h-3.5 w-3.5" />
-                  <span>Email: {kcTokenPayload?.email as string || user?.email || "—"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-3.5 w-3.5" />
-                  <span>Subject (sub): {kcTokenPayload?.sub as string || "—"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-3.5 w-3.5" />
-                  <span>Realm: CRM</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-3.5 w-3.5" />
-                  <span>Client: crm-frontend</span>
-                </div>
+      {/* Sessão autenticada via Access Gateway */}
+      <Card className="border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/50">
+        <CardContent className="flex items-start gap-4 p-6">
+          <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex-1 space-y-2">
+            <p className="font-semibold text-emerald-800 dark:text-emerald-300">
+              Sessão autenticada via Access Gateway
+            </p>
+            <div className="grid gap-x-8 gap-y-1 text-sm text-emerald-700 dark:text-emerald-400 sm:grid-cols-2">
+              <div className="flex items-center gap-2">
+                <UserIcon className="h-3.5 w-3.5" />
+                <span>Nome: {user?.name || "—"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <UserIcon className="h-3.5 w-3.5" />
+                <span>Email: {user?.email || "—"}</span>
               </div>
             </div>
-            <Button variant="destructive" size="sm" onClick={logout} className="shrink-0">
-              <LogOut className="mr-1 h-4 w-4" />
-              Sair
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          <Button variant="destructive" size="sm" onClick={logout} className="shrink-0">
+            <LogOut className="mr-1 h-4 w-4" />
+            Sair
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Welcome Card */}
       <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
         <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <h2 className="text-xl font-semibold lg:text-2xl">
-              {greeting}, {user?.name?.split(" ")[0] || kcTokenPayload?.name || "usuário"}!
+              {greeting}, {user?.name?.split(" ")[0] || "usuário"}!
             </h2>
             <p className="text-muted-foreground">
               Aqui está o resumo do seu CRM. Você tem{" "}

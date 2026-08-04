@@ -16,8 +16,8 @@ export default function EditUserPage() {
   const { data: user, isLoading } = useUser(id);
   const updateUser = useUpdateUser();
 
-  const handleSubmit = (data: any) => {
-    updateUser.mutate({ id, data: data as UpdateUserRequest }, {
+  const handleSubmit = (data: UpdateUserRequest) => {
+    updateUser.mutate({ id, data }, {
       onSuccess: () => router.push(`${ROUTES.USERS}/${id}`),
     });
   };

@@ -87,6 +87,12 @@ auth:
     session-store: ${AUTH_GATEWAY_SESSION_STORE:memory}
     session-lock-ttl: ${AUTH_GATEWAY_SESSION_LOCK_TTL:30s}
     session-lock-acquire-timeout: ${AUTH_GATEWAY_SESSION_LOCK_ACQUIRE_TIMEOUT:5s}
+    # BFF relay (Sprint 6.4): base do crm-backend para repassar /api/** com o
+    # access token da sessão. No Docker deve apontar para o serviço do backend
+    # na rede interna (ex.: http://crm-backend:8081).
+    api-backend-url: ${AUTH_GATEWAY_API_BACKEND_URL:http://localhost:8081}
+    api-connect-timeout: ${AUTH_GATEWAY_API_CONNECT_TIMEOUT:5s}
+    api-read-timeout: ${AUTH_GATEWAY_API_READ_TIMEOUT:30s}
 
 server:
   port: 8080

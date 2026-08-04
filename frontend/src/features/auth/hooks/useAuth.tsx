@@ -1,11 +1,18 @@
 "use client";
 
-import { createContext, useContext, useCallback, useState, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { usePathname } from "next/navigation";
 import { useMe } from "./useAuthMutations";
-import { TokenManager } from "@/store/token-manager";
-import { getRealmRoles } from "@/lib/jwt";
+import { loginWithGateway, logoutWithGateway } from "@/lib/gateway-auth";
+import { isPublicPathname } from "@/lib/middleware-auth";
 import type { User } from "../types/auth.types";
-import { useKeycloak } from "@/providers/KeycloakProvider";
 
 type AuthContextType = {
   user: User | null;
@@ -13,7 +20,7 @@ type AuthContextType = {
   isLoading: boolean;
   logout: () => void;
   loginKeycloak: (redirectPath?: string) => Promise<void>;
-  /** Roles do realm do Keycloak (identidade OIDC) — UX apenas. */
+  /** Roles OIDC (identidade) — não carregadas no browser (BFF). UX apenas. */
   roles: string[];
   /**
    * Permissões de negócio (CRM) para UX (menus/botões). Vindas do CurrentUser
@@ -27,33 +34,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const keycloakCtx = useKeycloak();
+  const pathname = usePathname();
 
-  // `/auth/me` só após o Keycloak inicializar/autenticar (sem race condition).
-  const keycloakReady = keycloakCtx.initialized && keycloakCtx.authenticated;
-  const { data, isLoading: isMeLoading, isError } = useMe(keycloakReady);
+  // `/auth/me` apenas em páginas não-públicas — evita chamada/redirecionamento
+  // desnecessário na tela de login (a sessão é validada pelo gateway).
+  const enabled = !isPublicPathname(pathname);
+  const { data, isLoading: isMeLoading, isError } = useMe(enabled);
 
   useEffect(() => {
     if (data) {
       setUser(data);
-    } else if (!isMeLoading && (isError || !TokenManager.getAccessToken())) {
+    } else if (!isMeLoading && isError) {
       setUser(null);
     }
   }, [data, isMeLoading, isError]);
 
   const logout = useCallback(() => {
-    keycloakCtx.logout();
-  }, [keycloakCtx]);
+    logoutWithGateway();
+  }, []);
 
-  const loginKeycloak = useCallback(
-    async (redirectPath?: string) => {
-      // Sempre via keycloak-js (PKCE S256) — nunca montar URL OIDC manualmente.
-      await keycloakCtx.login(redirectPath);
-    },
-    [keycloakCtx],
-  );
-
-  const roles = getRealmRoles(TokenManager.getAccessToken());
+  const loginKeycloak = useCallback(async (redirectPath?: string) => {
+    // Sempre via Access Gateway (`/auth/authorize`) — o fluxo OIDC é 100% no
+    // servidor; nunca montar URL de autorização manualmente no browser.
+    loginWithGateway(redirectPath);
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -63,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: isMeLoading,
         logout,
         loginKeycloak,
-        roles,
+        roles: [],
         permissions: [],
       }}
     >

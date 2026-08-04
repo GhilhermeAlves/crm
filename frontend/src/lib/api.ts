@@ -1,69 +1,45 @@
-import axios from "axios";
-import { TokenManager } from "@/store/token-manager";
-import { refreshAccessToken } from "@/lib/keycloak";
+import axios, { type AxiosRequestConfig } from "axios";
+import { refreshGatewaySession } from "@/lib/gateway-auth";
+import { isPublicPathname } from "@/lib/middleware-auth";
 
+/**
+ * Client HTTP da aplicação (Sprint 6.4). Mesma origem via BFF relay:
+ * o auth-service injeta o access token da sessão no backend — o browser nunca
+ * envia `Authorization`. Autenticação = cookie HttpOnly `crm_session`.
+ */
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1",
+  baseURL: "/api/v1",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-api.interceptors.request.use(async (config) => {
-  if (TokenManager.getAccessToken()) {
-    // Renova proativamente se o token expirar em breve (minValidity) —
-    // evita enviar token expirado; o keycloak-js deduplica refreshes.
-    await refreshAccessToken(30);
-  }
-  const token = TokenManager.getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
+    // 403 (CRM_ACCESS_DENIED/CSRF) NUNCA vira login — é decisão de autorização.
     if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-    if (originalRequest._retry) {
-      // Já renovamos o token e o backend voltou a rejeitar: sessão inválida.
-      // Sem novo refresh nem retry — evita loop de 401.
-      TokenManager.clearTokens();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    if (TokenManager.getAccessToken()) {
+    if (!originalRequest._retry) {
       originalRequest._retry = true;
-      const previousToken = TokenManager.getAccessToken();
-      const refreshed = await refreshAccessToken(30);
-      const newToken = TokenManager.getAccessToken();
-
-      if (refreshed && newToken && newToken !== previousToken) {
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      const refreshed = await refreshGatewaySession();
+      if (refreshed) {
         return api(originalRequest);
       }
-
-      // Sessão do Keycloak inválida/expirada: limpa e volta ao login uma
-      // única vez (sem loop de retry, graças ao guard `_retry`).
-      TokenManager.clearTokens();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
-      return Promise.reject(error);
     }
 
-    TokenManager.clearTokens();
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
+    // Sessão realmente inválida (refresh falhou ou o backend rejeitou de novo):
+    // volta ao login uma única vez — o guard `_retry` garante que não há loop.
+    if (typeof window !== "undefined" && !isPublicPathname(window.location.pathname)) {
+      window.location.assign("/login");
     }
     return Promise.reject(error);
   },

@@ -3,32 +3,26 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
 import { AuthProvider, useAuth } from "./useAuth";
-import { TokenManager } from "@/store/token-manager";
-import { makeToken } from "@/lib/jwt.test";
 
-const { kcState } = vi.hoisted(() => ({
-  kcState: {
-    keycloak: null,
-    initialized: false,
-    authenticated: false,
-    token: null as string | null,
-    login: vi.fn(),
-    logout: vi.fn(),
-  },
+const { pathnameState } = vi.hoisted(() => ({
+  pathnameState: { value: "/dashboard" },
 }));
 
+const { logoutMock } = vi.hoisted(() => ({ logoutMock: vi.fn() }));
 const { meMock } = vi.hoisted(() => ({ meMock: vi.fn() }));
 
-vi.mock("@/providers/KeycloakProvider", () => ({
-  useKeycloak: () => kcState,
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => pathnameState.value,
 }));
 
 vi.mock("@/features/auth/services/auth.service", () => ({
   AuthService: { me: meMock },
 }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+vi.mock("@/lib/gateway-auth", () => ({
+  loginWithGateway: vi.fn(),
+  logoutWithGateway: logoutMock,
 }));
 
 const mockUser = {
@@ -45,13 +39,11 @@ function makeClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
-describe("AuthProvider", () => {
+describe("AuthProvider (Sprint 6.4, session via gateway)", () => {
   beforeEach(() => {
     localStorage.clear();
-    kcState.initialized = false;
-    kcState.authenticated = false;
-    kcState.token = null;
-    kcState.logout.mockClear();
+    pathnameState.value = "/dashboard";
+    logoutMock.mockClear();
     meMock.mockReset();
   });
 
@@ -66,50 +58,51 @@ describe("AuthProvider", () => {
     return renderHook(() => useAuth(), { wrapper });
   }
 
-  it("does not call /auth/me before keycloak is initialized (no race condition)", async () => {
+  it("fetches the business identity from /auth/me on a protected page", async () => {
     meMock.mockResolvedValue(mockUser);
-    const { result, rerender } = renderAuth();
+    const { result } = renderAuth();
+
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+    expect(result.current.user?.email).toBe("ana@example.com");
+  });
+
+  it("does not call /auth/me on public pages (no session requirement)", async () => {
+    pathnameState.value = "/login";
+    meMock.mockResolvedValue(mockUser);
+    const { result } = renderAuth();
 
     await act(async () => {});
     expect(meMock).not.toHaveBeenCalled();
     expect(result.current.user).toBeNull();
-
-    kcState.initialized = true;
-    kcState.authenticated = true;
-    await act(async () => {
-      rerender();
-    });
-
-    await waitFor(() => expect(result.current.user?.id).toBe("user-1"));
-    expect(meMock).toHaveBeenCalledTimes(1);
   });
 
-  it("logout delegates to the keycloak provider", async () => {
-    meMock.mockResolvedValue(mockUser);
-    kcState.initialized = true;
-    kcState.authenticated = true;
+  it("clears the user when /auth/me fails (session invalid)", async () => {
+    meMock.mockRejectedValue(new Error("401"));
     const { result } = renderAuth();
 
-    await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(false));
+    expect(result.current.user).toBeNull();
+  });
+
+  it("logout delegates to the gateway end-session", () => {
+    const { result } = renderAuth();
 
     act(() => {
       result.current.logout();
     });
-    expect(kcState.logout).toHaveBeenCalled();
+
+    expect(logoutMock).toHaveBeenCalledTimes(1);
   });
 
-  it("exposes keycloak realm roles (OIDC identity) and no business permissions yet", async () => {
+  it("exposes no roles/permissions in the browser (BFF holds the claims)", async () => {
     meMock.mockResolvedValue(mockUser);
-    TokenManager.setTokens(makeToken({ realm_access: { roles: ["AGENT"] } }), null);
-    kcState.initialized = true;
-    kcState.authenticated = true;
-
     const { result } = renderAuth();
+
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
-    expect(result.current.roles).toEqual(["AGENT"]);
-    // Permissões de negócio virão do CurrentUser (endpoint público, Sprint 4);
-    // enquanto isso o frontend não as trata como autoridade.
+    expect(result.current.roles).toEqual([]);
     expect(result.current.permissions).toEqual([]);
   });
 });

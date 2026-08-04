@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useProfile, useUpdateProfile } from "@/features/users/hooks/useUsers";
+import type { UpdateProfileRequest } from "@/features/users/types/user.types";
 import { UserAvatar } from "@/features/users/components/UserAvatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ export default function ProfilePage() {
   const watchedLanguage = watch("language");
   const watchedTimezone = watch("timezone");
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: UpdateProfileRequest) => {
     updateProfile.mutate(data);
   };
 

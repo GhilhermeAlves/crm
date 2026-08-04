@@ -9,7 +9,7 @@ import { DeleteUserDialog } from "@/features/users/components/DeleteUserDialog";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import type { User } from "@/features/users/types/user.types";
+import type { User, UserStatus } from "@/features/users/types/user.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function UsersPage() {
@@ -23,7 +23,7 @@ export default function UsersPage() {
     page,
     pageSize: 10,
     search: search || undefined,
-    status: status !== "all" ? (status as any) : undefined,
+    status: status !== "all" ? (status as UserStatus) : undefined,
     sortBy: "createdAt",
     sortDirection: "desc",
   });

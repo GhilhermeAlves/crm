@@ -47,6 +47,9 @@ public class SecurityConfig {
                                 "/auth/callback",
                                 "/auth/logout",
                                 "/auth/refresh").permitAll()
+                        // BFF relay (Sprint 6.4): autenticado via cookie de sessão
+                        // (GatewayApiRelay) — nunca exige JWT do browser.
+                        .requestMatchers("/api/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)

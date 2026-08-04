@@ -30,7 +30,7 @@ describe("resolveAuthRedirect (middleware, flag-only)", () => {
   });
 
   it("exposes the session cookie name used by the middleware", () => {
-    expect(SESSION_COOKIE).toBe("kc_authenticated");
+    expect(SESSION_COOKIE).toBe("crm_session");
   });
 
   it("never interprets the token: decision depends only on the flag", () => {

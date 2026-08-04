@@ -2,7 +2,6 @@
 
 import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import { KeycloakProvider } from "@/providers/KeycloakProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { SidebarProvider } from "@/store/sidebar";
 import { Toaster } from "sonner";
@@ -16,14 +15,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
     >
       <QueryProvider>
-        <KeycloakProvider>
-          <AuthProvider>
-            <SidebarProvider>
-              {children}
-              <Toaster richColors position="top-right" />
-            </SidebarProvider>
-          </AuthProvider>
-        </KeycloakProvider>
+        <AuthProvider>
+          <SidebarProvider>
+            {children}
+            <Toaster richColors position="top-right" />
+          </SidebarProvider>
+        </AuthProvider>
       </QueryProvider>
     </ThemeProvider>
   );

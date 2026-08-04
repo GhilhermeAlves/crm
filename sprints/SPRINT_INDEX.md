@@ -35,6 +35,7 @@
 | 6.1 | Gateway OIDC (authorize/callback) | ✅ Concluída | 2026-08-02 | AI Agent | 6 |
 | 6.2 | Gateway OIDC (logout + ciclo de vida da sessão) | ✅ Concluída | 2026-08-02 | AI Agent | 6.1 |
 | 6.3 | Gateway OIDC (integração de produção / E2E) | ✅ Concluída | 2026-08-03 | AI Agent | 6.2 |
+| 6.4 | Migração do frontend para o Access Gateway (BFF relay) | ✅ Concluída | 2026-08-04 | AI Agent | 6.3 |
 
 ## SaaS
 
@@ -80,13 +81,13 @@
 | Planejamento | 3 | 3 | 0 | 0 |
 | Knowledge Layer | 3 | 3 | 0 | 0 |
 | Infraestrutura | 5 | 0 | 1 | 4 |
-| Segurança | 5 | 4 | 1 | 0 |
+| Segurança | 6 | 5 | 1 | 0 |
 | SaaS | 1 | 0 | 0 | 1 |
 | CRM | 4 | 0 | 0 | 4 |
 | Omnichannel | 3 | 0 | 0 | 3 |
 | Analytics | 1 | 0 | 0 | 1 |
 | IA | 1 | 0 | 0 | 1 |
-| **Total** | **26** | **10** | **2** | **14** |
+| **Total** | **27** | **11** | **2** | **14** |
 
 ---
 

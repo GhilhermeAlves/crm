@@ -1,0 +1,68 @@
+/**
+ * Acesso ao Access Gateway OIDC (Sprints 6.1–6.4).
+ *
+ * <p>O browser não detém tokens: a sessão vive no servidor (auth-service) e é
+ * referenciada pelo cookie HttpOnly `crm_session`. Este módulo apenas:
+ * <ul>
+ *   <li>inicia o login ({@link loginWithGateway}) navegando para
+ *       `/auth/authorize` (o gateway redireciona ao Keycloak e, após o CRM
+ *       Access, volta com o cookie de sessão);</li>
+ *   <li>encerra a sessão ({@link logoutWithGateway}) via `/auth/logout`;</li>
+ *   <li>renova a sessão ({@link refreshGatewaySession}) via `POST /auth/refresh`
+ *       com proteção CSRF cookie-to-header (XSRF-TOKEN → X-XSRF-TOKEN).</li>
+ * </ul>
+ */
+export const SESSION_COOKIE = "crm_session";
+export const CSRF_COOKIE = "XSRF-TOKEN";
+export const CSRF_HEADER = "X-XSRF-TOKEN";
+
+export function loginWithGateway(redirectPath?: string): void {
+  const target = redirectPath || "/dashboard";
+  window.location.assign(`/auth/authorize?redirect=${encodeURIComponent(target)}`);
+}
+
+export function logoutWithGateway(): void {
+  window.location.assign("/auth/logout");
+}
+
+/** Lê o token CSRF do cookie não-HttpOnly (padrão cookie-to-header). */
+export function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${CSRF_COOKIE}=([^;]*)`),
+  );
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+/**
+ * Renova a sessão no servidor (rotação de tokens lá) e devolve true se OK.
+ * Refreshes concorrentes são deduplicados (uma única chamada em voo).
+ */
+export async function refreshGatewaySession(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      const response = await fetch("/auth/refresh", {
+        method: "POST",
+        credentials: "include",
+        headers: { [CSRF_HEADER]: getCsrfToken() || "" },
+      });
+      return response.ok;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}

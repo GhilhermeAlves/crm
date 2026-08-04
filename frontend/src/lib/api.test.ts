@@ -2,12 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import axios from "axios";
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import api from "./api";
-import { TokenManager } from "@/store/token-manager";
-import { refreshAccessToken } from "./keycloak";
 
 const { refreshMock } = vi.hoisted(() => ({ refreshMock: vi.fn() }));
 
-vi.mock("@/lib/keycloak", () => ({ refreshAccessToken: refreshMock }));
+vi.mock("./gateway-auth", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./gateway-auth")>();
+  return { ...actual, refreshGatewaySession: refreshMock };
+});
 
 type AdapterHandler = (
   config: InternalAxiosRequestConfig,
@@ -21,11 +22,6 @@ function okResponse(config: InternalAxiosRequestConfig, data: unknown): AxiosRes
   return { data, status: 200, statusText: "OK", headers: {}, config };
 }
 
-function authHeader(config: InternalAxiosRequestConfig): string | undefined {
-  const headers = config.headers as unknown as Record<string, string | undefined>;
-  return headers["Authorization"];
-}
-
 function unauthorizedError(config: InternalAxiosRequestConfig) {
   return new axios.AxiosError(
     "Request failed with status code 401",
@@ -33,6 +29,16 @@ function unauthorizedError(config: InternalAxiosRequestConfig) {
     config,
     null,
     { status: 401, statusText: "Unauthorized", headers: {}, data: {}, config },
+  );
+}
+
+function forbiddenError(config: InternalAxiosRequestConfig) {
+  return new axios.AxiosError(
+    "Request failed with status code 403",
+    "ERR_BAD_REQUEST",
+    config,
+    null,
+    { status: 403, statusText: "Forbidden", headers: {}, data: {}, config },
   );
 }
 
@@ -46,10 +52,28 @@ function serverError(config: InternalAxiosRequestConfig) {
   });
 }
 
-describe("api interceptors", () => {
+function authHeader(config: InternalAxiosRequestConfig): string | undefined {
+  const headers = config.headers as unknown as Record<string, string | undefined>;
+  return headers["Authorization"];
+}
+
+function setPathname(pathname: string) {
+  const location = {
+    pathname,
+    href: `http://localhost:3000${pathname}`,
+    assign: (url: string) => {
+      location.href = url;
+    },
+  };
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    value: location,
+  });
+}
+
+describe("api interceptors (cookie-based, Sprint 6.4)", () => {
   beforeEach(() => {
     localStorage.clear();
-    document.cookie = "kc_authenticated=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
     refreshMock.mockReset();
     requestCount = 0;
     adapterHandler = async () => okResponse({} as InternalAxiosRequestConfig, {});
@@ -57,27 +81,25 @@ describe("api interceptors", () => {
       requestCount += 1;
       return adapterHandler(config, requestCount);
     };
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      value: { href: "http://localhost:3000/" },
-    });
+    setPathname("/dashboard");
   });
 
-  it("refreshes on a real 401 and retries with the new token", async () => {
-    TokenManager.setTokens("old.token", "refresh");
+  it("never sends an Authorization header (BFF holds the token)", async () => {
+    const sent: (string | undefined)[] = [];
+    adapterHandler = async (config) => {
+      sent.push(authHeader(config));
+      return okResponse(config, { ok: true });
+    };
 
-    let refreshCalls = 0;
-    refreshMock.mockImplementation(async () => {
-      refreshCalls += 1;
-      if (refreshCalls > 1) {
-        TokenManager.setTokens("new.token", "refresh");
-      }
-      return true;
-    });
+    await api.get("/contacts");
 
-    const sentTokens: (string | undefined)[] = [];
+    expect(sent).toEqual([undefined]);
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it("refreshes once on a 401 and retries the same request", async () => {
+    refreshMock.mockResolvedValue(true);
     adapterHandler = async (config, callNumber) => {
-      sentTokens.push(authHeader(config));
       if (callNumber === 1) {
         throw unauthorizedError(config);
       }
@@ -87,24 +109,12 @@ describe("api interceptors", () => {
     const res = await api.get("/contacts");
 
     expect(res.data).toEqual({ ok: true });
-    expect(sentTokens).toEqual(["Bearer old.token", "Bearer new.token"]);
-    expect(localStorage.getItem("kc_accessToken")).toBe("new.token");
-    // 1 = interceptor de request (proativo) · 2 = refresh no 401 · 3 = interceptor de request no retry
-    expect(refreshCalls).toBe(3);
+    expect(requestCount).toBe(2); // original + único retry
+    expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 
-  it("does not loop when the backend keeps rejecting after a refresh", async () => {
-    TokenManager.setTokens("old.token", "refresh");
-
-    let refreshCalls = 0;
-    refreshMock.mockImplementation(async () => {
-      refreshCalls += 1;
-      if (refreshCalls === 2) {
-        TokenManager.setTokens("new.token", "refresh");
-      }
-      return true;
-    });
-
+  it("does not loop when the backend keeps returning 401 after a refresh", async () => {
+    refreshMock.mockResolvedValue(true);
     adapterHandler = async (config) => {
       throw unauthorizedError(config);
     };
@@ -112,49 +122,53 @@ describe("api interceptors", () => {
     await expect(api.get("/contacts")).rejects.toBeTruthy();
 
     expect(requestCount).toBe(2); // original + único retry, nunca mais
-    expect(refreshCalls).toBe(3);
-    expect(localStorage.getItem("kc_accessToken")).toBeNull(); // sessão inválida
+    expect(refreshMock).toHaveBeenCalledTimes(1);
     expect(window.location.href).toBe("/login");
   });
 
-  it("clears tokens and redirects to login when the refresh fails", async () => {
-    TokenManager.setTokens("old.token", "refresh");
+  it("redirects to login when the refresh fails (non-public page)", async () => {
     refreshMock.mockResolvedValue(false);
-
     adapterHandler = async (config) => {
       throw unauthorizedError(config);
     };
 
     await expect(api.get("/contacts")).rejects.toBeTruthy();
 
-    expect(localStorage.getItem("kc_accessToken")).toBeNull();
+    expect(refreshMock).toHaveBeenCalledTimes(1);
     expect(window.location.href).toBe("/login");
   });
 
-  it("does not trigger a refresh on non-401 errors", async () => {
-    TokenManager.setTokens("old.token", "refresh");
+  it("does not redirect when the refresh fails on a public page (no loop on /login)", async () => {
+    setPathname("/login");
+    refreshMock.mockResolvedValue(false);
+    adapterHandler = async (config) => {
+      throw unauthorizedError(config);
+    };
 
+    await expect(api.get("/auth/me")).rejects.toBeTruthy();
+
+    // Em página pública não há assign — href permanece o mesmo (sem loop).
+    expect(window.location.href).toBe("http://localhost:3000/login");
+  });
+
+  it("does not trigger a refresh on non-401 errors", async () => {
     adapterHandler = async (config) => {
       throw serverError(config);
     };
 
     await expect(api.get("/contacts")).rejects.toBeTruthy();
-
-    // apenas o refresh proativo do interceptor de request (token perto de expirar)
-    expect(refreshMock).toHaveBeenCalledTimes(1);
-    expect(localStorage.getItem("kc_accessToken")).toBe("old.token");
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
-  it("sends no Authorization header when there is no token", async () => {
-    const sent: (string | undefined)[] = [];
+  it("does not convert a 403 (CRM_ACCESS_DENIED) into a login/refresh", async () => {
     adapterHandler = async (config) => {
-      sent.push(authHeader(config));
-      return okResponse(config, { ok: true });
+      throw forbiddenError(config);
     };
 
-    await api.get("/public");
-
-    expect(sent).toEqual([undefined]);
+    await expect(api.get("/users")).rejects.toMatchObject({
+      response: { status: 403 },
+    });
     expect(refreshMock).not.toHaveBeenCalled();
+    expect(window.location.href).toBe("http://localhost:3000/dashboard");
   });
 });
