@@ -83,7 +83,7 @@ Realizado com usuário de teste dedicado provisionado no realm CRM (`e2e.tester@
 
 ## Commit
 
-`<hash>` — ver seção final.
+`7fdebee` — `feat(frontend): migrate authentication to oidc gateway`
 
 ## Pendências
 
