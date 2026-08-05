@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { render, renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
 import { AuthProvider, useAuth } from "./useAuth";
@@ -104,5 +104,40 @@ describe("AuthProvider (Sprint 6.4, session via gateway)", () => {
 
     expect(result.current.roles).toEqual([]);
     expect(result.current.permissions).toEqual([]);
+  });
+
+  it("never reports isLoading=false with isAuthenticated=false when /auth/me succeeds (regression Sprint 6.9: login landing on /login)", async () => {
+    // O bug: `user` era estado copiado num useEffect que rodava DEPOIS do render
+    // em que a query concluía. Nesse render intermediário isLoading já era false
+    // mas isAuthenticated ainda era false, e o ProtectedRoute (efeito de filho)
+    // via `!isLoading && !isAuthenticated` e fazia router.push("/login") logo
+    // após um /auth/me BEM-SUCEDIDO. Este teste captura TODAS as transições de
+    // contexto e exige que, quando o loading termina com sucesso, a autenticação
+    // já esteja presente no MESMO frame (sem janela de "deslogado" pós-login).
+    meMock.mockResolvedValue(mockUser);
+    const snapshots: Array<{ isLoading: boolean; isAuthenticated: boolean }> = [];
+
+    function AuthStateObserver() {
+      const ctx = useAuth();
+      snapshots.push({ isLoading: ctx.isLoading, isAuthenticated: ctx.isAuthenticated });
+      return null;
+    }
+
+    const client = makeClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(
+        QueryClientProvider,
+        { client },
+        React.createElement(AuthProvider, null, children),
+      );
+
+    render(React.createElement(AuthStateObserver, null), { wrapper });
+
+    await waitFor(() =>
+      expect(snapshots.some((s) => !s.isLoading && s.isAuthenticated)).toBe(true),
+    );
+
+    const invalid = snapshots.filter((s) => !s.isLoading && !s.isAuthenticated);
+    expect(invalid).toEqual([]);
   });
 });
