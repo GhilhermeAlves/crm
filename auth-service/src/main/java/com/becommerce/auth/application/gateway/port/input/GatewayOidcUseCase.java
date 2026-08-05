@@ -20,7 +20,21 @@ import com.becommerce.auth.domain.gateway.GatewaySession;
  */
 public interface GatewayOidcUseCase {
 
-    BeginAuthorization beginAuthorization(String redirect);
+    /**
+     * Inicia o fluxo de autorização. {@code provider} (opcional) é o alias de
+     * um Identity Provider do Keycloak (Identity Brokering, Sprint 7.0): quando
+     * presente e disponível, o gateway adiciona {@code kc_idp_hint} à URL de
+     * autorização para encaminhar o usuário direto ao provedor. Nenhum token de
+     * provedor externo transita pelo browser.
+     */
+    BeginAuthorization beginAuthorization(String redirect, String provider);
+
+    /**
+     * Overload sem provider — preserva o fluxo atual (login local Keycloak).
+     */
+    default BeginAuthorization beginAuthorization(String redirect) {
+        return beginAuthorization(redirect, null);
+    }
 
     AuthenticationResult completeAuthorization(String code, String state);
 

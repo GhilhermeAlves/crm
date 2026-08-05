@@ -103,6 +103,10 @@ auth:
     rate-limit-refresh: ${AUTH_GATEWAY_RATE_LIMIT_REFRESH:30}
     rate-limit-logout: ${AUTH_GATEWAY_RATE_LIMIT_LOGOUT:20}
     rate-limit-api: ${AUTH_GATEWAY_RATE_LIMIT_API:60}
+    # Identity Brokering (Sprint 7.0): aliases de IdP habilitados para
+    # kc_idp_hint (ex.: google,microsoft). Vazio = nenhum provedor externo
+    # ativo; login local Keycloak inalterado. Meta/Facebook fora de escopo.
+    # enabled-providers: ${AUTH_GATEWAY_ENABLED_PROVIDERS:}
 
 server:
   port: 8080

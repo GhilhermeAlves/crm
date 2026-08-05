@@ -4,7 +4,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Configuração do Access Gateway OIDC (prefixo {@code auth.gateway}). Todos os
@@ -49,6 +51,15 @@ public class OidcGatewayProperties {
     private int rateLimitRefresh = 30;
     private int rateLimitLogout = 20;
     private int rateLimitApi = 60;
+    /**
+     * Provedores de identidade habilitados (Identity Brokering, Sprint 7.0).
+     * Aliases suportados: {@code google}, {@code microsoft}, {@code apple},
+     * {@code phone}. Vazio = nenhum provedor externo ativo (login local
+     * Keycloak, fluxo atual). Quando o IdP é configurado no Keycloak, o alias
+     * entra aqui e o gateway passa {@code kc_idp_hint} para a autorização.
+     * Meta/Facebook está fora de escopo.
+     */
+    private Set<String> enabledProviders = new LinkedHashSet<>();
 
     public boolean isConfigured() {
         return StringUtils.hasText(clientId)
@@ -361,5 +372,13 @@ public class OidcGatewayProperties {
 
     public void setRateLimitApi(int rateLimitApi) {
         this.rateLimitApi = rateLimitApi;
+    }
+
+    public Set<String> getEnabledProviders() {
+        return enabledProviders;
+    }
+
+    public void setEnabledProviders(Set<String> enabledProviders) {
+        this.enabledProviders = enabledProviders == null ? new LinkedHashSet<>() : enabledProviders;
     }
 }

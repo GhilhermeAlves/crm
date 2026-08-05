@@ -1,6 +1,7 @@
 package com.becommerce.auth.presentation.rest;
 
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
+import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.List;
 
 /**
  * Access Gateway OIDC (Sprints 6.1/6.2).
@@ -40,16 +42,26 @@ public class OidcGatewayController {
 
     private final GatewayOidcUseCase gatewayOidcUseCase;
     private final GatewayCookieFactory cookieFactory;
+    private final IdentityProviderCatalog identityProviderCatalog;
 
     public OidcGatewayController(GatewayOidcUseCase gatewayOidcUseCase,
-                                 GatewayCookieFactory cookieFactory) {
+                                 GatewayCookieFactory cookieFactory,
+                                 IdentityProviderCatalog identityProviderCatalog) {
         this.gatewayOidcUseCase = gatewayOidcUseCase;
         this.cookieFactory = cookieFactory;
+        this.identityProviderCatalog = identityProviderCatalog;
+    }
+
+    @GetMapping("/auth/providers")
+    public List<IdentityProviderCatalog.IdentityProviderInfo> providers() {
+        return identityProviderCatalog.list();
     }
 
     @GetMapping("/auth/authorize")
-    public ResponseEntity<Void> authorize(@RequestParam(value = "redirect", required = false) String redirect) {
-        GatewayOidcUseCase.BeginAuthorization result = gatewayOidcUseCase.beginAuthorization(redirect);
+    public ResponseEntity<Void> authorize(
+            @RequestParam(value = "redirect", required = false) String redirect,
+            @RequestParam(value = "provider", required = false) String provider) {
+        GatewayOidcUseCase.BeginAuthorization result = gatewayOidcUseCase.beginAuthorization(redirect, provider);
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(result.authorizationUri()))
                 .build();

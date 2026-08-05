@@ -1,5 +1,7 @@
 package com.becommerce.auth.infrastructure.config;
 
+import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
+import com.becommerce.auth.application.gateway.service.ConfiguredIdentityProviderCatalog;
 import com.becommerce.auth.infrastructure.gateway.ApiRateLimitFilter;
 import com.becommerce.auth.infrastructure.gateway.ClientIpResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
@@ -43,6 +45,17 @@ public class GatewayConfig {
             throw new IllegalStateException(
                     "auth.gateway.secure-cookie=false não é permitido no profile prod: o cookie de sessão deve ser Secure.");
         }
+    }
+
+    /**
+     * Catálogo de provedores de identidade (Sprint 7.0): alimenta
+     * {@code GET /auth/providers} e o {@code kc_idp_hint} do
+     * {@code /auth/authorize}. Disponível 100% no servidor; o browser não
+     * decide provedores nem buckets de rate limit.
+     */
+    @Bean
+    IdentityProviderCatalog identityProviderCatalog(OidcGatewayProperties properties) {
+        return new ConfiguredIdentityProviderCatalog(properties);
     }
 
     @Bean

@@ -90,7 +90,8 @@ class GatewayOidcServiceTest {
                 currentUserResolutionUseCase,
                 sessionStore,
                 new GatewaySessionResolver(sessionStore),
-                new OidcProviderMetadata(properties));
+                new OidcProviderMetadata(properties),
+                new ConfiguredIdentityProviderCatalog(properties));
     }
 
     private AuthenticatedIdentity identity() {
@@ -133,6 +134,46 @@ class GatewayOidcServiceTest {
     @Test
     void shouldRejectOpenRedirectOnAuthorize() {
         assertThrows(OidcGatewayException.class, () -> service.beginAuthorization("//evil.example"));
+    }
+
+    // ------------------------------------------- authorize + identity provider
+
+    @Test
+    void shouldNotIncludeIdpHintWhenNoProviderIsRequested() {
+        URI uri = URI.create(service.beginAuthorization("/dashboard").authorizationUri());
+        assertEquals(null, query(uri, "kc_idp_hint"));
+    }
+
+    @Test
+    void shouldIncludeKcIdpHintWhenProviderIsEnabled() {
+        properties.setEnabledProviders(new java.util.HashSet<>(java.util.List.of("google")));
+
+        URI uri = URI.create(service.beginAuthorization("/dashboard", "google").authorizationUri());
+        assertEquals("google", query(uri, "kc_idp_hint"));
+        assertEquals("code", query(uri, "response_type"));
+        assertEquals("/dashboard", service.beginAuthorization("/dashboard", "google").redirectTarget());
+    }
+
+    @Test
+    void shouldRejectUnknownProviderWith400() {
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> service.beginAuthorization("/dashboard", "facebook"));
+        assertEquals("UNKNOWN_PROVIDER", ex.getCode());
+        assertEquals(400, ex.getStatus());
+    }
+
+    @Test
+    void shouldRejectDisabledProviderWith400() {
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> service.beginAuthorization("/dashboard", "apple"));
+        assertEquals("PROVIDER_NOT_AVAILABLE", ex.getCode());
+        assertEquals(400, ex.getStatus());
+    }
+
+    @Test
+    void shouldTreatBlankProviderAsNoProvider() {
+        URI uri = URI.create(service.beginAuthorization("/dashboard", "  ").authorizationUri());
+        assertEquals(null, query(uri, "kc_idp_hint"));
     }
 
     // --------------------------------------------------------------- callback
@@ -268,7 +309,8 @@ class GatewayOidcServiceTest {
                 currentUserResolutionUseCase,
                 sessionStore,
                 new GatewaySessionResolver(sessionStore),
-                new OidcProviderMetadata(properties));
+                new OidcProviderMetadata(properties),
+                new ConfiguredIdentityProviderCatalog(properties));
 
         assertThrows(OidcGatewayException.class, () -> serviceWithSpy.completeAuthorization("code-1", state));
     }

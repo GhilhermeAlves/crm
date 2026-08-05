@@ -75,7 +75,8 @@ class GatewayOidcLogoutTest {
                 currentUserResolutionUseCase,
                 sessionStore,
                 new GatewaySessionResolver(sessionStore),
-                providerMetadata);
+                providerMetadata,
+                new ConfiguredIdentityProviderCatalog(properties));
     }
 
     private GatewaySession session(String token) {

@@ -1,6 +1,7 @@
 package com.becommerce.auth.application.gateway.service;
 
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
+import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
 import com.becommerce.auth.application.gateway.port.output.OidcTokenClient;
 import com.becommerce.auth.application.identity.port.input.CurrentUserResolutionUseCase;
 import com.becommerce.auth.domain.gateway.GatewaySession;
@@ -66,6 +67,7 @@ public class GatewayOidcService implements GatewayOidcUseCase {
     private final GatewaySessionStore sessionStore;
     private final GatewaySessionResolver sessionResolver;
     private final OidcProviderMetadata providerMetadata;
+    private final IdentityProviderCatalog identityProviderCatalog;
 
     public GatewayOidcService(OidcGatewayProperties properties,
                               SecureTokenGenerator tokenGenerator,
@@ -78,7 +80,8 @@ public class GatewayOidcService implements GatewayOidcUseCase {
                               CurrentUserResolutionUseCase currentUserResolutionUseCase,
                               GatewaySessionStore sessionStore,
                               GatewaySessionResolver sessionResolver,
-                              OidcProviderMetadata providerMetadata) {
+                              OidcProviderMetadata providerMetadata,
+                              IdentityProviderCatalog identityProviderCatalog) {
         this.properties = properties;
         this.tokenGenerator = tokenGenerator;
         this.pkceGenerator = pkceGenerator;
@@ -91,10 +94,11 @@ public class GatewayOidcService implements GatewayOidcUseCase {
         this.sessionStore = sessionStore;
         this.sessionResolver = sessionResolver;
         this.providerMetadata = providerMetadata;
+        this.identityProviderCatalog = identityProviderCatalog;
     }
 
     @Override
-    public BeginAuthorization beginAuthorization(String redirect) {
+    public BeginAuthorization beginAuthorization(String redirect, String provider) {
         String redirectTarget = redirectUriValidator.validateAndNormalize(redirect);
 
         String state = tokenGenerator.urlSafe(32);
@@ -108,7 +112,7 @@ public class GatewayOidcService implements GatewayOidcUseCase {
         authorizationRequestStore.put(request);
         log.info("OIDC authorization started: correlation={}", state);
 
-        String authorizationUri = UriComponentsBuilder.fromHttpUrl(properties.getAuthorizationEndpoint())
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(properties.getAuthorizationEndpoint())
                 .queryParam("response_type", "code")
                 .queryParam("client_id", properties.getClientId())
                 .queryParam("redirect_uri", properties.getRedirectUri())
@@ -116,12 +120,36 @@ public class GatewayOidcService implements GatewayOidcUseCase {
                 .queryParam("state", state)
                 .queryParam("nonce", nonce)
                 .queryParam("code_challenge", codeChallenge)
-                .queryParam("code_challenge_method", "S256")
-                .build()
-                .encode()
-                .toUriString();
+                .queryParam("code_challenge_method", "S256");
+
+        applyIdentityProviderHint(builder, provider);
+
+        String authorizationUri = builder.build().encode().toUriString();
 
         return new BeginAuthorization(authorizationUri, redirectTarget);
+    }
+
+    /**
+     * Encaminha o usuário direto a um Identity Provider do Keycloak (Identity
+     * Brokering, Sprint 7.0) quando o alias informado existe e está habilitado.
+     * O alias é validado contra o catálogo no servidor (allowlist): alias
+     * desconhecido → {@code 400 UNKNOWN_PROVIDER}; conhecido mas não habilitado
+     * → {@code 400 PROVIDER_NOT_AVAILABLE}. Sem provider, o fluxo segue
+     * idêntico ao das Sprints 6.x (login local Keycloak).
+     */
+    private void applyIdentityProviderHint(UriComponentsBuilder builder, String provider) {
+        if (!StringUtils.hasText(provider)) {
+            return;
+        }
+        IdentityProviderCatalog.IdentityProviderInfo idp = identityProviderCatalog.find(provider)
+                .orElseThrow(() -> new OidcGatewayException("UNKNOWN_PROVIDER", 400,
+                        "Provedor de identidade desconhecido."));
+        if (!idp.available()) {
+            throw new OidcGatewayException("PROVIDER_NOT_AVAILABLE", 400,
+                    "Provedor de identidade ainda não configurado.");
+        }
+        log.info("OIDC identity provider hint: provider={}", idp.alias());
+        builder.queryParam("kc_idp_hint", idp.alias());
     }
 
     @Override

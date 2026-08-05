@@ -43,11 +43,14 @@ public class SecurityConfig {
                         // callback, logout e refresh — públicos por definição (a
                         // autenticação do refresh é feita via cookie de sessão +
                         // GatewayCsrfFilter; o logout via cookie + SameSite=Lax).
+                        // /auth/providers (Sprint 7.0): catálogo público de provedores
+                        // de identidade (aliases/labels/available) — sem segredos.
                         .requestMatchers(
                                 "/auth/authorize",
                                 "/auth/callback",
                                 "/auth/logout",
-                                "/auth/refresh").permitAll()
+                                "/auth/refresh",
+                                "/auth/providers").permitAll()
                         // BFF relay (Sprint 6.4): autenticado via cookie de sessão
                         // (GatewayApiRelay) — nunca exige JWT do browser.
                         .requestMatchers("/api/**").permitAll()

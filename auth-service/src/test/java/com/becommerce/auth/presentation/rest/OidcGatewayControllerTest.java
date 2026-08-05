@@ -1,6 +1,7 @@
 package com.becommerce.auth.presentation.rest;
 
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
+import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
 import com.becommerce.auth.domain.gateway.GatewaySession;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
@@ -50,6 +51,7 @@ class OidcGatewayControllerTest {
     @MockBean private JwtDecoder jwtDecoder;
     @MockBean private GatewayOidcUseCase gatewayOidcUseCase;
     @MockBean private GatewayCookieFactory cookieFactory;
+    @MockBean private IdentityProviderCatalog identityProviderCatalog;
 
     private GatewaySession session() {
         Instant now = Instant.now();
@@ -72,7 +74,7 @@ class OidcGatewayControllerTest {
 
     @Test
     void shouldRedirectToKeycloakAuthorizationEndpoint() throws Exception {
-        when(gatewayOidcUseCase.beginAuthorization("/dashboard"))
+        when(gatewayOidcUseCase.beginAuthorization("/dashboard", null))
                 .thenReturn(new GatewayOidcUseCase.BeginAuthorization(AUTH_URI, "/dashboard"));
 
         mockMvc.perform(get("/auth/authorize").param("redirect", "/dashboard"))
@@ -81,8 +83,33 @@ class OidcGatewayControllerTest {
     }
 
     @Test
+    void shouldForwardProviderSelectionToTheGateway() throws Exception {
+        when(gatewayOidcUseCase.beginAuthorization("/dashboard", "google"))
+                .thenReturn(new GatewayOidcUseCase.BeginAuthorization(AUTH_URI + "&kc_idp_hint=google", "/dashboard"));
+
+        mockMvc.perform(get("/auth/authorize").param("redirect", "/dashboard").param("provider", "google"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl(AUTH_URI + "&kc_idp_hint=google"));
+    }
+
+    @Test
+    void shouldExposeThePublicIdentityProviderCatalog() throws Exception {
+        when(identityProviderCatalog.list()).thenReturn(List.of(
+                new IdentityProviderCatalog.IdentityProviderInfo("google", "Google", true),
+                new IdentityProviderCatalog.IdentityProviderInfo("apple", "Apple", false)));
+
+        mockMvc.perform(get("/auth/providers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].alias").value("google"))
+                .andExpect(jsonPath("$[0].label").value("Google"))
+                .andExpect(jsonPath("$[0].available").value(true))
+                .andExpect(jsonPath("$[1].alias").value("apple"))
+                .andExpect(jsonPath("$[1].available").value(false));
+    }
+
+    @Test
     void shouldRejectOpenRedirectWith400() throws Exception {
-        when(gatewayOidcUseCase.beginAuthorization("//evil.example"))
+        when(gatewayOidcUseCase.beginAuthorization("//evil.example", null))
                 .thenThrow(new OidcGatewayException("OPEN_REDIRECT", 400, "Redirect não permitido pela allowlist."));
 
         mockMvc.perform(get("/auth/authorize").param("redirect", "//evil.example"))
@@ -141,7 +168,7 @@ class OidcGatewayControllerTest {
     @Test
     void shouldKeepAuthorizeAndCallbackPublic() throws Exception {
         stubCookies();
-        when(gatewayOidcUseCase.beginAuthorization(org.mockito.ArgumentMatchers.any()))
+        when(gatewayOidcUseCase.beginAuthorization(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
                 .thenReturn(new GatewayOidcUseCase.BeginAuthorization(AUTH_URI, "/"));
         when(gatewayOidcUseCase.completeAuthorization("c", "s"))
                 .thenReturn(new GatewayOidcUseCase.AuthenticationResult(session(), "/"));

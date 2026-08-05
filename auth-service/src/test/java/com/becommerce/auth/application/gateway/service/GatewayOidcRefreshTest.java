@@ -82,7 +82,8 @@ class GatewayOidcRefreshTest {
                 currentUserResolutionUseCase,
                 sessionStore,
                 new GatewaySessionResolver(sessionStore),
-                providerMetadata);
+                providerMetadata,
+                new ConfiguredIdentityProviderCatalog(properties));
     }
 
     private GatewaySession session(String token, Instant expiresAt, Instant lastAccessedAt, Instant revokedAt) {
