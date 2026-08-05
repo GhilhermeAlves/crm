@@ -12,6 +12,20 @@ spring:
   flyway:
     enabled: true
 
+# Sprint 6.10 — documentação da API desabilitada em produção (/docs → 404).
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Sprint 6.10 — exposição do actuator restrita a health em produção.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
 logging:
   level:
     com.becommerce.crm: INFO
