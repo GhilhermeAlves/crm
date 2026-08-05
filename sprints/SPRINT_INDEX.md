@@ -42,6 +42,14 @@
 | 6.8 | Gateway OIDC (hardening, concorrência do rate limiting e fechamento) | ✅ Concluída | 2026-08-05 | AI Agent | 6.7 |
 | 6.9 | Gateway OIDC (auditoria final de segurança/arquitetura, correção do login manual e fechamento) | ✅ Concluída | 2026-08-05 | AI Agent | 6.8 |
 | 6.10 | Production Infrastructure Hardening & Final Closure (etapa auth/Gateway encerrada) | ✅ Concluída | 2026-08-05 | AI Agent | 6.9 |
+| 7.0 | Identity Provider Architecture (catálogo de provedores + `kc_idp_hint` + fundação do login) | ✅ Concluída | 2026-08-05 | AI Agent | 6.10 |
+| 7.1 | Login & Cadastro Google/Microsoft (IdP reais, account linking básico, deploy) | ⏳ Pendente | — | AI Agent | 7.0 |
+| 7.2 | Apple (Sign in with Apple) | ⏳ Pendente | — | AI Agent | 7.1 |
+| 7.3 | Telefone/OTP | ⏳ Pendente | — | AI Agent | 7.1 |
+| 7.4 | Account Linking | ⏳ Pendente | — | AI Agent | 7.1–7.3 |
+| 7.5 | Recuperação de conta e segurança da identidade | ⏳ Pendente | — | AI Agent | 7.4 |
+| 7.6 | UX / Perfil de identidade | ⏳ Pendente | — | AI Agent | 7.4 |
+| 7.7 | Final Security Review | ⏳ Pendente | — | AI Agent | 7.5, 7.6 |
 
 ## SaaS
 
@@ -88,13 +96,14 @@
 | Knowledge Layer | 3 | 3 | 0 | 0 |
 | Infraestrutura | 5 | 0 | 1 | 4 |
 | Segurança | 11 | 11 | 0 | 0 |
+| Identidade | 8 | 1 | 0 | 7 |
 | SaaS | 1 | 0 | 0 | 1 |
 | CRM | 4 | 0 | 0 | 4 |
 | Omnichannel | 3 | 0 | 0 | 3 |
 | Analytics | 1 | 0 | 0 | 1 |
 | IA | 1 | 0 | 0 | 1 |
-| **Total** | **32** | **17** | **1** | **14** |
+| **Total** | **40** | **18** | **1** | **21** |
 
 ---
 
-*Última atualização: 2026-08-05 (Sprint 6.10 — etapa auth/Gateway concluída)*
+*Última atualização: 2026-08-05 (Sprint 7.0 — Identity Provider Architecture concluída)*
