@@ -1,5 +1,21 @@
 version: '3.8'
 
+# =============================================================================
+# CRM — Aplicação (backend, auth-service/gateway, frontend)
+# =============================================================================
+# Sprint 6.10 — Hardening de produção:
+#   - Removeu os serviços datastore vestigiais (postgres/redis/rabbitmq/minio)
+#     com credenciais default hardcoded (postgres/postgres, guest/guest,
+#     minioadmin/minioadmin). Os datastores reais vivem no compose de
+#     infraestrutura (docker-compose.yml na raiz, projeto crm-infrastructure)
+#     com credenciais provenientes do .env.
+#   - Publicações de porta restritas ao loopback (127.0.0.1:) — todo o acesso
+#     externo legítimo passa pelo nginx (443).
+#   - SPRING_PROFILES_ACTIVE=prod (docs/actuator restritos em produção).
+#   - Credenciais de banco/mensageria 100% derivadas do .env (sem defaults
+#     inseguros no arquivo).
+# =============================================================================
+
 services:
   backend:
     build:
@@ -7,17 +23,18 @@ services:
       dockerfile: Dockerfile
     container_name: crm-backend
     ports:
-      - "8081:8080"
+      - "127.0.0.1:8081:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SERVER_SERVLET_CONTEXT_PATH=
       - CRM_DATABASE_HOST=postgres
       - CRM_DATABASE_PORT=5432
       - CRM_DATABASE_NAME=crm
-      - CRM_DATABASE_USERNAME=postgres
-      - CRM_DATABASE_PASSWORD=postgres
+      - CRM_DATABASE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - CRM_DATABASE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - CRM_REDIS_HOST=redis
       - CRM_REDIS_PORT=6379
+      - CRM_REDIS_PASSWORD=${CRM_REDIS_PASSWORD}
       - CRM_RABBITMQ_HOST=rabbitmq
       - CRM_RABBITMQ_PORT=5672
       - CRM_RABBITMQ_USERNAME=${CRM_RABBITMQ_USERNAME}
@@ -36,16 +53,6 @@ services:
       - SPRING_FLYWAY_URL=${SPRING_DATASOURCE_URL}
       - SPRING_FLYWAY_USER=crm_admin
       - SPRING_FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
-      - CRM_REDIS_PASSWORD=${CRM_REDIS_PASSWORD}
-      - CRM_REDIS_HOST=redis
-      - CRM_REDIS_PORT=6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     networks:
       - crm-network
     restart: unless-stopped
@@ -56,17 +63,30 @@ services:
       dockerfile: Dockerfile
     container_name: crm-auth-service
     ports:
-      - "8082:8080"
+      - "127.0.0.1:8082:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - AUTH_KEYCLOAK_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
       - AUTH_KEYCLOAK_JWKS_URI=http://crm-keycloak:8080/realms/CRM/protocol/openid-connect/certs
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - AUTH_GATEWAY_ENABLED=true
+      - AUTH_GATEWAY_CLIENT_ID=crm-gateway
+      - AUTH_GATEWAY_CLIENT_SECRET=${AUTH_GATEWAY_CLIENT_SECRET}
+      - AUTH_GATEWAY_REDIRECT_URI=https://srv1348261.hstgr.cloud/auth/callback
+      - AUTH_GATEWAY_ALLOWED_REDIRECT_URIS=https://srv1348261.hstgr.cloud/login,https://srv1348261.hstgr.cloud/dashboard,https://srv1348261.hstgr.cloud
+      - AUTH_GATEWAY_APP_BASE_URL=https://srv1348261.hstgr.cloud
+      - AUTH_GATEWAY_API_BACKEND_URL=http://backend:8080
+      - AUTH_GATEWAY_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
+      - AUTH_GATEWAY_SESSION_STORE=redis
+      - AUTH_GATEWAY_SESSION_TTL=8h
+      - AUTH_GATEWAY_SESSION_IDLE_TIMEOUT=0s
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    extra_hosts:
+      - "srv1348261.hstgr.cloud:76.13.237.238"
     networks:
       - crm-network
     restart: unless-stopped
@@ -85,93 +105,12 @@ services:
       dockerfile: Dockerfile
     container_name: crm-frontend
     ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
-      - NEXT_PUBLIC_WS_URL=ws://localhost:8080
+      - "127.0.0.1:3000:3000"
     depends_on:
       - backend
     networks:
       - crm-network
     restart: unless-stopped
-
-  postgres:
-    image: postgres:16
-    container_name: crm-postgres
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=crm
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - crm-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  redis:
-    image: redis:7
-    container_name: crm-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - crm-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: crm-rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - crm-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  minio:
-    image: minio/minio
-    container_name: crm-minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    networks:
-      - crm-network
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-  redis_data:
-  rabbitmq_data:
-  minio_data:
 
 networks:
   crm-network:
