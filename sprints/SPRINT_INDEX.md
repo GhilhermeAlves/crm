@@ -31,7 +31,7 @@
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
 | 5 | Tenant | ✅ Concluída | 2026-08-01 | AI Agent | 4.1 |
-| 6 | Access Gateway | 🚧 Em andamento | 2026-08-02 | AI Agent | 5 |
+| 6 | Access Gateway | ✅ Concluída | 2026-08-02 | AI Agent | 5 |
 | 6.1 | Gateway OIDC (authorize/callback) | ✅ Concluída | 2026-08-02 | AI Agent | 6 |
 | 6.2 | Gateway OIDC (logout + ciclo de vida da sessão) | ✅ Concluída | 2026-08-02 | AI Agent | 6.1 |
 | 6.3 | Gateway OIDC (integração de produção / E2E) | ✅ Concluída | 2026-08-03 | AI Agent | 6.2 |
@@ -41,6 +41,7 @@
 | 6.7 | Gateway OIDC (rate limit do relay `/api/*` por usuário autenticado) | ✅ Concluída | 2026-08-04 | AI Agent | 6.6 |
 | 6.8 | Gateway OIDC (hardening, concorrência do rate limiting e fechamento) | ✅ Concluída | 2026-08-05 | AI Agent | 6.7 |
 | 6.9 | Gateway OIDC (auditoria final de segurança/arquitetura, correção do login manual e fechamento) | ✅ Concluída | 2026-08-05 | AI Agent | 6.8 |
+| 6.10 | Production Infrastructure Hardening & Final Closure (etapa auth/Gateway encerrada) | ✅ Concluída | 2026-08-05 | AI Agent | 6.9 |
 
 ## SaaS
 
@@ -86,14 +87,14 @@
 | Planejamento | 3 | 3 | 0 | 0 |
 | Knowledge Layer | 3 | 3 | 0 | 0 |
 | Infraestrutura | 5 | 0 | 1 | 4 |
-| Segurança | 10 | 10 | 0 | 0 |
+| Segurança | 11 | 11 | 0 | 0 |
 | SaaS | 1 | 0 | 0 | 1 |
 | CRM | 4 | 0 | 0 | 4 |
 | Omnichannel | 3 | 0 | 0 | 3 |
 | Analytics | 1 | 0 | 0 | 1 |
 | IA | 1 | 0 | 0 | 1 |
-| **Total** | **31** | **16** | **1** | **14** |
+| **Total** | **32** | **17** | **1** | **14** |
 
 ---
 
-*Última atualização: 2026-08-05 (Sprint 6.9)*
+*Última atualização: 2026-08-05 (Sprint 6.10 — etapa auth/Gateway concluída)*
