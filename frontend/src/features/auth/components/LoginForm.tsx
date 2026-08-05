@@ -21,18 +21,19 @@ export function LoginForm() {
     <div className="space-y-4">
       <Button
         type="button"
+        variant="crm"
         className="w-full"
         onClick={handleLogin}
         disabled={isRedirecting}
       >
         {isRedirecting ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <LogIn className="mr-2 h-4 w-4" />
+          <LogIn className="h-4 w-4" />
         )}
-        Entrar
+        Entrar com e-mail e senha
       </Button>
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-center text-xs text-crm-text-secondary">
         Você será redirecionado para o login seguro e voltará automaticamente.
       </p>
     </div>

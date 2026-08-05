@@ -16,9 +16,34 @@ export const SESSION_COOKIE = "crm_session";
 export const CSRF_COOKIE = "XSRF-TOKEN";
 export const CSRF_HEADER = "X-XSRF-TOKEN";
 
-export function loginWithGateway(redirectPath?: string): void {
-  const target = redirectPath || "/dashboard";
-  window.location.assign(`/auth/authorize?redirect=${encodeURIComponent(target)}`);
+/**
+ * Provedores de identidade suportados (Sprint 7.0). Meta/Facebook está fora de
+ * escopo. O alias casa com o identity provider (Identity Brokering) do Keycloak
+ * e é encaminhado ao gateway como `kc_idp_hint`.
+ */
+export const IDENTITY_PROVIDERS = {
+  GOOGLE: "google",
+  MICROSOFT: "microsoft",
+  APPLE: "apple",
+  PHONE: "phone",
+} as const;
+
+export type IdentityProviderId = (typeof IDENTITY_PROVIDERS)[keyof typeof IDENTITY_PROVIDERS];
+
+/**
+ * Inicia o login via Access Gateway (`/auth/authorize`). O parâmetro
+ * {@code provider} é opcional: quando informado, o gateway adiciona
+ * {@code kc_idp_hint} na autorização do Keycloak para encaminhar o usuário ao
+ * Identity Provider escolhido. Nenhum token de provedor externo transita pelo
+ * browser — a sessão continua server-side (cookie HttpOnly).
+ */
+export function loginWithGateway(
+  redirectPath?: string,
+  provider?: IdentityProviderId,
+): void {
+  const params = new URLSearchParams({ redirect: redirectPath || "/dashboard" });
+  if (provider) params.set("provider", provider);
+  window.location.assign(`/auth/authorize?${params.toString()}`);
 }
 
 export function logoutWithGateway(): void {

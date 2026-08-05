@@ -40,6 +40,27 @@ describe("gateway-auth (BFF session)", () => {
     );
   });
 
+  it("loginWithGateway adds the provider hint preserving the redirect", () => {
+    loginWithGateway("/leads", "google");
+    expect(window.location.assign).toHaveBeenCalledWith(
+      "/auth/authorize?redirect=%2Fleads&provider=google",
+    );
+  });
+
+  it("loginWithGateway without redirect keeps the provider hint", () => {
+    loginWithGateway(undefined, "microsoft");
+    expect(window.location.assign).toHaveBeenCalledWith(
+      "/auth/authorize?redirect=%2Fdashboard&provider=microsoft",
+    );
+  });
+
+  it("loginWithGateway encodes the provider alias safely", () => {
+    loginWithGateway("/leads", "apple");
+    expect(window.location.assign).toHaveBeenCalledWith(
+      "/auth/authorize?redirect=%2Fleads&provider=apple",
+    );
+  });
+
   it("logoutWithGateway navigates to /auth/logout", () => {
     logoutWithGateway();
     expect(window.location.assign).toHaveBeenCalledWith("/auth/logout");

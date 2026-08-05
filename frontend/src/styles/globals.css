@@ -24,6 +24,26 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+
+    /*
+     * Tokens de identidade/Login (Sprint 7.0). Independentes da marca
+     * definitiva: para trocar a paleta futuramente, basta alterar estas
+     * variáveis — nenhum componente precisa de refatoração. Base sugerida:
+     * primário azul (ações principais/foco/seleção), cinza para secundários/
+     * bordas/divisores/estados desabilitados, fundo branco.
+     */
+    --crm-primary: 221.2 83.2% 53.3%;
+    --crm-primary-hover: 221.2 83.2% 46%;
+    --crm-primary-active: 221.2 83.2% 39%;
+    --crm-primary-foreground: 0 0% 100%;
+    --crm-secondary: 220 14.3% 95.9%;
+    --crm-text: 222.2 84% 4.9%;
+    --crm-text-secondary: 215.4 16.3% 46.9%;
+    --crm-border: 220 13% 91%;
+    --crm-background: 0 0% 100%;
+    --crm-surface: 0 0% 100%;
+    --crm-danger: 0 84.2% 60.2%;
+    --crm-success: 142 71% 45%;
   }
 
   .dark {
@@ -46,6 +66,19 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    --crm-primary: 217.2 91.2% 59.8%;
+    --crm-primary-hover: 217.2 91.2% 52%;
+    --crm-primary-active: 217.2 91.2% 44%;
+    --crm-primary-foreground: 0 0% 100%;
+    --crm-secondary: 217.2 32.6% 17.5%;
+    --crm-text: 210 40% 98%;
+    --crm-text-secondary: 215 20.2% 65.1%;
+    --crm-border: 217.2 32.6% 17.5%;
+    --crm-background: 222.2 84% 4.9%;
+    --crm-surface: 222.2 47.4% 11.2%;
+    --crm-danger: 0 62.8% 30.6%;
+    --crm-success: 142 71% 45%;
   }
 }
 
