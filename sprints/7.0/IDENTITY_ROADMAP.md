@@ -2,8 +2,10 @@
 
 > Roteiro da evolução de identidade do CRM sobre o Access Gateway (auth-service) + Keycloak
 > Identity Brokering. Sprint 7.0 (concluída) entregou a **fundação**: catálogo de provedores,
-> `kc_idp_hint` e a nova tela de login. As sprints seguintes **habilitam** provedores reais,
-> exigem credenciais externas e, a partir da 7.1, passam a ter deploy na VPS.
+> `kc_idp_hint` e a nova tela de login. A **7.1** habilitou o **Google** em produção (IdP real
+> no Keycloak + código 7.0 sincronizado na VPS + deploy controlado); **Microsoft permanece
+> bloqueado** por falta de credenciais Entra. As sprints seguintes habilitam Apple, Telefone
+> e o account linking visual, sempre com deploy na VPS.
 
 ## Princípios invariantes
 
@@ -17,33 +19,42 @@
 
 ## Matriz de provedores
 
-| Provedor | Alias | Sprint | Status 7.0 | Prerequisito externo |
+| Provedor | Alias | Sprint | Status 7.1 | Prerequisito externo |
 |----------|-------|--------|-------------|----------------------|
-| Google | `google` | 7.1 | Preparado (não habilitado) | OAuth Client ID/Secret (Google Cloud Console) |
-| Microsoft/Outlook | `microsoft` | 7.1 | Preparado (não habilitado) | App registration (Microsoft Entra) |
+| Google | `google` | 7.1 | ✅ **Habilitado em produção** (E2E final pendente) | OAuth Client ID/Secret (Google Cloud Console) — ✅ consumido |
+| Microsoft/Outlook | `microsoft` | 7.1 | ⛔ **Bloqueado** (sem credenciais Entra) — adiado | App registration (Microsoft Entra) — pendente |
 | Apple/iCloud | `apple` | 7.2 | Preparado (não habilitado) | Apple Developer Program (Sign in with Apple) |
 | Telefone/OTP | `phone` | 7.3 | No catálogo (registro) | Provedor SMS + abstração de envio |
 
 ---
 
-## 7.1 — Login & Cadastro com Google e Microsoft
+## 7.1 — Login & Cadastro com Google (Microsoft bloqueado)
 
-- **Objetivo:** habilitar Google e Microsoft como primeiros Identity Providers reais.
-- **Tarefas:**
-  - Criar OAuth app Google (authorized redirect = `/realms/CRM/broker/google/endpoint`) e app
-    Entra (redirect `/realms/CRM/broker/microsoft/endpoint`).
-  - Configurar os IdPs no Keycloak realm CRM (client id/secret, scopes `openid email profile`,
-    mapeamento de e-mail/nome) e habilitar `AUTH_GATEWAY_ENABLED_PROVIDERS=google,microsoft`.
-  - **Deploy controlado:** backup → rebuild auth-service → `up -d` → regressão 6.6–6.9 +
-    login real por e-mail/senha + login real Google/Microsoft.
-  - **Account linking básico:** decidir e implementar o mapeamento de e-mail entre IdP e conta
-    local (ver 7.4) e a política de e-mail duplicado (`duplicateEmailsAllowed` hoje `false`).
-  - Cadastro via IdP: decisão de auto-provisionamento de usuário novo (broker flow) + criação
-    da empresa/tenant associada.
-- **Critérios de aceite:** login com conta Google e Microsoft terminam em `/dashboard` com
-  `/auth/me` 200; e-mail+senha continua funcional; botões da tela de login ficam habilitados
-  apenas para os provedores ativos.
-- **Saída:** `sprints/7.1/REPORT.md`.
+- **Objetivo:** habilitar o primeiro Identity Provider real (Google).
+- **Entregue (Google):**
+  - OAuth app Google com authorized redirect
+    `/realms/CRM/broker/google/endpoint` (registrado no Cloud Console).
+  - IdP `google` configurado no Keycloak realm CRM (client id/secret, `useJwksUrl`,
+    `syncMode=IMPORT`, `trustEmail`, scopes `openid profile email`) + 4 mappers
+    (username/email/first name/last name).
+  - `AUTH_GATEWAY_ENABLED_PROVIDERS=google` habilitado apenas no serviço auth-service
+    do compose de produção.
+  - **Deploy controlado:** backup → sincronização do código 7.0 (a VPS estava ~24 commits
+    atrás) → rebuild auth-service/frontend → `up -d` → regressão 6.6–6.9 + cadeia curl
+    até a página de sign-in do Google (Google aceita Client ID/redirect URI).
+  - **Cadastro via IdP:** `firstBrokerLoginFlow` padrão do Keycloak (cria usuário novo no
+    primeiro login; e-mail duplicado é auto-linked — `duplicateEmailsAllowed=false`).
+- **Pendências da 7.1:**
+  - **E2E interativo do usuário** (Google bloqueia automação): login real em
+    `https://srv1348261.hstgr.cloud/login` até `/dashboard` com `/auth/me` 200.
+  - **Microsoft/Outlook ⛔ bloqueado** — sem app registration no Microsoft Entra; o
+    `enabled-providers` contém apenas `google` e `authorize?provider=microsoft` responde
+    `400 PROVIDER_NOT_AVAILABLE`. Reabrir quando as credenciais Entra existirem.
+  - Account linking visual (7.4).
+- **Critérios de aceite:** login com conta Google termina em `/dashboard` com `/auth/me`
+  200; e-mail+senha continua funcional; botões da tela de login habilitados apenas para
+  provedores ativos.
+- **Saída:** `sprints/7.1/REPORT.md` (status: em validação final — E2E pendente).
 
 ## 7.2 — Apple (Sign in with Apple)
 
@@ -127,8 +138,8 @@
 
 ## Dependências externas (necessárias para 7.1–7.3)
 
-- Google Cloud Console (OAuth 2.0 Client ID) — **7.1**.
-- Microsoft Entra (app registration) — **7.1**.
+- Google Cloud Console (OAuth 2.0 Client ID) — **7.1** — ✅ consumido (Google habilitado).
+- Microsoft Entra (app registration) — **7.1** — ⏳ pendente (Microsoft bloqueado).
 - Apple Developer Program (conta paga + Services ID/Key) — **7.2**.
 - Provedor de SMS — **7.3**.
 - Nenhuma credencial será inventada; a sprint 7.0 não consome nenhuma delas.
