@@ -35,8 +35,8 @@
   - OAuth app Google com authorized redirect
     `/realms/CRM/broker/google/endpoint` (registrado no Cloud Console).
   - IdP `google` configurado no Keycloak realm CRM (client id/secret, `useJwksUrl`,
-    `syncMode=IMPORT`, `trustEmail`, scopes `openid profile email`) + 4 mappers
-    (username/email/first name/last name).
+    `syncMode=IMPORT`, `trustEmail`, scopes `openid profile email`) + 3 mappers
+    (email/first name/last name); username via fallback padrão do broker (e-mail).
   - `AUTH_GATEWAY_ENABLED_PROVIDERS=google` habilitado apenas no serviço auth-service
     do compose de produção.
   - **Deploy controlado:** backup → sincronização do código 7.0 (a VPS estava ~24 commits

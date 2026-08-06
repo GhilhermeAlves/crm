@@ -75,9 +75,14 @@ Apple/Telefone permanecem preparados e desabilitados.
 - **IdP `google` criado (HTTP 201)** e verificado: `alias=google`, `providerId=google`,
   `enabled=true`, `useJwksUrl=true`, `syncMode=IMPORT`, `trustEmail=true`,
   `defaultScope=openid profile email`, `clientId`/`clientSecret` reais.
-- **4 mappers criados (HTTP 201 cada):** username ← claim `email`; email ← `email`;
-  first name ← `given_name`; last name ← `family_name`. Todos `addToIdToken/AddToUserInfo`
-  conforme padrão do broker.
+- **Mappers (estado final — após correção do NPE):**
+  - Criados (HTTP 201): **email** ← claim `email`, **first name** ← `given_name`,
+    **last name** ← `family_name` (todos `oidc-user-attribute-idp-mapper`).
+  - **`username` REMOVIDO (HTTP 204)**: criado via API como `oidc-username-idp-mapper`
+    com config `{claim: email, target: LOCAL}` **sem a chave `template`** — em Keycloak
+    26.3.5 essa classe (`UsernameTemplateMapper`) exige `template` e quebrava o login com
+    NPE (ver "Problemas"). Sem o mapper, o broker usa o **fallback padrão**: username =
+    e-mail do ID token do Google (o Google não envia `preferred_username`).
 - Realm (verificado pós-config): `registrationAllowed=false`, `verifyEmail=false`,
   `duplicateEmailsAllowed=false`, `bruteForceProtected=true` — nenhuma política de
   registro aberta; o "cadastro" via Google acontece pela primeira entrada no broker
@@ -161,14 +166,26 @@ interativa**: o Google bloqueia automação de login. O usuário deve executar e
 
 ## Problemas / observações
 
-- **NPE no Keycloak às 02:12:59** (IP externo): `Cannot invoke "java.lang.CharSequence.length()"
-  because "this.text" is null` — falha conhecida do broker OIDC do Keycloak ao renderizar a
-  tela de erro/cancelamento do Google. Ocorreu em uma tentativa real de callback externo
-  (provavelmente login cancelado/erro no lado do Google). **Não é erro de configuração.**
-  Registrar qualquer ocorrência nova durante o E2E.
+- **NPE no callback do Google (RESOLVIDO — causa raiz encontrada):**
+  `Cannot invoke "java.lang.CharSequence.length()" because "this.text" is null` em
+  `UsernameTemplateMapper.setUserNameFromTemplate` (linha 162). A stack trace mostrou o
+  `Pattern.matcher(null)` → **o mapper "username" criado via admin API (`oidc-username-idp-mapper`)
+  foi configurado com `{claim: email, target: LOCAL}` mas sem a chave `template`** — e em
+  Keycloak 26.3.5 esse providerId instancia a classe `UsernameTemplateMapper`, que executa
+  `SUBSTITUTION.matcher(config["template"])` e NPE quando `template` é null (a antiga classe
+  `UsernameMapper`, que usava `claim`/`target`, **não existe mais** nessa versão — foi
+  unificada na `UsernameTemplateMapper`).
+  **Correção:** mapper "username" removido (`DELETE .../mappers/ea0612c3...` → HTTP 204);
+  restaram 3 mappers (email/first name/last name). Sem o mapper, o broker usa o fallback
+  padrão username = e-mail do Google (comportamento consistente com os usuários existentes,
+  que logam por e-mail). Sem restart necessário (config lida do DB por request).
+  Re-testar o login Google interativo.
 - **A VPS rodava código 7.0-parcial antigo** — sem a sincronização, `/auth/providers` e a
   UI de providers simplesmente não existiam em produção. Corrigido com cópia manual
   arquivo a arquivo (sem git push/pull, preservando os arquivos locais do VPS).
+- **Erros auxiliares em logs:** `Redirection URL does not contain a state parameter`
+  (02:16/02:17, `127.0.0.1`) — foram os curls de teste batendo direto no endpoint do broker
+  sem `state`; inofensivos e esperados.
 - **Flake pré-existente** `GatewayOidcRefreshTest.shouldUpdateLastAccessedAtOnRefresh`
   (sensitive a timing; passa isolado) — sem relação com esta sprint.
 - Warn obsoleto do compose (`version:`) — pré-existente, inofensivo.
@@ -189,7 +206,7 @@ interativa**: o Google bloqueia automação de login. O usuário deve executar e
 ## Pendências / recomendações
 
 - **E2E interativo (usuário):** login Google real até `/dashboard`; reportar sucesso ou
-  erro (se NPE, coletar logs do Keycloak).
+  erro (se NPE, coletar logs do Keycloak). O NPE do mapper foi corrigido — re-testar.
 - **Credenciais Entra (Microsoft)** para habilitar o segundo provedor.
 - **Apple Developer Program** para Sign in with Apple (7.2).
 - **Provedor SMS** para Telefone/OTP (7.3).
@@ -200,8 +217,9 @@ interativa**: o Google bloqueia automação de login. O usuário deve executar e
 
 STATUS: **EM VALIDAÇÃO FINAL** (todas as etapas concluídas exceto o E2E interativo).
 
-- IdP `google` real configurado no Keycloak (produção) com 4 mappers; credenciais nunca
-  expostas fora do Keycloak.
+- IdP `google` real configurado no Keycloak (produção) com 3 mappers (email/first name/
+  last name) + username via fallback padrão (e-mail); credenciais nunca expostas fora do
+  Keycloak. NPE do mapper corrigido (username mapper removido).
 - Código 7.0 sincronizado na VPS (backend catálogo+hint+providers público; frontend UI
   de providers) e `AUTH_GATEWAY_ENABLED_PROVIDERS=google` aplicado ao auth-service.
 - Deploy controlado com backups; auth-service e frontend healthy; regressão de endpoints
