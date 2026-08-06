@@ -21,7 +21,7 @@
 
 | Provedor | Alias | Sprint | Status 7.1 | Prerequisito externo |
 |----------|-------|--------|-------------|----------------------|
-| Google | `google` | 7.1 | ✅ **Habilitado em produção** (E2E final pendente) | OAuth Client ID/Secret (Google Cloud Console) — ✅ consumido |
+| Google | `google` | 7.1 | ✅ **Habilitado e validado em produção** (E2E até `/dashboard`) | OAuth Client ID/Secret (Google Cloud Console) — ✅ consumido |
 | Microsoft/Outlook | `microsoft` | 7.1 | ⛔ **Bloqueado** (sem credenciais Entra) — adiado | App registration (Microsoft Entra) — pendente |
 | Apple/iCloud | `apple` | 7.2 | Preparado (não habilitado) | Apple Developer Program (Sign in with Apple) |
 | Telefone/OTP | `phone` | 7.3 | No catálogo (registro) | Provedor SMS + abstração de envio |
@@ -44,17 +44,18 @@
     até a página de sign-in do Google (Google aceita Client ID/redirect URI).
   - **Cadastro via IdP:** `firstBrokerLoginFlow` padrão do Keycloak (cria usuário novo no
     primeiro login; e-mail duplicado é auto-linked — `duplicateEmailsAllowed=false`).
+  - **E2E validado em produção:** login Google real (`paulo.alves@praiaclube.org.br`) →
+    `/dashboard`. Corrigido NPE do mapper de username (Keycloak 26.3.5 exige `template`).
 - **Pendências da 7.1:**
-  - **E2E interativo do usuário** (Google bloqueia automação): login real em
-    `https://srv1348261.hstgr.cloud/login` até `/dashboard` com `/auth/me` 200.
+  - **Provisão do usuário CRM é manual** (`PROVISIONING_REQUIRED`); auto-provisionamento
+    "cadastro com Google" fica para 7.4.
   - **Microsoft/Outlook ⛔ bloqueado** — sem app registration no Microsoft Entra; o
     `enabled-providers` contém apenas `google` e `authorize?provider=microsoft` responde
     `400 PROVIDER_NOT_AVAILABLE`. Reabrir quando as credenciais Entra existirem.
-  - Account linking visual (7.4).
-- **Critérios de aceite:** login com conta Google termina em `/dashboard` com `/auth/me`
-  200; e-mail+senha continua funcional; botões da tela de login habilitados apenas para
-  provedores ativos.
-- **Saída:** `sprints/7.1/REPORT.md` (status: em validação final — E2E pendente).
+- **Critérios de aceite (atingidos):** login com conta Google termina em `/dashboard` com
+  sessão de gateway criada; e-mail+senha continua funcional; botões da tela de login
+  habilitados apenas para provedores ativos.
+- **Saída:** `sprints/7.1/REPORT.md` (status: concluída).
 
 ## 7.2 — Apple (Sign in with Apple)
 

@@ -1,6 +1,6 @@
 # Sprint 7.1 — Login & Cadastro com Google (Keycloak Identity Brokering)
 
-**Data:** 2026-08-05/06 · **Ambiente:** local + VPS (produção `srv1348261.hstgr.cloud`) · **Status:** ⏳ Em validação final (aguardando E2E interativo do usuário)
+**Data:** 2026-08-05/06 · **Ambiente:** local + VPS (produção `srv1348261.hstgr.cloud`) · **Status:** ✅ Concluída
 
 ## Identificação
 
@@ -96,8 +96,9 @@ Apple/Telefone permanecem preparados e desabilitados.
 - **Caso B — usuário novo (nunca acessou o CRM):** o `firstBrokerLoginFlow` padrão cria o
   usuário Keycloak a partir dos dados do Google (create user if unique). O backend então
   resolve o usuário CRM por `sub` → não existe → exige provisão
-  (`PROVISIONING_REQUIRED`/`CRM_ACCESS_DENIED`) até um usuário CRM ser vinculado — o mesmo
-  fluxo do e-mail+senha. (Validação final pendente do E2E.)
+  (`PROVISIONING_REQUIRED`/`CRM_ACCESS_DENIED`) — **validado em produção às 03:12:50**
+  (403 `PROVISIONING_REQUIRED`). A provisão foi feita manualmente (ver "Validação em
+  produção — E2E") seguindo o padrão do `AuthService.provisionKeycloakUser`.
 - **Caso C — e-mail duplicado entre duas identidades:** protegido por
   `duplicateEmailsAllowed=false`; o broker não cria conta duplicada.
 - **Caso D — e-mail Google pertence a um usuário CRM que não tem conta Keycloak:**
@@ -157,12 +158,22 @@ Apple/Telefone permanecem preparados e desabilitados.
   Client ID e o redirect URI**. ✔
 - `/login` VPS HTTP 200; bundle do frontend contém `auth/providers` (código 7.0 servido). ✔
 
-### E2E interativo (pendente — ação do usuário)
+### E2E interativo (✅ validado — usuário)
 
-O passo final (clicar em "Continuar com Google" → conta
-`paulo.alves@praiaclube.org.br` → voltar ao CRM logado em `/dashboard`) **requer sessão
-interativa**: o Google bloqueia automação de login. O usuário deve executar em
-`https://srv1348261.hstgr.cloud/login`.
+1. **03:12:50** — primeira tentativa: Google → Keycloak → gateway → `403 PROVISIONING_REQUIRED`
+   (sub `90196618-...` sem usuário CRM). Comportamento correto (Caso B).
+2. **Provisão manual (decisão do usuário):** INSERT no banco CRM (`users` +
+   `user_roles`) seguindo exatamente o padrão do backend: e-mail
+   `paulo.alves@praiaclube.org.br`, `keycloak_sub=90196618-...`, `company_id=
+   11111111-...` (AUTH_DEFAULT_COMPANY_ID), role `AGENT`, `is_active/crm_enabled=true`,
+   `status=ACTIVE` (senha placeholder — login é via Keycloak). RLS FORCE respeitado via
+   GUC `app.current_company_id`.
+3. **03:23:36/03:23:51** — login Google real: `OIDC identity resolved` (sem provisioning
+   required) + `OIDC gateway session created: user=e3cf24ae-...` → `/dashboard` logado. ✅
+
+> Observação: o usuário no **Keycloak** não foi criado manualmente — o broker o criou
+> automaticamente no primeiro login Google (`firstBrokerLoginFlow`). A provisão manual foi
+> apenas no banco CRM (vínculo identidade→usuário CRM).
 
 ## Problemas / observações
 
@@ -178,8 +189,14 @@ interativa**: o Google bloqueia automação de login. O usuário deve executar e
   **Correção:** mapper "username" removido (`DELETE .../mappers/ea0612c3...` → HTTP 204);
   restaram 3 mappers (email/first name/last name). Sem o mapper, o broker usa o fallback
   padrão username = e-mail do Google (comportamento consistente com os usuários existentes,
-  que logam por e-mail). Sem restart necessário (config lida do DB por request).
-  Re-testar o login Google interativo.
+  que logam por e-mail). Sem restart necessário (config lida do DB por request). ✅
+- **403 PROVISIONING_REQUIRED (esperado, Caso B) — resolvido com provisão manual:**
+  o gateway falha com `403 PROVISIONING_REQUIRED` para identidade nova sem usuário CRM
+  (contrato das Sprints 6.x). O auto-provisioning do crm-backend
+  (`provisionKeycloakUser`) só dispara quando o backend recebe request com JWT — o gateway
+  falha antes de criar sessão. Para o E2E, a provisão foi feita manualmente no banco (ver
+  E2E). **Melhoria futura (7.4):** auto-provisionamento "cadastro com Google" no fluxo do
+  gateway.
 - **A VPS rodava código 7.0-parcial antigo** — sem a sincronização, `/auth/providers` e a
   UI de providers simplesmente não existiam em produção. Corrigido com cópia manual
   arquivo a arquivo (sem git push/pull, preservando os arquivos locais do VPS).
@@ -205,8 +222,9 @@ interativa**: o Google bloqueia automação de login. O usuário deve executar e
 
 ## Pendências / recomendações
 
-- **E2E interativo (usuário):** login Google real até `/dashboard`; reportar sucesso ou
-  erro (se NPE, coletar logs do Keycloak). O NPE do mapper foi corrigido — re-testar.
+- **Auto-provisionamento "cadastro com Google"** (7.4): quando o gateway recebe identidade
+  nova, disparar o provisionamento do crm-backend (ou provisionar no auth-service) em vez
+  de exigir provisão manual — hoje o `403 PROVISIONING_REQUIRED` exige ação manual.
 - **Credenciais Entra (Microsoft)** para habilitar o segundo provedor.
 - **Apple Developer Program** para Sign in with Apple (7.2).
 - **Provedor SMS** para Telefone/OTP (7.3).
@@ -215,7 +233,7 @@ interativa**: o Google bloqueia automação de login. O usuário deve executar e
 
 ## Resultado
 
-STATUS: **EM VALIDAÇÃO FINAL** (todas as etapas concluídas exceto o E2E interativo).
+STATUS: **CONCLUÍDA**.
 
 - IdP `google` real configurado no Keycloak (produção) com 3 mappers (email/first name/
   last name) + username via fallback padrão (e-mail); credenciais nunca expostas fora do
@@ -225,6 +243,9 @@ STATUS: **EM VALIDAÇÃO FINAL** (todas as etapas concluídas exceto o E2E inter
 - Deploy controlado com backups; auth-service e frontend healthy; regressão de endpoints
   OK (google → `kc_idp_hint`; microsoft → 400; sem provider → fluxo 6.x).
 - Google aceita Client ID/redirect URI na cadeia curl (até a página de sign-in).
+- **E2E validado em produção:** login Google real (`paulo.alves@praiaclube.org.br`) →
+  `/dashboard` com sessão de gateway criada (logs 03:23); Caso B (`PROVISIONING_REQUIRED`)
+  validado às 03:12 e resolvido com provisão manual padrão backend.
 - Suítes verdes: backend 245/245, frontend 49/49 + lint/typecheck/build PASS.
 
 ## Próxima sprint (roadmap)
