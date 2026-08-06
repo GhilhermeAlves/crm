@@ -171,6 +171,30 @@ class GatewayOidcServiceTest {
     }
 
     @Test
+    void shouldRejectGoogleWith400WhenGoogleIsNotEnabled() {
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> service.beginAuthorization("/dashboard", "google"));
+        assertEquals("PROVIDER_NOT_AVAILABLE", ex.getCode());
+        assertEquals(400, ex.getStatus());
+    }
+
+    @Test
+    void shouldRejectMicrosoftWith400WhileCredentialsAreMissing() {
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> service.beginAuthorization("/dashboard", "microsoft"));
+        assertEquals("PROVIDER_NOT_AVAILABLE", ex.getCode());
+        assertEquals(400, ex.getStatus());
+    }
+
+    @Test
+    void shouldIncludeKcIdpHintWhenMicrosoftIsEnabled() {
+        properties.setEnabledProviders(new java.util.HashSet<>(java.util.List.of("microsoft")));
+
+        URI uri = URI.create(service.beginAuthorization("/dashboard", "microsoft").authorizationUri());
+        assertEquals("microsoft", query(uri, "kc_idp_hint"));
+    }
+
+    @Test
     void shouldTreatBlankProviderAsNoProvider() {
         URI uri = URI.create(service.beginAuthorization("/dashboard", "  ").authorizationUri());
         assertEquals(null, query(uri, "kc_idp_hint"));

@@ -119,6 +119,18 @@ class OidcGatewayControllerTest {
     }
 
     @Test
+    void shouldRejectDisabledProviderWith400ThroughAuthorize() throws Exception {
+        when(gatewayOidcUseCase.beginAuthorization("/dashboard", "microsoft"))
+                .thenThrow(new OidcGatewayException("PROVIDER_NOT_AVAILABLE", 400,
+                        "Provider de identidade não está disponível."));
+
+        mockMvc.perform(get("/auth/authorize").param("redirect", "/dashboard").param("provider", "microsoft"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PROVIDER_NOT_AVAILABLE"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
     void shouldSetSessionAndCsrfCookieAndRedirectAfterSuccessfulLogin() throws Exception {
         when(gatewayOidcUseCase.completeAuthorization("code-1", "state-1"))
                 .thenReturn(new GatewayOidcUseCase.AuthenticationResult(session(), "/dashboard"));

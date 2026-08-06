@@ -49,6 +49,27 @@ class ConfiguredIdentityProviderCatalogTest {
     }
 
     @Test
+    void shouldExposeGoogleAsTheOnlyAvailableProviderInSprint71ProductionShape() {
+        properties.setEnabledProviders(Set.of("google"));
+
+        IdentityProviderCatalog.IdentityProviderInfo google = catalog.find("google").orElseThrow();
+        IdentityProviderCatalog.IdentityProviderInfo microsoft = catalog.find("microsoft").orElseThrow();
+        IdentityProviderCatalog.IdentityProviderInfo apple = catalog.find("apple").orElseThrow();
+        IdentityProviderCatalog.IdentityProviderInfo phone = catalog.find("phone").orElseThrow();
+        assertTrue(google.available());
+        assertFalse(microsoft.available(), "microsoft sem credenciais deve permanecer desabilitado");
+        assertFalse(apple.available());
+        assertFalse(phone.available());
+    }
+
+    @Test
+    void shouldKeepMicrosoftUnavailableWithoutCredentials() {
+        properties.setEnabledProviders(Set.of("google"));
+
+        assertFalse(catalog.find("microsoft").orElseThrow().available());
+    }
+
+    @Test
     void shouldReturnEmptyOptionalForUnknownAlias() {
         assertTrue(catalog.find("facebook").isEmpty());
         assertTrue(catalog.find("linkedin").isEmpty());
