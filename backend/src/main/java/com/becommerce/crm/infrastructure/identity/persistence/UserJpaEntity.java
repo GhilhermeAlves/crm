@@ -73,6 +73,13 @@ public class UserJpaEntity {
     @Column(name = "keycloak_sub")
     private String keycloakSub;
 
+    // Sprint 7.3 — Telefone/OTP
+    @Column(name = "phone_verified", nullable = false)
+    private boolean phoneVerified;
+
+    @Column(name = "phone_verified_at")
+    private LocalDateTime phoneVerifiedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -126,8 +133,15 @@ public class UserJpaEntity {
     public void setInvitedAt(LocalDateTime invitedAt) { this.invitedAt = invitedAt; }
     public UUID getInvitedBy() { return invitedBy; }
     public void setInvitedBy(UUID invitedBy) { this.invitedBy = invitedBy; }
-    public String getKeycloakSub() { return keycloakSub; }
+public String getKeycloakSub() { return keycloakSub; }
     public void setKeycloakSub(String keycloakSub) { this.keycloakSub = keycloakSub; }
+
+    // Sprint 7.3 — Telefone/OTP
+    public boolean isPhoneVerified() { return phoneVerified; }
+    public void setPhoneVerified(boolean phoneVerified) { this.phoneVerified = phoneVerified; }
+    public LocalDateTime getPhoneVerifiedAt() { return phoneVerifiedAt; }
+    public void setPhoneVerifiedAt(LocalDateTime phoneVerifiedAt) { this.phoneVerifiedAt = phoneVerifiedAt; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

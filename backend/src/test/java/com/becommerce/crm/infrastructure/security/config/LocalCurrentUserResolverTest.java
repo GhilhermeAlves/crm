@@ -66,7 +66,7 @@ class LocalCurrentUserResolverTest {
         Role agentRole = Role.createSystem(RoleName.AGENT);
         Permission dashboardView = Permission.create("dashboard:view", "Visualizar dashboard", "dashboard", "dashboard", "view");
 
-        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any())).thenReturn(user);
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
         when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), companyId))
                 .thenReturn(List.of(UserRole.assign(user.getId(), agentRole.getId(), companyId)));
         when(roleRepository.findById(agentRole.getId())).thenReturn(Optional.of(agentRole));
@@ -106,7 +106,7 @@ class LocalCurrentUserResolverTest {
         User user = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ghilherme", "Santos", companyId);
         user.linkKeycloak(SUB);
 
-        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any())).thenReturn(user);
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
         when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), companyId)).thenReturn(List.of());
 
         Jwt jwt = Jwt.withTokenValue("token")
@@ -126,7 +126,7 @@ class LocalCurrentUserResolverTest {
 
     @Test
     void shouldTranslateProvisioningFailureToAuthenticationException() {
-        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any()))
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any()))
                 .thenThrow(new UserProvisioningException("Auto-provisioning indisponível"));
 
         Jwt jwt = Jwt.withTokenValue("token")
@@ -143,7 +143,7 @@ class LocalCurrentUserResolverTest {
 
     @Test
     void shouldTranslateCrmAccessDeniedToCrmAccessDeniedAuthenticationException() {
-        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any()))
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any()))
                 .thenThrow(new CrmAccessDeniedException("Usuário sem acesso ao CRM (crm_enabled=false)"));
 
         Jwt jwt = Jwt.withTokenValue("token")

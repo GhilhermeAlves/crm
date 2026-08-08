@@ -2,10 +2,12 @@ package com.becommerce.crm.infrastructure.security.config;
 
 import com.becommerce.crm.infrastructure.tenant.filter.TenantFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -40,6 +42,32 @@ public class SecurityConfig {
         this.tenantFilter = tenantFilter;
     }
 
+    /**
+     * Cadeia dedicada a {@code /internal/**} (Sprint 7.2). Valida o JWT do
+     * Keycloak (JWKS) mas NÃO executa o {@link KeycloakJwtAuthenticationConverter}
+     * (que resolveria/provisionaria o CurrentUser — recursão e efeitos colaterais).
+     * O principal é o {@code Jwt} cru: a identidade é derivada das claims pelos
+     * endpoints internos. Rede: só o crm-auth-service fala com /internal/**.
+     */
+    @Bean
+    @Order(1)
+    public SecurityFilterChain internalSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/internal/**")
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(JwtAuthenticationToken::new))
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint(objectMapper))
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint(objectMapper))
+                .accessDeniedHandler(jwtAccessDeniedHandler(objectMapper))
+            );
+        return http.build();
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -50,6 +78,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/register").permitAll()
                 .requestMatchers("/api/v1/auth/forgot-password", "/api/v1/auth/reset-password").permitAll()
                 .requestMatchers("/api/v1/users/accept-invite").permitAll()
+                .requestMatchers("/api/v1/auth/phone/**").permitAll()
                 .requestMatchers("/actuator/**", "/docs/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/v1/permissions/**").authenticated()

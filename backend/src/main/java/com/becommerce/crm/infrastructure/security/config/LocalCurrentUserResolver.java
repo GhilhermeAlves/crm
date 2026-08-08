@@ -9,6 +9,7 @@ import com.becommerce.crm.domain.identity.Permission;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.domain.identity.exception.LinkingRequiredException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
@@ -58,6 +59,7 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
         String givenName = jwt.getClaimAsString("given_name");
         String familyName = jwt.getClaimAsString("family_name");
         String name = jwt.getClaimAsString("name");
+        String identityProvider = jwt.getClaimAsString("identity_provider");
 
         if (givenName == null && familyName == null && name != null && !name.isBlank()) {
             List<String> parts = Arrays.stream(name.trim().split("\\s+"))
@@ -72,17 +74,21 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
         }
 
         // Bootstrap de identidade sob RLS FORCE: antes de conhecer o company_id,
-        // o sub do JWT permite ler a própria linha em users (V022). Definido aqui
+        // o sub do JWT permite ler a própria linha em users (V022) e o e-mail
+        // permite ler/vincular a própria linha por e-mail (V024). Definidos aqui
         // para a transação de provisionamento; o company_id entra logo em seguida,
         // quando a consulta de RBAC precisa do tenant.
         TenantContext.setKeycloakSub(keycloakSub);
+        TenantContext.setIdentityEmail(email);
         try {
             User user;
             try {
                 user = authUseCase.provisionKeycloakUser(
-                        keycloakSub, email, preferredUsername, givenName, familyName);
+                        keycloakSub, email, preferredUsername, givenName, familyName, identityProvider);
             } catch (UserProvisioningException e) {
                 throw new AuthenticationServiceException(e.getMessage());
+            } catch (LinkingRequiredException e) {
+                throw new LinkingRequiredAuthenticationException(e.getMessage());
             } catch (CrmAccessDeniedException e) {
                 throw new CrmAccessDeniedAuthenticationException(e.getMessage());
             }

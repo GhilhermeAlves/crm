@@ -37,6 +37,8 @@ public class TenantAwareDataSource implements DataSource {
     private void setTenantContext(Connection connection) throws SQLException {
         UUID companyId = TenantContext.getCompanyId();
         String keycloakSub = TenantContext.getKeycloakSub();
+        String identityEmail = TenantContext.getIdentityEmail();
+        String identityPhone = TenantContext.getIdentityPhone();
         try (var stmt = connection.createStatement()) {
             if (keycloakSub != null && !keycloakSub.isBlank()) {
                 String safeSub = keycloakSub.replace("'", "''");
@@ -44,6 +46,20 @@ public class TenantAwareDataSource implements DataSource {
                 log.info("[TENANT] conn={} SET app.current_keycloak_sub = {}", System.identityHashCode(connection), keycloakSub);
             } else {
                 stmt.execute("RESET app.current_keycloak_sub");
+            }
+            if (identityEmail != null && !identityEmail.isBlank()) {
+                String safeEmail = identityEmail.replace("'", "''");
+                stmt.execute("SET app.current_identity_email = '" + safeEmail + "'");
+                log.info("[TENANT] conn={} SET app.current_identity_email", System.identityHashCode(connection));
+            } else {
+                stmt.execute("RESET app.current_identity_email");
+            }
+            if (identityPhone != null && !identityPhone.isBlank()) {
+                String safePhone = identityPhone.replace("'", "''");
+                stmt.execute("SET app.current_identity_phone = '" + safePhone + "'");
+                log.info("[TENANT] conn={} SET app.current_identity_phone", System.identityHashCode(connection));
+            } else {
+                stmt.execute("RESET app.current_identity_phone");
             }
             if (companyId != null) {
                 String safeId = companyId.toString();

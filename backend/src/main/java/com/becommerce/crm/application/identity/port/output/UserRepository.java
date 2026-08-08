@@ -11,6 +11,7 @@ public interface UserRepository {
     User save(User user);
     Optional<User> findById(UUID id);
     Optional<User> findByEmail(String email);
+    Optional<User> findByPhone(String phoneE164);
     Optional<User> findByInviteToken(String token);
     Optional<User> findByKeycloakSub(String keycloakSub);
     List<User> findAllByCompanyId(UUID companyId);

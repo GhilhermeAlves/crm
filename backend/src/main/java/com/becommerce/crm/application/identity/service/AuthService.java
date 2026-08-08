@@ -20,6 +20,7 @@ import com.becommerce.crm.domain.identity.event.PasswordResetRequestedEvent;
 import com.becommerce.crm.domain.identity.event.UserCreatedEvent;
 import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
+import com.becommerce.crm.domain.identity.exception.LinkingRequiredException;
 import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
@@ -140,9 +141,26 @@ public class AuthService implements AuthUseCase {
     @Transactional
     public User provisionKeycloakUser(String keycloakSub, String email, String preferredUsername,
                                       String givenName, String familyName) {
+        return provisionKeycloakUser(keycloakSub, email, preferredUsername, givenName, familyName, null);
+    }
+
+    @Override
+    @Transactional
+    public User provisionKeycloakUser(String keycloakSub, String email, String preferredUsername,
+                                      String givenName, String familyName, String provider) {
         String resolvedEmail = resolveEmail(email, preferredUsername);
+        boolean externalProvider = isExternalProvider(provider);
 
         if (!provisioningEnabled) {
+            // Provedor externo: um match por e-mail jamais resolve sem vinculação
+            // explícita, mesmo com provisionamento desabilitado.
+            if (externalProvider && resolvedEmail != null) {
+                Optional<User> byEmail = userRepository.findByEmail(resolvedEmail);
+                if (byEmail.isPresent()) {
+                    throw new LinkingRequiredException(
+                        "Conta local existente para o e-mail informado: vinculação exige verificação explícita.");
+                }
+            }
             User existing = findExistingKeycloakUser(keycloakSub, resolvedEmail);
             if (existing != null) {
                 crmAccessService.assertCrmAccess(existing);
@@ -152,12 +170,28 @@ public class AuthService implements AuthUseCase {
                 "Auto-provisioning de usuários do Keycloak está desabilitado.");
         }
 
-        User existing = findExistingKeycloakUser(keycloakSub, resolvedEmail);
-        if (existing != null) {
-            boolean changed = syncKeycloakIdentity(existing, keycloakSub, resolvedEmail, givenName, familyName);
-            User resolved = changed ? userRepository.save(existing) : existing;
-            crmAccessService.assertCrmAccess(resolved);
-            return resolved;
+        // Caso A / idempotência: já vinculado pelo sub.
+        if (keycloakSub != null && !keycloakSub.isBlank()) {
+            Optional<User> bySub = userRepository.findByKeycloakSub(keycloakSub);
+            if (bySub.isPresent()) {
+                User resolved = syncAndResolve(bySub.get(), keycloakSub, resolvedEmail, givenName, familyName);
+                return resolved;
+            }
+        }
+
+        // Match por e-mail com conta local existente.
+        if (resolvedEmail != null) {
+            Optional<User> byEmail = userRepository.findByEmail(resolvedEmail);
+            if (byEmail.isPresent()) {
+                if (externalProvider) {
+                    // Sprint 7.2: NUNCA auto-vincular identidade externa a uma
+                    // conta local apenas pelo e-mail — exige verificação explícita.
+                    throw new LinkingRequiredException(
+                        "Conta local existente para o e-mail informado: vinculação exige verificação explícita.");
+                }
+                User resolved = syncAndResolve(byEmail.get(), keycloakSub, resolvedEmail, givenName, familyName);
+                return resolved;
+            }
         }
 
         if (keycloakSub == null || keycloakSub.isBlank()) {
@@ -176,14 +210,75 @@ public class AuthService implements AuthUseCase {
         } catch (DataIntegrityViolationException e) {
             User raced = findExistingKeycloakUser(keycloakSub, resolvedEmail);
             if (raced != null) {
-                boolean changed = syncKeycloakIdentity(raced, keycloakSub, resolvedEmail, givenName, familyName);
-                User resolved = changed ? userRepository.save(raced) : raced;
-                crmAccessService.assertCrmAccess(resolved);
-                return resolved;
+                return syncAndResolve(raced, keycloakSub, resolvedEmail, givenName, familyName);
             }
             throw new UserProvisioningException(
                 "Não foi possível provisionar o usuário após conflito de criação: " + resolvedEmail);
         }
+    }
+
+    /**
+     * Vincula (link) a identidade externa à conta local do e-mail (Caso B,
+     * Sprint 7.2) após VERIFICAR a senha da conta local. O gate de segurança é a
+     * senha + o e-mail verificado pelo provedor; a política RLS V024 habilita
+     * a leitura/update da própria linha por {@code app.current_identity_email}.
+     *
+     * <p>Idempotente: sub já vinculado → retorna a conta sem re-verificar senha
+     * (replay/login repetido não duplica nem exige senha de novo).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public User linkKeycloakIdentity(String keycloakSub, String email, String givenName, String familyName,
+                                     String rawPassword) {
+        if (keycloakSub == null || keycloakSub.isBlank()) {
+            throw new UserProvisioningException(
+                "Vinculação de identidade exige subject (sub) do Keycloak.");
+        }
+
+        TenantContext.setKeycloakSub(keycloakSub);
+        TenantContext.setIdentityEmail(email);
+        try {
+            Optional<User> bySub = userRepository.findByKeycloakSub(keycloakSub);
+            if (bySub.isPresent()) {
+                User resolved = syncAndResolve(bySub.get(), keycloakSub, email, givenName, familyName);
+                return resolved;
+            }
+
+            if (email == null || email.isBlank()) {
+                throw new UserProvisioningException(
+                    "Vinculação de identidade exige e-mail do JWT do Keycloak.");
+            }
+
+            User local = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserProvisioningException(
+                    "Conta local não encontrada para vinculação (pode ter sido removida)."));
+
+            if (rawPassword == null || rawPassword.isBlank()
+                    || !passwordEncoder.matches(rawPassword, local.getPassword().value())) {
+                throw new InvalidCredentialsException("Senha da conta local inválida.");
+            }
+
+            User resolved = syncAndResolve(local, keycloakSub, email, givenName, familyName);
+            log.info("Identidade externa vinculada à conta local: email={} sub={}", email, keycloakSub);
+            return resolved;
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    /**
+     * Aplica a sincronização de identidade ({@link #syncKeycloakIdentity}) e o
+     * gate de acesso ao CRM. Retorna o usuário persistido quando houve mudança.
+     */
+    private User syncAndResolve(User user, String keycloakSub, String email,
+                                String givenName, String familyName) {
+        boolean changed = syncKeycloakIdentity(user, keycloakSub, email, givenName, familyName);
+        User resolved = changed ? userRepository.save(user) : user;
+        crmAccessService.assertCrmAccess(resolved);
+        return resolved;
+    }
+
+    private boolean isExternalProvider(String provider) {
+        return provider != null && !provider.isBlank() && !"keycloak".equalsIgnoreCase(provider);
     }
 
     /**

@@ -7,6 +7,9 @@ import {
   logoutWithGateway,
   getCsrfToken,
   refreshGatewaySession,
+  getLinkStatus,
+  linkAccountWithPassword,
+  GatewayLinkError,
 } from "./gateway-auth";
 
 describe("gateway-auth (BFF session)", () => {
@@ -110,5 +113,83 @@ describe("gateway-auth (BFF session)", () => {
     );
 
     await expect(refreshGatewaySession()).resolves.toBe(false);
+  });
+
+  it("getLinkStatus reports a pending link with the account email", async () => {
+    vi.spyOn(window, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ pending: true, email: "ana@exemplo.com" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(getLinkStatus()).resolves.toEqual({
+      pending: true,
+      email: "ana@exemplo.com",
+    });
+
+    const [url, init] = (window.fetch as ReturnType<typeof vi.fn>).mock
+      .calls[0] as [string, RequestInit];
+    expect(url).toBe("/auth/link-status");
+    expect(init.credentials).toBe("include");
+  });
+
+  it("getLinkStatus returns pending=false when there is no pending link", async () => {
+    vi.spyOn(window, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ pending: false }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(getLinkStatus()).resolves.toEqual({ pending: false });
+  });
+
+  it("getLinkStatus returns pending=false when the server errors", async () => {
+    vi.spyOn(window, "fetch").mockResolvedValue(new Response(null, { status: 500 }));
+    await expect(getLinkStatus()).resolves.toEqual({ pending: false });
+  });
+
+  it("linkAccountWithPassword posts /auth/link with cookie-to-header CSRF", async () => {
+    document.cookie = `${CSRF_COOKIE}=csrf-link; path=/`;
+    vi.spyOn(window, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ redirect: "/leads" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(linkAccountWithPassword("segredo")).resolves.toEqual({
+      redirect: "/leads",
+    });
+
+    const [url, init] = (window.fetch as ReturnType<typeof vi.fn>).mock
+      .calls[0] as [string, RequestInit];
+    expect(url).toBe("/auth/link");
+    expect(init.method).toBe("POST");
+    expect(init.credentials).toBe("include");
+    const headers = init.headers as Record<string, string>;
+    expect(headers[CSRF_HEADER]).toBe("csrf-link");
+    expect(JSON.parse(init.body as string)).toEqual({ password: "segredo" });
+  });
+
+  it("linkAccountWithPassword surfaces INVALID_CREDENTIALS as a typed error", async () => {
+    document.cookie = `${CSRF_COOKIE}=csrf-link; path=/`;
+    vi.spyOn(window, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          status: 401,
+          code: "INVALID_CREDENTIALS",
+          message: "Senha da conta local inválida.",
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    const promise = linkAccountWithPassword("errada");
+    await expect(promise).rejects.toBeInstanceOf(GatewayLinkError);
+    await promise.catch((error) => {
+      expect((error as GatewayLinkError).code).toBe("INVALID_CREDENTIALS");
+    });
   });
 });

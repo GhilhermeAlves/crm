@@ -28,6 +28,9 @@ public class User {
     private LocalDateTime invitedAt;
     private UUID invitedBy;
     private String keycloakSub;
+    // Sprint 7.3 — Telefone/OTP
+    private boolean phoneVerified;
+    private LocalDateTime phoneVerifiedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
@@ -198,6 +201,30 @@ public class User {
     public void linkKeycloak(String keycloakSub) {
         this.keycloakSub = keycloakSub;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // Sprint 7.3 — Telefone/OTP
+    public void markPhoneVerified() {
+        this.phoneVerified = true;
+        this.phoneVerifiedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isPhoneVerified() {
+        return phoneVerified;
+    }
+
+    public void setPhoneVerified(boolean phoneVerified) {
+        this.phoneVerified = phoneVerified;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public LocalDateTime getPhoneVerifiedAt() {
+        return phoneVerifiedAt;
+    }
+
+    public void setPhoneVerifiedAt(LocalDateTime phoneVerifiedAt) {
+        this.phoneVerifiedAt = phoneVerifiedAt;
     }
 
     public LocalDateTime getCreatedAt() { return createdAt; }

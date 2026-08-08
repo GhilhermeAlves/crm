@@ -13,6 +13,8 @@ export const PUBLIC_PATHS = [
   "/forgot-password",
   "/reset-password",
   "/auth/callback",
+  // Sprint 7.2: vínculo de conta local após login Google sem keycloak_sub.
+  "/link-account",
 ] as const;
 
 export type AuthDecision = {

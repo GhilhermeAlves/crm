@@ -29,6 +29,11 @@ describe("resolveAuthRedirect (middleware, flag-only)", () => {
     expect(resolveAuthRedirect({ pathname: "/auth/callback", hasSession: false }).redirectTo).toBeUndefined();
   });
 
+  it("keeps the link-account path public (Sprint 7.2)", () => {
+    expect(PUBLIC_PATHS).toContain("/link-account");
+    expect(resolveAuthRedirect({ pathname: "/link-account", hasSession: false }).redirectTo).toBeUndefined();
+  });
+
   it("exposes the session cookie name used by the middleware", () => {
     expect(SESSION_COOKIE).toBe("crm_session");
   });

@@ -15,6 +15,7 @@
 export const SESSION_COOKIE = "crm_session";
 export const CSRF_COOKIE = "XSRF-TOKEN";
 export const CSRF_HEADER = "X-XSRF-TOKEN";
+export const PENDING_LINK_COOKIE = "crm_pending_link";
 
 /**
  * Provedores de identidade suportados (Sprint 7.0). Meta/Facebook está fora de
@@ -90,4 +91,82 @@ export async function refreshGatewaySession(): Promise<boolean> {
   })();
 
   return refreshInFlight;
+}
+
+/**
+ * Sprint 7.2 (Caso B) — vínculo de conta local.
+ *
+ * <p>Após o login Google de um e-mail que já possui conta local (sem
+ * `keycloak_sub`), o gateway redireciona para `/link-account` com o cookie
+ * HttpOnly efêmero `crm_pending_link`. A página consulta {@link getLinkStatus}
+ * (exibe o e-mail da conta local) e, ao digitar a senha, chama
+ * {@link linkAccountWithPassword}. Sucesso → o gateway cria a sessão real
+ * (`crm_session`) e devolve o redirect original.
+ */
+
+export type GatewayLinkStatus = { pending: boolean; email?: string };
+
+export class GatewayLinkError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "GatewayLinkError";
+    this.code = code;
+  }
+}
+
+/** Estado do vínculo pendente via cookie `crm_pending_link`. */
+export async function getLinkStatus(): Promise<GatewayLinkStatus> {
+  if (typeof window === "undefined") return { pending: false };
+  try {
+    const response = await fetch("/auth/link-status", {
+      credentials: "include",
+    });
+    if (!response.ok) return { pending: false };
+    const body = await response.json();
+    return {
+      pending: !!body.pending,
+      email: typeof body.email === "string" ? body.email : undefined,
+    };
+  } catch {
+    return { pending: false };
+  }
+}
+
+/**
+ * Conclui o vínculo pendente verificando a senha da conta local no servidor.
+ * Devolve o redirect original em caso de sucesso (a sessão `crm_session` é
+ * setada pelo gateway via Set-Cookie). Erros: `GatewayLinkError` com `code`
+ * (`INVALID_CREDENTIALS`, `LINK_PENDING_NOT_FOUND`, `LINK_NOT_FOUND`,
+ * `RATE_LIMIT_EXCEEDED`, ...).
+ */
+export async function linkAccountWithPassword(
+  password: string,
+): Promise<{ redirect: string }> {
+  const response = await fetch("/auth/link", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      [CSRF_HEADER]: getCsrfToken() || "",
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (response.ok) {
+    const body = await response.json();
+    return { redirect: body.redirect || "/dashboard" };
+  }
+
+  let code = "LINK_FAILED";
+  let message = "Falha ao vincular a conta.";
+  try {
+    const body = await response.json();
+    if (typeof body.code === "string" && body.code) code = body.code;
+    if (typeof body.message === "string" && body.message) message = body.message;
+  } catch {
+    // corpo não-JSON
+  }
+  throw new GatewayLinkError(code, message);
 }

@@ -44,6 +44,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByPhone(String phoneE164) {
+        return repository.findByPhone(phoneE164).map(mapper::toDomainEntity);
+    }
+
+    @Override
     public Optional<User> findByInviteToken(String token) {
         return repository.findByInviteToken(token).map(mapper::toDomainEntity);
     }

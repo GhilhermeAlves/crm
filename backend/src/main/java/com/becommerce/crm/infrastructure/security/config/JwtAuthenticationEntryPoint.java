@@ -39,6 +39,19 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             return;
         }
 
+        if (authException instanceof LinkingRequiredAuthenticationException) {
+            response.setStatus(HttpServletResponse.SC_CONFLICT);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            mapper.writeValue(response.getWriter(), Map.of(
+                "status", 409,
+                "code", "LINKING_REQUIRED",
+                "error", "Conflict",
+                "message", message,
+                "timestamp", LocalDateTime.now().toString()
+            ));
+            return;
+        }
+
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 

@@ -59,6 +59,11 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:}
           jwk-set-uri: ${KEYCLOAK_JWKS_URI:}
 
+  mvc:
+    formcontent:
+      filter:
+        enabled: false
+
 server:
   port: 8080
   servlet:
