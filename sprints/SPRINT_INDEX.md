@@ -46,7 +46,7 @@
 | 7.1 | Login/Cadastro com Google | ✅ Concluída | 2026-08-06 | AI Agent | 7.0 |
 | 7.2 | Account Linking | ✅ Em andamento | — | AI Agent | 7.1 |
 | 7.3 | Telefone/OTP | ✅ Concluída | 2026-08-08 | AI Agent | 7.1 |
-| 7.4 | Recuperação de conta e segurança da identidade | ⏳ Pendente | — | AI Agent | 7.2, 7.3 |
+| 7.4 | Telefone → OTP → senha Keycloak (login completo por telefone na UI, catálogo `phone-enabled`, rota nginx direta) | ✅ Concluída | 2026-08-08 | AI Agent | 7.2, 7.3 |
 
 ## SaaS
 
@@ -93,14 +93,14 @@
 | Knowledge Layer | 3 | 3 | 0 | 0 |
 | Infraestrutura | 5 | 0 | 1 | 4 |
 | Segurança | 12 | 12 | 0 | 0 |
-| Identidade | 5 | 2 | 0 | 3 |
+| Identidade | 5 | 4 | 1 | 0 |
 | SaaS | 1 | 0 | 0 | 1 |
 | CRM | 4 | 0 | 0 | 4 |
 | Omnichannel | 3 | 0 | 0 | 3 |
 | Analytics | 1 | 0 | 0 | 1 |
 | IA | 1 | 0 | 0 | 1 |
-| **Total** | **38** | **20** | **1** | **17** |
+| **Total** | **38** | **22** | **1** | **14** |
 
 ---
 
-*Última atualização: 2026-08-06 (Sprint 7.1 concluída; escopo da Sprint 7 revisado — IdP externo somente Google; estrutura oficial: 7.0 Identity Providers, 7.1 Google ✅, 7.2 Account Linking, 7.3 Telefone/OTP, 7.4 Recuperação e segurança; Apple/Microsoft fora do escopo)*
+*Última atualização: 2026-08-08 (Sprint 7.4 concluída — login por telefone/OTP→senha Keycloak na UI; catálogo `phone-enabled`; rota nginx direta; logotipo oficial: 7.0 Identity Providers, 7.1 Google ✅, 7.2 Account Linking 🚧, 7.3 Telefone/OTP ✅, 7.4 Telefone→OTP→senha ✅; Apple/Microsoft fora do escopo)*

@@ -68,6 +68,16 @@ public class OidcGatewayProperties {
      * Meta/Facebook está fora de escopo.
      */
     private Set<String> enabledProviders = new LinkedHashSet<>();
+    /**
+     * Login por telefone/OTP local (Sprint 7.4). Diferente dos Identity
+     * Providers OIDC (google), o telefone NÃO existe no Keycloak como IdP:
+     * o gateway expõe `phone` como um provedor "local" cuja tela de login
+     * coleta o OTP e, após confirmação, segue para o fluxo de senha do
+     * Keycloak (a sessão continua sendo criada pelo gateway). Ver
+     * {@code ConfiguredIdentityProviderCatalog} e o guard em
+     * {@code GatewayOidcService#applyIdentityProviderHint}.
+     */
+    private boolean phoneEnabled = false;
 
     public boolean isConfigured() {
         return StringUtils.hasText(clientId)
@@ -388,6 +398,15 @@ public class OidcGatewayProperties {
 
     public void setEnabledProviders(Set<String> enabledProviders) {
         this.enabledProviders = enabledProviders == null ? new LinkedHashSet<>() : enabledProviders;
+    }
+
+    /** Login por telefone/OTP local habilitado (Sprint 7.4). */
+    public boolean isPhoneEnabled() {
+        return phoneEnabled;
+    }
+
+    public void setPhoneEnabled(boolean phoneEnabled) {
+        this.phoneEnabled = phoneEnabled;
     }
 
     /**

@@ -33,6 +33,12 @@ vi.mock("@/lib/gateway-auth", () => ({
   } as const,
 }));
 
+vi.mock("@/lib/api", () => ({
+  default: {
+    post: vi.fn(),
+  },
+}));
+
 function serverCatalog(overrides: Partial<Record<string, boolean>> = {}) {
   const labels: Record<string, string> = {
     google: "Google",
@@ -73,6 +79,15 @@ describe("ProviderList (Sprint 7.0)", () => {
     render(<ProviderList />);
     fireEvent.click(screen.getByRole("button", { name: "Entrar com Google" }));
     expect(loginWithGatewayMock).toHaveBeenCalledWith("/leads", "google");
+  });
+
+  it("opens the inline phone OTP flow instead of navigating when available", () => {
+    providersState.data = serverCatalog({ phone: true });
+    render(<ProviderList />);
+    fireEvent.click(screen.getByRole("button", { name: "Entrar com Telefone" }));
+    expect(loginWithGatewayMock).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText("+55 11 99999-0000")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Enviar código" })).not.toBeNull();
   });
 
   it("does not navigate when the provider is unavailable (defense in depth)", () => {

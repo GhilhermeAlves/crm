@@ -11,12 +11,21 @@ import java.util.Optional;
      *
      * <p>O registro de provedores suportados é fixo (Sprint 7.0): Google e
      * Telefone/OTP (Microsoft/Apple removidos por estarem fora do escopo).
-     * Meta/Facebook <b>não</b> faz parte do escopo. A disponibilidade de cada
-     * provedor vem de {@link OidcGatewayProperties#getEnabledProviders()}
-     * — o alias só é selecionável na tela de login (e só recebe
-     * {@code kc_idp_hint}) quando estiver habilitado, o que normalmente ocorre
-     * após o IdP ser configurado no Keycloak com as credenciais reais do
-     * provedor externo.
+     * Meta/Facebook <b>não</b> faz parte do escopo.
+     *
+     * <p>Duas fontes de disponibilidade distintas (Sprint 7.4):
+     * <ul>
+     *   <li><b>Google</b> — Identity Provider do Keycloak (Identity Brokering):
+     *       disponível quando o alias está em {@code enabled-providers}
+     *       ({@link OidcGatewayProperties#getEnabledProviders()}), o que
+     *       normalmente ocorre após o IdP ser configurado no Keycloak. O clique
+     *       gera {@code kc_idp_hint} na autorização;</li>
+     *   <li><b>Telefone</b> — provedor local de OTP ({@code phone-enabled}):
+     *       NÃO existe como IdP no Keycloak; a tela de login coleta o OTP e,
+     *       após confirmar, segue para o fluxo de senha do Keycloak. Nunca
+     *       recebe {@code kc_idp_hint} (ver guard em
+     *       {@code GatewayOidcService#applyIdentityProviderHint}).</li>
+     * </ul>
      */
 public class ConfiguredIdentityProviderCatalog implements IdentityProviderCatalog {
 
@@ -34,8 +43,7 @@ public class ConfiguredIdentityProviderCatalog implements IdentityProviderCatalo
     public List<IdentityProviderInfo> list() {
         return REGISTRY.stream()
                 .map(provider -> new IdentityProviderInfo(
-                        provider.alias(), provider.label(),
-                        properties.getEnabledProviders().contains(provider.alias())))
+                        provider.alias(), provider.label(), isAvailable(provider.alias())))
                 .toList();
     }
 
@@ -44,5 +52,16 @@ public class ConfiguredIdentityProviderCatalog implements IdentityProviderCatalo
         return list().stream()
                 .filter(provider -> provider.alias().equals(alias))
                 .findFirst();
+    }
+
+    /**
+     * Disponibilidade por origem: Google via {@code enabled-providers} (IdP do
+     * Keycloak); Telefone via {@code phone-enabled} (provedor local de OTP).
+     */
+    private boolean isAvailable(String alias) {
+        if ("phone".equals(alias)) {
+            return properties.isPhoneEnabled();
+        }
+        return properties.getEnabledProviders().contains(alias);
     }
 }

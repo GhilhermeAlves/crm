@@ -39,11 +39,21 @@ class ConfiguredIdentityProviderCatalogTest {
 
     @Test
     void shouldMarkEnabledProvidersAsAvailable() {
-        properties.setEnabledProviders(Set.of("google", "phone"));
+        properties.setEnabledProviders(Set.of("google"));
 
         IdentityProviderCatalog.IdentityProviderInfo google = catalog.find("google").orElseThrow();
         IdentityProviderCatalog.IdentityProviderInfo phone = catalog.find("phone").orElseThrow();
         assertTrue(google.available());
+        assertFalse(phone.available());
+    }
+
+    @Test
+    void shouldMarkPhoneAvailableOnlyWhenPhoneEnabled() {
+        properties.setPhoneEnabled(true);
+
+        IdentityProviderCatalog.IdentityProviderInfo google = catalog.find("google").orElseThrow();
+        IdentityProviderCatalog.IdentityProviderInfo phone = catalog.find("phone").orElseThrow();
+        assertFalse(google.available(), "phone-enabled não habilita o Google");
         assertTrue(phone.available());
     }
 

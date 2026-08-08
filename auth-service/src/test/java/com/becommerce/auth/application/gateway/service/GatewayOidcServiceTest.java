@@ -193,11 +193,13 @@ class GatewayOidcServiceTest {
     }
 
     @Test
-    void shouldIncludeKcIdpHintWhenPhoneIsEnabled() {
-        properties.setEnabledProviders(new java.util.HashSet<>(java.util.List.of("phone")));
+    void shouldRejectPhoneAsNonOidcProviderEvenWhenEnabled() {
+        properties.setPhoneEnabled(true);
 
-        URI uri = URI.create(service.beginAuthorization("/dashboard", "phone").authorizationUri());
-        assertEquals("phone", query(uri, "kc_idp_hint"));
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> service.beginAuthorization("/dashboard", "phone"));
+        assertEquals("PHONE_IS_LOCAL_FLOW", ex.getCode());
+        assertEquals(400, ex.getStatus());
     }
 
     @Test

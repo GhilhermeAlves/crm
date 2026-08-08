@@ -158,6 +158,13 @@ public class GatewayOidcService implements GatewayOidcUseCase {
             throw new OidcGatewayException("PROVIDER_NOT_AVAILABLE", 400,
                     "Provedor de identidade ainda não configurado.");
         }
+        if ("phone".equals(idp.alias())) {
+            // Sprint 7.4: telefone é um fluxo local de OTP, NÃO um IdP do
+            // Keycloak — nunca deve gerar kc_idp_hint. A tela de login coleta o
+            // OTP e segue para o fluxo de senha do Keycloak (sessão do gateway).
+            throw new OidcGatewayException("PHONE_IS_LOCAL_FLOW", 400,
+                    "Login por telefone usa o fluxo local de OTP; use a tela de login.");
+        }
         log.info("OIDC identity provider hint: provider={}", idp.alias());
         builder.queryParam("kc_idp_hint", idp.alias());
     }

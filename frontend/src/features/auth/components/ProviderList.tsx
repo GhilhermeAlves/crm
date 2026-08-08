@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   IDENTITY_PROVIDERS,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/gateway-auth";
 import { useIdentityProviders } from "../hooks/useIdentityProviders";
 import { IdentityProviderButton } from "./IdentityProviderButton";
+import { PhoneLoginForm } from "./PhoneLoginForm";
 import type { IdentityProviderInfo } from "../types/identity-provider";
 
 /**
@@ -24,7 +25,10 @@ import type { IdentityProviderInfo } from "../types/identity-provider";
  *   <li>Meta/Facebook não existe nesta tela.</li>
  * </ul>
  * O clique em um provedor disponível navega para `/auth/authorize` com o
- * parâmetro `provider`, preservando o `redirect` original.
+ * parâmetro `provider`, preservando o `redirect` original — EXCETO o Telefone
+ * (Sprint 7.4): telefone NÃO é um IdP do Keycloak; o clique abre o fluxo local
+ * de OTP ({@link PhoneLoginForm}) e, após confirmar a posse, segue para o
+ * fluxo de senha do Keycloak.
  */
 const KNOWN_ORDER: IdentityProviderId[] = [
   IDENTITY_PROVIDERS.GOOGLE,
@@ -42,6 +46,7 @@ export function ProviderList() {
   const { data, isLoading, isError } = useIdentityProviders();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? undefined;
+  const [phoneMode, setPhoneMode] = useState(false);
 
   const byAlias = useMemo(() => {
     const map = new Map<string, IdentityProviderInfo>();
@@ -58,9 +63,19 @@ export function ProviderList() {
     };
   });
 
+  const phone = providers.find((provider) => provider.alias === IDENTITY_PROVIDERS.PHONE);
+
   function handleSelect(provider: IdentityProviderInfo) {
     if (!provider.available) return;
+    if (provider.alias === IDENTITY_PROVIDERS.PHONE) {
+      setPhoneMode(true);
+      return;
+    }
     loginWithGateway(redirect, provider.alias);
+  }
+
+  if (phoneMode && phone?.available) {
+    return <PhoneLoginForm redirect={redirect} onBack={() => setPhoneMode(false)} />;
   }
 
   return (
