@@ -12,6 +12,9 @@ package com.becommerce.auth.domain.identity;
  * @param familyName       claim {@code family_name}
  * @param displayName      claim {@code name} (ou combinação given+family)
  * @param sessionId        claim {@code sid} (sessão OIDC do Keycloak, opcional)
+ * @param provider         claim {@code identity_provider} (Sprint 7.2): ausente
+ *                         no login direto no realm, {@code google} (ou outro
+ *                         alias) no login via Identity Brokering
  */
 public record AuthenticatedIdentity(
         String keycloakSub,
@@ -20,5 +23,6 @@ public record AuthenticatedIdentity(
         String givenName,
         String familyName,
         String displayName,
-        String sessionId) {
+        String sessionId,
+        String provider) {
 }

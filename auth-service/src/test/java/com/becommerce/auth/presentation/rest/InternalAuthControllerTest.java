@@ -73,7 +73,7 @@ class InternalAuthControllerTest {
     }
 
     private AuthenticatedIdentity identityFromJwt() {
-        return new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "session-9");
+        return new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "session-9", "keycloak");
     }
 
     @Test

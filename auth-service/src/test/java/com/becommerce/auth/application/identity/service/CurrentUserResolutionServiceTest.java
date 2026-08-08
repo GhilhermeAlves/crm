@@ -50,7 +50,7 @@ class CurrentUserResolutionServiceTest {
     }
 
     private AuthenticatedIdentity identity() {
-        return new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "session-1");
+        return new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "session-1", "keycloak");
     }
 
     private User user(boolean active, boolean crmEnabled) {

@@ -35,7 +35,8 @@ public class KeycloakIdentityConverter implements Converter<Jwt, AbstractAuthent
                 givenName,
                 familyName,
                 displayName,
-                jwt.getClaimAsString("sid"));
+                jwt.getClaimAsString("sid"),
+                jwt.getClaimAsString("identity_provider"));
 
         return new UsernamePasswordAuthenticationToken(identity, jwt, List.of());
     }

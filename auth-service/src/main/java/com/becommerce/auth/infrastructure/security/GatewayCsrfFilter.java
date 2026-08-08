@@ -19,14 +19,16 @@ import java.util.Map;
 
 /**
  * Proteção CSRF cookie-to-header para endpoints mutáveis autenticados pelo
- * cookie de sessão do gateway ({@code POST /auth/refresh}) — Sprint 6.2.
+ * cookie de sessão do gateway ({@code POST /auth/refresh} — Sprint 6.2) e pelo
+ * vínculo pendente ({@code POST /auth/link} — Sprint 7.2).
  *
  * <p>O browser envia o token CSRF no cookie (legível por JS) e o mesmo valor no
  * header {@code X-XSRF-TOKEN}; o filtro compara os dois. Requisições GET e
- * endpoints que não são o {@code /auth/refresh} não são interceptados.
+ * endpoints que não são {@code /auth/refresh}/{@code /auth/link} não são
+ * interceptados.
  *
- * <p>Registrado via {@code FilterRegistrationBean} (URL {@code /auth/refresh},
- * depois do chain do Spring Security), pois o CSRF default está desabilitado.
+ * <p>Registrado via {@code FilterRegistrationBean} (depois do chain do Spring
+ * Security), pois o CSRF default está desabilitado.
  */
 public class GatewayCsrfFilter implements Filter {
 
@@ -63,8 +65,11 @@ public class GatewayCsrfFilter implements Filter {
     }
 
     private boolean isProtected(HttpServletRequest request) {
+        if (!request.getMethod().equalsIgnoreCase(HttpMethod.POST.name())) {
+            return false;
+        }
         return request.getRequestURI().equals("/auth/refresh")
-                && request.getMethod().equalsIgnoreCase(HttpMethod.POST.name());
+                || request.getRequestURI().equals("/auth/link");
     }
 
     private void reject(HttpServletResponse response) throws IOException {

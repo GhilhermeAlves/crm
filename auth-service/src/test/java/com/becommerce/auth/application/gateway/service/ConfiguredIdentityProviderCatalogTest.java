@@ -26,7 +26,7 @@ class ConfiguredIdentityProviderCatalogTest {
     @Test
     void shouldListSupportedProvidersInDisplayOrderWithoutMeta() {
         List<IdentityProviderCatalog.IdentityProviderInfo> providers = catalog.list();
-        assertEquals(List.of("google", "microsoft", "apple", "phone"),
+        assertEquals(List.of("google", "phone"),
                 providers.stream().map(IdentityProviderCatalog.IdentityProviderInfo::alias).toList());
         assertTrue(providers.stream().noneMatch(p -> p.alias().equals("facebook")),
                 "Meta/Facebook is out of scope");
@@ -39,13 +39,12 @@ class ConfiguredIdentityProviderCatalogTest {
 
     @Test
     void shouldMarkEnabledProvidersAsAvailable() {
-        properties.setEnabledProviders(Set.of("google", "microsoft"));
+        properties.setEnabledProviders(Set.of("google", "phone"));
 
         IdentityProviderCatalog.IdentityProviderInfo google = catalog.find("google").orElseThrow();
-        IdentityProviderCatalog.IdentityProviderInfo apple = catalog.find("apple").orElseThrow();
+        IdentityProviderCatalog.IdentityProviderInfo phone = catalog.find("phone").orElseThrow();
         assertTrue(google.available());
-        assertTrue(catalog.find("microsoft").orElseThrow().available());
-        assertFalse(apple.available());
+        assertTrue(phone.available());
     }
 
     @Test
@@ -53,33 +52,22 @@ class ConfiguredIdentityProviderCatalogTest {
         properties.setEnabledProviders(Set.of("google"));
 
         IdentityProviderCatalog.IdentityProviderInfo google = catalog.find("google").orElseThrow();
-        IdentityProviderCatalog.IdentityProviderInfo microsoft = catalog.find("microsoft").orElseThrow();
-        IdentityProviderCatalog.IdentityProviderInfo apple = catalog.find("apple").orElseThrow();
         IdentityProviderCatalog.IdentityProviderInfo phone = catalog.find("phone").orElseThrow();
         assertTrue(google.available());
-        assertFalse(microsoft.available(), "microsoft sem credenciais deve permanecer desabilitado");
-        assertFalse(apple.available());
         assertFalse(phone.available());
-    }
-
-    @Test
-    void shouldKeepMicrosoftUnavailableWithoutCredentials() {
-        properties.setEnabledProviders(Set.of("google"));
-
-        assertFalse(catalog.find("microsoft").orElseThrow().available());
     }
 
     @Test
     void shouldReturnEmptyOptionalForUnknownAlias() {
         assertTrue(catalog.find("facebook").isEmpty());
         assertTrue(catalog.find("linkedin").isEmpty());
+        assertTrue(catalog.find("microsoft").isEmpty());
+        assertTrue(catalog.find("apple").isEmpty());
     }
 
     @Test
     void shouldExposeHumanReadableLabels() {
         assertEquals("Google", catalog.find("google").orElseThrow().label());
-        assertEquals("Microsoft", catalog.find("microsoft").orElseThrow().label());
-        assertEquals("Apple", catalog.find("apple").orElseThrow().label());
         assertEquals("Telefone", catalog.find("phone").orElseThrow().label());
     }
 }

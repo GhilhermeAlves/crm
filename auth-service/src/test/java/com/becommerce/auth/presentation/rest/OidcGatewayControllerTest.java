@@ -133,7 +133,7 @@ class OidcGatewayControllerTest {
     @Test
     void shouldSetSessionAndCsrfCookieAndRedirectAfterSuccessfulLogin() throws Exception {
         when(gatewayOidcUseCase.completeAuthorization("code-1", "state-1"))
-                .thenReturn(new GatewayOidcUseCase.AuthenticationResult(session(), "/dashboard"));
+                .thenReturn(new GatewayOidcUseCase.AuthenticationResult(session(), null, "/dashboard"));
         when(cookieFactory.createSessionCookie("opaque-session-token"))
                 .thenReturn(ResponseCookie.from("crm_session", "opaque-session-token")
                         .httpOnly(true).path("/").maxAge(java.time.Duration.ofHours(8)).build());
@@ -183,7 +183,7 @@ class OidcGatewayControllerTest {
         when(gatewayOidcUseCase.beginAuthorization(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
                 .thenReturn(new GatewayOidcUseCase.BeginAuthorization(AUTH_URI, "/"));
         when(gatewayOidcUseCase.completeAuthorization("c", "s"))
-                .thenReturn(new GatewayOidcUseCase.AuthenticationResult(session(), "/"));
+                .thenReturn(new GatewayOidcUseCase.AuthenticationResult(session(), null, "/"));
 
         mockMvc.perform(get("/auth/authorize"))
                 .andExpect(status().isFound());

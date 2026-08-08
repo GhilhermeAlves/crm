@@ -45,12 +45,18 @@ public class SecurityConfig {
                         // GatewayCsrfFilter; o logout via cookie + SameSite=Lax).
                         // /auth/providers (Sprint 7.0): catálogo público de provedores
                         // de identidade (aliases/labels/available) — sem segredos.
+                        // /auth/link-status + /auth/link (Sprint 7.2): fluxo de
+                        // vínculo de conta local — públicos por definição (autenticados
+                        // via cookie crm_pending_link + CSRF cookie-to-header; o
+                        // POST /auth/link nunca vaza tokens).
                         .requestMatchers(
                                 "/auth/authorize",
                                 "/auth/callback",
                                 "/auth/logout",
                                 "/auth/refresh",
-                                "/auth/providers").permitAll()
+                                "/auth/providers",
+                                "/auth/link-status",
+                                "/auth/link").permitAll()
                         // BFF relay (Sprint 6.4): autenticado via cookie de sessão
                         // (GatewayApiRelay) — nunca exige JWT do browser.
                         .requestMatchers("/api/**").permitAll()

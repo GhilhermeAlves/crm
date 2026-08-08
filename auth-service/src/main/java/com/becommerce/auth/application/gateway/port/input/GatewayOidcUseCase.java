@@ -42,15 +42,46 @@ public interface GatewayOidcUseCase {
 
     RefreshResult refresh(String sessionToken);
 
+    /**
+     * Estado do vínculo pendente (Sprint 7.2, Caso B): {@code true} quando o
+     * cookie {@code crm_pending_link} referencia um vínculo válido, expondo
+     * apenas o e-mail (para o usuário identificar a conta local).
+     */
+    LinkStatusResult linkStatus(String pendingToken);
+
+    /**
+     * Conclui o vínculo pendente (Caso B): verifica a senha da conta local no
+     * crm-backend ({@code POST /internal/auth/link}) e, em caso positivo, cria
+     * a sessão de browser real e retorna o redirect original. Erros:
+     * {@code INVALID_CREDENTIALS} (401), {@code LINK_PENDING_NOT_FOUND} (410),
+     * {@code LINK_NOT_FOUND} (410).
+     */
+    LinkResult completeLink(String pendingToken, String password);
+
     record BeginAuthorization(String authorizationUri, String redirectTarget) {
     }
 
-    record AuthenticationResult(GatewaySession session, String redirectTarget) {
+    /**
+     * Resultado do callback: exatamente um dos dois — sessão criada
+     * ({@code session}) ou vínculo pendente iniciado ({@code pendingLink}).
+     * Para vínculo pendente, {@code redirectTarget} aponta para a página
+     * {@code /link-account} do frontend.
+     */
+    record AuthenticationResult(GatewaySession session, PendingLinkInfo pendingLink, String redirectTarget) {
+    }
+
+    record PendingLinkInfo(String token, String email, String csrfToken, String redirectTarget) {
     }
 
     record LogoutResult(String redirectUri) {
     }
 
     record RefreshResult(GatewaySession session) {
+    }
+
+    record LinkStatusResult(boolean pending, String email) {
+    }
+
+    record LinkResult(String redirectTarget, GatewaySession session) {
     }
 }

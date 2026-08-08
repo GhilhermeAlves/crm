@@ -43,12 +43,19 @@ public class TenantAwareDataSource implements DataSource {
     private void setTenantContext(Connection connection) throws SQLException {
         UUID companyId = TenantContext.getCompanyId();
         String keycloakSub = TenantContext.getKeycloakSub();
+        String identityEmail = TenantContext.getIdentityEmail();
         try (var stmt = connection.createStatement()) {
             if (keycloakSub != null && !keycloakSub.isBlank()) {
                 String safeSub = keycloakSub.replace("'", "''");
                 stmt.execute("SET app.current_keycloak_sub = '" + safeSub + "'");
             } else {
                 stmt.execute("RESET app.current_keycloak_sub");
+            }
+            if (identityEmail != null && !identityEmail.isBlank()) {
+                String safeEmail = identityEmail.replace("'", "''");
+                stmt.execute("SET app.current_identity_email = '" + safeEmail + "'");
+            } else {
+                stmt.execute("RESET app.current_identity_email");
             }
             if (companyId != null) {
                 String safeId = companyId.toString();

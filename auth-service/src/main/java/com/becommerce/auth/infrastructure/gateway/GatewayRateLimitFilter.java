@@ -13,8 +13,8 @@ import java.io.IOException;
 /**
  * Rate limiting do Access Gateway (Sprint 6.6). Protege os endpoints sensíveis
  * de autenticação — {@code /auth/authorize}, {@code /auth/callback},
- * {@code /auth/refresh} e {@code /auth/logout} — com contador distribuído em
- * Redis ({@link GatewayRateLimiter}).
+ * {@code /auth/refresh}, {@code /auth/logout} e {@code /auth/link} (7.2) — com
+ * contador distribuído em Redis ({@link GatewayRateLimiter}).
  *
  * <p>Chave por endpoint:
  * <ul>
@@ -23,7 +23,9 @@ import java.io.IOException;
  *       proxies e ignorando spoofing de {@code X-Forwarded-For});</li>
  *   <li>{@code refresh}/{@code logout} → {@code sessionToken} opaco do cookie
  *       (sessões diferentes não se bloqueiam) com fallback para IP quando não
- *       há sessão.</li>
+ *       há sessão;</li>
+ *   <li>{@code link} → token do vínculo pendente ({@code crm_pending_link}) com
+ *       fallback para IP — protege as tentativas de senha da conta local.</li>
  * </ul>
  *
  * <p>Limite excedido → {@code 429} JSON no padrão do projeto com
@@ -80,6 +82,8 @@ public class GatewayRateLimitFilter extends OncePerRequestFilter {
                     "refresh", sessionKeyOrIp(request), properties.getRateLimitRefresh());
             case "/auth/logout" -> new RateLimitTarget(
                     "logout", sessionKeyOrIp(request), properties.getRateLimitLogout());
+            case "/auth/link" -> new RateLimitTarget(
+                    "link", pendingLinkKeyOrIp(request), properties.getRateLimitLink());
             default -> null;
         };
     }
@@ -87,6 +91,11 @@ public class GatewayRateLimitFilter extends OncePerRequestFilter {
     private String sessionKeyOrIp(HttpServletRequest request) {
         String sessionToken = cookieFactory.readSessionToken(request.getCookies()).orElse(null);
         return sessionToken != null ? sessionToken : clientIpResolver.resolve(request);
+    }
+
+    private String pendingLinkKeyOrIp(HttpServletRequest request) {
+        String pendingToken = cookieFactory.readPendingLinkToken(request.getCookies()).orElse(null);
+        return pendingToken != null ? pendingToken : clientIpResolver.resolve(request);
     }
 
     private record RateLimitTarget(String bucket, String key, int limit) {

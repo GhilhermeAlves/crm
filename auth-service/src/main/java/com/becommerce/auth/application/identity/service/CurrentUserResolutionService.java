@@ -25,6 +25,12 @@ import java.util.Optional;
  * acesso ao CRM (Sprint 6) → empresa/tenant → roles → permissions →
  * {@code CurrentUser}.
  *
+ * <p>Sprint 7.2: o fallback por e-mail (sub → e-mail) vale APENAS para login
+ * local no realm (claim {@code identity_provider} ausente). Para identidade de
+ * provedor externo (ex.: Google via Identity Brokering), e-mail coincidindo com
+ * conta local sem {@code keycloak_sub} resulta em
+ * {@link CurrentUserResolution.LinkingRequired} — nunca em resolução implícita.
+ *
  * <p>Gate de acesso (paridade com o crm-backend, Sprint 6):
  *
  * <pre>
@@ -62,15 +68,28 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
     public CurrentUserResolution resolve(AuthenticatedIdentity identity) {
         Objects.requireNonNull(identity, "identity");
 
+        boolean external = isExternalProvider(identity.provider());
+
         // Bootstrap de identidade sob RLS FORCE: o sub do JWT permite ler a
-        // própria linha em users (V022) antes do company_id ser conhecido. Sem
-        // transação por requisição: cada consulta obtém uma conexão própria e o
-        // TenantAwareDataSource aplica o GUC vigente no momento, incluindo o
-        // company_id assim que ele é resolvido.
+        // própria linha em users (V022) antes do company_id ser conhecido. Para
+        // provedor externo sem sub vinculado, a política V024 (por e-mail) lê a
+        // linha da conta local — sem bypass. Sem transação por requisição: cada
+        // consulta obtém uma conexão própria e o TenantAwareDataSource aplica o
+        // GUC vigente no momento, incluindo o company_id assim que resolvido.
         TenantContext.setKeycloakSub(identity.keycloakSub());
+        if (external) {
+            TenantContext.setIdentityEmail(identity.email());
+        }
         try {
-            User user = resolveUser(identity);
+            User user = resolveUser(identity, external);
             if (user == null) {
+                // Sprint 7.2: e-mail de provedor externo coincidindo com conta
+                // local NUNCA resolve implicitamente — exige verificação explícita
+                // (senha da conta local) antes de vincular o keycloak_sub.
+                if (external && hasEmail(identity)
+                        && userRepository.findByEmail(identity.email()).isPresent()) {
+                    return new CurrentUserResolution.LinkingRequired(identity);
+                }
                 return new CurrentUserResolution.ProvisioningRequired(identity);
             }
             assertCrmAccess(user);
@@ -89,7 +108,7 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
                     permissions,
                     identity.keycloakSub(),
                     identity.sessionId(),
-                    "keycloak",
+                    identity.provider(),
                     firstNonBlank(identity.displayName(), user.name()));
 
             return new CurrentUserResolution.Resolved(currentUser);
@@ -115,12 +134,18 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
         }
     }
 
-    private User resolveUser(AuthenticatedIdentity identity) {
+    private User resolveUser(AuthenticatedIdentity identity, boolean external) {
         if (identity.keycloakSub() != null && !identity.keycloakSub().isBlank()) {
             Optional<User> bySub = userRepository.findByKeycloakSub(identity.keycloakSub());
             if (bySub.isPresent()) {
                 return bySub.get();
             }
+        }
+        if (external) {
+            // Sprint 7.2: identidade de provedor externo NUNCA resolve pelo
+            // e-mail (a conta local seria "sequestrada" por e-mail). O caso
+            // e-mail = conta local é decidido como LinkingRequired no resolve().
+            return null;
         }
         if (identity.email() != null && !identity.email().isBlank()) {
             Optional<User> byEmail = userRepository.findByEmail(identity.email());
@@ -129,6 +154,14 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
             }
         }
         return null;
+    }
+
+    private boolean isExternalProvider(String provider) {
+        return provider != null && !provider.isBlank() && !"keycloak".equalsIgnoreCase(provider);
+    }
+
+    private boolean hasEmail(AuthenticatedIdentity identity) {
+        return identity.email() != null && !identity.email().isBlank();
     }
 
     private String firstNonBlank(String a, String b) {

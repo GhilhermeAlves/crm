@@ -5,14 +5,16 @@ import java.util.UUID;
 /**
  * Contexto de tenant e de bootstrap de identidade por requisição, espelhado no
  * crm-backend. O {@code TenantAwareDataSource} aplica os valores como GUCs
- * ({@code app.current_company_id} / {@code app.current_keycloak_sub}) a cada
- * conexão obtida, para que o RLS FORCE do banco CRM funcione também com o
- * usuário {@code crm_app} (NOBYPASSRLS).
+ * ({@code app.current_company_id} / {@code app.current_keycloak_sub} /
+ * {@code app.current_identity_email}) a cada conexão obtida, para que o RLS
+ * FORCE do banco CRM funcione também com o usuário {@code crm_app}
+ * (NOBYPASSRLS).
  */
 public final class TenantContext {
 
     private static final ThreadLocal<UUID> CURRENT_COMPANY = new ThreadLocal<>();
     private static final ThreadLocal<String> CURRENT_KEYCLOAK_SUB = new ThreadLocal<>();
+    private static final ThreadLocal<String> CURRENT_IDENTITY_EMAIL = new ThreadLocal<>();
 
     private TenantContext() {}
 
@@ -32,8 +34,17 @@ public final class TenantContext {
         return CURRENT_KEYCLOAK_SUB.get();
     }
 
+    public static void setIdentityEmail(String identityEmail) {
+        CURRENT_IDENTITY_EMAIL.set(identityEmail);
+    }
+
+    public static String getIdentityEmail() {
+        return CURRENT_IDENTITY_EMAIL.get();
+    }
+
     public static void clear() {
         CURRENT_COMPANY.remove();
         CURRENT_KEYCLOAK_SUB.remove();
+        CURRENT_IDENTITY_EMAIL.remove();
     }
 }

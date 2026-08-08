@@ -51,6 +51,14 @@ public class OidcGatewayProperties {
     private int rateLimitRefresh = 30;
     private int rateLimitLogout = 20;
     private int rateLimitApi = 60;
+    private int rateLimitLink = 10;
+    /**
+     * Vínculo pendente (Sprint 7.2, Caso B): cookie HttpOnly efêmero que guarda
+     * a referência ao {@code PendingLink} criado no callback quando o e-mail de
+     * uma identidade externa coincide com conta local. Curto (10 min) e uso único.
+     */
+    private String pendingLinkCookieName = "crm_pending_link";
+    private Duration pendingLinkTtl = Duration.ofMinutes(10);
     /**
      * Provedores de identidade habilitados (Identity Brokering, Sprint 7.0).
      * Aliases suportados: {@code google}, {@code microsoft}, {@code apple},
@@ -380,5 +388,33 @@ public class OidcGatewayProperties {
 
     public void setEnabledProviders(Set<String> enabledProviders) {
         this.enabledProviders = enabledProviders == null ? new LinkedHashSet<>() : enabledProviders;
+    }
+
+    /**
+     * Limite por janela de {@code POST /auth/link} (Sprint 7.2): protege a
+     * tentativa de senha da conta local no vínculo pendente (por IP real).
+     */
+    public int getRateLimitLink() {
+        return rateLimitLink;
+    }
+
+    public void setRateLimitLink(int rateLimitLink) {
+        this.rateLimitLink = rateLimitLink;
+    }
+
+    public String getPendingLinkCookieName() {
+        return pendingLinkCookieName;
+    }
+
+    public void setPendingLinkCookieName(String pendingLinkCookieName) {
+        this.pendingLinkCookieName = pendingLinkCookieName;
+    }
+
+    public Duration getPendingLinkTtl() {
+        return pendingLinkTtl;
+    }
+
+    public void setPendingLinkTtl(Duration pendingLinkTtl) {
+        this.pendingLinkTtl = pendingLinkTtl;
     }
 }

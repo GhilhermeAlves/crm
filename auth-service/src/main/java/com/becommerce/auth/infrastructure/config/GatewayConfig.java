@@ -98,7 +98,7 @@ public class GatewayConfig {
         FilterRegistrationBean<GatewayRateLimitFilter> registration =
                 new FilterRegistrationBean<>(new GatewayRateLimitFilter(
                         rateLimiter, cookieFactory, clientIpResolver, errorResponse, properties, objectMapper));
-        registration.setUrlPatterns(List.of("/auth/authorize", "/auth/callback", "/auth/refresh", "/auth/logout"));
+        registration.setUrlPatterns(List.of("/auth/authorize", "/auth/callback", "/auth/refresh", "/auth/logout", "/auth/link"));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return registration;
     }

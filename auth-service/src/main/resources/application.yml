@@ -103,6 +103,12 @@ auth:
     rate-limit-refresh: ${AUTH_GATEWAY_RATE_LIMIT_REFRESH:30}
     rate-limit-logout: ${AUTH_GATEWAY_RATE_LIMIT_LOGOUT:20}
     rate-limit-api: ${AUTH_GATEWAY_RATE_LIMIT_API:60}
+    # Rate limit do POST /auth/link (Sprint 7.2): protege as tentativas de senha
+    # da conta local no vínculo pendente (chave = token do vínculo/ IP).
+    rate-limit-link: ${AUTH_GATEWAY_RATE_LIMIT_LINK:10}
+    # Vínculo pendente (Sprint 7.2, Caso B): cookie HttpOnly efêmero + TTL curto.
+    pending-link-cookie-name: ${AUTH_GATEWAY_PENDING_LINK_COOKIE_NAME:crm_pending_link}
+    pending-link-ttl: ${AUTH_GATEWAY_PENDING_LINK_TTL:10m}
     # Identity Brokering (Sprint 7.0): aliases de IdP habilitados para
     # kc_idp_hint (ex.: google,microsoft). Vazio = nenhum provedor externo
     # ativo; login local Keycloak inalterado. Meta/Facebook fora de escopo.

@@ -1,21 +1,26 @@
 package com.becommerce.auth.application.gateway.service;
 
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
+import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
 import com.becommerce.auth.application.gateway.port.output.OidcTokenClient;
 import com.becommerce.auth.application.identity.port.input.CurrentUserResolutionUseCase;
 import com.becommerce.auth.domain.gateway.GatewaySession;
+import com.becommerce.auth.domain.gateway.OidcAuthorizationRequest;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.identity.AuthenticatedIdentity;
 import com.becommerce.auth.domain.identity.CurrentUser;
 import com.becommerce.auth.domain.identity.CurrentUserResolution;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.auth.infrastructure.gateway.BackendIdentityClient;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionStore;
 import com.becommerce.auth.infrastructure.gateway.InMemoryGatewaySessionStore;
+import com.becommerce.auth.infrastructure.gateway.InMemoryPendingLinkStore;
 import com.becommerce.auth.infrastructure.gateway.OidcAuthorizationRequestStore;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import com.becommerce.auth.infrastructure.gateway.OidcProviderMetadata;
 import com.becommerce.auth.infrastructure.gateway.OidcTokenValidator;
+import com.becommerce.auth.infrastructure.gateway.PendingLinkStore;
 import com.becommerce.auth.infrastructure.gateway.PkceGenerator;
 import com.becommerce.auth.infrastructure.gateway.RedirectUriValidator;
 import com.becommerce.auth.infrastructure.gateway.SecureTokenGenerator;
@@ -29,6 +34,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,6 +45,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,10 +65,12 @@ class GatewayOidcServiceTest {
     @Mock private OidcTokenValidator tokenValidator;
     @Mock private KeycloakIdentityConverter identityConverter;
     @Mock private CurrentUserResolutionUseCase currentUserResolutionUseCase;
+    @Mock private BackendIdentityClient backendIdentityClient;
 
     private OidcGatewayProperties properties;
     private OidcAuthorizationRequestStore requestStore;
     private GatewaySessionStore sessionStore;
+    private PendingLinkStore pendingLinkStore;
     private GatewayOidcService service;
 
     @BeforeEach
@@ -75,9 +85,11 @@ class GatewayOidcServiceTest {
         properties.setAllowedRedirectUris(List.of("http://localhost:3000"));
         properties.setSessionTtl(java.time.Duration.ofHours(8));
         properties.setAuthorizationRequestTtl(java.time.Duration.ofMinutes(10));
+        properties.setAppBaseUrl("http://localhost:3000");
 
         requestStore = new OidcAuthorizationRequestStore();
         sessionStore = new InMemoryGatewaySessionStore(properties);
+        pendingLinkStore = new InMemoryPendingLinkStore();
 
         service = new GatewayOidcService(properties,
                 new SecureTokenGenerator(),
@@ -91,11 +103,13 @@ class GatewayOidcServiceTest {
                 sessionStore,
                 new GatewaySessionResolver(sessionStore),
                 new OidcProviderMetadata(properties),
-                new ConfiguredIdentityProviderCatalog(properties));
+                new ConfiguredIdentityProviderCatalog(properties),
+                backendIdentityClient,
+                pendingLinkStore);
     }
 
     private AuthenticatedIdentity identity() {
-        return new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "sid-1");
+        return new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "sid-1", "google");
     }
 
     private CurrentUser resolvedCurrentUser() {
@@ -165,7 +179,7 @@ class GatewayOidcServiceTest {
     @Test
     void shouldRejectDisabledProviderWith400() {
         OidcGatewayException ex = assertThrows(OidcGatewayException.class,
-                () -> service.beginAuthorization("/dashboard", "apple"));
+                () -> service.beginAuthorization("/dashboard", "phone"));
         assertEquals("PROVIDER_NOT_AVAILABLE", ex.getCode());
         assertEquals(400, ex.getStatus());
     }
@@ -179,19 +193,11 @@ class GatewayOidcServiceTest {
     }
 
     @Test
-    void shouldRejectMicrosoftWith400WhileCredentialsAreMissing() {
-        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
-                () -> service.beginAuthorization("/dashboard", "microsoft"));
-        assertEquals("PROVIDER_NOT_AVAILABLE", ex.getCode());
-        assertEquals(400, ex.getStatus());
-    }
+    void shouldIncludeKcIdpHintWhenPhoneIsEnabled() {
+        properties.setEnabledProviders(new java.util.HashSet<>(java.util.List.of("phone")));
 
-    @Test
-    void shouldIncludeKcIdpHintWhenMicrosoftIsEnabled() {
-        properties.setEnabledProviders(new java.util.HashSet<>(java.util.List.of("microsoft")));
-
-        URI uri = URI.create(service.beginAuthorization("/dashboard", "microsoft").authorizationUri());
-        assertEquals("microsoft", query(uri, "kc_idp_hint"));
+        URI uri = URI.create(service.beginAuthorization("/dashboard", "phone").authorizationUri());
+        assertEquals("phone", query(uri, "kc_idp_hint"));
     }
 
     @Test
@@ -261,11 +267,38 @@ class GatewayOidcServiceTest {
 
     @Test
     void shouldRejectProvisioningRequiredWithoutSession() {
-        mockHappyPathTokens();
-        when(currentUserResolutionUseCase.resolve(any(AuthenticatedIdentity.class)))
-                .thenReturn(new CurrentUserResolution.ProvisioningRequired(identity()));
+        // Setup mocks for local login (no identity_provider claim)
+        String state = "test-state-" + UUID.randomUUID();
+        String nonce = "test-nonce-" + UUID.randomUUID();
+        String codeVerifier = "test-verifier-" + UUID.randomUUID();
+        String codeChallenge = "test-challenge";
+        OidcAuthorizationRequest request = new OidcAuthorizationRequest(
+                state, nonce, codeVerifier, "/",
+                Instant.now().plus(properties.getAuthorizationRequestTtl()));
+        requestStore.put(request);
 
-        String state = query(URI.create(service.beginAuthorization("/").authorizationUri()), "state");
+        Jwt idToken = Jwt.withTokenValue("idt").header("alg", "RS256")
+                .issuer(ISSUER).subject(SUB)
+                .claim("email", EMAIL)
+                .claim("preferred_username", EMAIL)
+                .claim("given_name", "Ghilherme")
+                .claim("family_name", "Santos")
+                .claim("name", "Ghilherme Santos")
+                .claim("sid", "sid-1")
+                .build();
+
+        when(tokenClient.exchange(any(OidcTokenClient.ExchangeRequest.class)))
+                .thenReturn(new OidcTokenClient.TokenResponse("at", "rt", "idt", 300));
+        when(tokenValidator.validateIdToken(any(), any())).thenReturn(idToken);
+        when(tokenValidator.validateAccessToken("at")).thenReturn(idToken);
+        when(identityConverter.convert(idToken))
+                .thenReturn(new UsernamePasswordAuthenticationToken(
+                        new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "sid-1", "keycloak"),
+                        idToken, List.of()));
+
+        AuthenticatedIdentity localIdentity = new AuthenticatedIdentity(SUB, EMAIL, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", "sid-1", "keycloak");
+        when(currentUserResolutionUseCase.resolve(any(AuthenticatedIdentity.class)))
+                .thenReturn(new CurrentUserResolution.ProvisioningRequired(localIdentity));
 
         OidcGatewayException ex = assertThrows(OidcGatewayException.class,
                 () -> service.completeAuthorization("code-1", state));
@@ -334,7 +367,9 @@ class GatewayOidcServiceTest {
                 sessionStore,
                 new GatewaySessionResolver(sessionStore),
                 new OidcProviderMetadata(properties),
-                new ConfiguredIdentityProviderCatalog(properties));
+                new ConfiguredIdentityProviderCatalog(properties),
+                backendIdentityClient,
+                pendingLinkStore);
 
         assertThrows(OidcGatewayException.class, () -> serviceWithSpy.completeAuthorization("code-1", state));
     }

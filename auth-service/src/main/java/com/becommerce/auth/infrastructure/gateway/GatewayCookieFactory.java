@@ -49,12 +49,37 @@ public class GatewayCookieFactory {
                 .build();
     }
 
+    public ResponseCookie createExpiredCsrfCookie() {
+        return base(properties.getCsrfCookieName(), "")
+                .httpOnly(false)
+                .maxAge(Duration.ZERO)
+                .build();
+    }
+
+    public ResponseCookie createPendingLinkCookie(String pendingToken) {
+        return base(properties.getPendingLinkCookieName(), pendingToken)
+                .httpOnly(true)
+                .maxAge(properties.getPendingLinkTtl())
+                .build();
+    }
+
+    public ResponseCookie createExpiredPendingLinkCookie() {
+        return base(properties.getPendingLinkCookieName(), "")
+                .httpOnly(true)
+                .maxAge(Duration.ZERO)
+                .build();
+    }
+
     public Optional<String> readSessionToken(Cookie[] cookies) {
         return read(cookies, properties.getCookieName());
     }
 
     public Optional<String> readCsrfToken(Cookie[] cookies) {
         return read(cookies, properties.getCsrfCookieName());
+    }
+
+    public Optional<String> readPendingLinkToken(Cookie[] cookies) {
+        return read(cookies, properties.getPendingLinkCookieName());
     }
 
     private ResponseCookie.ResponseCookieBuilder base(String name, String value) {

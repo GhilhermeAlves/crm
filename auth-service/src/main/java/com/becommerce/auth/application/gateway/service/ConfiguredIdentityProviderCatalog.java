@@ -6,23 +6,22 @@ import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Catálogo de provedores de identidade configurado ({@code auth.gateway}).
- *
- * <p>O registro de provedores suportados é fixo (Sprint 7.0): Google,
- * Microsoft, Apple e Telefone/OTP. Meta/Facebook <b>não</b> faz parte do
- * escopo. A disponibilidade de cada provedor vem de
- * {@link OidcGatewayProperties#getEnabledProviders()} — o alias só é
- * selecionável na tela de login (e só recebe {@code kc_idp_hint}) quando
- * estiver habilitado, o que normalmente ocorre após o IdP ser configurado no
- * Keycloak com as credenciais reais do provedor externo.
- */
+    /**
+     * Catálogo de provedores de identidade configurado ({@code auth.gateway}).
+     *
+     * <p>O registro de provedores suportados é fixo (Sprint 7.0): Google e
+     * Telefone/OTP (Microsoft/Apple removidos por estarem fora do escopo).
+     * Meta/Facebook <b>não</b> faz parte do escopo. A disponibilidade de cada
+     * provedor vem de {@link OidcGatewayProperties#getEnabledProviders()}
+     * — o alias só é selecionável na tela de login (e só recebe
+     * {@code kc_idp_hint}) quando estiver habilitado, o que normalmente ocorre
+     * após o IdP ser configurado no Keycloak com as credenciais reais do
+     * provedor externo.
+     */
 public class ConfiguredIdentityProviderCatalog implements IdentityProviderCatalog {
 
     private static final List<IdentityProviderInfo> REGISTRY = List.of(
             new IdentityProviderInfo("google", "Google", false),
-            new IdentityProviderInfo("microsoft", "Microsoft", false),
-            new IdentityProviderInfo("apple", "Apple", false),
             new IdentityProviderInfo("phone", "Telefone", false));
 
     private final OidcGatewayProperties properties;

@@ -1,18 +1,22 @@
 package com.becommerce.auth.application.gateway.service;
 
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
+import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
 import com.becommerce.auth.application.gateway.port.output.OidcTokenClient;
 import com.becommerce.auth.application.identity.port.input.CurrentUserResolutionUseCase;
 import com.becommerce.auth.domain.gateway.GatewaySession;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.gateway.SessionStatus;
+import com.becommerce.auth.infrastructure.gateway.BackendIdentityClient;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionStore;
 import com.becommerce.auth.infrastructure.gateway.InMemoryGatewaySessionStore;
+import com.becommerce.auth.infrastructure.gateway.InMemoryPendingLinkStore;
 import com.becommerce.auth.infrastructure.gateway.OidcAuthorizationRequestStore;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import com.becommerce.auth.infrastructure.gateway.OidcProviderMetadata;
 import com.becommerce.auth.infrastructure.gateway.OidcTokenValidator;
+import com.becommerce.auth.infrastructure.gateway.PendingLinkStore;
 import com.becommerce.auth.infrastructure.gateway.PkceGenerator;
 import com.becommerce.auth.infrastructure.gateway.RedirectUriValidator;
 import com.becommerce.auth.infrastructure.gateway.SecureTokenGenerator;
@@ -36,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,9 +54,11 @@ class GatewayOidcLogoutTest {
     @Mock private KeycloakIdentityConverter identityConverter;
     @Mock private CurrentUserResolutionUseCase currentUserResolutionUseCase;
     @Mock private OidcProviderMetadata providerMetadata;
+    @Mock private BackendIdentityClient backendIdentityClient;
 
     private OidcGatewayProperties properties;
     private GatewaySessionStore sessionStore;
+    private PendingLinkStore pendingLinkStore;
     private GatewayOidcService service;
 
     @BeforeEach
@@ -64,6 +71,7 @@ class GatewayOidcLogoutTest {
         properties.setSessionTtl(java.time.Duration.ofHours(8));
 
         sessionStore = new InMemoryGatewaySessionStore(properties);
+        pendingLinkStore = new InMemoryPendingLinkStore();
         service = new GatewayOidcService(properties,
                 new SecureTokenGenerator(),
                 new PkceGenerator(new SecureTokenGenerator()),
@@ -76,7 +84,9 @@ class GatewayOidcLogoutTest {
                 sessionStore,
                 new GatewaySessionResolver(sessionStore),
                 providerMetadata,
-                new ConfiguredIdentityProviderCatalog(properties));
+                new ConfiguredIdentityProviderCatalog(properties),
+                backendIdentityClient,
+                pendingLinkStore);
     }
 
     private GatewaySession session(String token) {
