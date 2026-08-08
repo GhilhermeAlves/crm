@@ -8,6 +8,7 @@ public final class TenantContext {
     private static final ThreadLocal<String> CURRENT_KEYCLOAK_SUB = new ThreadLocal<>();
     private static final ThreadLocal<String> CURRENT_IDENTITY_EMAIL = new ThreadLocal<>();
     private static final ThreadLocal<String> CURRENT_IDENTITY_PHONE = new ThreadLocal<>();
+    private static final ThreadLocal<String> CURRENT_RESET_TOKEN = new ThreadLocal<>();
 
     private TenantContext() {}
 
@@ -84,10 +85,42 @@ public final class TenantContext {
         CURRENT_IDENTITY_PHONE.remove();
     }
 
+    /** Limpa apenas o e-mail de identidade (sem afetar os demais contextos). */
+    public static void clearIdentityEmail() {
+        CURRENT_IDENTITY_EMAIL.remove();
+    }
+
+    /**
+     * Token de redefinição de senha (Sprint 7.4) cuja POSSE é provada pela
+     * chamada anônima a {@code POST /api/v1/auth/reset-password}. Usado no
+     * bootstrap RLS: permite ao app localizar o token e o usuário dono durante
+     * o fluxo de reset (antes de qualquer {@code company_id} ser conhecido).
+     *
+     * <p>O GUC {@code app.current_reset_token} só é definido pelo datasource
+     * quando este valor está presente no ThreadLocal — o reset é o ÚNICO ponto
+     * que o popula, no escopo da requisição anônima.
+     */
+    public static void setResetToken(String resetToken) {
+        CURRENT_RESET_TOKEN.set(resetToken);
+    }
+
+    public static String getResetToken() {
+        return CURRENT_RESET_TOKEN.get();
+    }
+
+    public static boolean hasResetToken() {
+        return CURRENT_RESET_TOKEN.get() != null && !CURRENT_RESET_TOKEN.get().isBlank();
+    }
+
+    public static void clearResetToken() {
+        CURRENT_RESET_TOKEN.remove();
+    }
+
     public static void clear() {
         CURRENT_COMPANY.remove();
         CURRENT_KEYCLOAK_SUB.remove();
         CURRENT_IDENTITY_EMAIL.remove();
         CURRENT_IDENTITY_PHONE.remove();
+        CURRENT_RESET_TOKEN.remove();
     }
 }

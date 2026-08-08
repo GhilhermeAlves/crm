@@ -38,3 +38,7 @@ app:
   security:
     reset-token:
       expiration-hours: 1
+  # Sprint 7.4 — em desenvolvimento o token de reset pode ser exposto no log
+  # do FakeEmailService para viabilizar o fluxo de recuperação no navegador.
+  mail:
+    log-token: ${MAIL_LOG_TOKEN:false}

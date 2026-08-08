@@ -1,6 +1,7 @@
 package com.becommerce.auth.presentation.rest;
 
 import com.becommerce.auth.application.identity.port.input.CurrentUserResolutionUseCase;
+import com.becommerce.auth.application.gateway.port.output.CredentialResetClient;
 import com.becommerce.auth.domain.identity.AuthenticatedIdentity;
 import com.becommerce.auth.domain.identity.CurrentUser;
 import com.becommerce.auth.domain.identity.CurrentUserResolution;
@@ -10,13 +11,19 @@ import com.becommerce.auth.infrastructure.health.DependencyProbe;
 import com.becommerce.auth.infrastructure.security.JwtAuthenticationEntryPoint;
 import com.becommerce.auth.infrastructure.security.KeycloakIdentityConverter;
 import com.becommerce.auth.presentation.rest.handler.GlobalExceptionHandler;
+import com.becommerce.auth.infrastructure.security.InternalApiTokenFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.Ordered;
+import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,12 +39,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({InternalAuthController.class, HealthController.class})
 @Import({SecurityConfig.class, KeycloakIdentityConverter.class, JwtAuthenticationEntryPoint.class,
-        GlobalExceptionHandler.class})
+        GlobalExceptionHandler.class, InternalAuthControllerTest.TestInternalApiTokenFilterConfig.class})
+@org.springframework.test.context.TestPropertySource(properties = "auth.internal.api-token=valid-token")
 class InternalAuthControllerTest {
 
     private static final UUID USER_ID = UUID.fromString("974bbedb-298d-4ec6-a037-514b24c248e4");
@@ -50,6 +59,7 @@ class InternalAuthControllerTest {
     @MockBean private JwtDecoder jwtDecoder;
     @MockBean private CurrentUserResolutionUseCase currentUserResolutionUseCase;
     @MockBean private DependencyProbe dependencyProbe;
+    @MockBean private CredentialResetClient credentialResetClient;
 
     @BeforeEach
     void setUp() {
@@ -141,8 +151,7 @@ class InternalAuthControllerTest {
     }
 
     @Test
-    void shouldIgnoreArbitraryUserIdFromClient() throws Exception {
-        UUID arbitraryUserId = UUID.randomUUID();
+    void shouldIgnoreArbitraryUserIdFromClient() throws Exception {        UUID arbitraryUserId = UUID.randomUUID();
         CurrentUser currentUser = new CurrentUser(USER_ID, EMAIL, COMPANY_ID, COMPANY_ID,
                 List.of("AGENT"), List.of(), SUB, null, "keycloak", "Ghilherme Santos");
         when(currentUserResolutionUseCase.resolve(any(AuthenticatedIdentity.class)))
@@ -160,5 +169,42 @@ class InternalAuthControllerTest {
         assertEquals(SUB, captor.getValue().keycloakSub());
         assertEquals(EMAIL, captor.getValue().email());
         assertNotEquals(arbitraryUserId.toString(), captor.getValue().keycloakSub());
+    }
+
+    @Test
+    void shouldDelegateResetPasswordToCredentialResetClient() throws Exception {
+        mockMvc.perform(post("/internal/auth/reset-password")
+                        .header("X-Internal-Api-Token", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"keycloakSub\":\"kz-sub-reset\",\"email\":\"" + EMAIL
+                                + "\",\"newPassword\":\"Kc!Nova1Aa\"}"))
+                .andExpect(status().isOk());
+
+        verify(credentialResetClient).resetPassword("kz-sub-reset", EMAIL, "Kc!Nova1Aa");
+    }
+
+    @Test
+    void shouldRejectResetPasswordWithWrongInternalToken() throws Exception {
+        mockMvc.perform(post("/internal/auth/reset-password")
+                        .header("X-Internal-Api-Token", "wrong-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"keycloakSub\":\"kz-sub-reset\",\"email\":\"" + EMAIL
+                                + "\",\"newPassword\":\"Kc!Nova1Aa\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INTERNAL_API_TOKEN_INVALID"));
+    }
+
+    @TestConfiguration
+    static class TestInternalApiTokenFilterConfig {
+        @Bean
+        FilterRegistrationBean<InternalApiTokenFilter> internalApiTokenFilter(
+                @org.springframework.beans.factory.annotation.Value("${auth.internal.api-token:}")
+                String apiToken, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+            FilterRegistrationBean<InternalApiTokenFilter> registration =
+                    new FilterRegistrationBean<>(new InternalApiTokenFilter(apiToken, objectMapper));
+            registration.setUrlPatterns(List.of("/internal/auth/reset-password"));
+            registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 2);
+            return registration;
+        }
     }
 }

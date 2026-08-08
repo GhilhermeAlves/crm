@@ -47,6 +47,7 @@
 | 7.2 | Account Linking | ✅ Em andamento | — | AI Agent | 7.1 |
 | 7.3 | Telefone/OTP | ✅ Concluída | 2026-08-08 | AI Agent | 7.1 |
 | 7.4 | Telefone → OTP → senha Keycloak (login completo por telefone na UI, catálogo `phone-enabled`, rota nginx direta) | ✅ Concluída | 2026-08-08 | AI Agent | 7.2, 7.3 |
+| 7.5 | Recuperação de conta — forgot/reset-password com reset REAL no Keycloak (service account `crm-keycloak-admin`, rotas nginx diretas, RLS V027/V028) | ✅ Concluída | 2026-08-08 | AI Agent | 7.3, 7.4 |
 
 ## SaaS
 

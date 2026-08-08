@@ -39,6 +39,7 @@ public class TenantAwareDataSource implements DataSource {
         String keycloakSub = TenantContext.getKeycloakSub();
         String identityEmail = TenantContext.getIdentityEmail();
         String identityPhone = TenantContext.getIdentityPhone();
+        String resetToken = TenantContext.getResetToken();
         try (var stmt = connection.createStatement()) {
             if (keycloakSub != null && !keycloakSub.isBlank()) {
                 String safeSub = keycloakSub.replace("'", "''");
@@ -60,6 +61,13 @@ public class TenantAwareDataSource implements DataSource {
                 log.info("[TENANT] conn={} SET app.current_identity_phone", System.identityHashCode(connection));
             } else {
                 stmt.execute("RESET app.current_identity_phone");
+            }
+            if (resetToken != null && !resetToken.isBlank()) {
+                String safeToken = resetToken.replace("'", "''");
+                stmt.execute("SET app.current_reset_token = '" + safeToken + "'");
+                log.info("[TENANT] conn={} SET app.current_reset_token (reset password flow)", System.identityHashCode(connection));
+            } else {
+                stmt.execute("RESET app.current_reset_token");
             }
             if (companyId != null) {
                 String safeId = companyId.toString();

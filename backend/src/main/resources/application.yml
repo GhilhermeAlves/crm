@@ -83,6 +83,9 @@ app:
     identity-layer:
       enabled: ${AUTH_IDENTITY_LAYER_ENABLED:false}
       auth-service-url: ${AUTH_SERVICE_URL:}
+      internal-api-token: ${AUTH_INTERNAL_API_TOKEN:}
+  mail:
+    log-token: ${MAIL_LOG_TOKEN:false}
 
 springdoc:
   api-docs:

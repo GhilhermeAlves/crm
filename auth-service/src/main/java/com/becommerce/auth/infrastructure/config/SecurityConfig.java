@@ -60,6 +60,10 @@ public class SecurityConfig {
                         // BFF relay (Sprint 6.4): autenticado via cookie de sessão
                         // (GatewayApiRelay) — nunca exige JWT do browser.
                         .requestMatchers("/api/**").permitAll()
+                        // Reset de credencial (Sprint 7.4): chamado pelo crm-backend
+                        // de serviço a serviço, sem JWT de usuário. A autenticação é o
+                        // header X-Internal-Api-Token, validado pelo InternalApiTokenFilter.
+                        .requestMatchers("/internal/auth/reset-password").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)

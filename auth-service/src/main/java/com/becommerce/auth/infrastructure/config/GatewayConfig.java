@@ -8,11 +8,13 @@ import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
 import com.becommerce.auth.infrastructure.gateway.GatewayRateLimiter;
 import com.becommerce.auth.infrastructure.gateway.GatewayRateLimitFilter;
 import com.becommerce.auth.infrastructure.gateway.GatewaySessionResolver;
+import com.becommerce.auth.infrastructure.gateway.KeycloakAdminProperties;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import com.becommerce.auth.infrastructure.gateway.RateLimitErrorResponse;
 import com.becommerce.auth.infrastructure.gateway.SecureTokenGenerator;
 import com.becommerce.auth.infrastructure.observability.CorrelationIdFilter;
 import com.becommerce.auth.infrastructure.security.GatewayCsrfFilter;
+import com.becommerce.auth.infrastructure.security.InternalApiTokenFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -22,6 +24,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
@@ -37,7 +40,7 @@ import java.util.List;
  */
 @Configuration
 @EnableScheduling
-@EnableConfigurationProperties(OidcGatewayProperties.class)
+@EnableConfigurationProperties({OidcGatewayProperties.class, KeycloakAdminProperties.class})
 public class GatewayConfig {
 
     public GatewayConfig(OidcGatewayProperties properties, Environment environment) {
@@ -120,6 +123,22 @@ public class GatewayConfig {
                         rateLimiter, cookieFactory, sessionResolver, clientIpResolver, errorResponse, properties));
         registration.setUrlPatterns(List.of("/api/*"));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+        return registration;
+    }
+
+    /**
+     * {@link InternalApiTokenFilter} (Sprint 7.4): protege o endpoint interno de
+     * reset de credencial ({@code /internal/auth/reset-password}) com segredo
+     * compartilhado ({@code auth.internal.api-token}). Roda antes do Spring
+     * Security e só se aplica ao path do endpoint.
+     */
+    @Bean
+    FilterRegistrationBean<InternalApiTokenFilter> internalApiTokenFilter(@Value("${auth.internal.api-token:}") String apiToken,
+                                                                          ObjectMapper objectMapper) {
+        FilterRegistrationBean<InternalApiTokenFilter> registration =
+                new FilterRegistrationBean<>(new InternalApiTokenFilter(apiToken, objectMapper));
+        registration.setUrlPatterns(List.of("/internal/auth/reset-password"));
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 2);
         return registration;
     }
 }

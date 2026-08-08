@@ -19,6 +19,7 @@ import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
 import com.becommerce.crm.domain.identity.valueobject.Password;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,7 @@ class AuthServiceProvisioningTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private EventPublisher eventPublisher;
     @Mock private EmailService emailService;
+    @Mock private AuthServiceClient authServiceClient;
 
     @InjectMocks
     private AuthService authService;

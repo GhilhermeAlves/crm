@@ -13,6 +13,7 @@ import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.company.CompanyPlan;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.event.UserCreatedEvent;
+import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +48,7 @@ class AuthServiceRegisterTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private EventPublisher eventPublisher;
     @Mock private EmailService emailService;
+    @Mock private AuthServiceClient authServiceClient;
 
     @InjectMocks
     private AuthService authService;

@@ -101,20 +101,20 @@
 
 ## 7.4 — Recuperação de conta e segurança da identidade
 
-- **Status:** ⏳ Pendente.
+- **Status:** ✅ **CONCLUÍDA** (2026-08-08) — histórico preservado em `sprints/7.5/REPORT.md`.
 - **Objetivo:** recuperação de conta e hardening da identidade.
 - **Tarefas:**
-  - Recuperação de conta utilizando os mecanismos definidos na Sprint 7.3 (OTP como
-    verificação/fallback) e e-mail como fallback.
+  - Reset de senha (forgot/reset-password) público com reset REAL da credencial no Keycloak via service account dedicado `crm-keycloak-admin` — **validado em produção** (nova senha ok / antiga rejeitada).
+  - RLS: V027 (bootstrap por token) + V028 (remove join policy de `password_reset_tokens`), RLS FORCE mantido.
   - Proteção contra abuso: revogação de sessões por admin, logout global
     (`end_session_endpoint`), revisão de `bruteForceProtected`, verificação de e-mail e
-    políticas de senha do realm CRM.
+    políticas de senha do realm CRM — **pendente (backlog)**.
   - Hardening dos fluxos de identidade (MFA TOTP nativo do Keycloak como camada opcional —
-    decisão de produto).
-  - Auditoria dos fluxos de recuperação e de vinculação.
+    decisão de produto) — **pendente (backlog)**.
+  - Auditoria dos fluxos de recuperação e de vinculação — **pendente (backlog)**.
 - **Critérios de aceite:** recuperação funcional sem criar backdoor; sessões revogáveis;
   fluxos de recuperação e vinculação auditados.
-- **Saída:** `sprints/7.4/REPORT.md`.
+- **Saída:** `sprints/7.5/REPORT.md` (reset de senha).
 
 ---
 

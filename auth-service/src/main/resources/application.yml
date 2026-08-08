@@ -116,6 +116,22 @@ auth:
     # Sprint 7.4: login por telefone/OTP local — provedor "local" (não-OIDC),
     # separado do catálogo de IdPs do Keycloak.
     phone-enabled: ${AUTH_GATEWAY_PHONE_ENABLED:false}
+  # Acesso ADMIN ao Keycloak (Sprint 7.4 — reset de credencial). Client
+  # confidencial com service account (ex.: crm-keycloak-admin) e papel
+  # realm-management:manage-users. Nunca loga o client_secret.
+  keycloak:
+    admin:
+      base-url: ${AUTH_KEYCLOAK_ADMIN_BASE_URL:http://crm-keycloak:8080}
+      realm: ${AUTH_KEYCLOAK_ADMIN_REALM:CRM}
+      client-id: ${AUTH_KEYCLOAK_ADMIN_CLIENT_ID:}
+      client-secret: ${AUTH_KEYCLOAK_ADMIN_CLIENT_SECRET:}
+      token-timeout: ${AUTH_KEYCLOAK_ADMIN_TOKEN_TIMEOUT:10s}
+      admin-timeout: ${AUTH_KEYCLOAK_ADMIN_ADMIN_TIMEOUT:15s}
+  # Segredo compartilhado serviço-a-serviço (Sprint 7.4): o crm-backend chama
+  # POST /internal/auth/reset-password com header X-Internal-Api-Token igual a
+  # este valor. Obrigatório no profile prod (startup falha se ausente).
+  internal:
+    api-token: ${AUTH_INTERNAL_API_TOKEN:}
 
 server:
   port: 8080

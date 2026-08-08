@@ -16,7 +16,6 @@ public class PasswordResetToken {
 
     public static PasswordResetToken create(String token, UUID userId, int expiryMinutes) {
         PasswordResetToken resetToken = new PasswordResetToken();
-        resetToken.id = UUID.randomUUID();
         resetToken.token = token;
         resetToken.userId = userId;
         resetToken.expiresAt = LocalDateTime.now().plusMinutes(expiryMinutes);

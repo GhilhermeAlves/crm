@@ -26,6 +26,7 @@ import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
 import com.becommerce.crm.domain.identity.valueobject.Password;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,6 +56,7 @@ public class AuthService implements AuthUseCase {
     private final PasswordEncoder passwordEncoder;
     private final EventPublisher eventPublisher;
     private final EmailService emailService;
+    private final AuthServiceClient authServiceClient;
 
     private static final int RESET_TOKEN_EXPIRY_MINUTES = 60;
 
@@ -77,7 +79,7 @@ public class AuthService implements AuthUseCase {
                        CompanyRepository companyRepository,
                        CrmAccessService crmAccessService,
                        PasswordEncoder passwordEncoder, EventPublisher eventPublisher,
-                       EmailService emailService) {
+                       EmailService emailService, AuthServiceClient authServiceClient) {
         this.userRepository = userRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.roleRepository = roleRepository;
@@ -87,6 +89,7 @@ public class AuthService implements AuthUseCase {
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
         this.emailService = emailService;
+        this.authServiceClient = authServiceClient;
     }
 
     @Override
@@ -107,34 +110,72 @@ public class AuthService implements AuthUseCase {
 
     @Override
     public void forgotPassword(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
-            String token = UUID.randomUUID().toString();
-            PasswordResetToken resetToken = PasswordResetToken.create(token, user.getId(), RESET_TOKEN_EXPIRY_MINUTES);
-            passwordResetTokenRepository.save(resetToken);
-            eventPublisher.publish(PasswordResetRequestedEvent.create(user.getId(), user.getCompanyId(), email, token));
-        });
+        // Endpoint anônimo: sem JWT, sem tenant. O email informado é a única
+        // identidade disponível — o bootstrap da linha em `users` via
+        // `app.current_identity_email` (V025) permite a leitura da PRÓPRIA
+        // conta pelo email (RLS FORCE). O GUC não expõe senha/hash; só localiza.
+        TenantContext.setIdentityEmail(email);
+        try {
+            userRepository.findByEmail(email).ifPresent(user -> {
+                String token = UUID.randomUUID().toString();
+                PasswordResetToken resetToken = PasswordResetToken.create(token, user.getId(), RESET_TOKEN_EXPIRY_MINUTES);
+                // O INSERT em password_reset_tokens (RLS FORCE, V027) exige o GUC
+                // app.current_reset_token igual ao token recém-gerado — define-se
+                // aqui, no escopo da requisição, e limpa-se no finally.
+                TenantContext.setResetToken(token);
+                try {
+                    passwordResetTokenRepository.save(resetToken);
+                } finally {
+                    TenantContext.clearResetToken();
+                }
+                eventPublisher.publish(PasswordResetRequestedEvent.create(user.getId(), user.getCompanyId(), email, token));
+                log.info("Reset de senha solicitado para: {} (token gerado; envio via de envio configurada)", email);
+                emailService.sendPasswordResetEmail(email, token);
+            });
+        } finally {
+            TenantContext.clearIdentityEmail();
+        }
     }
 
     @Override
     public void resetPassword(String token, String newPassword) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-            .orElseThrow(() -> new InvalidTokenException("Invalid reset token"));
+        // Endpoint anônimo: sem JWT/company_id. O token de reset é o segredo de
+        // posse — o datasource define `app.current_reset_token` (V027) para o
+        // bootstrap das leituras de token/usuário e da atualização do token em
+        // `password_reset_tokens` e `users` (RLS FORCE).
+        TenantContext.setResetToken(token);
+        try {
+            PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid reset token"));
 
-        if (!resetToken.isValid()) {
-            throw new InvalidTokenException("Reset token has expired or already been used");
+            if (!resetToken.isValid()) {
+                throw new InvalidTokenException("Reset token has expired or already been used");
+            }
+
+            User user = userRepository.findById(resetToken.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+
+            Password password = new Password(newPassword);
+
+            // Sprint 7.4: quando a conta é proveniente do Keycloak, o reset REAL
+            // acontece no Keycloak (auth-service → Keycloak Admin), a única fonte
+            // de verdade da credencial. Contas criadas localmente (fallback pré
+            // identity-layer) seguem o fluxo legado de hash próprio.
+            if (user.getKeycloakSub() != null && !user.getKeycloakSub().isBlank()) {
+                authServiceClient.resetPassword(user.getKeycloakSub(), user.getEmail().value(), newPassword);
+                log.info("Credencial de usuário resetada no Keycloak (sub={})", user.getKeycloakSub());
+            } else {
+                user.updatePassword(password);
+                userRepository.save(user);
+            }
+
+            resetToken.markAsUsed();
+            passwordResetTokenRepository.save(resetToken);
+
+            eventPublisher.publish(PasswordChangedEvent.create(user.getId(), user.getCompanyId()));
+        } finally {
+            TenantContext.clearResetToken();
         }
-
-        User user = userRepository.findById(resetToken.getUserId())
-            .orElseThrow(UserNotFoundException::new);
-
-        Password password = new Password(newPassword);
-        user.updatePassword(password);
-        userRepository.save(user);
-
-        resetToken.markAsUsed();
-        passwordResetTokenRepository.save(resetToken);
-
-        eventPublisher.publish(PasswordChangedEvent.create(user.getId(), user.getCompanyId()));
     }
 
     @Override

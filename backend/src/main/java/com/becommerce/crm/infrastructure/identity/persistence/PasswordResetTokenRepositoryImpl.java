@@ -20,6 +20,9 @@ public class PasswordResetTokenRepositoryImpl implements PasswordResetTokenRepos
     @Override
     public PasswordResetToken save(PasswordResetToken passwordResetToken) {
         PasswordResetTokenJpaEntity entity = new PasswordResetTokenJpaEntity();
+        // Se o agregado já possui id (carregado via findByToken), preserva para
+        // que o save vire um UPDATE (markAsUsed) e não um INSERT duplicado.
+        entity.setId(passwordResetToken.getId());
         entity.setToken(passwordResetToken.getToken());
         entity.setUserId(passwordResetToken.getUserId());
         entity.setExpiresAt(passwordResetToken.getExpiresAt());
@@ -30,7 +33,11 @@ public class PasswordResetTokenRepositoryImpl implements PasswordResetTokenRepos
 
         long expiryMinutes = Duration.between(LocalDateTime.now(), saved.getExpiresAt()).toMinutes();
         if (expiryMinutes < 1) expiryMinutes = 1;
-        return PasswordResetToken.create(saved.getToken(), saved.getUserId(), (int) expiryMinutes);
+        PasswordResetToken result = PasswordResetToken.create(saved.getToken(), saved.getUserId(), (int) expiryMinutes);
+        result.setId(saved.getId());
+        result.setUsed(saved.isUsed());
+        result.setCreatedAt(saved.getCreatedAt());
+        return result;
     }
 
     @Override
