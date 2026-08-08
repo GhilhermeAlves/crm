@@ -36,11 +36,9 @@ vi.mock("@/lib/gateway-auth", () => ({
 function serverCatalog(overrides: Partial<Record<string, boolean>> = {}) {
   const labels: Record<string, string> = {
     google: "Google",
-    microsoft: "Microsoft",
-    apple: "Apple",
     phone: "Telefone",
   };
-  return (["google", "microsoft", "apple", "phone"] as const).map((alias) => ({
+  return (["google", "phone"] as const).map((alias) => ({
     alias,
     label: labels[alias],
     available: overrides[alias] ?? false,
@@ -55,22 +53,18 @@ describe("ProviderList (Sprint 7.0)", () => {
     providersState.isError = false;
   });
 
-  it("renders the four providers in a fixed order", () => {
+  it("renders the configured providers in a fixed order (google, telefone)", () => {
     render(<ProviderList />);
     const buttons = screen.getAllByRole("button").map((b) => b.getAttribute("data-provider"));
-    expect(buttons).toEqual(["google", "microsoft", "apple", "phone"]);
+    expect(buttons).toEqual(["google", "phone"]);
   });
 
   it("enables providers the server marks as available", () => {
-    providersState.data = serverCatalog({ google: true, apple: true });
+    providersState.data = serverCatalog({ google: true });
     render(<ProviderList />);
     const google = screen.getByRole("button", { name: "Entrar com Google" });
-    const apple = screen.getByRole("button", { name: "Entrar com Apple" });
-    const microsoft = screen.getByRole("button", { name: "Entrar com Microsoft" });
     const phone = screen.getByRole("button", { name: "Entrar com Telefone" });
     expect((google as HTMLButtonElement).disabled).toBe(false);
-    expect((apple as HTMLButtonElement).disabled).toBe(false);
-    expect((microsoft as HTMLButtonElement).disabled).toBe(true);
     expect((phone as HTMLButtonElement).disabled).toBe(true);
   });
 

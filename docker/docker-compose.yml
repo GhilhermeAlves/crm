@@ -72,6 +72,7 @@ services:
       - AUTH_KEYCLOAK_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
       - AUTH_KEYCLOAK_JWKS_URI=http://crm-keycloak:8080/realms/CRM/protocol/openid-connect/certs
       - AUTH_GATEWAY_ENABLED=true
+      - AUTH_GATEWAY_ENABLED_PROVIDERS=google
       - AUTH_GATEWAY_CLIENT_ID=crm-gateway
       - AUTH_GATEWAY_CLIENT_SECRET=${AUTH_GATEWAY_CLIENT_SECRET}
       - AUTH_GATEWAY_REDIRECT_URI=https://srv1348261.hstgr.cloud/auth/callback

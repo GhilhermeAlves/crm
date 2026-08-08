@@ -14,7 +14,7 @@ import type { IdentityProviderInfo } from "../types/identity-provider";
 /**
  * Lista de provedores de identidade da tela de login (Sprint 7.0).
  *
- * <p>O catálogo exibido é fixo (Google, Microsoft, Apple, Telefone) e a
+ * <p>O catálogo exibido é fixo (Google, Telefone) e a
  * disponibilidade de cada um vem do servidor ({@code GET /auth/providers}):
  * <ul>
  *   <li>enquanto o catálogo não chega (ou falha), todos aparecem desabilitados
@@ -28,8 +28,6 @@ import type { IdentityProviderInfo } from "../types/identity-provider";
  */
 const KNOWN_ORDER: IdentityProviderId[] = [
   IDENTITY_PROVIDERS.GOOGLE,
-  IDENTITY_PROVIDERS.MICROSOFT,
-  IDENTITY_PROVIDERS.APPLE,
   IDENTITY_PROVIDERS.PHONE,
 ];
 
