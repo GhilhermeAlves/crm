@@ -1,10 +1,10 @@
 # Identity Provider Roadmap (7.0 → 7.4)
 
-> Roteiro da evolução de identidade do CRM sobre o Access Gateway (auth-service) + Keycloak
+> Roteiro da evolução de identidade do CRM sobre o Gateway (auth-service) + Keycloak
 > Identity Brokering. **Decisão de escopo (2026-08-06): o único Identity Provider externo da
 > Sprint 7 é o Google.** Microsoft/Microsoft Entra ID, Apple/Sign in with Apple/iCloud e
-> qualquer outro IdP externo estão **FORA DO ESCOPO ATUAL** — não há sprint prevista para
-> eles. A estrutura oficial da Sprint 7 é 7.0 → 7.4.
+> qualquer outro IdP externo fora do escopo atual — não há sprint prevista para
+> eles. A estrutura oficial da Sprint 7 é 7.0 → 7.5 (7.2 Account Linking 🚧 em andamento).
 
 ## Princípios invariantes
 
@@ -64,21 +64,25 @@
 
 ## 7.2 — Account Linking
 
-- **Status:** ⏳ Pendente.
+- **Status:** 🚧 **Em andamento** — implementação em código (commits 2026-08-07) com testes
+  locais verdes, mas **NÃO formalmente concluído** (ver débito).
 - **Objetivo:** permitir a **vinculação segura** entre a **conta local CRM** e a
   **identidade Google** (`conta local CRM ↕ identidade Google`).
-- **Tarefas:**
-  - Resolver o caso da identidade Google já autenticada que ainda não possui conta CRM
-    correspondente (pendência funcional herdada da 7.1) — vinculação/provisão segura.
-  - **Não fazer vinculação automática apenas porque o e-mail é igual** — definir a
-    estratégia segura de vinculação na implementação (fluxo de confirmação, prova de
-    posse, auditoria).
-  - Perfil do usuário consolidado no crm-backend (vínculo identidade ↔ usuário CRM).
-  - Auditoria de link/deslink (audit log 6.x).
-- **Critérios de aceite:** um usuário pode entrar por conta local e por identidade Google
-  vinculada sem criar duplicidade; deslink seguro; nenhum link automático baseado apenas no
-  e-mail.
-- **Saída:** `sprints/7.2/REPORT.md`.
+- **Entregue em código:**
+  - Fluxo Caso B/C no gateway (`PendingLink`, `InMemoryPendingLinkStore`,
+    `BackendIdentityClient`, `CurrentUserResolution.LinkingRequired` — nunca vincula por e-mail).
+  - `/auth/link-status` + `POST /auth/link` no auth-service (csrf cookie-to-header, rate limit).
+  - Backend: `LinkingRequiredException`, `linkKeycloakIdentity` (prova de senha local),
+    `provisionKeycloakUser`, `IdentityInternalController` (`/internal/auth/provision`, `/internal/auth/link`).
+  - RLS V025 (`app.current_identity_email`).
+  - Frontend: `/link-account` + `LinkAccountForm` (exibe e-mail do vínculo encontrado).
+- **Débito que impede a conclusão (registrado no `SPRINT_INDEX.md`, 2026-08-08):**
+  - 🚧 **Falta** `sprints/7.2/REPORT.md` (+ REVIEW/RETROSPECTIVE) — pasta inexistente.
+  - 🚧 **Sem validação E2E em produção** (sprints irmãs têm E2E na VPS).
+  - 🚧 `PendingLinkStore` **in-memory only** (prod usa `AUTH_GATEWAY_SESSION_STORE=redis`).
+  - 🚧 `/auth/link-status` e `/auth/link` **sem testes unitários** no auth-service;
+    branch `LinkingRequired` sem cobertura.
+- **Saída (quando fechar):** `sprints/7.2/REPORT.md`.
 
 ## 7.3 — Telefone / OTP
 
@@ -129,9 +133,10 @@
 - **Meta/Facebook e qualquer outro IdP externo não explicitamente definido** — fora de escopo.
 - Nota histórica: a versão anterior deste roadmap previa as sprints 7.2 (Apple), 7.5
   (Recuperação), 7.6 (UX/Perfil) e 7.7 (Final Security Review). A partir da decisão de
-  2026-08-06 a estrutura oficial é 7.0 → 7.4; itens gerais (logo definitivo para
+  2026-08-06 a estrutura oficial é 7.0 → 7.4, **estendida depois para 7.5 (Recuperação de conta)**
+  na renumeração de 2026-08-08; itens gerais (logo definitivo para
   `LoginBrand.logoSrc`, UX/perfil de identidade e revisão de segurança final) ficam como
-  backlog pós-7.4, sem sprint numerada, e não tratam de Apple/Microsoft.
+  backlog pós-7.5, sem sprint numerada, e não tratam de Apple/Microsoft.
 
 ---
 
