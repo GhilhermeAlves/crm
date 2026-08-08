@@ -34,8 +34,8 @@ Apple/Telefone permanecem preparados e desabilitados.
   auth-service; rebuild controlado de auth-service e frontend; regressão de endpoints.
 - **Deploy controlado:** backups pré-alteração, restarts com verificação de saúde,
   validação HTTP ponta-a-ponta até a página de sign-in do Google.
-- **Fora de escopo:** account linking visual completo (7.4), Apple/Telefone (7.2/7.3),
-  Microsoft (bloqueado sem credenciais). O linking de e-mail duplicado funciona via
+- **Fora de escopo:** account linking visual completo (7.2), Telefone/OTP (7.3), Apple e
+  Microsoft (fora do escopo da Sprint 7). O linking de e-mail duplicado funciona via
   comportamento padrão do Keycloak (ver "Cadastro / account linking").
 
 ## Decisões de escopo (confirmadas pelo usuário)
@@ -102,9 +102,9 @@ Apple/Telefone permanecem preparados e desabilitados.
 - **Caso C — e-mail duplicado entre duas identidades:** protegido por
   `duplicateEmailsAllowed=false`; o broker não cria conta duplicada.
 - **Caso D — e-mail Google pertence a um usuário CRM que não tem conta Keycloak:**
-  precisa de provisionamento (fora de escopo; roadmap 7.4).
+  precisa de provisionamento (fora de escopo da 7.1; roadmap 7.2).
 - UI dedicada de linking (escolha de qual conta vincular) não foi implementada — fica para
-  7.4. Nesta sprint o linking é o automático/seguro do Keycloak.
+  7.2. Nesta sprint o linking é o automático/seguro do Keycloak.
 
 ## Backend na VPS (sincronização 7.0 + validação)
 
@@ -195,8 +195,8 @@ Apple/Telefone permanecem preparados e desabilitados.
   (contrato das Sprints 6.x). O auto-provisioning do crm-backend
   (`provisionKeycloakUser`) só dispara quando o backend recebe request com JWT — o gateway
   falha antes de criar sessão. Para o E2E, a provisão foi feita manualmente no banco (ver
-  E2E). **Melhoria futura (7.4):** auto-provisionamento "cadastro com Google" no fluxo do
-  gateway.
+  E2E). **Melhoria futura (7.2):** auto-provisionamento/vinculação "cadastro com Google" no
+  fluxo do gateway.
 - **A VPS rodava código 7.0-parcial antigo** — sem a sincronização, `/auth/providers` e a
   UI de providers simplesmente não existiam em produção. Corrigido com cópia manual
   arquivo a arquivo (sem git push/pull, preservando os arquivos locais do VPS).
@@ -222,13 +222,15 @@ Apple/Telefone permanecem preparados e desabilitados.
 
 ## Pendências / recomendações
 
-- **Auto-provisionamento "cadastro com Google"** (7.4): quando o gateway recebe identidade
+- **Auto-provisionamento "cadastro com Google"** (7.2): quando o gateway recebe identidade
   nova, disparar o provisionamento do crm-backend (ou provisionar no auth-service) em vez
   de exigir provisão manual — hoje o `403 PROVISIONING_REQUIRED` exige ação manual.
-- **Credenciais Entra (Microsoft)** para habilitar o segundo provedor.
-- **Apple Developer Program** para Sign in with Apple (7.2).
+  Registrado como **pendência funcional da 7.2** (Account Linking).
+- **Apple e Microsoft fora do escopo da Sprint 7** (decisão de escopo 2026-08-06): apenas
+  Google é IdP externo; não requisitar credenciais Entra (Microsoft) nem Apple Developer
+  Program.
 - **Provedor SMS** para Telefone/OTP (7.3).
-- **Account linking visual** para Caso D (7.4).
+- **Account linking visual** para Caso D (7.2).
 - **Logo definitivo** para `LoginBrand.logoSrc`.
 
 ## Resultado
@@ -246,10 +248,17 @@ STATUS: **CONCLUÍDA**.
 - **E2E validado em produção:** login Google real (`paulo.alves@praiaclube.org.br`) →
   `/dashboard` com sessão de gateway criada (logs 03:23); Caso B (`PROVISIONING_REQUIRED`)
   validado às 03:12 e resolvido com provisão manual padrão backend.
+- **Auto-provisionamento NÃO implementado:** o **login** Google está concluído, mas a
+  criação automática da conta CRM a partir da identidade Google **não** — a conta do E2E
+  foi provisionada manualmente (`users` + `user_roles`). Pendência funcional registrada
+  para a **7.2 (Account Linking)**.
 - Suítes verdes: backend 245/245, frontend 49/49 + lint/typecheck/build PASS.
 
 ## Próxima sprint (roadmap)
 
-- **7.2 — Apple / iCloud:** Apple Developer Program + `kc_idp_hint` apple + E2E.
-- **7.4 — Account linking:** UI de escolha de conta vinculada e provisão para Caso D.
-- **7.3 — Telefone/OTP** conforme roadmap. Ver `sprints/7.0/IDENTITY_ROADMAP.md`.
+- **7.2 — Account Linking:** vinculação segura entre conta local CRM e identidade Google;
+  tratar identidade Google autenticada sem conta CRM correspondente (pendência da 7.1);
+  **sem** link automático por e-mail. Ver `sprints/7.0/IDENTITY_ROADMAP.md`.
+- **7.3 — Telefone/OTP:** autenticação/verificação por telefone + OTP.
+- **7.4 — Recuperação de conta e segurança da identidade.**
+- **Fora do escopo da Sprint 7:** Apple (Sign in with Apple) e Microsoft (Entra).

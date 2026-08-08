@@ -1,11 +1,10 @@
-# Identity Provider Roadmap (7.0 → 7.7)
+# Identity Provider Roadmap (7.0 → 7.4)
 
 > Roteiro da evolução de identidade do CRM sobre o Access Gateway (auth-service) + Keycloak
-> Identity Brokering. Sprint 7.0 (concluída) entregou a **fundação**: catálogo de provedores,
-> `kc_idp_hint` e a nova tela de login. A **7.1** habilitou o **Google** em produção (IdP real
-> no Keycloak + código 7.0 sincronizado na VPS + deploy controlado); **Microsoft permanece
-> bloqueado** por falta de credenciais Entra. As sprints seguintes habilitam Apple, Telefone
-> e o account linking visual, sempre com deploy na VPS.
+> Identity Brokering. **Decisão de escopo (2026-08-06): o único Identity Provider externo da
+> Sprint 7 é o Google.** Microsoft/Microsoft Entra ID, Apple/Sign in with Apple/iCloud e
+> qualquer outro IdP externo estão **FORA DO ESCOPO ATUAL** — não há sprint prevista para
+> eles. A estrutura oficial da Sprint 7 é 7.0 → 7.4.
 
 ## Princípios invariantes
 
@@ -16,131 +15,130 @@
   Keycloak (configuração = `AUTH_GATEWAY_ENABLED_PROVIDERS` + IdP no realm CRM).
 - **Sem log de secret/OTP/senha.**
 - **Meta/Facebook fora de escopo.**
+- **Escopo de IdP externo limitado ao Google** — Microsoft e Apple ficam apenas como registro
+  "preparado" no catálogo de código, sem sprint nem credencial; não habilitar.
 
 ## Matriz de provedores
 
-| Provedor | Alias | Sprint | Status 7.1 | Prerequisito externo |
+| Provedor | Alias | Sprint | Status | Prerequisito externo |
 |----------|-------|--------|-------------|----------------------|
 | Google | `google` | 7.1 | ✅ **Habilitado e validado em produção** (E2E até `/dashboard`) | OAuth Client ID/Secret (Google Cloud Console) — ✅ consumido |
-| Microsoft/Outlook | `microsoft` | 7.1 | ⛔ **Bloqueado** (sem credenciais Entra) — adiado | App registration (Microsoft Entra) — pendente |
-| Apple/iCloud | `apple` | 7.2 | Preparado (não habilitado) | Apple Developer Program (Sign in with Apple) |
-| Telefone/OTP | `phone` | 7.3 | No catálogo (registro) | Provedor SMS + abstração de envio |
+| Microsoft/Outlook | `microsoft` | — | ⛔ **FORA DO ESCOPO ATUAL** (registro no catálogo apenas; não habilitado) | App registration (Microsoft Entra) — não se aplica |
+| Apple/iCloud | `apple` | — | ⛔ **FORA DO ESCOPO ATUAL** (registro no catálogo apenas; não habilitado) | Apple Developer Program (Sign in with Apple) — não se aplica |
+| Telefone/OTP | `phone` | 7.3 | ✅ **Verificação OTP implementada e validada em produção** (endpoints `/api/v1/auth/phone/*`; portal OTP `OtpSender`; RLS por telefone) | Provedor SMS real (integração pendente — `DisabledOtpSender` em prod) |
 
 ---
 
-## 7.1 — Login & Cadastro com Google (Microsoft bloqueado)
+## 7.0 — Identity Providers (Google)
 
-- **Objetivo:** habilitar o primeiro Identity Provider real (Google).
-- **Entregue (Google):**
+- **Status:** ✅ Concluída (2026-08-05).
+- **Objetivo:** fundação de identidade — catálogo de provedores, `kc_idp_hint` e nova tela
+  de login (sem habilitar IdP real).
+- **Detalhes técnicos:** ver `sprints/7.0/REPORT.md`.
+
+## 7.1 — Login/Cadastro com Google
+
+- **Status:** ✅ **CONCLUÍDA** (2026-08-06) — histórico preservado em `sprints/7.1/REPORT.md`.
+- **Objetivo:** habilitar o primeiro (e único) Identity Provider externo real — Google.
+- **Entregue:**
   - OAuth app Google com authorized redirect
     `/realms/CRM/broker/google/endpoint` (registrado no Cloud Console).
   - IdP `google` configurado no Keycloak realm CRM (client id/secret, `useJwksUrl`,
     `syncMode=IMPORT`, `trustEmail`, scopes `openid profile email`) + 3 mappers
     (email/first name/last name); username via fallback padrão do broker (e-mail).
+  - Correção do `UsernameTemplateMapper` (Keycloak 26.3.5 exige `template`) — mapper
+    "username" removido (ver "Problemas" no report da 7.1).
   - `AUTH_GATEWAY_ENABLED_PROVIDERS=google` habilitado apenas no serviço auth-service
     do compose de produção.
-  - **Deploy controlado:** backup → sincronização do código 7.0 (a VPS estava ~24 commits
-    atrás) → rebuild auth-service/frontend → `up -d` → regressão 6.6–6.9 + cadeia curl
-    até a página de sign-in do Google (Google aceita Client ID/redirect URI).
-  - **Cadastro via IdP:** `firstBrokerLoginFlow` padrão do Keycloak (cria usuário novo no
-    primeiro login; e-mail duplicado é auto-linked — `duplicateEmailsAllowed=false`).
-  - **E2E validado em produção:** login Google real (`paulo.alves@praiaclube.org.br`) →
-    `/dashboard`. Corrigido NPE do mapper de username (Keycloak 26.3.5 exige `template`).
-- **Pendências da 7.1:**
-  - **Provisão do usuário CRM é manual** (`PROVISIONING_REQUIRED`); auto-provisionamento
-    "cadastro com Google" fica para 7.4.
-  - **Microsoft/Outlook ⛔ bloqueado** — sem app registration no Microsoft Entra; o
-    `enabled-providers` contém apenas `google` e `authorize?provider=microsoft` responde
-    `400 PROVIDER_NOT_AVAILABLE`. Reabrir quando as credenciais Entra existirem.
-- **Critérios de aceite (atingidos):** login com conta Google termina em `/dashboard` com
-  sessão de gateway criada; e-mail+senha continua funcional; botões da tela de login
-  habilitados apenas para provedores ativos.
-- **Saída:** `sprints/7.1/REPORT.md` (status: concluída).
+  - Deploy controlado na VPS (backup → sincronização do código 7.0 → rebuild → `up -d`
+    → regressão 6.6–6.9 + cadeia curl até o sign-in do Google).
+  - Testes de regressão; E2E Google validado em produção (login Google real →
+    `/dashboard`); backend 245/245, frontend 49/49, lint/typecheck/build PASS.
+  - Documentação + commit `f0b2524`.
+- **Pendência funcional (para a 7.2):** o **auto-provisionamento** completo da identidade
+  Google no banco CRM **ainda não está implementado**. O login Google está concluído
+  (Keycloak cria/importa a identidade → OIDC resolvida), mas a conta CRM correspondente não
+  é criada automaticamente: na validação da 7.1 foi necessário provisionar manualmente
+  `users` + `user_roles` para o usuário do E2E. A 7.2 deve tratar o caso de uma identidade
+  Google já autenticada que ainda não possui conta CRM correspondente.
 
-## 7.2 — Apple (Sign in with Apple)
+## 7.2 — Account Linking
 
-- **Objetivo:** habilitar Apple/iCloud como IdP.
+- **Status:** ⏳ Pendente.
+- **Objetivo:** permitir a **vinculação segura** entre a **conta local CRM** e a
+  **identidade Google** (`conta local CRM ↕ identidade Google`).
 - **Tarefas:**
-  - Adquirir Apple Developer Program (conta paga, pré-requisito) e criar Services ID + Key +
-    Private Key para "Sign in with Apple".
-  - Configurar IdP `apple` no Keycloak (`apple` já está no catálogo e no registro).
-  - Lidar com a peculiaridade da Apple: e-mail privado (Relay) e autorização apenas em
-    dispositivos/WebView — definir política de `email` privado × e-mail real do usuário.
-  - Deploy controlado + regressão.
-- **Critérios de aceite:** login com Apple (Safari/desktop) termina em `/dashboard`; e-mail
-  de relay não duplica contas (link por `sub`).
+  - Resolver o caso da identidade Google já autenticada que ainda não possui conta CRM
+    correspondente (pendência funcional herdada da 7.1) — vinculação/provisão segura.
+  - **Não fazer vinculação automática apenas porque o e-mail é igual** — definir a
+    estratégia segura de vinculação na implementação (fluxo de confirmação, prova de
+    posse, auditoria).
+  - Perfil do usuário consolidado no crm-backend (vínculo identidade ↔ usuário CRM).
+  - Auditoria de link/deslink (audit log 6.x).
+- **Critérios de aceite:** um usuário pode entrar por conta local e por identidade Google
+  vinculada sem criar duplicidade; deslink seguro; nenhum link automático baseado apenas no
+  e-mail.
 - **Saída:** `sprints/7.2/REPORT.md`.
 
 ## 7.3 — Telefone / OTP
 
-- **Objetivo:** adicionar autenticação por telefone com código OTP via Identity Broker.
-- **Tarefas:**
-  - Definir a **abstração de envio de SMS** (porta `OtpSender` + adapters: primeiro provedor
-    real, depois mock local) — hoje `phone` existe apenas no catálogo.
-  - Fluxo no Keycloak: IdP/flow custom para telefone+OTP ou fluxo de autenticação dedicado
-    (SPI), sempre atrás do Access Gateway.
-  - Políticas de segurança OTP: expiração, tentativas, cooldown, rate limit por telefone/IP
-    (reutilizar o rate limiting 6.6–6.8).
-  - Nenhum OTP em log; nunca logar o código.
-- **Critérios de aceite:** login por telefone com OTP válido termina em `/dashboard`; OTP
-  inválido/vencido rejeitado; rate limit ativo.
-- **Saída:** `sprints/7.3/REPORT.md`.
+- **Status:** ✅ **CONCLUÍDA** (2026-08-08) — histórico preservado em `sprints/7.3/REPORT.md`.
+- **Objetivo:** autenticação/verificação por **Telefone → OTP → Identidade CRM**.
+- **Entregue:**
+  - Porta `OtpSender` + adapters `ConsoleOtpSender` (dev/test) e `DisabledOtpSender`
+    (produção — nunca loga o código, invariante 7.3).
+  - `OtpService` (hash SHA-256+salt, TTL 5min, 3 tentativas, cooldown 60s, invalidação por
+    uso/expiração/excesso) + bean explícito em `OtpConfig`.
+  - Tabela `otp_codes` (V024) e colunas `phone`/`phone_verified` em `users`.
+  - Endpoints públicos `/api/v1/auth/phone/{send-otp,verify-otp,can-resend}`.
+  - **RLS por telefone (V026):** sob RLS FORCE, a conta só fica visível por telefone via
+    GUC `app.current_identity_phone`, definido APÓS a validação do OTP (prova de posse) —
+    padrão V025 aplicado ao telefone.
+  - E2E em produção: verify-otp → `success:true`, `phone_verified=t`, OTP consumido.
+  - Backend 105/105 tests PASS.
+- **Pendência funcional:** provedor SMS real em produção (hoje `DisabledOtpSender` descarta
+  o código); login completo por telefone (criar conta) fica para o backlog.
 
-## 7.4 — Account Linking
+## 7.4 — Recuperação de conta e segurança da identidade
 
-- **Objetivo:** resolver contas duplicadas e vincular identidades de provedores diferentes.
+- **Status:** ⏳ Pendente.
+- **Objetivo:** recuperação de conta e hardening da identidade.
 - **Tarefas:**
-  - Fluxo de "já tenho conta" (pedir login por senha para vincular à conta existente com o
-    mesmo e-mail) no Keycloak broker flow.
-  - Política de e-mail duplicado com IdP (link automático seguro vs. confirmação manual).
-  - Perfil do usuário consolidado no crm-backend: `external_id`/`idp` por usuário, mapeamento
-    de e-mail privado (Apple relay).
-  - Auditoria de link/deslink (audit log 6.x).
-- **Critérios de aceite:** um usuário pode entrar por qualquer provedor vinculado sem criar
-  duplicidade; deslink seguro.
+  - Recuperação de conta utilizando os mecanismos definidos na Sprint 7.3 (OTP como
+    verificação/fallback) e e-mail como fallback.
+  - Proteção contra abuso: revogação de sessões por admin, logout global
+    (`end_session_endpoint`), revisão de `bruteForceProtected`, verificação de e-mail e
+    políticas de senha do realm CRM.
+  - Hardening dos fluxos de identidade (MFA TOTP nativo do Keycloak como camada opcional —
+    decisão de produto).
+  - Auditoria dos fluxos de recuperação e de vinculação.
+- **Critérios de aceite:** recuperação funcional sem criar backdoor; sessões revogáveis;
+  fluxos de recuperação e vinculação auditados.
 - **Saída:** `sprints/7.4/REPORT.md`.
-
-## 7.5 — Recuperação de conta e segurança da identidade
-
-- **Objetivo:** recuperação de acesso e endurecimento da conta.
-- **Tarefas:**
-  - Política de recuperação quando o provedor externo é perdido (e-mail/senha como fallback).
-  - Revogação de sessões por admin, logout global (aproveitar `end_session_endpoint`).
-  - Revisar `bruteForceProtected`, email verification e políticas de senha do realm CRM.
-  - MFA nativo do Keycloak (TOTP) como camada opcional — decisão de produto.
-- **Critérios de aceite:** recuperação funcional sem criar backdoor; sessões revogáveis.
-- **Saída:** `sprints/7.5/REPORT.md`.
-
-## 7.6 — UX / Perfil de identidade
-
-- **Objetivo:** polir a experiência de identidade.
-- **Tarefas:**
-  - Logo definitivo no `LoginBrand.logoSrc` (SVG/PNG oficial) e identidade visual da tela de
-    login.
-  - Página de perfil mostrando provedores vinculados e permissão de vincular/desvincular.
-  - Estados de erro UX para provedor indisponível/falha (botões `error`, tela de retorno do
-    Keycloak).
-  - Testes E2E de todos os caminhos de login.
-- **Critérios de aceite:** tela de login com identidade final; perfil gerencia provedores.
-- **Saída:** `sprints/7.6/REPORT.md`.
-
-## 7.7 — Final Security Review
-
-- **Objetivo:** auditoria final de identidade antes de seguir para o SaaS (Sprint 7+).
-- **Tarefas:**
-  - Revisão de segurança de todos os IdPs habilitados, scopes mínimos, consentimento.
-  - Rotação de secrets de provedores e Keycloak client; Docker secrets (pendência 6.10).
-  - Regressão completa (6.1–6.10 + 7.x) na VPS + teste de performance/rate limit sob carga.
-  - Fechamento: atualização do `SPRINT_INDEX.md` e marcação da etapa Identidade como concluída.
-- **Critérios de aceite:** nenhuma exposição nova; suítes verdes; documentação final.
-- **Saída:** `sprints/7.7/REPORT.md`.
 
 ---
 
-## Dependências externas (necessárias para 7.1–7.3)
+## Fora do escopo atual
+
+- **Microsoft / Microsoft Entra ID** — ⛔ fora do escopo da Sprint 7. O catálogo de código
+  mantém o registro `microsoft` como "preparado", mas **não há sprint** prevista para
+  habilitá-lo; nenhuma credencial Entra será requisitada.
+- **Apple / Sign in with Apple / iCloud** — ⛔ fora do escopo da Sprint 7. O catálogo de
+  código mantém o registro `apple` como "preparado", mas **não há sprint** prevista para
+  habilitá-lo; nenhum Apple Developer Program será requisitado.
+- **Meta/Facebook e qualquer outro IdP externo não explicitamente definido** — fora de escopo.
+- Nota histórica: a versão anterior deste roadmap previa as sprints 7.2 (Apple), 7.5
+  (Recuperação), 7.6 (UX/Perfil) e 7.7 (Final Security Review). A partir da decisão de
+  2026-08-06 a estrutura oficial é 7.0 → 7.4; itens gerais (logo definitivo para
+  `LoginBrand.logoSrc`, UX/perfil de identidade e revisão de segurança final) ficam como
+  backlog pós-7.4, sem sprint numerada, e não tratam de Apple/Microsoft.
+
+---
+
+## Dependências externas
 
 - Google Cloud Console (OAuth 2.0 Client ID) — **7.1** — ✅ consumido (Google habilitado).
-- Microsoft Entra (app registration) — **7.1** — ⏳ pendente (Microsoft bloqueado).
-- Apple Developer Program (conta paga + Services ID/Key) — **7.2**.
-- Provedor de SMS — **7.3**.
+- Provedor de SMS — **7.3** — 🔶 abstração de envio implementada; integração de provedor real pendente (em produção o `DisabledOtpSender` descarta o código).
+- Microsoft Entra (app registration) — **fora do escopo atual** (não é dependência ativa).
+- Apple Developer Program — **fora do escopo atual** (não é dependência ativa).
 - Nenhuma credencial será inventada; a sprint 7.0 não consome nenhuma delas.

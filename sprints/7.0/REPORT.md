@@ -2,6 +2,11 @@
 
 **Data:** 2026-08-05 · **Ambiente:** local (código 100% local; sem deploy nesta sprint) · **Status:** ✅ Concluída
 
+> **Nota (2026-08-06):** decisão de escopo — a Sprint 7 tem como IdP externo **somente o
+> Google**. Microsoft/Entra e Apple/Sign in with Apple estão **FORA DO ESCOPO ATUAL**
+> (permanecem apenas como registro "preparado" no catálogo de código, não habilitados). A
+> estrutura oficial da Sprint 7 é 7.0 → 7.4 (ver `sprints/7.0/IDENTITY_ROADMAP.md`).
+
 ## Identificação
 
 - **Sprint:** 7.0
@@ -149,7 +154,7 @@ sem credenciais reais.
   sensíveis).
 - **Identidade única / account linking:** quando um IdP for habilitado, a criação de
   usuários continua via Keycloak (`verifyEmail=False`, `registrationAllowed=False`); o
-  mapeamento e o account linking de e-mail duplicado serão decididos no roadmap 7.1/7.4 —
+  mapeamento e o account linking de e-mail duplicado serão decididos no roadmap 7.1/7.2 —
   não implementados nesta sprint.
 
 ## Testes locais
@@ -179,12 +184,13 @@ será controlado (backup → build → `up -d` → regressão 6.6–6.9 + login 
 
 ## Pendências / recomendações
 
-- **Credenciais reais** de Google OAuth (Cloud Console) e Microsoft Entra para configurar os
-  IdPs no Keycloak e habilitar `AUTH_GATEWAY_ENABLED_PROVIDERS` (7.1).
-- **Apple Developer Program** (pré-requisito para Sign in with Apple — documentado em 7.2).
+- **Credenciais reais** de Google OAuth (Cloud Console) para configurar o IdP no Keycloak e
+  habilitar `AUTH_GATEWAY_ENABLED_PROVIDERS` (7.1 — consumidas; Google habilitado).
+- **Microsoft Entra e Apple Developer Program:** **fora do escopo da Sprint 7** (decisão
+  2026-08-06) — não são dependências ativas; nenhuma credencial será requisitada.
 - **Provedor SMS** para Telefone/OTP (abstração de envio — roadmap 7.3).
 - **Validação na VPS** (`GET /auth/providers` e login real) apenas quando houver deploy.
-- **Account linking** de e-mails duplicados entre IdP e conta local (7.4).
+- **Account linking** de e-mails duplicados entre IdP e conta local (7.2).
 - **Logo definitivo** — fornecer SVG/PNG para `LoginBrand.logoSrc`.
 
 ## Resultado
@@ -200,6 +206,9 @@ STATUS: **CONCLUÍDA**.
 
 ## Próxima sprint (roadmap)
 
-- **7.1 — Login & Cadastro com Google/Microsoft:** configurar IdPs no Keycloak com
-  credenciais reais, habilitar `enabled-providers`, deploy controlado + regressão completa,
-  fluxo de account linking básico. Ver `sprints/7.0/IDENTITY_ROADMAP.md`.
+- **7.1 — Login/Cadastro com Google** (✅ concluída): IdP `google` no Keycloak com
+  credenciais reais, `enabled-providers=google`, deploy controlado + regressão e E2E. Ver
+  `sprints/7.1/REPORT.md`.
+- **7.2 — Account Linking**, **7.3 — Telefone/OTP** e **7.4 — Recuperação de conta e
+  segurança da identidade**: próximas. Apple/Microsoft fora do escopo da Sprint 7. Ver
+  `sprints/7.0/IDENTITY_ROADMAP.md`.
