@@ -92,7 +92,6 @@ resendCooldownSeconds}`; invariante: `DisabledOtpSender` em prod (nunca loga o O
 - **Provedor SMS real** no lugar do `DisabledOtpSender` em produção (7.3 segue).
 - **Auto-provisionamento por telefone** (criar conta via telefone, sem senha Keycloak).
 - **Anti-abuso/rate limit fino** em `send-otp` por IP.
-- **Account linking visual (7.2)** ainda pendente de validação em produção.
 
 ## Resultado
 
@@ -107,8 +106,8 @@ STATUS: **CONCLUÍDA**.
 
 ## Próxima sprint (roadmap)
 
-- **7.1 — Google IdP E2E** (validação final), **7.2 — Account Linking**, **7.5+ — recuperação
-  de conta / segurança de identidade** (dependência 7.4 e 7.7).
+- **7.1 — Google IdP E2E** (validação final), **7.2 — Account Linking** (concluída em 2026-08-08),
+  **7.5+ — recuperação de conta / segurança de identidade** (dependência 7.4 e 7.7).
 
 ---
 

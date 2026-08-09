@@ -104,7 +104,6 @@ válido em `otp_codes`:
 - **Provedor SMS real** no lugar do `DisabledOtpSender` em produção.
 - **Auto-provisionamento / login completo por telefone** (criar conta por telefone).
 - **Rate limiting fino** no `send-otp` (por IP/sessão) e medidas anti-abuso.
-- **Account linking visual (7.2)** ainda pendente de fechamento.
 
 ## Resultado
 
@@ -121,4 +120,4 @@ STATUS: **CONCLUÍDA**.
 ## Próxima sprint (roadmap)
 
 - **7.4 — Recuperação de conta e segurança da identidade** (depende de 7.2 e 7.3).
-- **7.2 — Account Linking** (vinculação local/Google) — em andamento.
+- **7.2 — Account Linking** (vinculação local/Google) — concluída em 2026-08-08.

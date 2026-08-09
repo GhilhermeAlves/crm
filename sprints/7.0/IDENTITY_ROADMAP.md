@@ -4,7 +4,7 @@
 > Identity Brokering. **Decisão de escopo (2026-08-06): o único Identity Provider externo da
 > Sprint 7 é o Google.** Microsoft/Microsoft Entra ID, Apple/Sign in with Apple/iCloud e
 > qualquer outro IdP externo fora do escopo atual — não há sprint prevista para
-> eles. A estrutura oficial da Sprint 7 é 7.0 → 7.5 (7.2 Account Linking 🚧 em andamento).
+> eles. A estrutura oficial da Sprint 7 é 7.0 → 7.5 (todas ✅ concluídas, incluindo 7.2 Account Linking).
 
 ## Princípios invariantes
 
@@ -64,25 +64,21 @@
 
 ## 7.2 — Account Linking
 
-- **Status:** 🚧 **Em andamento** — implementação em código (commits 2026-08-07) com testes
-  locais verdes, mas **NÃO formalmente concluído** (ver débito).
+- **Status:** ✅ **CONCLUÍDA** (2026-08-08) — fechamento registrado em `sprints/7.2/REPORT.md`.
 - **Objetivo:** permitir a **vinculação segura** entre a **conta local CRM** e a
   **identidade Google** (`conta local CRM ↕ identidade Google`).
-- **Entregue em código:**
-  - Fluxo Caso B/C no gateway (`PendingLink`, `InMemoryPendingLinkStore`,
+- **Entregue:**
+  - Fluxo Caso B/C no gateway (`PendingLink`, `InMemoryPendingLinkStore`, `RedisPendingLinkStore`,
     `BackendIdentityClient`, `CurrentUserResolution.LinkingRequired` — nunca vincula por e-mail).
   - `/auth/link-status` + `POST /auth/link` no auth-service (csrf cookie-to-header, rate limit).
   - Backend: `LinkingRequiredException`, `linkKeycloakIdentity` (prova de senha local),
     `provisionKeycloakUser`, `IdentityInternalController` (`/internal/auth/provision`, `/internal/auth/link`).
   - RLS V025 (`app.current_identity_email`).
   - Frontend: `/link-account` + `LinkAccountForm` (exibe e-mail do vínculo encontrado).
-- **Débito que impede a conclusão (registrado no `SPRINT_INDEX.md`, 2026-08-08):**
-  - 🚧 **Falta** `sprints/7.2/REPORT.md` (+ REVIEW/RETROSPECTIVE) — pasta inexistente.
-  - 🚧 **Sem validação E2E em produção** (sprints irmãs têm E2E na VPS).
-  - 🚧 `PendingLinkStore` **in-memory only** (prod usa `AUTH_GATEWAY_SESSION_STORE=redis`).
-  - 🚧 `/auth/link-status` e `/auth/link` **sem testes unitários** no auth-service;
-    branch `LinkingRequired` sem cobertura.
-- **Saída (quando fechar):** `sprints/7.2/REPORT.md`.
+- **Fechamento (débito resolvido):** `sprints/7.2/REPORT.md` criado; E2E em produção validado na
+  VPS (Redis, sobrevivência a reinício, expiração lógica, CSRF 403, senha incorreta 401);
+  `RedisPendingLinkStore` alinhado a `AUTH_GATEWAY_SESSION_STORE=redis`; testes unitários de
+  `/auth/link-status`/`/auth/link`; correção do registro CSRF de `/auth/link`.
 
 ## 7.3 — Telefone / OTP
 

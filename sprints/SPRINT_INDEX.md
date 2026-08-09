@@ -72,20 +72,21 @@
 |--------|------|--------|------|-------------|-------------|
 | 7.0 | Identity Provider Architecture (catálogo de provedores + `kc_idp_hint` + fundação do login) | ✅ Concluída | 2026-08-05 | AI Agent | 6.10 |
 | 7.1 | Login/Cadastro com Google | ✅ Concluída | 2026-08-06 | AI Agent | 7.0 |
-| 7.2 | Account Linking | 🚧 Em andamento | — | AI Agent | 7.1 |
+| 7.2 | Account Linking | ✅ Concluída | 2026-08-08 | AI Agent | 7.1 |
 | 7.3 | Telefone/OTP | ✅ Concluída | 2026-08-08 | AI Agent | 7.1 |
 | 7.4 | Telefone → OTP → senha Keycloak (login completo por telefone na UI, catálogo `phone-enabled`, rota nginx direta) | ✅ Concluída | 2026-08-08 | AI Agent | 7.2, 7.3 |
 | 7.5 | Recuperação de conta — forgot/reset-password com reset REAL no Keycloak (service account `crm-keycloak-admin`, rotas nginx diretas, RLS V027/V028) | ✅ Concluída | 2026-08-08 | AI Agent | 7.3, 7.4 |
 
-> **7.2 — débito real registrado (NÃO pode ser marcada ✅ enquanto estiver pendente):**
-> - 🚧 **Falta** `sprints/7.2/REPORT.md` (+ REVIEW/RETROSPECTIVE — não existe pasta `sprints/7.2/`);
-> - 🚧 **Sem validação E2E em produção** (sprints irmãs 7.1/7.3/7.4/7.5 têm E2E documentado na VPS);
-> - 🚧 `PendingLinkStore` é apenas **in-memory** (`InMemoryPendingLinkStore`) enquanto prod usa
->   `AUTH_GATEWAY_SESSION_STORE=redis` — falta alinhamento do armazenamento da pendência com o store externo;
-> - 🚧 `/auth/link-status` e `/auth/link` **sem testes unitários** no auth-service (branche
->   `LinkingRequired` de `CurrentUserResolutionService` sem cobertura);
-> - 🚧 Reports 7.3/7.4 registram explicitamente: *"Account linking visual (7.2) ainda pendente de
->   fechamento / validação em produção"*.
+> **7.2 — Account Linking ✅ Concluída (2026-08-08).** Débito registrado em 2026-08-08 resolvido:
+> - ✅ `sprints/7.2/REPORT.md` criado (este fechamento);
+> - ✅ E2E em produção validado na VPS (Redis ativo, sobrevivência a reinício, expiração lógica,
+>   CSRF 403, senha incorreta 401 sem consumo);
+> - ✅ `RedisPendingLinkStore` (chave `gateway:pending-link:<token>`, TTL nativo, uso único)
+>   alinhado a `AUTH_GATEWAY_SESSION_STORE=redis`; `InMemoryPendingLinkStore` condicional;
+> - ✅ `/auth/link-status` e `/auth/link` com testes unitários (`GatewayOidcLinkingTest`,
+>   `OidcGatewayControllerTest`, `RedisPendingLinkStoreTest`);
+> - ✅ Bug CSRF crítico corrigido: `GatewayCsrfFilter` agora registrado também para `/auth/link`
+>   (commit `8851595`).
 
 ## SaaS
 
@@ -136,13 +137,13 @@
 | Knowledge Layer | 3 | 3 | 0 | 0 |
 | Infraestrutura | 5 | 0 | 1 | 4 |
 | Segurança | 12 | 12 | 0 | 0 |
-| Identidade / Autenticação | 6 | 5 | 1 | 0 |
+| Identidade / Autenticação | 6 | 6 | 0 | 0 |
 | SaaS | 1 | 0 | 0 | 1 |
 | CRM | 4 | 0 | 0 | 4 |
 | Omnichannel | 3 | 0 | 0 | 3 |
 | Analytics | 1 | 0 | 0 | 1 |
 | IA | 1 | 0 | 0 | 1 |
-| **Total** | **39** | **23** | **2** | **14** |
+| **Total** | **39** | **24** | **1** | **14** |
 
 ---
 
@@ -173,8 +174,8 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-08 — Sprint 7.5 (Recuperação de conta) concluída; numeração alinhada
+*Última atualização: 2026-08-08 — Sprint 7.2 (Account Linking) concluída; numeração alinhada
 (7.x = Identidade/Autenticação; 8=Empresas; 9–12 = CRM; 13–15 = Omnichannel; 16=Dashboard; 17=IA);
-7.2 (Account Linking) permanece 🚧 Em andamento com débito registrado —
-não está concluída até haver `sprints/7.2/REPORT.md`, validação E2E em produção, cobertura de teste
-nos endpoints de link e alinhamento do store de pendência com Redis.*
+fechamento incluiu `sprints/7.2/REPORT.md`, `RedisPendingLinkStore` (alinhado ao
+`AUTH_GATEWAY_SESSION_STORE=redis`), testes unitários de `/auth/link-status`/`/auth/link`, E2E em
+produção na VPS e correção do registro CSRF de `/auth/link`.*
