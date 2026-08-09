@@ -9,7 +9,7 @@ import java.util.Optional;
  * poucos minutos, uso único no sucesso e sem dados críticos além dos tokens do
  * servidor. Em memória (padrão) é suficiente para o fluxo; para múltiplas
  * réplicas a mesma decisão de {@link GatewaySessionStore} (Redis) se aplica —
- * ver pendência em REPORT 7.2.
+ * ver {@link RedisPendingLinkStore}.
  */
 public interface PendingLinkStore {
 

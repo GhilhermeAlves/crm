@@ -1,6 +1,7 @@
 package com.becommerce.auth.infrastructure.gateway;
 
 import com.becommerce.auth.domain.gateway.PendingLink;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -10,11 +11,14 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * {@link PendingLinkStore} em memória (Sprint 7.2). Estrutura paralela ao
+ * {@link PendingLinkStore} em memória (Sprint 7.2). Ativada por padrão
+ * ({@code auth.gateway.session-store=memory}) e paralela ao
  * {@link InMemoryGatewaySessionStore}: nó único, suficiente para o fluxo de
- * vínculo de curta duração.
+ * vínculo de curta duração. A implementação distribuída é
+ * {@link RedisPendingLinkStore}.
  */
 @Component
+@ConditionalOnProperty(name = "auth.gateway.session-store", havingValue = "memory", matchIfMissing = true)
 public class InMemoryPendingLinkStore implements PendingLinkStore {
 
     private final Map<String, PendingLink> entries = new ConcurrentHashMap<>();
