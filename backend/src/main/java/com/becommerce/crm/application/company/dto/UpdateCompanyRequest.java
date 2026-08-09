@@ -18,6 +18,7 @@ public record UpdateCompanyRequest(
         String status,
         Integer maxUsers,
         Integer maxStorageMb,
+        Integer maxContacts,
         String logoUrl,
         String notes
 ) {

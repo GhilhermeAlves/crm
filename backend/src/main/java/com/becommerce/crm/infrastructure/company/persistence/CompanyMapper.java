@@ -31,6 +31,7 @@ public class CompanyMapper {
         entity.setStatus(company.getStatus().name());
         entity.setMaxUsers(company.getMaxUsers());
         entity.setMaxStorageMb(company.getMaxStorageMb());
+        entity.setMaxContacts(company.getMaxContacts());
         entity.setLogoUrl(company.getLogoUrl());
         entity.setNotes(company.getNotes());
         entity.setCreatedAt(company.getCreatedAt());
@@ -61,6 +62,7 @@ public class CompanyMapper {
                 CompanyStatus.valueOf(entity.getStatus()),
                 entity.getMaxUsers(),
                 entity.getMaxStorageMb(),
+                entity.getMaxContacts(),
                 entity.getLogoUrl(),
                 entity.getNotes(),
                 entity.getCreatedAt(),

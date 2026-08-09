@@ -102,13 +102,32 @@
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 8 | Empresas | ⏳ Pendente | — | — | 7.5 |
+| 8 | Empresas | ✅ Concluída | 2026-08-09 | AI Agent | 7.5 |
+| 8.1 | Company Foundation | ✅ Concluída | 2026-08-09 | AI Agent | 8 (plano) |
+| 8.2 | Membership | ⏳ Pendente | — | — | 8.1 |
+| 8.3 | Onboarding | ⏳ Pendente | — | — | 8.2 |
+| 8.4 | Company Switcher | ⏳ Pendente | — | — | 8.2 |
+| 8.5 | Invitations | ⏳ Pendente | — | — | 8.2, 8.3 |
+| 8.6 | SaaS Hardening | ⏳ Pendente | — | — | 8.4, 8.5 |
 
 > **Planejamento (próxima sprint — não implementar nesta etapa):** a Sprint 8 será dividida
 > internamente em **8.1 Company Foundation · 8.2 Membership · 8.3 Onboarding ·
 > 8.4 Company Switcher · 8.5 Invitations · 8.6 SaaS Hardening** (padrão decimal já adotado em
 > 6.x/7.x). Plano detalhado (entregas, critérios de aceite, decisões de escopo D1–D6 e
 > dependências externas) em **`sprints/8/SPRINT_PLAN.md`**.
+
+> **8.1 — Company Foundation ✅ Concluída (2026-08-09).**
+> - ✅ Empresa como entidade de primeiro plano: `CompanyController` passa a mapear
+>   `/api/v1/companies` com alias de compatibilidade `/api/v1/tenants`;
+> - ✅ Leitura por membro (`GET /`, `/me`, `/{id}` com `isAuthenticated()` + escopo no serviço),
+>   leitura cross-tenant restrita a SUPER_ADMIN;
+> - ✅ API de settings da empresa (`GET/PUT /companies/{id}/settings`, `settings:view/update`,
+>   escopo restrito à própria empresa);
+> - ✅ `companies.max_contacts` (V029, default 500) exposto no modelo;
+> - ✅ Bug corrigido: upsert de settings gerava `StaleObjectStateException` (500) —
+>   `Persistable` + `existsById` para decidir `persist` vs `merge`;
+> - ✅ Suíte backend verde (125 testes) + E2E em produção **33/33 PASS**;
+> - 📄 `sprints/8.1/REPORT.md`.
 
 ## CRM
 
@@ -150,12 +169,12 @@
 | Infraestrutura | 5 | 0 | 0 | 0 | 5 |
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
-| SaaS | 1 | 0 | 0 | 1 | 0 |
+| SaaS | 7 | 2 | 0 | 5 | 0 |
 | CRM | 4 | 0 | 0 | 4 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **39** | **24** | **0** | **10** | **5** |
+| **Total** | **45** | **26** | **0** | **14** | **5** |
 
 ---
 
@@ -186,7 +205,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-09 — Sprint 7.2 (Account Linking) concluída (2026-08-08);
-fase 4.x (Infraestrutura Auth monolítica) consolidada como **↪️ Absorvida** pela arquitetura
-Keycloak/OIDC (Sprints 5–7); resumo agora 39 sprints: 24 ✅, 0 🚧, 10 ⏳, 5 ↪️. Próxima sprint:
-**8 — Empresas** (SaaS), detalhada em `sprints/8/SPRINT_PLAN.md`.*
+*Última atualização: 2026-08-09 — Sprint **8.1 (Company Foundation)** concluída com E2E em produção
+33/33 PASS; resumo agora 45 sprints: 26 ✅, 0 🚧, 14 ⏳, 5 ↪️. Próxima sprint:
+**8.2 — Membership** (SaaS), detalhada em `sprints/8/SPRINT_PLAN.md`.*

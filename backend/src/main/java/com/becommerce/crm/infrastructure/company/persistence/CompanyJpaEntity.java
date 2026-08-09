@@ -71,6 +71,9 @@ public class CompanyJpaEntity {
     @Column(name = "max_storage_mb", nullable = false)
     private int maxStorageMb;
 
+    @Column(name = "max_contacts", nullable = false)
+    private int maxContacts;
+
     @Column(name = "logo_url")
     private String logoUrl;
 
@@ -147,6 +150,9 @@ public class CompanyJpaEntity {
 
     public int getMaxStorageMb() { return maxStorageMb; }
     public void setMaxStorageMb(int maxStorageMb) { this.maxStorageMb = maxStorageMb; }
+
+    public int getMaxContacts() { return maxContacts; }
+    public void setMaxContacts(int maxContacts) { this.maxContacts = maxContacts; }
 
     public String getLogoUrl() { return logoUrl; }
     public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }

@@ -56,6 +56,8 @@ public record CreateCompanyRequest(
 
         Integer maxStorageMb,
 
+        Integer maxContacts,
+
         String logoUrl,
 
         String notes

@@ -43,6 +43,7 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
             <TableHead>Plano</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-center">Usuários</TableHead>
+            <TableHead className="text-center">Contatos</TableHead>
             <TableHead>Criado em</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -77,6 +78,9 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
               </TableCell>
               <TableCell className="text-center">
                 <span className="text-sm">{tenant.maxUsers}</span>
+              </TableCell>
+              <TableCell className="text-center">
+                <span className="text-sm">{tenant.maxContacts}</span>
               </TableCell>
               <TableCell>
                 <span className="text-sm text-muted-foreground">

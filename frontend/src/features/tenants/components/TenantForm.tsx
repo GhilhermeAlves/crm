@@ -60,6 +60,7 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
       plan: initialData?.plan ?? "starter",
       maxUsers: initialData?.maxUsers ?? 5,
       maxStorageMb: initialData?.maxStorageMb ?? 1024,
+      maxContacts: initialData?.maxContacts ?? 500,
       logoUrl: initialData?.logoUrl ?? null,
       notes: initialData?.notes ?? "",
       address: {
@@ -229,6 +230,17 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
               />
               {errors.maxStorageMb && (
                 <p className="text-sm text-destructive">{errors.maxStorageMb.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="maxContacts">Limite de Contatos *</Label>
+              <Input
+                id="maxContacts"
+                type="number"
+                {...register("maxContacts", { valueAsNumber: true })}
+              />
+              {errors.maxContacts && (
+                <p className="text-sm text-destructive">{errors.maxContacts.message}</p>
               )}
             </div>
           </div>

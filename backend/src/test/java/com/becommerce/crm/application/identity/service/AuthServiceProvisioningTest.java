@@ -86,7 +86,7 @@ class AuthServiceProvisioningTest {
                 "contato@empresa.com", "(11) 99999-0000", "https://empresa.com",
                 "01001000", "Rua Teste", "100", "Sala 1",
                 "Centro", "São Paulo", "SP", "Brasil",
-                CompanyPlan.STARTER, 5, 1024, null, null
+                CompanyPlan.STARTER, 5, 1024, 500, null, null
         );
 
         agentRole = Role.createSystem(RoleName.AGENT);

@@ -6,7 +6,7 @@ import type {
   ListTenantsParams,
 } from "../types/tenant.types";
 
-const BASE_PATH = "/tenants";
+const BASE_PATH = "/companies";
 
 export const TenantService = {
   async list(params?: ListTenantsParams): Promise<Tenant[]> {

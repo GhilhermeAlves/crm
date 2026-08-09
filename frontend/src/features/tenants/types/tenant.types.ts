@@ -27,6 +27,7 @@ export type Tenant = {
   plan: TenantPlan;
   maxUsers: number;
   maxStorageMb: number;
+  maxContacts: number;
   logoUrl: string | null;
   notes: string;
   address: TenantAddress;

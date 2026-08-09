@@ -9,6 +9,7 @@ import {
   MapPin,
   Users,
   HardDrive,
+  Contact,
   Calendar,
   Pencil,
 } from "lucide-react";
@@ -126,6 +127,11 @@ export function TenantDetails({ tenant }: TenantDetailsProps) {
               icon={<HardDrive className="h-4 w-4" />}
               label="Armazenamento"
               value={`${tenant.maxStorageMb >= 1024 ? `${(tenant.maxStorageMb / 1024).toFixed(0)} GB` : `${tenant.maxStorageMb} MB`}`}
+            />
+            <InfoRow
+              icon={<Contact className="h-4 w-4" />}
+              label="Limite de Contatos"
+              value={`${tenant.maxContacts}`}
             />
             {tenant.notes && (
               <>

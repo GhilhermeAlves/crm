@@ -17,6 +17,7 @@ public record CompanyResponse(
         String plan,
         int maxUsers,
         int maxStorageMb,
+        int maxContacts,
         String logoUrl,
         String notes,
         LocalDateTime createdAt,

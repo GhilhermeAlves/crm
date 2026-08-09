@@ -63,7 +63,7 @@ class CrmAccessServiceTest {
                 "contato@empresa.com", "(11) 99999-0000", "https://empresa.com",
                 "01001000", "Rua Teste", "100", "Sala 1",
                 "Centro", "São Paulo", "SP", "Brasil",
-                CompanyPlan.STARTER, 5, 1024, null, null);
+                CompanyPlan.STARTER, 5, 1024, 500, null, null);
         return Company.reconstitute(
                 created.getId(), created.getLegalName(), created.getTradingName(),
                 created.getCnpj(), created.getStateRegistration(), created.getMunicipalRegistration(),
@@ -72,7 +72,7 @@ class CrmAccessServiceTest {
                 created.getAddressComplement(), created.getAddressNeighborhood(),
                 created.getAddressCity(), created.getAddressState(), created.getAddressCountry(),
                 created.getPlan(), status,
-                created.getMaxUsers(), created.getMaxStorageMb(),
+                created.getMaxUsers(), created.getMaxStorageMb(), created.getMaxContacts(),
                 created.getLogoUrl(), created.getNotes(),
                 created.getCreatedAt(), created.getUpdatedAt());
     }

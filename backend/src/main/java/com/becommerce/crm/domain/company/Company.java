@@ -27,6 +27,7 @@ public class Company {
     private CompanyStatus status;
     private int maxUsers;
     private int maxStorageMb;
+    private int maxContacts;
     private String logoUrl;
     private String notes;
     private final LocalDateTime createdAt;
@@ -54,6 +55,7 @@ public class Company {
             CompanyStatus status,
             int maxUsers,
             int maxStorageMb,
+            int maxContacts,
             String logoUrl,
             String notes,
             LocalDateTime createdAt,
@@ -80,6 +82,7 @@ public class Company {
         this.status = status;
         this.maxUsers = maxUsers;
         this.maxStorageMb = maxStorageMb;
+        this.maxContacts = maxContacts;
         this.logoUrl = logoUrl;
         this.notes = notes;
         this.createdAt = createdAt;
@@ -106,6 +109,7 @@ public class Company {
             CompanyPlan plan,
             int maxUsers,
             int maxStorageMb,
+            int maxContacts,
             String logoUrl,
             String notes
     ) {
@@ -119,7 +123,7 @@ public class Company {
                 addressComplement, addressNeighborhood,
                 addressCity, addressState, addressCountry,
                 plan, CompanyStatus.ACTIVE,
-                maxUsers, maxStorageMb,
+                maxUsers, maxStorageMb, maxContacts,
                 logoUrl, notes,
                 now, now
         );
@@ -147,6 +151,7 @@ public class Company {
             CompanyStatus status,
             int maxUsers,
             int maxStorageMb,
+            int maxContacts,
             String logoUrl,
             String notes,
             LocalDateTime createdAt,
@@ -160,7 +165,7 @@ public class Company {
                 addressComplement, addressNeighborhood,
                 addressCity, addressState, addressCountry,
                 plan, status,
-                maxUsers, maxStorageMb,
+                maxUsers, maxStorageMb, maxContacts,
                 logoUrl, notes,
                 createdAt, updatedAt
         );
@@ -184,6 +189,7 @@ public class Company {
             CompanyStatus status,
             int maxUsers,
             int maxStorageMb,
+            int maxContacts,
             String logoUrl,
             String notes
     ) {
@@ -204,6 +210,7 @@ public class Company {
         this.status = status;
         this.maxUsers = maxUsers;
         this.maxStorageMb = maxStorageMb;
+        this.maxContacts = maxContacts;
         this.logoUrl = logoUrl;
         this.notes = notes;
         this.updatedAt = LocalDateTime.now();
@@ -230,6 +237,7 @@ public class Company {
     public CompanyStatus getStatus() { return status; }
     public int getMaxUsers() { return maxUsers; }
     public int getMaxStorageMb() { return maxStorageMb; }
+    public int getMaxContacts() { return maxContacts; }
     public String getLogoUrl() { return logoUrl; }
     public String getNotes() { return notes; }
     public LocalDateTime getCreatedAt() { return createdAt; }

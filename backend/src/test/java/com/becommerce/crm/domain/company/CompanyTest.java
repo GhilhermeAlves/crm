@@ -16,7 +16,7 @@ class CompanyTest {
                 "contato@empresa.com", "(11) 99999-0000", "https://empresa.com",
                 "01001000", "Rua Teste", "100", "Sala 1",
                 "Centro", "São Paulo", "SP", "Brasil",
-                CompanyPlan.STARTER, 5, 1024, null, null
+                CompanyPlan.STARTER, 5, 1024, 500, null, null
         );
 
         assertNotNull(company.getId());
@@ -27,6 +27,7 @@ class CompanyTest {
         assertEquals(CompanyPlan.STARTER, company.getPlan());
         assertEquals(5, company.getMaxUsers());
         assertEquals(1024, company.getMaxStorageMb());
+        assertEquals(500, company.getMaxContacts());
         assertNotNull(company.getCreatedAt());
         assertNotNull(company.getUpdatedAt());
     }
@@ -41,13 +42,14 @@ class CompanyTest {
                 "01001000", "Rua Teste", "100", "Sala 1",
                 "Centro", "São Paulo", "SP", "Brasil",
                 CompanyPlan.PROFESSIONAL, CompanyStatus.ACTIVE,
-                10, 2048, "https://logo.png", "Notes",
+                10, 2048, 1000, "https://logo.png", "Notes",
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now()
         );
 
         assertEquals(id, company.getId());
         assertEquals(CompanyPlan.PROFESSIONAL, company.getPlan());
         assertEquals(10, company.getMaxUsers());
+        assertEquals(1000, company.getMaxContacts());
     }
 
     @Test
@@ -58,7 +60,7 @@ class CompanyTest {
                 "contato@empresa.com", "(11) 99999-0000", null,
                 "01001000", "Rua Teste", "100", null,
                 "Centro", "São Paulo", "SP", "Brasil",
-                CompanyPlan.STARTER, 5, 1024, null, null
+                CompanyPlan.STARTER, 5, 1024, 500, null, null
         );
 
         company.update(
@@ -67,7 +69,7 @@ class CompanyTest {
                 "02002000", "Rua Nova", "200", "Andar 2",
                 "Novo Bairro", "Rio de Janeiro", "RJ", "Brasil",
                 CompanyPlan.ENTERPRISE, CompanyStatus.SUSPENDED,
-                50, 4096, "https://novo-logo.png", "Updated notes"
+                50, 4096, 1000, "https://novo-logo.png", "Updated notes"
         );
 
         assertEquals("Empresa Updated LTDA", company.getLegalName());
@@ -75,6 +77,7 @@ class CompanyTest {
         assertEquals(CompanyPlan.ENTERPRISE, company.getPlan());
         assertEquals(CompanyStatus.SUSPENDED, company.getStatus());
         assertEquals(50, company.getMaxUsers());
+        assertEquals(1000, company.getMaxContacts());
     }
 
     @Test
@@ -86,7 +89,7 @@ class CompanyTest {
                 "01001000", "Rua Teste", "100", null,
                 "Centro", "São Paulo", "SP", "Brasil",
                 CompanyPlan.STARTER, CompanyStatus.ACTIVE,
-                5, 1024, null, null,
+                5, 1024, 500, null, null,
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now()
         );
 
@@ -96,7 +99,7 @@ class CompanyTest {
                 "02002000", "Rua Outra", "200", null,
                 "Outro Bairro", "Rio de Janeiro", "RJ", "Brasil",
                 CompanyPlan.ENTERPRISE, CompanyStatus.ACTIVE,
-                50, 4096, null, null,
+                50, 4096, 1000, null, null,
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now()
         );
 

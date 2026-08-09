@@ -56,6 +56,10 @@ export const tenantSchema = z.object({
     .number({ invalid_type_error: "Limite de armazenamento é obrigatório" })
     .min(100, "Mínimo 100 MB")
     .max(1000000, "Máximo 1 TB"),
+  maxContacts: z
+    .number({ invalid_type_error: "Limite de contatos é obrigatório" })
+    .min(1, "Mínimo 1 contato")
+    .max(1000000, "Máximo 1.000.000 contatos"),
   logoUrl: z.string().nullable().optional().default(null),
   notes: z.string().max(2000).optional().default(""),
   address: tenantAddressSchema,
