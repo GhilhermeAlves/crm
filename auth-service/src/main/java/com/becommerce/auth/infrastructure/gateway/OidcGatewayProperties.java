@@ -35,7 +35,7 @@ public class OidcGatewayProperties {
     private String csrfCookieName = "XSRF-TOKEN";
     private String csrfHeaderName = "X-XSRF-TOKEN";
     private String appBaseUrl = "";
-    private Duration authorizationRequestTtl = Duration.ofMinutes(10);
+    private Duration authorizationRequestTtl = Duration.ofMinutes(30);
     private Duration tokenExchangeTimeout = Duration.ofSeconds(10);
     private Duration clockSkew = Duration.ofSeconds(30);
     private String sessionStore = "memory";
