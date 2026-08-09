@@ -31,7 +31,8 @@ import java.util.List;
 /**
  * Habilita a configuração do Access Gateway OIDC ({@code auth.gateway.*}), o
  * agendamento da purga de estados/sessões em memória e registra o
- * {@link GatewayCsrfFilter} (proteção cookie-to-header de {@code /auth/refresh}).
+ * {@link GatewayCsrfFilter} (proteção cookie-to-header de {@code /auth/refresh}
+ * e {@code POST /auth/link} — Sprint 7.2).
  *
  * <p>Validação de segurança: no profile {@code prod} o cookie de sessão do
  * gateway é obrigatoriamente {@code Secure}. Configuração insegura
@@ -67,7 +68,7 @@ public class GatewayConfig {
                                                                 ObjectMapper objectMapper) {
         FilterRegistrationBean<GatewayCsrfFilter> registration =
                 new FilterRegistrationBean<>(new GatewayCsrfFilter(cookieFactory, properties, objectMapper));
-        registration.setUrlPatterns(List.of("/auth/refresh"));
+        registration.setUrlPatterns(List.of("/auth/refresh", "/auth/link"));
         registration.setOrder(Ordered.LOWEST_PRECEDENCE - 100);
         return registration;
     }
