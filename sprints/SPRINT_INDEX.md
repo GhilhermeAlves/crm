@@ -43,11 +43,21 @@
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 4.1 | Infraestrutura Auth | 🚧 Em andamento | 2026-07-15 | AI Agent | Sprint 3.2 |
-| 4.2 | Usuários | ⏳ Pendente | — | — | 4.1 |
-| 4.3 | Login | ⏳ Pendente | — | — | 4.1, 4.2 |
-| 4.4 | Frontend Auth | ⏳ Pendente | — | — | 4.3 |
-| 4.5 | Testes Auth | ⏳ Pendente | — | — | 4.3, 4.4 |
+| 4.1 | Infraestrutura Auth | ↪️ Absorvida | 2026-08-09 | AI Agent | Sprint 3.2 |
+| 4.2 | Usuários | ↪️ Absorvida | 2026-08-09 | AI Agent | 4.1 |
+| 4.3 | Login | ↪️ Absorvida | 2026-08-09 | AI Agent | 4.1, 4.2 |
+| 4.4 | Frontend Auth | ↪️ Absorvida | 2026-08-09 | AI Agent | 4.3 |
+| 4.5 | Testes Auth | ↪️ Absorvida | 2026-08-09 | AI Agent | 4.3, 4.4 |
+
+> **Fase 4.x (Infraestrutura Auth) — absorvida pela arquitetura Keycloak/OIDC (Sprints 5–7).**
+> O plano original da fase 4 (auth monolítico em Spring Security/JWT: 4.1 infra, 4.2 usuários,
+> 4.3 login, 4.4 frontend auth, 4.5 testes auth) foi **substituído pelo Access Gateway OIDC** com
+> Keycloak. A fase Segurança (5, 6.0–6.10) entregou tenant/RLS, gateway de autenticação e sessão
+> Redis; a fase Identidade (7.x) entregou login Google, account linking, telefone/OTP e recuperação
+> de conta. 4.1 foi encerrada em 2026-07-15 (REPORT próprio, 93/100) e 4.3 teve Review aprovado,
+> mas suas entregas (JWT próprio, CORS aberto, `permitAll`) foram substituídas/descontinuadas pelo
+> gateway. **4.2/4.4/4.5 não serão executadas como fase própria** — seu escopo está coberto por
+> 5–7.x. Consolidação registrada em 2026-08-09.
 
 ## Segurança
 
@@ -131,19 +141,19 @@
 
 ## Resumo
 
-| Fase | Total | ✅ Concluída | 🚧 Em andamento | ⏳ Pendente |
-|------|-------|-------------|-----------------|-------------|
-| Planejamento | 3 | 3 | 0 | 0 |
-| Knowledge Layer | 3 | 3 | 0 | 0 |
-| Infraestrutura | 5 | 0 | 1 | 4 |
-| Segurança | 12 | 12 | 0 | 0 |
-| Identidade / Autenticação | 6 | 6 | 0 | 0 |
-| SaaS | 1 | 0 | 0 | 1 |
-| CRM | 4 | 0 | 0 | 4 |
-| Omnichannel | 3 | 0 | 0 | 3 |
-| Analytics | 1 | 0 | 0 | 1 |
-| IA | 1 | 0 | 0 | 1 |
-| **Total** | **39** | **24** | **1** | **14** |
+| Fase | Total | ✅ Concluída | 🚧 Em andamento | ⏳ Pendente | ↪️ Absorvida |
+|------|-------|-------------|-----------------|-------------|--------------|
+| Planejamento | 3 | 3 | 0 | 0 | 0 |
+| Knowledge Layer | 3 | 3 | 0 | 0 | 0 |
+| Infraestrutura | 5 | 0 | 0 | 0 | 5 |
+| Segurança | 12 | 12 | 0 | 0 | 0 |
+| Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
+| SaaS | 1 | 0 | 0 | 1 | 0 |
+| CRM | 4 | 0 | 0 | 4 | 0 |
+| Omnichannel | 3 | 0 | 0 | 3 | 0 |
+| Analytics | 1 | 0 | 0 | 1 | 0 |
+| IA | 1 | 0 | 0 | 1 | 0 |
+| **Total** | **39** | **24** | **0** | **10** | **5** |
 
 ---
 
@@ -174,8 +184,7 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-08 — Sprint 7.2 (Account Linking) concluída; numeração alinhada
-(7.x = Identidade/Autenticação; 8=Empresas; 9–12 = CRM; 13–15 = Omnichannel; 16=Dashboard; 17=IA);
-fechamento incluiu `sprints/7.2/REPORT.md`, `RedisPendingLinkStore` (alinhado ao
-`AUTH_GATEWAY_SESSION_STORE=redis`), testes unitários de `/auth/link-status`/`/auth/link`, E2E em
-produção na VPS e correção do registro CSRF de `/auth/link`.*
+*Última atualização: 2026-08-09 — Sprint 7.2 (Account Linking) concluída (2026-08-08);
+fase 4.x (Infraestrutura Auth monolítica) consolidada como **↪️ Absorvida** pela arquitetura
+Keycloak/OIDC (Sprints 5–7); resumo agora 39 sprints: 24 ✅, 0 🚧, 10 ⏳, 5 ↪️. Próxima sprint:
+**8 — Empresas** (SaaS), detalhada em `sprints/8/SPRINT_PLAN.md`.*
