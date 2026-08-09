@@ -104,9 +104,11 @@
 |--------|------|--------|------|-------------|-------------|
 | 8 | Empresas | ⏳ Pendente | — | — | 7.5 |
 
-> **Planejamento (próxima sprint — não implementar nesta etapa):** a Sprint 8 poderá ser dividida
-> internamente em **8.1 Company Foundation · 8.2 Membership · 8.3 Onboarding · 8.4 Company Switcher ·
-> 8.5 Invitations · 8.6 SaaS Hardening** (padrão decimal já adotado em 6.x/7.x — detalhar quando iniciar).
+> **Planejamento (próxima sprint — não implementar nesta etapa):** a Sprint 8 será dividida
+> internamente em **8.1 Company Foundation · 8.2 Membership · 8.3 Onboarding ·
+> 8.4 Company Switcher · 8.5 Invitations · 8.6 SaaS Hardening** (padrão decimal já adotado em
+> 6.x/7.x). Plano detalhado (entregas, critérios de aceite, decisões de escopo D1–D6 e
+> dependências externas) em **`sprints/8/SPRINT_PLAN.md`**.
 
 ## CRM
 
