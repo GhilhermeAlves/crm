@@ -104,7 +104,7 @@
 |--------|------|--------|------|-------------|-------------|
 | 8 | Empresas | ✅ Concluída | 2026-08-09 | AI Agent | 7.5 |
 | 8.1 | Company Foundation | ✅ Concluída | 2026-08-09 | AI Agent | 8 (plano) |
-| 8.2 | Membership | ⏳ Pendente | — | — | 8.1 |
+| 8.2 | Membership | ✅ Concluída | 2026-08-09 | AI Agent | 8.1 |
 | 8.3 | Onboarding | ⏳ Pendente | — | — | 8.2 |
 | 8.4 | Company Switcher | ⏳ Pendente | — | — | 8.2 |
 | 8.5 | Invitations | ⏳ Pendente | — | — | 8.2, 8.3 |
@@ -128,6 +128,21 @@
 >   `Persistable` + `existsById` para decidir `persist` vs `merge`;
 > - ✅ Suíte backend verde (125 testes) + E2E em produção **33/33 PASS**;
 > - 📄 `sprints/8.1/REPORT.md`.
+
+> **8.2 — Membership ✅ Concluída (2026-08-09).**
+> - ✅ `memberships` como entidade de primeiro plano do multi-tenant com **RLS FORCE** no banco
+>   (`membership_own_policy` + `membership_tenant_policy`; `crm_admin` BYPASSRLS, `crm_app`
+>   NOBYPASSRLS isolado por empresa);
+> - ✅ API de gestão: `GET/PUT/DELETE /companies/{id}/members` (`membership:view`/`membership:manage`),
+>   roles `AGENT|ADMIN|MANAGER`, validações de último admin/membro e própria empresa;
+> - ✅ **Gate de acesso**: usuário sem membership ativa não resolve `CurrentUser` (401), em
+>   profundidade (auth-service + `LocalCurrentUserResolver`);
+> - ✅ Sync de `user_roles` ao alterar/remover membership (promoção, demissão, revogação);
+> - ✅ Backfill no deploy (6 memberships `AGENT/ACTIVE`); V030 corrigida (`RAISE`) + V031 (GRANT
+>   `crm_app`); backup `crm_main_20260809-160919.dump` antes do deploy;
+> - ✅ Suíte backend verde (143 testes) + auth-service verde (280 testes) + E2E em produção
+>   **19/19 PASS** (8 RLS + 9 API + gate);
+> - 📄 `sprints/8.2/REPORT.md`.
 
 ## CRM
 
@@ -169,12 +184,12 @@
 | Infraestrutura | 5 | 0 | 0 | 0 | 5 |
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
-| SaaS | 7 | 2 | 0 | 5 | 0 |
+| SaaS | 7 | 3 | 0 | 4 | 0 |
 | CRM | 4 | 0 | 0 | 4 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **26** | **0** | **14** | **5** |
+| **Total** | **45** | **27** | **0** | **13** | **5** |
 
 ---
 
@@ -205,6 +220,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-09 — Sprint **8.1 (Company Foundation)** concluída com E2E em produção
-33/33 PASS; resumo agora 45 sprints: 26 ✅, 0 🚧, 14 ⏳, 5 ↪️. Próxima sprint:
-**8.2 — Membership** (SaaS), detalhada em `sprints/8/SPRINT_PLAN.md`.*
+*Última atualização: 2026-08-09 — Sprint **8.2 (Membership)** concluída com E2E em produção
+19/19 PASS; resumo agora 45 sprints: 27 ✅, 0 🚧, 13 ⏳, 5 ↪️. Próxima sprint:
+**8.3 — Onboarding** (SaaS), detalhada em `sprints/8/SPRINT_PLAN.md`.*

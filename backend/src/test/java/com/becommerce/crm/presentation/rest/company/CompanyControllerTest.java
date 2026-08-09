@@ -69,7 +69,8 @@ class CompanyControllerTest {
                 "keycloak-sub",
                 null,
                 "keycloak",
-                "Admin"
+                "Admin",
+                null
         );
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(

@@ -90,7 +90,7 @@ class InternalAuthControllerTest {
     void shouldResolveCurrentUserForAuthenticatedExistingUser() throws Exception {
         CurrentUser currentUser = new CurrentUser(USER_ID, EMAIL, COMPANY_ID, COMPANY_ID,
                 List.of("AGENT"), List.of("contact:read", "dashboard:view"), SUB,
-                "session-9", "keycloak", "Ghilherme Santos");
+                "session-9", "keycloak", "Ghilherme Santos", null);
         when(currentUserResolutionUseCase.resolve(any(AuthenticatedIdentity.class)))
                 .thenReturn(new CurrentUserResolution.Resolved(currentUser));
 
@@ -153,7 +153,7 @@ class InternalAuthControllerTest {
     @Test
     void shouldIgnoreArbitraryUserIdFromClient() throws Exception {        UUID arbitraryUserId = UUID.randomUUID();
         CurrentUser currentUser = new CurrentUser(USER_ID, EMAIL, COMPANY_ID, COMPANY_ID,
-                List.of("AGENT"), List.of(), SUB, null, "keycloak", "Ghilherme Santos");
+                List.of("AGENT"), List.of(), SUB, null, "keycloak", "Ghilherme Santos", null);
         when(currentUserResolutionUseCase.resolve(any(AuthenticatedIdentity.class)))
                 .thenReturn(new CurrentUserResolution.Resolved(currentUser));
 

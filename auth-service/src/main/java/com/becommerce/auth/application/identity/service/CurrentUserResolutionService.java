@@ -2,6 +2,7 @@ package com.becommerce.auth.application.identity.service;
 
 import com.becommerce.auth.application.company.port.output.CompanyRepository;
 import com.becommerce.auth.application.identity.port.input.CurrentUserResolutionUseCase;
+import com.becommerce.auth.application.identity.port.output.MembershipRepository;
 import com.becommerce.auth.application.identity.port.output.PermissionRepository;
 import com.becommerce.auth.application.identity.port.output.RoleRepository;
 import com.becommerce.auth.application.identity.port.output.UserRepository;
@@ -52,15 +53,18 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final MembershipRepository membershipRepository;
     private final CompanyRepository companyRepository;
 
     public CurrentUserResolutionService(UserRepository userRepository,
                                         RoleRepository roleRepository,
                                         PermissionRepository permissionRepository,
+                                        MembershipRepository membershipRepository,
                                         CompanyRepository companyRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
+        this.membershipRepository = membershipRepository;
         this.companyRepository = companyRepository;
     }
 
@@ -96,8 +100,15 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
 
             TenantContext.setCompanyId(user.companyId());
 
+            // Sprint 8.2: membro desligado (sem membership ACTIVE) perde acesso.
+            if (!membershipRepository.existsActiveByUserIdAndCompanyId(user.id(), user.companyId())) {
+                throw new CrmAccessDeniedException(
+                    "Usuário sem membership ativa nesta empresa: acesso ao CRM negado.");
+            }
+
             List<String> roles = roleRepository.findRoleNamesByUserIdAndCompanyId(user.id(), user.companyId());
             List<String> permissions = permissionRepository.findPermissionNamesByUserIdAndCompanyId(user.id(), user.companyId());
+            String membershipRole = membershipRepository.findMembershipRoleByUserIdAndCompanyId(user.id(), user.companyId()).orElse(null);
 
             CurrentUser currentUser = new CurrentUser(
                     user.id(),
@@ -109,7 +120,8 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
                     identity.keycloakSub(),
                     identity.sessionId(),
                     identity.provider(),
-                    firstNonBlank(identity.displayName(), user.name()));
+                    firstNonBlank(identity.displayName(), user.name()),
+                    membershipRole);
 
             return new CurrentUserResolution.Resolved(currentUser);
         } finally {

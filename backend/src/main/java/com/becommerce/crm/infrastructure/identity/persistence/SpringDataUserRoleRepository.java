@@ -23,6 +23,10 @@ public interface SpringDataUserRoleRepository extends JpaRepository<UserRoleJpaE
     void deleteByUserIdAndRoleId(@Param("userId") UUID userId, @Param("roleId") UUID roleId);
 
     @Modifying
+    @Query("DELETE FROM UserRoleJpaEntity ur WHERE ur.userId = :userId AND ur.companyId = :companyId")
+    void deleteByUserIdAndCompanyId(@Param("userId") UUID userId, @Param("companyId") UUID companyId);
+
+    @Modifying
     @Query("DELETE FROM UserRoleJpaEntity ur WHERE ur.userId = :userId")
     void deleteByUserId(@Param("userId") UUID userId);
 }

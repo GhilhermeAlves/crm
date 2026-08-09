@@ -47,7 +47,7 @@ class TenantFilterTest {
         UUID companyId = UUID.randomUUID();
         CurrentUser currentUser = new CurrentUser(
                 UUID.randomUUID(), "test@test.com", companyId, companyId,
-                List.of("ADMIN"), List.of("user:read"), "sub-123", null, "keycloak", "Test"
+                List.of("ADMIN"), List.of("user:read"), "sub-123", null, "keycloak", "Test", null
         );
 
         Authentication auth = mock(Authentication.class);
@@ -84,7 +84,7 @@ class TenantFilterTest {
         UUID companyId = UUID.randomUUID();
         CurrentUser currentUser = new CurrentUser(
                 UUID.randomUUID(), "test@test.com", companyId, companyId,
-                List.of("ADMIN"), List.of("user:read"), "sub-123", null, "keycloak", "Test"
+                List.of("ADMIN"), List.of("user:read"), "sub-123", null, "keycloak", "Test", null
         );
 
         Authentication auth = mock(Authentication.class);

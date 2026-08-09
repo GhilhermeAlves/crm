@@ -118,7 +118,7 @@ class GatewayOidcLinkingTest {
 
     private CurrentUser resolvedCurrentUser() {
         return new CurrentUser(USER_ID, EMAIL, COMPANY_ID, COMPANY_ID,
-                List.of("AGENT"), List.of("contact:read"), SUB, "sid-1", "keycloak", "Ghilherme Santos");
+                List.of("AGENT"), List.of("contact:read"), SUB, "sid-1", "keycloak", "Ghilherme Santos", null);
     }
 
     private void mockTokens() {

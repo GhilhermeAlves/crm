@@ -10,6 +10,7 @@ import com.becommerce.crm.application.identity.port.output.PasswordResetTokenRep
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.identity.PasswordResetToken;
 import com.becommerce.crm.domain.identity.Role;
@@ -26,6 +27,7 @@ import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
 import com.becommerce.crm.domain.identity.valueobject.Password;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,7 @@ public class AuthService implements AuthUseCase {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final MembershipRepository membershipRepository;
     private final CompanyRepository companyRepository;
     private final CrmAccessService crmAccessService;
     private final PasswordEncoder passwordEncoder;
@@ -77,6 +80,7 @@ public class AuthService implements AuthUseCase {
                        PasswordResetTokenRepository passwordResetTokenRepository,
                        RoleRepository roleRepository, UserRoleRepository userRoleRepository,
                        CompanyRepository companyRepository,
+                       MembershipRepository membershipRepository,
                        CrmAccessService crmAccessService,
                        PasswordEncoder passwordEncoder, EventPublisher eventPublisher,
                        EmailService emailService, AuthServiceClient authServiceClient) {
@@ -84,6 +88,7 @@ public class AuthService implements AuthUseCase {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
+        this.membershipRepository = membershipRepository;
         this.companyRepository = companyRepository;
         this.crmAccessService = crmAccessService;
         this.passwordEncoder = passwordEncoder;
@@ -354,6 +359,11 @@ public class AuthService implements AuthUseCase {
         User saved = userRepository.save(user);
 
         assignDefaultRole(saved);
+        // Sprint 8.2: membership é a fonte de verdade da relação usuário↔empresa.
+        // O trigger de consistência mantém users.company_id (aqui já definido).
+        if (!membershipRepository.existsActiveByUserIdAndCompanyId(saved.getId(), companyId)) {
+            membershipRepository.save(Membership.activate(saved.getId(), companyId, defaultRoleName.trim().toUpperCase()));
+        }
         eventPublisher.publish(UserCreatedEvent.create(saved.getId(), saved.getEmail().value(), saved.getCompanyId()));
         log.info("Usuário Keycloak provisionado: {} (sub={})", saved.getEmail().value(), keycloakSub);
         return saved;

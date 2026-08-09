@@ -5,6 +5,7 @@ import com.becommerce.crm.application.identity.port.output.PermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RolePermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.domain.identity.Permission;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
@@ -37,18 +38,21 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
     private final RoleRepository roleRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final PermissionRepository permissionRepository;
+    private final MembershipRepository membershipRepository;
 
     public LocalCurrentUserResolver(
             AuthUseCase authUseCase,
             UserRoleRepository userRoleRepository,
             RoleRepository roleRepository,
             RolePermissionRepository rolePermissionRepository,
-            PermissionRepository permissionRepository) {
+            PermissionRepository permissionRepository,
+            MembershipRepository membershipRepository) {
         this.authUseCase = authUseCase;
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
         this.rolePermissionRepository = rolePermissionRepository;
         this.permissionRepository = permissionRepository;
+        this.membershipRepository = membershipRepository;
     }
 
     @Override
@@ -97,6 +101,12 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
             UUID companyId = user.getCompanyId();
             TenantContext.setCompanyId(companyId);
 
+            // Sprint 8.2: membro desligado (sem membership ACTIVE) perde acesso.
+            if (!membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)) {
+                throw new CrmAccessDeniedException(
+                        "Usuário sem membership ativa nesta empresa: acesso ao CRM negado.");
+            }
+
             List<String> roleNames = userRoleRepository.findByUserIdAndCompanyId(userId, companyId).stream()
                     .map(ur -> roleRepository.findById(ur.getRoleId()))
                     .filter(Optional::isPresent)
@@ -109,9 +119,13 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
                     .distinct()
                     .collect(Collectors.toList());
 
+            String membershipRole = membershipRepository
+                    .findMembershipRoleByUserIdAndCompanyId(userId, companyId)
+                    .orElse(null);
+
             String displayName = buildDisplayName(name, givenName, familyName, email);
 
-            return CurrentUser.fromKeycloak(userId, email, companyId, roleNames, permissions, keycloakSub, displayName);
+            return CurrentUser.fromKeycloak(userId, email, companyId, roleNames, permissions, keycloakSub, displayName, membershipRole);
         } finally {
             TenantContext.clear();
         }

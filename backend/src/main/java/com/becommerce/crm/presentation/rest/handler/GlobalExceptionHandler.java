@@ -23,10 +23,10 @@ import com.becommerce.crm.domain.identity.exception.PermissionNotFoundException;
 import com.becommerce.crm.domain.identity.exception.RoleNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
+import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -137,6 +137,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuditLogNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleAuditLogNotFoundException(AuditLogNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(MembershipNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleMembershipNotFoundException(MembershipNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
                 "status", 404,

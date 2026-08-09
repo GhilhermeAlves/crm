@@ -5,6 +5,7 @@ import com.becommerce.crm.application.identity.port.output.PermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RolePermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -31,9 +32,10 @@ public class CurrentUserResolverConfiguration {
             UserRoleRepository userRoleRepository,
             RoleRepository roleRepository,
             RolePermissionRepository rolePermissionRepository,
-            PermissionRepository permissionRepository) {
+            PermissionRepository permissionRepository,
+            MembershipRepository membershipRepository) {
         LocalCurrentUserResolver localResolver = new LocalCurrentUserResolver(
-                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository);
+                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository, membershipRepository);
         return new AuthServiceCurrentUserResolver(authServiceClient, localResolver);
     }
 
@@ -44,8 +46,9 @@ public class CurrentUserResolverConfiguration {
             UserRoleRepository userRoleRepository,
             RoleRepository roleRepository,
             RolePermissionRepository rolePermissionRepository,
-            PermissionRepository permissionRepository) {
+            PermissionRepository permissionRepository,
+            MembershipRepository membershipRepository) {
         return new LocalCurrentUserResolver(
-                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository);
+                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository, membershipRepository);
     }
 }

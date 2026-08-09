@@ -19,7 +19,8 @@ public record CurrentUser(
         String keycloakSub,
         String sessionId,
         String provider,
-        String displayName) {
+        String displayName,
+        String membershipRole) {
 
     public CurrentUser {
         Objects.requireNonNull(userId, "userId");
@@ -36,7 +37,13 @@ public record CurrentUser(
     public static CurrentUser fromKeycloak(UUID userId, String email, UUID companyId,
                                            List<String> roles, List<String> permissions,
                                            String keycloakSub, String displayName) {
+        return fromKeycloak(userId, email, companyId, roles, permissions, keycloakSub, displayName, null);
+    }
+
+    public static CurrentUser fromKeycloak(UUID userId, String email, UUID companyId,
+                                           List<String> roles, List<String> permissions,
+                                           String keycloakSub, String displayName, String membershipRole) {
         return new CurrentUser(userId, email, companyId, companyId, roles, permissions,
-                keycloakSub, null, "keycloak", displayName);
+                keycloakSub, null, "keycloak", displayName, membershipRole);
     }
 }

@@ -74,6 +74,11 @@ public class UserRoleRepositoryImpl implements UserRoleRepository {
     }
 
     @Override
+    public void deleteByUserIdAndCompanyId(UUID userId, UUID companyId) {
+        repository.deleteByUserIdAndCompanyId(userId, companyId);
+    }
+
+    @Override
     public boolean existsByUserIdAndRoleId(UUID userId, UUID roleId) {
         return repository.existsByUserIdAndRoleId(userId, roleId);
     }

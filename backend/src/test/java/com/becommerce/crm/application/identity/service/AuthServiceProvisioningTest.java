@@ -8,6 +8,7 @@ import com.becommerce.crm.application.identity.port.output.PasswordResetTokenRep
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.company.CompanyPlan;
 import com.becommerce.crm.domain.identity.Role;
@@ -58,6 +59,7 @@ class AuthServiceProvisioningTest {
     @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private RoleRepository roleRepository;
     @Mock private UserRoleRepository userRoleRepository;
+    @Mock private MembershipRepository membershipRepository;
     @Mock private CompanyRepository companyRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private EventPublisher eventPublisher;

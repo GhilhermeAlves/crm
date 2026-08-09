@@ -19,10 +19,11 @@ public record CurrentUserDto(
         String keycloakSub,
         String sessionId,
         String provider,
-        String displayName) {
+        String displayName,
+        String membershipRole) {
 
     public CurrentUser toCurrentUser() {
         return new CurrentUser(userId, email, companyId, tenantId, roles, permissions,
-                keycloakSub, sessionId, provider, displayName);
+                keycloakSub, sessionId, provider, displayName, membershipRole);
     }
 }

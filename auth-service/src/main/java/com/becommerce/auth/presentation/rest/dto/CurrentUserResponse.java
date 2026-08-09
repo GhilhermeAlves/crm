@@ -18,7 +18,8 @@ public record CurrentUserResponse(
         String keycloakSub,
         String sessionId,
         String provider,
-        String displayName) {
+        String displayName,
+        String membershipRole) {
 
     public static CurrentUserResponse from(CurrentUser currentUser) {
         return new CurrentUserResponse(
@@ -31,6 +32,7 @@ public record CurrentUserResponse(
                 currentUser.keycloakSub(),
                 currentUser.sessionId(),
                 currentUser.provider(),
-                currentUser.displayName());
+                currentUser.displayName(),
+                currentUser.membershipRole());
     }
 }

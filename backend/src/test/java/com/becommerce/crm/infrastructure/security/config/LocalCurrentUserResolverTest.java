@@ -5,6 +5,7 @@ import com.becommerce.crm.application.identity.port.output.PermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RolePermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.domain.identity.Permission;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.RolePermission;
@@ -48,13 +49,14 @@ class LocalCurrentUserResolverTest {
     @Mock private RoleRepository roleRepository;
     @Mock private RolePermissionRepository rolePermissionRepository;
     @Mock private PermissionRepository permissionRepository;
+    @Mock private MembershipRepository membershipRepository;
 
     private LocalCurrentUserResolver resolver;
 
     @BeforeEach
     void setUp() {
         resolver = new LocalCurrentUserResolver(
-                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository);
+                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository, membershipRepository);
     }
 
     @Test
@@ -74,6 +76,9 @@ class LocalCurrentUserResolverTest {
         when(rolePermissionRepository.findByRoleId(agentRole.getId()))
                 .thenReturn(List.of(RolePermission.create(agentRole.getId(), dashboardView.getId())));
         when(permissionRepository.findById(dashboardView.getId())).thenReturn(Optional.of(dashboardView));
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId)).thenReturn(true);
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(user.getId(), companyId))
+                .thenReturn(Optional.of("AGENT"));
 
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
@@ -108,6 +113,7 @@ class LocalCurrentUserResolverTest {
 
         when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
         when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), companyId)).thenReturn(List.of());
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId)).thenReturn(true);
 
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")

@@ -41,6 +41,15 @@ public class TenantFilter extends OncePerRequestFilter {
             if (companyId != null) {
                 TenantContext.setCompanyId(companyId);
             }
+            // Sprint 8.2: manter os GUCs de bootstrap de identidade durante toda a
+            // requisição, para que políticas RLS de "linha própria" funcionem fora
+            // da resolução (ex.: membership_own_policy em GET /api/v1/me/memberships).
+            if (currentUser.keycloakSub() != null && !currentUser.keycloakSub().isBlank()) {
+                TenantContext.setKeycloakSub(currentUser.keycloakSub());
+            }
+            if (currentUser.email() != null && !currentUser.email().isBlank()) {
+                TenantContext.setIdentityEmail(currentUser.email());
+            }
         }
     }
 }

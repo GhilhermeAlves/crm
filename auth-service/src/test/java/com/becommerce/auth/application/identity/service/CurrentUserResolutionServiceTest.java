@@ -1,6 +1,7 @@
 package com.becommerce.auth.application.identity.service;
 
 import com.becommerce.auth.application.company.port.output.CompanyRepository;
+import com.becommerce.auth.application.identity.port.output.MembershipRepository;
 import com.becommerce.auth.application.identity.port.output.PermissionRepository;
 import com.becommerce.auth.application.identity.port.output.RoleRepository;
 import com.becommerce.auth.application.identity.port.output.UserRepository;
@@ -40,13 +41,14 @@ class CurrentUserResolutionServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private RoleRepository roleRepository;
     @Mock private PermissionRepository permissionRepository;
+    @Mock private MembershipRepository membershipRepository;
     @Mock private CompanyRepository companyRepository;
 
     private CurrentUserResolutionService service;
 
     @BeforeEach
     void setUp() {
-        service = new CurrentUserResolutionService(userRepository, roleRepository, permissionRepository, companyRepository);
+        service = new CurrentUserResolutionService(userRepository, roleRepository, permissionRepository, membershipRepository, companyRepository);
     }
 
     private AuthenticatedIdentity identity() {
@@ -69,6 +71,9 @@ class CurrentUserResolutionServiceTest {
     void shouldResolveCurrentUserForExistingAuthenticatedUser() {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
         allowActiveCompany();
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(true);
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(USER_ID, COMPANY_ID))
+                .thenReturn(Optional.of("AGENT"));
         when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of("AGENT"));
         when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID))
                 .thenReturn(List.of("contact:read", "dashboard:view"));
@@ -85,6 +90,7 @@ class CurrentUserResolutionServiceTest {
         assertEquals("keycloak", currentUser.provider());
         assertEquals(List.of("AGENT"), currentUser.roles());
         assertEquals(List.of("contact:read", "dashboard:view"), currentUser.permissions());
+        assertEquals("AGENT", currentUser.membershipRole());
 
         verify(userRepository).findByKeycloakSub(SUB);
         verify(userRepository, never()).findByEmail(any());
@@ -157,9 +163,22 @@ class CurrentUserResolutionServiceTest {
     }
 
     @Test
+    void shouldDenyUserWithoutActiveMembership() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        allowActiveCompany();
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(false);
+
+        CrmAccessDeniedException ex = assertThrows(CrmAccessDeniedException.class, () -> service.resolve(identity()));
+
+        assertTrue(ex.getMessage().contains("membership ativa"));
+        verify(roleRepository, never()).findRoleNamesByUserIdAndCompanyId(any(), any());
+    }
+
+    @Test
     void shouldResolveRolesAndPermissionsFromCrm() {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
         allowActiveCompany();
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(true);
         when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID))
                 .thenReturn(List.of("AGENT", "MANAGER"));
         when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID))
@@ -178,6 +197,7 @@ class CurrentUserResolutionServiceTest {
     void shouldResolveCompanyAndDeriveTenantFromCompany() {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
         allowActiveCompany();
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(true);
         when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
         when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
 
@@ -193,6 +213,7 @@ class CurrentUserResolutionServiceTest {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(activeUser()));
         allowActiveCompany();
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(true);
         when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of("AGENT"));
         when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
 

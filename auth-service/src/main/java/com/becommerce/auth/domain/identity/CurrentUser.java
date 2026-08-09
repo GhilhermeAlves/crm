@@ -25,7 +25,8 @@ public record CurrentUser(
         String keycloakSub,
         String sessionId,
         String provider,
-        String displayName) {
+        String displayName,
+        String membershipRole) {
 
     public CurrentUser {
         Objects.requireNonNull(userId, "userId");

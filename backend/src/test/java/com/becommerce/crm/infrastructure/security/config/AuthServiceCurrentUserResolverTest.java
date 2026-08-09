@@ -37,7 +37,7 @@ class AuthServiceCurrentUserResolverTest {
         UUID companyId = UUID.randomUUID();
         CurrentUserDto dto = new CurrentUserDto(
                 userId, EMAIL, companyId, companyId, List.of("AGENT"),
-                List.of("dashboard:view"), SUB, null, "keycloak", "Ghilherme");
+                List.of("dashboard:view"), SUB, null, "keycloak", "Ghilherme", null);
         when(authServiceClient.currentUser("jwt-token"))
                 .thenReturn(new ResolutionResponse("RESOLVED", dto, null));
 
