@@ -109,7 +109,57 @@ class GatewayCsrfFilterTest {
 
         filter.doFilter(request, response, chain);
 
-        assertNotNull(chain.getRequest(), "somente /auth/refresh é protegido por CSRF");
+        assertNotNull(chain.getRequest(), "somente /auth/refresh e /auth/link são protegidos por CSRF");
+    }
+
+    @Test
+    void shouldProtectLinkEndpointWhenTokensMatch() throws Exception {
+        MockHttpServletRequest request = post("/auth/link");
+        request.setCookies(csrfCookie("csrf-123"));
+        request.addHeader("X-XSRF-TOKEN", "csrf-123");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertNotNull(chain.getRequest(), "POST /auth/link deve prosseguir quando cookie e header coincidem");
+    }
+
+    @Test
+    void shouldRejectLinkEndpointWhenHeaderMissing() throws Exception {
+        MockHttpServletRequest request = post("/auth/link");
+        request.setCookies(csrfCookie("csrf-123"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertRejected(chain, response);
+    }
+
+    @Test
+    void shouldRejectLinkEndpointWhenCookieMissing() throws Exception {
+        MockHttpServletRequest request = post("/auth/link");
+        request.addHeader("X-XSRF-TOKEN", "csrf-123");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertRejected(chain, response);
+    }
+
+    @Test
+    void shouldRejectLinkEndpointWhenTokensDiffer() throws Exception {
+        MockHttpServletRequest request = post("/auth/link");
+        request.setCookies(csrfCookie("csrf-cookie"));
+        request.addHeader("X-XSRF-TOKEN", "csrf-other");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertRejected(chain, response);
     }
 
     private void assertRejected(MockFilterChain chain, MockHttpServletResponse response) {

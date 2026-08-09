@@ -254,4 +254,105 @@ class OidcGatewayControllerTest {
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.error").value("Unauthorized"));
     }
+
+    // ------------------------------------------------------- link-status (7.2)
+
+    @Test
+    void shouldReturnPendingFalseWhenNoPendingCookie() throws Exception {
+        when(cookieFactory.readPendingLinkToken(any())).thenReturn(java.util.Optional.empty());
+        when(gatewayOidcUseCase.linkStatus(null))
+                .thenReturn(new GatewayOidcUseCase.LinkStatusResult(false, null));
+
+        mockMvc.perform(get("/auth/link-status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pending").value(false))
+                .andExpect(jsonPath("$.email").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnPendingTrueWithEmailForValidPendingCookie() throws Exception {
+        Cookie pendingCookie = new Cookie("crm_pending_link", "opaque-pending-token");
+        when(cookieFactory.readPendingLinkToken(any())).thenReturn(java.util.Optional.of("opaque-pending-token"));
+        when(gatewayOidcUseCase.linkStatus("opaque-pending-token"))
+                .thenReturn(new GatewayOidcUseCase.LinkStatusResult(true, "ghilherme007@gmail.com"));
+
+        mockMvc.perform(get("/auth/link-status").cookie(pendingCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pending").value(true))
+                .andExpect(jsonPath("$.email").value("ghilherme007@gmail.com"));
+    }
+
+    @Test
+    void shouldReturnPendingFalseForExpiredPendingCookie() throws Exception {
+        Cookie pendingCookie = new Cookie("crm_pending_link", "expired-token");
+        when(cookieFactory.readPendingLinkToken(any())).thenReturn(java.util.Optional.of("expired-token"));
+        when(gatewayOidcUseCase.linkStatus("expired-token"))
+                .thenReturn(new GatewayOidcUseCase.LinkStatusResult(false, null));
+
+        mockMvc.perform(get("/auth/link-status").cookie(pendingCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pending").value(false))
+                .andExpect(jsonPath("$.email").doesNotExist());
+    }
+
+    // ----------------------------------------------------------- link (7.2)
+
+    @Test
+    void shouldCompleteLinkAndSetSessionCookiesClearingPendingCookie() throws Exception {
+        Cookie pendingCookie = new Cookie("crm_pending_link", "opaque-pending-token");
+        when(cookieFactory.readPendingLinkToken(any())).thenReturn(java.util.Optional.of("opaque-pending-token"));
+        when(gatewayOidcUseCase.completeLink("opaque-pending-token", "senha-certa"))
+                .thenReturn(new GatewayOidcUseCase.LinkResult("/dashboard", session()));
+        when(cookieFactory.createSessionCookie(anyString()))
+                .thenReturn(ResponseCookie.from("crm_session", "opaque-session-token").build());
+        when(cookieFactory.createCsrfCookie(anyString()))
+                .thenReturn(ResponseCookie.from("XSRF-TOKEN", "csrf").build());
+        when(cookieFactory.createExpiredPendingLinkCookie())
+                .thenReturn(ResponseCookie.from("crm_pending_link", "").maxAge(java.time.Duration.ZERO).build());
+
+        mockMvc.perform(post("/auth/link")
+                        .cookie(pendingCookie)
+                        .contentType("application/json")
+                        .content("{\"password\":\"senha-certa\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.redirect").value("/dashboard"))
+                .andExpect(header().stringValues("Set-Cookie",
+                        org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("crm_session="))))
+                .andExpect(header().stringValues("Set-Cookie",
+                        org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("crm_pending_link="))));
+    }
+
+    @Test
+    void shouldRejectLinkWhenPendingNotFound() throws Exception {
+        Cookie pendingCookie = new Cookie("crm_pending_link", "unknown-token");
+        when(cookieFactory.readPendingLinkToken(any())).thenReturn(java.util.Optional.of("unknown-token"));
+        when(gatewayOidcUseCase.completeLink("unknown-token", "senha"))
+                .thenThrow(new OidcGatewayException("LINK_PENDING_NOT_FOUND", 410,
+                        "Vínculo pendente expirado ou inexistente."));
+
+        mockMvc.perform(post("/auth/link")
+                        .cookie(pendingCookie)
+                        .contentType("application/json")
+                        .content("{\"password\":\"senha\"}"))
+                .andExpect(status().isGone())
+                .andExpect(jsonPath("$.code").value("LINK_PENDING_NOT_FOUND"))
+                .andExpect(header().doesNotExist("Set-Cookie"));
+    }
+
+    @Test
+    void shouldRejectLinkWithInvalidCredentials() throws Exception {
+        Cookie pendingCookie = new Cookie("crm_pending_link", "opaque-pending-token");
+        when(cookieFactory.readPendingLinkToken(any())).thenReturn(java.util.Optional.of("opaque-pending-token"));
+        when(gatewayOidcUseCase.completeLink("opaque-pending-token", "senha-errada"))
+                .thenThrow(new OidcGatewayException("INVALID_CREDENTIALS", 401,
+                        "Senha da conta local inválida."));
+
+        mockMvc.perform(post("/auth/link")
+                        .cookie(pendingCookie)
+                        .contentType("application/json")
+                        .content("{\"password\":\"senha-errada\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+                .andExpect(header().doesNotExist("Set-Cookie"));
+    }
 }
