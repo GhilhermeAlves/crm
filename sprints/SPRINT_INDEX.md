@@ -106,7 +106,7 @@
 | 8.1 | Company Foundation | ✅ Concluída | 2026-08-09 | AI Agent | 8 (plano) |
 | 8.2 | Membership | ✅ Concluída | 2026-08-09 | AI Agent | 8.1 |
 | 8.3 | Onboarding | ✅ Concluída | 2026-08-10 | AI Agent | 8.2 |
-| 8.4 | Company Switcher | 🚧 Em andamento | 2026-08-10 | AI Agent | 8.2 |
+| 8.4 | Company Switcher | ✅ Concluída | 2026-08-10 | AI Agent | 8.2 |
 | 8.5 | Invitations | ⏳ Pendente | — | — | 8.2, 8.3 |
 | 8.6 | SaaS Hardening | ⏳ Pendente | — | — | 8.4, 8.5 |
 
@@ -155,6 +155,23 @@
 > - ✅ Backend 153, auth-service 282, frontend 56 testes; typecheck OK;
 > - 📄 `sprints/8.3/REPORT.md`.
 
+> **8.4 — Company Switcher ✅ Concluída (2026-08-10).**
+> - ✅ Troca de empresa ativa **sem relogar**: `POST /api/v1/me/switch-company` e `GET
+>   /api/v1/me/companies` (`MeController`/`MeService`), membros obtidos via
+>   `companies.memberships` (RLS FORCE);
+> - ✅ Empresa ativa autoritativa = `users.company_id`; `TenantContext`/`TenantFilter`/RLS
+>   (GUC `app.current_company_id`) trocam de vista na hora; auth-service reflete o snapshot no
+>   `GatewaySession` via `withCompanyId` (`CurrentUserResolutionService`);
+> - ✅ Frontend: `CompanySwitcher` (UserMenu), `useAuthMutations.switchCompany` + auth.service;
+> - ✅ RLS: teste de integração real (Testcontainers) `switchingActiveCompany_togglesTenantIsolation`
+>   prova A→B→A sem vazar dados (0 cross-tenant);
+> - ✅ Testes verdes: **backend 163, auth-service 284, frontend 59**, typecheck OK, lint sem erros;
+> - ✅ **Reconciliação Git+deploy**: main reconciliado (7.4/7.5 da VPS semanticamente = 8.1–8.3),
+>   push `c55fde9→3225201`, VPS sincronizada `--ff-only`, **build+deploy prod OK** (V031 Flyway
+>   aplicado), serviços healthy, `/me` endpooints registrados;
+> - ⚠️ Verificação manual pós-deploy pendente: login real com conta multi-empresa no browser;
+> - 📄 `sprints/8.4/REPORT.md`.
+
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
@@ -195,12 +212,12 @@
 | Infraestrutura | 5 | 0 | 0 | 0 | 5 |
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
-| SaaS | 7 | 4 | 1 | 3 | 0 |
+| SaaS | 7 | 5 | 0 | 2 | 0 |
 | CRM | 4 | 0 | 0 | 4 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **28** | **1** | **12** | **5** |
+| **Total** | **45** | **29** | **0** | **11** | **5** |
 
 ---
 
@@ -231,6 +248,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-10 — Sprint **8.3 (Onboarding)** concluída (REPORT + índice). Resumo
-agora 45 sprints: 28 ✅, 1 🚧, 12 ⏳, 5 ↪️. Próxima sprint: **8.4 — Company Switcher** (SaaS), em
-andamento, detalhada em `sprints/8/SPRINT_PLAN.md`.*
+*Última atualização: 2026-08-10 — Sprint **8.4 — Company Switcher** concluída (REPORT + índice +
+reconciliação Git + build/deploy prod). Resumo agora 45 sprints: 29 ✅, 0 🚧, 11 ⏳, 5 ↪️. Próxima
+sprint: **8.5 — Invitations** (SaaS), detalhada em `sprints/8/SPRINT_PLAN.md`.*
