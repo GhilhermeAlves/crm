@@ -102,6 +102,19 @@ public record GatewaySession(
                 idTokenHint, accessToken, refreshToken, accessTokenExpiresAt, csrfToken, revokedAt);
     }
 
+    /**
+     * Alterna a empresa ativa do usuário nesta sessão (Sprint 8.4 - Company
+     * Switcher), preservando {@code tenantId} e o quarto comportamento. A empresa
+     * ativa autoritativa do sistema é {@code users.company_id} (banco); esta
+     * cópia apenas reflete o valor alternado no snapshot de sessão (Redis),
+     * mantendo os demais atributos (tokens, CSRF, ciclo de vida) intactos.
+     */
+    public GatewaySession withCompanyId(UUID activeCompanyId) {
+        return new GatewaySession(sessionToken, userId, email, activeCompanyId, tenantId, roles, permissions,
+                keycloakSub, keycloakSessionId, provider, displayName, createdAt, expiresAt, lastAccessedAt,
+                idTokenHint, accessToken, refreshToken, accessTokenExpiresAt, csrfToken, revokedAt);
+    }
+
     public GatewaySession withRevokedAt(Instant now) {
         return new GatewaySession(sessionToken, userId, email, companyId, tenantId, roles, permissions,
                 keycloakSub, keycloakSessionId, provider, displayName, createdAt, expiresAt, lastAccessedAt,

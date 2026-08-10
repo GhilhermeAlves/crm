@@ -42,6 +42,13 @@ import java.util.Optional;
  *
  * Qualquer falha → {@link CrmAccessDeniedException} ({@code 403 CRM_ACCESS_DENIED}).
  *
+ * <p>Sprint 8.4 (Company Switcher): a empresa ativa é {@code users.company_id}
+ * (autoritativa, alternada por {@code POST /api/v1/me/switch-company} no
+ * backend). Como esta resolução lê {@code user.companyId()} do banco em cada
+ * chamada, a empresa alternada é automaticamente respeitada aqui (CurrentUser,
+ * TenantContext e RLS) sem relogar. A sessão de gateway ({@code GatewaySession})
+ * apenas reflete esse snapshot via {@code withCompanyId}.
+ *
  * <p>O provisionamento (criação de usuário inexistente) NÃO é duplicado aqui:
  * continua sendo responsabilidade do crm-backend (Sprint 1). Para identidade sem
  * usuário CRM, o resultado é o contrato {@code PROVISIONING_REQUIRED}, preparado

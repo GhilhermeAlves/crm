@@ -1,5 +1,6 @@
 package com.becommerce.crm.infrastructure.membership.persistence;
 
+import com.becommerce.crm.application.me.port.output.MyCompanyProjection;
 import com.becommerce.crm.application.membership.port.output.MemberProjection;
 import com.becommerce.crm.application.membership.port.output.MembershipProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -72,4 +73,17 @@ public interface SpringDataMembershipRepository extends JpaRepository<Membership
     List<MembershipProjection> findMembershipsByUserId(@Param("userId") UUID userId);
 
     boolean existsByUserIdAndCompanyIdAndStatus(UUID userId, UUID companyId, String status);
+
+    @Query(value = """
+            SELECT m.company_id AS companyId,
+                   c.trading_name AS companyName,
+                   c.logo_url     AS logoUrl,
+                   m.role    AS role
+            FROM memberships m
+            JOIN companies c ON c.id = m.company_id
+            WHERE m.user_id = :userId
+              AND m.status = 'ACTIVE'
+            ORDER BY m.joined_at
+            """, nativeQuery = true)
+    List<MyCompanyProjection> findActiveCompanyOptionsByUserId(@Param("userId") UUID userId);
 }

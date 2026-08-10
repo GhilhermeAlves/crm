@@ -224,6 +224,21 @@ class RedisGatewaySessionStoreTest {
     }
 
     @Test
+    void shouldPersistSwitchToActiveCompanyAcrossRedisRoundTrip() throws Exception {
+        UUID companyB = UUID.fromString("bbbbbbbb-1111-2222-3333-444444444444");
+        GatewaySession original = activeSession("sw2", Instant.now().plusSeconds(3600));
+        store.put(original);
+
+        GatewaySession switched = original.withCompanyId(companyB);
+        when(valueOps.get("gateway:session:sw2")).thenReturn(objectMapper.writeValueAsString(switched));
+        assertEquals(companyB, store.get("sw2").get().companyId(), "troca A->B persistida via Redis");
+
+        when(valueOps.get("gateway:session:sw2")).thenReturn(
+                objectMapper.writeValueAsString(switched.withCompanyId(COMPANY_ID)));
+        assertEquals(COMPANY_ID, store.get("sw2").get().companyId(), "troca B->A restaura a empresa A");
+    }
+
+    @Test
     void shouldTranslateRedisFailureOnWriteToDomainUnavailableError() {
         org.mockito.Mockito.doThrow(new org.springframework.dao.QueryTimeoutException("connection timed out after 2000 ms"))
                 .when(valueOps).set(anyString(), anyString(), any(Duration.class));

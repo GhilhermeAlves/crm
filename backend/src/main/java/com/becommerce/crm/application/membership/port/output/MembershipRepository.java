@@ -1,5 +1,6 @@
 package com.becommerce.crm.application.membership.port.output;
 
+import com.becommerce.crm.application.me.port.output.MyCompanyProjection;
 import com.becommerce.crm.domain.membership.Membership;
 
 import java.util.List;
@@ -27,6 +28,8 @@ public interface MembershipRepository {
     List<MemberProjection> findActiveMembersByCompanyId(UUID companyId);
 
     List<MembershipProjection> findMembershipsByUserId(UUID userId);
+
+    List<MyCompanyProjection> findActiveCompanyOptionsByUserId(UUID userId);
 
     long countActiveByCompanyId(UUID companyId);
 

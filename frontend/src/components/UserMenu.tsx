@@ -4,6 +4,7 @@ import { LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ProfileAvatar } from "./ProfileAvatar";
+import { CompanySwitcher } from "./CompanySwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ export function UserMenu() {
             <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
           </div>
         </DropdownMenuLabel>
+        <CompanySwitcher />
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={ROUTES.PROFILE}>

@@ -1,6 +1,7 @@
 import api from "@/lib/api";
 import type {
   User,
+  CompanyOption,
   RegisterRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
@@ -35,6 +36,21 @@ export const AuthService = {
   /** Identidade de negócio vinda do crm-backend (Sprint 1). */
   async me(): Promise<User> {
     const response = await api.get<User>("/auth/me");
+    return response.data;
+  },
+
+  /**
+   * Empresas do usuário com membership ativa (Company Switcher, Sprint 8.4).
+   * A autorização é feita no backend; o campo `active` identifica a ativa.
+   */
+  async myCompanies(): Promise<CompanyOption[]> {
+    const response = await api.get<CompanyOption[]>("/me/companies");
+    return response.data;
+  },
+
+  /** Alterna a empresa ativa do usuário (Sprint 8.4). */
+  async switchCompany(companyId: string): Promise<CompanyOption> {
+    const response = await api.post<CompanyOption>("/me/switch-company", { companyId });
     return response.data;
   },
 };

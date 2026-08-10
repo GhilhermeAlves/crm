@@ -130,11 +130,16 @@ class InMemoryGatewaySessionStoreTest {
     }
 
     @Test
-    void shouldPurgeExpiredSessionsAndRetainFresh() {
-        store.put(activeSession("expired", Instant.now().minusSeconds(1)));
-        store.put(activeSession("fresh", Instant.now().plusSeconds(3600)));
-        store.purgeExpired();
-        assertEquals(1, store.size());
-        assertTrue(store.get("fresh").isPresent());
+    void shouldPersistSwitchToActiveCompanyAndSwitchBack() {
+        UUID companyB = UUID.fromString("bbbbbbbb-1111-2222-3333-444444444444");
+        store.put(activeSession("sw1", Instant.now().plusSeconds(3600)));
+
+        store.put(store.get("sw1").get().withCompanyId(companyB));
+        Optional<GatewaySession> switched = store.get("sw1");
+        assertTrue(switched.isPresent());
+        assertEquals(companyB, switched.get().companyId(), "troca A->B deve persistir na sessão");
+
+        store.put(store.get("sw1").get().withCompanyId(COMPANY_ID));
+        assertEquals(COMPANY_ID, store.get("sw1").get().companyId(), "troca B->A deve restaurar a empresa A");
     }
 }

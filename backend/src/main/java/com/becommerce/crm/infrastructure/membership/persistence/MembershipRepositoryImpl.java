@@ -1,5 +1,6 @@
 package com.becommerce.crm.infrastructure.membership.persistence;
 
+import com.becommerce.crm.application.me.port.output.MyCompanyProjection;
 import com.becommerce.crm.application.membership.port.output.MemberProjection;
 import com.becommerce.crm.application.membership.port.output.MembershipProjection;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
@@ -68,6 +69,11 @@ public class MembershipRepositoryImpl implements MembershipRepository {
     @Override
     public List<MembershipProjection> findMembershipsByUserId(UUID userId) {
         return repository.findMembershipsByUserId(userId);
+    }
+
+    @Override
+    public List<MyCompanyProjection> findActiveCompanyOptionsByUserId(UUID userId) {
+        return repository.findActiveCompanyOptionsByUserId(userId);
     }
 
     @Override

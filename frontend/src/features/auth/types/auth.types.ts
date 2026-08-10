@@ -9,6 +9,18 @@ export type User = {
   updatedAt: string;
 };
 
+/**
+ * Empresa disponível para o Company Switcher (Sprint 8.4). Somente empresas do
+ * usuário com membership ativa (validadas no backend).
+ */
+export type CompanyOption = {
+  companyId: string;
+  name: string;
+  logo: string | null;
+  /** empresa ativa corrente — resolvida pelo backend (não confia em input). */
+  active: boolean;
+};
+
 export type RegisterRequest = {
   name: string;
   email: string;

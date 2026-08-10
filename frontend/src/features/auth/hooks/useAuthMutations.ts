@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthService } from "../services/auth.service";
@@ -67,5 +67,48 @@ export function useMe(enabled: boolean) {
     enabled,
     retry: false,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Empresas do usuário com membership ativa (Company Switcher, Sprint 8.4).
+ * Desabilitado para usuário sem empresa (onboarding).
+ */
+export function useMyCompanies(enabled = true) {
+  return useQuery({
+    queryKey: ["me", "companies"],
+    queryFn: () => AuthService.myCompanies(),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * Alterna a empresa ativa (Sprint 8.4). Sem logout/login: ao concluir, invalida
+ * a identidade corrente /me (fonte de `user.companyId`) e as queries escopadas
+ * por empresa (tenants/users/roles/permissions/audit), de modo que o novo
+ * CurrentUser e o contexto da aplicação reflitam a empresa trocada.
+ */
+export function useSwitchCompany() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (companyId: string) => AuthService.switchCompany(companyId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["me"] }),
+        queryClient.invalidateQueries({ queryKey: ["me", "companies"] }),
+        queryClient.invalidateQueries({ queryKey: ["tenants"] }),
+        queryClient.invalidateQueries({ queryKey: ["users"] }),
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit"] }),
+      ]);
+      toast.success("Empresa ativa alterada.");
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      const message = error.response?.data?.message || "Erro ao alternar empresa";
+      toast.error(message);
+    },
   });
 }

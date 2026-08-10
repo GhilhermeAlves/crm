@@ -59,6 +59,10 @@ class CurrentUserResolutionServiceTest {
         return new User(USER_ID, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", SUB, COMPANY_ID, active, crmEnabled);
     }
 
+    private User userWithCompany(UUID companyId, boolean active, boolean crmEnabled) {
+        return new User(USER_ID, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", SUB, companyId, active, crmEnabled);
+    }
+
     private User userWithoutCompany(boolean active) {
         return new User(USER_ID, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", SUB, null, active, false);
     }
@@ -229,6 +233,31 @@ class CurrentUserResolutionServiceTest {
     }
 
     // ------------------------------------------------------------- onboarding (Sprint 8.3)
+
+    @Test
+    void shouldResolveActiveCompanyAfterSwitch() {
+        // Sprint 8.4: após o switch, users.company_id aponta para B e a resolução
+        // (que lê o banco) respeita a nova empresa ativa — roles/permissions/tenant.
+        UUID companyB = UUID.fromString("bbbbbbbb-1111-2222-3333-444444444444");
+        when(userRepository.findByKeycloakSub(SUB))
+                .thenReturn(Optional.of(userWithCompany(companyB, true, true)));
+        when(companyRepository.findStatusById(companyB)).thenReturn(Optional.of(CompanyStatus.ACTIVE));
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(USER_ID, companyB)).thenReturn(true);
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(USER_ID, companyB))
+                .thenReturn(Optional.of("ADMIN"));
+        when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, companyB)).thenReturn(List.of("ADMIN"));
+        when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, companyB))
+                .thenReturn(List.of("company:view", "membership:manage"));
+
+        CurrentUser currentUser = ((CurrentUserResolution.Resolved) service.resolve(identity())).currentUser();
+
+        assertEquals(companyB, currentUser.companyId(), "empresa ativa B após o switch");
+        assertEquals(companyB, currentUser.tenantId(), "tenant acompanha a empresa ativa");
+        assertEquals(List.of("ADMIN"), currentUser.roles(), "roles da empresa ativa B");
+        assertEquals(List.of("company:view", "membership:manage"), currentUser.permissions(),
+                "permissions da empresa ativa B");
+        assertEquals("ADMIN", currentUser.membershipRole());
+    }
 
     @Test
     void shouldResolveOnboardingUserWithoutCompany() {

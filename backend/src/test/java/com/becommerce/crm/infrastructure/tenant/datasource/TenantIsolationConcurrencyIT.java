@@ -393,6 +393,42 @@ class TenantIsolationConcurrencyIT {
         }
     }
 
+    /**
+     * Sprint 8.4 — Company Switcher: alternar a empresa ativa (via atualização de
+     * {@code users.company_id}, propagada ao {@code TenantContext} → GUC
+     * {@code app.current_company_id}) deve trocar a visão RLS. Empresa A ativa →
+     * só dados de A; switch B → só dados de B (nada de A); switch A → só dados de A.
+     */
+    @Test
+    void switchingActiveCompany_togglesTenantIsolation() throws SQLException {
+        // Empresa A ativa → vê apenas dados de A
+        TenantContext.setCompanyId(TENANT_A);
+        assertCountUsers(2, "Empresa A ativa → vê apenas seus dados");
+        assertCrossTenantCount(TENANT_B, 0, "Empresa A ativa não pode ver dados de B");
+
+        // switch → Empresa B ativa → vê apenas dados de B (nada de A)
+        TenantContext.setCompanyId(TENANT_B);
+        assertCountUsers(2, "Empresa B ativa → vê apenas seus dados");
+        assertCrossTenantCount(TENANT_A, 0, "Empresa B ativa não pode ver dados de A");
+
+        // switch de volta → Empresa A ativa → vê apenas dados de A
+        TenantContext.setCompanyId(TENANT_A);
+        assertCountUsers(2, "Empresa A reativada → vê apenas seus dados");
+        assertCrossTenantCount(TENANT_B, 0, "Empresa A reativada não pode ver dados de B");
+    }
+
+    private void assertCrossTenantCount(UUID otherTenant, int expected, String message) throws SQLException {
+        try (Connection conn = tenantAwareDataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT count(*) FROM users WHERE company_id = ?")) {
+            ps.setObject(1, otherTenant);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                assertEquals(expected, rs.getInt(1), message);
+            }
+        }
+    }
+
     private void assertCountUsers(int expected, String message) throws SQLException {
         try (Connection conn = tenantAwareDataSource.getConnection();
              Statement st = conn.createStatement();

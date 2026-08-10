@@ -105,8 +105,8 @@
 | 8 | Empresas | ✅ Concluída | 2026-08-09 | AI Agent | 7.5 |
 | 8.1 | Company Foundation | ✅ Concluída | 2026-08-09 | AI Agent | 8 (plano) |
 | 8.2 | Membership | ✅ Concluída | 2026-08-09 | AI Agent | 8.1 |
-| 8.3 | Onboarding | ⏳ Pendente | — | — | 8.2 |
-| 8.4 | Company Switcher | ⏳ Pendente | — | — | 8.2 |
+| 8.3 | Onboarding | ✅ Concluída | 2026-08-10 | AI Agent | 8.2 |
+| 8.4 | Company Switcher | 🚧 Em andamento | 2026-08-10 | AI Agent | 8.2 |
 | 8.5 | Invitations | ⏳ Pendente | — | — | 8.2, 8.3 |
 | 8.6 | SaaS Hardening | ⏳ Pendente | — | — | 8.4, 8.5 |
 
@@ -143,6 +143,17 @@
 > - ✅ Suíte backend verde (143 testes) + auth-service verde (280 testes) + E2E em produção
 >   **19/19 PASS** (8 RLS + 9 API + gate);
 > - 📄 `sprints/8.2/REPORT.md`.
+
+> **8.3 — Onboarding ✅ Concluída (2026-08-10).**
+> - ✅ `users.company_id` nullable (V032) + RLS `identity_onboarding_insert_policy`;
+> - ✅ Provisionamento company-less no auth-service (`resolveDefaultCompanyId` → null);
+> - ✅ `POST /api/v1/onboarding/companies` (cria empresa, seed de papéis via `RoleSeedService`,
+>   membership `OWNER/ACTIVE`, eleva company ativa, concede acesso CRM);
+> - ✅ `CurrentUser.companyId` nullable (backend + auth-service); usuário sem empresa resolve com
+>   roles/permissões vazios e pula o gate do CRM (redirect `/onboarding`);
+> - ✅ Frontend: rota `/onboarding` + gate (`ProtectedRoute`), feature onboarding (form/schema);
+> - ✅ Backend 153, auth-service 282, frontend 56 testes; typecheck OK;
+> - 📄 `sprints/8.3/REPORT.md`.
 
 ## CRM
 
@@ -184,12 +195,12 @@
 | Infraestrutura | 5 | 0 | 0 | 0 | 5 |
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
-| SaaS | 7 | 3 | 0 | 4 | 0 |
+| SaaS | 7 | 4 | 1 | 3 | 0 |
 | CRM | 4 | 0 | 0 | 4 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **27** | **0** | **13** | **5** |
+| **Total** | **45** | **28** | **1** | **12** | **5** |
 
 ---
 
@@ -220,6 +231,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-09 — Sprint **8.2 (Membership)** concluída com E2E em produção
-19/19 PASS; resumo agora 45 sprints: 27 ✅, 0 🚧, 13 ⏳, 5 ↪️. Próxima sprint:
-**8.3 — Onboarding** (SaaS), detalhada em `sprints/8/SPRINT_PLAN.md`.*
+*Última atualização: 2026-08-10 — Sprint **8.3 (Onboarding)** concluída (REPORT + índice). Resumo
+agora 45 sprints: 28 ✅, 1 🚧, 12 ⏳, 5 ↪️. Próxima sprint: **8.4 — Company Switcher** (SaaS), em
+andamento, detalhada em `sprints/8/SPRINT_PLAN.md`.*
