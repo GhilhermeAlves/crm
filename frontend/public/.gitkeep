@@ -1,0 +1,4 @@
+# Diretório público do Next.js (vazio por design).
+# Mantido versionado via .gitkeep porque o Dockerfile faz
+# `COPY --from=builder /app/public ./public` no estágio runner:
+# sem este diretório no build context, o COPY falha (frontend).
