@@ -99,6 +99,16 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
 
             UUID userId = user.getId();
             UUID companyId = user.getCompanyId();
+
+            // Sprint 8.3: usuário provisionado SEM empresa (onboarding pendente).
+            // Autenticado, porém SEM company_id / roles / permissions — o gate da
+            // UI redireciona para a tela de onboarding ("crie sua empresa") e os
+            // módulos CRM exigem company_id (ver CompanyRequiredRoute no frontend
+            // e os gates de autorização no backend).
+            if (companyId == null) {
+                return CurrentUser.fromKeycloak(userId, email, null, List.of(), List.of(),
+                        keycloakSub, buildDisplayName(name, givenName, familyName, email), null);
+            }
             TenantContext.setCompanyId(companyId);
 
             // Sprint 8.2: membro desligado (sem membership ACTIVE) perde acesso.

@@ -7,6 +7,7 @@ export const ROUTES = {
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
   DASHBOARD: "/dashboard",
+  ONBOARDING: "/onboarding",
   TENANTS: "/tenants",
   TENANTS_NEW: "/tenants/new",
   USERS: "/users",

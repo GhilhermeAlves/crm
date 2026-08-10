@@ -31,10 +31,12 @@ public record CurrentUser(
     public CurrentUser {
         Objects.requireNonNull(userId, "userId");
         Objects.requireNonNull(email, "email");
-        Objects.requireNonNull(companyId, "companyId");
         Objects.requireNonNull(roles, "roles");
         Objects.requireNonNull(permissions, "permissions");
         Objects.requireNonNull(keycloakSub, "keycloakSub");
+        // Sprint 8.3: companyId pode ser null (usuário sem empresa — onboarding
+        // pendente). Nesse estado o CurrentUser é autenticado, porém SEM empresa
+        // e SEM roles/permissions.
         tenantId = tenantId == null ? companyId : tenantId;
         provider = provider == null || provider.isBlank() ? "keycloak" : provider;
         roles = List.copyOf(roles);

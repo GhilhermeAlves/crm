@@ -251,7 +251,9 @@ public class AuthService implements AuthUseCase {
 
         try {
             User created = self.createProvisionedUser(keycloakSub, resolvedEmail, givenName, familyName);
-            crmAccessService.assertCrmAccess(created);
+            if (created.getCompanyId() != null) {
+                crmAccessService.assertCrmAccess(created);
+            }
             return created;
         } catch (DataIntegrityViolationException e) {
             User raced = findExistingKeycloakUser(keycloakSub, resolvedEmail);
@@ -314,12 +316,18 @@ public class AuthService implements AuthUseCase {
     /**
      * Aplica a sincronização de identidade ({@link #syncKeycloakIdentity}) e o
      * gate de acesso ao CRM. Retorna o usuário persistido quando houve mudança.
+     *
+     * <p>Sprint 8.3: usuário provisionado SEM empresa (company_id null) pula o
+     * gate de acesso ao CRM (onboarding pendente) — não há empresa para checar;
+     * ele é resolvido como autenticado-sem-empresa e direcionado ao onboarding.
      */
     private User syncAndResolve(User user, String keycloakSub, String email,
                                 String givenName, String familyName) {
         boolean changed = syncKeycloakIdentity(user, keycloakSub, email, givenName, familyName);
         User resolved = changed ? userRepository.save(user) : user;
-        crmAccessService.assertCrmAccess(resolved);
+        if (resolved.getCompanyId() != null) {
+            crmAccessService.assertCrmAccess(resolved);
+        }
         return resolved;
     }
 
@@ -347,7 +355,14 @@ public class AuthService implements AuthUseCase {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public User createProvisionedUser(String keycloakSub, String email, String givenName, String familyName) {
         UUID companyId = resolveDefaultCompanyId();
-        TenantContext.setCompanyId(companyId);
+        if (companyId != null) {
+            // Sprint 8.3: quando há empresa padrão configurada, o tenant é
+            // definido no TenantContext antes do INSERT para satisfazer o
+            // WITH CHECK do tenant_isolation_policy (V019). Sem empresa padrão,
+            // a linha é criada com company_id NULL pela
+            // identity_onboarding_insert_policy (V032) — onboarding pendente.
+            TenantContext.setCompanyId(companyId);
+        }
         String firstName = givenName != null && !givenName.isBlank() ? givenName : email.substring(0, email.indexOf('@'));
         String lastName = familyName != null && !familyName.isBlank() ? familyName : "";
 
@@ -358,14 +373,17 @@ public class AuthService implements AuthUseCase {
 
         User saved = userRepository.save(user);
 
-        assignDefaultRole(saved);
-        // Sprint 8.2: membership é a fonte de verdade da relação usuário↔empresa.
-        // O trigger de consistência mantém users.company_id (aqui já definido).
-        if (!membershipRepository.existsActiveByUserIdAndCompanyId(saved.getId(), companyId)) {
-            membershipRepository.save(Membership.activate(saved.getId(), companyId, defaultRoleName.trim().toUpperCase()));
+        if (companyId != null) {
+            assignDefaultRole(saved);
+            // Sprint 8.2: membership é a fonte de verdade da relação usuário↔empresa.
+            // O trigger de consistência mantém users.company_id (aqui já definido).
+            if (!membershipRepository.existsActiveByUserIdAndCompanyId(saved.getId(), companyId)) {
+                membershipRepository.save(Membership.activate(saved.getId(), companyId, defaultRoleName.trim().toUpperCase()));
+            }
         }
         eventPublisher.publish(UserCreatedEvent.create(saved.getId(), saved.getEmail().value(), saved.getCompanyId()));
-        log.info("Usuário Keycloak provisionado: {} (sub={})", saved.getEmail().value(), keycloakSub);
+        log.info("Usuário Keycloak provisionado: {} (sub={}){}", saved.getEmail().value(), keycloakSub,
+                companyId == null ? " [sem empresa — onboarding pendente]" : "");
         return saved;
     }
 
@@ -447,15 +465,17 @@ public class AuthService implements AuthUseCase {
      * Resolve o tenant de provisionamento de forma confiável: apenas a fonte
      * explícita {@code app.auth.provisioning.default-company-id}. Não há
      * fallback para "primeira empresa ativa", pois escolheria um tenant
-     * arbitrariamente (proibido). Se o tenant não for determinável, o
-     * provisionamento é bloqueado explicitamente ({@code PROVISIONING_REQUIRED})
-     * em vez de inventar um tenant.
+     * arbitrariamente (proibido).
+     *
+     * <p>Sprint 8.3: se o tenant não for determinável, retorna {@code null}
+     * (em vez de lançar {@code PROVISIONING_REQUIRED}) — o usuário passa a ser
+     * provisionado SEM empresa e é direcionado ao onboarding self-service
+     * (criação da primeira empresa). {@code AUTH_DEFAULT_COMPANY_ID} continua
+     * válido como fallback opcional quando configurado (D4).
      */
     private UUID resolveDefaultCompanyId() {
         if (defaultCompanyId == null || defaultCompanyId.isBlank()) {
-            throw new UserProvisioningException(
-                "PROVISIONING_REQUIRED: nenhum tenant determinável para provisionar o usuário. "
-                    + "Configure app.auth.provisioning.default-company-id (AUTH_DEFAULT_COMPANY_ID).");
+            return null;
         }
         try {
             return UUID.fromString(defaultCompanyId);

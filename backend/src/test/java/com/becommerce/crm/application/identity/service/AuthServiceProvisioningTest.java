@@ -20,6 +20,7 @@ import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.identity.valueobject.Email;
 import com.becommerce.crm.domain.identity.valueobject.Password;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
@@ -263,16 +264,23 @@ class AuthServiceProvisioningTest {
     }
 
     @Test
-    void shouldSignalProvisioningRequiredWhenNoTenantConfigured() {
+    void shouldProvisionUserWithoutCompanyWhenNoTenantConfigured() {
+        // Sprint 8.3: sem AUTH_DEFAULT_COMPANY_ID, o usuário é provisionado SEM
+        // empresa (onboarding pendente) em vez de lançar PROVISIONING_REQUIRED.
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UserProvisioningException ex = assertThrows(UserProvisioningException.class,
-                () -> authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos"));
+        User result = authService.provisionKeycloakUser(SUB, EMAIL, PREFERRED_USERNAME, "Ghilherme", "Santos");
 
-        assertTrue(ex.getMessage().contains("PROVISIONING_REQUIRED"));
-        verify(userRepository, never()).save(any(User.class));
-        assertNull(TenantContext.getCompanyId());
+        assertNotNull(result.getId());
+        assertEquals(SUB, result.getKeycloakSub());
+        assertNull(result.getCompanyId());
+        assertFalse(result.isCrmEnabled());
+        // Sem empresa: sem role nem membership (aguardando onboarding).
+        verify(userRoleRepository, never()).save(any(UserRole.class));
+        verify(membershipRepository, never()).save(any(Membership.class));
+        verify(userRepository, times(1)).save(any(User.class));
     }
 
     @Test

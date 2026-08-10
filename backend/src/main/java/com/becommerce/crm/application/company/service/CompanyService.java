@@ -19,9 +19,9 @@ import java.util.UUID;
 @Service
 public class CompanyService implements CompanyUseCase {
 
-    private static final int DEFAULT_MAX_USERS = 5;
-    private static final int DEFAULT_MAX_STORAGE_MB = 1024;
-    private static final int DEFAULT_MAX_CONTACTS = 500;
+    public static final int DEFAULT_MAX_USERS = 5;
+    public static final int DEFAULT_MAX_STORAGE_MB = 1024;
+    public static final int DEFAULT_MAX_CONTACTS = 500;
 
     private final CompanyRepository companyRepository;
     private final CompanySettingsRepository companySettingsRepository;

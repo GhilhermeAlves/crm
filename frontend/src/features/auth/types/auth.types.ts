@@ -2,7 +2,8 @@ export type User = {
   id: string;
   email: string;
   name: string;
-  companyId: string;
+  /** null = usuário provisionado sem empresa (onboarding pendente, Sprint 8.3) */
+  companyId: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

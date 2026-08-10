@@ -96,8 +96,23 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
                 }
                 return new CurrentUserResolution.ProvisioningRequired(identity);
             }
-            assertCrmAccess(user);
+            // Sprint 8.3: usuário provisionado SEM empresa (company_id null) — acesso
+            // ao CRM ainda não concedido porque não há empresa. Resolve um CurrentUser
+            // autenticado SEM company_id/roles/permissions: o frontend redireciona para
+            // a tela de onboarding (crie a primeira empresa). Este estado pula o gate
+            // de acesso ao CRM (que exigiria crm_enabled e empresa ativa).
+            if (user.companyId() == null) {
+                if (!user.active()) {
+                    throw new CrmAccessDeniedException("Usuário inativo: acesso negado.");
+                }
+                return new CurrentUserResolution.Resolved(new CurrentUser(
+                        user.id(), user.email(), null, null,
+                        List.of(), List.of(), identity.keycloakSub(),
+                        identity.sessionId(), identity.provider(),
+                        firstNonBlank(identity.displayName(), user.name()), null));
+            }
 
+            assertCrmAccess(user);
             TenantContext.setCompanyId(user.companyId());
 
             // Sprint 8.2: membro desligado (sem membership ACTIVE) perde acesso.

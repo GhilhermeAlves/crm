@@ -37,7 +37,7 @@ public class UserJpaEntity {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    @Column(name = "company_id", nullable = false)
+    @Column(name = "company_id")
     private UUID companyId;
 
     @Column(nullable = false)

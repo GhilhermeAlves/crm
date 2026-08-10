@@ -59,6 +59,10 @@ class CurrentUserResolutionServiceTest {
         return new User(USER_ID, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", SUB, COMPANY_ID, active, crmEnabled);
     }
 
+    private User userWithoutCompany(boolean active) {
+        return new User(USER_ID, EMAIL, "Ghilherme", "Santos", "Ghilherme Santos", SUB, null, active, false);
+    }
+
     private User activeUser() {
         return user(true, true);
     }
@@ -222,5 +226,38 @@ class CurrentUserResolutionServiceTest {
         assertInstanceOf(CurrentUserResolution.Resolved.class, resolution);
         assertEquals(USER_ID, ((CurrentUserResolution.Resolved) resolution).currentUser().userId());
         verify(userRepository).findByEmail(EMAIL);
+    }
+
+    // ------------------------------------------------------------- onboarding (Sprint 8.3)
+
+    @Test
+    void shouldResolveOnboardingUserWithoutCompany() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(userWithoutCompany(true)));
+
+        CurrentUserResolution resolution = service.resolve(identity());
+
+        assertInstanceOf(CurrentUserResolution.Resolved.class, resolution);
+        CurrentUser currentUser = ((CurrentUserResolution.Resolved) resolution).currentUser();
+        assertEquals(USER_ID, currentUser.userId());
+        assertEquals(null, currentUser.companyId());
+        assertEquals(null, currentUser.tenantId());
+        assertEquals(null, currentUser.membershipRole());
+        assertEquals(List.of(), currentUser.roles());
+        assertEquals(List.of(), currentUser.permissions());
+
+        verify(roleRepository, never()).findRoleNamesByUserIdAndCompanyId(any(), any());
+        verify(permissionRepository, never()).findPermissionNamesByUserIdAndCompanyId(any(), any());
+        verify(membershipRepository, never()).existsActiveByUserIdAndCompanyId(any(), any());
+        verify(companyRepository, never()).findStatusById(any());
+    }
+
+    @Test
+    void shouldDenyInactiveOnboardingUserWithoutCompany() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(userWithoutCompany(false)));
+
+        CrmAccessDeniedException ex = assertThrows(CrmAccessDeniedException.class, () -> service.resolve(identity()));
+
+        assertTrue(ex.getMessage().contains("inativo"));
+        verify(roleRepository, never()).findRoleNamesByUserIdAndCompanyId(any(), any());
     }
 }
