@@ -127,3 +127,28 @@ ambiente produtivo validado.
 - E2E manual do switch com usuário autenticado multi-empresa no browser (requer credenciais reais).
 - RLS `*IT` **executado** na VPS (Docker): `TenantIsolationConcurrencyIT` **13/13 PASS**,
   incluindo `switchingActiveCompany_togglesTenantIsolation`.
+
+---
+
+## 23. Correção pós-deploy — criação de empresa (HTTP 400)
+
+**Problema:** `POST /api/v1/companies` retornava **400** mesmo com o formulário preenchido.
+
+**Causa raiz:** `TenantService.create` enviava `address` **aninhado** (`address.zipCode`...), mas o
+contrato backend (`CreateCompanyRequest`) exige endereço **achatado**
+(`addressZipCode`, `addressStreet`, ...) — o mesmo formato que o onboarding já usa. Os campos de
+endereço chegavam `null` → `@NotBlank` → 400. (Jackson: `fail-on-unknown-properties=false`; o campo
+extra `status` era ignorado e não era a causa.)
+
+**Correção (única responsabilidade na camada de serviço):**
+- `mapCreateTenantRequest`: achata `address` para `address*`, `plan` em UPPERCASE, omite `status` no
+  create (contrato não tem);
+- `mapUpdateTenantRequest`: payload parcial achatado, `plan`/`status` em UPPERCASE;
+- +7 testes do mapper (flatten de endereço, pass-through de CNPJ/CEP/telefone, plan/status, defaults,
+  endereço ausente). Suíte frontend **66/66**, typecheck limpo, lint sem erros.
+
+**Deploy:** commit `73f1014`, push `999e124→73f1014`, VPS `--ff-only`, frontend rebuilt+recreated,
+`/` HTTP 200, containers up.
+
+**Validação manual pendente:** preencher uma empresa real no navegador e confirmar o payload
+achatado no DevTools (requer credenciais autenticadas com `company:create`).
