@@ -1,6 +1,5 @@
 package com.becommerce.crm.domain.identity;
 
-import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -8,7 +7,7 @@ import java.util.UUID;
 
 public class Role {
     private UUID id;
-    private RoleName name;
+    private String name;
     private String description;
     private UUID companyId;
     private boolean isSystem;
@@ -20,12 +19,12 @@ public class Role {
     public Role() {
     }
 
-    public static Role create(RoleName name, UUID companyId) {
+    public static Role create(String name, UUID companyId) {
         Role role = new Role();
         role.id = UUID.randomUUID();
         role.name = name;
         role.companyId = companyId;
-        role.description = name.getDisplayName();
+        role.description = name;
         role.isSystem = false;
         role.isActive = true;
         role.permissions = new HashSet<>();
@@ -36,16 +35,16 @@ public class Role {
 
     public static final UUID SYSTEM_COMPANY_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
-    public static Role createSystem(RoleName name) {
+    public static Role createSystem(String name) {
         return createSystem(name, SYSTEM_COMPANY_ID);
     }
 
-    public static Role createSystem(RoleName name, UUID companyId) {
+    public static Role createSystem(String name, UUID companyId) {
         Role role = new Role();
         role.id = UUID.randomUUID();
         role.name = name;
         role.companyId = companyId;
-        role.description = name.getDisplayName() + " (System Role)";
+        role.description = name + " (System Role)";
         role.isSystem = true;
         role.isActive = true;
         role.permissions = new HashSet<>();
@@ -74,11 +73,11 @@ public class Role {
         this.id = id;
     }
 
-    public RoleName getName() {
+    public String getName() {
         return name;
     }
 
-    public void setName(RoleName name) {
+    public void setName(String name) {
         this.name = name;
     }
 

@@ -92,7 +92,7 @@ class AuthServiceProvisioningTest {
                 CompanyPlan.STARTER, 5, 1024, 500, null, null
         );
 
-        agentRole = Role.createSystem(RoleName.AGENT);
+        agentRole = Role.createSystem(RoleName.AGENT.name());
     }
 
     @AfterEach
@@ -118,7 +118,7 @@ class AuthServiceProvisioningTest {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.empty());
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT, activeCompany.getId()))
+        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), activeCompany.getId()))
                 .thenReturn(Optional.of(agentRole));
         when(userRoleRepository.existsByUserIdAndRoleId(any(UUID.class), any(UUID.class))).thenReturn(false);
         when(userRoleRepository.save(any(UserRole.class))).thenAnswer(invocation -> invocation.getArgument(0));

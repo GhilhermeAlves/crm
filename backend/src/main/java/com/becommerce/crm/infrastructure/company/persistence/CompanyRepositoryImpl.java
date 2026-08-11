@@ -22,6 +22,9 @@ public class CompanyRepositoryImpl implements CompanyRepository {
     @Override
     public Company save(Company company) {
         CompanyJpaEntity entity = mapper.toJpaEntity(company);
+        if (company.getId() == null || !repository.existsById(company.getId())) {
+            entity.setId(null);
+        }
         CompanyJpaEntity saved = repository.save(entity);
         return mapper.toDomainEntity(saved);
     }

@@ -31,8 +31,8 @@ public class RoleRepositoryImpl implements RoleRepository {
     }
 
     @Override
-    public Optional<Role> findByNameAndCompanyId(RoleName name, UUID companyId) {
-        return repository.findByNameAndCompanyId(name.name(), companyId).map(this::toDomainEntity);
+    public Optional<Role> findByNameAndCompanyId(String name, UUID companyId) {
+        return repository.findByNameAndCompanyId(name, companyId).map(this::toDomainEntity);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class RoleRepositoryImpl implements RoleRepository {
     private RoleJpaEntity toJpaEntity(Role role) {
         RoleJpaEntity entity = new RoleJpaEntity();
         entity.setId(role.getId());
-        entity.setName(role.getName().name());
+        entity.setName(role.getName());
         entity.setDescription(role.getDescription());
         entity.setCompanyId(role.getCompanyId());
         entity.setSystem(role.isSystem());
@@ -64,7 +64,7 @@ public class RoleRepositoryImpl implements RoleRepository {
     }
 
     private Role toDomainEntity(RoleJpaEntity entity) {
-        Role role = Role.create(RoleName.valueOf(entity.getName()), entity.getCompanyId());
+        Role role = Role.create(entity.getName(), entity.getCompanyId());
         role.setId(entity.getId());
         role.setDescription(entity.getDescription());
         role.setSystem(entity.isSystem());

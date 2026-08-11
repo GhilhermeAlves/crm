@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCreateRole } from "../hooks/useRoles";
+import { useCreateRole, usePermissions } from "../hooks/useRoles";
 import { roleSchema, type RoleFormData } from "../schemas/role.schema";
+import { PermissionMatrix } from "./PermissionMatrix";
 
 interface RoleFormProps {
   defaultValues?: Partial<RoleFormData>;
@@ -19,6 +21,10 @@ interface RoleFormProps {
 export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
   const router = useRouter();
   const createRole = useCreateRole();
+  const { data: allPermissions } = usePermissions();
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
+    defaultValues?.permissionIds ?? []
+  );
 
   const {
     register,
@@ -29,16 +35,28 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
     defaultValues: {
       name: "",
       description: "",
+      permissionIds: [],
       ...defaultValues,
     },
   });
 
+  const handleTogglePermission = (permissionId: string) => {
+    setSelectedPermissionIds((prev) =>
+      prev.includes(permissionId)
+        ? prev.filter((id) => id !== permissionId)
+        : [...prev, permissionId]
+    );
+  };
+
   const onSubmit = async (data: RoleFormData) => {
-    createRole.mutate(data, {
-      onSuccess: () => {
-        router.push("/roles");
-      },
-    });
+    createRole.mutate(
+      { ...data, permissionIds: selectedPermissionIds },
+      {
+        onSuccess: () => {
+          router.push("/roles");
+        },
+      }
+    );
   };
 
   return (
@@ -74,6 +92,16 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
             />
             {errors.description && (
               <p className="text-sm text-destructive">{errors.description.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {allPermissions && (
+              <PermissionMatrix
+                permissions={allPermissions}
+                selectedPermissionIds={selectedPermissionIds}
+                onToggle={handleTogglePermission}
+              />
             )}
           </div>
 

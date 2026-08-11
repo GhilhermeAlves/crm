@@ -88,12 +88,12 @@ public class MembershipService implements MembershipUseCase {
                         "Membro não encontrado nesta empresa: " + userId));
 
         boolean demotingAdmin = membership.isAdminRole()
-                && !targetRole.getName().name().equals(membership.getRole());
+                && !targetRole.getName().equals(membership.getRole());
         if (demotingAdmin) {
             assertNotLastAdmin(companyId, membership);
         }
 
-        membership.changeRole(targetRole.getName().name());
+        membership.changeRole(targetRole.getName());
         membershipRepository.save(membership);
         syncUserRoles(userId, companyId, targetRole);
 
@@ -125,12 +125,7 @@ public class MembershipService implements MembershipUseCase {
     }
 
     private Role resolveRoleForCompany(String role, UUID companyId) {
-        RoleName roleName;
-        try {
-            roleName = RoleName.valueOf(role.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new RoleNotFoundException("Role inválida: " + role);
-        }
+        String roleName = role.trim().toUpperCase().replaceAll("[^A-Z0-9_]+", "_");
         return roleRepository.findByNameAndCompanyId(roleName, companyId)
                 .orElseThrow(() -> new RoleNotFoundException(
                         "Role não existe nesta empresa: " + role));

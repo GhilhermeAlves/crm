@@ -435,7 +435,7 @@ public class AuthService implements AuthUseCase {
                 "Role padrão de provisionamento inválida: " + defaultRoleName);
         }
 
-        Optional<Role> roleOpt = roleRepository.findByNameAndCompanyId(roleName, user.getCompanyId());
+        Optional<Role> roleOpt = roleRepository.findByNameAndCompanyId(roleName.name(), user.getCompanyId());
         if (roleOpt.isEmpty()) {
             throw new UserProvisioningException(
                 "Role padrão não encontrada no banco: " + roleName);

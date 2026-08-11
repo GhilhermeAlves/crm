@@ -121,7 +121,7 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
                     .map(ur -> roleRepository.findById(ur.getRoleId()))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
-                    .map(role -> role.getName().name())
+                    .map(role -> role.getName())
                     .collect(Collectors.toList());
 
             List<String> permissions = roleNames.stream()
@@ -143,7 +143,7 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
 
     private Stream<String> permissionsForRole(String roleName, UUID companyId) {
         try {
-            Optional<Role> roleOpt = roleRepository.findByNameAndCompanyId(RoleName.valueOf(roleName), companyId);
+            Optional<Role> roleOpt = roleRepository.findByNameAndCompanyId(roleName, companyId);
             return roleOpt.map(role -> rolePermissionRepository.findByRoleId(role.getId()).stream()
                             .map(rp -> permissionRepository.findById(rp.getPermissionId()))
                             .filter(Optional::isPresent)

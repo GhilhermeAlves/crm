@@ -122,7 +122,7 @@ public class OnboardingService implements OnboardingUseCase {
             }
 
             // RBAC: o dono recebe o papel ADMIN (permite operar os módulos).
-            Role admin = roleRepository.findByNameAndCompanyId(RoleName.ADMIN, saved.getId())
+            Role admin = roleRepository.findByNameAndCompanyId(RoleName.ADMIN.name(), saved.getId())
                     .orElseThrow(() -> new IllegalStateException(
                             "Papel ADMIN não encontrado após o seed da nova empresa."));
             if (!userRoleRepository.existsByUserIdAndRoleId(owner.getId(), admin.getId())) {

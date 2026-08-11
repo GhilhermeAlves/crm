@@ -48,7 +48,7 @@ class MembershipServiceTest {
     }
 
     private Role role(RoleName name) {
-        return Role.create(name, COMPANY_ID);
+        return Role.create(name.name(), COMPANY_ID);
     }
 
     private MemberProjection memberProjection(String role) {
@@ -110,7 +110,7 @@ class MembershipServiceTest {
         Membership membership = Membership.activate(USER_ID, COMPANY_ID, "ADMIN");
         when(membershipRepository.findActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID))
                 .thenReturn(Optional.of(membership));
-        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT, COMPANY_ID))
+        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), COMPANY_ID))
                 .thenReturn(Optional.of(agentRole));
         when(membershipRepository.countActiveAdminByCompanyId(COMPANY_ID)).thenReturn(2L);
         when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, agentRole.getId())).thenReturn(false);
@@ -129,7 +129,7 @@ class MembershipServiceTest {
         Membership membership = Membership.activate(USER_ID, COMPANY_ID, "ADMIN");
         when(membershipRepository.findActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID))
                 .thenReturn(Optional.of(membership));
-        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT, COMPANY_ID))
+        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), COMPANY_ID))
                 .thenReturn(Optional.of(agentRole));
         when(membershipRepository.countActiveAdminByCompanyId(COMPANY_ID)).thenReturn(1L);
 
@@ -146,7 +146,7 @@ class MembershipServiceTest {
 
     @Test
     void shouldRejectRoleNotInCompany() {
-        when(roleRepository.findByNameAndCompanyId(RoleName.MANAGER, COMPANY_ID)).thenReturn(Optional.empty());
+        when(roleRepository.findByNameAndCompanyId(RoleName.MANAGER.name(), COMPANY_ID)).thenReturn(Optional.empty());
 
         assertThrows(RoleNotFoundException.class,
                 () -> service.updateMemberRole(COMPANY_ID, USER_ID, "MANAGER", COMPANY_ID, false));
@@ -155,7 +155,7 @@ class MembershipServiceTest {
     @Test
     void shouldThrowWhenMemberNotFoundOnUpdate() {
         Role agentRole = role(RoleName.AGENT);
-        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT, COMPANY_ID))
+        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), COMPANY_ID))
                 .thenReturn(Optional.of(agentRole));
         when(membershipRepository.findActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID))
                 .thenReturn(Optional.empty());

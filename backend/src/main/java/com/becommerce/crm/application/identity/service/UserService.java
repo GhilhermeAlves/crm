@@ -5,8 +5,11 @@ import com.becommerce.crm.application.identity.port.input.UserUseCase;
 import com.becommerce.crm.application.identity.port.output.EventPublisher;
 import com.becommerce.crm.application.identity.port.output.PasswordEncoder;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
+import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.UserStatus;
+import com.becommerce.crm.domain.membership.Membership;
+import com.becommerce.crm.domain.membership.MembershipStatus;
 import com.becommerce.crm.domain.identity.event.UserCreatedEvent;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
 import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
@@ -25,11 +28,14 @@ public class UserService implements UserUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EventPublisher eventPublisher;
+    private final MembershipRepository membershipRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, EventPublisher eventPublisher) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       EventPublisher eventPublisher, MembershipRepository membershipRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
+        this.membershipRepository = membershipRepository;
     }
 
     @Override
@@ -180,6 +186,9 @@ public class UserService implements UserUseCase {
 
         User saved = userRepository.save(user);
 
+        membershipRepository.save(Membership.invite(
+                saved.getId(), companyId, "AGENT", invitedBy));
+
         log.info("Convite enviado para: {} (token: {})", saved.getEmail().value(), saved.getInviteToken());
         // TODO: Send invitation email when EmailService is fully implemented
         // emailService.sendInviteEmail(saved.getEmail().value(), saved.getInviteToken(), saved.getFirstName());
@@ -197,6 +206,14 @@ public class UserService implements UserUseCase {
         user.activateFromInvite(hashedPassword);
 
         User saved = userRepository.save(user);
+
+        membershipRepository.findByUserIdAndCompanyId(saved.getId(), saved.getCompanyId())
+                .ifPresent(membership -> {
+                    membership.setStatus(MembershipStatus.ACTIVE);
+                    membership.setJoinedAt(java.time.LocalDateTime.now());
+                    membershipRepository.save(membership);
+                });
+
         log.info("Convite aceito por: {}", saved.getEmail().value());
         return mapToResponse(saved);
     }

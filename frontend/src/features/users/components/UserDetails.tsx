@@ -1,9 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import type { User } from "../types/user.types";
 import { UserAvatar } from "./UserAvatar";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  useRoles,
+  useUserRoles,
+  useAssignRoleToUser,
+  useRemoveRoleFromUser,
+} from "@/features/rbac/hooks/useRoles";
 
 interface UserDetailsProps {
   user: User;
@@ -30,6 +46,24 @@ function formatDate(dateStr: string | null): string {
 }
 
 export function UserDetails({ user }: UserDetailsProps) {
+  const rolesQuery = useRoles();
+  const userRolesQuery = useUserRoles(user.id);
+  const assignRole = useAssignRoleToUser();
+  const removeRole = useRemoveRoleFromUser();
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+
+  const availableRoles = (rolesQuery.data ?? []).filter(
+    (r) => !userRolesQuery.data?.some((ur) => ur.id === r.id)
+  );
+
+  const handleAssign = () => {
+    if (!selectedRoleId) return;
+    assignRole.mutate(
+      { userId: user.id, data: { roleId: selectedRoleId } },
+      { onSuccess: () => setSelectedRoleId("") }
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -76,6 +110,67 @@ export function UserDetails({ user }: UserDetailsProps) {
         <CardContent>
           <InfoRow label="Cargo" value={user.jobTitle} />
           <InfoRow label="Departamento" value={user.department} />
+        </CardContent>
+      </Card>
+
+      {/* Papéis */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Papéis</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {userRolesQuery.data?.length ? (
+              userRolesQuery.data.map((role) => (
+                <div
+                  key={role.id}
+                  className="flex items-center gap-1 rounded-md border px-2 py-1"
+                >
+                  <Badge variant="secondary">
+                    {role.name.replace(/_/g, " ")}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 text-muted-foreground"
+                    disabled={removeRole.isPending}
+                    onClick={() =>
+                      removeRole.mutate({ userId: user.id, roleId: role.id })
+                    }
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhum papel atribuído.
+              </p>
+            )}
+          </div>
+
+          {availableRoles.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Select value={selectedRoleId} onValueChange={setSelectedRoleId}>
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="Selecionar papel..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRoles.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name.replace(/_/g, " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                disabled={!selectedRoleId || assignRole.isPending}
+                onClick={handleAssign}
+              >
+                {assignRole.isPending ? "Atribuindo..." : "Atribuir"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

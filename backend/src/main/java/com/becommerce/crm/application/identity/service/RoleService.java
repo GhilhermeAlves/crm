@@ -13,7 +13,6 @@ import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.exception.DuplicateRoleException;
 import com.becommerce.crm.domain.identity.exception.PermissionNotFoundException;
 import com.becommerce.crm.domain.identity.exception.RoleNotFoundException;
-import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -61,18 +60,12 @@ public class RoleService implements RoleUseCase {
     @Override
     @Transactional
     public RoleResponse createRole(UUID companyId, CreateRoleRequest request) {
-        RoleName roleName;
-        try {
-            roleName = RoleName.valueOf(request.name().toUpperCase().replace(" ", "_"));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Nome de role inválido: " + request.name());
-        }
-
-        if (roleRepository.existsByNameAndCompanyId(roleName.name(), companyId)) {
+        String name = normalizeRoleName(request.name());
+        if (roleRepository.existsByNameAndCompanyId(name, companyId)) {
             throw new DuplicateRoleException("Já existe uma role com este nome: " + request.name());
         }
 
-        Role role = Role.create(roleName, companyId);
+        Role role = Role.create(name, companyId);
         role.setDescription(request.description());
         Role saved = roleRepository.save(role);
 
@@ -88,6 +81,17 @@ public class RoleService implements RoleUseCase {
 
         log.info("Role criada: {} para empresa {}", saved.getName(), companyId);
         return mapToResponse(saved);
+    }
+
+    private String normalizeRoleName(String raw) {
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("Nome de role é obrigatório");
+        }
+        String name = raw.trim().toUpperCase().replaceAll("[^A-Z0-9_]+", "_");
+        if (!name.matches("^[A-Z][A-Z0-9_]{0,49}$")) {
+            throw new IllegalArgumentException("Nome de role inválido: " + raw);
+        }
+        return name;
     }
 
     @Override
@@ -207,7 +211,7 @@ public class RoleService implements RoleUseCase {
 
         return new RoleResponse(
                 role.getId().toString(),
-                role.getName().name(),
+                role.getName(),
                 role.getDescription(),
                 role.getCompanyId() != null ? role.getCompanyId().toString() : null,
                 role.isSystem(),

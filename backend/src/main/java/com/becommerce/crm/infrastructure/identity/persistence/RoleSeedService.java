@@ -97,8 +97,8 @@ public class RoleSeedService {
             RoleName roleName = entry.getKey();
             List<String> permNames = entry.getValue();
 
-            Role role = roleRepository.findByNameAndCompanyId(roleName, companyId).orElseGet(() -> {
-                Role newRole = Role.createSystem(roleName, companyId);
+            Role role = roleRepository.findByNameAndCompanyId(roleName.name(), companyId).orElseGet(() -> {
+                Role newRole = Role.createSystem(roleName.name(), companyId);
                 newRole.setDescription(roleName.getDisplayName());
                 newRole.setSystem(true);
                 return roleRepository.save(newRole);

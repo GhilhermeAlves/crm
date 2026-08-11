@@ -10,6 +10,7 @@ export const roleSchema = z.object({
     .string()
     .max(500, "Descrição deve ter no máximo 500 caracteres")
     .optional(),
+  permissionIds: z.array(z.string()).optional(),
 });
 
 export const updateRoleSchema = z.object({

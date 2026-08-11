@@ -107,7 +107,7 @@ class OnboardingServiceTest {
         });
         when(membershipRepository.existsActiveByUserIdAndCompanyId(eq(USER_ID), any())).thenReturn(false);
         when(roleRepository.findByNameAndCompanyId(any(), any())).thenAnswer(inv ->
-                Optional.of(Role.createSystem(RoleName.ADMIN, inv.getArgument(1))));
+                Optional.of(Role.createSystem(RoleName.ADMIN.name(), inv.getArgument(1))));
         when(userRoleRepository.existsByUserIdAndRoleId(any(), any())).thenReturn(false);
         when(companyUseCase.getCompanyById(any(), any(), anyBoolean())).thenAnswer(inv ->
                 response(inv.getArgument(0)));

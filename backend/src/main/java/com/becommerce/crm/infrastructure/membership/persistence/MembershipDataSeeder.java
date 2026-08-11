@@ -98,7 +98,7 @@ public class MembershipDataSeeder implements CommandLineRunner {
     private Map<UUID, String> resolveRoleNames(UUID companyId) {
         Map<UUID, String> roleNameByRoleId = new java.util.HashMap<>();
         for (Role role : roleRepository.findAllByCompanyId(companyId)) {
-            roleNameByRoleId.put(role.getId(), role.getName().name());
+            roleNameByRoleId.put(role.getId(), role.getName());
         }
         return roleNameByRoleId;
     }
