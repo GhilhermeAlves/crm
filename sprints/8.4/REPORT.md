@@ -77,7 +77,7 @@ Nenhum squash: commits originais das Sprints 8.1–8.3 + 8.4 mantidos na linha `
 | Frontend (`vitest`) | **59** testes, 0 falhas |
 | Typecheck (`tsc --noEmit`) | limpo |
 | Lint (`next lint`) | sem erros (só warnings pré-existentes de `<img>`) |
-| RLS (`*IT`, Testcontainers) | roda em `mvn verify` (Docker local indisponível; padrão validado no build VPS) |
+| RLS (`TenantIsolationConcurrencyIT`, Testcontainers) | **13/13 ✓** (`mvn test -Dtest=...` na VPS, Postgres 17 real) |
 
 ## 15–17. Commit · origin/main · VPS
 
@@ -124,5 +124,6 @@ ambiente produtivo validado.
 
 ## 22. Pendências
 
-- E2E manual do switch com usuário autenticado multi-empresa no browser.
-- Rodar o RLS `*IT` (`mvn verify`) em ambiente com Docker para execução de integração completa.
+- E2E manual do switch com usuário autenticado multi-empresa no browser (requer credenciais reais).
+- RLS `*IT` **executado** na VPS (Docker): `TenantIsolationConcurrencyIT` **13/13 PASS**,
+  incluindo `switchingActiveCompany_togglesTenantIsolation`.
