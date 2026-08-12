@@ -107,7 +107,7 @@
 | 8.2 | Membership | ✅ Concluída | 2026-08-09 | AI Agent | 8.1 |
 | 8.3 | Onboarding | ✅ Concluída | 2026-08-10 | AI Agent | 8.2 |
 | 8.4 | Company Switcher | ✅ Concluída | 2026-08-10 | AI Agent | 8.2 |
-| 8.5 | Invitations | ⏳ Pendente | — | — | 8.2, 8.3 |
+| 8.5 | Invitations | ✅ Concluída | 2026-08-11 | AI Agent | 8.2, 8.3 |
 | 8.6 | SaaS Hardening | ⏳ Pendente | — | — | 8.4, 8.5 |
 
 > **Planejamento (próxima sprint — não implementar nesta etapa):** a Sprint 8 será dividida
@@ -172,6 +172,26 @@
 > - ⚠️ Verificação manual pós-deploy pendente: login real com conta multi-empresa no browser;
 > - 📄 `sprints/8.4/REPORT.md`.
 
+> **8.5 — Invitations ✅ Concluída (2026-08-11).**
+> - ✅ **Governança (Parte 1)**: versionamento de migrações reconciliado (V032–V035 no Git; V034 DML
+>   + V035 lockdown de grants), grants padronizados (companies full DML; permissions e
+>   `flyway_schema_history` SELECT-only), `users.company_id` nullable, seed de papéis no `createCompany`
+>   (transacional via `RoleSeedService`), `SPRING_FLYWAY_OUT_OF_ORDER=true` no compose;
+> - ✅ **Backend (Parte 2)**: `V036__invitations.sql` (tabela `invitations` + 4 policies RLS +
+>   GUC `app.invitation_token_hash` + fns `app.set_invitation_token_context`/`current_invitation_token_hash`
+>   + grants), token 32B base64url → SHA-256 hex (varchar(64)) persistido, única `PENDING` por
+>   `(company_id, email)`, status `PENDING/ACCEPTED/REVOKED/EXPIRED` (decline→REVOKED), roles
+>   `ADMIN/MANAGER/AGENT/VIEWER` (SUPER_ADMIN/OWNER bloqueados);
+> - ✅ API: `GET/POST /companies/{id}/invitations` + `DELETE /{invitationId}` (`membership:view`/
+>   `membership:manage`), `InvitationTokenContextHolder` + policies token p/ leitura/aceite cross-contexto;
+> - ✅ RLS provado em produção (smoke): sem contexto → 0 linhas; com token → 1 linha (isolamento real);
+> - ✅ Frontend: `/invitations` (lista + status badge + criar/revogar), `CreateInvitationDialog`, hooks e
+>   serviço React Query, link na Sidebar (`membership:view`); typecheck OK, lint sem erros novos;
+> - ✅ Testes verdes: **backend 179**, typecheck OK;
+> - ✅ Deploy prod: Cherry-pick/rephase V032–V035 + V036 aplicadas (Flyway history `031..036`),
+>   backend e frontend rebuild/deploy OK, `/invitations` respondendo;
+> - 📄 `sprints/8.5/REPORT.md`.
+
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
@@ -212,12 +232,12 @@
 | Infraestrutura | 5 | 0 | 0 | 0 | 5 |
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
-| SaaS | 7 | 5 | 0 | 2 | 0 |
+| SaaS | 7 | 6 | 0 | 1 | 0 |
 | CRM | 4 | 0 | 0 | 4 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **29** | **0** | **11** | **5** |
+| **Total** | **45** | **30** | **0** | **10** | **5** |
 
 ---
 
@@ -248,6 +268,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-10 — Sprint **8.4 — Company Switcher** concluída (REPORT + índice +
-reconciliação Git + build/deploy prod). Resumo agora 45 sprints: 29 ✅, 0 🚧, 11 ⏳, 5 ↪️. Próxima
-sprint: **8.5 — Invitations** (SaaS), detalhada em `sprints/8/SPRINT_PLAN.md`.*
+*Última atualização: 2026-08-11 — Sprint **8.5 — Invitations** concluída (REPORT + índice +
+reconciliação Git + build/deploy prod backend/frontend). Resumo agora 45 sprints: 30 ✅, 0 🚧, 10 ⏳, 5 ↪️. Próxima
+sprint: **8.6 — SaaS Hardening**, detalhada em `sprints/8/SPRINT_PLAN.md`.*
