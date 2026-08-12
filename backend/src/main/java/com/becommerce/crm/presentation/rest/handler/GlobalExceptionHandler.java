@@ -14,6 +14,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import com.becommerce.crm.application.audit.service.AuditLogNotFoundException;
 import com.becommerce.crm.domain.company.CompanyAlreadyExistsException;
 import com.becommerce.crm.domain.company.CompanyNotFoundException;
+import com.becommerce.crm.domain.company.CompanyDeletionForbiddenException;
 import com.becommerce.crm.domain.identity.exception.DuplicateEmailException;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.exception.DuplicateRoleException;
@@ -126,6 +127,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CompanyAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleCompanyAlreadyExistsException(CompanyAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(CompanyDeletionForbiddenException.class)
+    public ResponseEntity<Map<String, Object>> handleCompanyDeletionForbiddenException(
+        CompanyDeletionForbiddenException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(Map.of(
                 "status", 409,

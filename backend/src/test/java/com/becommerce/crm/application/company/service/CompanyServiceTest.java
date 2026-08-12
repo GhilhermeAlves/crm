@@ -226,13 +226,24 @@ class CompanyServiceTest {
     }
 
     @Test
-    void shouldDeleteOwnCompany() {
+    void shouldPreventDeletingOwnCompany() {
         when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
-        doNothing().when(companyRepository).deleteById(sampleCompany.getId());
 
-        companyService.deleteCompany(sampleCompany.getId(), sampleCompany.getId(), false);
+        assertThrows(CompanyDeletionForbiddenException.class,
+                () -> companyService.deleteCompany(sampleCompany.getId(), sampleCompany.getId(), true));
+        verify(companyRepository, never()).deleteById(any());
+        verify(eventPublisher, never()).publish(any(CompanyDeletedEvent.class));
+    }
 
-        verify(companyRepository).deleteById(sampleCompany.getId());
+    @Test
+    void shouldAllowSuperAdminDeletingOtherCompany() {
+        UUID otherCompanyId = UUID.randomUUID();
+        when(companyRepository.findById(otherCompanyId)).thenReturn(Optional.of(sampleCompany));
+        doNothing().when(companyRepository).deleteById(otherCompanyId);
+
+        companyService.deleteCompany(otherCompanyId, sampleCompany.getId(), true);
+
+        verify(companyRepository).deleteById(otherCompanyId);
         verify(eventPublisher).publish(any(CompanyDeletedEvent.class));
     }
 

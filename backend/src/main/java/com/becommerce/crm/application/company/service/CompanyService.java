@@ -152,6 +152,12 @@ public class CompanyService implements CompanyUseCase {
     public void deleteCompany(UUID id, UUID requesterCompanyId, boolean isSuperAdmin) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
+        // Salvaguarda: nunca permitir excluir a empresa em que o usuário está
+        // logado (evita órfãos/bloqueio de acesso como os usuários de memberships
+        // perdidos por CASCADE). Edição continua permitida via updateCompany.
+        if (requesterCompanyId != null && requesterCompanyId.equals(id)) {
+            throw new CompanyDeletionForbiddenException(id);
+        }
         assertCompanyAccess(id, requesterCompanyId, isSuperAdmin);
         companyRepository.deleteById(id);
         eventPublisher.publish(CompanyDeletedEvent.create(id, company.getLegalName(), company.getCnpj()));
