@@ -190,6 +190,9 @@
 > - ✅ Testes verdes: **backend 179**, typecheck OK;
 > - ✅ Deploy prod: Cherry-pick/rephase V032–V035 + V036 aplicadas (Flyway history `031..036`),
 >   backend e frontend rebuild/deploy OK, `/invitations` respondendo;
+> - ✅ Reconciliação (`cbee5ce`): frontend de aceite/recusa (`/invitations/accept`), rate limit
+>   (`InvitationRateLimiter`), link absoluto no e-mail (`INVITATION_BASE_URL`); endpoints
+>   validados no VPS (401 sem sessão); backend 179 verdes;
 > - 📄 `sprints/8.5/REPORT.md`.
 
 ## CRM

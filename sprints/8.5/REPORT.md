@@ -76,10 +76,32 @@ Smoke via `psql`/`docker exec`:
 - Backend e frontend rebuild :redeploy via `docker compose` (containers `crm-backend`,
   `crm-frontend`). `/invitations` respondendo (307 → login quando não autenticado).
 
+## Reconciliação (segunda passada) — `cbee5ce`
+
+Fechamento dos gaps do escopo sobre a base já existente:
+
+- **Frontend de aceite/recusa**: `InvitationService.accept/decline`; página `/invitations/accept`
+  (rota `(invitation)` com gate **somente de autenticação** — aceita usuário com/sem empresa,
+  essencial p/ ingressar numa segunda empresa). Não-autenticado → login preservando a URL+token.
+- **Rate limit**: `InvitationRateLimiter` (janela móvel em memória, sem dependência) aplicado em
+  `create` (por empresa, 20/h) e `accept` (por usuário, 10/h). @Mock adicionado ao
+  `InvitationServiceTest`. Em multi-instância deve virar Redis/DB (débito anotado).
+- **Link absoluto no e-mail**: `app.invitations.base-url` (`INVITATION_BASE_URL`) — quando
+  configurado, o e-mail leva a URL absoluta `/invitations/accept?token=`; vazio mantém relativo
+  (sem inventar domínio).
+- **Validação no VPS**: pages `/invitations/accept` viva (307→login); endpoints backend
+  `/api/v1/invitations/accept|decline` registrados (401 sem sessão, via nginx).
+- **Status dos testes**: backend **179 verdes** (invitation 15); frontend typecheck + lint sem erros.
+- Pendência: E2E de aceite **autenticado** (sessão + token real) fica para validação manual no browser.
+
 ## Pendências / débitos conhecidos
 
-- Envio de e-mail real: `ConsoleEmailSender` é placeholder; trocar por provider quando disponível.
-- E2E de aceite (fluxo completo de convite → aceite) fica para Sprint 8.6 / validação manual no browser.
+- Envio de e-mail real: `ConsoleEmailSender` é placeholder; trocar por provider (SMTP/Resend/SES)
+  quando disponível — abstração `EmailSender` pronta.
+- E2E de aceite autenticado (fluxo completo convite → aceite → membership): validação manual no browser.
+- `InvitationRateLimiter` em memória: substituir por implementação distribuída se multi-instância.
+- Legado `users.invite_token`/`/users/invite` (Sprint antiga): sem mudança breaking; mapeado como
+  débito para depreciação isolada.
 
 ## Artefatos
 
