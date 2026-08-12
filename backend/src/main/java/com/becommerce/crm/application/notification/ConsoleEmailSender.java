@@ -2,15 +2,16 @@ package com.becommerce.crm.application.notification;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Provider de desenvolvimento: apenas loga o convite (nenhum e-mail real).
- * O token aparece no log para permitir o E2E/dev local.
+ * Provider atual de e-mail: apenas registra no log (nenhum e-mail real é
+ * enviado). Disponível em todos os perfis para não quebrar o startup sem um
+ * provider SMTP configurado. Em produção, trocar por um provider real
+ * (SMTP/Resend/SES) mantendo a interface {@link EmailSender} — sem segredos no
+ * Git.
  */
 @Component
-@Profile("!production")
 public class ConsoleEmailSender implements EmailSender {
 
     private static final Logger log = LoggerFactory.getLogger(ConsoleEmailSender.class);
