@@ -4,11 +4,20 @@ import com.becommerce.crm.application.company.dto.*;
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
 import com.becommerce.crm.application.company.port.output.CompanySettingsRepository;
 import com.becommerce.crm.application.identity.port.output.EventPublisher;
+import com.becommerce.crm.application.identity.port.output.RoleRepository;
+import com.becommerce.crm.application.identity.port.output.UserRepository;
+import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.domain.company.*;
 import com.becommerce.crm.domain.company.event.CompanyCreatedEvent;
 import com.becommerce.crm.domain.company.event.CompanyDeletedEvent;
 import com.becommerce.crm.domain.company.event.CompanyUpdatedEvent;
+import com.becommerce.crm.domain.identity.Role;
+import com.becommerce.crm.domain.identity.User;
+import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.infrastructure.identity.persistence.RoleSeedService;
+import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +32,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,10 +47,30 @@ class CompanyServiceTest {
     @Mock
     private EventPublisher eventPublisher;
 
+    @Mock
+    private RoleSeedService roleSeedService;
+
+    @Mock
+    private MembershipRepository membershipRepository;
+
+    @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
+    private UserRoleRepository userRoleRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private TenantContext tenantContext;
+
     @InjectMocks
     private CompanyService companyService;
 
     private Company sampleCompany;
+    private User sampleUser;
+    private Role sampleAdminRole;
 
     @BeforeEach
     void setUp() {
@@ -52,6 +82,15 @@ class CompanyServiceTest {
                 "Centro", "São Paulo", "SP", "Brasil",
                 CompanyPlan.STARTER, 5, 1024, 500, null, null
         );
+        sampleUser = mock(User.class);
+        lenient().when(sampleUser.getId()).thenReturn(UUID.randomUUID());
+        sampleAdminRole = mock(Role.class);
+        lenient().when(sampleAdminRole.getId()).thenReturn(UUID.randomUUID());
+        lenient().when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(sampleUser));
+        lenient().when(roleRepository.findByNameAndCompanyId(anyString(), any(UUID.class)))
+                .thenReturn(Optional.of(sampleAdminRole));
+        lenient().when(userRoleRepository.existsByUserIdAndRoleId(any(UUID.class), any(UUID.class)))
+                .thenReturn(false);
     }
 
     @Test
@@ -134,6 +173,8 @@ class CompanyServiceTest {
         when(companyRepository.existsByCnpj("12345678000190")).thenReturn(false);
         when(companyRepository.existsByEmail("contato@empresa.com")).thenReturn(false);
         when(companyRepository.save(any(Company.class))).thenReturn(sampleCompany);
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(any(UUID.class), any(UUID.class)))
+                .thenReturn(false);
 
         CreateCompanyRequest request = new CreateCompanyRequest(
                 "Empresa LTDA", "Empresa", "12345678000190",
@@ -144,7 +185,7 @@ class CompanyServiceTest {
                 "STARTER", 5, 1024, null, null, null
         );
 
-        CompanyResponse response = companyService.createCompany(request);
+        CompanyResponse response = companyService.createCompany(request, sampleUser.getId());
 
         assertNotNull(response.id());
         assertEquals("Empresa LTDA", response.legalName());
@@ -155,6 +196,9 @@ class CompanyServiceTest {
         assertEquals(CompanyStatus.ACTIVE, captor.getValue().getStatus());
         assertEquals(500, captor.getValue().getMaxContacts());
 
+        verify(roleSeedService).seedRoles(any(UUID.class));
+        verify(membershipRepository).save(any());
+        verify(userRoleRepository).save(any());
         verify(eventPublisher).publish(any(CompanyCreatedEvent.class));
     }
 
@@ -171,7 +215,7 @@ class CompanyServiceTest {
                 "STARTER", null, null, null, null, null
         );
 
-        assertThrows(CompanyAlreadyExistsException.class, () -> companyService.createCompany(request));
+        assertThrows(CompanyAlreadyExistsException.class, () -> companyService.createCompany(request, sampleUser.getId()));
         verify(companyRepository, never()).save(any());
     }
 
@@ -189,7 +233,7 @@ class CompanyServiceTest {
                 "STARTER", null, null, null, null, null
         );
 
-        assertThrows(CompanyAlreadyExistsException.class, () -> companyService.createCompany(request));
+        assertThrows(CompanyAlreadyExistsException.class, () -> companyService.createCompany(request, sampleUser.getId()));
     }
 
     @Test

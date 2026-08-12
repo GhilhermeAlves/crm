@@ -65,7 +65,7 @@ class CompanyControllerTest {
                 companyId,
                 companyId,
                 List.of(superAdmin ? "SUPER_ADMIN" : "ADMIN"),
-                List.of("company:view", "company:update", "settings:view", "settings:update"),
+                List.of("company:create", "company:view", "company:update", "settings:view", "settings:update"),
                 "keycloak-sub",
                 null,
                 "keycloak",
@@ -179,8 +179,9 @@ class CompanyControllerTest {
 
     @Test
     void shouldCreateCompany() throws Exception {
+        login(false);
         CompanyResponse response = sampleResponse();
-        when(companyUseCase.createCompany(any(CreateCompanyRequest.class))).thenReturn(response);
+        when(companyUseCase.createCompany(any(CreateCompanyRequest.class), any(UUID.class))).thenReturn(response);
 
         String json = """
                 {
@@ -208,7 +209,8 @@ class CompanyControllerTest {
 
     @Test
     void shouldReturn409WhenCnpjAlreadyExists() throws Exception {
-        when(companyUseCase.createCompany(any(CreateCompanyRequest.class)))
+        login(false);
+        when(companyUseCase.createCompany(any(CreateCompanyRequest.class), any(UUID.class)))
                 .thenThrow(new CompanyAlreadyExistsException("CNPJ", "12345678000190"));
 
         String json = """

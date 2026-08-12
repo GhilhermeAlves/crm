@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface CompanyUseCase {
     CompanyResponse getCompanyById(UUID id, UUID requesterCompanyId, boolean isSuperAdmin);
     List<CompanySummaryResponse> listCompanies(UUID requesterCompanyId, boolean isSuperAdmin);
-    CompanyResponse createCompany(CreateCompanyRequest request);
+    CompanyResponse createCompany(CreateCompanyRequest request, UUID creatorUserId);
     CompanyResponse updateCompany(UUID id, UpdateCompanyRequest request, UUID requesterCompanyId, boolean isSuperAdmin);
     void deleteCompany(UUID id, UUID requesterCompanyId, boolean isSuperAdmin);
     CompanySettingsResponse getCompanySettings(UUID companyId, UUID requesterCompanyId);

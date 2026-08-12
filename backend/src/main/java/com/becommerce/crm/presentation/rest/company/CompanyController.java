@@ -65,8 +65,9 @@ public class CompanyController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('company:create')")
-    public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CreateCompanyRequest request) {
-        CompanyResponse response = companyUseCase.createCompany(request);
+    public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CreateCompanyRequest request,
+                                                  @AuthenticationPrincipal CurrentUser principal) {
+        CompanyResponse response = companyUseCase.createCompany(request, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

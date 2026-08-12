@@ -5,11 +5,22 @@ import com.becommerce.crm.application.company.port.input.CompanyUseCase;
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
 import com.becommerce.crm.application.company.port.output.CompanySettingsRepository;
 import com.becommerce.crm.application.identity.port.output.EventPublisher;
+import com.becommerce.crm.application.identity.port.output.RoleRepository;
+import com.becommerce.crm.application.identity.port.output.UserRepository;
+import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.domain.company.*;
 import com.becommerce.crm.domain.company.event.CompanyCreatedEvent;
 import com.becommerce.crm.domain.company.event.CompanyDeletedEvent;
 import com.becommerce.crm.domain.company.event.CompanyUpdatedEvent;
+import com.becommerce.crm.domain.identity.Role;
+import com.becommerce.crm.domain.identity.User;
+import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.domain.membership.Membership;
+import com.becommerce.crm.infrastructure.identity.persistence.RoleSeedService;
+import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,13 +37,28 @@ public class CompanyService implements CompanyUseCase {
     private final CompanyRepository companyRepository;
     private final CompanySettingsRepository companySettingsRepository;
     private final EventPublisher eventPublisher;
+    private final RoleSeedService roleSeedService;
+    private final MembershipRepository membershipRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final UserRepository userRepository;
 
     public CompanyService(CompanyRepository companyRepository,
                           CompanySettingsRepository companySettingsRepository,
-                          EventPublisher eventPublisher) {
+                          EventPublisher eventPublisher,
+                          RoleSeedService roleSeedService,
+                          MembershipRepository membershipRepository,
+                          RoleRepository roleRepository,
+                          UserRoleRepository userRoleRepository,
+                          UserRepository userRepository) {
         this.companyRepository = companyRepository;
         this.companySettingsRepository = companySettingsRepository;
         this.eventPublisher = eventPublisher;
+        this.roleSeedService = roleSeedService;
+        this.membershipRepository = membershipRepository;
+        this.roleRepository = roleRepository;
+        this.userRoleRepository = userRoleRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -60,7 +86,7 @@ public class CompanyService implements CompanyUseCase {
 
     @Override
     @Transactional
-    public CompanyResponse createCompany(CreateCompanyRequest request) {
+    public CompanyResponse createCompany(CreateCompanyRequest request, UUID creatorUserId) {
         if (companyRepository.existsByCnpj(request.cnpj())) {
             throw new CompanyAlreadyExistsException("CNPJ", request.cnpj());
         }
@@ -100,8 +126,48 @@ public class CompanyService implements CompanyUseCase {
         );
 
         Company saved = companyRepository.save(company);
+        provisionNewCompany(saved.getId(), creatorUserId);
         eventPublisher.publish(CompanyCreatedEvent.create(saved));
         return mapToResponse(saved);
+    }
+
+    /**
+     * Provisionamento transacional de uma empresa recém-criada, espelhando o
+     * onboarding (8.3): seed dos papéis RBAC padrão, membership OWNER do criador,
+     * atribuição do papel ADMIN e concessão de acesso ao CRM. Garante que uma
+     * empresa nova NUNCA termine parcialmente provisionada (sem roles/membros).
+     */
+    private void provisionNewCompany(UUID companyId, UUID creatorUserId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+
+            // 1. Seed dos papéis padrão (SUPER_ADMIN, ADMIN, MANAGER, AGENT, VIEWER).
+            roleSeedService.seedRoles(companyId);
+
+            User creator = userRepository.findById(creatorUserId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Usuário criador não encontrado: " + creatorUserId));
+
+            // 2. Membership OWNER (fonte de verdade). O trigger V033 eleva
+            //    users.company_id quando for a primeira membership ativa.
+            if (!membershipRepository.existsActiveByUserIdAndCompanyId(creator.getId(), companyId)) {
+                membershipRepository.save(Membership.activate(creator.getId(), companyId, Membership.OWNER_ROLE));
+            }
+
+            // 3. RBAC: o criador recebe o papel ADMIN (permite operar os módulos).
+            Role admin = roleRepository.findByNameAndCompanyId(RoleName.ADMIN.name(), companyId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Papel ADMIN não encontrado após o seed da nova empresa."));
+            if (!userRoleRepository.existsByUserIdAndRoleId(creator.getId(), admin.getId())) {
+                userRoleRepository.save(UserRole.assign(creator.getId(), admin.getId(), companyId));
+            }
+
+            // 4. Concede acesso ao CRM (idempotente) para o criador.
+            creator.grantCrmAccess();
+            userRepository.save(creator);
+        } finally {
+            TenantContext.clear();
+        }
     }
 
     @Override
