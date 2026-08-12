@@ -13,6 +13,7 @@ export const ROUTES = {
   USERS: "/users",
   USERS_NEW: "/users/new",
   MEMBERS: "/members",
+  INVITATIONS: "/invitations",
   PROFILE: "/profile",
   ROLES: "/roles",
   ROLES_NEW: "/roles/new",

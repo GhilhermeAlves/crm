@@ -18,6 +18,7 @@ import {
   ChevronRight,
   LogOut,
   Shield,
+  MailPlus,
   KeyRound,
   ClipboardList,
 } from "lucide-react";
@@ -63,6 +64,7 @@ const navGroups: NavGroup[] = [
       { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, permission: "company:view" },
           { label: "Usuários", href: ROUTES.USERS, icon: Users, permission: "user:read" },
           { label: "Membros", href: ROUTES.MEMBERS, icon: Users, permission: "membership:view" },
+          { label: "Convites", href: ROUTES.INVITATIONS, icon: MailPlus, permission: "membership:view" },
           { label: "Roles", href: ROUTES.ROLES, icon: Shield, permission: "role:read" },
       { label: "Permissões", href: ROUTES.PERMISSIONS, icon: KeyRound, permission: "role:read" },
     ],
