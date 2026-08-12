@@ -108,7 +108,7 @@
 | 8.3 | Onboarding | ✅ Concluída | 2026-08-10 | AI Agent | 8.2 |
 | 8.4 | Company Switcher | ✅ Concluída | 2026-08-10 | AI Agent | 8.2 |
 | 8.5 | Invitations | ✅ Concluída | 2026-08-11 | AI Agent | 8.2, 8.3 |
-| 8.6 | SaaS Hardening | ⏳ Pendente | — | — | 8.4, 8.5 |
+| 8.6 | SaaS Hardening | ✅ Concluída | 2026-08-12 | AI Agent | 8.4, 8.5 |
 
 > **Planejamento (próxima sprint — não implementar nesta etapa):** a Sprint 8 será dividida
 > internamente em **8.1 Company Foundation · 8.2 Membership · 8.3 Onboarding ·
@@ -200,6 +200,28 @@
 >   manual autenticada no browser (sem credenciais de teste);
 > - 📄 `sprints/8.5/REPORT.md`.
 
+> **8.6 — SaaS Hardening ✅ Concluída (2026-08-12).** Última sprint da fase SaaS.
+> - ✅ **Enforcement**: `QuotaExceededException`→HTTP 422 (`QUOTA_EXCEEDED`);
+>   `CompanyQuotaService` (`assertCanAddContact`, `assertCanAddSpace`, `usage`);
+>   `max_users` no `InvitationService` (create = activeMembers + PENDING convites; accept
+>   bloqueia atinge limite e e-mail já membro); `max_contacts` (módulo mínimo `Contact`,
+>   V015); `max_storage_mb` (módulo mínimo `Storage`, V037 `storage_objects` blob);
+>   defaults `5 users / 500 contatos / 1024 MB`;
+> - ✅ **Quotas/uso**: `GET /companies/{id}/usage` (`CompanyUsageResponse`) + feature
+>   `usage` no frontend (types/service/hook + teste);
+> - ✅ **Auditoria de tenant**: `AuditModule` +`MEMBERSHIPS`/`INVITATIONS`,
+>   `TenantAuditRecorder` (lê `AuditContext`, fallback ator, seta/restaura tenant); eventos
+>   de convite (criado/aceito/revogado), membership removida, switch company (`TENANTS UPDATE`);
+> - ✅ **Revisão RLS/gateway**: corrigido set de TenantContext nos novos serviços
+>   Contact/Storage (SUPER_ADMIN cross-tenant); policies revisadas (memberships/invitations/
+>   storage_objects);
+> - ✅ **Docs corrigidos para RLS real**: `MULTI_TENANCY.md` (2.0), `DATABASE_MAP.md` (2.0),
+>   `BACKEND_MAP.md` (1.1, Implementação Vigente) — design antigo schema-per-tenant marcado
+>   como superado;
+> - ✅ **Testes**: backend **210 PASS** (antes 185), frontend **68 PASS** (antes 66), typecheck
+>   + lint OK;
+> - 📄 `sprints/8.6/REPORT.md`.
+
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
@@ -240,12 +262,12 @@
 | Infraestrutura | 5 | 0 | 0 | 0 | 5 |
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
-| SaaS | 7 | 6 | 0 | 1 | 0 |
+| SaaS | 7 | 7 | 0 | 0 | 0 |
 | CRM | 4 | 0 | 0 | 4 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **30** | **0** | **10** | **5** |
+| **Total** | **45** | **31** | **0** | **9** | **5** |
 
 ---
 
@@ -276,6 +298,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-11 — Sprint **8.5 — Invitations** concluída (REPORT + índice +
-reconciliação Git + build/deploy prod backend/frontend). Resumo agora 45 sprints: 30 ✅, 0 🚧, 10 ⏳, 5 ↪️. Próxima
-sprint: **8.6 — SaaS Hardening**, detalhada em `sprints/8/SPRINT_PLAN.md`.*
+*Última atualização: 2026-08-12 — Sprint **8.6 — SaaS Hardening** concluída (REPORT + índice +
+docs multi-tenancy RLS real). Fase **SaaS (8.x) encerrada**. Resumo agora 45 sprints: 31 ✅, 0 🚧, 9 ⏳, 5 ↪️. Próxima
+sprint: **9 — Contatos**.*

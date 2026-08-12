@@ -3,6 +3,7 @@ package com.becommerce.crm.presentation.rest.company;
 import com.becommerce.crm.application.company.dto.CompanyResponse;
 import com.becommerce.crm.application.company.dto.CompanySettingsResponse;
 import com.becommerce.crm.application.company.dto.CompanySummaryResponse;
+import com.becommerce.crm.application.company.dto.CompanyUsageResponse;
 import com.becommerce.crm.application.company.dto.CreateCompanyRequest;
 import com.becommerce.crm.application.company.dto.UpdateCompanyRequest;
 import com.becommerce.crm.application.company.dto.UpdateCompanySettingsRequest;
@@ -46,6 +47,14 @@ public class CompanyController {
     public ResponseEntity<CompanyResponse> getById(@PathVariable UUID id,
                                                    @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(companyUseCase.getCompanyById(id, principal.companyId(), isSuperAdmin(principal)));
+    }
+
+    @GetMapping("/{id}/usage")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CompanyUsageResponse> getUsage(@PathVariable UUID id,
+                                                         @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(companyUseCase.getCompanyUsage(
+                id, principal.companyId(), isSuperAdmin(principal)));
     }
 
     @GetMapping("/{id}/settings")

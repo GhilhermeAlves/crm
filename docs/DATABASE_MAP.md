@@ -2,12 +2,16 @@
 
 ## Objetivo
 
-Fornecer uma visão consolidada do banco de dados PostgreSQL com diagrama ER em Mermaid, entidades, relacionamentos e regras.
+Oferecer uma visão consolidada do banco de dados PostgreSQL: diagrama ER, entidades reais (do projeto vigente, shared schema + RLS), regras,
+tabelas tenant-scoped versus globais e quotas por plano.
+
+> **Nota.** O modelo antigo de schema-por-tenant foi substituído pelo shared schema + RLS FORCE (ver [MULTI_TENANCY.md](./MULTI_TENANCY.md)).
 
 ## Índice
 
 - [Diagrama ER](#diagrama-er)
 - [Entidades Principais](#entidades-principais)
+- [Multi-Tenancy e Quotas](#multi-tenancy-e-quotas)
 - [Regras de Esquema](#regras-de-esquema)
 - [Referências](#referências)
 - [Histórico de Revisão](#histórico-de-revisão)
@@ -18,298 +22,130 @@ Fornecer uma visão consolidada do banco de dados PostgreSQL com diagrama ER em 
 
 ```mermaid
 erDiagram
-    TENANT ||--o{ USER : contains
-    TENANT ||--o{ CONTACT : contains
-    TENANT ||--o{ LEAD : contains
-    TENANT ||--o{ PIPELINE : contains
-    TENANT ||--o{ CAMPAIGN : contains
-    TENANT ||--o{ TEMPLATE : contains
+    COMPANY ||--o{ USER : has_members_via
+    USER ||--o{ MEMBERSHIP : has
+    COMPANY ||--o{ MEMBERSHIP : has
+    COMPANY ||--o{ INVITATION : sends
+    COMPANY ||--o{ CONTACT : owns
+    COMPANY ||--o{ TAG : owns
+    COMPANY ||--o{ AUDIT_LOG : generates
+    COMPANY ||--o{ STORAGE_OBJECT : stores
 
-    USER ||--o{ CONVERSATION : assigned
-    USER ||--o{ OPPORTUNITY : owns
-    USER ||--o{ AUDIT_LOG : generates
+    CONTACT ||--o{ CONTACT_ADDRESS : has
+    CONTACT ||--o{ CONTACT_CUSTOM_FIELD : has
+    CONTACT }o--o{ TAG : tagged (CONTACT_TAG)
 
-    CONTACT ||--o{ LEAD : converts_to
-    CONTACT ||--o{ CONVERSATION : participates
-    CONTACT ||--o{ OPPORTUNITY : linked_to
-    CONTACT ||--o{ MESSAGE : sends_receives
-    CONTACT }o--o{ TAG : has
+    USER ||--o{ INVITATION : invited_by
+    USER ||--o{ STORAGE_OBJECT : created_by
 
-    LEAD }o--|| PIPELINE : belongs_to
-    LEAD }o--|| STAGE : at_stage
-    LEAD ||--o{ LEAD_SCORE : scored
-
-    PIPELINE ||--o{ STAGE : contains
-    PIPELINE ||--o{ OPPORTUNITY : tracks
-    STAGE ||--o{ OPPORTUNITY : holds
-
-    OPPORTUNITY ||--o{ MESSAGE : linked
-    OPPORTUNITY ||--o{ OPPORTUNITY_HISTORY : has
-
-    CONVERSATION ||--o{ MESSAGE : contains
-    CONVERSATION }o--|| USER : assigned_to
-    CONVERSATION }o--|| CONTACT : with
-
-    CAMPAIGN ||--o{ CAMPAIGN_MESSAGE : sends
-    CAMPAIGN }o--o{ CONTACT : targets
-    CAMPAIGN }o--o{ TEMPLATE : uses
-
-    TEMPLATE }o--o{ CAMPAIGN : used_in
-
-    AUTOMATION ||--o{ AUTOMATION_EXECUTION : logs
-    AUTOMATION }o--o{ CONTACT : triggers_on
-
-    USER ||--o{ NOTIFICATION : receives
-    USER ||--o{ USER_PERMISSION : has
-
-    COMPANY ||--o{ BILLING : has
-    COMPANY ||--o{ COMPANY_SETTINGS : configured
-
-    %% Entidades
-    TENANT {
+    COMPANY {
         uuid id PK
-        varchar name
-        varchar slug
-        varchar schema_name
+        varchar legal_name
+        varchar trading_name
+        varchar cnpj
+        varchar email
+        varchar phone
         varchar plan
         varchar status
+        integer max_users
+        integer max_contacts
+        integer max_storage_mb
+        jsonb address
         timestamp created_at
     }
 
     USER {
         uuid id PK
-        uuid tenant_id FK
+        uuid company_id FK
         varchar name
         varchar email
         varchar password_hash
-        varchar role
+        varchar keycloak_sub
         varchar status
         timestamp created_at
     }
 
-    COMPANY {
+    MEMBERSHIP {
         uuid id PK
-        uuid tenant_id FK
-        varchar name
-        varchar cnpj
+        uuid user_id FK
+        uuid company_id FK
+        varchar role
+        varchar status
+        uuid invited_by FK
+        timestamp joined_at
+    }
+
+    INVITATION {
+        uuid id PK
+        uuid company_id FK
         varchar email
-        varchar phone
-        jsonb address
-        timestamp created_at
+        varchar role
+        varchar token_hash
+        uuid invited_by FK
+        varchar status
+        timestamp expires_at
     }
 
     CONTACT {
         uuid id PK
-        uuid tenant_id FK
-        varchar name
+        uuid company_id FK
+        varchar first_name
+        varchar last_name
         varchar email
         varchar phone
-        jsonb custom_fields
-        varchar status
-        timestamp created_at
+        varchar company_name
+        text notes
+        timestamp deleted_at
     }
 
-    LEAD {
+    CONTACT_ADDRESS {
         uuid id PK
-        uuid tenant_id FK
         uuid contact_id FK
-        uuid pipeline_id FK
-        uuid stage_id FK
-        uuid owner_id FK
-        varchar source
-        integer score
-        varchar status
-        timestamp created_at
-    }
-
-    LEAD_SCORE {
-        uuid id PK
-        uuid lead_id FK
-        varchar rule_name
-        integer points
-        timestamp calculated_at
-    }
-
-    PIPELINE {
-        uuid id PK
-        uuid tenant_id FK
-        varchar name
-        integer position
-        boolean active
-        timestamp created_at
-    }
-
-    STAGE {
-        uuid id PK
-        uuid pipeline_id FK
-        varchar name
-        integer position
-        varchar color
-        integer probability
-        timestamp created_at
-    }
-
-    OPPORTUNITY {
-        uuid id PK
-        uuid tenant_id FK
-        uuid pipeline_id FK
-        uuid stage_id FK
-        uuid contact_id FK
-        uuid owner_id FK
-        varchar title
-        decimal value
-        varchar currency
-        varchar status
-        varchar priority
-        timestamp expected_close_date
-        timestamp created_at
-    }
-
-    OPPORTUNITY_HISTORY {
-        uuid id PK
-        uuid opportunity_id FK
-        uuid from_stage_id FK
-        uuid to_stage_id FK
-        varchar action
-        jsonb details
-        timestamp created_at
-    }
-
-    CONVERSATION {
-        uuid id PK
-        uuid tenant_id FK
-        uuid contact_id FK
-        uuid assigned_to FK
-        varchar channel
-        varchar status
-        varchar priority
-        timestamp last_message_at
-        timestamp created_at
-    }
-
-    MESSAGE {
-        uuid id PK
-        uuid conversation_id FK
-        uuid tenant_id FK
-        varchar direction
-        varchar channel
-        text content
-        jsonb metadata
-        varchar status
-        varchar external_id
-        timestamp sent_at
-        timestamp created_at
-    }
-
-    CAMPAIGN {
-        uuid id PK
-        uuid tenant_id FK
-        varchar name
         varchar type
-        varchar status
-        timestamp scheduled_at
-        timestamp started_at
-        timestamp completed_at
-        jsonb config
-        timestamp created_at
+        varchar city
+        varchar state
+        varchar zip_code
     }
 
-    CAMPAIGN_MESSAGE {
+    CONTACT_CUSTOM_FIELD {
         uuid id PK
-        uuid campaign_id FK
         uuid contact_id FK
-        uuid message_id FK
-        varchar status
-        timestamp sent_at
-    }
-
-    TEMPLATE {
-        uuid id PK
-        uuid tenant_id FK
-        varchar name
-        varchar category
-        text body
-        jsonb variables
-        varchar status
-        timestamp created_at
-    }
-
-    AUTOMATION {
-        uuid id PK
-        uuid tenant_id FK
-        varchar name
-        varchar trigger_type
-        jsonb trigger_config
-        jsonb actions
-        boolean active
-        timestamp created_at
-    }
-
-    AUTOMATION_EXECUTION {
-        uuid id PK
-        uuid automation_id FK
-        uuid tenant_id FK
-        varchar status
-        jsonb input
-        jsonb output
-        timestamp executed_at
+        varchar field_key
+        text field_value
     }
 
     TAG {
         uuid id PK
-        uuid tenant_id FK
+        uuid company_id FK
         varchar name
         varchar color
-        timestamp created_at
     }
 
-    NOTIFICATION {
-        uuid id PK
-        uuid user_id FK
-        varchar type
-        text title
-        text body
-        jsonb data
-        boolean read
-        timestamp created_at
+    CONTACT_TAG {
+        uuid contact_id FK
+        uuid tag_id FK
     }
 
     AUDIT_LOG {
         uuid id PK
-        uuid tenant_id FK
-        uuid user_id FK
+        uuid company_id FK
+        uuid actor_user_id FK
+        varchar action
         varchar entity
-        varchar entity_id
-        varchar action
-        jsonb old_value
-        jsonb new_value
+        uuid entity_id
+        jsonb details
         timestamp created_at
     }
 
-    USER_PERMISSION {
-        uuid id PK
-        uuid user_id FK
-        varchar resource
-        varchar action
-        varchar effect
-    }
-
-    BILLING {
+    STORAGE_OBJECT {
         uuid id PK
         uuid company_id FK
-        varchar plan
-        decimal amount
-        varchar currency
-        varchar status
-        timestamp next_billing_date
-        timestamp created_at
-    }
-
-    COMPANY_SETTINGS {
-        uuid id PK
-        uuid company_id FK
-        jsonb settings
-        timestamp updated_at
+        varchar object_key
+        varchar file_name
+        varchar content_type
+        bigint size_bytes
+        bytea data
+        uuid created_by FK
     }
 ```
 
@@ -317,43 +153,43 @@ erDiagram
 
 ## Entidades Principais
 
-### Identidade
-- `TENANT` — Schema isolation de cada cliente
-- `USER` — Usuários com roles (SUPER_ADMIN, ADMIN, MANAGER, AGENT, VIEWER)
-- `USER_PERMISSION` — Permissões granulares (RBAC)
-- `COMPANY` — Dados da empresa/tenant
-- `COMPANY_SETTINGS` — Configurações customizáveis
+### Identidade e Tenancies (Sprint 8.1–8.6)
+- `companies` — **tabela global** (sem RLS): tenants do sistema; carrega `plan`, `status`, `max_users`, `max_contacts`, `max_storage_mb`.
+- `users` — usuários; `company_id` = empresa ativa denormalizada (synced pela membership). RLS FORCE por `company_id`.
+- `memberships` — **fonte de verdade** da relação usuário↔empresa (1:N): role e status `ACTIVE`/`PENDING`/`REMOVED`. RLS FORCE com `membership_own_policy` (próprias) + `membership_tenant_policy` (tenant).
+- `invitations` — convites por e-mail; `token_hash` (SHA-256 hex), status `PENDING`/`ACCEPTED`/`REVOKED`/`EXPIRED`. Acesso admin por `company_id` + acesso por token via GUC.
+- `roles` / `user_roles` / `role_permissions` / `permissions` — RBAC. `permissions` é global; roles/user_roles tenant-scoped.
+- `subscriptions` / `company_settings` — dados da empresa, tenant-scoped.
 
 ### Contato
-- `CONTACT` — Contatos com campos customizados
-- `TAG` — Tags para segmentação
-- `LEAD` — Leads com scoring e pipeline
-- `LEAD_SCORE` — Histórico de scoring
-- `CUSTOMER` (implícito via CONTACT com status CUSTOMER)
+- `contacts` (V015) — contatos com `company_id`; uniqueness `email+company` onde `deleted_at IS NULL`.
+- `contact_addresses` — endereços do contato.
+- `contact_custom_fields` — campos customizados (chave/valor).
+- `tags` / `contact_tags` — segmentação; tags tenant-scoped, unique `name+company`.
 
-### Pipeline
-- `PIPELINE` — Pipelines de vendas
-- `STAGE` — Estágios do pipeline
-- `OPPORTUNITY` — Oportunidades de negócio
-- `OPPORTUNITY_HISTORY` — Histórico de movimentação
+### Pipeline (V016/V017)
+- `pipelines`, `stages`, `opportunities`, `opportunity_history` — funil de vendas, tenant-scoped (histórico via join com opportunities).
 
-### Comunicação
-- `CONVERSATION` — Conversas multicanal
-- `MESSAGE` — Mensagens (texto, mídia, status)
+### Grandes prioridades / extras
+- `leads` (V016) — leads tenant-scoped.
+- `audit_logs` — auditoria, tenant-scoped (RLS FORCE).
+- `storage_objects` (V037) — blob de storage tenant-scoped usado para enforce/uso da quota `max_storage_mb`; único armazenamento (port permite trocar por object-store futuro).
 
-### Campanha
-- `CAMPAIGN` — Campanhas de marketing
-- `CAMPAIGN_MESSAGE` — Mensagens enviadas por campanha
-- `TEMPLATE` — Templates de mensagens
+### Identidade (auth / bootstrap)
+- `refresh_tokens`, `password_reset_tokens` — global (sem RLS).
+- Tabelas de bootstrap de identidade (V022/V024/V025/V026): OTP por telefone/e-mail, seeds de `keycloak_sub`/e-mail/telefone.
 
-### Automação
-- `AUTOMATION` — Regras de automação
-- `AUTOMATION_EXECUTION` — Log de execuções
+---
 
-### Sistema
-- `NOTIFICATION` — Notificações do usuário
-- `AUDIT_LOG` — Log de auditoria (todas as ações)
-- `BILLING` — Dados de faturamento
+## Multi-Tenancy e Quotas
+
+| Regra | Descrição |
+|---|---|
+| Shared schema + RLS | Todas as tabelas tenant-scoped têm `company_id` e RLS FORCE com policy por `company_id = app.current_tenant_id()`. |
+| Tabelas globais | `companies`, `permissions`, `role_permissions`, `refresh_tokens`, `password_reset_tokens`. |
+| Quotas por plano | `max_users = 5`, `max_contacts = 500`, `max_storage_mb = 1024` (defaults `CompanyService`). |
+| Uso | `CompanyQuotaService.usage()` soma ativos + convites pendentes (users), contatos, `SUM(size_bytes)` de `storage_objects`. |
+| Exceção | `QuotaExceededException` → HTTP 422 `QUOTA_EXCEEDED`. |
 
 ---
 
@@ -361,12 +197,13 @@ erDiagram
 
 | Regra | Descrição |
 |---|---|
-| Multi-tenancy | Schema isolation por tenant (`tenant_{id}`) |
-| UUID PK | Todas as tabelas usam UUID v4 como PK |
-| Soft Delete | `deleted_at` em todas as tabelas de negócio |
-| Audit | `created_at`, `updated_at` em todas as tabelas |
-| Índices | Índices em FKs, campos de busca e ordenação |
-| JSONB | `custom_fields`, `metadata`, `settings` como JSONB |
+| UUID PK | Todas as tabelas usam UUID (v4 / `gen_random_uuid()`) como PK. |
+| Soft Delete | `deleted_at` nas tabelas de negócio (ex.: `contacts`). |
+| Audit | `created_at`/`updated_at` nas tabelas relevantes. |
+| JSONB | `metadata`, `settings`, `address`, `details` em JSONB onde aplicável. |
+| RLS | Tenant-scoped: `ENABLE + FORCE ROW LEVEL SECURITY` + policy de isolamento. |
+| Grants | Padrão `crm_app` (V031/V034/V037): SELECT/INSERT/UPDATE/DELETE nas tabelas do app. |
+| Migrações | Verificação estrutural via `pg_catalog` (imune a RLS) em `DO` blocks. |
 
 ---
 
@@ -374,15 +211,8 @@ erDiagram
 
 | Documento | Caminho |
 |---|---|
+| Multi-Tenancy | [MULTI_TENANCY.md](./MULTI_TENANCY.md) |
 | Overview | [03-database/Overview.md](./03-database/Overview.md) |
-| ERD | [03-database/ERD.md](./03-database/ERD.md) |
-| Entities | [03-database/Entities.md](./03-database/Entities.md) |
-| Relationships | [03-database/Relationships.md](./03-database/Relationships.md) |
-| Indexes | [03-database/Indexes.md](./03-database/Indexes.md) |
-| UUID | [03-database/UUID.md](./03-database/UUID.md) |
-| SoftDelete | [03-database/SoftDelete.md](./03-database/SoftDelete.md) |
-| Audit | [03-database/Audit.md](./03-database/Audit.md) |
-| SUMMARY | [SUMMARY.md](./SUMMARY.md) |
 
 ---
 
@@ -390,4 +220,5 @@ erDiagram
 
 | Versão | Data | Autor | Descrição |
 |---|---|---|---|
-| 1.0.0 | 2026-07-15 | Architect | Criação inicial do mapa de banco de dados |
+| 1.0.0 | 2026-07-15 | Architect | Criação inicial (modelo schema-per-tenant) — **superado** |
+| 2.0.0 | 2026-08-12 | Architect | Reescrita para o modelo real: shared schema + RLS, memberships, invitations, quotas, storage |

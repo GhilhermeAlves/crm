@@ -2,6 +2,7 @@ package com.becommerce.crm.application.me.service;
 
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
+import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.me.dto.CompanyOptionResponse;
 import com.becommerce.crm.application.me.port.output.MyCompanyProjection;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
@@ -38,12 +39,13 @@ class MeServiceTest {
     @Mock private MembershipRepository membershipRepository;
     @Mock private UserRepository userRepository;
     @Mock private CompanyRepository companyRepository;
+    @Mock private TenantAuditRecorder auditor;
 
     private MeService service;
 
     @BeforeEach
     void setUp() {
-        service = new MeService(membershipRepository, userRepository, companyRepository);
+        service = new MeService(membershipRepository, userRepository, companyRepository, auditor);
     }
 
     private User userWithCompany(UUID companyId) {

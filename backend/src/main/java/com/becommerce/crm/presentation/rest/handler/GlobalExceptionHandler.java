@@ -26,6 +26,7 @@ import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundException;
 import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
+import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -233,6 +234,18 @@ public class GlobalExceptionHandler {
                 "status", 403,
                 "code", "CRM_ACCESS_DENIED",
                 "error", "Forbidden",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(QuotaExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleQuotaExceededException(QuotaExceededException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .body(Map.of(
+                "status", 422,
+                "code", "QUOTA_EXCEEDED",
+                "error", "Unprocessable Entity",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

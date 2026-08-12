@@ -16,5 +16,7 @@ public enum AuditModule {
     REPORTS,
     SETTINGS,
     AUDIT,
+    MEMBERSHIPS,
+    INVITATIONS,
     SYSTEM
 }

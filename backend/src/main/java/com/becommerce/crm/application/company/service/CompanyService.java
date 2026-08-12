@@ -42,6 +42,7 @@ public class CompanyService implements CompanyUseCase {
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
     private final UserRepository userRepository;
+    private final CompanyQuotaService quotaService;
 
     public CompanyService(CompanyRepository companyRepository,
                           CompanySettingsRepository companySettingsRepository,
@@ -50,7 +51,8 @@ public class CompanyService implements CompanyUseCase {
                           MembershipRepository membershipRepository,
                           RoleRepository roleRepository,
                           UserRoleRepository userRoleRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          CompanyQuotaService quotaService) {
         this.companyRepository = companyRepository;
         this.companySettingsRepository = companySettingsRepository;
         this.eventPublisher = eventPublisher;
@@ -59,6 +61,7 @@ public class CompanyService implements CompanyUseCase {
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
         this.userRepository = userRepository;
+        this.quotaService = quotaService;
     }
 
     @Override
@@ -68,6 +71,15 @@ public class CompanyService implements CompanyUseCase {
                 .orElseThrow(() -> new CompanyNotFoundException(id));
         assertCompanyAccess(id, requesterCompanyId, isSuperAdmin);
         return mapToResponse(company);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CompanyUsageResponse getCompanyUsage(UUID id, UUID requesterCompanyId, boolean isSuperAdmin) {
+        Company company = companyRepository.findById(id)
+                .orElseThrow(() -> new CompanyNotFoundException(id));
+        assertCompanyAccess(id, requesterCompanyId, isSuperAdmin);
+        return quotaService.usage(id);
     }
 
     @Override

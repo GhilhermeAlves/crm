@@ -178,6 +178,37 @@ class CompanyControllerTest {
     }
 
     @Test
+    void shouldGetUsage() throws Exception {
+        login(false);
+        CompanyUsageResponse usage = new CompanyUsageResponse(
+                new CompanyUsageResponse.UsageItem(4, 10),
+                new CompanyUsageResponse.UsageItem(120, 1000),
+                new CompanyUsageResponse.StorageUsage(350L, 5000));
+        when(companyUseCase.getCompanyUsage(eq(companyId), eq(companyId), eq(false))).thenReturn(usage);
+
+        mockMvc.perform(get("/api/v1/companies/" + companyId + "/usage"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.users.current").value(4))
+                .andExpect(jsonPath("$.users.limit").value(10))
+                .andExpect(jsonPath("$.contacts.current").value(120))
+                .andExpect(jsonPath("$.contacts.limit").value(1000))
+                .andExpect(jsonPath("$.storage.currentMb").value(350))
+                .andExpect(jsonPath("$.storage.limitMb").value(5000));
+    }
+
+    @Test
+    void shouldReturn403OnCrossTenantUsage() throws Exception {
+        login(false);
+        UUID otherCompanyId = UUID.randomUUID();
+        when(companyUseCase.getCompanyUsage(eq(otherCompanyId), eq(companyId), eq(false)))
+                .thenThrow(new CrmAccessDeniedException("Acesso a esta empresa não permitido."));
+
+        mockMvc.perform(get("/api/v1/companies/" + otherCompanyId + "/usage"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("CRM_ACCESS_DENIED"));
+    }
+
+    @Test
     void shouldCreateCompany() throws Exception {
         login(false);
         CompanyResponse response = sampleResponse();

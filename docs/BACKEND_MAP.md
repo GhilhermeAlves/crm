@@ -106,6 +106,26 @@ graph TB
 
 ---
 
+## Implementação Vigente (Sprint 8)
+
+O código real usa o pacote base **`com.becommerce.crm`** (camadas `presentation/rest`, `application/domain`, `infrastructure`), com o design em portas e adaptadores (Ports & Adapters) e padrão de entidades `create`/`reconstitute`. Destaques:
+
+| Módulo | Características |
+|---|---|
+| **Company** | `CompanyService` (CRUD + quotas), `CompanyQuotaService` (`usage`, `assertCanAddContact`, `assertCanAddSpace`), `CompanyController` (`GET /api/v1/companies/{id}/usage`). Uses `CurrentUser` (`principal.userId()/companyId()/roles()`), `TenantContext`, RLS. |
+| **Contact** (novo, mín.) | `Contact`, `ContactRepository`+impl, `ContactService` (enforcement `max_contacts`), `ContactController`, DTOs, `ContactNotFoundException`. Reusa tabela `contacts` (V015). |
+| **Storage** (novo, mín.) | `StorageObject`, ports, `StorageJpaEntity`, `StorageRepositoryImpl`, `StorageService` (enforcement `max_storage_mb`), `StorageController`, DTOs. Tabela `storage_objects` (V037). |
+| **Invitation** (8.5) | `InvitationService` (+ auditoria); enforcement `max_users` = activeMembers + PENDING convites. |
+| **Membership** | `MembershipService` (remove membro + auditoria `DELETE`). |
+| **Audit** | `TenantAuditRecorder` (ler `AuditContext`, fallback ator; seta/restaura tenant), `AuditModule` (+`MEMBERSHIPS`, +`INVITATIONS`). |
+| **Me** | `MeService.switchCompany` (troca empresa ativa + auditoria `TENANTS UPDATE`). |
+| **Identity** | `AuthService` (GUC `app.current_company_id` no primeiro acesso). |
+| **Tenant infra** | `infrastructure.tenant.context.TenantContext` (ThreadLocal) + `infrastructure.tenant.datasource.TenantAwareDataSource` (SET/RESET dos GUCs). |
+
+**Multi-tenancy real**: shared schema + RLS FORCE (policy por `company_id = app.current_tenant_id()`). Ver [MULTI_TENANCY.md](./MULTI_TENANCY.md) e [DATABASE_MAP.md](./DATABASE_MAP.md).
+
+---
+
 ## Serviços por Módulo
 
 ### Identity
@@ -318,3 +338,4 @@ tenant:
 | Versão | Data | Autor | Descrição |
 |---|---|---|---|
 | 1.0.0 | 2026-07-15 | Architect | Criação inicial do mapa do backend |
+| 1.1.0 | 2026-08-12 | Architect | Adicionada seção Implementação Vigente (company quotas, contact, storage, invitation, audit, tenant infra) |

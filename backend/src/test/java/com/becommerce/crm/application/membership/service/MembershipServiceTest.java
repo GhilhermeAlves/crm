@@ -2,6 +2,7 @@ package com.becommerce.crm.application.membership.service;
 
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
+import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.membership.dto.MemberResponse;
 import com.becommerce.crm.application.membership.dto.MembershipResponse;
 import com.becommerce.crm.application.membership.port.output.MemberProjection;
@@ -39,12 +40,13 @@ class MembershipServiceTest {
     @Mock private MembershipRepository membershipRepository;
     @Mock private RoleRepository roleRepository;
     @Mock private UserRoleRepository userRoleRepository;
+    @Mock private TenantAuditRecorder auditor;
 
     private MembershipService service;
 
     @BeforeEach
     void setUp() {
-        service = new MembershipService(membershipRepository, roleRepository, userRoleRepository);
+        service = new MembershipService(membershipRepository, roleRepository, userRoleRepository, auditor);
     }
 
     private Role role(RoleName name) {

@@ -2,313 +2,136 @@
 
 ## Objetivo
 
-Documentar a arquitetura de multi-tenancy do CRM SaaS Omnichannel, definindo isolamento de dados por schema, resolução de tenant, contexto propagado via JWT, pool de conexões, estratégia de migrações e backup por tenant.
+Documentar a arquitetura de multi-tenancy do CRM SaaS Omnichannel: **schema compartilhado (shared schema) com Row Level Security (RLS) FORCE**, sem separação física por schema. O isolamento é garantido por coluna `company_id` em todas as tabelas tenant-scoped, por policies RLS atreladas a um contexto de aplicação (GUCs do PostgreSQL) e por `FORCE ROW LEVEL SECURITY` que impede desvios mesmo para o usuário de aplicação.
+
+> **Nota histórica.** O design inicial previa schema-por-tenant (`tenant_{id}`) com `search_path`. Este modelo foi **substituído** pelo shared schema + RLS (V013/V019 em diante). Este documento descreve exclusivamente a arquitetura real vigente.
 
 ## Escopo
 
-Cobre toda a infraestrutura de isolamento entre tenants, desde a camada de API até o banco de dados, incluindo Redis, RabbitMQ e camadas de cache.
+Cobre o isolamento entre tenants na camada de aplicação (ThreadLocal → datasource → GUC → RLS), as tabelas tenant-scoped versus globais, membresias (1:N usuário→empresa), empresas ativas, switcher, convites por token, quotas por plano, uso e auditoria.
 
-## Responsabilidades
+## Termos
+
+| Termo | Definição |
+|---|---|
+| **Tenant** | Empresa do CRM representada pela tabela `companies` (tabela global). |
+| **company_id** | Coluna de isolamento presente em todas as tabelas tenant-scoped. |
+| **GUC** | *Grand Unified Configuration* do PostgreSQL: variáveis de sessão setadas a cada conexão. |
+| **RLS FORCE** | `ALTER TABLE ... FORCE ROW LEVEL SECURITY`: RLS vale para todos, inclusive tables owners/usuário de app. |
+| **Membership** | Relação usuário↔empresa (1:N), fonte de verdade de associação. |
+| **Company Switcher** | Fluxo de troca da empresa ativa de um usuário multi-empresa. |
+
+## Componentes e responsabilidades
 
 | Componente | Responsabilidade |
 |---|---|
-| **Tenant Filter** | Intercepta requisições e extrai tenantId do JWT |
-| **Schema Router** | Redireciona conexões PostgreSQL para o schema correto |
-| **JWT Provider** | Emite e valida tokens com claim `tenantId` |
-| **Flyway Migrator** | Aplica migrações individualmente por schema de tenant |
-| **Connection Pooler** | Gerencia pool de conexões com isolamento por tenant |
-| **Redis Prefixer** | Adiciona prefixo de tenant nas chaves Redis |
-| **Backup Service** | Executa backups individualizados por tenant |
+| **`TenantContext`** (ThreadLocal) | Guarda `companyId`, `keycloakSub`, `identityEmail`, `identityPhone`, `resetToken` por requisição; limpo no `finally`. |
+| **`TenantAwareDataSource`** | A cada `getConnection()`, emite `SET`/`RESET` dos GUCs de contexto a partir do ThreadLocal. |
+| **`app.current_tenant_id()`** | Função SQL STABLE que lê `app.current_company_id` e devolve UUID (ou NULL). |
+| **`app.is_super_admin()`** | Função SQL que verifica role `SUPER_ADMIN` na empresa ativa. |
+| **Policies RLS** | `tenant_isolation_policy` (and colleagues) filtrando por `company_id = app.current_tenant_id()`. |
+| **`CurrentUser` resolver** | Resolve o usuário autenticado e define `TenantContext` + GUCs (sub/e-mail antes do company). |
+| **`AuditContext`** | Atores/IP/User-Agent da auditoria (interceptor HTTP). |
+| **`TenantAuditRecorder`** | Registra auditoria de tenant com fallback de ator, setando/restaurando o tenant no escopo. |
 
-## Fluxos
+## Mecanismo de contexto (ThreadLocal → GUC → RLS)
 
-### Diagrama de Resolução de Tenant
+### Fluxo por requisição
 
 ```mermaid
 sequenceDiagram
     participant C as Cliente
-    participant GW as API Gateway
-    participant AUTH as Auth Filter
-    participant JWT as JWT Provider
-    participant TF as Tenant Filter
-    participant SC as Schema Context
-    participant CP as Connection Pool
+    participant GW as Gateway
+    participant AUTH as Auth/Resolver
+    participant TC as TenantContext (ThreadLocal)
+    participant DS as TenantAwareDataSource
     participant DB as PostgreSQL
-    participant RD as Redis
 
-    C->>GW: HTTP Request + Authorization: Bearer JWT
-    GW->>AUTH: Extrai token do header
-    AUTH->>JWT: Valida token e assinatura
+    C->>GW: Request + Bearer JWT
+    GW->>AUTH: Token extraído
+    AUTH->>TC: setKeycloakSub / setIdentityEmail / setCompanyId
+    TC->>DS: getConnection()
+    DS->>DB: SET app.current_keycloak_sub = '...'
+    DS->>DB: SET app.current_company_id = '<companyId>'
+    DS-->>AUTH: Connection com GUCs definidos
 
-    alt Token válido
-        JWT-->>AUTH: Claims (userId, tenantId, roles)
-        AUTH->>TF: Propaga tenantId
-        TF->>SC: Define TenantContext (ThreadLocal)
-        SC->>CP: Obtém conexão do schema correto
-        CP->>DB: SET search_path TO tenant_{tenantId}
-        DB-->>CP: Conexão configurada
+    Note over DB: RLS força company_id = app.current_tenant_id()
 
-        TF->>RD: Redis com prefixo tenant:{tenantId}:
-
-        Note over SC: Execução da requisição com contexto de tenant
-
-        SC->>SC: Limpa TenantContext no finally
-    else Token inválido
-        JWT-->>AUTH: Erro de validação
-        AUTH-->>GW: 401 Unauthorized
-        GW-->>C: 401 Unauthorized
-    end
-
-    GW-->>C: Response
+    AUTH->>DB: Queries já isoladas por tenant
+    AUTH->>TC: clear() no finally
 ```
 
-### Diagrama de Estrutura de Schemas
+### GUCs relevantes
 
-```mermaid
-flowchart TB
-    subgraph PostgreSQL ["PostgreSQL 16"]
-        PG_PUBLIC["public schema<br/>(shared data)"]
-        PG_T1["tenant_abc123 schema<br/>(Tenant A)"]
-        PG_T2["tenant_def456 schema<br/>(Tenant B)"]
-        PG_T3["tenant_ghi789 schema<br/>(Tenant C)"]
-
-        PG_PUBLIC --> PG_T1
-        PG_PUBLIC --> PG_T2
-        PG_PUBLIC --> PG_T3
-    end
-
-    subgraph Shared ["Tabelas Shared (public)"]
-        SH1[companies]
-        SH2[plans]
-        SH3[users]
-        SH4[tenants]
-        SH5[global_configs]
-    end
-
-    subgraph Tenant ["Tabelas por Tenant"]
-        TT1[contacts]
-        TT2[leads]
-        TT3[opportunities]
-        TT4[pipelines]
-        TT5[conversations]
-        TT6[messages]
-        TT7[campaigns]
-        TT8[reports]
-        TT9[integrations]
-        TT10[audit_logs]
-    end
-
-    PG_PUBLIC --- Shared
-    PG_T1 --- Tenant
-    PG_T2 --- Tenant
-    PG_T3 --- Tenant
-```
-
-## Dependências
-
-### Resolução de Tenant
-
-O tenant é resolvido em cada requisição através do seguinte fluxo:
-
-1. **JWT Header**: Token contém claim `tenantId` no payload
-2. **Tenant Filter (OncePerRequestFilter)**: Intercepts every request
-3. **TenantContext (ThreadLocal)**: Armazena tenantId para toda a duração da requisição
-4. **Schema Router**: Configura `search_path` na conexão PostgreSQL
-
-### Estrutura do JWT
-
-```json
-{
-  "sub": "user-uuid",
-  "tenantId": "tenant-uuid",
-  "roles": ["admin", "agent"],
-  "schema": "tenant_abc123",
-  "iat": 1752595800,
-  "exp": 1752682200
-}
-```
-
-### Tenant Context Filter
-
-```
-Request → JWT Validation → Extract tenantId → Set TenantContext → Process → Clear TenantContext
-```
-
-O TenantContext é implementado como ThreadLocal com limpeza automática no finally block para evitar vazamento entre threads.
-
-## Fluxos (continuação)
-
-### Pool de Conexões por Tenant
-
-```mermaid
-flowchart LR
-    subgraph App ["Application"]
-        SVC1[Service A]
-        SVC2[Service B]
-        SVC3[Service C]
-    end
-
-    subgraph Pool ["HikariCP Pool"]
-        POOL1["Pool: tenant_abc<br/>max=10, min=2"]
-        POOL2["Pool: tenant_def<br/>max=10, min=2"]
-        POOL3["Pool: tenant_ghi<br/>max=10, min=2"]
-    end
-
-    subgraph DB ["PostgreSQL"]
-        SCHEMA1[tenant_abc schema]
-        SCHEMA2[tenant_def schema]
-        SCHEMA3[tenant_ghi schema]
-    end
-
-    SVC1 --> POOL1
-    SVC2 --> POOL2
-    SVC3 --> POOL3
-
-    POOL1 --> SCHEMA1
-    POOL2 --> SCHEMA2
-    POOL3 --> SCHEMA3
-```
-
-| Configuração | Valor | Descrição |
+| GUC | Preenchido por | Uso (policy) |
 |---|---|---|
-| maximumPoolSize | 10 por tenant | Máximo de conexões simultâneas por tenant |
-| minimumIdle | 2 por tenant | Mínimo de conexões em idle |
-| connectionTimeout | 30000ms | Tempo máximo para obter conexão |
-| idleTimeout | 600000ms | Tempo para liberar conexão idle |
-| maxLifetime | 1800000ms | Vida máxima de uma conexão |
-| leakDetectionThreshold | 60000ms | Alerta de leak de conexão |
+| `app.current_keycloak_sub` | `TenantContext` | Bootstrap de identidade (V022/V025): ler a própria linha em `users`. |
+| `app.current_identity_email` | `TenantContext` | Bootstrap por e-mail (V024/V025). |
+| `app.current_identity_phone` | `TenantContext` | Bootstrap por telefone/OTP (V024/V026). |
+| `app.current_reset_token` | `TenantContext` | Reset de senha anônimo (V028). |
+| `app.current_company_id` | `TenantContext` | Isolamento de tenant nas policies. |
+| `app.invitation_token_hash` | `set_invitation_token_context` | Acesso por token a `invitations` (V036). |
 
-### Migrações por Tenant (Flyway)
+### Isolamento de dados
 
-```mermaid
-flowchart TB
-    START([Início da Migração]) --> CHECK{Novo tenant?}
-
-    CHECK -->|Sim| CREATE[Aplica schema base<br/>todas as tabelas]
-    CREATE --> VERSION[Registra versão<br/>flyway_schema_history]
-
-    CHECK -->|Não| VERIFY{Pendências<br/>de migração?}
-    VERIFY -->|Sim| MIGRATE[Aplica migrations pendentes<br/>no schema do tenant]
-    MIGRATE --> VERSION
-    VERIFY -->|Não| SKIP[Migração ignorada]
-
-    VERSION --> LOG[Registra log de migração]
-    SKIP --> LOG
-    LOG --> END([Fim])
-
-    style CREATE fill:#e1f5fe
-    style MIGRATE fill:#fff3e0
-    style SKIP fill:#e8f5e9
-```
-
-| Etapa | Descrição |
+| Camada | Estratégia |
 |---|---|
-| 1. Migrations compartilhadas | Arquivos em `db/migration/shared/` aplicados a todos os schemas |
-| 2. Migrations por tenant | Flyway itera sobre cada schema de tenant e aplica pendências |
-| 3. Novo tenant | Schema criado a partir de migrations completas ( bootstrap ) |
-| 4. Rollback | Operação manual com script de reversão; não automático |
-| 5. Versionamento | Tabela `flyway_schema_history` isolada por schema |
+| **PostgreSQL** | Shared schema + RLS FORCE por `company_id`. |
+| **Aplicação** | `TenantContext` ThreadLocal, limpo no `finally`. |
+| **Audit Trail** | Tabela `audit_logs` tenant-scoped (RLS FORCE). |
+| **Storage** | Tabela `storage_objects` tenant-scoped (RLS FORCE, V037). |
 
-### Estrutura de Diretórios Flyway
+## Tabelas tenant-scoped vs globais
 
-```
-db/
-  migration/
-    shared/
-      V1__create_plans_table.sql
-      V2__create_companies_table.sql
-      V3__create_users_table.sql
-    tenant/
-      V1__create_contacts_table.sql
-      V2__create_leads_table.sql
-      V3__create_pipelines_table.sql
-      V4__create_opportunities_table.sql
-      V5__create_conversations_table.sql
-      V6__create_messages_table.sql
-      V7__create_campaigns_table.sql
-      V8__create_reports_table.sql
-      V9__create_integrations_table.sql
-      V10__create_audit_logs_table.sql
-```
+Tabelas **tenant-scoped** (RLS FORCE por `company_id`): `users`, `roles`, `user_roles`, `audit_logs`, `company_settings`, `subscriptions`, `pipelines`, `stages`, `opportunities`, `opportunity_history` (via join com opportunities), `contacts`, `leads`, `memberships`, `invitations`, `storage_objects`.
 
-### Isolamento de Dados
+Tabelas **globais** (SEM RLS): `companies` (tabela de tenants), `permissions`, `role_permissions`, `refresh_tokens`, `password_reset_tokens`.
 
-| Camada | Estratégia de Isolamento |
-|---|---|
-| **PostgreSQL** | Schema separado por tenant (`tenant_{id}`) |
-| **Redis** | Prefixo de chave: `tenant:{tenantId}:{key}` |
-| **RabbitMQ** | Vhost exclusivo por tenant OU prefixo na routing key |
-| **File Storage** | Diretório: `/{tenantId}/attachments/` |
-| **Cache (Application)** | Key prefix `cache:{tenantId}:{entity}:{id}` |
-| **Logs** | Campo `tenantId` em todas as linhas de log estruturado |
-| **Audit Trail** | Tabela `audit_logs` isolada no schema do tenant |
-| **Metrics** | Tag `tenant_id` em todas as métricas Micrometer |
+## Membresias e empresa ativa
 
-### Backup por Tenant
+- `memberships` (V030) é a **fonte de verdade** da relação usuário↔empresa (1:N): `user_id`, `company_id`, `role`, `status` (`ACTIVE`/`PENDING`/`REMOVED`).
+- `users.company_id` permanece NOT NULL como **empresa ativa** denormalizada, mantido consistente pelo trigger `app.membership_sync_active_company` (define `company_id` apenas quando a membership inserida é a ÚNICA ativa do usuário).
+- Duas camadas de policy:
+  - `membership_own_policy` (SELECT): usuário vê apenas as PRÓPRIAS memberships (cross-company, para `/me/memberships`).
+  - `membership_tenant_policy` (ALL): dentro do tenant, membros/gestores operam memberships da própria empresa.
+- Remoção de membro perde acesso via remoção de `user_roles` + gate de membership ativa na resolução do `CurrentUser`.
 
-```mermaid
-flowchart TB
-    SCHEDULE[Cron: 02:00 AM UTC] --> LIST[Lista todos os tenants ativos]
+### Company Switcher
 
-    LIST --> LOOP{Para cada tenant}
+A troca de empresa ativa (multi-empresa) é feita pelo fluxo de switch (Sprint 8.4), que valida a membership `ACTIVE` na empresa de destino e re-resolve roles/`company_id`; registrada em auditoria (action `TENANTS UPDATE`).
 
-    LOOP --> SNAPSHOT[pg_dump schema tenant_{id}]
-    SNAPSHOT --> COMPRESS[Comprime com gzip]
-    COMPRESS --> UPLOAD[Upload para S3 bucket privado]
-    UPLOAD --> VERIFY[Verifica integridade SHA-256]
-    VERIFY --> RETAIN[Aplica política de retenção<br/>30 dias]
+## Convites (Sprint 8.5) — RLS por token
 
-    RETAIN --> NEXT{Próximo tenant?}
-    NEXT -->|Sim| LOOP
-    NEXT -->|Não| NOTIFY[Notifica time de ops]
-    NOTIFY --> END([Fim])
-```
+- `invitations` (V036) rastreáveis por e-mail, com `token_hash` (SHA-256 hex) — o token **nunca** é persistido em texto puro.
+- Roles fixas no convite: `ADMIN | MANAGER | AGENT | VIEWER`; `SUPER_ADMIN` jamais concedível; `OWNER` exclusivo do onboarding.
+- Policies:
+  - `invitations_admin_select_policy` / `invitations_admin_write_policy` — acesso administrativo por `company_id` (RBAC exige ADMIN/OWNER no serviço).
+  - `invitations_token_select_policy` / `invitations_token_update_policy` — aceite/recusa por `token_hash = app.current_invitation_token_hash()`, independente de membership (cross-tenant não vaza).
 
-| Configuração | Valor |
-|---|---|
-| Frequência | Diária às 02:00 UTC |
-| Retenção | 30 dias (configurável por tenant) |
-| Storage | S3 bucket com AES-256 encryption |
-| Compressão | gzip (redução média de 70%) |
-| Verificação | SHA-256 checksum após upload |
-| Restauração | Script automatizado com target_schema |
-| Snapshot compartilhado | Backup do schema `public` separadamente |
+## Quotas por plano e uso (Sprint 8.6)
 
-### Checklist de Isolamento
+- Cada `company` carrega limites do plano: `maxUsers`, `maxContacts`, `maxStorageMb`.
+- Defaults (`CompanyService`): `maxUsers = 5`, `maxContacts = 500`, `maxStorageMb = 1024`.
+- `CompanyQuotaService` expõe `usage(...)` e asserts (`assertCanAddContact`, `assertCanAddSpace`), contando ativos e pendentes (convites), contatos e bytes de storage.
+- Enforcement lança `QuotaExceededException` → HTTP **422** (`QUOTA_EXCEEDED`) — ex.: bloqueia convite/aceite quando `activeMembers + pendingInvites >= maxUsers`.
+- `GET /companies/{id}/usage` retorna `CompanyUsageResponse` (users/contacts/storage) para consumo (frontend).
 
-| Critério | Implementação |
-|---|---|
-| Um tenant não acessa dados de outro | Schema isolation + TenantContext filter |
-| Tenant ausente na requisição bloqueia acesso | TenantFilter rejeita requests sem tenantId |
-| Migrations não afetam outros schemas | Flyway itera por schema independentemente |
-| Redis não vaza dados entre tenants | Prefixo obrigatório em todas as operações |
-| Logs permitem rastreabilidade por tenant | tenantId em todas as linhas estruturadas |
-| Backup é granular e restaurável | pg_dump por schema + verificação de integridade |
-| Rate limiting é por tenant | Redis key: `ratelimit:{tenantId}:{endpoint}` |
-| File uploads são isolados | Path: `{tenantId}/attachments/{fileId}` |
+## Auditoria de tenant (Sprint 8.6)
+
+- `TenantAuditRecorder` lê o `AuditContext` (ator/IP/UA), com fallback de `actorUserId`, e **seta/restaura** o tenant (GUC `app.current_company_id`) no escopo para gravar `audit_logs` mesmo fora do contexto normal da requisição.
+- Eventos auditados nesta sprint: criação/aceite/revogação de convite, membership removida (`DELETE` da membership), empresa ativa trocada (`TENANTS UPDATE`).
 
 ## Boas práticas
 
-- Nunca executar queries sem `search_path` configurado — usar o TenantContext sempre
-- TenantContext deve ser limpo no finally block para evitar vazamento entre threads
-- Migrações devem ser testadas individualmente para cada schema antes de produção
-- Backups devem ser testados periodicamente com restauração em ambiente de staging
-- Rate limiting configurado por tenant para evitar noisy neighbor
-- Monitoring com dashboards segregados por tenant para detecção de anomalias
-- PII (dados pessoais) isolado com criptografia adicional no schema do tenant
-- Hard delete proibido — usar soft delete com `deleted_at` timestamp
-- Conexões com search_path devem ser validadas no startup do application
-- Pool de conexões dimensionado conforme tier do plano do tenant
-
-## Referências
-
-- PostgreSQL Schema Documentation — postgresql.org
-- Multi-Tenancy with Spring Boot — spring.io
-- SaaS Multi-Tenancy Patterns — Microsoft Azure Architecture Center
-- Flyway Teams Edition — Documentation
+- Nunca rodar queries sem o GUC de tenant definido quando a tabela for tenant-scoped.
+- `TenantContext` limpo no `finally` para evitar vazamento entre threads.
+- Migrações estruturais usam `pg_catalog` para verificação (imune a RLS).
+- Backfill de dados sob RLS FORCE é best-effort quando roda como usuário de app; sincronização garantida é feita em startup por seeders (ex.: `MembershipDataSeeder`).
+- Hard delete proibido para dados de negócio — usar soft delete com `deleted_at`.
 
 ## Histórico de Revisão
 
 | Versão | Data | Autor | Descrição |
 |---|---|---|---|
-| 1.0 | 2026-07-15 | Equipe de Arquitetura | Versão inicial da arquitetura multi-tenancy |
+| 1.0 | 2026-07-15 | Equipe de Arquitetura | Versão inicial (schema-per-tenant) — **superada** |
+| 2.0 | 2026-08-12 | Equipe de Arquitetura | Reescrita para o modelo real: shared schema + RLS FORCE, memberships, switcher, invitations, quotas, auditoria |

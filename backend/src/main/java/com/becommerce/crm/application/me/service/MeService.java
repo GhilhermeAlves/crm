@@ -1,5 +1,6 @@
 package com.becommerce.crm.application.me.service;
 
+import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.me.dto.CompanyOptionResponse;
@@ -10,6 +11,8 @@ import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.company.CompanyNotFoundException;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
+import com.becommerce.crm.domain.audit.AuditAction;
+import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +39,16 @@ public class MeService implements MeUseCase {
     private final MembershipRepository membershipRepository;
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
+    private final TenantAuditRecorder auditor;
 
     public MeService(MembershipRepository membershipRepository,
                      UserRepository userRepository,
-                     CompanyRepository companyRepository) {
+                     CompanyRepository companyRepository,
+                     TenantAuditRecorder auditor) {
         this.membershipRepository = membershipRepository;
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
+        this.auditor = auditor;
     }
 
     @Override
@@ -81,6 +87,12 @@ public class MeService implements MeUseCase {
         }
 
         log.info("Company Switcher: usuário {} ativou empresa {}", userId, companyId);
+
+        // Auditoria de tenant (Sprint 8.6): troca da empresa ativa.
+        auditor.record(companyId, AuditAction.UPDATE, AuditModule.TENANTS, "Company",
+                companyId.toString(),
+                "Company Switcher: usuário ativou a empresa",
+                userId, null);
         return toOption(companyId, true);
     }
 

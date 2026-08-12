@@ -1,5 +1,6 @@
 package com.becommerce.crm.application.invitation.service;
 
+import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
@@ -20,6 +21,7 @@ import com.becommerce.crm.domain.invitation.Invitation;
 import com.becommerce.crm.domain.invitation.InvitationStatus;
 import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundException;
 import com.becommerce.crm.domain.membership.Membership;
+import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 import com.becommerce.crm.infrastructure.invitation.persistence.InvitationTokenContextHolder;
 import com.becommerce.crm.infrastructure.invitation.rate.InvitationRateLimiter;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +54,7 @@ class InvitationServiceTest {
     @Mock EmailSender emailSender;
     @Mock InvitationTokenContextHolder tokenContext;
     @Mock InvitationRateLimiter rateLimiter;
+    @Mock TenantAuditRecorder auditor;
 
     @InjectMocks InvitationService invitationService;
 
@@ -84,6 +87,8 @@ class InvitationServiceTest {
         Company company = activeCompany();
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
         when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(0L);
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
 
         InvitationResponse response = invitationService.create(
@@ -141,6 +146,8 @@ class InvitationServiceTest {
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
         when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(0L);
 
         Role adminRole = mock(Role.class);
         when(adminRole.getId()).thenReturn(UUID.randomUUID());
@@ -253,6 +260,8 @@ class InvitationServiceTest {
         // membro ativo de outra empresa, mas NÃO da empresa-alvo
         when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(0L);
 
         InvitationResponse response = invitationService.accept("tok-abc", userId);
 
@@ -274,6 +283,8 @@ class InvitationServiceTest {
         when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
         when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(0L);
 
         InvitationResponse response = invitationService.accept("tok-abc", userId);
 
@@ -282,6 +293,55 @@ class InvitationServiceTest {
         verify(membershipRepository).save(any(Membership.class));
         verify(user).grantCrmAccess();
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void shouldBlockInviteWhenUserLimitReached() {
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(5L);
+        when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of());
+        assertThrows(QuotaExceededException.class,
+                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "AGENT"), invitedBy));
+    }
+
+    @Test
+    void shouldBlockInviteWhenUserIsAlreadyMember() {
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+        when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mock(User.class)));
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(any(), any())).thenReturn(true);
+        assertThrows(IllegalArgumentException.class,
+                () -> invitationService.create(companyId, new CreateInvitationRequest("member@empresa.com", "AGENT"), invitedBy));
+    }
+
+    @Test
+    void shouldAllowInviteBelowUserLimit() {
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+        when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(3L);
+        when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InvitationResponse response = invitationService.create(
+                companyId, new CreateInvitationRequest("novo@empresa.com", "AGENT"), invitedBy);
+        assertEquals(InvitationStatus.PENDING, response.status());
+    }
+
+    @Test
+    void shouldBlockAcceptWhenUserLimitReached() {
+        UUID userId = UUID.randomUUID();
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(userId);
+        when(user.getEmail()).thenReturn(new Email("convite@empresa.com"));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
+        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(5L);
+
+        assertThrows(QuotaExceededException.class, () -> invitationService.accept("tok-abc", userId));
+        verify(membershipRepository, never()).save(any(Membership.class));
     }
 
     private void setExpired(Invitation invitation) {

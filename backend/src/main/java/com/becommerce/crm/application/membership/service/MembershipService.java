@@ -1,5 +1,6 @@
 package com.becommerce.crm.application.membership.service;
 
+import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.dto.MemberResponse;
@@ -13,6 +14,8 @@ import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.exception.RoleNotFoundException;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
+import com.becommerce.crm.domain.audit.AuditAction;
+import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
 import org.slf4j.Logger;
@@ -46,13 +49,16 @@ public class MembershipService implements MembershipUseCase {
     private final MembershipRepository membershipRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final TenantAuditRecorder auditor;
 
     public MembershipService(MembershipRepository membershipRepository,
                              RoleRepository roleRepository,
-                             UserRoleRepository userRoleRepository) {
+                             UserRoleRepository userRoleRepository,
+                             TenantAuditRecorder auditor) {
         this.membershipRepository = membershipRepository;
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
+        this.auditor = auditor;
     }
 
     @Override
@@ -120,6 +126,12 @@ public class MembershipService implements MembershipUseCase {
         membershipRepository.save(membership);
         // Revoga o RBAC: sem roles, o membro desligado perde todas as permissões.
         userRoleRepository.deleteByUserIdAndCompanyId(userId, companyId);
+
+        // Auditoria de tenant (Sprint 8.6): remoção/desativação de membership.
+        auditor.record(companyId, AuditAction.DELETE, AuditModule.MEMBERSHIPS, "Member",
+                userId.toString(),
+                "Membro desligado da empresa",
+                null, null);
 
         log.info("Membro {} desligado da empresa {}", userId, companyId);
     }

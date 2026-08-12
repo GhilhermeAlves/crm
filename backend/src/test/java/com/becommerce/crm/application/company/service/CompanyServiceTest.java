@@ -63,6 +63,9 @@ class CompanyServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private CompanyQuotaService quotaService;
+
+    @Mock
     private TenantContext tenantContext;
 
     @InjectMocks
