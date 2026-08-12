@@ -24,6 +24,7 @@ import com.becommerce.crm.domain.identity.exception.PermissionNotFoundException;
 import com.becommerce.crm.domain.identity.exception.RoleNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
+import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundException;
 import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
 
 import java.time.LocalDateTime;
@@ -161,6 +162,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MembershipNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleMembershipNotFoundException(MembershipNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(InvitationNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleInvitationNotFoundException(InvitationNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
                 "status", 404,
