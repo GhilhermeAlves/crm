@@ -57,9 +57,9 @@ DECLARE
     has_trigger BOOLEAN;
     null_count INTEGER;
 BEGIN
-    SELECT NOT is_nullable
-    FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'company_id'
+    SELECT (ic.is_nullable = 'NO')
+    FROM information_schema.columns ic
+    WHERE ic.table_schema = 'public' AND ic.table_name = 'users' AND ic.column_name = 'company_id'
     INTO is_nullable;
 
     SELECT c.relforcerowsecurity INTO is_forced
