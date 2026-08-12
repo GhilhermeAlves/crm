@@ -57,7 +57,7 @@ DECLARE
     has_trigger BOOLEAN;
     null_count INTEGER;
 BEGIN
-    SELECT (ic.is_nullable = 'NO')
+    SELECT (ic.is_nullable = 'YES')
     FROM information_schema.columns ic
     WHERE ic.table_schema = 'public' AND ic.table_name = 'users' AND ic.column_name = 'company_id'
     INTO is_nullable;
