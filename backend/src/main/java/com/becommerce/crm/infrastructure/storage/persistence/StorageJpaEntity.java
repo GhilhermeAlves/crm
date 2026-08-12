@@ -3,7 +3,6 @@ package com.becommerce.crm.infrastructure.storage.persistence;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
@@ -31,7 +30,6 @@ public class StorageJpaEntity {
     @Column(name = "size_bytes")
     private long sizeBytes;
 
-    @Lob
     @Column(name = "data")
     private byte[] data;
 
