@@ -21,6 +21,7 @@ import com.becommerce.crm.domain.invitation.InvitationStatus;
 import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundException;
 import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.infrastructure.invitation.persistence.InvitationTokenContextHolder;
+import com.becommerce.crm.infrastructure.invitation.rate.InvitationRateLimiter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,7 @@ class InvitationServiceTest {
     @Mock UserRoleRepository userRoleRepository;
     @Mock EmailSender emailSender;
     @Mock InvitationTokenContextHolder tokenContext;
+    @Mock InvitationRateLimiter rateLimiter;
 
     @InjectMocks InvitationService invitationService;
 
@@ -61,6 +63,10 @@ class InvitationServiceTest {
     void setUp() {
         companyId = UUID.randomUUID();
         invitedBy = UUID.randomUUID();
+        // Rate limiter permitido por padrão nos testes de fluxo principal
+        // (lenient: testes que não acionam o limiter não devem falhar por stub não usado).
+        lenient().when(rateLimiter.tryCreate(anyString())).thenReturn(true);
+        lenient().when(rateLimiter.tryAccept(anyString())).thenReturn(true);
     }
 
     private Company activeCompany() {

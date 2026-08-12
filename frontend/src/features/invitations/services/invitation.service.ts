@@ -17,4 +17,16 @@ export const InvitationService = {
   async revoke(companyId: string, invitationId: string): Promise<void> {
     await api.delete(`${BASE}/${companyId}/invitations/${invitationId}`);
   },
+  async accept(token: string): Promise<Invitation> {
+    const response = await api.post<Invitation>("/invitations/accept", null, {
+      params: { token },
+    });
+    return response.data;
+  },
+  async decline(token: string): Promise<Invitation> {
+    const response = await api.post<Invitation>("/invitations/decline", null, {
+      params: { token },
+    });
+    return response.data;
+  },
 };

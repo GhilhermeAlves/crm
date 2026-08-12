@@ -21,6 +21,7 @@ import com.becommerce.crm.domain.invitation.InvitationStatus;
 import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundException;
 import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.infrastructure.invitation.persistence.InvitationTokenContextHolder;
+import com.becommerce.crm.infrastructure.invitation.rate.InvitationRateLimiter;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,9 @@ public class InvitationService implements InvitationUseCase {
     private final UserRoleRepository userRoleRepository;
     private final EmailSender emailSender;
     private final InvitationTokenContextHolder tokenContext;
+    private final InvitationRateLimiter rateLimiter;
+
+    private final String invitationBaseUrl;
 
     public InvitationService(InvitationRepository invitationRepository,
                              CompanyRepository companyRepository,
@@ -61,7 +65,9 @@ public class InvitationService implements InvitationUseCase {
                              RoleRepository roleRepository,
                              UserRoleRepository userRoleRepository,
                              EmailSender emailSender,
-                             InvitationTokenContextHolder tokenContext) {
+                             InvitationTokenContextHolder tokenContext,
+                             InvitationRateLimiter rateLimiter,
+                             @org.springframework.beans.factory.annotation.Value("${app.invitations.base-url:}") String invitationBaseUrl) {
         this.invitationRepository = invitationRepository;
         this.companyRepository = companyRepository;
         this.membershipRepository = membershipRepository;
@@ -70,6 +76,8 @@ public class InvitationService implements InvitationUseCase {
         this.userRoleRepository = userRoleRepository;
         this.emailSender = emailSender;
         this.tokenContext = tokenContext;
+        this.rateLimiter = rateLimiter;
+        this.invitationBaseUrl = invitationBaseUrl;
     }
 
     @Override
@@ -79,6 +87,9 @@ public class InvitationService implements InvitationUseCase {
                 .orElseThrow(() -> new CompanyNotFoundException(companyId));
         if (company.getStatus() != CompanyStatus.ACTIVE) {
             throw new IllegalStateException("Empresa inativa: não é possível convidar.");
+        }
+        if (!rateLimiter.tryCreate(companyId.toString())) {
+            throw new IllegalStateException("Excesso de convites na janela atual. Tente novamente mais tarde.");
         }
 
         String role = request.role().trim().toUpperCase(Locale.ROOT);
@@ -124,6 +135,9 @@ public class InvitationService implements InvitationUseCase {
     @Override
     @Transactional
     public InvitationResponse accept(String token, UUID userId) {
+        if (!rateLimiter.tryAccept(userId.toString())) {
+            throw new IllegalStateException("Muitas tentativas de aceite. Tente novamente mais tarde.");
+        }
         String hash = InvitationTokenService.hash(token);
         tokenContext.setTokenHash(hash);
         try {
@@ -208,7 +222,12 @@ public class InvitationService implements InvitationUseCase {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
-    private static String buildTokenUrl(String token) {
+    private String buildTokenUrl(String token) {
+        // Base absoluta opcional (configurada em produção p/ link clicável no
+        // e-mail). Vazia por padrão → mantém caminho relativo (sem inventar domínio).
+        if (invitationBaseUrl != null && !invitationBaseUrl.isBlank()) {
+            return invitationBaseUrl.replaceAll("/+$", "") + "/invitations/accept?token=" + token;
+        }
         return "/invitations/accept?token=" + token;
     }
 

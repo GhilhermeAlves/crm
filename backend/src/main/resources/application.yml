@@ -86,6 +86,8 @@ app:
       internal-api-token: ${AUTH_INTERNAL_API_TOKEN:}
   mail:
     log-token: ${MAIL_LOG_TOKEN:false}
+  invitations:
+    base-url: ${INVITATION_BASE_URL:}
 
 springdoc:
   api-docs:
