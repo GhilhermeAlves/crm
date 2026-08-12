@@ -168,6 +168,14 @@ public class InvitationService implements InvitationUseCase {
             membershipRepository.save(Membership.activate(user.getId(), invitation.getCompanyId(), invitation.getRole()));
             assignRole(user, invitation);
             user.grantCrmAccess();
+            // Usuário sem empresa ativa (ex.: pós-onboarding pendente) passa a ter a
+            // empresa convidada como ativa — completa o fluxo de aceite ponta a ponta e
+            // a nova empresa já aparece ativa no Company Switcher (Sprint 8.4).
+            // Quem já possui empresa ativa permanece nela (a convidada fica disponível
+            // para troca manual).
+            if (user.getCompanyId() == null) {
+                user.setCompanyId(invitation.getCompanyId());
+            }
             userRepository.save(user);
 
             invitation.accept();

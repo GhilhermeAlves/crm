@@ -206,6 +206,84 @@ class InvitationServiceTest {
         assertEquals(InvitationStatus.REVOKED, pending.getStatus());
     }
 
+    @Test
+    void shouldRejectAcceptWhenAlreadyUsed() {
+        Invitation used = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
+        used.accept();
+        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(used));
+
+        assertThrows(IllegalStateException.class, () -> invitationService.accept("tok-abc", UUID.randomUUID()));
+    }
+
+    @Test
+    void shouldRejectAcceptWhenRevoked() {
+        Invitation revoked = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
+        revoked.revoke();
+        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(revoked));
+
+        assertThrows(IllegalStateException.class, () -> invitationService.accept("tok-abc", UUID.randomUUID()));
+    }
+
+    @Test
+    void shouldRejectAcceptWhenAlreadyMemberOfTargetCompany() {
+        UUID userId = UUID.randomUUID();
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(userId);
+        when(user.getEmail()).thenReturn(new Email("convite@empresa.com"));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
+        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(true);
+
+        assertThrows(IllegalStateException.class, () -> invitationService.accept("tok-abc", userId));
+        verify(membershipRepository, never()).save(any(Membership.class));
+    }
+
+    @Test
+    void shouldAcceptInvitationWhenUserAlreadyBelongsToAnotherCompany() {
+        UUID userId = UUID.randomUUID();
+        UUID otherCompany = UUID.randomUUID();
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(userId);
+        when(user.getEmail()).thenReturn(new Email("convite@empresa.com"));
+        when(user.getCompanyId()).thenReturn(otherCompany); // ativa em OUTRA empresa
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
+        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        // membro ativo de outra empresa, mas NÃO da empresa-alvo
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
+        when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InvitationResponse response = invitationService.accept("tok-abc", userId);
+
+        assertEquals(InvitationStatus.ACCEPTED, response.status());
+        verify(membershipRepository).save(any(Membership.class));
+        // não deve trocar a empresa ativa do usuário (permanece na outra)
+        verify(user, never()).setCompanyId(any());
+    }
+
+    @Test
+    void shouldSetActiveCompanyWhenUserHadNoCompany() {
+        UUID userId = UUID.randomUUID();
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(userId);
+        when(user.getEmail()).thenReturn(new Email("convite@empresa.com"));
+        when(user.getCompanyId()).thenReturn(null); // sem empresa ativa (onboarding pendente)
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
+        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
+        when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InvitationResponse response = invitationService.accept("tok-abc", userId);
+
+        assertEquals(InvitationStatus.ACCEPTED, response.status());
+        verify(user).setCompanyId(companyId); // empresa convidada vira a ativa
+        verify(membershipRepository).save(any(Membership.class));
+        verify(user).grantCrmAccess();
+        verify(userRepository).save(user);
+    }
+
     private void setExpired(Invitation invitation) {
         // mutate expiresAt para o passado via reflexão simples em teste
         try {

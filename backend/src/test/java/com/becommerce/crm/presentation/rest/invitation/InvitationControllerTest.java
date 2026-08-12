@@ -87,6 +87,20 @@ class InvitationControllerTest {
     }
 
     @Test
+    void shouldRejectCrossCompanyAccess() throws Exception {
+        // principal pertence à companyId, mas tenta administrar OUTRA empresa
+        UUID otherCompany = UUID.randomUUID();
+        mockMvc.perform(post("/api/v1/companies/{cid}/invitations", otherCompany)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"novo@empresa.com\",\"role\":\"AGENT\"}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/companies/{cid}/invitations", otherCompany))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/v1/companies/{cid}/invitations/{iid}", otherCompany, UUID.randomUUID()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void shouldRevokeInvitation() throws Exception {
         UUID invitationId = UUID.randomUUID();
         mockMvc.perform(delete("/api/v1/companies/{cid}/invitations/{iid}", companyId, invitationId))
