@@ -70,6 +70,11 @@ docker/.env
 *.dump
 *.bak
 
+# Flyway migrations are source code and MUST be versioned.
+# Exception to the *.sql rule above for the official migrations directory.
+!backend/src/main/resources/db/migration/*.sql
+!**/db/migration/*.sql
+
 # OS
 Thumbs.db
 
