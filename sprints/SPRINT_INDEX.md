@@ -193,6 +193,11 @@
 > - ✅ Reconciliação (`cbee5ce`): frontend de aceite/recusa (`/invitations/accept`), rate limit
 >   (`InvitationRateLimiter`), link absoluto no e-mail (`INVITATION_BASE_URL`); endpoints
 >   validados no VPS (401 sem sessão); backend 179 verdes;
+> - ✅ Finalização (`3519cba`): usuário sem empresa ativa passa a ter a empresa convidada como
+>   ativa no aceite (Company Switcher/8.4); testes ampliados p/ token já usado/revogado,
+>   membership duplicada, usuário em outra empresa e autorização cross-company (403); backend
+>   **185 verdes** (invitation 21), frontend 66 testes verdes; única pendência = validação
+>   manual autenticada no browser (sem credenciais de teste);
 > - 📄 `sprints/8.5/REPORT.md`.
 
 ## CRM

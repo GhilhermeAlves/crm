@@ -94,12 +94,50 @@ Fechamento dos gaps do escopo sobre a base já existente:
 - **Status dos testes**: backend **179 verdes** (invitation 15); frontend typecheck + lint sem erros.
 - Pendência: E2E de aceite **autenticado** (sessão + token real) fica para validação manual no browser.
 
-## Pendências / débitos conhecidos
+## Finalização da Sprint 8.5 (`3519cba`)
 
+Auditoria do fluxo ponta a ponta + validação automatizada ampliada:
+
+- **Fluxo autenticado** confirmado pela auditoria: criar → PENDING → link gerado
+  (`/invitations/accept?token=`) → aceite → membership `ACTIVE` (company_id/role da invitation)
+  → invitation `ACCEPTED` → `grantCrmAccess` + role RBAC → nova empresa disponível no
+  **Company Switcher** (8.4) via `findActiveCompanyOptionsByUserId`.
+- **Gap corrigido (usuário sem empresa)**: no aceite, se o usuário não tinha empresa ativa
+  (`users.company_id = null`), a empresa convidada passa a ser a **ativa** (evita ficar preso
+  no gate de onboarding e faz a empresa aparecer já ativa no switcher). Quem já tem empresa
+  ativa permanece nela (a convidada fica para troca manual no switcher).
+- **Testes ampliados** (reuso de `InvitationServiceTest`/`InvitationControllerTest`):
+  - já utilizado (ACCEPTED) → rejeita; revogado (REVOKED) → rejeita;
+  - já membro da empresa-alvo → rejeita (sem criar membership duplicada);
+  - usuário já em OUTRA empresa → aceite OK e **não** troca a empresa ativa;
+  - usuário sem empresa → aceite define a empresa convidada como ativa;
+  - **autorização cross-company** (controller): ADMIN tenta administrar outra empresa → **403**
+    (`CrmAccessDenied`), create/list/revoke bloqueados.
+- **Segurança** (confirmada por código): token armazenado só como hash (SHA-256, `varchar(64)`),
+  uso único (rejeita não-PENDING), expiração (→ EXPIRED), revogação (→ REVOKED), e-mail
+  vinculado ao convite, autorização por empresa (ADMIN/OWNER via `membership:manage` +
+  `companyId`), RLS FORCE por `company_id` + policies de token (GUC dedicado).
+- **Status dos testes**: backend **185 verdes** (invitation **21**); frontend typecheck + lint
+  sem erros; frontend **66 testes verdes**.
+
+## E2E (VPS)
+
+- Headless: página `/invitations/accept` viva; endpoints `/api/v1/invitations/accept|decline`
+  registrados e protegidos (401 sem sessão).
+- **Limitação**: não há credenciais de teste seguras disponíveis → o fluxo **autenticado**
+  completo (ADMIN cria convite → convidado abre link → autentica → aceita → membership ACTIVE)
+  **não pôde ser executado automaticamente**. Isso **não** bloqueia a Sprint (implementação e
+  testes automatizados cobrem o fluxo); fica como **validação manual no browser** a única
+  pendência.
+
+## Pendências / débitos técnicos
+
+- **E2E autenticado manual**: única pendência funcional — executar o fluxo real no browser
+  (sem credenciais de teste automatizáveis).
 - Envio de e-mail real: `ConsoleEmailSender` é placeholder; trocar por provider (SMTP/Resend/SES)
   quando disponível — abstração `EmailSender` pronta.
-- E2E de aceite autenticado (fluxo completo convite → aceite → membership): validação manual no browser.
-- `InvitationRateLimiter` em memória: substituir por implementação distribuída se multi-instância.
+- `InvitationRateLimiter` em memória: substituir por implementação distribuída (Redis/DB) se
+  multi-instância (dívida técnica; NÃO migrado nesta Sprint).
 - Legado `users.invite_token`/`/users/invite` (Sprint antiga): sem mudança breaking; mapeado como
   débito para depreciação isolada.
 
