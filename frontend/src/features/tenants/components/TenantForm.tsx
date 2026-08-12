@@ -1,6 +1,7 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useRef, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
+import { maskCep, maskCnpj, maskPhone } from "@/lib/masks";
+import { fetchAddressByCep } from "../services/cep.service";
 import {
   tenantSchema,
   tenantStatusLabels,
@@ -41,8 +44,11 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
+    setError,
+    clearErrors,
     watch,
     formState: { errors },
   } = useForm<TenantFormData>({
@@ -94,6 +100,37 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
     });
   };
 
+  const lastCepSearched = useRef("");
+  const [isFetchingCep, setIsFetchingCep] = useState(false);
+
+  const handleCepBlur = async (cepValue: string) => {
+    const digits = maskCep(cepValue).replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    // Evita chamadas duplicadas para o mesmo CEP (de-bounce por blur + guarda).
+    if (digits === lastCepSearched.current) return;
+    lastCepSearched.current = digits;
+
+    clearErrors("address.zipCode");
+    setIsFetchingCep(true);
+    try {
+      const result = await fetchAddressByCep(cepValue);
+      if (result) {
+        setValue("address.street", result.street);
+        setValue("address.neighborhood", result.neighborhood);
+        setValue("address.city", result.city);
+        setValue("address.state", result.state);
+        setValue("address.complement", result.complement);
+        // address.number permanece informado manualmente pelo usuário.
+      } else {
+        setError("address.zipCode", { message: "CEP não encontrado" });
+      }
+    } catch {
+      // Falha de rede/HTTP: preserva os dados já preenchidos sem erro forçado.
+    } finally {
+      setIsFetchingCep(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Dados da Empresa */}
@@ -123,7 +160,20 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="cnpj">CNPJ *</Label>
-              <Input id="cnpj" placeholder="00.000.000/0000-00" {...register("cnpj")} />
+              <Controller
+                name="cnpj"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    id="cnpj"
+                    placeholder="00.000.000/0000-00"
+                    inputMode="numeric"
+                    value={field.value}
+                    onChange={(e) => field.onChange(maskCnpj(e.target.value))}
+                    ref={field.ref}
+                  />
+                )}
+              />
               {errors.cnpj && (
                 <p className="text-sm text-destructive">{errors.cnpj.message}</p>
               )}
@@ -148,7 +198,20 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone *</Label>
-              <Input id="phone" placeholder="(00) 00000-0000" {...register("phone")} />
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    id="phone"
+                    placeholder="(00) 00000-0000"
+                    inputMode="numeric"
+                    value={field.value}
+                    onChange={(e) => field.onChange(maskPhone(e.target.value))}
+                    ref={field.ref}
+                  />
+                )}
+              />
               {errors.phone && (
                 <p className="text-sm text-destructive">{errors.phone.message}</p>
               )}
@@ -262,8 +325,29 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
           <div className="grid gap-4 sm:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="address.zipCode">CEP *</Label>
-              <Input id="address.zipCode" placeholder="00000-000" {...register("address.zipCode")} />
-              {errors.address?.zipCode && (
+              <Controller
+                name="address.zipCode"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    id="address.zipCode"
+                    placeholder="00000-000"
+                    inputMode="numeric"
+                    value={field.value}
+                    disabled={isFetchingCep}
+                    ref={field.ref}
+                    onChange={(e) => {
+                      clearErrors("address.zipCode");
+                      field.onChange(maskCep(e.target.value));
+                    }}
+                    onBlur={() => handleCepBlur(field.value)}
+                  />
+                )}
+              />
+              {isFetchingCep && (
+                <p className="text-sm text-muted-foreground">Buscando endereço...</p>
+              )}
+              {!isFetchingCep && errors.address?.zipCode && (
                 <p className="text-sm text-destructive">{errors.address.zipCode.message}</p>
               )}
             </div>

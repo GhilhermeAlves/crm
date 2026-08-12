@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidCnpj } from "@/lib/masks";
 
 const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
 const phoneRegex = /^\(\d{2}\)\s?\d{4,5}-\d{4}$/;
@@ -30,7 +31,8 @@ export const tenantSchema = z.object({
   cnpj: z
     .string()
     .min(1, "CNPJ é obrigatório")
-    .regex(cnpjRegex, "CNPJ inválido (ex: 12.345.678/0001-90)"),
+    .regex(cnpjRegex, "CNPJ inválido (ex: 12.345.678/0001-90)")
+    .refine(isValidCnpj, "CNPJ inválido"),
   stateRegistration: z.string().max(30).optional().default(""),
   municipalRegistration: z.string().max(30).optional().default(""),
   email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
