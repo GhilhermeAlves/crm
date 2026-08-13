@@ -72,9 +72,9 @@ const navGroups: NavGroup[] = [
   {
     title: "CRM",
     items: [
-      { label: "Leads", href: ROUTES.LEADS, icon: Users },
-      { label: "Contatos", href: ROUTES.CONTACTS, icon: Contact },
-      { label: "Pipeline", href: ROUTES.PIPELINE, icon: GitBranch },
+      { label: "Leads", href: ROUTES.LEADS, icon: Users, permission: "lead:read" },
+      { label: "Contatos", href: ROUTES.CONTACTS, icon: Contact, permission: "contact:read" },
+      { label: "Pipeline", href: ROUTES.PIPELINE, icon: GitBranch, permission: "pipeline:view" },
     ],
   },
   {

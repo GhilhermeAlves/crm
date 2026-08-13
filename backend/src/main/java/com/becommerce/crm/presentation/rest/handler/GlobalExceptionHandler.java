@@ -25,6 +25,8 @@ import com.becommerce.crm.domain.identity.exception.RoleNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundException;
+import com.becommerce.crm.domain.lead.exception.DuplicateLeadException;
+import com.becommerce.crm.domain.lead.exception.LeadNotFoundException;
 import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 
@@ -218,6 +220,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateRoleException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateRoleException(DuplicateRoleException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(LeadNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleLeadNotFoundException(LeadNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(DuplicateLeadException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateLeadException(DuplicateLeadException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(Map.of(
                 "status", 409,

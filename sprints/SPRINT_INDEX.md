@@ -240,12 +240,32 @@
 >   **74 PASS** (antes 69, +useAuthorization), typecheck OK, lint sem erros novos;
 > - 📄 `sprints/9/REPORT.md`.
 
+> **10 — Leads ✅ Concluída (2026-08-13).** Próxima etapa do funil (CRM).
+> - ✅ **Camada de aplicação sobre base já existente**: tabela `leads` (V016) + RLS
+>   FORCE (V021) e permissões `lead:*` (V007/`RoleSeedService`) reaproveitadas — **sem
+>   nova migration** e sem duplicar RBAC/RLS/CurrentUser/Company Switcher.
+> - ✅ **Backend** (espelho do módulo `contact`): `Lead`/enums (`LeadStatus/Source/
+>   Classification`) + `LeadService` com `TenantContext` isolado por empresa, validação
+>   de contato pertencente/ativo na mesma empresa (defense-in-depth), unicidade por
+>   `(contact_id, company_id)` e auditoria (`AuditModule.LEADS`); `LeadController`
+>   `/api/v1/companies/{companyId}/leads` com `@PreAuthorize('lead:*')` +
+>   `requireCompanyAccess`; listagem com filtros + paginação (`PageResponse`);
+>   handlers 404/409 no `GlobalExceptionHandler`.
+> - ✅ **Frontend**: feature `features/leads` (types/schema Zod/serviço/hooks React
+>   Query/componentes) + páginas `/leads`, `/leads/new`, `/leads/[id]`, `/leads/[id]/edit`;
+>   Sidebar gated por `lead:read` e botões por `lead:create`/`lead:delete`.
+> - ✅ **Testes**: backend **228 PASS** (antes 215, +4 service +9 controller), frontend
+>   **82 PASS** (antes 74, +schema/useLeads), typecheck + lint OK, build prod OK.
+> - ⚠️ **Débito**: deploy + validação VPS dos endpoints de leads pendente; E2E
+>   autenticado manual herdado (sem credenciais).
+> - 📄 `sprints/10/REPORT.md`.
+
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
 | 9 | User & Permission Management (Contatos CRUD) | ✅ Concluída | 2026-08-12 | AI Agent | 8.6 |
-| 10 | Leads | ⏳ Pendente | — | — | 9 |
+| 10 | Leads | ✅ Concluída | 2026-08-13 | AI Agent | 9 |
 | 11 | Pipeline | ⏳ Pendente | — | — | 9 |
 | 12 | Conversas | ⏳ Pendente | — | — | 9 |
 
@@ -281,11 +301,11 @@
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
 | SaaS | 7 | 7 | 0 | 0 | 0 |
-| CRM | 4 | 1 | 0 | 3 | 0 |
+| CRM | 4 | 2 | 0 | 2 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **32** | **0** | **8** | **5** |
+| **Total** | **45** | **33** | **0** | **7** | **5** |
 
 ---
 
@@ -316,6 +336,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-12 — Sprint **9 — User & Permission Management** concluída
-(REPORT + índice). Resumo agora 45 sprints: 32 ✅, 0 🚧, 8 ⏳, 5 ↪️. Próxima
-sprint: **10 — Leads**.*
+*Última atualização: 2026-08-13 — Sprint **10 — Leads** concluída
+(REPORT + índice). Resumo agora 45 sprints: 33 ✅, 0 🚧, 7 ⏳, 5 ↪️. Próxima
+sprint: **11 — Pipeline**.*

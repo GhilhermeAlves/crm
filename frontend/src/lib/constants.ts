@@ -19,6 +19,7 @@ export const ROUTES = {
   ROLES_NEW: "/roles/new",
   PERMISSIONS: "/permissions",
   LEADS: "/leads",
+  LEADS_NEW: "/leads/new",
   CONTACTS: "/contacts",
   PIPELINE: "/pipeline",
   CHAT: "/chat",
