@@ -82,22 +82,25 @@ Nova feature `features/leads` + páginas sob `app/(dashboard)/leads`:
 
 ## Testes
 
+> **Validado em 2026-08-13.** Contagens refletem execução real, incluindo os testes
+> adicionados posteriormente (IT RLS + componentes de UI).
+
 - **Backend: 236 testes PASS** (antes 215). Novos:
   - `LeadServiceTest` (4): cria lead com contato próprio+único; rejeita contato de
     outra empresa; rejeita lead duplicado; lead não encontrado.
   - `LeadControllerTest` (9): list/403 cross-company; create 201/400 (sem origem)/403;
     update/403; delete/403 — cobrindo autorização por permission e isolamento.
-  - `LeadIsolationIT` (8, Testcontainers PostgreSQL 17 + RLS): isolamento cross-tenant
-    real na tabela `leads` — cada tenant vê apenas os seus leads, cross-tenant
-    SELECT/UPDATE/DELETE afetam 0, INSERT cross-tenant bloqueado por RLS, e insert+read
-    na mesma empresa funciona.
-- **Frontend: 96 testes PASS** (antes 74). Novos:
+  - `LeadIsolationIT` (8, Testcontainers PostgreSQL 17 + RLS, **executado 8/8 PASS**):
+    isolamento cross-tenant real na tabela `leads` — cada tenant vê apenas os seus leads,
+    cross-tenant SELECT/UPDATE/DELETE afetam 0, INSERT cross-tenant bloqueado por RLS, e
+    insert+read na mesma empresa funciona.
+- **Frontend: 96 testes PASS** (antes 74, **suíte completa executada 96/96**). Novos:
   - `lead.schema.test.ts` (5): validação de UUID, origem, score 0–100, classificação.
   - `useLeads.test.ts` (3): busca por empresa ativa, não busca sem empresa, create
     mutation posta na empresa ativa.
   - `LeadBadges.test.tsx` (5): rótulos pt-BR de status/classificação, fallback e dash.
   - `LeadTable.test.tsx` (4): skeleton de loading, empty state, renderização de linhas
-    (status/origem/score) e disparo do `onDelete`.
+    (status/origem/score) e disparo do `onDelete` (abre o dropdown por `pointerdown`).
   - `DeleteLeadDialog.test.tsx` (5): sem lead → nada; título/descrição; confirmar;
     cancelar; estado `isLoading` (botão travado).
 - Typecheck OK; lint sem erros novos (warnings pré-existentes mantidos); build

@@ -45,13 +45,14 @@ describe("LeadTable (Sprint 10)", () => {
     expect(screen.getByText("50")).toBeTruthy();
   });
 
-  it("invokes onDelete when the delete action is triggered", () => {
+  it("invokes onDelete when the delete action is triggered", async () => {
     const onDelete = vi.fn();
     const lead = makeLead();
     render(<LeadTable leads={[lead]} onDelete={onDelete} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /morehorizontal/i }));
-    fireEvent.click(screen.getByText("Excluir"));
+    fireEvent.pointerDown(screen.getByRole("button"));
+    const deleteItem = await screen.findByText("Excluir");
+    fireEvent.click(deleteItem);
 
     expect(onDelete).toHaveBeenCalledWith(lead);
   });

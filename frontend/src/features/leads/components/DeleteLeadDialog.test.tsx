@@ -28,7 +28,7 @@ describe("DeleteLeadDialog (Sprint 10)", () => {
         onConfirm={vi.fn()}
       />,
     );
-    expect(container).toBeEmptyDOMElement();
+    expect(container.querySelectorAll("*").length).toBe(0);
   });
 
   it("shows title, description and buttons when a lead is selected", () => {

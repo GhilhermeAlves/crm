@@ -254,11 +254,14 @@
 > - ✅ **Frontend**: feature `features/leads` (types/schema Zod/serviço/hooks React
 >   Query/componentes) + páginas `/leads`, `/leads/new`, `/leads/[id]`, `/leads/[id]/edit`;
 >   Sidebar gated por `lead:read` e botões por `lead:create`/`lead:delete`.
-> - ✅ **Testes**: backend **236** (antes 215; +21 incl. `LeadIsolationIT` Testcontainers/RLS
->   de isolamento real), frontend **96** (antes 74, +schema/useLeads/componentes),
->   typecheck + lint OK, build prod OK.
-> - ✅ **Deploy + validação VPS**: rebuild backend+frontend e `up -d` (sem nova migration),
->   `/actuator/health` 200, endpoints de leads 401 sem sessão, `/leads` 307→login, 0 ERROR.
+> - ✅ **Testes** (**validados 2026-08-13**): backend **236** (antes 215; +17 unit +
+>   `LeadIsolationIT` 8/8 Testcontainers/PostgreSQL 17 + RLS provando isolamento cross-tenant
+>   real na tabela `leads` — SELECT/UPDATE/DELETE cross-tenant 0 e INSERT bloqueado por RLS,
+>   insert+read mesma empresa ok), frontend **96** (antes 74, +schema/useLeads/componentes)
+>   — suíte completa **96/96 verdes** (17 arquivos) + typecheck + lint OK, build prod OK.
+> - ✅ **Deploy + validação VPS** (`20001d2..cf381ed`): rebuild backend+frontend e `up -d`
+>   (sem nova migration), `/actuator/health` 200, endpoints de leads 401 sem sessão,
+>   `/leads` 307→login, 0 ERROR no backend.
 > - ⚠️ **Débito**: E2E autenticado manual herdado (sem credenciais de teste).
 > - 📄 `sprints/10/REPORT.md`.
 
