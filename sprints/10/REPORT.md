@@ -85,7 +85,7 @@ Nova feature `features/leads` + páginas sob `app/(dashboard)/leads`:
 > **Validado em 2026-08-13.** Contagens refletem execução real, incluindo os testes
 > adicionados posteriormente (IT RLS + componentes de UI).
 
-- **Backend: 236 testes PASS** (antes 215). Novos:
+- **Backend: 242 testes PASS** (antes 215). Novos:
   - `LeadServiceTest` (4): cria lead com contato próprio+único; rejeita contato de
     outra empresa; rejeita lead duplicado; lead não encontrado.
   - `LeadControllerTest` (9): list/403 cross-company; create 201/400 (sem origem)/403;
@@ -94,6 +94,10 @@ Nova feature `features/leads` + páginas sob `app/(dashboard)/leads`:
     isolamento cross-tenant real na tabela `leads` — cada tenant vê apenas os seus leads,
     cross-tenant SELECT/UPDATE/DELETE afetam 0, INSERT cross-tenant bloqueado por RLS, e
     insert+read na mesma empresa funciona.
+  - `InvitationRateLimiterTest` (6, **6/6 PASS**): após migração do rate limiter de
+    convites para Redis — permitido dentro do limite (create 20/h, accept 10/h), bloqueio
+    ao exceder, contadores independentes por chave e fail-open quando o Redis está
+    indisponível (timeout/conexão).
 - **Frontend: 96 testes PASS** (antes 74, **suíte completa executada 96/96**). Novos:
   - `lead.schema.test.ts` (5): validação de UUID, origem, score 0–100, classificação.
   - `useLeads.test.ts` (3): busca por empresa ativa, não busca sem empresa, create
@@ -128,6 +132,28 @@ Nova feature `features/leads` + páginas sob `app/(dashboard)/leads`:
   `/api/v1/companies/{companyId}/leads` 401 sem sessão (endpoints registrados),
   `/leads` 307 → `/login?redirect=%2Fleads`, 0 ERROR nos logs do backend.
 
+## Reconciliação de débito — rate limiter de convites → Redis (2026-08-13)
+
+Fechamento do débito anotado nas Sprints 8.5/8.6/9 ("`InvitationRateLimiter` em memória →
+Redis/DB em multi-instância"):
+
+- **`InvitationRateLimiter` migrado de janela deslizante em memória (`ConcurrentHashMap`)**
+  para **janela fixa distribuída em Redis** (`StringRedisTemplate`), espelhando o padrão do
+  `GatewayRateLimiter` do auth-service (Lua `INCR` + `EXPIRE` no primeiro incremento ⇒
+  atômico e compartilhado entre instâncias).
+- **Contrato preservado**: `tryCreate(companyId)` / `tryAccept(key)` booleanos — o
+  `InvitationService` e o `InvitationServiceTest` (mock) não mudaram. Limites mantidos
+  (create 20/h por empresa, accept 10/h por usuário; janela 60 min).
+- **`prune()` removido**: chaves distribuem-se com TTL nativo do Redis (não há mais
+  limpeza manual em memória).
+- **Política de falha (fail-open controlado)**: Redis indisponível ⇒ requisição permitida
+  com warning (igual ao gateway) — o limiter nunca derruba o backend.
+- **Infra**: o backend já recebia `CRM_REDIS_HOST/PORT/PASSWORD` no compose e tem
+  `spring-boot-starter-data-redis` + health indicator de Redis — só a implementação de
+  in-memory → Redis mudou (nenhuma configuração nova de deploy).
+- **Teste**: `InvitationRateLimiterTest` (6) validando limites, independência por chave e
+  fail-open; suíte `InvitationServiceTest` (19) permanece 19/19.
+
 ## Débitos
 
 - **E2E autenticado manual** (herdado): fluxo real de leads no browser sem credenciais.
@@ -141,7 +167,8 @@ Nova feature `features/leads` + páginas sob `app/(dashboard)/leads`:
 - Backend: `domain/lead/*`, `application/lead/{dto,port,service}/*`,
   `presentation/rest/lead/LeadController.java`,
   `infrastructure/lead/persistence/*`, `GlobalExceptionHandler.java`.
-- Testes backend: `LeadServiceTest.java`, `LeadControllerTest.java`.
+- Testes backend: `LeadServiceTest.java`, `LeadControllerTest.java`,
+  `LeadIsolationIT.java`, `InvitationRateLimiterTest.java`.
 - Frontend: `features/leads/{types,schemas,services,hooks,components}/*`,
   `app/(dashboard)/leads/{page,new,{[id]},{[id]/edit}}`,
   `components/layout/Sidebar.tsx`, `lib/constants.ts`.

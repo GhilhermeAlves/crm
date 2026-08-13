@@ -254,14 +254,20 @@
 > - ✅ **Frontend**: feature `features/leads` (types/schema Zod/serviço/hooks React
 >   Query/componentes) + páginas `/leads`, `/leads/new`, `/leads/[id]`, `/leads/[id]/edit`;
 >   Sidebar gated por `lead:read` e botões por `lead:create`/`lead:delete`.
-> - ✅ **Testes** (**validados 2026-08-13**): backend **236** (antes 215; +17 unit +
->   `LeadIsolationIT` 8/8 Testcontainers/PostgreSQL 17 + RLS provando isolamento cross-tenant
->   real na tabela `leads` — SELECT/UPDATE/DELETE cross-tenant 0 e INSERT bloqueado por RLS,
->   insert+read mesma empresa ok), frontend **96** (antes 74, +schema/useLeads/componentes)
->   — suíte completa **96/96 verdes** (17 arquivos) + typecheck + lint OK, build prod OK.
+> - ✅ **Testes** (**validados 2026-08-13**): backend **242** (antes 215; +21 leads —
+>   service/controller/`LeadIsolationIT` 8/8 Testcontainers/PostgreSQL 17 + RLS provando
+>   isolamento cross-tenant real na tabela `leads` — e +6 `InvitationRateLimiterTest`),
+>   frontend **96** (antes 74, +schema/useLeads/componentes) — suíte completa
+>   **96/96 verdes** (17 arquivos) + typecheck + lint OK, build prod OK.
 > - ✅ **Deploy + validação VPS** (`20001d2..cf381ed`): rebuild backend+frontend e `up -d`
 >   (sem nova migration), `/actuator/health` 200, endpoints de leads 401 sem sessão,
 >   `/leads` 307→login, 0 ERROR no backend.
+> - ✅ **Débito fechado — rate limiter de convites → Redis** (herdado de 8.5/8.6/9):
+>   `InvitationRateLimiter` migrado de janela em memória para **janela fixa distribuída em
+>   Redis** (Lua `INCR`+`EXPIRE`, padrão do `GatewayRateLimiter`); contrato
+>   `tryCreate`/`tryAccept` preservado, limites 20/h create e 10/h accept, fail-open
+>   controlado quando o Redis cai, `prune()` removido (TTL nativo); teste
+>   `InvitationRateLimiterTest` 6/6.
 > - ⚠️ **Débito**: E2E autenticado manual herdado (sem credenciais de teste).
 > - 📄 `sprints/10/REPORT.md`.
 
@@ -342,5 +348,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 ---
 
 *Última atualização: 2026-08-13 — Sprint **10 — Leads** concluída
-(REPORT + índice). Resumo agora 45 sprints: 33 ✅, 0 🚧, 7 ⏳, 5 ↪️. Próxima
-sprint: **11 — Pipeline**.*
+(REPORT + índice; validação de testes 242 backend / 96 frontend; deploy VPS;
+débito do rate limiter de convites fechado com Redis). Resumo agora 45 sprints:
+33 ✅, 0 🚧, 7 ⏳, 5 ↪️. Próxima sprint: **11 — Pipeline**.*
