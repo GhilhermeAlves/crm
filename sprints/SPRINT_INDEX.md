@@ -254,10 +254,12 @@
 > - ✅ **Frontend**: feature `features/leads` (types/schema Zod/serviço/hooks React
 >   Query/componentes) + páginas `/leads`, `/leads/new`, `/leads/[id]`, `/leads/[id]/edit`;
 >   Sidebar gated por `lead:read` e botões por `lead:create`/`lead:delete`.
-> - ✅ **Testes**: backend **228 PASS** (antes 215, +4 service +9 controller), frontend
->   **82 PASS** (antes 74, +schema/useLeads), typecheck + lint OK, build prod OK.
-> - ⚠️ **Débito**: deploy + validação VPS dos endpoints de leads pendente; E2E
->   autenticado manual herdado (sem credenciais).
+> - ✅ **Testes**: backend **236** (antes 215; +21 incl. `LeadIsolationIT` Testcontainers/RLS
+>   de isolamento real), frontend **96** (antes 74, +schema/useLeads/componentes),
+>   typecheck + lint OK, build prod OK.
+> - ✅ **Deploy + validação VPS**: rebuild backend+frontend e `up -d` (sem nova migration),
+>   `/actuator/health` 200, endpoints de leads 401 sem sessão, `/leads` 307→login, 0 ERROR.
+> - ⚠️ **Débito**: E2E autenticado manual herdado (sem credenciais de teste).
 > - 📄 `sprints/10/REPORT.md`.
 
 ## CRM

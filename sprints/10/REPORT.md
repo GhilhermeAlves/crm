@@ -82,15 +82,24 @@ Nova feature `features/leads` + páginas sob `app/(dashboard)/leads`:
 
 ## Testes
 
-- **Backend: 228 testes PASS** (antes 215). Novos:
+- **Backend: 236 testes PASS** (antes 215). Novos:
   - `LeadServiceTest` (4): cria lead com contato próprio+único; rejeita contato de
     outra empresa; rejeita lead duplicado; lead não encontrado.
   - `LeadControllerTest` (9): list/403 cross-company; create 201/400 (sem origem)/403;
     update/403; delete/403 — cobrindo autorização por permission e isolamento.
-- **Frontend: 82 testes PASS** (antes 74). Novos:
+  - `LeadIsolationIT` (8, Testcontainers PostgreSQL 17 + RLS): isolamento cross-tenant
+    real na tabela `leads` — cada tenant vê apenas os seus leads, cross-tenant
+    SELECT/UPDATE/DELETE afetam 0, INSERT cross-tenant bloqueado por RLS, e insert+read
+    na mesma empresa funciona.
+- **Frontend: 96 testes PASS** (antes 74). Novos:
   - `lead.schema.test.ts` (5): validação de UUID, origem, score 0–100, classificação.
   - `useLeads.test.ts` (3): busca por empresa ativa, não busca sem empresa, create
     mutation posta na empresa ativa.
+  - `LeadBadges.test.tsx` (5): rótulos pt-BR de status/classificação, fallback e dash.
+  - `LeadTable.test.tsx` (4): skeleton de loading, empty state, renderização de linhas
+    (status/origem/score) e disparo do `onDelete`.
+  - `DeleteLeadDialog.test.tsx` (5): sem lead → nada; título/descrição; confirmar;
+    cancelar; estado `isLoading` (botão travado).
 - Typecheck OK; lint sem erros novos (warnings pré-existentes mantidos); build
   production OK (rotas `/leads*` geradas).
 
@@ -110,17 +119,14 @@ Nova feature `features/leads` + páginas sob `app/(dashboard)/leads`:
 
 ## Produção / VPS
 
-- **NÃO validado em produção nesta etapa.** A implementação está pronta e testada
-  localmente; o deploy real na VPS (imagem GHCR, rebuild backend+frontend, Flyway
-  inalterado pois não há nova migration) e a validação dos endpoints
-  `/api/v1/companies/{companyId}/leads*` na VPS ainda **pendentes** — push para `main`
-  não implica deploy real (pipeline atual publica imagens no GHCR sem deploy). Ver
-  débitos.
+- **Validado em produção nesta etapa.** Deploy real executado na VPS `crm-vps`
+  (`docker compose build` + `up -d`: rebuild backend+frontend, sem nova migration —
+  Flyway inalterado). Smoke tests: `/actuator/health` 200, `/api/v1/leads` e
+  `/api/v1/companies/{companyId}/leads` 401 sem sessão (endpoints registrados),
+  `/leads` 307 → `/login?redirect=%2Fleads`, 0 ERROR nos logs do backend.
 
 ## Débitos
 
-- **Deploy + validação VPS pendente** (Sprint 10 não 100% fechada no ambiente de
-  produção): rebuild backend/frontend na VPS e smoke test dos endpoints de leads.
 - **E2E autenticado manual** (herdado): fluxo real de leads no browser sem credenciais.
 - **Envio de e-mail real** (herdado): `ConsoleEmailSender` placeholder.
 - **Scoring/distribuição/conversão** (Lead.md L-020/030/040) — regras avançadas de
