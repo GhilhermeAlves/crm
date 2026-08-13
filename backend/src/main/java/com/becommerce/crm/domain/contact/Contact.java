@@ -62,4 +62,20 @@ public class Contact {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public boolean isActive() { return deletedAt == null; }
+
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+    public void setEmail(String email) { this.email = email; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public void setNotes(String notes) { this.notes = notes; }
+
+    public void touch() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void delete() {
+        if (deletedAt == null) {
+            this.deletedAt = LocalDateTime.now();
+        }
+    }
 }

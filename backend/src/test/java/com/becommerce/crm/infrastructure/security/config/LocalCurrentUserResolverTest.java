@@ -163,4 +163,71 @@ class LocalCurrentUserResolverTest {
 
         assertThrows(CrmAccessDeniedAuthenticationException.class, () -> resolver.resolve(jwt));
     }
+
+    @Test
+    void shouldResolvePermissionsPerActiveCompany_afterCompanySwitch() {
+        // Sprint 9 - o mesmo usuário, com a empresa ativa A, deve resolver como
+        // ADMIN (full), e com a empresa ativa B, como VIEWER (somente leitura).
+        UUID companyA = UUID.randomUUID();
+        UUID companyB = UUID.randomUUID();
+        User user = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ghilherme", "Santos", companyA);
+        user.linkKeycloak(SUB);
+
+        Role adminRole = Role.createSystem(RoleName.ADMIN.name());
+        Role viewerRole = Role.createSystem(RoleName.VIEWER.name());
+        Permission usersRead = Permission.create("user:read", "Ler usuários", "identity", "user", "read");
+        Permission usersCreate = Permission.create("user:create", "Criar usuários", "identity", "user", "create");
+
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(any(UUID.class), any(UUID.class))).thenReturn(true);
+
+        // Empresa A: user_roles = ADMIN; role_specific_permissions = create+read
+        when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), companyA))
+                .thenReturn(List.of(UserRole.assign(user.getId(), adminRole.getId(), companyA)));
+        when(roleRepository.findById(adminRole.getId())).thenReturn(Optional.of(adminRole));
+        when(roleRepository.findByNameAndCompanyId(RoleName.ADMIN.name(), companyA)).thenReturn(Optional.of(adminRole));
+        when(rolePermissionRepository.findByRoleId(adminRole.getId()))
+                .thenReturn(List.of(RolePermission.create(adminRole.getId(), usersRead.getId()),
+                        RolePermission.create(adminRole.getId(), usersCreate.getId())));
+        when(permissionRepository.findById(usersRead.getId())).thenReturn(Optional.of(usersRead));
+        when(permissionRepository.findById(usersCreate.getId())).thenReturn(Optional.of(usersCreate));
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(user.getId(), companyA))
+                .thenReturn(Optional.of("ADMIN"));
+
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .issuer("http://keycloak")
+                .subject(SUB)
+                .claim("email", EMAIL)
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+
+        CurrentUser asCompanyA = resolver.resolve(jwt);
+        assertEquals("ADMIN", asCompanyA.membershipRole());
+        assertTrue(asCompanyA.permissions().contains("user:create"));
+        assertTrue(asCompanyA.permissions().contains("user:read"));
+
+        // Company Switcher: empresa ativa passa a B. Resolução re-deriva roles.
+        User userInB = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ghilherme", "Santos", companyB);
+        userInB.linkKeycloak(SUB);
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(userInB);
+        when(userRoleRepository.findByUserIdAndCompanyId(any(UUID.class), eq(companyB)))
+                .thenReturn(List.of(UserRole.assign(user.getId(), viewerRole.getId(), companyB)));
+        when(roleRepository.findById(viewerRole.getId())).thenReturn(Optional.of(viewerRole));
+        when(roleRepository.findByNameAndCompanyId(RoleName.VIEWER.name(), companyB)).thenReturn(Optional.of(viewerRole));
+        when(rolePermissionRepository.findByRoleId(viewerRole.getId()))
+                .thenReturn(List.of(RolePermission.create(viewerRole.getId(), usersRead.getId())));
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(any(UUID.class), eq(companyB)))
+                .thenReturn(Optional.of("VIEWER"));
+
+        CurrentUser asCompanyB = resolver.resolve(jwt);
+        assertEquals(companyB, asCompanyB.companyId());
+        assertEquals("VIEWER", asCompanyB.membershipRole());
+        assertTrue(asCompanyB.permissions().contains("user:read"));
+        assertTrue(!asCompanyB.permissions().contains("user:create"));
+
+        // Perfis diferem por empresa: nada da empresa anterior "vaza" para a B.
+        assertTrue(!asCompanyB.roles().contains(RoleName.ADMIN.name()));
+    }
 }

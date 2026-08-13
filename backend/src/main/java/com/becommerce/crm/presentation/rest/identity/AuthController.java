@@ -49,6 +49,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal CurrentUser principal) {
         UserResponse response = userUseCase.getUserById(principal.userId());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(UserResponse.withCurrentUser(
+                response, principal.roles(), principal.membershipRole(), principal.permissions()));
     }
 }

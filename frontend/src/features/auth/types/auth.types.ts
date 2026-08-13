@@ -7,6 +7,18 @@ export type User = {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Roles da EMPRESA ATIVA (Sprint 9) — já scoped por companyId no backend. */
+  roles?: string[];
+  /**
+   * Papel efetivo (membership) da empresa ativa. Ex.: Empresa A → "ADMIN",
+   * Empresa B → "VIEWER". Re-derivado a cada Company Switcher.
+   */
+  membershipRole?: string | null;
+  /**
+   * Permissões efetivas da empresa ativa (resource:action). Carregadas do
+   * CurrentUser via /auth/me. Autorização de UX; backend é a autoridade.
+   */
+  permissions?: string[];
 };
 
 /**

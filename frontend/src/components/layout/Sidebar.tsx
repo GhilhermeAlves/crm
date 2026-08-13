@@ -95,6 +95,8 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Auditoria", href: ROUTES.AUDIT, icon: ClipboardList, permission: "audit:read" },
       { label: "Configurações", href: ROUTES.SETTINGS, icon: Settings },
+      { label: "Usuários", href: ROUTES.SETTINGS_USERS, icon: Users, permission: "membership:view" },
+      { label: "Perfis & permissões", href: ROUTES.SETTINGS_ROLES, icon: Shield, permission: "role:read" },
     ],
   },
 ];

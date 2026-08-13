@@ -2,6 +2,7 @@ package com.becommerce.crm.presentation.rest.contact;
 
 import com.becommerce.crm.application.contact.dto.ContactResponse;
 import com.becommerce.crm.application.contact.dto.CreateContactRequest;
+import com.becommerce.crm.application.contact.dto.UpdateContactRequest;
 import com.becommerce.crm.application.contact.port.input.ContactUseCase;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
@@ -45,6 +46,26 @@ public class ContactController {
                                                    @AuthenticationPrincipal CurrentUser principal) {
         requireCompanyAccess(companyId, principal);
         return ResponseEntity.ok(contactUseCase.getById(companyId, contactId));
+    }
+
+    @PutMapping("/{contactId}")
+    @PreAuthorize("hasAuthority('contact:update')")
+    public ResponseEntity<ContactResponse> update(@PathVariable UUID companyId,
+                                                  @PathVariable UUID contactId,
+                                                  @Valid @RequestBody UpdateContactRequest request,
+                                                  @AuthenticationPrincipal CurrentUser principal) {
+        requireCompanyAccess(companyId, principal);
+        return ResponseEntity.ok(contactUseCase.update(companyId, contactId, request));
+    }
+
+    @DeleteMapping("/{contactId}")
+    @PreAuthorize("hasAuthority('contact:delete')")
+    public ResponseEntity<Void> delete(@PathVariable UUID companyId,
+                                       @PathVariable UUID contactId,
+                                       @AuthenticationPrincipal CurrentUser principal) {
+        requireCompanyAccess(companyId, principal);
+        contactUseCase.delete(companyId, contactId);
+        return ResponseEntity.noContent().build();
     }
 
     private void requireCompanyAccess(UUID companyId, CurrentUser principal) {

@@ -22,8 +22,8 @@ type AuthContextType = {
   roles: string[];
   /**
    * Permissões de negócio (CRM) para UX (menus/botões). Vindas do CurrentUser
-   * da aplicação; placeholder até o endpoint público do auth-service (Sprint 4).
-   * Autorização real é sempre do backend.
+   * da aplicação via /auth/me (Sprint 9), re-derivadas a cada Company Switcher.
+   * Autorização real é sempre do backend (@PreAuthorize + RLS).
    */
   permissions: string[];
 };
@@ -68,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: isMeLoading,
         logout,
         loginKeycloak,
-        roles: [],
-        permissions: [],
+        roles: user?.roles ?? [],
+        permissions: user?.permissions ?? [],
       }}
     >
       {children}

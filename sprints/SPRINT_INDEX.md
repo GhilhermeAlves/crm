@@ -222,11 +222,29 @@
 >   + lint OK;
 > - 📄 `sprints/8.6/REPORT.md`.
 
+> **9 — User & Permission Management ✅ Concluída (2026-08-12).**
+> - ✅ **Contexto reutilizado**: estrutura USUÁRIO → MEMBERSHIP → ROLE/PERFIL → PERMISSIONS,
+>   `CurrentUser`, `@EnableMethodSecurity`, RLS e Company Switcher existentes — nenhuma
+>   estrutura de users/roles/permissions duplicada; roles canônicas preservadas.
+> - ✅ **Contact CRUD completo**: `update`/`delete` (`@PreAuthorize('contact:update'/'contact:delete')`),
+>   `ContactService` + `requireOwnedActive` + auditoria (`AuditAction.UPDATE/DELETE`);
+> - ✅ **`/auth/me` com permissões**: `UserResponse.withCurrentUser` expõe
+>   `roles`/`membershipRole`/`permissions` da empresa ativa (antes expunha sem permissões);
+> - ✅ **Autorização real**: guardas por permission (403) + isolamento multi-empresa provado
+>   (`LocalCurrentUserResolverTest` — ADMIN A ≠ VIEWER B sem vazar);
+> - ✅ **Frontend**: `User` +`roles/membershipRole/permissions`, `useAuth` deriva do `/auth/me`,
+>   hook `useAuthorization` (`can`/`cannot`/`hasRole`/`isSuperAdmin`); telas `/settings/users`
+>   e `/settings/roles` reusando features members + rbac; menu protegido por permission e
+>   re-derivação a cada Company Switcher;
+> - ✅ **Testes**: backend **215 PASS** (antes 210, +5 contact/403/multi-company), frontend
+>   **74 PASS** (antes 69, +useAuthorization), typecheck OK, lint sem erros novos;
+> - 📄 `sprints/9/REPORT.md`.
+
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 9 | Contatos | ⏳ Pendente | — | — | 8 |
+| 9 | User & Permission Management (Contatos CRUD) | ✅ Concluída | 2026-08-12 | AI Agent | 8.6 |
 | 10 | Leads | ⏳ Pendente | — | — | 9 |
 | 11 | Pipeline | ⏳ Pendente | — | — | 9 |
 | 12 | Conversas | ⏳ Pendente | — | — | 9 |
@@ -263,11 +281,11 @@
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
 | SaaS | 7 | 7 | 0 | 0 | 0 |
-| CRM | 4 | 0 | 0 | 4 | 0 |
+| CRM | 4 | 1 | 0 | 3 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **31** | **0** | **9** | **5** |
+| **Total** | **45** | **32** | **0** | **8** | **5** |
 
 ---
 
@@ -298,6 +316,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-12 — Sprint **8.6 — SaaS Hardening** concluída (REPORT + índice +
-docs multi-tenancy RLS real). Fase **SaaS (8.x) encerrada**. Resumo agora 45 sprints: 31 ✅, 0 🚧, 9 ⏳, 5 ↪️. Próxima
-sprint: **9 — Contatos**.*
+*Última atualização: 2026-08-12 — Sprint **9 — User & Permission Management** concluída
+(REPORT + índice). Resumo agora 45 sprints: 32 ✅, 0 🚧, 8 ⏳, 5 ↪️. Próxima
+sprint: **10 — Leads**.*

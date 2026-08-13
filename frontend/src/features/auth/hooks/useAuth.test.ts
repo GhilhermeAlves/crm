@@ -96,7 +96,26 @@ describe("AuthProvider (Sprint 6.4, session via gateway)", () => {
     expect(logoutMock).toHaveBeenCalledTimes(1);
   });
 
-  it("exposes no roles/permissions in the browser (BFF holds the claims)", async () => {
+  it("exposes roles/permissions from the business identity when present (Sprint 9)", async () => {
+    meMock.mockResolvedValue({
+      ...mockUser,
+      roles: ["ADMIN"],
+      membershipRole: "ADMIN",
+      permissions: ["user:read", "user:create", "contact:read"],
+    });
+    const { result } = renderAuth();
+
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+    expect(result.current.roles).toEqual(["ADMIN"]);
+    expect(result.current.permissions).toEqual([
+      "user:read",
+      "user:create",
+      "contact:read",
+    ]);
+  });
+
+  it("defaults to empty roles/permissions when the identity carries none (company-less)", async () => {
     meMock.mockResolvedValue(mockUser);
     const { result } = renderAuth();
 

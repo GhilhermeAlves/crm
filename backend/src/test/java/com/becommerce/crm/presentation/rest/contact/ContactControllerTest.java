@@ -2,6 +2,7 @@ package com.becommerce.crm.presentation.rest.contact;
 
 import com.becommerce.crm.application.contact.dto.ContactResponse;
 import com.becommerce.crm.application.contact.dto.CreateContactRequest;
+import com.becommerce.crm.application.contact.dto.UpdateContactRequest;
 import com.becommerce.crm.application.contact.port.input.ContactUseCase;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
@@ -25,8 +26,11 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -100,5 +104,54 @@ class ContactControllerTest {
                         .content("{\"firstName\":\"Ana\"}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.code").value("QUOTA_EXCEEDED"));
+    }
+
+    @Test
+    void shouldUpdateContactInOwnCompany() throws Exception {
+        login(companyId);
+        UUID contactId = UUID.randomUUID();
+        when(contactUseCase.update(any(), any(), any(UpdateContactRequest.class)))
+                .thenReturn(new ContactResponse(contactId, companyId, "Ana", "Souza", "ana@e.com", null, null,
+                        java.time.LocalDateTime.now()));
+
+        mockMvc.perform(put("/api/v1/companies/" + companyId + "/contacts/" + contactId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Ana\",\"lastName\":\"Souza\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Ana"));
+    }
+
+    @Test
+    void shouldReturn403WhenUpdatingContactForOtherCompany() throws Exception {
+        UUID otherCompany = UUID.randomUUID();
+        login(companyId);
+        UUID contactId = UUID.randomUUID();
+
+        mockMvc.perform(put("/api/v1/companies/" + otherCompany + "/contacts/" + contactId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"firstName\":\"Ana\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("CRM_ACCESS_DENIED"));
+    }
+
+    @Test
+    void shouldDeleteContactInOwnCompany() throws Exception {
+        login(companyId);
+        UUID contactId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/companies/" + companyId + "/contacts/" + contactId))
+                .andExpect(status().isNoContent());
+        verify(contactUseCase).delete(companyId, contactId);
+    }
+
+    @Test
+    void shouldReturn403WhenDeletingContactForOtherCompany() throws Exception {
+        UUID otherCompany = UUID.randomUUID();
+        login(companyId);
+        UUID contactId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/companies/" + otherCompany + "/contacts/" + contactId))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("CRM_ACCESS_DENIED"));
     }
 }

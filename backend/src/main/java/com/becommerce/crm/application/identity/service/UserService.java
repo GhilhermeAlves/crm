@@ -264,7 +264,10 @@ public class UserService implements UserUseCase {
                 user.getNotes(),
                 user.getLastLoginAt(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                java.util.List.of(),
+                null,
+                java.util.List.of()
         );
     }
 }

@@ -2,6 +2,7 @@ package com.becommerce.crm.application.contact.port.input;
 
 import com.becommerce.crm.application.contact.dto.ContactResponse;
 import com.becommerce.crm.application.contact.dto.CreateContactRequest;
+import com.becommerce.crm.application.contact.dto.UpdateContactRequest;
 
 import java.util.UUID;
 
@@ -15,4 +16,8 @@ public interface ContactUseCase {
     ContactResponse create(UUID companyId, CreateContactRequest request, UUID createdBy);
 
     ContactResponse getById(UUID companyId, UUID contactId);
+
+    ContactResponse update(UUID companyId, UUID contactId, UpdateContactRequest request);
+
+    void delete(UUID companyId, UUID contactId);
 }
