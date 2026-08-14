@@ -133,15 +133,16 @@ Novas features + páginas + evolução do dashboard:
 
 ## Produção / VPS
 
-- **Deploy pendente desta etapa** (ver "Débitos"): migrations V039/V040 e novo build
-  backend+frontend devem ser aplicados na VPS `crm-vps` via `docker compose build` + `up -d`
-  (com `SPRING_FLYWAY_OUT_OF_ORDER=true` já configurado), seguido de smoke test (Flyway `v040`,
-  backend 0 ERROR, rotas registradas, `/activities`, `/tasks` 307→login no frontend).
+- **Validado em produção nesta etapa.** Deploy real executado na VPS `crm-vps` (`git pull
+  --ff-only` → `docker compose build backend frontend` + `up -d`). **Migrations V039/V040
+  aplicadas** — Flyway `now at version v040` (`Migrating ... 039 - activities tasks tables`,
+  `040 - activity task permissions`). Backend iniciou sem erro (`Started CrmApplication`,
+  **0 ERROR/Exception** nos logs), endpoints `/activities`, `/tasks`, `/dashboard/operational`
+  registrados (404 unauthenticated, idêntico aos demais — sem regressão), rotas `/tasks` e
+  `/activities` 307 → `/login?redirect=...` no frontend, todos os serviços healthy.
 
 ## Débitos
 
-- **Deploy VPS pendente**: aplicar V039/V040 + rebuild na VPS `crm-vps` e validar em produção
-  (smoke test conforme Sprint 11).
 - **E2E autenticado manual** (herdado): fluxo real no browser sem credenciais.
 - **Envio de e-mail real** (herdado): `ConsoleEmailSender` placeholder.
 - **IA/Inbox/Workflow** (Sprints 16/17): modelo já preparado (contact/opportunity nullable em

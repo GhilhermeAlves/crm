@@ -316,8 +316,10 @@
 >   `TaskServiceTest`, `DashboardServiceTest`, `ActivityTaskIsolationIT` RLS real em
 >   `activities`/`tasks`), frontend **114** (antes 106; +activity.schema/task.schema) —
 >   suíte verde + typecheck/lint (novos arquivos) OK.
-> - ⚠️ **Débito**: **deploy VPS pendente** (aplicar V039/V040 + rebuild + smoke test); E2E
->   autenticado manual herdado; IA/Inbox/Workflow para Sprints 16/17 (modelo já preparado).
+> - ⚠️ **Débito**: E2E autenticado manual herdado; IA/Inbox/Workflow para Sprints 16/17 (modelo já preparado).
+> - ✅ **Deploy + validação VPS**: `git pull --ff-only` + rebuild backend/frontend + `up -d`,
+>   **V039/V040 aplicadas** (Flyway `v040`), backend 0 ERROR, `/activities`/`/tasks` 307→login,
+>   endpoints registrados, serviços healthy.
 > - 📄 `sprints/12/REPORT.md`.
 
 ## CRM
@@ -397,5 +399,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 ---
 
 *Última atualização: 2026-08-13 — Sprint **12 — CRM Orientado à Ação** concluída
-(REPORT; validação de testes 281 backend / 114 frontend; deploy VPS pendente — V039/V040).
-Resumo agora 45 sprints: 34 ✅, 0 🚧, 6 ⏳, 5 ↪️. Próxima sprint: **12b/13 — Conversas**.*
+(REPORT + índice; validação de testes 281 backend / 114 frontend; deploy VPS OK —
+V039/V040 aplicadas, Flyway v040). Resumo agora 45 sprints:
+34 ✅, 0 🚧, 6 ⏳, 5 ↪️. Próxima sprint: **12b/13 — Conversas**.*
