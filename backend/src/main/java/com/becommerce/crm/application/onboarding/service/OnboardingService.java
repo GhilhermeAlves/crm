@@ -7,6 +7,7 @@ import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.application.onboarding.port.input.OnboardingUseCase;
+import com.becommerce.crm.application.workflow.service.WorkflowTemplateSeeder;
 import com.becommerce.crm.infrastructure.identity.persistence.RoleSeedService;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import com.becommerce.crm.domain.company.Company;
@@ -55,6 +56,7 @@ public class OnboardingService implements OnboardingUseCase {
     private final UserRepository userRepository;
     private final RoleSeedService roleSeedService;
     private final CompanyUseCase companyUseCase;
+    private final WorkflowTemplateSeeder workflowTemplateSeeder;
 
     public OnboardingService(CompanyRepository companyRepository,
                              MembershipRepository membershipRepository,
@@ -62,7 +64,8 @@ public class OnboardingService implements OnboardingUseCase {
                              UserRoleRepository userRoleRepository,
                              UserRepository userRepository,
                              RoleSeedService roleSeedService,
-                             CompanyUseCase companyUseCase) {
+                             CompanyUseCase companyUseCase,
+                             WorkflowTemplateSeeder workflowTemplateSeeder) {
         this.companyRepository = companyRepository;
         this.membershipRepository = membershipRepository;
         this.roleRepository = roleRepository;
@@ -70,6 +73,7 @@ public class OnboardingService implements OnboardingUseCase {
         this.userRepository = userRepository;
         this.roleSeedService = roleSeedService;
         this.companyUseCase = companyUseCase;
+        this.workflowTemplateSeeder = workflowTemplateSeeder;
     }
 
     @Override
@@ -114,6 +118,7 @@ public class OnboardingService implements OnboardingUseCase {
         try {
             TenantContext.setCompanyId(saved.getId());
             roleSeedService.seedRoles(saved.getId());
+            workflowTemplateSeeder.seedTemplates(saved.getId());
 
             // Membership OWNER (fonte de verdade). O trigger V030 eleva
             // users.company_id para esta empresa (primeira membership ativa).

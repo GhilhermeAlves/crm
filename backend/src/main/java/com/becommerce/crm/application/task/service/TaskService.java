@@ -2,6 +2,7 @@ package com.becommerce.crm.application.task.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.contact.port.output.ContactRepository;
+import com.becommerce.crm.application.identity.port.output.EventPublisher;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.application.task.dto.CreateTaskRequest;
 import com.becommerce.crm.application.task.dto.TaskResponse;
@@ -15,6 +16,7 @@ import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException
 import com.becommerce.crm.domain.task.Task;
 import com.becommerce.crm.domain.task.TaskStatus;
 import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
+import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,13 +39,16 @@ public class TaskService implements TaskUseCase {
     private final ContactRepository contactRepository;
     private final OpportunityRepository opportunityRepository;
     private final TenantAuditRecorder auditor;
+    private final EventPublisher eventPublisher;
 
     public TaskService(TaskRepository taskRepository, ContactRepository contactRepository,
-                       OpportunityRepository opportunityRepository, TenantAuditRecorder auditor) {
+                       OpportunityRepository opportunityRepository, TenantAuditRecorder auditor,
+                       EventPublisher eventPublisher) {
         this.taskRepository = taskRepository;
         this.contactRepository = contactRepository;
         this.opportunityRepository = opportunityRepository;
         this.auditor = auditor;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -59,6 +64,9 @@ public class TaskService implements TaskUseCase {
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.TASKS, "Task",
                     task.getId().toString(), "Tarefa criada: " + task.getTitle(), createdBy, null);
+            eventPublisher.publish(WorkflowTriggerEvent.taskCreated(companyId, task.getId(),
+                    task.getContactId(), task.getOpportunityId(),
+                    task.getPriority() != null ? task.getPriority().name() : null));
             return toResponse(task);
         } finally {
             TenantContext.clear();
@@ -112,6 +120,11 @@ public class TaskService implements TaskUseCase {
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.TASKS, "Task",
                     task.getId().toString(), "Tarefa " + status.name().toLowerCase() + ": " + task.getTitle(),
                     null, null);
+            if (status == TaskStatus.COMPLETED) {
+                eventPublisher.publish(WorkflowTriggerEvent.taskCompleted(companyId, task.getId(),
+                        task.getContactId(), task.getOpportunityId(),
+                        task.getPriority() != null ? task.getPriority().name() : null));
+            }
             return toResponse(task);
         } finally {
             TenantContext.clear();

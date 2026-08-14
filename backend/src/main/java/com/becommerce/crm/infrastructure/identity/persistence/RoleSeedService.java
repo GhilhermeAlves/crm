@@ -64,6 +64,7 @@ public class RoleSeedService {
             "membership:view", "membership:manage",
             "activity:create", "activity:read", "activity:update", "activity:delete",
             "task:create", "task:read", "task:update", "task:delete",
+            "workflow:create", "workflow:read", "workflow:update", "workflow:delete",
             "dashboard:operational"
         ));
         rolePermissions.put(RoleName.MANAGER, List.of(
@@ -82,6 +83,7 @@ public class RoleSeedService {
             "audit:read",
             "activity:create", "activity:read", "activity:update", "activity:delete",
             "task:create", "task:read", "task:update", "task:delete",
+            "workflow:create", "workflow:read", "workflow:update", "workflow:delete",
             "dashboard:operational"
         ));
         rolePermissions.put(RoleName.AGENT, List.of(
@@ -95,6 +97,7 @@ public class RoleSeedService {
             "report:view",
             "activity:create", "activity:read", "activity:update",
             "task:create", "task:read", "task:update",
+            "workflow:read",
             "dashboard:operational"
         ));
         rolePermissions.put(RoleName.VIEWER, List.of(
@@ -108,6 +111,7 @@ public class RoleSeedService {
             "report:view",
             "activity:read",
             "task:read",
+            "workflow:read",
             "dashboard:operational"
         ));
 

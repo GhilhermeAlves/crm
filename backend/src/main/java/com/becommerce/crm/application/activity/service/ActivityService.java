@@ -7,6 +7,7 @@ import com.becommerce.crm.application.activity.port.input.ActivityUseCase;
 import com.becommerce.crm.application.activity.port.output.ActivityRepository;
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.contact.port.output.ContactRepository;
+import com.becommerce.crm.application.identity.port.output.EventPublisher;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.domain.activity.Activity;
 import com.becommerce.crm.domain.activity.exception.ActivityNotFoundException;
@@ -14,6 +15,7 @@ import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.contact.exception.ContactNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
+import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,15 +36,18 @@ public class ActivityService implements ActivityUseCase {
     private final ContactRepository contactRepository;
     private final OpportunityRepository opportunityRepository;
     private final TenantAuditRecorder auditor;
+    private final EventPublisher eventPublisher;
 
     public ActivityService(ActivityRepository activityRepository,
                            ContactRepository contactRepository,
                            OpportunityRepository opportunityRepository,
-                           TenantAuditRecorder auditor) {
+                           TenantAuditRecorder auditor,
+                           EventPublisher eventPublisher) {
         this.activityRepository = activityRepository;
         this.contactRepository = contactRepository;
         this.opportunityRepository = opportunityRepository;
         this.auditor = auditor;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -58,6 +63,9 @@ public class ActivityService implements ActivityUseCase {
             auditor.record(companyId, AuditAction.CREATE, AuditModule.ACTIVITIES, "Activity",
                     activity.getId().toString(), "Atividade registrada: " + activity.getSubject(),
                     createdBy, null);
+            eventPublisher.publish(WorkflowTriggerEvent.activityCreated(companyId, activity.getId(),
+                    activity.getContactId(), activity.getOpportunityId(),
+                    activity.getType() != null ? activity.getType().name() : null));
             return toResponse(activity);
         } finally {
             TenantContext.clear();

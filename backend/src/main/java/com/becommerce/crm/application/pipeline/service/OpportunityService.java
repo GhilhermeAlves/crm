@@ -2,6 +2,7 @@ package com.becommerce.crm.application.pipeline.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.contact.port.output.ContactRepository;
+import com.becommerce.crm.application.identity.port.output.EventPublisher;
 import com.becommerce.crm.application.pipeline.dto.CreateOpportunityRequest;
 import com.becommerce.crm.application.pipeline.dto.MarkLostRequest;
 import com.becommerce.crm.application.pipeline.dto.MoveDirection;
@@ -26,6 +27,7 @@ import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException
 import com.becommerce.crm.domain.pipeline.exception.PipelineNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.PipelineValidationException;
 import com.becommerce.crm.domain.pipeline.exception.StageNotFoundException;
+import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,17 +52,20 @@ public class OpportunityService implements OpportunityUseCase {
     private final StageRepository stageRepository;
     private final ContactRepository contactRepository;
     private final TenantAuditRecorder auditor;
+    private final EventPublisher eventPublisher;
 
     public OpportunityService(OpportunityRepository opportunityRepository,
                               PipelineRepository pipelineRepository,
                               StageRepository stageRepository,
                               ContactRepository contactRepository,
-                              TenantAuditRecorder auditor) {
+                              TenantAuditRecorder auditor,
+                              EventPublisher eventPublisher) {
         this.opportunityRepository = opportunityRepository;
         this.pipelineRepository = pipelineRepository;
         this.stageRepository = stageRepository;
         this.contactRepository = contactRepository;
         this.auditor = auditor;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -87,6 +92,8 @@ public class OpportunityService implements OpportunityUseCase {
             auditor.record(companyId, AuditAction.CREATE, AuditModule.PIPELINE, "Opportunity",
                     opportunity.getId().toString(), "Oportunidade criada: " + opportunity.getTitle(),
                     createdBy, Map.of("pipelineId", pipelineId.toString()));
+            eventPublisher.publish(WorkflowTriggerEvent.opportunityCreated(companyId, opportunity.getId(),
+                    opportunity.getContactId(), first.getName(), opportunity.getValue()));
 
             return toResponse(opportunity, first);
         } finally {
@@ -163,6 +170,8 @@ public class OpportunityService implements OpportunityUseCase {
                     opportunity.getId().toString(),
                     "Oportunidade movida: " + current.getName() + " → " + target.getName(),
                     changedBy, null);
+            eventPublisher.publish(WorkflowTriggerEvent.opportunityStageChanged(companyId, opportunity.getId(),
+                    opportunity.getContactId(), target.getName(), opportunity.getValue()));
 
             return toResponse(opportunity, target);
         } finally {
@@ -186,6 +195,8 @@ public class OpportunityService implements OpportunityUseCase {
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.PIPELINE, "Opportunity",
                     opportunity.getId().toString(), "Oportunidade ganha: " + opportunity.getTitle(),
                     changedBy, Map.of("value", opportunity.getValue().toPlainString()));
+            eventPublisher.publish(WorkflowTriggerEvent.opportunityWon(companyId, opportunity.getId(),
+                    opportunity.getContactId(), current.getName(), opportunity.getValue()));
 
             return toResponse(opportunity, current);
         } finally {
@@ -212,6 +223,8 @@ public class OpportunityService implements OpportunityUseCase {
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.PIPELINE, "Opportunity",
                     opportunity.getId().toString(), "Oportunidade perdida: " + opportunity.getTitle(),
                     changedBy, Map.of("lossReason", request.lossReason()));
+            eventPublisher.publish(WorkflowTriggerEvent.opportunityLost(companyId, opportunity.getId(),
+                    opportunity.getContactId(), current.getName(), opportunity.getValue()));
 
             return toResponse(opportunity, current);
         } finally {

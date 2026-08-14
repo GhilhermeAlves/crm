@@ -21,6 +21,7 @@ import {
   MailPlus,
   KeyRound,
   ClipboardList,
+  Workflow as WorkflowIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,7 @@ const navGroups: NavGroup[] = [
       { label: "Pipeline", href: ROUTES.PIPELINE, icon: GitBranch, permission: "pipeline:view" },
       { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:read" },
       { label: "Timeline", href: ROUTES.ACTIVITIES, icon: MailPlus, permission: "activity:read" },
+      { label: "Workflows", href: ROUTES.WORKFLOWS, icon: WorkflowIcon, permission: "workflow:read" },
     ],
   },
   {

@@ -29,6 +29,7 @@ Use `Ctrl+F` para buscar por palavra-chave. Cada linha contém o caminho relativ
 | [DOMAIN_MODEL.md](./DOMAIN_MODEL.md) | Modelo de domínio e entidades | v1.1 |
 | [EVENT_MAP.md](./EVENT_MAP.md) | Mapa de eventos do sistema | v1.1 |
 | [WORKFLOWS.md](./WORKFLOWS.md) | Workflows e fluxos de processos | v1.1 |
+| [WORKFLOW_AUTOMATION.md](./WORKFLOW_AUTOMATION.md) | Motor de automação (Sprint 13) | v1.0 |
 | [STATE_MACHINES.md](./STATE_MACHINES.md) | Máquinas de estado das entidades | v1.1 |
 | [MULTI_TENANCY.md](./MULTI_TENANCY.md) | Estratégia de multi-tenancy | v1.1 |
 | [BILLING_MODEL.md](./BILLING_MODEL.md) | Modelo de cobrança e billing | v1.1 |

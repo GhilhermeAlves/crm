@@ -66,6 +66,9 @@ class CompanyServiceTest {
     private CompanyQuotaService quotaService;
 
     @Mock
+    private com.becommerce.crm.application.workflow.service.WorkflowTemplateSeeder workflowTemplateSeeder;
+
+    @Mock
     private TenantContext tenantContext;
 
     @InjectMocks

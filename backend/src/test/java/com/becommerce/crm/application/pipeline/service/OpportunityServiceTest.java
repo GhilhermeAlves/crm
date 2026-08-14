@@ -45,6 +45,7 @@ class OpportunityServiceTest {
     @Mock StageRepository stageRepository;
     @Mock ContactRepository contactRepository;
     @Mock TenantAuditRecorder auditor;
+    @Mock com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
 
     @InjectMocks OpportunityService opportunityService;
 

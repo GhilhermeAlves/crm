@@ -9,6 +9,7 @@ import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
+import com.becommerce.crm.application.workflow.service.WorkflowTemplateSeeder;
 import com.becommerce.crm.domain.company.*;
 import com.becommerce.crm.domain.company.event.CompanyCreatedEvent;
 import com.becommerce.crm.domain.company.event.CompanyDeletedEvent;
@@ -43,6 +44,7 @@ public class CompanyService implements CompanyUseCase {
     private final UserRoleRepository userRoleRepository;
     private final UserRepository userRepository;
     private final CompanyQuotaService quotaService;
+    private final WorkflowTemplateSeeder workflowTemplateSeeder;
 
     public CompanyService(CompanyRepository companyRepository,
                           CompanySettingsRepository companySettingsRepository,
@@ -52,7 +54,8 @@ public class CompanyService implements CompanyUseCase {
                           RoleRepository roleRepository,
                           UserRoleRepository userRoleRepository,
                           UserRepository userRepository,
-                          CompanyQuotaService quotaService) {
+                          CompanyQuotaService quotaService,
+                          WorkflowTemplateSeeder workflowTemplateSeeder) {
         this.companyRepository = companyRepository;
         this.companySettingsRepository = companySettingsRepository;
         this.eventPublisher = eventPublisher;
@@ -62,6 +65,7 @@ public class CompanyService implements CompanyUseCase {
         this.userRoleRepository = userRoleRepository;
         this.userRepository = userRepository;
         this.quotaService = quotaService;
+        this.workflowTemplateSeeder = workflowTemplateSeeder;
     }
 
     @Override
@@ -155,6 +159,9 @@ public class CompanyService implements CompanyUseCase {
 
             // 1. Seed dos papéis padrão (SUPER_ADMIN, ADMIN, MANAGER, AGENT, VIEWER).
             roleSeedService.seedRoles(companyId);
+
+            // 1b. Seed dos templates de workflow padrão (Sprint 14, Item 9).
+            workflowTemplateSeeder.seedTemplates(companyId);
 
             User creator = userRepository.findById(creatorUserId)
                     .orElseThrow(() -> new IllegalStateException(

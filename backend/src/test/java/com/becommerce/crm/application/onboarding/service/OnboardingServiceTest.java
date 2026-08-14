@@ -53,13 +53,14 @@ class OnboardingServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private RoleSeedService roleSeedService;
     @Mock private CompanyUseCase companyUseCase;
+    @Mock private com.becommerce.crm.application.workflow.service.WorkflowTemplateSeeder workflowTemplateSeeder;
 
     private OnboardingService service;
 
     @BeforeEach
     void setUp() {
         service = new OnboardingService(companyRepository, membershipRepository, roleRepository,
-                userRoleRepository, userRepository, roleSeedService, companyUseCase);
+                userRoleRepository, userRepository, roleSeedService, companyUseCase, workflowTemplateSeeder);
     }
 
     @AfterEach

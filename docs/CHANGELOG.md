@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## [5.0.0] - 2026-08-14 — Sprint 13: Workflows (Automação de Tarefas e Atividades)
+
+### Added
+- **Domínio** (`domain/workflow/`): `Workflow`, `WorkflowCondition`, `WorkflowAction`,
+  `WorkflowExecution`, enums (`TriggerEvent`, `ActionType`, `ExecutionStatus`,
+  `ConditionOperator`) e `event/WorkflowTriggerEvent`.
+- **Aplicação** (`application/workflow/`): `WorkflowService` (UseCase CRUD + activate/deactivate +
+  listExecutions), `WorkflowExecutor`, `WorkflowConditionEvaluator`, `WorkflowActionRunner`,
+  `WorkflowTemplateSeeder` (seeds por empresa).
+- **Persistência**: JPA entities/repos com RLS; `WorkflowExecutionJpaEntity` com chave única
+  `(company_id, workflow_action_id, event_id)` e insert nativo `ON CONFLICT DO NOTHING`
+  (idempotência atômica).
+- **Migrações**: `V041__workflow_tables.sql` (tabelas + RLS + índices + chave idempotência),
+  `V042__workflow_permissions.sql` (permissões workflow:*).
+- **Infraestrutura**: `WorkflowEventListener` (transacional), `WorkflowController`
+  (CRUD + toggle + executions, `@PreAuthorize` por permissão).
+- **Publicadores de eventos** (alterados): `OpportunityService` (created/stage_changed/won/lost),
+  `TaskService` (created/completed), `ActivityService` (created).
+- **Permissões** (`RoleSeedService`): SUPER_ADMIN e MANAGER → CRUD; AGENT e VIEWER → leitura.
+- **Frontend** (`features/workflows/`): types, service, hooks, schemas, `WorkflowForm`,
+  `WorkflowTable`, `WorkflowExecutionsPanel`, `DeleteWorkflowDialog`; rotas `/workflows`
+  (lista/new/[id]/[id]/edit) e item no menu CRM.
+
+### Fixed
+- Guard de recursão por `eventId` + idempotência: ações que re-disparam o trigger não re-executam.
+
+### Qualidade
+- Backend: 315 testes unitários passando (BUILD SUCCESS).
+- Frontend: `tsc` limpo (código novo), lint sem warnings, 128 testes passando.
+- `WorkflowIsolationIT` (Testcontainers) para RLS + idempotência em Postgres real (CI).
+
+### Documentação
+- `sprints/13/REPORT.md`, `docs/WORKFLOW_AUTOMATION.md`, `docs/CHANGELOG.md`,
+  `docs/PROJECT_INDEX.md`.
+
 ## [4.3.0] - 2026-07-15 — Sprint 4.3: Login (Review + Close)
 
 ### Added

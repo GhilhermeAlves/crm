@@ -38,6 +38,8 @@ import com.becommerce.crm.domain.pipeline.exception.StageNotFoundException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
 import com.becommerce.crm.domain.task.exception.TaskValidationException;
+import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
+import com.becommerce.crm.domain.workflow.WorkflowValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -362,6 +364,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TaskValidationException.class)
     public ResponseEntity<Map<String, Object>> handleTaskValidationException(TaskValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(WorkflowNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleWorkflowNotFoundException(WorkflowNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(WorkflowValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleWorkflowValidationException(WorkflowValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,
