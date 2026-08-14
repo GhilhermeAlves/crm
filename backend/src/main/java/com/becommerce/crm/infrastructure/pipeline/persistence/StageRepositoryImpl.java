@@ -35,6 +35,13 @@ public class StageRepositoryImpl implements StageRepository {
     }
 
     @Override
+    public List<Stage> findByCompanyId(UUID companyId) {
+        return jpaRepository.findByCompanyId(companyId).stream()
+                .map(StageRepositoryImpl::toDomain)
+                .toList();
+    }
+
+    @Override
     public int countByPipelineId(UUID pipelineId) {
         return (int) jpaRepository.countByPipelineId(pipelineId);
     }

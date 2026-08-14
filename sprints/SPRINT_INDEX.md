@@ -295,6 +295,31 @@
 >   (L-020/030/040, P-0xx avançadas) para Sprints 17 (IA).
 > - 📄 `sprints/11/REPORT.md`.
 
+> **12 — CRM Orientado à Ação ✅ Concluída (2026-08-13).** Activities (Timeline) + Tasks
+> (Follow-up) + Dashboard operacional determinístico.
+> - ✅ **DB**: novas migrations **V039** (`activities` + `tasks`: company_id, vínculos
+>   contact/opportunity **nullable**, enums, índices, RLS FORCE + `tenant_isolation_policy`)
+>   e **V040** (permissões `activity:*`/`task:*` + `dashboard:operational`, grants via loop
+>   dinâmico da V034).
+> - ✅ **Backend** (módulos `activity`/`task`/`dashboard`): `ActivityService`/`TaskService`
+>   (TenantContext isolado, validação de ownership contact/opportunity, auditoria
+>   `AuditModule.ACTIVITIES`/`TASKS`, transições de status com regra de task concluída),
+>   `DashboardService` (inteligência determinística: dias parado ≥7 = stale, score por
+>   valor+probabilidade+tempo parado, sugestão de follow-up, tarefas de hoje, atividades
+>   recentes); controllers `/activities`, `/tasks`, `/dashboard/operational` com
+>   `@PreAuthorize('activity:*'/'task:*'/'dashboard:operational')` + `requireCompanyAccess`.
+> - ✅ **Frontend**: features `activities` (timeline + diálogo) e `tasks` (lista com
+>   transições) + **dashboard reescrito** estático→orientado à ação (KPIs reais, lista de
+>   atenção, tarefas de hoje, atividades recentes) gated por permissões; Sidebar + rota
+>   `/tasks` e `/activities`.
+> - ✅ **Testes** (**validados 2026-08-13**): backend **281** (antes 267; +`ActivityServiceTest`,
+>   `TaskServiceTest`, `DashboardServiceTest`, `ActivityTaskIsolationIT` RLS real em
+>   `activities`/`tasks`), frontend **114** (antes 106; +activity.schema/task.schema) —
+>   suíte verde + typecheck/lint (novos arquivos) OK.
+> - ⚠️ **Débito**: **deploy VPS pendente** (aplicar V039/V040 + rebuild + smoke test); E2E
+>   autenticado manual herdado; IA/Inbox/Workflow para Sprints 16/17 (modelo já preparado).
+> - 📄 `sprints/12/REPORT.md`.
+
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
@@ -302,7 +327,7 @@
 | 9 | User & Permission Management (Contatos CRUD) | ✅ Concluída | 2026-08-12 | AI Agent | 8.6 |
 | 10 | Leads | ✅ Concluída | 2026-08-13 | AI Agent | 9 |
 | 11 | Pipeline | ✅ Concluída | 2026-08-13 | AI Agent | 10 |
-| 12 | Conversas | ⏳ Pendente | — | — | 9 |
+| 12 | CRM orientado à ação (Activities/Tasks/Dashboard) | ✅ Concluída | 2026-08-13 | AI Agent | 11 |
 
 ## Omnichannel
 
@@ -336,11 +361,11 @@
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
 | SaaS | 7 | 7 | 0 | 0 | 0 |
-| CRM | 4 | 2 | 0 | 2 | 0 |
+| CRM | 4 | 3 | 0 | 1 | 0 |
 | Omnichannel | 3 | 0 | 0 | 3 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **33** | **0** | **7** | **5** |
+| **Total** | **45** | **34** | **0** | **6** | **5** |
 
 ---
 
@@ -371,7 +396,6 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-13 — Sprint **11 — Pipeline** concluída
-(REPORT + índice; validação de testes 267 backend / 106 frontend; deploy VPS;
-migration V038 aplicada). Resumo agora 45 sprints:
-33 ✅, 0 🚧, 7 ⏳, 5 ↪️. Próxima sprint: **12 — Conversas**.*
+*Última atualização: 2026-08-13 — Sprint **12 — CRM Orientado à Ação** concluída
+(REPORT; validação de testes 281 backend / 114 frontend; deploy VPS pendente — V039/V040).
+Resumo agora 45 sprints: 34 ✅, 0 🚧, 6 ⏳, 5 ↪️. Próxima sprint: **12b/13 — Conversas**.*

@@ -61,7 +61,10 @@ public class RoleSeedService {
             "report:view", "report:export",
             "settings:view", "settings:update",
             "audit:read", "audit:export",
-            "membership:view", "membership:manage"
+            "membership:view", "membership:manage",
+            "activity:create", "activity:read", "activity:update", "activity:delete",
+            "task:create", "task:read", "task:update", "task:delete",
+            "dashboard:operational"
         ));
         rolePermissions.put(RoleName.MANAGER, List.of(
             "user:read", "user:update",
@@ -76,7 +79,10 @@ public class RoleSeedService {
             "campaign:create", "campaign:read", "campaign:update", "campaign:delete",
             "report:view", "report:export",
             "settings:view",
-            "audit:read"
+            "audit:read",
+            "activity:create", "activity:read", "activity:update", "activity:delete",
+            "task:create", "task:read", "task:update", "task:delete",
+            "dashboard:operational"
         ));
         rolePermissions.put(RoleName.AGENT, List.of(
             "dashboard:view",
@@ -86,7 +92,10 @@ public class RoleSeedService {
             "opportunity:create", "opportunity:read", "opportunity:update", "opportunity:move",
             "chat:view", "chat:send",
             "campaign:read",
-            "report:view"
+            "report:view",
+            "activity:create", "activity:read", "activity:update",
+            "task:create", "task:read", "task:update",
+            "dashboard:operational"
         ));
         rolePermissions.put(RoleName.VIEWER, List.of(
             "dashboard:view",
@@ -96,7 +105,10 @@ public class RoleSeedService {
             "opportunity:read",
             "chat:view",
             "campaign:read",
-            "report:view"
+            "report:view",
+            "activity:read",
+            "task:read",
+            "dashboard:operational"
         ));
 
         for (Map.Entry<RoleName, List<String>> entry : rolePermissions.entrySet()) {

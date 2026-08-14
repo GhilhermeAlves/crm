@@ -29,6 +29,8 @@ export const ROUTES = {
   SETTINGS_USERS: "/settings/users",
   SETTINGS_ROLES: "/settings/roles",
   AUDIT: "/audit",
+  TASKS: "/tasks",
+  ACTIVITIES: "/activities",
 } as const;
 
 export const PUBLIC_ROUTES = [

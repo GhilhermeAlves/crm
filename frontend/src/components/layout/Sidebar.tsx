@@ -75,6 +75,8 @@ const navGroups: NavGroup[] = [
       { label: "Leads", href: ROUTES.LEADS, icon: Users, permission: "lead:read" },
       { label: "Contatos", href: ROUTES.CONTACTS, icon: Contact, permission: "contact:read" },
       { label: "Pipeline", href: ROUTES.PIPELINE, icon: GitBranch, permission: "pipeline:view" },
+      { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:read" },
+      { label: "Timeline", href: ROUTES.ACTIVITIES, icon: MailPlus, permission: "activity:read" },
     ],
   },
   {

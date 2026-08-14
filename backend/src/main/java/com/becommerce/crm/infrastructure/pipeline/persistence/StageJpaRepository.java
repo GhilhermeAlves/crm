@@ -11,5 +11,7 @@ public interface StageJpaRepository extends JpaRepository<StageJpaEntity, UUID> 
 
     List<StageJpaEntity> findByPipelineIdOrderByOrderNumAsc(UUID pipelineId);
 
+    List<StageJpaEntity> findByCompanyId(UUID companyId);
+
     long countByPipelineId(UUID pipelineId);
 }

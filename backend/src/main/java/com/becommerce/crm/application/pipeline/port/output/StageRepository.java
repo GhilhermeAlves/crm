@@ -14,6 +14,8 @@ public interface StageRepository {
 
     List<Stage> findByPipelineIdOrdered(UUID pipelineId);
 
+    List<Stage> findByCompanyId(UUID companyId);
+
     int countByPipelineId(UUID pipelineId);
 
     void delete(Stage stage);

@@ -17,6 +17,8 @@ import com.becommerce.crm.domain.company.CompanyNotFoundException;
 import com.becommerce.crm.domain.company.CompanyDeletionForbiddenException;
 import com.becommerce.crm.domain.identity.exception.DuplicateEmailException;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.domain.activity.exception.ActivityNotFoundException;
+import com.becommerce.crm.domain.activity.exception.ActivityValidationException;
 import com.becommerce.crm.domain.identity.exception.DuplicateRoleException;
 import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
@@ -33,6 +35,8 @@ import com.becommerce.crm.domain.pipeline.exception.PipelineNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.PipelineValidationException;
 import com.becommerce.crm.domain.pipeline.exception.StageNotFoundException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
+import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
+import com.becommerce.crm.domain.task.exception.TaskValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -302,6 +306,50 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PipelineValidationException.class)
     public ResponseEntity<Map<String, Object>> handlePipelineValidationException(PipelineValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ActivityNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleActivityNotFoundException(ActivityNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ActivityValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleActivityValidationException(ActivityValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTaskNotFoundException(TaskNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(TaskValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleTaskValidationException(TaskValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,

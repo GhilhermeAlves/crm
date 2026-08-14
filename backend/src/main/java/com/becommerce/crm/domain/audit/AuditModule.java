@@ -10,6 +10,7 @@ public enum AuditModule {
     CONTACTS,
     LEADS,
     PIPELINE,
+    ACTIVITIES,
     TASKS,
     CALENDAR,
     FINANCE,

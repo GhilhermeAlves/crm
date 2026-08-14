@@ -40,6 +40,13 @@ public class OpportunityRepositoryImpl implements OpportunityRepository {
     }
 
     @Override
+    public List<Opportunity> findByCompanyId(UUID companyId) {
+        return jpaRepository.findByCompanyId(companyId).stream()
+                .map(OpportunityRepositoryImpl::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Opportunity> findByPipelineIdAndStatus(UUID pipelineId, OpportunityStatus status) {
         return jpaRepository.findByPipelineIdAndStatus(pipelineId, status == null ? null : status.name())
                 .stream().map(OpportunityRepositoryImpl::toDomain).toList();
