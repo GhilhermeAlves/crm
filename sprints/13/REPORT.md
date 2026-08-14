@@ -125,6 +125,21 @@ de domínio (`WorkflowTriggerEvent`) carregam contexto fechado (`opportunity.sta
 - `docs/WORKFLOW_AUTOMATION.md` — doc dedicada do motor de automação
 - `sprints/13/REPORT.md` — este relatório
 
+## Produção / VPS
+
+- **Validado em produção nesta etapa.** Deploy real executado na VPS `crm-vps` (`git pull --ff-only`
+  + rebuild `docker compose build backend frontend` + `up -d`). **Migrations V041/V042 aplicadas**
+  (Flyway `now at version v042`). Backend iniciou sem erro (`Started CrmApplication`).
+- **Descoberta de topologia**: o deploy canônico de produção é **`docker/docker-compose.yml`**
+  (rede externa `crm-network`, porta `127.0.0.1:8081` backend / `127.0.0.1:3000` frontend, servidos
+  por nginx no host). O `docker/docker-compose.prod.yml` é legado e não é o alvo de deploy — um
+  override ad-hoc para ele foi descartado e o arquivo foi revertido ao estado original.
+- **Smoke tests**: `/actuator/health` 200 (UP); `/api/v1/.../workflows` e `/api/v1/.../tasks` com
+  token inválido → 401 (endpoints protegidos); página `/workflows` → 307 para login (rota existe e
+  autentica); `/login` → 200. Sem regressão nas demais rotas.
+- **Estado final**: `crm-backend` (8081), `crm-frontend` (3000), `crm-auth-service` (8082),
+  `crm-postgres` (5432) saudáveis; artefatos legados (`crm-*-prod`) removidos.
+
 ## Roadmap próximo
 
 Sprint 14+: Inbox de eventos e integração IA (recomendação de ações); notificações em tempo real
