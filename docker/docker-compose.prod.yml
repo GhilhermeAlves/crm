@@ -73,7 +73,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - crm-network
+      - crm-network-prod
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${CRM_DATABASE_USERNAME}"]
       interval: 10s
@@ -95,7 +95,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - crm-network
+      - crm-network-prod
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${CRM_REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -120,7 +120,7 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
-      - crm-network
+      - crm-network-prod
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 10s
@@ -146,7 +146,7 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     networks:
-      - crm-network
+      - crm-network-prod
     restart: always
     deploy:
       resources:
