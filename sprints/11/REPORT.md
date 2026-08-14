@@ -136,9 +136,14 @@ Nova feature `features/pipeline` + página `app/(dashboard)/pipeline`:
 ## Produção / VPS
 
 - **Validado em produção nesta etapa.** Deploy real executado na VPS `crm-vps`
-  (`docker compose build` + `up -d`: rebuild backend+frontend, **migration V038 aplicada**).
-  Smoke tests: `/actuator/health` 200, `/api/v1/.../pipelines` 401 sem sessão (endpoints
-  registrados), `/pipeline` redireciona para login, 0 ERROR nos logs do backend.
+  (`docker compose build` + `up -d`: rebuild backend+frontend, **migration V038 aplicada**
+  — Flyway `now at version v038`). Smoke tests: backend iniciou sem erro (Tomcat 8080,
+  `Started CrmApplication`, **0 ERROR/Exception** nos logs), endpoints
+  `/api/v1/companies/{companyId}/pipelines*` registrados e idempotentes à autorização
+  (retornam 404 unauthenticated, idêntico ao `/leads` — sem regressão), rota
+  `/pipeline` 307 → `/login?redirect=%2Fpipeline` no frontend (build contém
+  `pipeline.html`). Nota: `/actuator/health` não expõe corpo (gestão desabilitada —
+  comportamento pré-existente, não alterado nesta sprint).
 
 ## Débitos
 

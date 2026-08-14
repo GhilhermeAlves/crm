@@ -288,9 +288,9 @@
 >   controller/`PipelineIsolationIT` Testcontainers/PostgreSQL + RLS provando isolamento
 >   cross-tenant em `pipelines`/`stages`/`opportunities`), frontend **106** (antes 96;
 >   +schema/OpportunityCard) — suíte **106/106** + typecheck/lint (novos arquivos) OK.
-> - ✅ **Deploy + validação VPS**: rebuild backend+frontend e `up -d` (**V038 aplicada**),
->   `/actuator/health` 200, endpoints de pipelines 401 sem sessão, `/pipeline` 307→login,
->   0 ERROR no backend.
+> - ✅ **Deploy + validação VPS**: rebuild backend+frontend e `up -d` (**V038 aplicada**,
+>   Flyway `v038`), backend iniciou com 0 ERROR, `/pipeline` 307→login, endpoints de
+>   pipelines registrados.
 > - ⚠️ **Débito**: E2E autenticado manual herdado; scoring/distribuição/conversão
 >   (L-020/030/040, P-0xx avançadas) para Sprints 17 (IA).
 > - 📄 `sprints/11/REPORT.md`.
