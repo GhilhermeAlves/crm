@@ -21,6 +21,9 @@ public interface TaskRepository {
 
     List<Task> findByCompanyIdAndOpportunityId(UUID companyId, UUID opportunityId);
 
+    /** Tarefas associadas a um contato (qualquer estado). */
+    List<Task> findByContactId(UUID contactId);
+
     List<Task> findDueToday(UUID companyId, java.time.LocalDateTime start, java.time.LocalDateTime end);
 
     long countPendingByCompanyId(UUID companyId);

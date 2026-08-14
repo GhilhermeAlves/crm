@@ -14,4 +14,6 @@ public interface OpportunityJpaRepository extends JpaRepository<OpportunityJpaEn
     List<OpportunityJpaEntity> findByCompanyId(UUID companyId);
 
     List<OpportunityJpaEntity> findByPipelineIdAndStatus(UUID pipelineId, String status);
+
+    List<OpportunityJpaEntity> findByContactId(UUID contactId);
 }

@@ -15,6 +15,7 @@ import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -66,6 +67,19 @@ public class ContactService implements ContactUseCase {
             TenantContext.setCompanyId(companyId);
             Contact contact = requireOwnedActive(companyId, contactId);
             return toResponse(contact);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContactResponse> listByCompany(UUID companyId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            return contactRepository.findByCompanyIdActive(companyId).stream()
+                    .map(ContactService::toResponse)
+                    .toList();
         } finally {
             TenantContext.clear();
         }

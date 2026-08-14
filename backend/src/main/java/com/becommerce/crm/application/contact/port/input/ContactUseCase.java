@@ -4,6 +4,7 @@ import com.becommerce.crm.application.contact.dto.ContactResponse;
 import com.becommerce.crm.application.contact.dto.CreateContactRequest;
 import com.becommerce.crm.application.contact.dto.UpdateContactRequest;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Casos de uso de contatos (Sprint 8.6). */
@@ -16,6 +17,9 @@ public interface ContactUseCase {
     ContactResponse create(UUID companyId, CreateContactRequest request, UUID createdBy);
 
     ContactResponse getById(UUID companyId, UUID contactId);
+
+    /** Lista os contatos ativos da empresa (diretório de clientes). */
+    List<ContactResponse> listByCompany(UUID companyId);
 
     ContactResponse update(UUID companyId, UUID contactId, UpdateContactRequest request);
 

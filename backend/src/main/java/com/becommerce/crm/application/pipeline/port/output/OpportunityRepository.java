@@ -18,6 +18,9 @@ public interface OpportunityRepository {
 
     List<Opportunity> findByCompanyId(UUID companyId);
 
+    /** Oportunidades associadas a um contato (qualquer estado). */
+    List<Opportunity> findByContactId(UUID contactId);
+
     List<Opportunity> findByPipelineIdAndStatus(UUID pipelineId, OpportunityStatus status);
 
     void delete(Opportunity opportunity);

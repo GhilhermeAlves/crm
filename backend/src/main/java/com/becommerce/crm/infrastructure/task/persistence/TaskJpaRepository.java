@@ -16,6 +16,8 @@ public interface TaskJpaRepository extends JpaRepository<TaskJpaEntity, UUID> {
 
     List<TaskJpaEntity> findByCompanyIdAndOpportunityId(UUID companyId, UUID opportunityId);
 
+    List<TaskJpaEntity> findByContactId(UUID contactId);
+
     List<TaskJpaEntity> findByCompanyIdAndDueAtBetween(UUID companyId, LocalDateTime start, LocalDateTime end);
 
     long countByCompanyIdAndStatus(UUID companyId, String status);

@@ -55,6 +55,12 @@ public class TaskRepositoryImpl implements TaskRepository {
     }
 
     @Override
+    public List<Task> findByContactId(UUID contactId) {
+        return jpaRepository.findByContactId(contactId).stream()
+                .map(TaskRepositoryImpl::toDomain).toList();
+    }
+
+    @Override
     public List<Task> findDueToday(UUID companyId, LocalDateTime start, LocalDateTime end) {
         return jpaRepository.findByCompanyIdAndDueAtBetween(companyId, start, end).stream()
                 .map(TaskRepositoryImpl::toDomain).toList();

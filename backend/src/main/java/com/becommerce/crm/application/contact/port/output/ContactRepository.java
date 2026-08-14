@@ -2,6 +2,7 @@ package com.becommerce.crm.application.contact.port.output;
 
 import com.becommerce.crm.domain.contact.Contact;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,4 +18,7 @@ public interface ContactRepository {
 
     /** Total de contatos ativos (não excluídos logicamente) da empresa. */
     long countActiveByCompanyId(UUID companyId);
+
+    /** Contatos ativos (não excluídos logicamente) da empresa, ordenados por nome. */
+    List<Contact> findByCompanyIdActive(UUID companyId);
 }

@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -46,6 +47,14 @@ public class ContactController {
                                                    @AuthenticationPrincipal CurrentUser principal) {
         requireCompanyAccess(companyId, principal);
         return ResponseEntity.ok(contactUseCase.getById(companyId, contactId));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('contact:read')")
+    public ResponseEntity<List<ContactResponse>> list(@PathVariable UUID companyId,
+                                                      @AuthenticationPrincipal CurrentUser principal) {
+        requireCompanyAccess(companyId, principal);
+        return ResponseEntity.ok(contactUseCase.listByCompany(companyId));
     }
 
     @PutMapping("/{contactId}")

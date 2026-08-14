@@ -18,4 +18,6 @@ public interface ActivityJpaRepository extends JpaRepository<ActivityJpaEntity, 
     List<ActivityJpaEntity> findByCompanyIdOrderByActivityAtDesc(UUID companyId, Pageable pageable);
 
     Optional<ActivityJpaEntity> findTopByOpportunityIdOrderByActivityAtDesc(UUID opportunityId);
+
+    Optional<ActivityJpaEntity> findTopByContactIdOrderByActivityAtDesc(UUID contactId);
 }

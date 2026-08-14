@@ -130,6 +130,21 @@
 - **Resultado:** Sprint 4.3 encerrada — 4 fases concluídas (Development ✅, Review ✅, Close ✅)
 - **Pendências:** Nenhuma
 
+## Sprint 13 — Customer 360 e Contexto Comercial
+- **Data:** 2026-08-13
+- **Objetivo:** Visão consolidada do contato — contexto comercial, tarefas, linha do tempo unificada e próxima ação recomendada (determinística, sem IA)
+- **Backend:**
+  - `application/customer360/` — DTOs + `Customer360Service` (agrega dados, `GET /companies/{companyId}/contacts/{contactId}/360`)
+  - `presentation/rest/customer360/Customer360Controller` (permissão `contact:read`)
+  - Diretório de contatos: `ContactRepository.findByCompanyIdActive` + `ContactUseCase.listByCompany` + `GET /contacts`
+  - Consultas por contato: `OpportunityRepository.findByContactId`, `TaskRepository.findByContactId`, `ActivityRepository.findLatestActivityAtByContactId`
+  - `GlobalExceptionHandler` — `ContactNotFoundException` → 404
+- **Frontend:**
+  - `features/contacts/` — `types`, `services/contact.service.ts`, `hooks/useContacts.ts`, componentes (`ContactTable`, `ContactSummaryCard`, `NextActionCard`, `OpportunitiesPanel`, `TasksPanel`, `TimelinePanel`, `CreateContactDialog`)
+  - Rotas: `/contacts` (diretório) e `/contacts/[id]` (Customer 360) + ações rápidas (atividade/tarefa)
+- **Testes:** backend +8 (Customer360Service/Controller); frontend +(hook + componentes). `mvn verify` 289 testes ✅; frontend 123 testes ✅
+- **Resultado:** Sprint 13 implementada e testada
+
 ---
 
 *Última atualização: 2026-07-15*

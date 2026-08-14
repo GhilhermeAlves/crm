@@ -19,6 +19,7 @@ import com.becommerce.crm.domain.identity.exception.DuplicateEmailException;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.activity.exception.ActivityNotFoundException;
 import com.becommerce.crm.domain.activity.exception.ActivityValidationException;
+import com.becommerce.crm.domain.contact.exception.ContactNotFoundException;
 import com.becommerce.crm.domain.identity.exception.DuplicateRoleException;
 import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
@@ -295,6 +296,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OpportunityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleOpportunityNotFoundException(OpportunityNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ContactNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleContactNotFoundException(ContactNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
                 "status", 404,

@@ -4,6 +4,7 @@ import com.becommerce.crm.application.contact.port.output.ContactRepository;
 import com.becommerce.crm.domain.contact.Contact;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,6 +30,13 @@ public class ContactRepositoryImpl implements ContactRepository {
     @Override
     public long countActiveByCompanyId(UUID companyId) {
         return jpaRepository.countByCompanyIdAndDeletedAtIsNull(companyId);
+    }
+
+    @Override
+    public List<Contact> findByCompanyIdActive(UUID companyId) {
+        return jpaRepository.findByCompanyIdAndDeletedAtIsNullOrderByFirstNameAscLastNameAsc(companyId).stream()
+                .map(ContactRepositoryImpl::toDomain)
+                .toList();
     }
 
     private static ContactJpaEntity toEntity(Contact c) {

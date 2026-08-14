@@ -23,5 +23,8 @@ public interface ActivityRepository {
     /** Data da atividade mais recente de uma oportunidade (usado pela inteligência operacional). */
     java.util.Optional<java.time.LocalDateTime> findLatestActivityAtByOpportunityId(UUID opportunityId);
 
+    /** Data da atividade mais recente de um contato (usado pelo Customer 360). */
+    java.util.Optional<java.time.LocalDateTime> findLatestActivityAtByContactId(UUID contactId);
+
     void delete(Activity activity);
 }

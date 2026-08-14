@@ -61,6 +61,12 @@ public class ActivityRepositoryImpl implements ActivityRepository {
     }
 
     @Override
+    public Optional<LocalDateTime> findLatestActivityAtByContactId(UUID contactId) {
+        return jpaRepository.findTopByContactIdOrderByActivityAtDesc(contactId)
+                .map(ActivityJpaEntity::getActivityAt);
+    }
+
+    @Override
     public void delete(Activity activity) {
         jpaRepository.deleteById(activity.getId());
     }

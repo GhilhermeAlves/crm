@@ -53,6 +53,12 @@ public class OpportunityRepositoryImpl implements OpportunityRepository {
     }
 
     @Override
+    public List<Opportunity> findByContactId(UUID contactId) {
+        return jpaRepository.findByContactId(contactId).stream()
+                .map(OpportunityRepositoryImpl::toDomain).toList();
+    }
+
+    @Override
     public void delete(Opportunity opportunity) {
         jpaRepository.deleteById(opportunity.getId());
     }
