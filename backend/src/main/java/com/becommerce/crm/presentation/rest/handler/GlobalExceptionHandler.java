@@ -28,6 +28,10 @@ import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundExceptio
 import com.becommerce.crm.domain.lead.exception.DuplicateLeadException;
 import com.becommerce.crm.domain.lead.exception.LeadNotFoundException;
 import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
+import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
+import com.becommerce.crm.domain.pipeline.exception.PipelineNotFoundException;
+import com.becommerce.crm.domain.pipeline.exception.PipelineValidationException;
+import com.becommerce.crm.domain.pipeline.exception.StageNotFoundException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 
 import java.time.LocalDateTime;
@@ -258,6 +262,50 @@ public class GlobalExceptionHandler {
                 "status", 403,
                 "code", "CRM_ACCESS_DENIED",
                 "error", "Forbidden",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(PipelineNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handlePipelineNotFoundException(PipelineNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(StageNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleStageNotFoundException(StageNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(OpportunityNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleOpportunityNotFoundException(OpportunityNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(PipelineValidationException.class)
+    public ResponseEntity<Map<String, Object>> handlePipelineValidationException(PipelineValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

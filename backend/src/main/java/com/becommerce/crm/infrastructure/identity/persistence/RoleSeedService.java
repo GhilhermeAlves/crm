@@ -54,6 +54,8 @@ public class RoleSeedService {
             "lead:create", "lead:read", "lead:update", "lead:delete",
             "contact:create", "contact:read", "contact:update", "contact:delete",
             "pipeline:view", "pipeline:update",
+            "opportunity:create", "opportunity:read", "opportunity:update", "opportunity:delete",
+            "opportunity:move", "opportunity:win", "opportunity:lose",
             "chat:view", "chat:send",
             "campaign:create", "campaign:read", "campaign:update", "campaign:delete",
             "report:view", "report:export",
@@ -68,6 +70,8 @@ public class RoleSeedService {
             "lead:create", "lead:read", "lead:update", "lead:delete",
             "contact:create", "contact:read", "contact:update", "contact:delete",
             "pipeline:view", "pipeline:update",
+            "opportunity:create", "opportunity:read", "opportunity:update", "opportunity:delete",
+            "opportunity:move", "opportunity:win", "opportunity:lose",
             "chat:view", "chat:send",
             "campaign:create", "campaign:read", "campaign:update", "campaign:delete",
             "report:view", "report:export",
@@ -79,6 +83,7 @@ public class RoleSeedService {
             "lead:create", "lead:read", "lead:update",
             "contact:create", "contact:read", "contact:update",
             "pipeline:view",
+            "opportunity:create", "opportunity:read", "opportunity:update", "opportunity:move",
             "chat:view", "chat:send",
             "campaign:read",
             "report:view"
@@ -88,6 +93,7 @@ public class RoleSeedService {
             "lead:read",
             "contact:read",
             "pipeline:view",
+            "opportunity:read",
             "chat:view",
             "campaign:read",
             "report:view"

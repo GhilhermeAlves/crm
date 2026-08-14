@@ -271,13 +271,37 @@
 > - ⚠️ **Débito**: E2E autenticado manual herdado (sem credenciais de teste).
 > - 📄 `sprints/10/REPORT.md`.
 
+> **11 — Pipeline ✅ Concluída (2026-08-13).** Funil de vendas por empresa.
+> - ✅ **DB**: base `pipelines`/`stages`/`opportunities`/`opportunity_stage_history`
+>   (V033–V037, RLS FORCE) já existente; **nova migration V038** adiciona as permissões
+>   `pipeline:*`/`stage:*`/`opportunity:*`/`pipeline.metrics:*`.
+> - ✅ **Backend** (módulo `com.becommerce.crm.pipeline`): `Pipeline`/`Stage`/`Opportunity`
+>   + enums, `PipelineService`/`StageService`/`OpportunityService`/`OpportunityMetricsService`
+>   com `TenantContext` isolado por empresa, regras (movimento ±1, conclusão/cancelamento só
+>   no último estágio, histórico imutável), controllers
+>   `/api/v1/companies/{companyId}/pipelines*` (+ stages/opportunities/metrics) com
+>   `@PreAuthorize('pipeline:*')` + `requireCompanyAccess`; handlers 404/409.
+> - ✅ **Frontend**: feature `features/pipeline` (types/schema Zod/serviço/hooks React
+>   Query/componentes `PipelineBoard`/`OpportunityCard`/`PipelineMetricsStrip` + diálogos)
+>   e página `app/(dashboard)/pipeline/page.tsx`; Sidebar/item gated por `pipeline:read`.
+> - ✅ **Testes** (**validados 2026-08-13**): backend **267** (antes 228; +39 — service/
+>   controller/`PipelineIsolationIT` Testcontainers/PostgreSQL + RLS provando isolamento
+>   cross-tenant em `pipelines`/`stages`/`opportunities`), frontend **106** (antes 96;
+>   +schema/OpportunityCard) — suíte **106/106** + typecheck/lint (novos arquivos) OK.
+> - ✅ **Deploy + validação VPS**: rebuild backend+frontend e `up -d` (**V038 aplicada**),
+>   `/actuator/health` 200, endpoints de pipelines 401 sem sessão, `/pipeline` 307→login,
+>   0 ERROR no backend.
+> - ⚠️ **Débito**: E2E autenticado manual herdado; scoring/distribuição/conversão
+>   (L-020/030/040, P-0xx avançadas) para Sprints 17 (IA).
+> - 📄 `sprints/11/REPORT.md`.
+
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
 | 9 | User & Permission Management (Contatos CRUD) | ✅ Concluída | 2026-08-12 | AI Agent | 8.6 |
 | 10 | Leads | ✅ Concluída | 2026-08-13 | AI Agent | 9 |
-| 11 | Pipeline | ⏳ Pendente | — | — | 9 |
+| 11 | Pipeline | ✅ Concluída | 2026-08-13 | AI Agent | 10 |
 | 12 | Conversas | ⏳ Pendente | — | — | 9 |
 
 ## Omnichannel
@@ -347,7 +371,7 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-13 — Sprint **10 — Leads** concluída
-(REPORT + índice; validação de testes 242 backend / 96 frontend; deploy VPS;
-débito do rate limiter de convites fechado com Redis). Resumo agora 45 sprints:
-33 ✅, 0 🚧, 7 ⏳, 5 ↪️. Próxima sprint: **11 — Pipeline**.*
+*Última atualização: 2026-08-13 — Sprint **11 — Pipeline** concluída
+(REPORT + índice; validação de testes 267 backend / 106 frontend; deploy VPS;
+migration V038 aplicada). Resumo agora 45 sprints:
+33 ✅, 0 🚧, 7 ⏳, 5 ↪️. Próxima sprint: **12 — Conversas**.*
