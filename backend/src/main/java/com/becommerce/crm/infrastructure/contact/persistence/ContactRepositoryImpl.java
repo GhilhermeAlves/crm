@@ -39,6 +39,12 @@ public class ContactRepositoryImpl implements ContactRepository {
                 .toList();
     }
 
+    @Override
+    public Optional<Contact> findByCompanyIdAndPhone(UUID companyId, String phone) {
+        return jpaRepository.findFirstByCompanyIdAndPhoneAndDeletedAtIsNull(companyId, phone)
+                .map(ContactRepositoryImpl::toDomain);
+    }
+
     private static ContactJpaEntity toEntity(Contact c) {
         ContactJpaEntity e = new ContactJpaEntity();
         e.setId(c.getId());

@@ -1,5 +1,60 @@
 # CHANGELOG
 
+## [6.0.0] - 2026-08-15 - Sprint 16: Omnichannel - WhatsApp (base)
+
+### Added
+- **Domínio** (`domain/omnichannel/`): `Channel`, `Conversation`, `Message` + enums
+  (`ChannelType`, `ChannelProvider`, `ChannelStatus`, `ConversationStatus`,
+  `MessageDirection`, `MessageStatus`, `MessageType`), fábricas create/reconstitute
+  e transições de estado (touch/markRead/markSent/markStatus/close/reopen/assignContact).
+- **Aplicação** (`application/omnichannel/`): `OmnichannelChannelService` (CRUD + setStatus),
+  `OmnichannelInboxService` (listar/detalhar/enviar/markRead, RLS FORCE via GUC,
+  falha de provider marca a mensagem como FAILED), `WhatsAppWebhookService`
+  (verificação GET, mensagem recebida com resolução de empresa pelo canal via
+  SECURITY DEFINER, idempotência por `external_message_id`, status update, e
+  publicação de `WorkflowTriggerEvent.whatsAppMessageReceived`).
+- **DTOs**: `ChannelRequest/Response`, `ConversationResponse`, `ConversationDetailResponse`,
+  `MessageResponse`, `SendMessageRequest`.
+- **Persistência/Infra**: repositories omnichannel (RLS FORCE), `OmnichannelCompanyResolver`,
+  `WhatsAppWebhookParser`/`WhatsAppProvider` (portas), `WhatsAppCloudApiProvider`/parser
+  (Meta) e `FakeWhatsAppProvider` (dev), seed de permissões `omnichannel:*`
+  (SUPER_ADMIN/MANAGER CRUD, AGENT leitura, VIEWER sem acesso).
+- **DB/Migrações**: `V044__omnichannel_tables.sql` (channels/conversations/messages + RLS +
+  GUC + idempotência `external_message_id`) e `V045__omnichannel_permissions.sql`
+  (permissões `omnichannel:*`).
+- **Controllers** (`/api/v1/omnichannel/channels` e `/api/v1/omnichannel/inbox`,
+  `@PreAuthorize('omnichannel:*')`) + webhook de WhatsApp.
+- **Frontend** (`features/omnichannel/`): types/service/hooks/componentes
+  (`ConversationList`, `ChatThread`, `ChannelTable` via página, `ChannelFormDialog`,
+  `ChannelStatusBadge`) e páginas `/inbox` (lista + chat + envio) e `/channels`
+  (configuração de canais); Sidebar atualizada.
+
+### Qualidade
+- Backend: +33 testes (domínio Channel/Conversation/Message, `OmnichannelInboxServiceTest`,
+  `WhatsAppWebhookServiceTest`, `OmnichannelChannelServiceTest`) — suíte omnichannel verde.
+- Frontend: typecheck/lint sem erros nos novos arquivos; build prod OK com rotas
+  `/inbox` e `/channels` geradas.
+
+### Pendente (do sprint)
+- Deploy + validação na VPS (Docker/Testcontainers) e IT `OmnichannelIsolationIT`
+  (RLS cross-tenant em channels/conversations/messages) a rodar na VPS com Docker.
+
+## [5.1.0] - 2026-08-14 - Sprint 14: Workflows - disparo por inatividade (OPPORTUNITY_STALE)
+
+### Added
+- **Novo trigger** OPPORTUNITY_STALE no enum TriggerEvent.
+- **WorkflowTriggerEvent.opportunityStale(...)**: factory com eventId **deterministico** (= opportunityId)
+  para idempotencia entre varreduras, e campo de contexto opportunity.daysWithoutActivity.
+- **WorkflowStaleOpportunityScanner** (infrastructure/workflow/scheduler/): varredura diaria
+  (cron 0 0 7 * * *, configuravel via workflow.stale.cron) que publica o evento para oportunidades em
+  **aberto** sem atividade ha 7+ dias (mesmo criterio do dashboard de atencao).
+- **WorkflowSchedulingConfig**: habilita @EnableScheduling no backend.
+- **Template seed** "Follow-up apos oportunidade parada" (WorkflowTemplateSeeder) - condicao
+  opportunity.daysWithoutActivity >= 7 + acao criar tarefa.
+
+### Qualidade
+- Backend: 318 testes unitarios passando (BUILD SUCCESS; +3 WorkflowStaleOpportunityScannerTest).
+
 ## [5.0.0] - 2026-08-14 — Sprint 13: Workflows (Automação de Tarefas e Atividades)
 
 ### Added

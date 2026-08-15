@@ -82,6 +82,13 @@ public class WorkflowExecutionRepositoryImpl implements WorkflowExecutionReposit
                 .map(WorkflowExecutionRepositoryImpl::toDomain).toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkflowExecution> findByCompanyIdAndWorkflowIdAndEventId(UUID companyId, UUID workflowId, UUID eventId) {
+        return jpaRepository.findByCompanyIdAndWorkflowIdAndEventId(companyId, workflowId, eventId).stream()
+                .map(WorkflowExecutionRepositoryImpl::toDomain).toList();
+    }
+
     private static WorkflowExecution toDomain(WorkflowExecutionJpaEntity e) {
         return WorkflowExecution.reconstitute(e.getId(), e.getCompanyId(), e.getWorkflowId(),
                 e.getWorkflowActionId(), e.getEventId(), e.getEventType(), e.getEntityId(),

@@ -1,19 +1,27 @@
 package com.becommerce.crm.presentation.rest.workflow;
 
+import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.workflow.dto.CreateWorkflowRequest;
+import com.becommerce.crm.application.workflow.dto.DryRunRequest;
+import com.becommerce.crm.application.workflow.dto.DryRunResponse;
 import com.becommerce.crm.application.workflow.dto.UpdateWorkflowRequest;
 import com.becommerce.crm.application.workflow.dto.WorkflowExecutionResponse;
 import com.becommerce.crm.application.workflow.dto.WorkflowResponse;
+import com.becommerce.crm.application.workflow.dto.WorkflowRunDetailResponse;
+import com.becommerce.crm.application.workflow.dto.WorkflowRunResponse;
+import com.becommerce.crm.application.workflow.dto.WorkflowRunSummary;
 import com.becommerce.crm.application.workflow.port.input.WorkflowUseCase;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -119,6 +127,54 @@ public class WorkflowController {
             @AuthenticationPrincipal CurrentUser principal) {
         requireCompanyAccess(companyId, principal);
         return ResponseEntity.ok(workflowUseCase.listRecentExecutions(companyId));
+    }
+
+    @GetMapping("/api/v1/companies/{companyId}/workflows/{workflowId}/runs")
+    @PreAuthorize("hasAuthority('workflow:read')")
+    public ResponseEntity<PageResponse<WorkflowRunResponse>> runs(
+            @PathVariable UUID companyId,
+            @PathVariable UUID workflowId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String eventType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @AuthenticationPrincipal CurrentUser principal) {
+        requireCompanyAccess(companyId, principal);
+        return ResponseEntity.ok(workflowUseCase.listRuns(companyId, workflowId, status, eventType,
+                from, to, page, pageSize));
+    }
+
+    @GetMapping("/api/v1/companies/{companyId}/workflows/{workflowId}/runs/{runId}")
+    @PreAuthorize("hasAuthority('workflow:read')")
+    public ResponseEntity<WorkflowRunDetailResponse> runDetail(
+            @PathVariable UUID companyId,
+            @PathVariable UUID workflowId,
+            @PathVariable UUID runId,
+            @AuthenticationPrincipal CurrentUser principal) {
+        requireCompanyAccess(companyId, principal);
+        return ResponseEntity.ok(workflowUseCase.getRun(companyId, workflowId, runId));
+    }
+
+    @PostMapping("/api/v1/companies/{companyId}/workflows/{workflowId}/dry-run")
+    @PreAuthorize("hasAuthority('workflow:read')")
+    public ResponseEntity<DryRunResponse> dryRun(
+            @PathVariable UUID companyId,
+            @PathVariable UUID workflowId,
+            @Valid @RequestBody DryRunRequest request,
+            @AuthenticationPrincipal CurrentUser principal) {
+        requireCompanyAccess(companyId, principal);
+        return ResponseEntity.ok(workflowUseCase.dryRun(companyId, workflowId, request));
+    }
+
+    @GetMapping("/api/v1/companies/{companyId}/workflow-executions/summary")
+    @PreAuthorize("hasAuthority('workflow:read')")
+    public ResponseEntity<List<WorkflowRunSummary>> summary(
+            @PathVariable UUID companyId,
+            @AuthenticationPrincipal CurrentUser principal) {
+        requireCompanyAccess(companyId, principal);
+        return ResponseEntity.ok(workflowUseCase.workflowSummaries(companyId));
     }
 
     private void requireCompanyAccess(UUID companyId, CurrentUser principal) {

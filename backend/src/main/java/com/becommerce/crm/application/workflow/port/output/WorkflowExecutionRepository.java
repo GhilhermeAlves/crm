@@ -21,4 +21,6 @@ public interface WorkflowExecutionRepository {
     List<WorkflowExecution> findByCompanyIdAndWorkflowId(UUID companyId, UUID workflowId);
 
     List<WorkflowExecution> findByCompanyId(UUID companyId);
+
+    List<WorkflowExecution> findByCompanyIdAndWorkflowIdAndEventId(UUID companyId, UUID workflowId, UUID eventId);
 }

@@ -73,6 +73,26 @@ public record WorkflowTriggerEvent(
                 stageName, value, null, null, ctx);
     }
 
+    /**
+     * Disparado por varredura periódica para oportunidades paradas (Item 11).
+     *
+     * <p>{@code eventId} é determinístico (= {@code opportunityId}) para que a
+     * idempotência (Item 6) garanta que cada ação (ex.: criar tarefa de follow-up)
+     * seja executada no máximo uma vez por oportunidade, mesmo com varreduras
+     * diárias repetidas.
+     */
+    public static WorkflowTriggerEvent opportunityStale(UUID companyId, UUID opportunityId,
+                                                        UUID contactId, String stageName,
+                                                        BigDecimal value, long daysWithoutActivity) {
+        Map<String, Object> ctx = ctx();
+        ctx.put("opportunity.stage", stageName);
+        ctx.put("opportunity.value", value);
+        ctx.put("opportunity.daysWithoutActivity", daysWithoutActivity);
+        return new WorkflowTriggerEvent(opportunityId, companyId, TriggerEvent.OPPORTUNITY_STALE,
+                opportunityId, contactId, null, null, stageName, value, null, null,
+                LocalDateTime.now(), ctx);
+    }
+
     public static WorkflowTriggerEvent taskCreated(UUID companyId, UUID taskId, UUID contactId,
                                                    UUID opportunityId, String priority) {
         Map<String, Object> ctx = ctx();
@@ -95,6 +115,23 @@ public record WorkflowTriggerEvent(
         ctx.put("activity.type", type);
         return build(TriggerEvent.ACTIVITY_CREATED, companyId, null, contactId, null, activityId,
                 null, null, null, type, ctx);
+    }
+
+    /**
+     * Mensagem de WhatsApp recebida (Sprint 16, FASE 14). {@code eventId} é
+     * determinístico (= {@code messageId}) para que cada ação seja executada no
+     * máximo uma vez por mensagem.
+     */
+    public static WorkflowTriggerEvent whatsAppMessageReceived(UUID companyId, UUID contactId,
+                                                               UUID conversationId, UUID messageId,
+                                                               String from, String body) {
+        Map<String, Object> ctx = ctx();
+        ctx.put("whatsapp.from", from);
+        ctx.put("whatsapp.body", body);
+        ctx.put("whatsapp.conversationId", conversationId.toString());
+        return new WorkflowTriggerEvent(messageId, companyId, TriggerEvent.WHATSAPP_MESSAGE_RECEIVED,
+                null, contactId, null, null, null, null, null, null,
+                LocalDateTime.now(), ctx);
     }
 
     private static Map<String, Object> ctx() {

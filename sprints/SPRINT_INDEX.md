@@ -13,15 +13,16 @@
 | 5 – 6.10 | Segurança (Tenant + Access Gateway / OIDC) |
 | **7.x** | **Identidade / Autenticação** |
 | 8 | SaaS — Empresas |
-| 9 | CRM — Contatos |
+| 9 | CRM — Contatos (User & Permission Management) |
 | 10 | CRM — Leads |
 | 11 | CRM — Pipeline |
-| 12 | CRM — Conversas |
-| 13 | Omnichannel — WhatsApp |
-| 14 | Omnichannel — Campanhas |
-| 15 | Omnichannel — Automações |
-| 16 | Analytics — Dashboard |
-| 17 | IA |
+| 12 | CRM — orientado à ação (Activities/Tasks/Dashboard) |
+| 13–15 | CRM — Automação de Workflows (13 base · 14 disparo por inatividade · 15 auditoria) |
+| 16 | Omnichannel — WhatsApp |
+| 17 | Omnichannel — Campanhas |
+| 18 | Omnichannel — Automações |
+| 19 | Analytics — Dashboard |
+| 20 | IA |
 
 ## Planejamento
 
@@ -292,7 +293,7 @@
 >   Flyway `v038`), backend iniciou com 0 ERROR, `/pipeline` 307→login, endpoints de
 >   pipelines registrados.
 > - ⚠️ **Débito**: E2E autenticado manual herdado; scoring/distribuição/conversão
->   (L-020/030/040, P-0xx avançadas) para Sprints 17 (IA).
+>   (L-020/030/040, P-0xx avançadas) para Sprints 20 (IA).
 > - 📄 `sprints/11/REPORT.md`.
 
 > **12 — CRM Orientado à Ação ✅ Concluída (2026-08-13).** Activities (Timeline) + Tasks
@@ -322,6 +323,53 @@
 >   endpoints registrados, serviços healthy.
 > - 📄 `sprints/12/REPORT.md`.
 
+> **13 — CRM · Automação de Workflows ✅ Concluída (2026-08-14).** Motor de automação determinístico
+> (sem IA) que responde "o que fazer automaticamente quando um evento do CRM acontece?".
+> - ✅ **DB**: `V041__workflow_tables.sql` (tabelas `workflows`/`workflow_conditions`/
+>   `workflow_actions`/`workflow_executions`, RLS FORCE, chave única de idempotência
+>   `(company_id, workflow_action_id, event_id)`, insert nativo `ON CONFLICT DO NOTHING`) e
+>   `V042__workflow_permissions.sql` (`workflow:create/read/update/delete`).
+> - ✅ **Backend**: `Workflow`/`WorkflowCondition`/`WorkflowAction`/`WorkflowExecution` + enums
+>   (`TriggerEvent`, `ActionType`, `ExecutionStatus`, `ConditionOperator`); `WorkflowService`
+>   (CRUD + ativar/desativar + execuções), `WorkflowConditionEvaluator` (campos fechados),
+>   `WorkflowActionRunner` (ação em `REQUIRES_NEW` + idempotência), `WorkflowExecutor` (guarda de
+>   recursão); eventos `WorkflowTriggerEvent` publicados por Opportunity/Task/Activity;
+>   `WorkflowTemplateSeeder` (seeds por empresa); `WorkflowController` com `@PreAuthorize`
+>   `workflow:*` + empresa ativa; `RoleSeedService` atualizado (ADMIN/MANAGER CRUD, AGENT/VIEWER leitura).
+> - ✅ **Frontend**: feature `workflows` (types/service/hooks/schema Zod + `WorkflowTable`/
+>   `WorkflowForm`/`WorkflowExecutionsPanel`/`DeleteWorkflowDialog`) e rotas `/workflows`, gated por
+>   `workflow:read`; `tsc --noEmit` e `next lint` limpos.
+> - ✅ **Qualidade**: backend **315** testes (incluindo `WorkflowIsolationIT` RLS/idempotência),
+>   frontend **128** testes.
+> - ✅ **Deploy + validação VPS**: `git pull --ff-only` + rebuild, **V041/V042 aplicadas**
+>   (Flyway `v042`), topologia canônica `docker/docker-compose.yml` (rede `crm-network`,
+>   backend 8081 / frontend 3000), backend 0 ERROR, `/workflows` 307→login, endpoints 401 sem sessão.
+> - ⚠️ **Débito**: E2E autenticado manual herdado; Inbox/IA/WebSocket para sprints futuras.
+> - 📄 `sprints/13/REPORT.md`.
+
+> **14 — CRM · Automação de Workflows (disparo por inatividade) ✅ Concluída (2026-08-14).**
+> Continuação da 13.
+> - ✅ **Novo — disparo por inatividade (`OPPORTUNITY_STALE`)**: novo trigger no enum; factory
+>   `WorkflowTriggerEvent.opportunityStale` com `context.opportunity.daysWithoutActivity` e
+>   `eventId` determinístico (idempotente entre varreduras); `WorkflowStaleOpportunityScanner`
+>   (cron diário `0 0 7 * * *`, configurável) que detecta oportunidades em aberto sem atividade há
+>   7+ dias e publica o evento; `WorkflowSchedulingConfig` (`@EnableScheduling`); template seed
+>   "Follow-up após oportunidade parada" + novo `WorkflowStaleOpportunityScannerTest` (3 casos).
+> - ✅ **Qualidade** (**validado 2026-08-14**): backend **318** testes (antes 315; +3 scanner) —
+>   suíte completa **318/318 verdes**; `WorkflowIsolationIT` (Testcontainers/RLS/idempotência) para CI;
+>   frontend 128 testes verdes.
+> - ✅ **Deploy + validação VPS**: rebuild + `up -d`, **V041/V042 aplicadas** (Flyway `v042`),
+>   backend 0 ERROR, `/workflows` 307→login, endpoints protegidos 401 sem sessão, serviços healthy.
+> - ⚠️ **Débito**: E2E autenticado manual herdado; Inbox de eventos e integração IA (recomendação de
+>   ações), WebSocket de notificações e métricas/rate limits de automação para sprints futuras.
+> - 📄 `sprints/14/REPORT.md`.
+
+> **15 — CRM · Auditoria do Workflow Automation (FASE 1) ✅ Concluída (2026-08-14).**
+> Auditoria do que já existe em Workflow (Sprints 13/14) antes de implementar melhorias de
+> observabilidade, categorizando cada item como `JÁ EXISTE` / `PARCIALMENTE` / `NÃO EXISTE` /
+> `NÃO É NECESSÁRIO` nas dimensões domínio, aplicação, persistência, eventos, frontend e testes.
+> - 📄 `sprints/15/AUDIT.md`.
+
 ## CRM
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
@@ -330,26 +378,29 @@
 | 10 | Leads | ✅ Concluída | 2026-08-13 | AI Agent | 9 |
 | 11 | Pipeline | ✅ Concluída | 2026-08-13 | AI Agent | 10 |
 | 12 | CRM orientado à ação (Activities/Tasks/Dashboard) | ✅ Concluída | 2026-08-13 | AI Agent | 11 |
+| 13 | CRM — Automação de Workflows (base) | ✅ Concluída | 2026-08-14 | AI Agent | 12 |
+| 14 | CRM — Workflows (disparo por inatividade OPPORTUNITY_STALE) | ✅ Concluída | 2026-08-14 | AI Agent | 13 |
+| 15 | CRM — Auditoria do Workflow Automation (FASE 1) | ✅ Concluída | 2026-08-14 | AI Agent | 14 |
 
 ## Omnichannel
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 13 | WhatsApp | ⏳ Pendente | — | — | 12 |
-| 14 | Campanhas | ⏳ Pendente | — | — | 12 |
-| 15 | Automações | ⏳ Pendente | — | — | 14 |
+| 16 | WhatsApp | 🚧 Em andamento | 2026-08-15 | AI Agent | 12 |
+| 17 | Campanhas | ⏳ Pendente | — | — | 16 |
+| 18 | Automações | ⏳ Pendente | — | — | 17 |
 
 ## Analytics
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 16 | Dashboard | ⏳ Pendente | — | — | 9, 10, 12 |
+| 19 | Dashboard | ⏳ Pendente | — | — | 9, 10, 12 |
 
 ## IA
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 17 | IA | ⏳ Pendente | — | — | 12 |
+| 20 | IA | ⏳ Pendente | — | — | 12 |
 
 ---
 
@@ -363,11 +414,11 @@
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
 | SaaS | 7 | 7 | 0 | 0 | 0 |
-| CRM | 4 | 3 | 0 | 1 | 0 |
-| Omnichannel | 3 | 0 | 0 | 3 | 0 |
+| CRM | 8 | 8 | 0 | 0 | 0 |
+| Omnichannel | 3 | 0 | 1 | 2 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
 | IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **45** | **34** | **0** | **6** | **5** |
+| **Total** | **49** | **39** | **1** | **4** | **5** |
 
 ---
 
@@ -398,7 +449,5 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-13 — Sprint **12 — CRM Orientado à Ação** concluída
-(REPORT + índice; validação de testes 281 backend / 114 frontend; deploy VPS OK —
-V039/V040 aplicadas, Flyway v040). Resumo agora 45 sprints:
-34 ✅, 0 🚧, 6 ⏳, 5 ↪️. Próxima sprint: **12b/13 — Conversas**.*
+*Última atualização: 2026-08-15 — Sprint **16 — WhatsApp** iniciada (código + testes + build OK;
+deploy/VPS e IT Testcontainers pendentes). Resumo agora 49 sprints: 39 ✅, 1 🚧, 4 ⏳, 5 ↪️.*

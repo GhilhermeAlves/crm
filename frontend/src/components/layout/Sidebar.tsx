@@ -84,8 +84,8 @@ const navGroups: NavGroup[] = [
   {
     title: "Comunicação",
     items: [
-      { label: "Chat", href: ROUTES.CHAT, icon: MessageSquare },
-      { label: "Campanhas", href: ROUTES.CAMPAIGNS, icon: Megaphone },
+      { label: "Inbox", href: ROUTES.INBOX, icon: MessageSquare, permission: "omnichannel:read" },
+      { label: "Canais", href: ROUTES.CHANNELS, icon: Megaphone, permission: "omnichannel:read" },
     ],
   },
   {

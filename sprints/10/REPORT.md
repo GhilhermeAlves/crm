@@ -159,7 +159,7 @@ Redis/DB em multi-instância"):
 - **E2E autenticado manual** (herdado): fluxo real de leads no browser sem credenciais.
 - **Envio de e-mail real** (herdado): `ConsoleEmailSender` placeholder.
 - **Scoring/distribuição/conversão** (Lead.md L-020/030/040) — regras avançadas de
-  qualificação e scoring ficam para Sprints 11 (Pipeline) e 17 (IA); esta sprint
+  qualificação e scoring ficam para Sprints 11 (Pipeline) e 20 (IA); esta sprint
   entregou CRUD + status/classificação/score validados.
 
 ## Artefatos

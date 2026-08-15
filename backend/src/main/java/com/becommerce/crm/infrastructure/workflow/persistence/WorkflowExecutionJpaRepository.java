@@ -10,4 +10,7 @@ public interface WorkflowExecutionJpaRepository extends JpaRepository<WorkflowEx
     List<WorkflowExecutionJpaEntity> findByCompanyIdAndWorkflowIdOrderByCreatedAtDesc(UUID companyId, UUID workflowId);
 
     List<WorkflowExecutionJpaEntity> findByCompanyIdOrderByCreatedAtDesc(UUID companyId);
+
+    List<WorkflowExecutionJpaEntity> findByCompanyIdAndWorkflowIdAndEventId(
+            UUID companyId, UUID workflowId, UUID eventId);
 }

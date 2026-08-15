@@ -46,6 +46,7 @@ public class WorkflowTemplateSeeder {
         seed(companyId, followUpProposta(companyId), existingNames);
         seed(companyId, contatoInicial(companyId), existingNames);
         seed(companyId, agradecimentoGanha(companyId), existingNames);
+        seed(companyId, followUpParada(companyId), existingNames);
     }
 
     private void seed(UUID companyId, Workflow template, Set<String> existingNames) {
@@ -82,6 +83,17 @@ public class WorkflowTemplateSeeder {
                 TriggerEvent.OPPORTUNITY_WON);
         wf.addAction(WorkflowAction.create(companyId, wf.getId(), ActionType.CREATE_TASK, 0,
                 "{\"title\":\"Enviar agradecimento ao cliente\",\"dueInDays\":1,\"priority\":\"HIGH\"}"));
+        return wf;
+    }
+
+    private Workflow followUpParada(UUID companyId) {
+        Workflow wf = Workflow.create(companyId, "Follow-up após oportunidade parada",
+                "Cria uma tarefa de follow-up quando uma oportunidade fica sem atividade por 7+ dias.",
+                TriggerEvent.OPPORTUNITY_STALE);
+        wf.addCondition(WorkflowCondition.create(companyId, wf.getId(), "opportunity.daysWithoutActivity",
+                ConditionOperator.GREATER_OR_EQUAL, "7", 0));
+        wf.addAction(WorkflowAction.create(companyId, wf.getId(), ActionType.CREATE_TASK, 0,
+                "{\"title\":\"Fazer follow-up da oportunidade parada\",\"dueInDays\":1,\"priority\":\"MEDIUM\"}"));
         return wf;
     }
 }

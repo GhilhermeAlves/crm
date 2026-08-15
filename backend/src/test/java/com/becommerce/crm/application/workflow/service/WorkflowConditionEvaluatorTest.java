@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -96,5 +97,29 @@ class WorkflowConditionEvaluatorTest {
         WorkflowTriggerEvent lowValue = WorkflowTriggerEvent.opportunityStageChanged(
                 companyId, UUID.randomUUID(), null, "Proposta", new BigDecimal("500"));
         assertFalse(evaluator.matches(wf, lowValue));
+    }
+
+    @Test
+    void evaluate_exposesExpectedActualAndMatchPerCondition() {
+        Workflow wf = Workflow.create(companyId, "x", null, TriggerEvent.OPPORTUNITY_STAGE_CHANGED);
+        wf.addCondition(WorkflowCondition.create(companyId, wf.getId(), "opportunity.stage",
+                ConditionOperator.EQUALS, "Proposta", 0));
+        wf.addCondition(WorkflowCondition.create(companyId, wf.getId(), "opportunity.value",
+                ConditionOperator.GREATER_OR_EQUAL, "10000", 1));
+
+        WorkflowTriggerEvent event = WorkflowTriggerEvent.opportunityStageChanged(
+                companyId, UUID.randomUUID(), null, "Proposta", new BigDecimal("500"));
+
+        var results = evaluator.evaluate(wf, event);
+        assertEquals(2, results.size());
+        var stage = results.get(0);
+        assertEquals("opportunity.stage", stage.field());
+        assertEquals("Proposta", stage.expected());
+        assertEquals("Proposta", stage.actual());
+        assertTrue(stage.matched());
+        var value = results.get(1);
+        assertEquals(new BigDecimal("10000"), new java.math.BigDecimal(String.valueOf(value.expected())));
+        assertEquals(new BigDecimal("500"), new java.math.BigDecimal(String.valueOf(value.actual())));
+        assertFalse(value.matched());
     }
 }

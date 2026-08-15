@@ -1,5 +1,14 @@
 # Linha do Tempo do Projeto
 
+> ⚠️ **SUPERSEDED / NÃO AUTORITATIVO** — Este arquivo é o **planejamento inicial** (2026-07-15) e usa
+> uma numeração **que não é mais válida** (ex.: "Sprint 5 = Tenant", "Sprint 13 = Automações",
+> "Sprint 14 = Dashboard", "Sprint 15 = IA"). O projeto evoluiu e a numeração real mudou
+> (Segurança 5–6.10, Identidade 7.x, SaaS 8, CRM 9–15 — com **Automação de Workflows em 13–15**,
+> Omnichannel **16–18**, Analytics **19**, IA **20**).
+>
+> **Fonte de verdade atual: [`sprints/SPRINT_INDEX.md`](../sprints/SPRINT_INDEX.md).**
+> As entradas abaixo ficam preservadas apenas como registro histórico do plano inicial.
+
 ## Sprint 0 — Planejamento
 - **Data:** 2026-07-15
 - **Objetivo:** Definir arquitetura, stack, estrutura

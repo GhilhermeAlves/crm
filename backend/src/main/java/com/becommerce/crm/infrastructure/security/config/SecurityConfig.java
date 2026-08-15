@@ -79,6 +79,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/forgot-password", "/api/v1/auth/reset-password").permitAll()
                 .requestMatchers("/api/v1/users/accept-invite").permitAll()
                 .requestMatchers("/api/v1/auth/phone/**").permitAll()
+                .requestMatchers("/api/v1/omnichannel/whatsapp/webhook").permitAll()
                 .requestMatchers("/actuator/**", "/docs/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/v1/permissions/**").authenticated()

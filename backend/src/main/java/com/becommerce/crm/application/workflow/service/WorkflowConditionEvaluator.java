@@ -1,5 +1,6 @@
 package com.becommerce.crm.application.workflow.service;
 
+import com.becommerce.crm.application.workflow.dto.ConditionEvaluation;
 import com.becommerce.crm.domain.workflow.ConditionOperator;
 import com.becommerce.crm.domain.workflow.Workflow;
 import com.becommerce.crm.domain.workflow.WorkflowCondition;
@@ -7,6 +8,8 @@ import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,17 +23,33 @@ import java.util.Map;
 public class WorkflowConditionEvaluator {
 
     public boolean matches(Workflow workflow, WorkflowTriggerEvent event) {
-        if (workflow.getConditions().isEmpty()) {
-            return true;
-        }
-        Map<String, Object> context = event.context();
+        return evaluate(workflow, event.context()).stream().allMatch(ConditionEvaluation::matched);
+    }
+
+    /** Compara um único valor do contexto contra o operador/esperado (dry-run). */
+    public boolean matches(String field, ConditionOperator operator, String expected, Object actual) {
+        return compare(actual, operator, expected);
+    }
+
+    /**
+     * Avalia cada condição individualmente (Sprint 15), retornando o resultado
+     * com o valor esperado e o valor encontrado — usado na persistência de
+     * {@code workflow_runs} e no dry-run.
+     */
+    public List<ConditionEvaluation> evaluate(Workflow workflow, Map<String, Object> context) {
+        List<ConditionEvaluation> results = new ArrayList<>();
         for (WorkflowCondition condition : workflow.getConditions()) {
             Object actual = context.get(condition.getField());
-            if (!compare(actual, condition.getOperator(), condition.getValue())) {
-                return false;
-            }
+            boolean matched = compare(actual, condition.getOperator(), condition.getValue());
+            results.add(new ConditionEvaluation(condition.getField(), condition.getOperator(),
+                    condition.getValue(), actual, matched));
         }
-        return true;
+        return results;
+    }
+
+    /** Avalia usando o contexto do próprio evento (conveniência). */
+    public List<ConditionEvaluation> evaluate(Workflow workflow, WorkflowTriggerEvent event) {
+        return evaluate(workflow, event.context());
     }
 
     private boolean compare(Object actual, ConditionOperator op, String expected) {

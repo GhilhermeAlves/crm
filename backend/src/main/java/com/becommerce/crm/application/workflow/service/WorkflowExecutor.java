@@ -1,16 +1,22 @@
 package com.becommerce.crm.application.workflow.service;
 
 import com.becommerce.crm.application.workflow.port.output.WorkflowRepository;
+import com.becommerce.crm.application.workflow.port.output.WorkflowRunRepository;
+import com.becommerce.crm.application.workflow.dto.ConditionEvaluation;
 import com.becommerce.crm.domain.workflow.Workflow;
 import com.becommerce.crm.domain.workflow.WorkflowAction;
+import com.becommerce.crm.domain.workflow.WorkflowRunStatus;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -35,13 +41,19 @@ public class WorkflowExecutor {
     private final WorkflowRepository workflowRepository;
     private final WorkflowConditionEvaluator conditionEvaluator;
     private final WorkflowActionRunner actionRunner;
+    private final WorkflowRunRepository runRepository;
+    private final ObjectMapper objectMapper;
 
     public WorkflowExecutor(WorkflowRepository workflowRepository,
                             WorkflowConditionEvaluator conditionEvaluator,
-                            WorkflowActionRunner actionRunner) {
+                            WorkflowActionRunner actionRunner,
+                            WorkflowRunRepository runRepository,
+                            ObjectMapper objectMapper) {
         this.workflowRepository = workflowRepository;
         this.conditionEvaluator = conditionEvaluator;
         this.actionRunner = actionRunner;
+        this.runRepository = runRepository;
+        this.objectMapper = objectMapper;
     }
 
     public void process(WorkflowTriggerEvent event) {
@@ -60,16 +72,32 @@ public class WorkflowExecutor {
                     .findByCompanyIdAndTriggerAndActive(companyId, event.trigger(), true);
 
             for (Workflow workflow : active) {
-                if (!conditionEvaluator.matches(workflow, event)) {
+                List<ConditionEvaluation> conditions = conditionEvaluator.evaluate(workflow, event);
+                boolean matched = conditions.stream().allMatch(ConditionEvaluation::matched);
+
+                UUID runId = UUID.randomUUID();
+                int inserted = runRepository.insertNew(runId, companyId, workflow.getId(), event.eventId(),
+                        event.trigger().name(), entityId(event), matched ? WorkflowRunStatus.MATCHED : WorkflowRunStatus.SKIPPED,
+                        toJson(conditions), toJson(event.context()));
+                if (inserted == 0) {
+                    continue; // run já registrado para (company, workflow, event)
+                }
+                if (!matched) {
+                    runRepository.updateStatus(runId, companyId, WorkflowRunStatus.SKIPPED, null);
                     continue;
                 }
+
                 List<WorkflowAction> actions = workflow.getActions().stream()
                         .sorted(Comparator.comparingInt(WorkflowAction::getSortOrder))
                         .toList();
+                int failures = 0;
+                int executed = 0;
                 for (WorkflowAction action : actions) {
+                    executed++;
                     try {
                         actionRunner.run(workflow, action, event);
                     } catch (Exception ex) {
+                        failures++;
                         try {
                             actionRunner.recordFailure(workflow, action, event, ex);
                         } catch (Exception recordEx) {
@@ -79,6 +107,10 @@ public class WorkflowExecutor {
                         }
                     }
                 }
+                WorkflowRunStatus finalStatus = failures == 0
+                        ? WorkflowRunStatus.SUCCESS
+                        : (failures == executed ? WorkflowRunStatus.FAILED : WorkflowRunStatus.PARTIAL);
+                runRepository.updateStatus(runId, companyId, finalStatus, null);
             }
         } finally {
             PROCESSING.remove();
@@ -89,5 +121,26 @@ public class WorkflowExecutor {
 
     public boolean isProcessing() {
         return Boolean.TRUE.equals(PROCESSING.get());
+    }
+
+    private String toJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
+    }
+
+    private static UUID entityId(WorkflowTriggerEvent event) {
+        if (event.opportunityId() != null) {
+            return event.opportunityId();
+        }
+        if (event.taskId() != null) {
+            return event.taskId();
+        }
+        if (event.activityId() != null) {
+            return event.activityId();
+        }
+        return event.contactId();
     }
 }

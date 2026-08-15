@@ -1,19 +1,31 @@
 package com.becommerce.crm.application.workflow.service;
 
+import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.workflow.dto.CreateWorkflowRequest;
+import com.becommerce.crm.application.workflow.dto.ConditionEvaluation;
+import com.becommerce.crm.application.workflow.dto.DryRunAction;
+import com.becommerce.crm.application.workflow.dto.DryRunRequest;
+import com.becommerce.crm.application.workflow.dto.DryRunResponse;
+import com.becommerce.crm.application.workflow.dto.DryRunCondition;
 import com.becommerce.crm.application.workflow.dto.UpdateWorkflowRequest;
 import com.becommerce.crm.application.workflow.dto.WorkflowActionRequest;
 import com.becommerce.crm.application.workflow.dto.WorkflowConditionRequest;
 import com.becommerce.crm.application.workflow.dto.WorkflowExecutionResponse;
 import com.becommerce.crm.application.workflow.dto.WorkflowResponse;
+import com.becommerce.crm.application.workflow.dto.WorkflowRunDetailResponse;
+import com.becommerce.crm.application.workflow.dto.WorkflowRunResponse;
+import com.becommerce.crm.application.workflow.dto.WorkflowRunSummary;
 import com.becommerce.crm.application.workflow.port.input.WorkflowUseCase;
 import com.becommerce.crm.application.workflow.port.output.WorkflowExecutionRepository;
 import com.becommerce.crm.application.workflow.port.output.WorkflowRepository;
+import com.becommerce.crm.application.workflow.port.output.WorkflowRunRepository;
 import com.becommerce.crm.domain.workflow.Workflow;
 import com.becommerce.crm.domain.workflow.WorkflowAction;
 import com.becommerce.crm.domain.workflow.WorkflowCondition;
 import com.becommerce.crm.domain.workflow.WorkflowExecution;
 import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
+import com.becommerce.crm.domain.workflow.WorkflowRun;
+import com.becommerce.crm.domain.workflow.WorkflowRunStatus;
 import com.becommerce.crm.domain.workflow.WorkflowValidationException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,7 +33,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,13 +55,19 @@ public class WorkflowService implements WorkflowUseCase {
 
     private final WorkflowRepository workflowRepository;
     private final WorkflowExecutionRepository executionRepository;
+    private final WorkflowRunRepository runRepository;
+    private final WorkflowConditionEvaluator conditionEvaluator;
     private final ObjectMapper objectMapper;
 
     public WorkflowService(WorkflowRepository workflowRepository,
                            WorkflowExecutionRepository executionRepository,
+                           WorkflowRunRepository runRepository,
+                           WorkflowConditionEvaluator conditionEvaluator,
                            ObjectMapper objectMapper) {
         this.workflowRepository = workflowRepository;
         this.executionRepository = executionRepository;
+        this.runRepository = runRepository;
+        this.conditionEvaluator = conditionEvaluator;
         this.objectMapper = objectMapper;
     }
 
@@ -170,6 +190,107 @@ public class WorkflowService implements WorkflowUseCase {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<WorkflowRunResponse> listRuns(UUID companyId, UUID workflowId, String status,
+                                                      String eventType, LocalDateTime from, LocalDateTime to,
+                                                      int page, int pageSize) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            requireOwned(companyId, workflowId);
+            WorkflowRunRepository.PageResult result = runRepository.findByCompanyAndWorkflow(
+                    companyId, workflowId, status, eventType, from, to, page, pageSize);
+            List<WorkflowRunResponse> content = result.content().stream()
+                    .map(WorkflowService::toRunResponse).toList();
+            return PageResponse.of(content, page, pageSize, result.totalElements());
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkflowRunDetailResponse getRun(UUID companyId, UUID workflowId, UUID runId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            requireOwned(companyId, workflowId);
+            WorkflowRun run = runRepository.findById(runId, companyId)
+                    .filter(r -> r.getWorkflowId().equals(workflowId))
+                    .orElseThrow(() -> new WorkflowNotFoundException(runId));
+            List<ConditionEvaluation> conditions = readConditions(run.getConditions());
+            Map<String, Object> context = readContext(run.getContext());
+            List<WorkflowExecutionResponse> actions = executionRepository
+                    .findByCompanyIdAndWorkflowIdAndEventId(companyId, workflowId, run.getEventId())
+                    .stream().map(WorkflowService::toExecutionResponse).toList();
+            return new WorkflowRunDetailResponse(run.getId(), run.getWorkflowId(), run.getEventType(),
+                    run.getEntityId(), run.getStatus(), run.getResultText(),
+                    run.getCreatedAt(), run.getUpdatedAt(), conditions, context, actions);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DryRunResponse dryRun(UUID companyId, UUID workflowId, DryRunRequest request) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            Workflow workflow = requireOwned(companyId, workflowId);
+            String eventType = request.eventType() != null ? request.eventType().trim() : null;
+            Map<String, Object> context = request.context() != null ? request.context() : Collections.emptyMap();
+
+            List<DryRunCondition> conditions = workflow.getConditions().stream()
+                    .map(c -> {
+                        Object actual = context.get(c.getField());
+                        boolean matched = conditionEvaluator.matches(c.getField(), c.getOperator(), c.getValue(), actual);
+                        return new DryRunCondition(c.getField(), c.getOperator(), c.getValue(), actual, matched);
+                    })
+                    .toList();
+            boolean matched = conditions.stream().allMatch(DryRunCondition::matched);
+
+            List<DryRunAction> actions = matched
+                    ? workflow.getActions().stream()
+                            .sorted(java.util.Comparator.comparingInt(WorkflowAction::getSortOrder))
+                            .map(a -> new DryRunAction(a.getActionType(), a.getSortOrder(), parseConfig(a.getConfig())))
+                            .toList()
+                    : List.of();
+
+            String message = matched
+                    ? "Workflow elegível. " + actions.size() + " ação(ões) seriam executadas."
+                    : "Workflow não elegível — alguma condição não foi atendida.";
+            return new DryRunResponse(matched, eventType, conditions, actions, message);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkflowRunSummary> workflowSummaries(UUID companyId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            return runRepository.summarizeByCompany(companyId).stream()
+                    .map(row -> {
+                        String lastError = null;
+                        WorkflowRunStatus lastStatus = row.lastStatus() != null
+                                ? WorkflowRunStatus.valueOf(row.lastStatus()) : null;
+                        if ((lastStatus == WorkflowRunStatus.FAILED || lastStatus == WorkflowRunStatus.PARTIAL)
+                                && row.lastEventId() != null) {
+                            lastError = executionRepository
+                                    .findByCompanyIdAndWorkflowIdAndEventId(companyId, row.workflowId(), row.lastEventId())
+                                    .stream().map(WorkflowExecution::getErrorMessage)
+                                    .filter(m -> m != null && !m.isBlank())
+                                    .findFirst().orElse(null);
+                        }
+                        return new WorkflowRunSummary(row.workflowId(), row.runCount(), lastStatus,
+                                row.lastAt(), lastError);
+                    })
+                    .toList();
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
     private Workflow requireOwned(UUID companyId, UUID workflowId) {
         Workflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new WorkflowNotFoundException(workflowId));
@@ -237,5 +358,47 @@ public class WorkflowService implements WorkflowUseCase {
         return new WorkflowExecutionResponse(e.getId(), e.getWorkflowId(), e.getActionType(),
                 e.getEventType(), e.getEntityId(), e.getStatus(), e.getResultText(),
                 e.getErrorMessage(), e.getCreatedAt());
+    }
+
+    private static WorkflowRunResponse toRunResponse(WorkflowRun r) {
+        return new WorkflowRunResponse(r.getId(), r.getWorkflowId(), r.getEventType(), r.getEntityId(),
+                r.getStatus(), r.getResultText(), r.getCreatedAt(), r.getUpdatedAt());
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<ConditionEvaluation> readConditions(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(json,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, ConditionEvaluation.class));
+        } catch (JsonProcessingException e) {
+            return List.of();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> readContext(String json) {
+        if (json == null || json.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(json, Map.class);
+        } catch (JsonProcessingException e) {
+            return Map.of();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> parseConfig(String configJson) {
+        if (configJson == null || configJson.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(configJson, Map.class);
+        } catch (JsonProcessingException e) {
+            return Map.of();
+        }
     }
 }

@@ -1,5 +1,13 @@
 # Diário de Trabalho
 
+> ⚠️ **ATENÇÃO — numeração histórica.** Este diário registra o trabalho conforme foi feito, usando a
+> numeração **vigente na época de cada entrada**, que **nem sempre coincide com a numeração canônica
+> atual** (ex.: a entrada "Sprint 13 — Customer 360" data de antes de a Automação de Workflows ser
+> fixada como Sprint 13). Não tratar estes números como fonte de verdade.
+>
+> **Fonte de verdade atual: [`sprints/SPRINT_INDEX.md`](../sprints/SPRINT_INDEX.md).**
+> Sprints reais: CRM 9–15 (Automação de Workflows em 13–15), Omnichannel 16–18, Analytics 19, IA 20.
+
 ## Sprint 0 — Planejamento
 - **Data:** 2026-07-15
 - **Objetivo:** Definir arquitetura, stack tecnológica, estrutura do projeto
@@ -144,6 +152,20 @@
   - Rotas: `/contacts` (diretório) e `/contacts/[id]` (Customer 360) + ações rápidas (atividade/tarefa)
 - **Testes:** backend +8 (Customer360Service/Controller); frontend +(hook + componentes). `mvn verify` 289 testes ✅; frontend 123 testes ✅
 - **Resultado:** Sprint 13 implementada e testada
+
+## Sprint 16 - Omnichannel · WhatsApp (base)
+- **Data:** 2026-08-15
+- **Objetivo:** Base do Omnichannel de WhatsApp — canais, inbox (chat) e webhook, com RLS FORCE.
+- **Backend:**
+  - `domain/omnichannel/` - `Channel`/`Conversation`/`Message` + enums (create/reconstitute/estados)
+  - `application/omnichannel/` - `OmnichannelChannelService`, `OmnichannelInboxService`, `WhatsAppWebhookService`
+  - Portas `Omnichannel{Channel,Conversation,Message}Repository`, `OmnichannelCompanyResolver`, `WhatsAppWebhookParser`, `WhatsAppProvider`
+  - Infra: `WhatsAppCloudApiProvider`/parser (Meta) + `FakeWhatsAppProvider` (dev), repos RLS FORCE, seed `omnichannel:*`
+  - Controllers `/api/v1/omnichannel/channels` + `/inbox`; migrações `V043__omnichannel_tables.sql`, `V044__omnichannel_permissions.sql`
+- **Frontend:**
+  - Feature `features/omnichannel/` (types/service/hooks/componentes) + páginas `/inbox` (lista + chat) e `/channels` (config)
+- **Testes:** backend +33 (domínio + 3 services); typecheck/lint OK; build prod OK. IT `OmnichannelIsolationIT` p/ rodar na VPS.
+- **Pendências:** deploy/VPS + IT Testcontainers + E2E manual.
 
 ---
 

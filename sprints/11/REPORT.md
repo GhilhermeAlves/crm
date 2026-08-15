@@ -150,7 +150,7 @@ Nova feature `features/pipeline` + página `app/(dashboard)/pipeline`:
 - **E2E autenticado manual** (herdado): fluxo real no browser sem credenciais.
 - **Envio de e-mail real** (herdado): `ConsoleEmailSender` placeholder.
 - **Scoring/distribuição/conversão** (Lead.md L-020/030/040, Pipeline.md P-0xx avançadas):
-  regras avançadas de qualificação e scoring ficam para sprints 17 (IA); esta sprint
+  regras avançadas de qualificação e scoring ficam para sprints 20 (IA); esta sprint
   entregou CRUD + movimentação ±1 + conclusão/cancelamento + histórico + métricas.
 
 ## Artefatos
