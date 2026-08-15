@@ -34,6 +34,7 @@ export const ROUTES = {
   WORKFLOWS: "/workflows",
   INBOX: "/inbox",
   CHANNELS: "/channels",
+  STORAGE: "/storage",
 } as const;
 
 export const PUBLIC_ROUTES = [

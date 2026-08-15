@@ -11,7 +11,7 @@ Nenhum problema ativo.
 | L-002 | Sem testes de integração | Não validar fluxos | Implementar em Sprint 4.5 |
 | L-003 | Sem cache implementado | Performance limitada | Implementar quando necessário |
 | L-004 | Sem WebSocket implementado | Sem real-time | Implementar em Sprint 10 |
-| L-005 | Sem file storage implementado | Sem upload | Implementar quando necessário |
+| L-005 | ~~Sem file storage implementado~~ | ~~Sem upload~~ | **Resolvido** (2026-08-15): upload/download/list/delete em `storage_objects` |
 
 ## Pendências
 

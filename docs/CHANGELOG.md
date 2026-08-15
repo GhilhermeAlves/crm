@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## [6.1.0] - 2026-08-15 - Storage: CRUD completo (download/exclusão) + tela de Arquivos
+
+### Added
+- **Backend** (`application/storage/`): completados os casos de uso do módulo de
+  armazenamento — `list` (metadados da empresa, mais recentes primeiro), `download`
+  (retorna `StorageDownload` com bytes) e `delete` — adicionados a `StorageUseCase`,
+  `StorageRepository`, `StorageJpaRepository`, `StorageRepositoryImpl` e
+  `StorageService`. Todos escopados por tenant (`TenantContext` + RLS FORCE) e com
+  auditoria via `TenantAuditRecorder`.
+- **DTO**: `StorageDownload` (id, fileName, contentType, sizeBytes, data).
+- **Exceção**: `StorageObjectNotFoundException` (`domain/storage/exception/`) mapeada
+  no `GlobalExceptionHandler` → HTTP **404** quando o objeto não existe/não pertence
+  à empresa.
+- **Endpoints** (`/api/v1/companies/{companyId}/storage`):
+  `GET` (listar), `GET /{objectId}` (download com `Content-Type` e
+  `Content-Disposition: attachment`), `DELETE /{objectId}` (no-content);
+  acesso restrito à própria empresa (SUPER_ADMIN cross-tenant permitido).
+- **Frontend** (`features/storage/`): `types`, `service`, hook `useStorage`
+  (`useStorageObjects`/`useUploadFile`/`useDownloadFile`/`useDeleteFile`) e testes;
+  nova página `/storage` ("Arquivos") com upload, listagem, download e exclusão
+  (ConfirmDialog) + `formatBytes`; Sidebar e `ROUTES.STORAGE` atualizados.
+
+### Qualidade
+- Backend: **366 testes** unitários passando (BUILD SUCCESS; +`StorageServiceTest`
+  para list/download/delete e 404 cross-tenant).
+- Frontend: **133 testes** (26 arquivos) passando; typecheck/lint OK; build prod OK
+  com rota `/storage` gerada.
+
 ## [6.0.0] - 2026-08-15 - Sprint 16: Omnichannel - WhatsApp (base)
 
 ### Added

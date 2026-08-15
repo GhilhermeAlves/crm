@@ -104,3 +104,47 @@ Esta é a **última sprint da fase SaaS (8.x)**.
 - `backend/.../presentation/rest/handler/GlobalExceptionHandler.java`
 - `frontend/src/features/usage/**`
 - `docs/MULTI_TENANCY.md`, `docs/DATABASE_MAP.md`, `docs/BACKEND_MAP.md`
+
+---
+
+## Addendum (2026-08-15) — Storage: CRUD completo + tela de Arquivos
+
+Extensão do módulo mínimo `Storage` (8.6), que originalmente só gravava via upload
+para aplicar a quota. Esta entrega completa os casos de uso e adiciona a UI.
+
+### Backend
+- `StorageUseCase`/`StorageService`/`StorageRepository`(+impl/`StorageJpaRepository`):
+  novos casos `list`, `download` e `delete` — todos escopados por tenant
+  (`TenantContext` + RLS FORCE) e auditados via `TenantAuditRecorder`.
+- `StorageDownload` (DTO: id, fileName, contentType, sizeBytes, data).
+- `StorageObjectNotFoundException` (`domain/storage/exception/`) → HTTP **404** no
+  `GlobalExceptionHandler` quando o objeto não existe ou não pertence à empresa.
+- Endpoints em `StorageController`:
+  `GET /api/v1/companies/{companyId}/storage` (listar),
+  `GET /{objectId}` (download com `Content-Type` + `Content-Disposition: attachment`),
+  `DELETE /{objectId}` (204); acesso restrito à própria empresa (SUPER_ADMIN cross-tenant).
+
+### Frontend
+- Nova página `/storage` ("Arquivos") em `frontend/src/app/(dashboard)/storage/`:
+  upload, listagem em tabela (nome/tipo/tamanho), download e exclusão com `ConfirmDialog`.
+- Feature `features/storage/`: `types`, `service`, hook `useStorage`
+  (`useStorageObjects`/`useUploadFile`/`useDownloadFile`/`useDeleteFile`) + `formatBytes`.
+- Sidebar (grupo Administração) e `ROUTES.STORAGE` atualizados.
+
+### Qualidade
+- Backend: **366 testes** PASS (BUILD SUCCESS) — `StorageServiceTest` cobrindo
+  list/download/delete e 404 cross-tenant.
+- Frontend: **133 testes** (26 arquivos) PASS; typecheck/lint OK; build prod OK
+  (rota `/storage` gerada).
+
+### Débito técnico resolvido
+- `KNOWN_ISSUES L-005` ("Sem file storage implementado") → **resolvida**: storage
+  com upload/download/list/delete agora disponível (blob em `storage_objects`, port
+  permite trocar por object-store externo).
+
+### Artefatos (addendum)
+- `backend/.../application/storage/**`, `domain/storage/exception/**`,
+  `presentation/rest/storage/StorageController.java`, `GlobalExceptionHandler.java`
+- `backend/.../test/.../storage/service/StorageServiceTest.java`
+- `frontend/src/app/(dashboard)/storage/page.tsx`, `frontend/src/features/storage/**`
+- `frontend/src/components/layout/Sidebar.tsx`, `frontend/src/lib/constants.ts`

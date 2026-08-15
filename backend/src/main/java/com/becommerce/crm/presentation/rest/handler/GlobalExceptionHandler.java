@@ -36,6 +36,7 @@ import com.becommerce.crm.domain.pipeline.exception.PipelineNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.PipelineValidationException;
 import com.becommerce.crm.domain.pipeline.exception.StageNotFoundException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
+import com.becommerce.crm.domain.storage.exception.StorageObjectNotFoundException;
 import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
 import com.becommerce.crm.domain.task.exception.TaskValidationException;
 import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
@@ -407,8 +408,18 @@ public class GlobalExceptionHandler {
             ));
     }
 
-    @ExceptionHandler(UserProvisioningException.class)
-    public ResponseEntity<Map<String, Object>> handleUserProvisioningException(UserProvisioningException ex) {
+    @ExceptionHandler(StorageObjectNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleStorageObjectNotFoundException(StorageObjectNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(UserProvisioningException.class)    public ResponseEntity<Map<String, Object>> handleUserProvisioningException(UserProvisioningException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(Map.of(
                 "status", 401,

@@ -2,16 +2,20 @@ package com.becommerce.crm.application.storage.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.company.service.CompanyQuotaService;
+import com.becommerce.crm.application.storage.dto.StorageDownload;
 import com.becommerce.crm.application.storage.dto.StorageResponse;
 import com.becommerce.crm.application.storage.port.input.StorageUseCase;
 import com.becommerce.crm.application.storage.port.output.StorageRepository;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.storage.StorageObject;
+import com.becommerce.crm.domain.storage.exception.StorageObjectNotFoundException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -53,8 +57,52 @@ public class StorageService implements StorageUseCase {
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SETTINGS, "StorageObject",
                     saved.getId().toString(),
                     "Arquivo enviado: " + saved.getFileName() + " (" + saved.getSizeBytes() + " bytes)",
-                    userId, java.util.Map.of("fileName", saved.getFileName(), "sizeBytes", saved.getSizeBytes()));
+                    userId, Map.of("fileName", saved.getFileName(), "sizeBytes", saved.getSizeBytes()));
             return toResponse(saved);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StorageResponse> list(UUID companyId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            return storageRepository.listByCompanyId(companyId).stream()
+                    .map(StorageService::toResponse)
+                    .toList();
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StorageDownload download(UUID companyId, UUID objectId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            StorageObject object = storageRepository.findByIdAndCompanyId(objectId, companyId)
+                    .orElseThrow(() -> new StorageObjectNotFoundException(objectId));
+            return new StorageDownload(
+                    object.getId(), object.getFileName(), object.getContentType(),
+                    object.getSizeBytes(), object.getData());
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional
+    public void delete(UUID companyId, UUID objectId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            storageRepository.findByIdAndCompanyId(objectId, companyId)
+                    .orElseThrow(() -> new StorageObjectNotFoundException(objectId));
+            storageRepository.deleteByIdAndCompanyId(objectId, companyId);
+            auditor.record(companyId, AuditAction.DELETE, AuditModule.SETTINGS, "StorageObject",
+                    objectId.toString(), "Arquivo removido: " + objectId, null,
+                    Map.of("objectId", objectId.toString()));
         } finally {
             TenantContext.clear();
         }

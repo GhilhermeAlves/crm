@@ -21,6 +21,7 @@ import {
   MailPlus,
   KeyRound,
   ClipboardList,
+  HardDrive,
   Workflow as WorkflowIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -66,8 +67,9 @@ const navGroups: NavGroup[] = [
           { label: "Usuários", href: ROUTES.USERS, icon: Users, permission: "user:read" },
           { label: "Membros", href: ROUTES.MEMBERS, icon: Users, permission: "membership:view" },
           { label: "Convites", href: ROUTES.INVITATIONS, icon: MailPlus, permission: "membership:view" },
-          { label: "Roles", href: ROUTES.ROLES, icon: Shield, permission: "role:read" },
+      { label: "Roles", href: ROUTES.ROLES, icon: Shield, permission: "role:read" },
       { label: "Permissões", href: ROUTES.PERMISSIONS, icon: KeyRound, permission: "role:read" },
+      { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
     ],
   },
   {
