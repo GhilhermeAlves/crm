@@ -142,6 +142,14 @@ para aplicar a quota. Esta entrega completa os casos de uso e adiciona a UI.
   com upload/download/list/delete agora disponível (blob em `storage_objects`, port
   permite trocar por object-store externo).
 
+### Deploy / validação (VPS)
+- Código sincronizado em `/opt/crm` e imagens `backend`/`frontend` reconstruídas
+  (`docker compose build/up -d`) na VPS `crm-vps` (76.13.237.238).
+- Backend sobe limpo (sem nova migração — mudança apenas de código), `/actuator/health` → **200**.
+- Smoke test: `GET .../storage` → **401** (rota registrada e protegida por
+  `@PreAuthorize` + `requireCompanyAccess`); frontend `/storage` → **307** para
+  `/login?redirect=/storage` (rota existente e guardada pelo middleware de auth).
+
 ### Artefatos (addendum)
 - `backend/.../application/storage/**`, `domain/storage/exception/**`,
   `presentation/rest/storage/StorageController.java`, `GlobalExceptionHandler.java`
