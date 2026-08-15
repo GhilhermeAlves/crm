@@ -57,6 +57,11 @@ function authHeader(config: InternalAxiosRequestConfig): string | undefined {
   return headers["Authorization"];
 }
 
+function contentTypeHeader(config: InternalAxiosRequestConfig): string | undefined {
+  const headers = config.headers as unknown as Record<string, string | undefined>;
+  return headers["Content-Type"];
+}
+
 function setPathname(pathname: string) {
   const location = {
     pathname,
@@ -94,6 +99,19 @@ describe("api interceptors (cookie-based, Sprint 6.4)", () => {
     await api.get("/contacts");
 
     expect(sent).toEqual([undefined]);
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps Content-Type application/json for JSON requests", async () => {
+    const sent: (string | undefined)[] = [];
+    adapterHandler = async (config) => {
+      sent.push(contentTypeHeader(config));
+      return okResponse(config, { ok: true });
+    };
+
+    await api.post("/contacts", { name: "A" });
+
+    expect(sent).toEqual(["application/json"]);
     expect(refreshMock).not.toHaveBeenCalled();
   });
 

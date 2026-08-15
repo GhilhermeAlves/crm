@@ -27,7 +27,7 @@ describe("StorageService (hotfix arquivos)", () => {
     expect(getMock).toHaveBeenCalledWith(`/companies/${companyId}/storage`);
   });
 
-  it("upload envia FormData e NÃO fixa Content-Type manual (boundary preservado)", async () => {
+  it("upload envia FormData real com a part 'file' e sem Content-Type fixo (browser monta o boundary)", async () => {
     postMock.mockResolvedValue({ data: { id: "x" } });
     const file = new File(["conteudo"], "a.txt", { type: "text/plain" });
 
@@ -36,10 +36,18 @@ describe("StorageService (hotfix arquivos)", () => {
     expect(postMock).toHaveBeenCalledTimes(1);
     const [url, body, config] = postMock.mock.calls[0];
     expect(url).toBe(`/companies/${companyId}/storage/upload`);
+    // FormData real é enviado e contém a part "file".
     expect(body).toBeInstanceOf(FormData);
     expect((body as FormData).get("file")).toBe(file);
-    // Content-Type deve ser undefined para o browser montar o boundary do multipart.
-    expect(config.headers["Content-Type"]).toBeUndefined();
+    // O Content-Type é removido (null) para o browser gerar
+    // multipart/form-data; boundary=... — nunca application/json nem
+    // application/x-www-form-urlencoded.
+    const contentType = config.headers["Content-Type"];
+    expect(contentType).toBeNull();
+    if (typeof contentType === "string") {
+      expect(contentType).not.toContain("application/json");
+      expect(contentType).not.toContain("application/x-www-form-urlencoded");
+    }
   });
 
   it("download usa responseType blob e o endpoint correto", async () => {

@@ -4,8 +4,9 @@ import type { StorageObject } from "../types/storage.types";
 /**
  * Serviço de arquivos (Sprint 8.6). Escopado por tenant no backend
  * ({@code requireCompanyAccess} + RLS). O upload reutiliza o client HTTP único
- * do CRM e NÃO fixa {@code Content-Type} manualmente para não quebrar o
- * boundary do multipart.
+ * do CRM e remove o {@code Content-Type} do request (via {@code null}) para o
+ * browser montar o {@code multipart/form-data; boundary=...} do FormData — sem
+ * fixar manualmente o valor, o que quebraria o boundary.
  */
 export const StorageService = {
   async list(companyId: string): Promise<StorageObject[]> {
@@ -19,7 +20,11 @@ export const StorageService = {
     const response = await api.post<StorageObject>(
       `/companies/${companyId}/storage/upload`,
       formData,
-      { headers: { "Content-Type": undefined } },
+      // `null` remove o default `application/json` do client e faz o axios
+      // passar o FormData intacto — o browser define o Content-Type multipart
+      // com o boundary correto. (Não usar `undefined`: em axios 1.18.1 não
+      // sobrescreve o default e o request acaba sem o boundary/part file.)
+      { headers: { "Content-Type": null } },
     );
     return response.data;
   },
