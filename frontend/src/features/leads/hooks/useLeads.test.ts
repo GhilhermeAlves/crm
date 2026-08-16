@@ -46,11 +46,11 @@ function makeClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
 }
 
-function renderHookWith(render: () => ReturnType<typeof renderHook>) {
+function renderHookWith<TResult>(render: () => TResult) {
   const client = makeClient();
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client }, children);
-  return renderHook(render, { wrapper });
+  return renderHook<TResult, unknown>(render, { wrapper });
 }
 
 describe("useLeads (Sprint 10)", () => {
