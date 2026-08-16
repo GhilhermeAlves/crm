@@ -78,6 +78,51 @@ class TenantAwareDataSourceTest {
     }
 
     @Test
+    void shouldReapplyTenantContextWhenCompanyChangesMidTransaction() throws SQLException {
+        UUID paulo = UUID.randomUUID();
+        TenantContext.setCompanyId(paulo);
+
+        Connection connection = mock(Connection.class);
+        Statement statement = mock(Statement.class);
+        when(delegateDataSource.getConnection()).thenReturn(connection);
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.execute(anyString())).thenReturn(true);
+
+        Connection conn = new TenantAwareDataSource(delegateDataSource).getConnection();
+
+        verify(statement).execute("SET app.current_company_id = '" + paulo + "'");
+        clearInvocations(statement);
+
+        UUID novaEmpresa = UUID.randomUUID();
+        TenantContext.setCompanyId(novaEmpresa);
+
+        conn.createStatement();
+
+        verify(statement).execute("SET app.current_company_id = '" + novaEmpresa + "'");
+    }
+
+    @Test
+    void shouldNotReapplyWhenContextUnchanged() throws SQLException {
+        UUID paulo = UUID.randomUUID();
+        TenantContext.setCompanyId(paulo);
+
+        Connection connection = mock(Connection.class);
+        Statement statement = mock(Statement.class);
+        when(delegateDataSource.getConnection()).thenReturn(connection);
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.execute(anyString())).thenReturn(true);
+
+        Connection conn = new TenantAwareDataSource(delegateDataSource).getConnection();
+
+        verify(statement).execute("SET app.current_company_id = '" + paulo + "'");
+        clearInvocations(statement);
+
+        conn.createStatement();
+
+        verify(statement, never()).execute(anyString());
+    }
+
+    @Test
     void shouldDelegateGetConnectionWithCredentials() throws SQLException {
         UUID companyId = UUID.randomUUID();
         TenantContext.setCompanyId(companyId);
