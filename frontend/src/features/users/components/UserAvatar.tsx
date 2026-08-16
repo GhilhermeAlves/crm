@@ -53,11 +53,7 @@ export function UserAvatar({
       <img
         src={avatarUrl}
         alt={name}
-        className={cn(
-          "rounded-full object-cover",
-          sizeClasses[size],
-          className,
-        )}
+        className={cn("rounded-full object-cover", sizeClasses[size], className)}
       />
     );
   }

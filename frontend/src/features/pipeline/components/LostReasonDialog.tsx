@@ -33,9 +33,7 @@ export function LostReasonDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Marcar como perdida</DialogTitle>
-          <DialogDescription>
-            Informe o motivo da perda (obrigatório).
-          </DialogDescription>
+          <DialogDescription>Informe o motivo da perda (obrigatório).</DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
           <Label htmlFor="lossReason">Motivo</Label>

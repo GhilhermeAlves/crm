@@ -9,19 +9,10 @@ const google: IdentityProviderInfo = {
   available: true,
 };
 
-function renderButton(
-  overrides: Partial<IdentityProviderInfo> = {},
-  props = {},
-) {
+function renderButton(overrides: Partial<IdentityProviderInfo> = {}, props = {}) {
   const provider = { ...google, ...overrides };
   const onSelect = vi.fn();
-  render(
-    <IdentityProviderButton
-      provider={provider}
-      onSelect={onSelect}
-      {...props}
-    />,
-  );
+  render(<IdentityProviderButton provider={provider} onSelect={onSelect} {...props} />);
   return { onSelect, provider };
 }
 
@@ -58,9 +49,7 @@ describe("IdentityProviderButton (Sprint 7.0)", () => {
 
   it("renders the error message when provided", () => {
     renderButton({}, { error: "Falha na autenticação" });
-    expect(screen.queryByRole("alert")?.textContent).toContain(
-      "Falha na autenticação",
-    );
+    expect(screen.queryByRole("alert")?.textContent).toContain("Falha na autenticação");
   });
 
   it("respects an explicit disabled prop", () => {

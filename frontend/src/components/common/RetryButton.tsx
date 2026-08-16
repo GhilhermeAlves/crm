@@ -8,19 +8,9 @@ type RetryButtonProps = {
   label?: string;
 } & Omit<ButtonProps, "onClick">;
 
-export function RetryButton({
-  onRetry,
-  label = "Tentar novamente",
-  ...props
-}: RetryButtonProps) {
+export function RetryButton({ onRetry, label = "Tentar novamente", ...props }: RetryButtonProps) {
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={onRetry}
-      className="gap-2"
-      {...props}
-    >
+    <Button variant="outline" size="sm" onClick={onRetry} className="gap-2" {...props}>
       <RefreshCw className="h-4 w-4" />
       {label}
     </Button>

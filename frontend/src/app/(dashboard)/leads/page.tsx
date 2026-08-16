@@ -36,10 +36,7 @@ export default function LeadsPage() {
     pageSize: 10,
     status: status !== "all" ? (status as LeadStatus) : undefined,
     source: source !== "all" ? (source as LeadSource) : undefined,
-    classification:
-      classification !== "all"
-        ? (classification as LeadClassification)
-        : undefined,
+    classification: classification !== "all" ? (classification as LeadClassification) : undefined,
     sortBy: "createdAt",
     sortDirection: "desc",
   });
@@ -110,9 +107,7 @@ export default function LeadsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setPage((p) => Math.min(data.totalPages - 1, p + 1))
-              }
+              onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
               disabled={page >= data.totalPages - 1}
             >
               Próximo

@@ -14,10 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  forgotPasswordSchema,
-  type ForgotPasswordFormData,
-} from "../schemas/auth.schema";
+import { forgotPasswordSchema, type ForgotPasswordFormData } from "../schemas/auth.schema";
 import { useForgotPassword } from "../hooks/useAuthMutations";
 import { ROUTES } from "@/lib/constants";
 import { useState } from "react";
@@ -46,8 +43,7 @@ export function ForgotPasswordForm() {
         <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
         <h3 className="text-lg font-semibold">Verifique seu email</h3>
         <p className="text-sm text-muted-foreground">
-          Se o email existir em nossa base, você receberá um link para redefinir
-          sua senha.
+          Se o email existir em nossa base, você receberá um link para redefinir sua senha.
         </p>
         <Link href={ROUTES.LOGIN}>
           <Button variant="outline" className="w-full">
@@ -71,34 +67,20 @@ export function ForgotPasswordForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="seu@email.com"
-                  type="email"
-                  autoComplete="email"
-                  {...field}
-                />
+                <Input placeholder="seu@email.com" type="email" autoComplete="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={forgotPasswordMutation.isPending}
-        >
-          {forgotPasswordMutation.isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          )}
+        <Button type="submit" className="w-full" disabled={forgotPasswordMutation.isPending}>
+          {forgotPasswordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Enviar link de recuperação
         </Button>
       </form>
       <div className="mt-4 text-center text-sm text-muted-foreground">
         Lembrou a senha?{" "}
-        <Link
-          href={ROUTES.LOGIN}
-          className="font-medium text-primary hover:underline"
-        >
+        <Link href={ROUTES.LOGIN} className="font-medium text-primary hover:underline">
           Voltar para o login
         </Link>
       </div>

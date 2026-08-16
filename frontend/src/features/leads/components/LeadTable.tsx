@@ -3,11 +3,7 @@
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Eye, Pencil, Trash2, Target } from "lucide-react";
 import type { Lead } from "../types/lead.types";
-import {
-  LeadStatusBadge,
-  LeadSourceBadge,
-  LeadClassificationBadge,
-} from "./LeadBadges";
+import { LeadStatusBadge, LeadSourceBadge, LeadClassificationBadge } from "./LeadBadges";
 import {
   Table,
   TableBody,
@@ -56,7 +52,7 @@ export function LeadTable({ leads, isLoading, onDelete }: LeadTableProps) {
   if (leads.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <Target className="h-12 w-12 mb-4 opacity-50" />
+        <Target className="mb-4 h-12 w-12 opacity-50" />
         <p className="text-lg font-medium">Nenhum lead encontrado</p>
         <p className="text-sm">Crie um lead para começar a qualificar.</p>
       </div>
@@ -88,9 +84,7 @@ export function LeadTable({ leads, isLoading, onDelete }: LeadTableProps) {
               <TableCell>
                 <LeadClassificationBadge classification={lead.classification} />
               </TableCell>
-              <TableCell className="text-sm font-medium">
-                {lead.score}
-              </TableCell>
+              <TableCell className="text-sm font-medium">{lead.score}</TableCell>
               <TableCell className="text-sm text-muted-foreground">
                 {formatDate(lead.createdAt)}
               </TableCell>
@@ -102,25 +96,18 @@ export function LeadTable({ leads, isLoading, onDelete }: LeadTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => router.push(`${ROUTES.LEADS}/${lead.id}`)}
-                    >
+                    <DropdownMenuItem onClick={() => router.push(`${ROUTES.LEADS}/${lead.id}`)}>
                       <Eye className="mr-2 h-4 w-4" />
                       Visualizar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() =>
-                        router.push(`${ROUTES.LEADS}/${lead.id}/edit`)
-                      }
+                      onClick={() => router.push(`${ROUTES.LEADS}/${lead.id}/edit`)}
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onDelete?.(lead)}
-                      className="text-destructive"
-                    >
+                    <DropdownMenuItem onClick={() => onDelete?.(lead)} className="text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Excluir
                     </DropdownMenuItem>

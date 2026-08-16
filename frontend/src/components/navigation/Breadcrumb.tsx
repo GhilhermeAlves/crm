@@ -34,13 +34,9 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
     return parts
       .map((part, index) => {
         const href = "/" + parts.slice(0, index + 1).join("/");
-        const isUuid =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-            part,
-          );
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(part);
         if (isUuid) return null;
-        const label =
-          routeLabels[part] || part.charAt(0).toUpperCase() + part.slice(1);
+        const label = routeLabels[part] || part.charAt(0).toUpperCase() + part.slice(1);
         return { label, href, isLast: index === parts.length - 1 };
       })
       .filter(Boolean) as { label: string; href: string; isLast: boolean }[];
@@ -51,10 +47,7 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
   }
 
   return (
-    <nav
-      aria-label="Breadcrumb"
-      className={cn("flex items-center text-sm", className)}
-    >
+    <nav aria-label="Breadcrumb" className={cn("flex items-center text-sm", className)}>
       <ol className="flex items-center gap-1">
         <li>
           <Link
@@ -68,9 +61,7 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
           <li key={segment.href} className="flex items-center gap-1">
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
             {segment.isLast ? (
-              <span className="font-medium text-foreground">
-                {segment.label}
-              </span>
+              <span className="font-medium text-foreground">{segment.label}</span>
             ) : (
               <Link
                 href={segment.href}

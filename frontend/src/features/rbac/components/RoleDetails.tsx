@@ -15,13 +15,14 @@ interface RoleDetailsProps {
 }
 
 export function RoleDetails({ role }: RoleDetailsProps) {
-  const permissionsByModule = role.permissions.reduce<
-    Record<string, typeof role.permissions>
-  >((acc, perm) => {
-    if (!acc[perm.module]) acc[perm.module] = [];
-    acc[perm.module].push(perm);
-    return acc;
-  }, {});
+  const permissionsByModule = role.permissions.reduce<Record<string, typeof role.permissions>>(
+    (acc, perm) => {
+      if (!acc[perm.module]) acc[perm.module] = [];
+      acc[perm.module].push(perm);
+      return acc;
+    },
+    {},
+  );
 
   return (
     <div className="space-y-6">
@@ -33,12 +34,8 @@ export function RoleDetails({ role }: RoleDetailsProps) {
             </Link>
           </Button>
           <div>
-            <h2 className="text-2xl font-bold">
-              {role.name.replace(/_/g, " ")}
-            </h2>
-            <p className="text-muted-foreground">
-              {role.description || "Sem descrição"}
-            </p>
+            <h2 className="text-2xl font-bold">{role.name.replace(/_/g, " ")}</h2>
+            <p className="text-muted-foreground">{role.description || "Sem descrição"}</p>
           </div>
         </div>
         {!role.isSystem && (
@@ -54,9 +51,7 @@ export function RoleDetails({ role }: RoleDetailsProps) {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Status
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Status</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -65,18 +60,14 @@ export function RoleDetails({ role }: RoleDetailsProps) {
               ) : (
                 <ShieldOff className="h-5 w-5 text-gray-500" />
               )}
-              <span className="text-lg font-semibold">
-                {role.isActive ? "Ativo" : "Inativo"}
-              </span>
+              <span className="text-lg font-semibold">{role.isActive ? "Ativo" : "Inativo"}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Tipo
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Tipo</CardTitle>
           </CardHeader>
           <CardContent>
             <RoleBadge name={role.name} isSystem={role.isSystem} />
@@ -85,14 +76,10 @@ export function RoleDetails({ role }: RoleDetailsProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Permissões
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Permissões</CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold">
-              {role.permissions.length}
-            </span>
+            <span className="text-2xl font-bold">{role.permissions.length}</span>
           </CardContent>
         </Card>
       </div>
@@ -104,7 +91,7 @@ export function RoleDetails({ role }: RoleDetailsProps) {
         <CardContent className="space-y-4">
           {Object.entries(permissionsByModule).map(([module, permissions]) => (
             <div key={module}>
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              <h4 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 {roleModuleName[module] || module}
               </h4>
               <div className="flex flex-wrap gap-1.5">
@@ -116,9 +103,7 @@ export function RoleDetails({ role }: RoleDetailsProps) {
             </div>
           ))}
           {role.permissions.length === 0 && (
-            <p className="text-muted-foreground text-sm">
-              Nenhuma permissão atribuída.
-            </p>
+            <p className="text-sm text-muted-foreground">Nenhuma permissão atribuída.</p>
           )}
         </CardContent>
       </Card>

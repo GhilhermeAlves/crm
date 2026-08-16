@@ -1,21 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ActivityService } from "../services/activity.service";
-import type {
-  CreateActivityRequest,
-  UpdateActivityRequest,
-} from "../types/activity.types";
+import type { CreateActivityRequest, UpdateActivityRequest } from "../types/activity.types";
 
 export function useActivities(
   companyId: string | null,
   filter: { contactId?: string; opportunityId?: string } = {},
 ) {
   return useQuery({
-    queryKey: [
-      "activities",
-      companyId,
-      filter.contactId ?? filter.opportunityId ?? "all",
-    ],
+    queryKey: ["activities", companyId, filter.contactId ?? filter.opportunityId ?? "all"],
     queryFn: () => {
       const company = companyId as string;
       if (filter.contactId) {
@@ -55,8 +48,7 @@ function useActivityMutations(companyId: string | null) {
 export function useCreateActivity(companyId: string | null) {
   const { invalidate } = useActivityMutations(companyId);
   return useMutation({
-    mutationFn: (data: CreateActivityRequest) =>
-      ActivityService.create(companyId as string, data),
+    mutationFn: (data: CreateActivityRequest) => ActivityService.create(companyId as string, data),
     onSuccess: () => {
       invalidate();
       toast.success("Atividade registrada");

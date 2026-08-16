@@ -1,14 +1,6 @@
 import { z } from "zod";
-import type {
-  LeadClassification,
-  LeadSource,
-  LeadStatus,
-} from "../types/lead.types";
-import {
-  LEAD_STATUSES,
-  LEAD_SOURCES,
-  LEAD_CLASSIFICATIONS,
-} from "../types/lead.types";
+import type { LeadClassification, LeadSource, LeadStatus } from "../types/lead.types";
+import { LEAD_STATUSES, LEAD_SOURCES, LEAD_CLASSIFICATIONS } from "../types/lead.types";
 
 export const leadStatusLabels: Record<LeadStatus, string> = {
   NEW: "Novo",
@@ -43,10 +35,7 @@ export const leadClassifications = LEAD_CLASSIFICATIONS;
  * (vazias) no formulário; a conversão para o DTO acontece nas páginas.
  */
 export const leadFormSchema = z.object({
-  contactId: z
-    .string()
-    .min(1, "Contato é obrigatório")
-    .uuid("Contato inválido (UUID)"),
+  contactId: z.string().min(1, "Contato é obrigatório").uuid("Contato inválido (UUID)"),
   status: z.enum(leadStatuses),
   source: z.enum(leadSources),
   score: z.string().refine(

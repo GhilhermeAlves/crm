@@ -10,10 +10,7 @@ interface PipelineMetricsStripProps {
   isLoading?: boolean;
 }
 
-export function PipelineMetricsStrip({
-  metrics,
-  isLoading,
-}: PipelineMetricsStripProps) {
+export function PipelineMetricsStrip({ metrics, isLoading }: PipelineMetricsStripProps) {
   if (isLoading || !metrics) {
     return (
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

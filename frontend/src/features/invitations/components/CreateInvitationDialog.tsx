@@ -67,8 +67,8 @@ export function CreateInvitationDialog({ companyId }: { companyId: string }) {
         <DialogHeader>
           <DialogTitle>Convidar membro</DialogTitle>
           <DialogDescription>
-            Envie um convite por e-mail com um papel de acesso definido. O
-            membro aceitará pelo link recebido.
+            Envie um convite por e-mail com um papel de acesso definido. O membro aceitará pelo link
+            recebido.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -80,11 +80,7 @@ export function CreateInvitationDialog({ companyId }: { companyId: string }) {
                 <FormItem>
                   <FormLabel>E-mail</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="membro@empresa.com"
-                      {...field}
-                    />
+                    <Input type="email" placeholder="membro@empresa.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -96,10 +92,7 @@ export function CreateInvitationDialog({ companyId }: { companyId: string }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Papel</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o papel" />
@@ -118,11 +111,7 @@ export function CreateInvitationDialog({ companyId }: { companyId: string }) {
               )}
             />
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={create.isPending}>

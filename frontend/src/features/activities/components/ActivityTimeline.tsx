@@ -3,10 +3,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Activity } from "../types/activity.types";
-import {
-  ACTIVITY_TYPE_ICONS,
-  ACTIVITY_TYPE_LABELS,
-} from "../types/activity.types";
+import { ACTIVITY_TYPE_ICONS, ACTIVITY_TYPE_LABELS } from "../types/activity.types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
@@ -17,11 +14,7 @@ type Props = {
 
 export function ActivityTimeline({ activities, isLoading }: Props) {
   if (isLoading) {
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        Carregando…
-      </p>
-    );
+    return <p className="py-6 text-center text-sm text-muted-foreground">Carregando…</p>;
   }
 
   if (activities.length === 0) {
@@ -33,8 +26,7 @@ export function ActivityTimeline({ activities, isLoading }: Props) {
   }
 
   const sorted = [...activities].sort(
-    (a, b) =>
-      new Date(b.activityAt).getTime() - new Date(a.activityAt).getTime(),
+    (a, b) => new Date(b.activityAt).getTime() - new Date(a.activityAt).getTime(),
   );
 
   return (
@@ -55,13 +47,9 @@ export function ActivityTimeline({ activities, isLoading }: Props) {
                 </span>
               </div>
               {activity.description && (
-                <p className="text-sm text-muted-foreground">
-                  {activity.description}
-                </p>
+                <p className="text-sm text-muted-foreground">{activity.description}</p>
               )}
-              <Badge variant="secondary">
-                {ACTIVITY_TYPE_LABELS[activity.type]}
-              </Badge>
+              <Badge variant="secondary">{ACTIVITY_TYPE_LABELS[activity.type]}</Badge>
             </div>
           </li>
         ))}

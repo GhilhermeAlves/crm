@@ -38,11 +38,7 @@ export class PhoneOtpError extends Error {
   }
 }
 
-function errorFrom(
-  caught: unknown,
-  fallbackCode: string,
-  fallbackMessage: string,
-): PhoneOtpError {
+function errorFrom(caught: unknown, fallbackCode: string, fallbackMessage: string): PhoneOtpError {
   const axiosError = caught as AxiosError<{ code?: string; message?: string }>;
   const code = axiosError?.response?.data?.code ?? fallbackCode;
   const message = axiosError?.response?.data?.message ?? fallbackMessage;
@@ -59,20 +55,14 @@ export const PhoneOtpService = {
         phone,
       });
       if (!response.data.sent) {
-        throw new PhoneOtpError(
-          "SEND_OTP_COOLDOWN",
-          "Aguarde antes de solicitar outro código.",
-        );
+        throw new PhoneOtpError("SEND_OTP_COOLDOWN", "Aguarde antes de solicitar outro código.");
       }
       return response.data;
     } catch (caught) {
       if (caught instanceof PhoneOtpError) throw caught;
       const axiosError = caught as AxiosError<SendOtpResult>;
       if (axiosError?.response?.data?.sent === false) {
-        throw new PhoneOtpError(
-          "SEND_OTP_COOLDOWN",
-          "Aguarde antes de solicitar outro código.",
-        );
+        throw new PhoneOtpError("SEND_OTP_COOLDOWN", "Aguarde antes de solicitar outro código.");
       }
       throw errorFrom(
         caught,
@@ -88,10 +78,7 @@ export const PhoneOtpService = {
    */
   async verifyOtp(phone: string, otp: string): Promise<VerifyOtpResult> {
     try {
-      const response = await api.post<VerifyOtpResult>(
-        "/auth/phone/verify-otp",
-        { phone, otp },
-      );
+      const response = await api.post<VerifyOtpResult>("/auth/phone/verify-otp", { phone, otp });
       if (!response.data.success) {
         throw new PhoneOtpError(
           response.data.errorCode ?? "OTP_INVALID",
@@ -101,11 +88,7 @@ export const PhoneOtpService = {
       return response.data;
     } catch (caught) {
       if (caught instanceof PhoneOtpError) throw caught;
-      throw errorFrom(
-        caught,
-        "OTP_INVALID",
-        "Não foi possível validar o código.",
-      );
+      throw errorFrom(caught, "OTP_INVALID", "Não foi possível validar o código.");
     }
   },
 };

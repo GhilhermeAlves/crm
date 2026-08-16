@@ -75,28 +75,14 @@ export function TenantDetails({ tenant }: TenantDetailsProps) {
           <CardContent className="space-y-3">
             <InfoRow label="CNPJ" value={tenant.cnpj} />
             {tenant.stateRegistration && (
-              <InfoRow
-                label="Inscrição Estadual"
-                value={tenant.stateRegistration}
-              />
+              <InfoRow label="Inscrição Estadual" value={tenant.stateRegistration} />
             )}
             {tenant.municipalRegistration && (
-              <InfoRow
-                label="Inscrição Municipal"
-                value={tenant.municipalRegistration}
-              />
+              <InfoRow label="Inscrição Municipal" value={tenant.municipalRegistration} />
             )}
             <Separator />
-            <InfoRow
-              icon={<Mail className="h-4 w-4" />}
-              label="E-mail"
-              value={tenant.email}
-            />
-            <InfoRow
-              icon={<Phone className="h-4 w-4" />}
-              label="Telefone"
-              value={tenant.phone}
-            />
+            <InfoRow icon={<Mail className="h-4 w-4" />} label="E-mail" value={tenant.email} />
+            <InfoRow icon={<Phone className="h-4 w-4" />} label="Telefone" value={tenant.phone} />
             {tenant.website && (
               <InfoRow
                 icon={<Globe className="h-4 w-4" />}
@@ -117,9 +103,7 @@ export function TenantDetails({ tenant }: TenantDetailsProps) {
               icon={<MapPin className="h-4 w-4" />}
               label="Endereço"
               value={`${tenant.address.street}, ${tenant.address.number}${
-                tenant.address.complement
-                  ? ` - ${tenant.address.complement}`
-                  : ""
+                tenant.address.complement ? ` - ${tenant.address.complement}` : ""
               }`}
             />
             <InfoRow label="Bairro" value={tenant.address.neighborhood} />
@@ -157,9 +141,7 @@ export function TenantDetails({ tenant }: TenantDetailsProps) {
               <>
                 <Separator />
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Observações
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground">Observações</p>
                   <p className="mt-1 text-sm">{tenant.notes}</p>
                 </div>
               </>
@@ -178,15 +160,8 @@ export function TenantDetails({ tenant }: TenantDetailsProps) {
               label="Criado em"
               value={formatDate(tenant.createdAt)}
             />
-            <InfoRow
-              label="Atualizado em"
-              value={formatDate(tenant.updatedAt)}
-            />
-            <InfoRow
-              label="ID"
-              value={tenant.id}
-              className="font-mono text-xs"
-            />
+            <InfoRow label="Atualizado em" value={formatDate(tenant.updatedAt)} />
+            <InfoRow label="ID" value={tenant.id} className="font-mono text-xs" />
           </CardContent>
         </Card>
       </div>

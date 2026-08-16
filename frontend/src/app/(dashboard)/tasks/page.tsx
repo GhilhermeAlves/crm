@@ -26,8 +26,7 @@ export default function TasksPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const { data: allTasks = [], isLoading } = useTasks(companyId);
-  const { data: dueToday = [], isLoading: dueLoading } =
-    useTasksDueToday(companyId);
+  const { data: dueToday = [], isLoading: dueLoading } = useTasksDueToday(companyId);
 
   const createTask = useCreateTask(companyId);
   const changeStatus = useChangeTaskStatus(companyId);
@@ -52,9 +51,7 @@ export default function TasksPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">
-              Vencendo hoje
-            </CardTitle>
+            <CardTitle className="text-base font-semibold">Vencendo hoje</CardTitle>
           </CardHeader>
           <CardContent>
             <TaskList
@@ -69,9 +66,7 @@ export default function TasksPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">
-              Todas as tarefas
-            </CardTitle>
+            <CardTitle className="text-base font-semibold">Todas as tarefas</CardTitle>
           </CardHeader>
           <CardContent>
             <TaskList
@@ -89,9 +84,7 @@ export default function TasksPage() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         isLoading={createTask.isPending}
-        onSubmit={(values) =>
-          createTask.mutate(values, { onSuccess: () => setCreateOpen(false) })
-        }
+        onSubmit={(values) => createTask.mutate(values, { onSuccess: () => setCreateOpen(false) })}
       />
     </div>
   );

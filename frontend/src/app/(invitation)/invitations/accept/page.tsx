@@ -38,9 +38,7 @@ function AcceptInvitationContent() {
       router.push(ROUTES.DASHBOARD);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Não foi possível processar o convite.";
+        error instanceof Error ? error.message : "Não foi possível processar o convite.";
       toast.error(message);
       setAction(null);
     }
@@ -63,8 +61,8 @@ function AcceptInvitationContent() {
           <>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>
-                Ao aceitar, uma nova associação ativa será criada para o seu
-                usuário. Você poderá alternar de empresa depois.
+                Ao aceitar, uma nova associação ativa será criada para o seu usuário. Você poderá
+                alternar de empresa depois.
               </p>
             </CardContent>
             <CardFooter className="flex justify-end gap-3">
@@ -75,10 +73,7 @@ function AcceptInvitationContent() {
               >
                 <MailX className="mr-2 h-4 w-4" /> Recusar
               </Button>
-              <Button
-                disabled={action !== null}
-                onClick={() => handle("accept")}
-              >
+              <Button disabled={action !== null} onClick={() => handle("accept")}>
                 <MailCheck className="mr-2 h-4 w-4" />
                 {action === "accept" ? "Aceitando..." : "Aceitar convite"}
               </Button>
@@ -86,10 +81,7 @@ function AcceptInvitationContent() {
           </>
         ) : (
           <CardFooter>
-            <Button
-              variant="outline"
-              onClick={() => router.push(ROUTES.DASHBOARD)}
-            >
+            <Button variant="outline" onClick={() => router.push(ROUTES.DASHBOARD)}>
               Voltar ao início
             </Button>
           </CardFooter>

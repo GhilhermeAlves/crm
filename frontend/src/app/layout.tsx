@@ -8,15 +8,10 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "CRM SaaS Omnichannel",
-  description:
-    "Sistema CRM Omnichannel para gestão de leads, contatos e comunicação",
+  description: "Sistema CRM Omnichannel para gestão de leads, contatos e comunicação",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
       <body className={inter.className}>

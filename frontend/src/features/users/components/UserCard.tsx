@@ -12,10 +12,7 @@ interface UserCardProps {
 
 export function UserCard({ user, onClick }: UserCardProps) {
   return (
-    <Card
-      className="cursor-pointer transition-colors hover:bg-accent"
-      onClick={onClick}
-    >
+    <Card className="cursor-pointer transition-colors hover:bg-accent" onClick={onClick}>
       <CardContent className="pt-6">
         <div className="flex items-center gap-3">
           <UserAvatar
@@ -23,11 +20,9 @@ export function UserCard({ user, onClick }: UserCardProps) {
             lastName={user.lastName}
             avatarUrl={user.avatarUrl}
           />
-          <div className="flex-1 min-w-0">
-            <p className="font-medium truncate">{user.name}</p>
-            <p className="text-sm text-muted-foreground truncate">
-              {user.email}
-            </p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium">{user.name}</p>
+            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
           </div>
           <UserStatusBadge status={user.status} />
         </div>

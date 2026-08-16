@@ -2,14 +2,8 @@
 
 import { Building2, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import {
-  useMyCompanies,
-  useSwitchCompany,
-} from "@/features/auth/hooks/useAuthMutations";
-import {
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { useMyCompanies, useSwitchCompany } from "@/features/auth/hooks/useAuthMutations";
+import { DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,9 +25,7 @@ export function CompanySwitcher() {
   return (
     <>
       <DropdownMenuSeparator />
-      <DropdownMenuLabel className="font-normal text-muted-foreground">
-        Empresas
-      </DropdownMenuLabel>
+      <DropdownMenuLabel className="font-normal text-muted-foreground">Empresas</DropdownMenuLabel>
       <div className="space-y-0.5 px-2 py-1">
         {isLoading ? (
           <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground">
@@ -70,14 +62,9 @@ export function CompanySwitcher() {
                   <span className="truncate font-medium">{company.name}</span>
                 </span>
                 {isActive ? (
-                  <Check
-                    className="h-4 w-4 shrink-0"
-                    data-testid="active-company-check"
-                  />
+                  <Check className="h-4 w-4 shrink-0" data-testid="active-company-check" />
                 ) : (
-                  switchCompany.isPending && (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                  )
+                  switchCompany.isPending && <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                 )}
               </button>
             );

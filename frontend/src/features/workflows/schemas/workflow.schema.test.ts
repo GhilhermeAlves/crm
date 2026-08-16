@@ -13,9 +13,7 @@ describe("workflowFormToPayload", () => {
       name: "Follow-up de proposta",
       description: "Automação de follow-up",
       trigger: "OPPORTUNITY_STAGE_CHANGED",
-      conditions: [
-        { field: "opportunity.stage", operator: "EQUALS", value: "Negociação" },
-      ],
+      conditions: [{ field: "opportunity.stage", operator: "EQUALS", value: "Negociação" }],
       actions: [
         {
           actionType: "CREATE_TASK",
@@ -121,8 +119,7 @@ describe("workflowToFormValues", () => {
           id: "a1",
           actionType: "CREATE_TASK",
           sortOrder: 0,
-          config:
-            '{"title":"Entrar em contato","priority":"HIGH","dueInDays":1}',
+          config: '{"title":"Entrar em contato","priority":"HIGH","dueInDays":1}',
         },
       ],
       createdAt: "2026-01-01T00:00:00",

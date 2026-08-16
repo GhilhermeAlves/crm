@@ -22,9 +22,7 @@ export default function NewWorkflowPage() {
     return (
       <div className="space-y-6">
         <PageTitle>Sem permissão</PageTitle>
-        <p className="text-muted-foreground">
-          Você não tem permissão para criar workflows.
-        </p>
+        <p className="text-muted-foreground">Você não tem permissão para criar workflows.</p>
       </div>
     );
   }
@@ -32,11 +30,7 @@ export default function NewWorkflowPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push(ROUTES.WORKFLOWS)}
-        >
+        <Button variant="ghost" size="icon" onClick={() => router.push(ROUTES.WORKFLOWS)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <PageTitle>Novo workflow</PageTitle>

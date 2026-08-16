@@ -74,9 +74,7 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
               {...register("name")}
               disabled={mode === "edit"}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             <p className="text-xs text-muted-foreground">
               Apenas letras maiúsculas e underscores. Ex: MANAGER, TEAM_LEAD
             </p>
@@ -91,9 +89,7 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
               rows={3}
             />
             {errors.description && (
-              <p className="text-sm text-destructive">
-                {errors.description.message}
-              </p>
+              <p className="text-sm text-destructive">{errors.description.message}</p>
             )}
           </div>
 
@@ -107,12 +103,8 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
             )}
           </div>
 
-          <div className="flex gap-2 justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/roles")}
-            >
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => router.push("/roles")}>
               Cancelar
             </Button>
             <Button type="submit" disabled={createRole.isPending}>

@@ -104,9 +104,7 @@ export default function UsersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setPage((p) => Math.min(data.totalPages - 1, p + 1))
-              }
+              onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
               disabled={page >= data.totalPages - 1}
             >
               Próximo

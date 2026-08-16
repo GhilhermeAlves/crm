@@ -53,21 +53,16 @@ describe("StorageService (hotfix arquivos)", () => {
   it("download usa responseType blob e o endpoint correto", async () => {
     getMock.mockResolvedValue({ data: new Blob(["x"]) });
     const blob = await StorageService.download(companyId, "obj-1");
-    expect(getMock).toHaveBeenCalledWith(
-      `/companies/${companyId}/storage/obj-1`,
-      {
-        responseType: "blob",
-      },
-    );
+    expect(getMock).toHaveBeenCalledWith(`/companies/${companyId}/storage/obj-1`, {
+      responseType: "blob",
+    });
     expect(blob).toBeInstanceOf(Blob);
   });
 
   it("remove chama DELETE /companies/{id}/storage/{objectId}", async () => {
     deleteMock.mockResolvedValue({});
     await StorageService.remove(companyId, "obj-1");
-    expect(deleteMock).toHaveBeenCalledWith(
-      `/companies/${companyId}/storage/obj-1`,
-    );
+    expect(deleteMock).toHaveBeenCalledWith(`/companies/${companyId}/storage/obj-1`);
   });
 });
 

@@ -1,13 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-export function SkeletonTable({
-  rows = 5,
-  columns = 4,
-}: {
-  rows?: number;
-  columns?: number;
-}) {
+export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
   return (
     <Card>
       <CardHeader>

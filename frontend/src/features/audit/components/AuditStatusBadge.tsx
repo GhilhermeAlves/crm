@@ -30,12 +30,7 @@ export function AuditStatusBadge({ status }: AuditStatusBadgeProps) {
   const Icon = config.icon;
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 text-sm font-medium",
-        config.className,
-      )}
-    >
+    <span className={cn("inline-flex items-center gap-1 text-sm font-medium", config.className)}>
       <Icon className="h-3.5 w-3.5" />
       {config.label}
     </span>

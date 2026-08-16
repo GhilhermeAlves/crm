@@ -21,11 +21,7 @@ interface DeleteRoleDialogProps {
   role: Role;
 }
 
-export function DeleteRoleDialog({
-  open,
-  onOpenChange,
-  role,
-}: DeleteRoleDialogProps) {
+export function DeleteRoleDialog({ open, onOpenChange, role }: DeleteRoleDialogProps) {
   const router = useRouter();
   const deleteRole = useDeleteRole();
 
@@ -44,17 +40,15 @@ export function DeleteRoleDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir Role</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir a role{" "}
-            <strong>{role.name.replace(/_/g, " ")}</strong>?
+            Tem certeza que deseja excluir a role <strong>{role.name.replace(/_/g, " ")}</strong>?
             {role.isSystem && (
-              <span className="block mt-2 text-destructive font-medium">
+              <span className="mt-2 block font-medium text-destructive">
                 Esta é uma role do sistema e não pode ser excluída.
               </span>
             )}
             {!role.isSystem && (
-              <span className="block mt-2">
-                Esta ação não pode ser desfeita. Todas as permissões associadas
-                serão removidas.
+              <span className="mt-2 block">
+                Esta ação não pode ser desfeita. Todas as permissões associadas serão removidas.
               </span>
             )}
           </AlertDialogDescription>

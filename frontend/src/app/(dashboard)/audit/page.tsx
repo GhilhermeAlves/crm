@@ -6,10 +6,7 @@ import { ClipboardList } from "lucide-react";
 import { AuditTable } from "@/features/audit/components/AuditTable";
 import { AuditFilters } from "@/features/audit/components/AuditFilters";
 import { useAuditLogs } from "@/features/audit/hooks/useAudit";
-import type {
-  AuditLog,
-  AuditLogSearchParams,
-} from "@/features/audit/types/audit.types";
+import type { AuditLog, AuditLogSearchParams } from "@/features/audit/types/audit.types";
 
 export default function AuditPage() {
   const router = useRouter();
@@ -27,13 +24,11 @@ export default function AuditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-2xl font-bold">
           <ClipboardList className="h-6 w-6" />
           Auditoria
         </h1>
-        <p className="text-muted-foreground">
-          Histórico de ações e eventos do sistema
-        </p>
+        <p className="text-muted-foreground">Histórico de ações e eventos do sistema</p>
       </div>
 
       <AuditFilters params={params} onParamsChange={setParams} />

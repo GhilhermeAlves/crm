@@ -22,8 +22,7 @@ export function usePipeline(companyId: string | null, id: string | null) {
 export function useCreatePipeline(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreatePipelineRequest) =>
-      PipelineService.create(companyId as string, data),
+    mutationFn: (data: CreatePipelineRequest) => PipelineService.create(companyId as string, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipelines", companyId] });
       toast.success("Pipeline criado com sucesso");

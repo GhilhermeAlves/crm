@@ -37,10 +37,7 @@ export const RbacService = {
     await api.delete(`${ROLES_PATH}/${id}`);
   },
 
-  async assignPermission(
-    roleId: string,
-    data: AssignPermissionRequest,
-  ): Promise<void> {
+  async assignPermission(roleId: string, data: AssignPermissionRequest): Promise<void> {
     await api.post(`${ROLES_PATH}/${roleId}/permissions`, data);
   },
 
@@ -48,10 +45,7 @@ export const RbacService = {
     await api.delete(`${ROLES_PATH}/${roleId}/permissions/${permissionId}`);
   },
 
-  async assignRoleToUser(
-    userId: string,
-    data: AssignRoleRequest,
-  ): Promise<void> {
+  async assignRoleToUser(userId: string, data: AssignRoleRequest): Promise<void> {
     await api.post(`${ROLES_PATH}/user/${userId}`, data);
   },
 
@@ -70,9 +64,7 @@ export const RbacService = {
   },
 
   async listPermissionsByModule(module: string): Promise<Permission[]> {
-    const response = await api.get<Permission[]>(
-      `${PERMISSIONS_PATH}/module/${module}`,
-    );
+    const response = await api.get<Permission[]>(`${PERMISSIONS_PATH}/module/${module}`);
     return response.data;
   },
 

@@ -1,10 +1,7 @@
 "use client";
 
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import {
-  useInvitations,
-  useRevokeInvitation,
-} from "@/features/invitations/hooks/useInvitations";
+import { useInvitations, useRevokeInvitation } from "@/features/invitations/hooks/useInvitations";
 import { CreateInvitationDialog } from "@/features/invitations/components/CreateInvitationDialog";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,10 +76,7 @@ export default function InvitationsPage() {
             <TableBody>
               {invitations.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="h-24 text-center text-muted-foreground"
-                  >
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     Nenhum convite encontrado.
                   </TableCell>
                 </TableRow>
@@ -102,13 +96,9 @@ export default function InvitationsPage() {
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </TableCell>
                       <TableCell>
-                        {format(
-                          new Date(invitation.expiresAt),
-                          "dd/MM/yyyy HH:mm",
-                          {
-                            locale: ptBR,
-                          },
-                        )}
+                        {format(new Date(invitation.expiresAt), "dd/MM/yyyy HH:mm", {
+                          locale: ptBR,
+                        })}
                       </TableCell>
                       <TableCell className="text-right">
                         {invitation.status === "PENDING" && (

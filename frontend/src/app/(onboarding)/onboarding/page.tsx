@@ -28,14 +28,11 @@ export default function OnboardingPage() {
             Crie a sua empresa
           </h1>
           <p className="text-sm text-crm-text-secondary">
-            Olá, {user?.name} — você ainda não possui uma empresa. Crie a
-            primeira para começar a usar o CRM.
+            Olá, {user?.name} — você ainda não possui uma empresa. Crie a primeira para começar a
+            usar o CRM.
           </p>
         </div>
-        <OnboardingCompanyForm
-          onSubmit={handleSubmit}
-          isLoading={createCompany.isPending}
-        />
+        <OnboardingCompanyForm onSubmit={handleSubmit} isLoading={createCompany.isPending} />
       </div>
     </main>
   );

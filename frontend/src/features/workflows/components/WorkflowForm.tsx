@@ -50,12 +50,7 @@ type Props = {
   onSubmit: (payload: ReturnType<typeof workflowFormToPayload>) => void;
 };
 
-export function WorkflowForm({
-  initial,
-  isLoading,
-  submitLabel = "Salvar",
-  onSubmit,
-}: Props) {
+export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSubmit }: Props) {
   const form = useForm<WorkflowFormValues>({
     resolver: zodResolver(workflowFormSchema),
     defaultValues: initial
@@ -107,10 +102,7 @@ export function WorkflowForm({
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Ex.: Follow-up de proposta"
-                      {...field}
-                    />
+                    <Input placeholder="Ex.: Follow-up de proposta" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -123,10 +115,7 @@ export function WorkflowForm({
                 <FormItem>
                   <FormLabel>Descrição</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Descreva o objetivo do workflow"
-                      {...field}
-                    />
+                    <Textarea placeholder="Descreva o objetivo do workflow" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -138,10 +127,7 @@ export function WorkflowForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Disparo</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={handleTriggerChange}
-                  >
+                  <Select value={field.value} onValueChange={handleTriggerChange}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o evento" />
@@ -193,10 +179,7 @@ export function WorkflowForm({
                   name={`conditions.${index}.field`}
                   render={({ field }) => (
                     <FormItem>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Campo" />
@@ -219,10 +202,7 @@ export function WorkflowForm({
                   name={`conditions.${index}.operator`}
                   render={({ field }) => (
                     <FormItem>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Operador" />
@@ -246,10 +226,7 @@ export function WorkflowForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input
-                          placeholder="Valor (ex.: Negociação)"
-                          {...field}
-                        />
+                        <Input placeholder="Valor (ex.: Negociação)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -268,8 +245,7 @@ export function WorkflowForm({
             ))}
             {conditions.fields.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                Sem condições — o workflow será executado para todo evento do
-                disparo.
+                Sem condições — o workflow será executado para todo evento do disparo.
               </p>
             )}
           </CardContent>
@@ -309,10 +285,7 @@ export function WorkflowForm({
                       name={`actions.${index}.actionType`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
+                          <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Tipo de ação" />
@@ -352,10 +325,7 @@ export function WorkflowForm({
                               : "Assunto da atividade"}
                           </FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Ex.: Entrar em contato"
-                              {...field}
-                            />
+                            <Input placeholder="Ex.: Entrar em contato" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -368,10 +338,7 @@ export function WorkflowForm({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Prioridade</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Prioridade" />
@@ -396,10 +363,7 @@ export function WorkflowForm({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Tipo</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Tipo" />
@@ -448,11 +412,7 @@ export function WorkflowForm({
                       <FormItem>
                         <FormLabel>Descrição</FormLabel>
                         <FormControl>
-                          <Textarea
-                            rows={2}
-                            placeholder="Detalhes"
-                            {...field}
-                          />
+                          <Textarea rows={2} placeholder="Detalhes" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

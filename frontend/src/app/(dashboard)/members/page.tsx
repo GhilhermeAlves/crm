@@ -71,10 +71,7 @@ export default function MembersPage() {
             <TableBody>
               {members.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-24 text-center text-muted-foreground"
-                  >
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     Nenhum membro encontrado.
                   </TableCell>
                 </TableRow>
@@ -103,11 +100,7 @@ export default function MembersPage() {
                       </select>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          member.status === "ACTIVE" ? "default" : "secondary"
-                        }
-                      >
+                      <Badge variant={member.status === "ACTIVE" ? "default" : "secondary"}>
                         {member.status === "ACTIVE" ? "Ativo" : "Pendente"}
                       </Badge>
                     </TableCell>

@@ -28,8 +28,7 @@ export function useRegister() {
 
 export function useForgotPassword() {
   return useMutation({
-    mutationFn: (data: ForgotPasswordRequest) =>
-      AuthService.forgotPassword(data),
+    mutationFn: (data: ForgotPasswordRequest) => AuthService.forgotPassword(data),
     onSuccess: () => {
       toast.success("Se o email existir, você receberá um link de recuperação");
     },
@@ -49,8 +48,7 @@ export function useResetPassword() {
       router.push("/login");
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
-      const message =
-        error.response?.data?.message || "Erro ao redefinir senha";
+      const message = error.response?.data?.message || "Erro ao redefinir senha";
       toast.error(message);
     },
   });
@@ -109,8 +107,7 @@ export function useSwitchCompany() {
       toast.success("Empresa ativa alterada.");
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
-      const message =
-        error.response?.data?.message || "Erro ao alternar empresa";
+      const message = error.response?.data?.message || "Erro ao alternar empresa";
       toast.error(message);
     },
   });

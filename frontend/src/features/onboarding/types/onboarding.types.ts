@@ -1,7 +1,4 @@
-import type {
-  Tenant,
-  TenantAddress,
-} from "@/features/tenants/types/tenant.types";
+import type { Tenant, TenantAddress } from "@/features/tenants/types/tenant.types";
 
 /**
  * Onboarding self-service (Sprint 8.3): usuário provisionado sem empresa cria

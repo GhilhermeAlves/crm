@@ -15,13 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { maskCep, maskCnpj, maskPhone } from "@/lib/masks";
 import { fetchAddressByCep } from "../services/cep.service";
@@ -39,11 +33,7 @@ type TenantFormProps = {
   isLoading?: boolean;
 };
 
-export function TenantForm({
-  initialData,
-  onSubmit,
-  isLoading,
-}: TenantFormProps) {
+export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps) {
   const router = useRouter();
 
   const {
@@ -149,18 +139,14 @@ export function TenantForm({
               <Label htmlFor="legalName">Razão Social *</Label>
               <Input id="legalName" {...register("legalName")} />
               {errors.legalName && (
-                <p className="text-sm text-destructive">
-                  {errors.legalName.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.legalName.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="tradingName">Nome Fantasia *</Label>
               <Input id="tradingName" {...register("tradingName")} />
               {errors.tradingName && (
-                <p className="text-sm text-destructive">
-                  {errors.tradingName.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.tradingName.message}</p>
               )}
             </div>
           </div>
@@ -182,25 +168,15 @@ export function TenantForm({
                   />
                 )}
               />
-              {errors.cnpj && (
-                <p className="text-sm text-destructive">
-                  {errors.cnpj.message}
-                </p>
-              )}
+              {errors.cnpj && <p className="text-sm text-destructive">{errors.cnpj.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="stateRegistration">Inscrição Estadual</Label>
-              <Input
-                id="stateRegistration"
-                {...register("stateRegistration")}
-              />
+              <Input id="stateRegistration" {...register("stateRegistration")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="municipalRegistration">Inscrição Municipal</Label>
-              <Input
-                id="municipalRegistration"
-                {...register("municipalRegistration")}
-              />
+              <Input id="municipalRegistration" {...register("municipalRegistration")} />
             </div>
           </div>
 
@@ -208,11 +184,7 @@ export function TenantForm({
             <div className="space-y-2">
               <Label htmlFor="email">E-mail *</Label>
               <Input id="email" type="email" {...register("email")} />
-              {errors.email && (
-                <p className="text-sm text-destructive">
-                  {errors.email.message}
-                </p>
-              )}
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone *</Label>
@@ -230,23 +202,13 @@ export function TenantForm({
                   />
                 )}
               />
-              {errors.phone && (
-                <p className="text-sm text-destructive">
-                  {errors.phone.message}
-                </p>
-              )}
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                placeholder="https://"
-                {...register("website")}
-              />
+              <Input id="website" placeholder="https://" {...register("website")} />
               {errors.website && (
-                <p className="text-sm text-destructive">
-                  {errors.website.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.website.message}</p>
               )}
             </div>
           </div>
@@ -265,9 +227,7 @@ export function TenantForm({
               <Label>Status *</Label>
               <Select
                 value={statusValue}
-                onValueChange={(val) =>
-                  setValue("status", val as TenantFormData["status"])
-                }
+                onValueChange={(val) => setValue("status", val as TenantFormData["status"])}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -280,19 +240,13 @@ export function TenantForm({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.status && (
-                <p className="text-sm text-destructive">
-                  {errors.status.message}
-                </p>
-              )}
+              {errors.status && <p className="text-sm text-destructive">{errors.status.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Plano *</Label>
               <Select
                 value={planValue}
-                onValueChange={(val) =>
-                  setValue("plan", val as TenantFormData["plan"])
-                }
+                onValueChange={(val) => setValue("plan", val as TenantFormData["plan"])}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -305,11 +259,7 @@ export function TenantForm({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.plan && (
-                <p className="text-sm text-destructive">
-                  {errors.plan.message}
-                </p>
-              )}
+              {errors.plan && <p className="text-sm text-destructive">{errors.plan.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="maxUsers">Limite de Usuários *</Label>
@@ -319,9 +269,7 @@ export function TenantForm({
                 {...register("maxUsers", { valueAsNumber: true })}
               />
               {errors.maxUsers && (
-                <p className="text-sm text-destructive">
-                  {errors.maxUsers.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.maxUsers.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -332,9 +280,7 @@ export function TenantForm({
                 {...register("maxStorageMb", { valueAsNumber: true })}
               />
               {errors.maxStorageMb && (
-                <p className="text-sm text-destructive">
-                  {errors.maxStorageMb.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.maxStorageMb.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -345,9 +291,7 @@ export function TenantForm({
                 {...register("maxContacts", { valueAsNumber: true })}
               />
               {errors.maxContacts && (
-                <p className="text-sm text-destructive">
-                  {errors.maxContacts.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.maxContacts.message}</p>
               )}
             </div>
           </div>
@@ -389,32 +333,24 @@ export function TenantForm({
                 )}
               />
               {isFetchingCep && (
-                <p className="text-sm text-muted-foreground">
-                  Buscando endereço...
-                </p>
+                <p className="text-sm text-muted-foreground">Buscando endereço...</p>
               )}
               {!isFetchingCep && errors.address?.zipCode && (
-                <p className="text-sm text-destructive">
-                  {errors.address.zipCode.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.address.zipCode.message}</p>
               )}
             </div>
             <div className="col-span-2 space-y-2">
               <Label htmlFor="address.street">Logradouro *</Label>
               <Input id="address.street" {...register("address.street")} />
               {errors.address?.street && (
-                <p className="text-sm text-destructive">
-                  {errors.address.street.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.address.street.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="address.number">Número *</Label>
               <Input id="address.number" {...register("address.number")} />
               {errors.address?.number && (
-                <p className="text-sm text-destructive">
-                  {errors.address.number.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.address.number.message}</p>
               )}
             </div>
           </div>
@@ -422,30 +358,20 @@ export function TenantForm({
           <div className="grid gap-4 sm:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="address.complement">Complemento</Label>
-              <Input
-                id="address.complement"
-                {...register("address.complement")}
-              />
+              <Input id="address.complement" {...register("address.complement")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="address.neighborhood">Bairro *</Label>
-              <Input
-                id="address.neighborhood"
-                {...register("address.neighborhood")}
-              />
+              <Input id="address.neighborhood" {...register("address.neighborhood")} />
               {errors.address?.neighborhood && (
-                <p className="text-sm text-destructive">
-                  {errors.address.neighborhood.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.address.neighborhood.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="address.city">Cidade *</Label>
               <Input id="address.city" {...register("address.city")} />
               {errors.address?.city && (
-                <p className="text-sm text-destructive">
-                  {errors.address.city.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.address.city.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -457,14 +383,12 @@ export function TenantForm({
                 {...register("address.state")}
               />
               {errors.address?.state && (
-                <p className="text-sm text-destructive">
-                  {errors.address.state.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.address.state.message}</p>
               )}
             </div>
           </div>
 
-          <div className="w-full sm:w-1/4 space-y-2">
+          <div className="w-full space-y-2 sm:w-1/4">
             <Label htmlFor="address.country">País *</Label>
             <Input id="address.country" {...register("address.country")} />
           </div>
@@ -473,19 +397,11 @@ export function TenantForm({
 
       {/* Actions */}
       <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push(ROUTES.TENANTS)}
-        >
+        <Button type="button" variant="outline" onClick={() => router.push(ROUTES.TENANTS)}>
           Cancelar
         </Button>
         <Button type="submit" disabled={isLoading}>
-          {isLoading
-            ? "Salvando..."
-            : initialData
-              ? "Atualizar"
-              : "Criar Empresa"}
+          {isLoading ? "Salvando..." : initialData ? "Atualizar" : "Criar Empresa"}
         </Button>
       </div>
     </form>

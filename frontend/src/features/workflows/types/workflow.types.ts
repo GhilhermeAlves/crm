@@ -8,17 +8,11 @@ export type WorkflowTrigger =
   | "ACTIVITY_CREATED";
 
 export type ConditionOperator =
-  | "EQUALS"
-  | "NOT_EQUALS"
-  | "GREATER_THAN"
-  | "LESS_THAN"
-  | "GREATER_OR_EQUAL"
-  | "LESS_OR_EQUAL";
+  "EQUALS" | "NOT_EQUALS" | "GREATER_THAN" | "LESS_THAN" | "GREATER_OR_EQUAL" | "LESS_OR_EQUAL";
 
 export type WorkflowActionType = "CREATE_TASK" | "CREATE_ACTIVITY";
 
-export type WorkflowExecutionStatus =
-  "PROCESSING" | "SUCCESS" | "FAILED" | "SKIPPED";
+export type WorkflowExecutionStatus = "PROCESSING" | "SUCCESS" | "FAILED" | "SKIPPED";
 
 export type WorkflowCondition = {
   id: string | null;
@@ -109,10 +103,7 @@ export const WORKFLOW_ACTION_LABELS: Record<WorkflowActionType, string> = {
   CREATE_ACTIVITY: "Criar atividade",
 };
 
-export const WORKFLOW_EXECUTION_STATUS_LABELS: Record<
-  WorkflowExecutionStatus,
-  string
-> = {
+export const WORKFLOW_EXECUTION_STATUS_LABELS: Record<WorkflowExecutionStatus, string> = {
   PROCESSING: "Processando",
   SUCCESS: "Sucesso",
   FAILED: "Falhou",
@@ -121,25 +112,24 @@ export const WORKFLOW_EXECUTION_STATUS_LABELS: Record<
 
 export type ConditionFieldOption = { value: string; label: string };
 
-export const CONDITION_FIELDS: Record<WorkflowTrigger, ConditionFieldOption[]> =
-  {
-    OPPORTUNITY_CREATED: [
-      { value: "opportunity.stage", label: "Etapa da oportunidade" },
-      { value: "opportunity.value", label: "Valor da oportunidade" },
-    ],
-    OPPORTUNITY_STAGE_CHANGED: [
-      { value: "opportunity.stage", label: "Etapa da oportunidade" },
-      { value: "opportunity.value", label: "Valor da oportunidade" },
-    ],
-    OPPORTUNITY_WON: [
-      { value: "opportunity.stage", label: "Etapa da oportunidade" },
-      { value: "opportunity.value", label: "Valor da oportunidade" },
-    ],
-    OPPORTUNITY_LOST: [
-      { value: "opportunity.stage", label: "Etapa da oportunidade" },
-      { value: "opportunity.value", label: "Valor da oportunidade" },
-    ],
-    TASK_CREATED: [{ value: "task.priority", label: "Prioridade da tarefa" }],
-    TASK_COMPLETED: [{ value: "task.priority", label: "Prioridade da tarefa" }],
-    ACTIVITY_CREATED: [{ value: "activity.type", label: "Tipo da atividade" }],
-  };
+export const CONDITION_FIELDS: Record<WorkflowTrigger, ConditionFieldOption[]> = {
+  OPPORTUNITY_CREATED: [
+    { value: "opportunity.stage", label: "Etapa da oportunidade" },
+    { value: "opportunity.value", label: "Valor da oportunidade" },
+  ],
+  OPPORTUNITY_STAGE_CHANGED: [
+    { value: "opportunity.stage", label: "Etapa da oportunidade" },
+    { value: "opportunity.value", label: "Valor da oportunidade" },
+  ],
+  OPPORTUNITY_WON: [
+    { value: "opportunity.stage", label: "Etapa da oportunidade" },
+    { value: "opportunity.value", label: "Valor da oportunidade" },
+  ],
+  OPPORTUNITY_LOST: [
+    { value: "opportunity.stage", label: "Etapa da oportunidade" },
+    { value: "opportunity.value", label: "Valor da oportunidade" },
+  ],
+  TASK_CREATED: [{ value: "task.priority", label: "Prioridade da tarefa" }],
+  TASK_COMPLETED: [{ value: "task.priority", label: "Prioridade da tarefa" }],
+  ACTIVITY_CREATED: [{ value: "activity.type", label: "Tipo da atividade" }],
+};

@@ -2,10 +2,7 @@
 
 import type { TimelineEvent } from "../types/contact.types";
 
-const EVENT_STYLE: Record<
-  TimelineEvent["type"],
-  { dot: string; accent: string }
-> = {
+const EVENT_STYLE: Record<TimelineEvent["type"], { dot: string; accent: string }> = {
   ACTIVITY: { dot: "bg-blue-500", accent: "text-blue-600" },
   TASK_CREATED: { dot: "bg-slate-400", accent: "text-slate-600" },
   TASK_COMPLETED: { dot: "bg-emerald-500", accent: "text-emerald-600" },
@@ -40,17 +37,11 @@ export function TimelinePanel({ events }: { events: TimelineEvent[] }) {
               className={`absolute -left-[26px] top-1 h-3 w-3 rounded-full ${style.dot} ring-2 ring-background`}
             />
             <div className="space-y-0.5">
-              <p className={`text-sm font-medium ${style.accent}`}>
-                {event.title}
-              </p>
+              <p className={`text-sm font-medium ${style.accent}`}>{event.title}</p>
               {event.description && (
-                <p className="text-xs text-muted-foreground">
-                  {event.description}
-                </p>
+                <p className="text-xs text-muted-foreground">{event.description}</p>
               )}
-              <p className="text-xs text-muted-foreground">
-                {formatDate(event.occurredAt)}
-              </p>
+              <p className="text-xs text-muted-foreground">{formatDate(event.occurredAt)}</p>
             </div>
           </li>
         );

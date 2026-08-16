@@ -8,21 +8,10 @@ export const LEAD_STATUSES = [
 ] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
-export const LEAD_SOURCES = [
-  "WHATSAPP",
-  "FORM",
-  "API",
-  "IMPORT",
-  "MANUAL",
-] as const;
+export const LEAD_SOURCES = ["WHATSAPP", "FORM", "API", "IMPORT", "MANUAL"] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 
-export const LEAD_CLASSIFICATIONS = [
-  "HOT",
-  "WARM",
-  "COLD",
-  "DISQUALIFIED",
-] as const;
+export const LEAD_CLASSIFICATIONS = ["HOT", "WARM", "COLD", "DISQUALIFIED"] as const;
 export type LeadClassification = (typeof LEAD_CLASSIFICATIONS)[number];
 
 export type Lead = {

@@ -28,12 +28,8 @@ export function TenantCard({ tenant }: TenantCardProps) {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
-                {tenant.tradingName}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {tenant.cnpj}
-              </p>
+              <p className="truncate text-sm font-medium">{tenant.tradingName}</p>
+              <p className="truncate text-xs text-muted-foreground">{tenant.cnpj}</p>
             </div>
             <div className="flex flex-col items-end gap-1">
               <TenantStatusBadge status={tenant.status} />

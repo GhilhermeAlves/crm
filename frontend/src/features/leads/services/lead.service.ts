@@ -10,14 +10,8 @@ import type {
 const BASE = "/companies";
 
 export const LeadService = {
-  async list(
-    companyId: string,
-    params?: ListLeadsParams,
-  ): Promise<PageResponse<Lead>> {
-    const response = await api.get<PageResponse<Lead>>(
-      `${BASE}/${companyId}/leads`,
-      { params },
-    );
+  async list(companyId: string, params?: ListLeadsParams): Promise<PageResponse<Lead>> {
+    const response = await api.get<PageResponse<Lead>>(`${BASE}/${companyId}/leads`, { params });
     return response.data;
   },
 
@@ -31,15 +25,8 @@ export const LeadService = {
     return response.data;
   },
 
-  async update(
-    companyId: string,
-    id: string,
-    data: UpdateLeadRequest,
-  ): Promise<Lead> {
-    const response = await api.put<Lead>(
-      `${BASE}/${companyId}/leads/${id}`,
-      data,
-    );
+  async update(companyId: string, id: string, data: UpdateLeadRequest): Promise<Lead> {
+    const response = await api.put<Lead>(`${BASE}/${companyId}/leads/${id}`, data);
     return response.data;
   },
 

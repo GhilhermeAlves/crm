@@ -85,18 +85,12 @@ export const TenantService = {
   },
 
   async create(data: CreateTenantRequest): Promise<Tenant> {
-    const response = await api.post<Tenant>(
-      BASE_PATH,
-      mapCreateTenantRequest(data),
-    );
+    const response = await api.post<Tenant>(BASE_PATH, mapCreateTenantRequest(data));
     return response.data;
   },
 
   async update(id: string, data: UpdateTenantRequest): Promise<Tenant> {
-    const response = await api.put<Tenant>(
-      `${BASE_PATH}/${id}`,
-      mapUpdateTenantRequest(data),
-    );
+    const response = await api.put<Tenant>(`${BASE_PATH}/${id}`, mapUpdateTenantRequest(data));
     return response.data;
   },
 

@@ -83,7 +83,7 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground">Perfil não encontrado.</p>
       </div>
     );
@@ -129,11 +129,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  placeholder="(XX) XXXXX-XXXX"
-                  {...register("phone")}
-                />
+                <Input id="phone" placeholder="(XX) XXXXX-XXXX" {...register("phone")} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="jobTitle">Cargo</Label>
@@ -155,10 +151,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Idioma</Label>
-                <Select
-                  value={watchedLanguage}
-                  onValueChange={(val) => setValue("language", val)}
-                >
+                <Select value={watchedLanguage} onValueChange={(val) => setValue("language", val)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -173,10 +166,7 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label>Fuso Horário</Label>
-                <Select
-                  value={watchedTimezone}
-                  onValueChange={(val) => setValue("timezone", val)}
-                >
+                <Select value={watchedTimezone} onValueChange={(val) => setValue("timezone", val)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

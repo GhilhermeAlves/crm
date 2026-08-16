@@ -12,11 +12,7 @@ import { ROUTES } from "@/lib/constants";
  *  - autenticado COM empresa → já onboarded, vai ao dashboard
  *  - autenticado SEM empresa (company_id null) → renderiza o onboarding
  */
-export default function OnboardingGroupLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function OnboardingGroupLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -30,9 +26,7 @@ export default function OnboardingGroupLayout({
       return;
     }
     if (!isAuthenticated) {
-      router.push(
-        `${ROUTES.LOGIN}?redirect=${encodeURIComponent("/onboarding")}`,
-      );
+      router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent("/onboarding")}`);
     } else if (user?.companyId) {
       router.push(ROUTES.DASHBOARD);
     }

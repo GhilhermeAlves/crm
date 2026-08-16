@@ -28,13 +28,7 @@ export type Lead = {
 };
 
 export type LeadStatus =
-  | "new"
-  | "contacted"
-  | "qualified"
-  | "proposal"
-  | "negotiation"
-  | "won"
-  | "lost";
+  "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "won" | "lost";
 
 export type Contact = {
   id: string;

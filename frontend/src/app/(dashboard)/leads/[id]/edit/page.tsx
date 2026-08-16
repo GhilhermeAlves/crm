@@ -46,7 +46,7 @@ export default function EditLeadPage() {
 
   if (!lead) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground">Lead não encontrado.</p>
       </div>
     );

@@ -2,11 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  IDENTITY_PROVIDERS,
-  loginWithGateway,
-  type IdentityProviderId,
-} from "@/lib/gateway-auth";
+import { IDENTITY_PROVIDERS, loginWithGateway, type IdentityProviderId } from "@/lib/gateway-auth";
 import { useIdentityProviders } from "../hooks/useIdentityProviders";
 import { IdentityProviderButton } from "./IdentityProviderButton";
 import { PhoneLoginForm } from "./PhoneLoginForm";
@@ -30,10 +26,7 @@ import type { IdentityProviderInfo } from "../types/identity-provider";
  * de OTP ({@link PhoneLoginForm}) e, após confirmar a posse, segue para o
  * fluxo de senha do Keycloak.
  */
-const KNOWN_ORDER: IdentityProviderId[] = [
-  IDENTITY_PROVIDERS.GOOGLE,
-  IDENTITY_PROVIDERS.PHONE,
-];
+const KNOWN_ORDER: IdentityProviderId[] = [IDENTITY_PROVIDERS.GOOGLE, IDENTITY_PROVIDERS.PHONE];
 
 const FALLBACK_LABELS: Record<IdentityProviderId, string> = {
   google: "Google",
@@ -63,9 +56,7 @@ export function ProviderList() {
     };
   });
 
-  const phone = providers.find(
-    (provider) => provider.alias === IDENTITY_PROVIDERS.PHONE,
-  );
+  const phone = providers.find((provider) => provider.alias === IDENTITY_PROVIDERS.PHONE);
 
   function handleSelect(provider: IdentityProviderInfo) {
     if (!provider.available) return;
@@ -77,19 +68,13 @@ export function ProviderList() {
   }
 
   if (phoneMode && phone?.available) {
-    return (
-      <PhoneLoginForm redirect={redirect} onBack={() => setPhoneMode(false)} />
-    );
+    return <PhoneLoginForm redirect={redirect} onBack={() => setPhoneMode(false)} />;
   }
 
   return (
     <div className="space-y-2">
       {providers.map((provider) => (
-        <IdentityProviderButton
-          key={provider.alias}
-          provider={provider}
-          onSelect={handleSelect}
-        />
+        <IdentityProviderButton key={provider.alias} provider={provider} onSelect={handleSelect} />
       ))}
       {isLoading && (
         <p

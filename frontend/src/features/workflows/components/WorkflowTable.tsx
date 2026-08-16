@@ -1,13 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-  Workflow as WorkflowIcon,
-} from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, Workflow as WorkflowIcon } from "lucide-react";
 import type { Workflow } from "../types/workflow.types";
 import { WORKFLOW_TRIGGER_LABELS } from "../types/workflow.types";
 import {
@@ -74,9 +68,7 @@ export function WorkflowTable({
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
         <WorkflowIcon className="mb-4 h-12 w-12 opacity-50" />
         <p className="text-lg font-medium">Nenhum workflow configurado</p>
-        <p className="text-sm">
-          Crie automações para seguir vendas e tarefas automaticamente.
-        </p>
+        <p className="text-sm">Crie automações para seguir vendas e tarefas automaticamente.</p>
       </div>
     );
   }
@@ -99,22 +91,18 @@ export function WorkflowTable({
               <TableCell>
                 <button
                   type="button"
-                  onClick={() =>
-                    router.push(`${ROUTES.WORKFLOWS}/${workflow.id}`)
-                  }
+                  onClick={() => router.push(`${ROUTES.WORKFLOWS}/${workflow.id}`)}
                   className="text-left font-medium hover:underline"
                 >
                   {workflow.name}
                 </button>
                 {workflow.description && (
-                  <div className="text-xs text-muted-foreground line-clamp-1">
+                  <div className="line-clamp-1 text-xs text-muted-foreground">
                     {workflow.description}
                   </div>
                 )}
               </TableCell>
-              <TableCell className="text-sm">
-                {WORKFLOW_TRIGGER_LABELS[workflow.trigger]}
-              </TableCell>
+              <TableCell className="text-sm">{WORKFLOW_TRIGGER_LABELS[workflow.trigger]}</TableCell>
               <TableCell>
                 {canUpdate ? (
                   <Switch
@@ -141,17 +129,13 @@ export function WorkflowTable({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() =>
-                        router.push(`${ROUTES.WORKFLOWS}/${workflow.id}`)
-                      }
+                      onClick={() => router.push(`${ROUTES.WORKFLOWS}/${workflow.id}`)}
                     >
                       <Eye className="mr-2 h-4 w-4" />
                       Visualizar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() =>
-                        router.push(`${ROUTES.WORKFLOWS}/${workflow.id}/edit`)
-                      }
+                      onClick={() => router.push(`${ROUTES.WORKFLOWS}/${workflow.id}/edit`)}
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar

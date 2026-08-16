@@ -14,8 +14,7 @@ export function useStorageObjects(companyId: string | null) {
 export function useUploadFile(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (file: File) =>
-      StorageService.upload(companyId as string, file),
+    mutationFn: (file: File) => StorageService.upload(companyId as string, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["storage", companyId] });
       toast.success("Arquivo enviado");
@@ -29,8 +28,7 @@ export function useUploadFile(companyId: string | null) {
 export function useDeleteFile(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (objectId: string) =>
-      StorageService.remove(companyId as string, objectId),
+    mutationFn: (objectId: string) => StorageService.remove(companyId as string, objectId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["storage", companyId] });
       toast.success("Arquivo excluído");

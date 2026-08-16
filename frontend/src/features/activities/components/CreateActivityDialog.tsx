@@ -4,16 +4,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ActivityType } from "../types/activity.types";
 import { ACTIVITY_TYPE_LABELS } from "../types/activity.types";
-import {
-  createActivitySchema,
-  type CreateActivityFormValues,
-} from "../schemas/activity.schema";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { createActivitySchema, type CreateActivityFormValues } from "../schemas/activity.schema";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -86,9 +78,7 @@ export function CreateActivityDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {(
-                        Object.keys(ACTIVITY_TYPE_LABELS) as ActivityType[]
-                      ).map((t) => (
+                      {(Object.keys(ACTIVITY_TYPE_LABELS) as ActivityType[]).map((t) => (
                         <SelectItem key={t} value={t}>
                           {ACTIVITY_TYPE_LABELS[t]}
                         </SelectItem>
@@ -106,10 +96,7 @@ export function CreateActivityDialog({
                 <FormItem>
                   <FormLabel>Assunto</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Ex.: Ligação de qualificação"
-                      {...field}
-                    />
+                    <Input placeholder="Ex.: Ligação de qualificação" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -142,11 +129,7 @@ export function CreateActivityDialog({
               )}
             />
             <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>

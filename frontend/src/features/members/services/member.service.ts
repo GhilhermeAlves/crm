@@ -8,15 +8,8 @@ export const MemberService = {
     const response = await api.get<Member[]>(`${BASE}/${companyId}/members`);
     return response.data;
   },
-  async updateRole(
-    companyId: string,
-    userId: string,
-    role: string,
-  ): Promise<Member> {
-    const response = await api.put<Member>(
-      `${BASE}/${companyId}/members/${userId}`,
-      { role },
-    );
+  async updateRole(companyId: string, userId: string, role: string): Promise<Member> {
+    const response = await api.put<Member>(`${BASE}/${companyId}/members/${userId}`, { role });
     return response.data;
   },
   async removeMember(companyId: string, userId: string): Promise<void> {

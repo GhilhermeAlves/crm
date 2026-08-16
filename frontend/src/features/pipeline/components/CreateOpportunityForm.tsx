@@ -2,10 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  opportunityFormSchema,
-  type OpportunityFormValues,
-} from "../schemas/pipeline.schema";
+import { opportunityFormSchema, type OpportunityFormValues } from "../schemas/pipeline.schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,14 +55,8 @@ export function CreateOpportunityForm({
     >
       <div className="space-y-2">
         <Label htmlFor="title">Título *</Label>
-        <Input
-          id="title"
-          placeholder="Ex.: Contrato anual"
-          {...register("title")}
-        />
-        {errors.title && (
-          <p className="text-sm text-destructive">{errors.title.message}</p>
-        )}
+        <Input id="title" placeholder="Ex.: Contrato anual" {...register("title")} />
+        {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -78,17 +69,11 @@ export function CreateOpportunityForm({
             placeholder="0,00"
             {...register("value")}
           />
-          {errors.value && (
-            <p className="text-sm text-destructive">{errors.value.message}</p>
-          )}
+          {errors.value && <p className="text-sm text-destructive">{errors.value.message}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="expectedCloseDate">Previsão de fechamento</Label>
-          <Input
-            id="expectedCloseDate"
-            type="datetime-local"
-            {...register("expectedCloseDate")}
-          />
+          <Input id="expectedCloseDate" type="datetime-local" {...register("expectedCloseDate")} />
         </div>
       </div>
 
@@ -99,9 +84,7 @@ export function CreateOpportunityForm({
           placeholder="UUID do contato (ex.: 3fa85f64-5717-4562-b3fc-2c963f66afa6)"
           {...register("contactId")}
         />
-        {errors.contactId && (
-          <p className="text-sm text-destructive">{errors.contactId.message}</p>
-        )}
+        {errors.contactId && <p className="text-sm text-destructive">{errors.contactId.message}</p>}
       </div>
 
       <div className="space-y-2">

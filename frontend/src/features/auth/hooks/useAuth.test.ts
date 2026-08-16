@@ -108,11 +108,7 @@ describe("AuthProvider (Sprint 6.4, session via gateway)", () => {
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
     expect(result.current.roles).toEqual(["ADMIN"]);
-    expect(result.current.permissions).toEqual([
-      "user:read",
-      "user:create",
-      "contact:read",
-    ]);
+    expect(result.current.permissions).toEqual(["user:read", "user:create", "contact:read"]);
   });
 
   it("defaults to empty roles/permissions when the identity carries none (company-less)", async () => {
@@ -134,8 +130,7 @@ describe("AuthProvider (Sprint 6.4, session via gateway)", () => {
     // contexto e exige que, quando o loading termina com sucesso, a autenticação
     // já esteja presente no MESMO frame (sem janela de "deslogado" pós-login).
     meMock.mockResolvedValue(mockUser);
-    const snapshots: Array<{ isLoading: boolean; isAuthenticated: boolean }> =
-      [];
+    const snapshots: Array<{ isLoading: boolean; isAuthenticated: boolean }> = [];
 
     function AuthStateObserver() {
       const ctx = useAuth();
@@ -157,9 +152,7 @@ describe("AuthProvider (Sprint 6.4, session via gateway)", () => {
     render(React.createElement(AuthStateObserver, null), { wrapper });
 
     await waitFor(() =>
-      expect(snapshots.some((s) => !s.isLoading && s.isAuthenticated)).toBe(
-        true,
-      ),
+      expect(snapshots.some((s) => !s.isLoading && s.isAuthenticated)).toBe(true),
     );
 
     const invalid = snapshots.filter((s) => !s.isLoading && !s.isAuthenticated);

@@ -8,10 +8,6 @@ type PageTitleProps = {
 
 export function PageTitle({ children, className }: PageTitleProps) {
   return (
-    <h1
-      className={cn("text-2xl font-bold tracking-tight lg:text-3xl", className)}
-    >
-      {children}
-    </h1>
+    <h1 className={cn("text-2xl font-bold tracking-tight lg:text-3xl", className)}>{children}</h1>
   );
 }

@@ -29,8 +29,7 @@ export const IDENTITY_PROVIDERS = {
   PHONE: "phone",
 } as const;
 
-export type IdentityProviderId =
-  (typeof IDENTITY_PROVIDERS)[keyof typeof IDENTITY_PROVIDERS];
+export type IdentityProviderId = (typeof IDENTITY_PROVIDERS)[keyof typeof IDENTITY_PROVIDERS];
 
 /**
  * Inicia o login via Access Gateway (`/auth/authorize`). O parâmetro
@@ -39,10 +38,7 @@ export type IdentityProviderId =
  * Identity Provider escolhido. Nenhum token de provedor externo transita pelo
  * browser — a sessão continua server-side (cookie HttpOnly).
  */
-export function loginWithGateway(
-  redirectPath?: string,
-  provider?: IdentityProviderId,
-): void {
+export function loginWithGateway(redirectPath?: string, provider?: IdentityProviderId): void {
   const params = new URLSearchParams({
     redirect: redirectPath || "/dashboard",
   });
@@ -57,9 +53,7 @@ export function logoutWithGateway(): void {
 /** Lê o token CSRF do cookie não-HttpOnly (padrão cookie-to-header). */
 export function getCsrfToken(): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(
-    new RegExp(`(?:^|;\\s*)${CSRF_COOKIE}=([^;]*)`),
-  );
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${CSRF_COOKIE}=([^;]*)`));
   if (!match) return null;
   try {
     return decodeURIComponent(match[1]);
@@ -144,9 +138,7 @@ export async function getLinkStatus(): Promise<GatewayLinkStatus> {
  * (`INVALID_CREDENTIALS`, `LINK_PENDING_NOT_FOUND`, `LINK_NOT_FOUND`,
  * `RATE_LIMIT_EXCEEDED`, ...).
  */
-export async function linkAccountWithPassword(
-  password: string,
-): Promise<{ redirect: string }> {
+export async function linkAccountWithPassword(password: string): Promise<{ redirect: string }> {
   const response = await fetch("/auth/link", {
     method: "POST",
     credentials: "include",
@@ -167,8 +159,7 @@ export async function linkAccountWithPassword(
   try {
     const body = await response.json();
     if (typeof body.code === "string" && body.code) code = body.code;
-    if (typeof body.message === "string" && body.message)
-      message = body.message;
+    if (typeof body.message === "string" && body.message) message = body.message;
   } catch {
     // corpo não-JSON
   }

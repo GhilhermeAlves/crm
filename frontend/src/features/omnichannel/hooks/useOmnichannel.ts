@@ -16,8 +16,7 @@ export function useChannels() {
 export function useCreateChannel() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: ChannelRequest) =>
-      OmnichannelService.createChannel(data),
+    mutationFn: (data: ChannelRequest) => OmnichannelService.createChannel(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["omnichannel", "channels"] });
       toast.success("Canal criado");
@@ -46,13 +45,8 @@ export function useUpdateChannel() {
 export function useSetChannelStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      status,
-    }: {
-      id: string;
-      status: "ACTIVE" | "INACTIVE" | "ERROR";
-    }) => OmnichannelService.setChannelStatus(id, status),
+    mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "INACTIVE" | "ERROR" }) =>
+      OmnichannelService.setChannelStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["omnichannel", "channels"] });
       toast.success("Status atualizado");
@@ -97,13 +91,8 @@ export function useConversation(conversationId: string | null) {
 export function useSendMessage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      conversationId,
-      body,
-    }: {
-      conversationId: string;
-      body: string;
-    }) => OmnichannelService.sendMessage(conversationId, body),
+    mutationFn: ({ conversationId, body }: { conversationId: string; body: string }) =>
+      OmnichannelService.sendMessage(conversationId, body),
     onSuccess: (message) => {
       queryClient.invalidateQueries({
         queryKey: ["omnichannel", "conversation", message.conversationId],
@@ -121,8 +110,7 @@ export function useSendMessage() {
 export function useMarkRead() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (conversationId: string) =>
-      OmnichannelService.markRead(conversationId),
+    mutationFn: (conversationId: string) => OmnichannelService.markRead(conversationId),
     onSuccess: (_, conversationId) => {
       queryClient.invalidateQueries({
         queryKey: ["omnichannel", "conversation", conversationId],

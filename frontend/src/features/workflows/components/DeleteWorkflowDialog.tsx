@@ -35,19 +35,14 @@ export function DeleteWorkflowDialog({
           <DialogTitle>Excluir workflow</DialogTitle>
           <DialogDescription>
             Tem certeza que deseja excluir o workflow &quot;{workflow.name}
-            &quot;? Esta ação não pode ser desfeita e o histórico de execuções
-            será removido.
+            &quot;? Esta ação não pode ser desfeita e o histórico de execuções será removido.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isLoading}
-          >
+          <Button variant="destructive" onClick={onConfirm} disabled={isLoading}>
             {isLoading ? "Excluindo..." : "Excluir"}
           </Button>
         </DialogFooter>

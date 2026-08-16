@@ -35,8 +35,7 @@ export default function SettingsRolesPage() {
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
 
   const roles = rolesQuery.data ?? [];
-  const activeRole =
-    roles.find((r) => r.id === selectedRoleId) ?? roles[0] ?? null;
+  const activeRole = roles.find((r) => r.id === selectedRoleId) ?? roles[0] ?? null;
 
   const managePermissions = can("role:manage");
 
@@ -71,8 +70,7 @@ export default function SettingsRolesPage() {
         <div>
           <PageTitle>Perfis de acesso</PageTitle>
           <p className="text-sm text-muted-foreground">
-            Papéis e permissões desta empresa. A empresa ativa determina o que é
-            exibido.
+            Papéis e permissões desta empresa. A empresa ativa determina o que é exibido.
           </p>
         </div>
         {managePermissions && (
@@ -100,16 +98,12 @@ export default function SettingsRolesPage() {
                     key={role.id}
                     onClick={() => setSelectedRoleId(role.id)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-left transition-colors",
-                      activeRole?.id === role.id
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted",
+                      "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors",
+                      activeRole?.id === role.id ? "bg-primary/10 text-primary" : "hover:bg-muted",
                     )}
                   >
                     <RoleBadge name={role.name} isSystem={role.isSystem} />
-                    <span className="text-xs text-muted-foreground">
-                      {role.permissions.length}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{role.permissions.length}</span>
                   </button>
                 ))}
               </div>
@@ -121,12 +115,8 @@ export default function SettingsRolesPage() {
           {activeRole ? (
             <>
               <div>
-                <h2 className="text-2xl font-bold">
-                  {activeRole.name.replace(/_/g, " ")}
-                </h2>
-                <p className="text-muted-foreground">
-                  {activeRole.description || "Sem descrição"}
-                </p>
+                <h2 className="text-2xl font-bold">{activeRole.name.replace(/_/g, " ")}</h2>
+                <p className="text-muted-foreground">{activeRole.description || "Sem descrição"}</p>
               </div>
               <PermissionMatrix
                 permissions={permissionsQuery.data ?? []}
@@ -136,9 +126,7 @@ export default function SettingsRolesPage() {
               />
             </>
           ) : (
-            <p className="text-muted-foreground">
-              Nenhum papel disponível para esta empresa.
-            </p>
+            <p className="text-muted-foreground">Nenhum papel disponível para esta empresa.</p>
           )}
         </div>
       </div>

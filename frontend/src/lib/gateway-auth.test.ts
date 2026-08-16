@@ -31,16 +31,12 @@ describe("gateway-auth (BFF session)", () => {
 
   it("loginWithGateway navigates to /auth/authorize preserving the redirect", () => {
     loginWithGateway("/leads");
-    expect(window.location.assign).toHaveBeenCalledWith(
-      "/auth/authorize?redirect=%2Fleads",
-    );
+    expect(window.location.assign).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fleads");
   });
 
   it("loginWithGateway defaults to /dashboard when no redirect is given", () => {
     loginWithGateway();
-    expect(window.location.assign).toHaveBeenCalledWith(
-      "/auth/authorize?redirect=%2Fdashboard",
-    );
+    expect(window.location.assign).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fdashboard");
   });
 
   it("loginWithGateway adds the provider hint preserving the redirect", () => {
@@ -91,21 +87,14 @@ describe("gateway-auth (BFF session)", () => {
     expect(url).toBe("/auth/refresh");
     expect(init.method).toBe("POST");
     expect(init.credentials).toBe("include");
-    expect((init.headers as Record<string, string>)[CSRF_HEADER]).toBe(
-      "csrf-1",
-    );
+    expect((init.headers as Record<string, string>)[CSRF_HEADER]).toBe("csrf-1");
   });
 
   it("refreshGatewaySession deduplicates concurrent refreshes", async () => {
     document.cookie = `${CSRF_COOKIE}=csrf-1; path=/`;
-    vi.spyOn(window, "fetch").mockResolvedValue(
-      new Response(null, { status: 204 }),
-    );
+    vi.spyOn(window, "fetch").mockResolvedValue(new Response(null, { status: 204 }));
 
-    const [a, b] = await Promise.all([
-      refreshGatewaySession(),
-      refreshGatewaySession(),
-    ]);
+    const [a, b] = await Promise.all([refreshGatewaySession(), refreshGatewaySession()]);
     expect(a).toBe(true);
     expect(b).toBe(true);
     expect(window.fetch).toHaveBeenCalledTimes(1);
@@ -113,22 +102,17 @@ describe("gateway-auth (BFF session)", () => {
 
   it("refreshGatewaySession returns false when the server rejects", async () => {
     document.cookie = `${CSRF_COOKIE}=csrf-1; path=/`;
-    vi.spyOn(window, "fetch").mockResolvedValue(
-      new Response(null, { status: 401 }),
-    );
+    vi.spyOn(window, "fetch").mockResolvedValue(new Response(null, { status: 401 }));
 
     await expect(refreshGatewaySession()).resolves.toBe(false);
   });
 
   it("getLinkStatus reports a pending link with the account email", async () => {
     vi.spyOn(window, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({ pending: true, email: "ana@exemplo.com" }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        },
-      ),
+      new Response(JSON.stringify({ pending: true, email: "ana@exemplo.com" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
     );
 
     await expect(getLinkStatus()).resolves.toEqual({
@@ -136,8 +120,10 @@ describe("gateway-auth (BFF session)", () => {
       email: "ana@exemplo.com",
     });
 
-    const [url, init] = (window.fetch as ReturnType<typeof vi.fn>).mock
-      .calls[0] as [string, RequestInit];
+    const [url, init] = (window.fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
     expect(url).toBe("/auth/link-status");
     expect(init.credentials).toBe("include");
   });
@@ -154,9 +140,7 @@ describe("gateway-auth (BFF session)", () => {
   });
 
   it("getLinkStatus returns pending=false when the server errors", async () => {
-    vi.spyOn(window, "fetch").mockResolvedValue(
-      new Response(null, { status: 500 }),
-    );
+    vi.spyOn(window, "fetch").mockResolvedValue(new Response(null, { status: 500 }));
     await expect(getLinkStatus()).resolves.toEqual({ pending: false });
   });
 
@@ -173,8 +157,10 @@ describe("gateway-auth (BFF session)", () => {
       redirect: "/leads",
     });
 
-    const [url, init] = (window.fetch as ReturnType<typeof vi.fn>).mock
-      .calls[0] as [string, RequestInit];
+    const [url, init] = (window.fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
     expect(url).toBe("/auth/link");
     expect(init.method).toBe("POST");
     expect(init.credentials).toBe("include");

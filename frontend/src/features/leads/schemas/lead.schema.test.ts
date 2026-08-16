@@ -31,30 +31,18 @@ describe("lead.schema (Sprint 10 — validação de lead)", () => {
   });
 
   it("rejeita origem inválida (só aceita WHATSAPP/FORM/API/IMPORT/MANUAL)", () => {
-    const result = leadFormSchema.safeParse(
-      makeValues({ source: "TWITTER" as never }),
-    );
+    const result = leadFormSchema.safeParse(makeValues({ source: "TWITTER" as never }));
     expect(result.success).toBe(false);
   });
 
   it("valida score entre 0 e 100", () => {
-    expect(leadFormSchema.safeParse(makeValues({ score: "150" })).success).toBe(
-      false,
-    );
-    expect(leadFormSchema.safeParse(makeValues({ score: "-5" })).success).toBe(
-      false,
-    );
-    expect(leadFormSchema.safeParse(makeValues({ score: "100" })).success).toBe(
-      true,
-    );
+    expect(leadFormSchema.safeParse(makeValues({ score: "150" })).success).toBe(false);
+    expect(leadFormSchema.safeParse(makeValues({ score: "-5" })).success).toBe(false);
+    expect(leadFormSchema.safeParse(makeValues({ score: "100" })).success).toBe(true);
   });
 
   it("aceita classificação opcional vazia ou válida", () => {
-    expect(
-      leadFormSchema.safeParse(makeValues({ classification: "HOT" })).success,
-    ).toBe(true);
-    expect(
-      leadFormSchema.safeParse(makeValues({ classification: "" })).success,
-    ).toBe(true);
+    expect(leadFormSchema.safeParse(makeValues({ classification: "HOT" })).success).toBe(true);
+    expect(leadFormSchema.safeParse(makeValues({ classification: "" })).success).toBe(true);
   });
 });

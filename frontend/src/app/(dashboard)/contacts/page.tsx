@@ -27,9 +27,7 @@ export default function ContactsPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Contatos</h1>
-          <p className="text-sm text-muted-foreground">
-            Diretório de clientes da sua empresa.
-          </p>
+          <p className="text-sm text-muted-foreground">Diretório de clientes da sua empresa.</p>
         </div>
         {canCreate && (
           <Button onClick={() => setOpen(true)}>

@@ -98,9 +98,7 @@ describe("useContacts (Sprint 13)", () => {
 
   it("loads the customer 360 for a contact", async () => {
     c360Mock.mockResolvedValue(customer360);
-    const { result } = renderWith(() =>
-      useCustomer360("company-1", "contact-1"),
-    );
+    const { result } = renderWith(() => useCustomer360("company-1", "contact-1"));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.contact.fullName).toBe("Ana Souza");

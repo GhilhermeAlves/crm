@@ -34,19 +34,15 @@ export function DeleteLeadDialog({
         <DialogHeader>
           <DialogTitle>Excluir Lead</DialogTitle>
           <DialogDescription>
-            Tem certeza que deseja excluir este lead? Esta ação removerá o lead
-            do funil desta empresa.
+            Tem certeza que deseja excluir este lead? Esta ação removerá o lead do funil desta
+            empresa.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isLoading}
-          >
+          <Button variant="destructive" onClick={onConfirm} disabled={isLoading}>
             {isLoading ? "Excluindo..." : "Excluir"}
           </Button>
         </DialogFooter>

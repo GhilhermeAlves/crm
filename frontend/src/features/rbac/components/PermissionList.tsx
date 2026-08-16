@@ -39,7 +39,7 @@ export function PermissionList({ permissions }: PermissionListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar permissões..."
@@ -62,17 +62,12 @@ export function PermissionList({ permissions }: PermissionListProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
               {modulePermissions.map((permission) => (
-                <div
-                  key={permission.id}
-                  className="flex items-start gap-3 rounded-md border p-3"
-                >
+                <div key={permission.id} className="flex items-start gap-3 rounded-md border p-3">
                   <PermissionBadge name={permission.name} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">
-                      {permission.description}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{permission.description}</p>
                     <p className="text-xs text-muted-foreground">
                       {actionName[permission.action] || permission.action}
                     </p>

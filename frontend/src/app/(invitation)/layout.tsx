@@ -10,11 +10,7 @@ import { LoadingScreen } from "@/components/LoadingScreen";
  * ser aceito para ingressar numa segunda empresa). Não-autenticado → login
  * preservando a URL com o token (loginKeycloak usa /auth/authorize com redirect).
  */
-export default function InvitationGroupLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function InvitationGroupLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, loginKeycloak } = useAuth();
   const [mounted, setMounted] = useState(false);
 

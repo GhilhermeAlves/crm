@@ -4,13 +4,9 @@ import { ContactTable } from "./ContactTable";
 import type { Contact } from "../types/contact.types";
 
 vi.mock("next/link", () => ({
-  default: ({
-    href,
-    children,
-  }: {
-    href: string;
-    children: React.ReactNode;
-  }) => <a href={href}>{children}</a>,
+  default: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 function makeContact(overrides: Partial<Contact> = {}): Contact {

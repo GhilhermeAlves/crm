@@ -1,12 +1,5 @@
 export type ActivityType =
-  | "CALL"
-  | "MEETING"
-  | "EMAIL"
-  | "MESSAGE"
-  | "NOTE"
-  | "PROPOSAL"
-  | "FOLLOW_UP"
-  | "OTHER";
+  "CALL" | "MEETING" | "EMAIL" | "MESSAGE" | "NOTE" | "PROPOSAL" | "FOLLOW_UP" | "OTHER";
 
 export type Activity = {
   id: string;

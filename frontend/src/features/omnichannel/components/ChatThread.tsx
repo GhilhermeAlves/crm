@@ -8,10 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
-import {
-  MESSAGE_STATUS_LABELS,
-  type ConversationDetail,
-} from "../types/omnichannel.types";
+import { MESSAGE_STATUS_LABELS, type ConversationDetail } from "../types/omnichannel.types";
 
 type Props = {
   detail: ConversationDetail | undefined;
@@ -21,13 +18,7 @@ type Props = {
   sending: boolean;
 };
 
-export function ChatThread({
-  detail,
-  isLoading,
-  canSend,
-  onSend,
-  sending,
-}: Props) {
+export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Props) {
   const [body, setBody] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -70,9 +61,7 @@ export function ChatThread({
           </p>
         </div>
         <Badge variant="secondary">
-          {detail.unreadCount > 0
-            ? `${detail.unreadCount} não lida(s)`
-            : "Em dia"}
+          {detail.unreadCount > 0 ? `${detail.unreadCount} não lida(s)` : "Em dia"}
         </Badge>
       </div>
 
@@ -86,34 +75,22 @@ export function ChatThread({
           {detail.messages.content.map((m) => {
             const outbound = m.direction === "OUTBOUND";
             return (
-              <div
-                key={m.id}
-                className={cn(
-                  "flex",
-                  outbound ? "justify-end" : "justify-start",
-                )}
-              >
+              <div key={m.id} className={cn("flex", outbound ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
                     "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm",
-                    outbound
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted",
+                    outbound ? "bg-primary text-primary-foreground" : "bg-muted",
                   )}
                 >
                   <p className="whitespace-pre-wrap break-words">{m.body}</p>
                   <div
                     className={cn(
                       "mt-1 flex items-center gap-2 text-[11px]",
-                      outbound
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground",
+                      outbound ? "text-primary-foreground/70" : "text-muted-foreground",
                     )}
                   >
                     <span>{MESSAGE_STATUS_LABELS[m.status]}</span>
-                    {m.status === "FAILED" && m.providerError && (
-                      <span>• {m.providerError}</span>
-                    )}
+                    {m.status === "FAILED" && m.providerError && <span>• {m.providerError}</span>}
                   </div>
                 </div>
               </div>
@@ -123,21 +100,14 @@ export function ChatThread({
         </div>
       </ScrollArea>
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex items-center gap-2 border-t p-3"
-      >
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t p-3">
         <Input
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Digite sua mensagem…"
           disabled={!canSend || sending}
         />
-        <Button
-          type="submit"
-          size="icon"
-          disabled={!canSend || sending || !body.trim()}
-        >
+        <Button type="submit" size="icon" disabled={!canSend || sending || !body.trim()}>
           <Send className="h-4 w-4" />
         </Button>
       </form>

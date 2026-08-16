@@ -77,9 +77,7 @@ function renderSwitcher() {
 }
 
 async function optionButton(id: string) {
-  return (await screen.findByTestId(
-    `company-option-${id}`,
-  )) as HTMLButtonElement;
+  return (await screen.findByTestId(`company-option-${id}`)) as HTMLButtonElement;
 }
 
 describe("CompanySwitcher (Sprint 8.4)", () => {
@@ -114,9 +112,7 @@ describe("CompanySwitcher (Sprint 8.4)", () => {
 
   it("switches company without logout and moves the active mark (me invalidated)", async () => {
     // A -> B after switch: both `me` and the company list refetch during invalidate.
-    meMock
-      .mockResolvedValueOnce(mockUser(COMPANY_A))
-      .mockResolvedValue(mockUser(COMPANY_B));
+    meMock.mockResolvedValueOnce(mockUser(COMPANY_A)).mockResolvedValue(mockUser(COMPANY_B));
     myCompaniesMock
       .mockResolvedValueOnce(companies(COMPANY_A))
       .mockResolvedValue(companies(COMPANY_B));
@@ -126,9 +122,7 @@ describe("CompanySwitcher (Sprint 8.4)", () => {
     const optionB = await optionButton(COMPANY_B);
     fireEvent.click(optionB);
 
-    await waitFor(() =>
-      expect(switchCompanyMock).toHaveBeenCalledWith(COMPANY_B),
-    );
+    await waitFor(() => expect(switchCompanyMock).toHaveBeenCalledWith(COMPANY_B));
     // After invalidation, /me returns company B -> B becomes the active/disabled option.
     await waitFor(async () => {
       const activeOption = await optionButton(COMPANY_B);

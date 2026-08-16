@@ -42,15 +42,9 @@ export function Header() {
       <div className="flex-1" />
 
       {/* Search (UI only) */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="hidden h-9 gap-2 md:flex md:w-64 lg:w-80"
-      >
+      <Button variant="outline" size="sm" className="hidden h-9 gap-2 md:flex md:w-64 lg:w-80">
         <Search className="h-4 w-4 text-muted-foreground" />
-        <span className="flex-1 text-left text-sm text-muted-foreground">
-          Pesquisar...
-        </span>
+        <span className="flex-1 text-left text-sm text-muted-foreground">Pesquisar...</span>
         <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">
           <Command className="h-3 w-3" />K
         </kbd>
@@ -67,11 +61,7 @@ export function Header() {
         <DropdownMenuContent className="w-80" align="end">
           <DropdownMenuLabel className="flex items-center justify-between">
             <span>Notificações</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-auto p-0 text-xs text-primary"
-            >
+            <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-primary">
               Marcar como lidas
             </Button>
           </DropdownMenuLabel>
@@ -84,15 +74,11 @@ export function Header() {
           </DropdownMenuItem>
           <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
             <p className="text-sm font-medium">Reunião agendada</p>
-            <p className="text-xs text-muted-foreground">
-              Reunião com Empresa X amanhã às 14h
-            </p>
+            <p className="text-xs text-muted-foreground">Reunião com Empresa X amanhã às 14h</p>
           </DropdownMenuItem>
           <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
             <p className="text-sm font-medium">Negócio atualizado</p>
-            <p className="text-xs text-muted-foreground">
-              Proposta aceita para Empresa Y
-            </p>
+            <p className="text-xs text-muted-foreground">Proposta aceita para Empresa Y</p>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="justify-center text-sm text-primary">

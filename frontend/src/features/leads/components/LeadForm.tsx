@@ -34,13 +34,7 @@ interface LeadFormProps {
   mode: "create" | "edit";
 }
 
-export function LeadForm({
-  lead,
-  onSubmit,
-  onCancel,
-  isLoading,
-  mode,
-}: LeadFormProps) {
+export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadFormProps) {
   const isEdit = mode === "edit";
 
   const {
@@ -82,9 +76,7 @@ export function LeadForm({
                 {...register("contactId")}
               />
               {errors.contactId && (
-                <p className="text-sm text-destructive">
-                  {errors.contactId.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.contactId.message}</p>
               )}
             </div>
           )}
@@ -94,9 +86,7 @@ export function LeadForm({
               <Label>Origem *</Label>
               <Select
                 value={watchedSource}
-                onValueChange={(val) =>
-                  setValue("source", val as typeof watchedSource)
-                }
+                onValueChange={(val) => setValue("source", val as typeof watchedSource)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -114,9 +104,7 @@ export function LeadForm({
               <Label>Status</Label>
               <Select
                 value={watchedStatus}
-                onValueChange={(val) =>
-                  setValue("status", val as typeof watchedStatus)
-                }
+                onValueChange={(val) => setValue("status", val as typeof watchedStatus)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -135,17 +123,8 @@ export function LeadForm({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="score">Score (0-100)</Label>
-              <Input
-                id="score"
-                type="text"
-                inputMode="numeric"
-                {...register("score")}
-              />
-              {errors.score && (
-                <p className="text-sm text-destructive">
-                  {errors.score.message}
-                </p>
-              )}
+              <Input id="score" type="text" inputMode="numeric" {...register("score")} />
+              {errors.score && <p className="text-sm text-destructive">{errors.score.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Classificação</Label>
@@ -154,8 +133,7 @@ export function LeadForm({
                 onValueChange={(val) =>
                   setValue(
                     "classification",
-                    (val === "none" ? "" : val) as
-                      "" | typeof watchedClassification,
+                    (val === "none" ? "" : val) as "" | typeof watchedClassification,
                   )
                 }
               >
@@ -197,11 +175,7 @@ export function LeadForm({
           </Button>
         )}
         <Button type="submit" disabled={isLoading}>
-          {isLoading
-            ? "Salvando..."
-            : isEdit
-              ? "Salvar Alterações"
-              : "Criar Lead"}
+          {isLoading ? "Salvando..." : isEdit ? "Salvar Alterações" : "Criar Lead"}
         </Button>
       </div>
     </form>

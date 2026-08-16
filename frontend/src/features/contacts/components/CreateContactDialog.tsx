@@ -3,12 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -24,12 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 const createContactSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório").max(100),
   lastName: z.string().max(100).optional(),
-  email: z
-    .string()
-    .email("E-mail inválido")
-    .max(255)
-    .optional()
-    .or(z.literal("")),
+  email: z.string().email("E-mail inválido").max(255).optional().or(z.literal("")),
   phone: z.string().max(30).optional(),
   notes: z.string().max(2000).optional(),
 });
@@ -49,12 +39,7 @@ type Props = {
   }) => void;
 };
 
-export function CreateContactDialog({
-  open,
-  onOpenChange,
-  isLoading,
-  onSubmit,
-}: Props) {
+export function CreateContactDialog({ open, onOpenChange, isLoading, onSubmit }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(createContactSchema),
     defaultValues: {
@@ -84,10 +69,7 @@ export function CreateContactDialog({
           <DialogTitle>Novo contato</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -123,11 +105,7 @@ export function CreateContactDialog({
                 <FormItem>
                   <FormLabel>E-mail</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="cliente@empresa.com"
-                      {...field}
-                    />
+                    <Input type="email" placeholder="cliente@empresa.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -153,21 +131,14 @@ export function CreateContactDialog({
                 <FormItem>
                   <FormLabel>Notas</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Observações sobre o contato"
-                      {...field}
-                    />
+                    <Textarea placeholder="Observações sobre o contato" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>

@@ -22,10 +22,7 @@ export default function NewTenantPage() {
   return (
     <div className="space-y-6">
       <PageTitle>Nova Empresa</PageTitle>
-      <TenantForm
-        onSubmit={handleSubmit}
-        isLoading={createMutation.isPending}
-      />
+      <TenantForm onSubmit={handleSubmit} isLoading={createMutation.isPending} />
     </div>
   );
 }

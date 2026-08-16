@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import {
-  LeadStatusBadge,
-  LeadSourceBadge,
-  LeadClassificationBadge,
-} from "./LeadBadges";
+import { LeadStatusBadge, LeadSourceBadge, LeadClassificationBadge } from "./LeadBadges";
 
 describe("LeadBadges (Sprint 10)", () => {
   it("renders the pt-BR label for each lead status", () => {
@@ -46,9 +42,7 @@ describe("LeadBadges (Sprint 10)", () => {
       ["DISQUALIFIED", "Desqualificado"],
     ];
     for (const [value, label] of cases) {
-      const { unmount } = render(
-        <LeadClassificationBadge classification={value} />,
-      );
+      const { unmount } = render(<LeadClassificationBadge classification={value} />);
       expect(screen.getByText(label)).toBeTruthy();
       unmount();
     }

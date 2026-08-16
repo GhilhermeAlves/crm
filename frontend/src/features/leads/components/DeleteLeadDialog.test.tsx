@@ -21,70 +21,36 @@ const lead: Lead = {
 describe("DeleteLeadDialog (Sprint 10)", () => {
   it("renders nothing when there is no lead selected", () => {
     const { container } = render(
-      <DeleteLeadDialog
-        lead={null}
-        open
-        onOpenChange={vi.fn()}
-        onConfirm={vi.fn()}
-      />,
+      <DeleteLeadDialog lead={null} open onOpenChange={vi.fn()} onConfirm={vi.fn()} />,
     );
     expect(container.querySelectorAll("*").length).toBe(0);
   });
 
   it("shows title, description and buttons when a lead is selected", () => {
-    render(
-      <DeleteLeadDialog
-        lead={lead}
-        open
-        onOpenChange={vi.fn()}
-        onConfirm={vi.fn()}
-      />,
-    );
+    render(<DeleteLeadDialog lead={lead} open onOpenChange={vi.fn()} onConfirm={vi.fn()} />);
     expect(screen.getByText("Excluir Lead")).toBeTruthy();
-    expect(
-      screen.getByText(/Tem certeza que deseja excluir este lead/),
-    ).toBeTruthy();
+    expect(screen.getByText(/Tem certeza que deseja excluir este lead/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Excluir" })).toBeTruthy();
   });
 
   it("confirms deletion", () => {
     const onConfirm = vi.fn();
-    render(
-      <DeleteLeadDialog
-        lead={lead}
-        open
-        onOpenChange={vi.fn()}
-        onConfirm={onConfirm}
-      />,
-    );
+    render(<DeleteLeadDialog lead={lead} open onOpenChange={vi.fn()} onConfirm={onConfirm} />);
     fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
   it("cancels and closes the dialog", () => {
     const onOpenChange = vi.fn();
-    render(
-      <DeleteLeadDialog
-        lead={lead}
-        open
-        onOpenChange={onOpenChange}
-        onConfirm={vi.fn()}
-      />,
-    );
+    render(<DeleteLeadDialog lead={lead} open onOpenChange={onOpenChange} onConfirm={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it("disables the confirm button and shows progress while loading", () => {
     render(
-      <DeleteLeadDialog
-        lead={lead}
-        open
-        onOpenChange={vi.fn()}
-        onConfirm={vi.fn()}
-        isLoading
-      />,
+      <DeleteLeadDialog lead={lead} open onOpenChange={vi.fn()} onConfirm={vi.fn()} isLoading />,
     );
     const confirm = screen.getByRole("button", {
       name: "Excluindo...",

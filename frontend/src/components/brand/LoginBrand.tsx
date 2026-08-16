@@ -67,9 +67,7 @@ export function LoginBrand({
   );
 
   const wordmarkElement = wordmark && (
-    <span className="text-xl font-semibold tracking-tight text-crm-text">
-      {wordmark}
-    </span>
+    <span className="text-xl font-semibold tracking-tight text-crm-text">{wordmark}</span>
   );
 
   return (

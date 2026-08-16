@@ -6,10 +6,7 @@ import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import {
-  useActivities,
-  useCreateActivity,
-} from "@/features/activities/hooks/useActivities";
+import { useActivities, useCreateActivity } from "@/features/activities/hooks/useActivities";
 import { ActivityTimeline } from "@/features/activities/components/ActivityTimeline";
 import { CreateActivityDialog } from "@/features/activities/components/CreateActivityDialog";
 import { useActivityPermissions } from "@/features/activities/schemas/activity.schema";
@@ -38,9 +35,7 @@ export default function ActivitiesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">
-            Atividades da empresa
-          </CardTitle>
+          <CardTitle className="text-base font-semibold">Atividades da empresa</CardTitle>
         </CardHeader>
         <CardContent>
           <ActivityTimeline activities={activities} isLoading={isLoading} />

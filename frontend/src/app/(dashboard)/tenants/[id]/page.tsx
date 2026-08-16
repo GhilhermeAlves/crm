@@ -9,11 +9,7 @@ import { TenantDetails } from "@/features/tenants/components/TenantDetails";
 
 type Params = { id: string };
 
-export default function TenantDetailPage({
-  params,
-}: {
-  params: Promise<Params>;
-}) {
+export default function TenantDetailPage({ params }: { params: Promise<Params> }) {
   const { id } = use(params);
   const { data: tenant, isLoading, error } = useTenant(id);
 

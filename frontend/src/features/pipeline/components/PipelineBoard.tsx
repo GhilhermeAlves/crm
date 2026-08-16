@@ -1,11 +1,7 @@
 "use client";
 
 import { Target } from "lucide-react";
-import type {
-  Opportunity,
-  Stage,
-  MoveDirection,
-} from "../types/pipeline.types";
+import type { Opportunity, Stage, MoveDirection } from "../types/pipeline.types";
 import { OpportunityCard } from "./OpportunityCard";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -46,7 +42,7 @@ export function PipelineBoard({
   if (stages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <Target className="h-12 w-12 mb-4 opacity-50" />
+        <Target className="mb-4 h-12 w-12 opacity-50" />
         <p className="text-lg font-medium">Nenhum pipeline</p>
         <p className="text-sm">Crie um pipeline para começar a vender.</p>
       </div>
@@ -70,9 +66,7 @@ export function PipelineBoard({
               >
                 <div className="space-y-0.5">
                   <p className="text-sm font-semibold">{stage.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {stage.probability}%
-                  </p>
+                  <p className="text-xs text-muted-foreground">{stage.probability}%</p>
                 </div>
                 <div className="text-right text-xs text-muted-foreground">
                   <p>{columnOpps.length}</p>

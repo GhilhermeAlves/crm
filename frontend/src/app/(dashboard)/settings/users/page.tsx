@@ -55,9 +55,7 @@ export default function SettingsUsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <PageTitle>Usuários</PageTitle>
-          <p className="text-sm text-muted-foreground">
-            Membros e papéis de acesso desta empresa.
-          </p>
+          <p className="text-sm text-muted-foreground">Membros e papéis de acesso desta empresa.</p>
         </div>
         {manageUsers && <InviteMemberDialog />}
       </div>
@@ -81,10 +79,7 @@ export default function SettingsUsersPage() {
             <TableBody>
               {members.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-24 text-center text-muted-foreground"
-                  >
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     Nenhum membro encontrado.
                   </TableCell>
                 </TableRow>
@@ -117,11 +112,7 @@ export default function SettingsUsersPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          member.status === "ACTIVE" ? "default" : "secondary"
-                        }
-                      >
+                      <Badge variant={member.status === "ACTIVE" ? "default" : "secondary"}>
                         {member.status === "ACTIVE" ? "Ativo" : "Pendente"}
                       </Badge>
                     </TableCell>

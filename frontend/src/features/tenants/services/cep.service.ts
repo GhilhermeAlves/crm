@@ -22,9 +22,7 @@ type ViaCepResponse = {
  * é encontrado, `null` quando não existe (erro: true), e lança exceção em
  * falhas de rede/HTTP (para o chamador decidir sem apagar dados preenchidos).
  */
-export async function fetchAddressByCep(
-  cep: string,
-): Promise<ViaCepAddress | null> {
+export async function fetchAddressByCep(cep: string): Promise<ViaCepAddress | null> {
   const digits = onlyDigits(cep);
   if (digits.length !== 8) return null;
 

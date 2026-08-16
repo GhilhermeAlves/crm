@@ -122,9 +122,9 @@ export function AuditFilters({ params, onParamsChange }: AuditFiltersProps) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por descrição, usuário, URI..."
             value={searchInput}
@@ -138,20 +138,18 @@ export function AuditFilters({ params, onParamsChange }: AuditFiltersProps) {
         </Button>
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={handleClear}>
-            <X className="h-4 w-4 mr-1" />
+            <X className="mr-1 h-4 w-4" />
             Limpar
           </Button>
         )}
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-wrap items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
 
         <Select
           value={params.module || ""}
-          onValueChange={(value) =>
-            onParamsChange({ ...params, module: value, page: 1 })
-          }
+          onValueChange={(value) => onParamsChange({ ...params, module: value, page: 1 })}
         >
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Módulo" />
@@ -167,9 +165,7 @@ export function AuditFilters({ params, onParamsChange }: AuditFiltersProps) {
 
         <Select
           value={params.action || ""}
-          onValueChange={(value) =>
-            onParamsChange({ ...params, action: value, page: 1 })
-          }
+          onValueChange={(value) => onParamsChange({ ...params, action: value, page: 1 })}
         >
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Ação" />
@@ -185,9 +181,7 @@ export function AuditFilters({ params, onParamsChange }: AuditFiltersProps) {
 
         <Select
           value={params.status || ""}
-          onValueChange={(value) =>
-            onParamsChange({ ...params, status: value, page: 1 })
-          }
+          onValueChange={(value) => onParamsChange({ ...params, status: value, page: 1 })}
         >
           <SelectTrigger className="w-[130px]">
             <SelectValue placeholder="Status" />
@@ -209,9 +203,7 @@ export function AuditFilters({ params, onParamsChange }: AuditFiltersProps) {
             onChange={(e) =>
               onParamsChange({
                 ...params,
-                startDate: e.target.value
-                  ? new Date(e.target.value).toISOString()
-                  : undefined,
+                startDate: e.target.value ? new Date(e.target.value).toISOString() : undefined,
                 page: 1,
               })
             }
@@ -224,9 +216,7 @@ export function AuditFilters({ params, onParamsChange }: AuditFiltersProps) {
             onChange={(e) =>
               onParamsChange({
                 ...params,
-                endDate: e.target.value
-                  ? new Date(e.target.value).toISOString()
-                  : undefined,
+                endDate: e.target.value ? new Date(e.target.value).toISOString() : undefined,
                 page: 1,
               })
             }

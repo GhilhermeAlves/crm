@@ -26,7 +26,7 @@ export default function UserDetailPage() {
 
   if (!user) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground">Usuário não encontrado.</p>
       </div>
     );

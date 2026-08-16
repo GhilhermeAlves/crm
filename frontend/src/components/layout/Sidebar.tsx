@@ -28,12 +28,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useSidebar } from "@/store/sidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -219,18 +214,15 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
       <div className="flex h-14 items-center border-b px-4">
         {!collapsed && (
           <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
               C
             </div>
             <span className="text-lg font-bold">CRM</span>
           </Link>
         )}
         {collapsed && (
-          <Link
-            href={ROUTES.DASHBOARD}
-            className="mx-auto flex items-center justify-center"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
+          <Link href={ROUTES.DASHBOARD} className="mx-auto flex items-center justify-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
               C
             </div>
           </Link>
@@ -255,8 +247,7 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
                     .map((item) => {
                       const Icon = item.icon;
                       const isActive =
-                        pathname === item.href ||
-                        pathname.startsWith(item.href + "/");
+                        pathname === item.href || pathname.startsWith(item.href + "/");
 
                       const navLink = (
                         <Link
@@ -270,9 +261,7 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
                           )}
                         >
                           <Icon className="h-4 w-4 shrink-0" />
-                          {!collapsed && (
-                            <span className="flex-1">{item.label}</span>
-                          )}
+                          {!collapsed && <span className="flex-1">{item.label}</span>}
                           {!collapsed && item.badge && (
                             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                               {item.badge}
@@ -285,9 +274,7 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
                         return (
                           <Tooltip key={item.href}>
                             <TooltipTrigger asChild>{navLink}</TooltipTrigger>
-                            <TooltipContent side="right">
-                              {item.label}
-                            </TooltipContent>
+                            <TooltipContent side="right">{item.label}</TooltipContent>
                           </Tooltip>
                         );
                       }
@@ -307,12 +294,7 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-full h-9"
-                  onClick={logout}
-                >
+                <Button variant="ghost" size="icon" className="h-9 w-full" onClick={logout}>
                   <LogOut className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -356,7 +338,7 @@ export function Sidebar() {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden lg:flex h-screen flex-col border-r bg-card transition-all duration-300 ease-in-out",
+          "hidden h-screen flex-col border-r bg-card transition-all duration-300 ease-in-out lg:flex",
           effectiveCollapsed ? "w-16" : "w-64",
         )}
       >
@@ -367,9 +349,7 @@ export function Sidebar() {
             size="icon"
             className="h-8 w-8"
             onClick={toggle}
-            aria-label={
-              effectiveCollapsed ? "Expandir sidebar" : "Recolher sidebar"
-            }
+            aria-label={effectiveCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
           >
             {effectiveCollapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -386,10 +366,7 @@ export function Sidebar() {
           <VisuallyHidden.Root>
             <SheetTitle>Menu</SheetTitle>
           </VisuallyHidden.Root>
-          <SidebarContent
-            collapsed={false}
-            onNavClick={() => setMobileOpen(false)}
-          />
+          <SidebarContent collapsed={false} onNavClick={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
     </>

@@ -7,9 +7,7 @@ import type { CompanyUsage } from "../types/usage.types";
  */
 export const UsageService = {
   async companyUsage(companyId: string): Promise<CompanyUsage> {
-    const response = await api.get<CompanyUsage>(
-      `/companies/${companyId}/usage`,
-    );
+    const response = await api.get<CompanyUsage>(`/companies/${companyId}/usage`);
     return response.data;
   },
 };

@@ -13,7 +13,7 @@ export default function AuditDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <p className="text-muted-foreground">Carregando detalhes do log...</p>
       </div>
     );
@@ -23,13 +23,11 @@ export default function AuditDetailPage() {
     return (
       <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
-          <ArrowLeft className="h-4 w-4 mr-1" />
+          <ArrowLeft className="mr-1 h-4 w-4" />
           Voltar
         </Button>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">
-            Log de auditoria não encontrado.
-          </p>
+        <div className="flex h-64 items-center justify-center">
+          <p className="text-muted-foreground">Log de auditoria não encontrado.</p>
         </div>
       </div>
     );

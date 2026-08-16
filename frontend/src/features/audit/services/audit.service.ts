@@ -1,9 +1,5 @@
 import api from "@/lib/api";
-import type {
-  AuditLog,
-  AuditLogPageResponse,
-  AuditLogSearchParams,
-} from "../types/audit.types";
+import type { AuditLog, AuditLogPageResponse, AuditLogSearchParams } from "../types/audit.types";
 
 const AUDIT_PATH = "/audit";
 
@@ -21,9 +17,7 @@ function buildQueryString(params: AuditLogSearchParams): string {
 export const AuditService = {
   async search(params: AuditLogSearchParams): Promise<AuditLogPageResponse> {
     const queryString = buildQueryString(params);
-    const response = await api.get<AuditLogPageResponse>(
-      `${AUDIT_PATH}${queryString}`,
-    );
+    const response = await api.get<AuditLogPageResponse>(`${AUDIT_PATH}${queryString}`);
     return response.data;
   },
 

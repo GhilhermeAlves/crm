@@ -11,9 +11,7 @@ const BASE_PATH = "/onboarding/companies";
  * com sessão (sem exigir company:create) cria a primeira empresa e vira OWNER.
  */
 export const OnboardingService = {
-  async createCompany(
-    data: OnboardingCompanyRequest,
-  ): Promise<OnboardingCompanyResponse> {
+  async createCompany(data: OnboardingCompanyRequest): Promise<OnboardingCompanyResponse> {
     const response = await api.post<OnboardingCompanyResponse>(BASE_PATH, {
       legalName: data.legalName,
       tradingName: data.tradingName,

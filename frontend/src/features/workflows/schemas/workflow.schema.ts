@@ -28,10 +28,7 @@ export const CONDITION_OPERATORS = [
   "LESS_OR_EQUAL",
 ] as const;
 
-export const WORKFLOW_ACTION_TYPES = [
-  "CREATE_TASK",
-  "CREATE_ACTIVITY",
-] as const;
+export const WORKFLOW_ACTION_TYPES = ["CREATE_TASK", "CREATE_ACTIVITY"] as const;
 
 export const TASK_PRIORITIES = ["LOW", "MEDIUM", "HIGH"] as const;
 
@@ -88,10 +85,7 @@ const actionSchema = z.object({
 });
 
 export const workflowFormSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Nome é obrigatório")
-    .max(120, "Nome deve ter no máximo 120 caracteres"),
+  name: z.string().min(1, "Nome é obrigatório").max(120, "Nome deve ter no máximo 120 caracteres"),
   description: z.string().max(2000, "Descrição muito longa").optional(),
   trigger: z.enum(WORKFLOW_TRIGGERS),
   conditions: z.array(conditionSchema),
@@ -169,12 +163,9 @@ export function workflowToFormValues(workflow: Workflow): WorkflowFormValues {
         actionType: a.actionType,
         title: (cfg.title ?? cfg.subject ?? "") as string,
         description: (cfg.description ?? "") as string,
-        priority:
-          (cfg.priority as (typeof TASK_PRIORITIES)[number] | undefined) ??
-          undefined,
+        priority: (cfg.priority as (typeof TASK_PRIORITIES)[number] | undefined) ?? undefined,
         dueInDays: cfg.dueInDays != null ? String(cfg.dueInDays) : "",
-        activityType:
-          (cfg.type as (typeof ACTIVITY_TYPES)[number] | undefined) ?? "OTHER",
+        activityType: (cfg.type as (typeof ACTIVITY_TYPES)[number] | undefined) ?? "OTHER",
       };
     }),
   };

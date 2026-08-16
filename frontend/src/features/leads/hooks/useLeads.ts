@@ -1,11 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LeadService } from "../services/lead.service";
-import type {
-  CreateLeadRequest,
-  ListLeadsParams,
-  UpdateLeadRequest,
-} from "../types/lead.types";
+import type { CreateLeadRequest, ListLeadsParams, UpdateLeadRequest } from "../types/lead.types";
 
 export function useLeads(companyId: string | null, params?: ListLeadsParams) {
   return useQuery({
@@ -26,8 +22,7 @@ export function useLead(companyId: string | null, id: string) {
 export function useCreateLead(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateLeadRequest) =>
-      LeadService.create(companyId as string, data),
+    mutationFn: (data: CreateLeadRequest) => LeadService.create(companyId as string, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads", companyId] });
       toast.success("Lead criado com sucesso");

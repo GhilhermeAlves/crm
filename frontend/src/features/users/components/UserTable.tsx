@@ -2,15 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-  UserCheck,
-  UserX,
-  Mail,
-} from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, UserCheck, UserX, Mail } from "lucide-react";
 import type { User } from "../types/user.types";
 import { UserAvatar } from "./UserAvatar";
 import { UserStatusBadge } from "./UserStatusBadge";
@@ -82,11 +74,9 @@ export function UserTable({
   if (users.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <Mail className="h-12 w-12 mb-4 opacity-50" />
+        <Mail className="mb-4 h-12 w-12 opacity-50" />
         <p className="text-lg font-medium">Nenhum usuário encontrado</p>
-        <p className="text-sm">
-          Cadastre ou convide novos usuários para começar.
-        </p>
+        <p className="text-sm">Cadastre ou convide novos usuários para começar.</p>
       </div>
     );
   }
@@ -118,9 +108,7 @@ export function UserTable({
                   />
                   <div>
                     <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {user.email}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
               </TableCell>
@@ -143,16 +131,12 @@ export function UserTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => router.push(`${ROUTES.USERS}/${user.id}`)}
-                    >
+                    <DropdownMenuItem onClick={() => router.push(`${ROUTES.USERS}/${user.id}`)}>
                       <Eye className="mr-2 h-4 w-4" />
                       Visualizar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() =>
-                        router.push(`${ROUTES.USERS}/${user.id}/edit`)
-                      }
+                      onClick={() => router.push(`${ROUTES.USERS}/${user.id}/edit`)}
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
@@ -176,10 +160,7 @@ export function UserTable({
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onDelete?.(user)}
-                      className="text-destructive"
-                    >
+                    <DropdownMenuItem onClick={() => onDelete?.(user)} className="text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Excluir
                     </DropdownMenuItem>

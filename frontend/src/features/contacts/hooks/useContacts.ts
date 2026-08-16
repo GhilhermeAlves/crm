@@ -2,10 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import { ContactService } from "../services/contact.service";
-import type {
-  CreateContactRequest,
-  UpdateContactRequest,
-} from "../types/contact.types";
+import type { CreateContactRequest, UpdateContactRequest } from "../types/contact.types";
 
 export function useContacts(companyId: string | null) {
   return useQuery({
@@ -18,20 +15,15 @@ export function useContacts(companyId: string | null) {
 export function useContact(companyId: string | null, contactId: string | null) {
   return useQuery({
     queryKey: ["contact", companyId, contactId],
-    queryFn: () =>
-      ContactService.findById(companyId as string, contactId as string),
+    queryFn: () => ContactService.findById(companyId as string, contactId as string),
     enabled: !!companyId && !!contactId,
   });
 }
 
-export function useCustomer360(
-  companyId: string | null,
-  contactId: string | null,
-) {
+export function useCustomer360(companyId: string | null, contactId: string | null) {
   return useQuery({
     queryKey: ["customer360", companyId, contactId],
-    queryFn: () =>
-      ContactService.customer360(companyId as string, contactId as string),
+    queryFn: () => ContactService.customer360(companyId as string, contactId as string),
     enabled: !!companyId && !!contactId,
   });
 }
@@ -48,8 +40,7 @@ function invalidateContacts(
 export function useCreateContact(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateContactRequest) =>
-      ContactService.create(companyId as string, data),
+    mutationFn: (data: CreateContactRequest) => ContactService.create(companyId as string, data),
     onSuccess: () => {
       invalidateContacts(queryClient, companyId);
       toast.success("Contato criado");

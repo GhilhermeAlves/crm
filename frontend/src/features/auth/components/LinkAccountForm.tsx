@@ -5,11 +5,7 @@ import Link from "next/link";
 import { AlertCircle, KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  getLinkStatus,
-  linkAccountWithPassword,
-  GatewayLinkError,
-} from "@/lib/gateway-auth";
+import { getLinkStatus, linkAccountWithPassword, GatewayLinkError } from "@/lib/gateway-auth";
 
 /**
  * Sprint 7.2 (Caso B) — vínculo da conta local.
@@ -56,10 +52,7 @@ export function LinkAccountForm() {
     } catch (caught) {
       if (caught instanceof GatewayLinkError) {
         setError(messageFor(caught.code));
-        if (
-          caught.code === "LINK_PENDING_NOT_FOUND" ||
-          caught.code === "LINK_NOT_FOUND"
-        ) {
+        if (caught.code === "LINK_PENDING_NOT_FOUND" || caught.code === "LINK_NOT_FOUND") {
           window.location.assign("/login");
           return;
         }
@@ -82,9 +75,7 @@ export function LinkAccountForm() {
   if (!status.pending) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-crm-text-secondary">
-          Não há vínculo pendente nesta sessão.
-        </p>
+        <p className="text-sm text-crm-text-secondary">Não há vínculo pendente nesta sessão.</p>
         <Link
           href="/login"
           className="block text-center text-sm font-medium text-crm-primary hover:underline"
@@ -111,9 +102,7 @@ export function LinkAccountForm() {
       </div>
 
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-crm-text">
-          Senha da conta local
-        </span>
+        <span className="text-sm font-medium text-crm-text">Senha da conta local</span>
         <Input
           type="password"
           value={password}
@@ -126,21 +115,13 @@ export function LinkAccountForm() {
       </label>
 
       {error ? (
-        <p
-          role="alert"
-          className="flex items-start gap-2 text-sm text-destructive"
-        >
+        <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           {error}
         </p>
       ) : null}
 
-      <Button
-        type="submit"
-        variant="crm"
-        className="w-full"
-        disabled={isSubmitting}
-      >
+      <Button type="submit" variant="crm" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (

@@ -23,12 +23,7 @@ interface AuditTableProps {
   onRowClick: (log: AuditLog) => void;
 }
 
-export function AuditTable({
-  data,
-  isLoading,
-  onPageChange,
-  onRowClick,
-}: AuditTableProps) {
+export function AuditTable({ data, isLoading, onPageChange, onRowClick }: AuditTableProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -47,7 +42,7 @@ export function AuditTable({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-32">
+      <div className="flex h-32 items-center justify-center">
         <p className="text-muted-foreground">Carregando logs de auditoria...</p>
       </div>
     );
@@ -76,10 +71,7 @@ export function AuditTable({
           <TableBody>
             {logs.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="h-24 text-center text-muted-foreground"
-                >
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   Nenhum log de auditoria encontrado.
                 </TableCell>
               </TableRow>
@@ -92,18 +84,14 @@ export function AuditTable({
                 >
                   <TableCell className="whitespace-nowrap">
                     <div className="text-sm">{formatDate(log.createdAt)}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatTime(log.createdAt)}
-                    </div>
+                    <div className="text-xs text-muted-foreground">{formatTime(log.createdAt)}</div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm font-medium">
                       {log.userName || log.userEmail || "-"}
                     </div>
                     {log.userName && log.userEmail && (
-                      <div className="text-xs text-muted-foreground">
-                        {log.userEmail}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{log.userEmail}</div>
                     )}
                   </TableCell>
                   <TableCell>

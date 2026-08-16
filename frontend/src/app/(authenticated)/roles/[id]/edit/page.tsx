@@ -16,11 +16,7 @@ import { usePermissions } from "@/features/rbac/hooks/useRoles";
 import { PermissionMatrix } from "@/features/rbac/components/PermissionMatrix";
 import { RoleBadge } from "@/features/rbac/components/RoleBadge";
 
-export default function EditRolePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function EditRolePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { data: role, isLoading: roleLoading } = useRole(id);
@@ -29,9 +25,7 @@ export default function EditRolePage({
 
   const [description, setDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
-    [],
-  );
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
 
   const initialized = useMemo(() => {
     if (role) {
@@ -71,7 +65,7 @@ export default function EditRolePage({
 
   if (roleLoading || !initialized) {
     return (
-      <div className="flex items-center justify-center h-32">
+      <div className="flex h-32 items-center justify-center">
         <p className="text-muted-foreground">Carregando role...</p>
       </div>
     );
@@ -87,9 +81,7 @@ export default function EditRolePage({
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">
-              Editar Role: {role!.name.replace(/_/g, " ")}
-            </h1>
+            <h1 className="text-2xl font-bold">Editar Role: {role!.name.replace(/_/g, " ")}</h1>
             <p className="text-muted-foreground">
               <RoleBadge name={role!.name} isSystem={role!.isSystem} />
             </p>
@@ -102,7 +94,7 @@ export default function EditRolePage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1 space-y-4">
+        <div className="space-y-4 lg:col-span-1">
           <Card>
             <CardHeader>
               <CardTitle>Informações</CardTitle>
@@ -121,11 +113,7 @@ export default function EditRolePage({
               <Separator />
               <div className="flex items-center justify-between">
                 <Label htmlFor="isActive">Ativo</Label>
-                <Switch
-                  id="isActive"
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                />
+                <Switch id="isActive" checked={isActive} onCheckedChange={setIsActive} />
               </div>
             </CardContent>
           </Card>

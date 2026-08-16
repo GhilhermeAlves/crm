@@ -21,28 +21,16 @@ const priorityBadge: Record<string, "secondary" | "default" | "destructive"> = {
   HIGH: "destructive",
 };
 
-export function TaskList({
-  tasks,
-  isLoading,
-  canUpdate,
-  busyId,
-  onChangeStatus,
-}: Props) {
+export function TaskList({ tasks, isLoading, canUpdate, busyId, onChangeStatus }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (isLoading) {
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        Carregando…
-      </p>
-    );
+    return <p className="py-6 text-center text-sm text-muted-foreground">Carregando…</p>;
   }
 
   if (tasks.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        Nenhuma tarefa por aqui.
-      </p>
+      <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma tarefa por aqui.</p>
     );
   }
 
@@ -64,15 +52,11 @@ export function TaskList({
               <button
                 type="button"
                 className="flex-1 text-left"
-                onClick={() =>
-                  setExpandedId(expandedId === task.id ? null : task.id)
-                }
+                onClick={() => setExpandedId(expandedId === task.id ? null : task.id)}
               >
                 <span
                   className={`text-sm font-medium ${
-                    task.status === "COMPLETED"
-                      ? "text-muted-foreground line-through"
-                      : ""
+                    task.status === "COMPLETED" ? "text-muted-foreground line-through" : ""
                   }`}
                 >
                   {task.title}
@@ -81,9 +65,7 @@ export function TaskList({
                   <Badge variant={priorityBadge[task.priority]}>
                     {TASK_PRIORITY_LABELS[task.priority]}
                   </Badge>
-                  <Badge variant="outline">
-                    {TASK_STATUS_LABELS[task.status]}
-                  </Badge>
+                  <Badge variant="outline">{TASK_STATUS_LABELS[task.status]}</Badge>
                   {task.dueAt && (
                     <span className="text-xs text-muted-foreground">
                       Vence {new Date(task.dueAt).toLocaleDateString("pt-BR")}
@@ -92,43 +74,41 @@ export function TaskList({
                 </div>
               </button>
 
-              {canUpdate &&
-                task.status !== "COMPLETED" &&
-                task.status !== "CANCELLED" && (
-                  <div className="flex shrink-0 items-center gap-1">
-                    {task.status === "PENDING" && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        title="Iniciar"
-                        disabled={busy}
-                        onClick={() => onChangeStatus(task.id, "IN_PROGRESS")}
-                      >
-                        {busy ? <Loader2 className="animate-spin" /> : <Play />}
-                      </Button>
-                    )}
+              {canUpdate && task.status !== "COMPLETED" && task.status !== "CANCELLED" && (
+                <div className="flex shrink-0 items-center gap-1">
+                  {task.status === "PENDING" && (
                     <Button
                       size="icon"
                       variant="ghost"
-                      title="Concluir"
+                      title="Iniciar"
                       disabled={busy}
-                      onClick={() => onChangeStatus(task.id, "COMPLETED")}
+                      onClick={() => onChangeStatus(task.id, "IN_PROGRESS")}
                     >
-                      {busy ? <Loader2 className="animate-spin" /> : <Check />}
+                      {busy ? <Loader2 className="animate-spin" /> : <Play />}
                     </Button>
-                    {task.status === "PENDING" && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        title="Cancelar"
-                        disabled={busy}
-                        onClick={() => onChangeStatus(task.id, "CANCELLED")}
-                      >
-                        <X />
-                      </Button>
-                    )}
-                  </div>
-                )}
+                  )}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    title="Concluir"
+                    disabled={busy}
+                    onClick={() => onChangeStatus(task.id, "COMPLETED")}
+                  >
+                    {busy ? <Loader2 className="animate-spin" /> : <Check />}
+                  </Button>
+                  {task.status === "PENDING" && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      title="Cancelar"
+                      disabled={busy}
+                      onClick={() => onChangeStatus(task.id, "CANCELLED")}
+                    >
+                      <X />
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {canUpdate && task.status === "COMPLETED" && (
                 <Button
@@ -144,9 +124,7 @@ export function TaskList({
             </div>
 
             {expandedId === task.id && task.description && (
-              <p className="mt-2 pl-1 text-sm text-muted-foreground">
-                {task.description}
-              </p>
+              <p className="mt-2 pl-1 text-sm text-muted-foreground">{task.description}</p>
             )}
           </li>
         );

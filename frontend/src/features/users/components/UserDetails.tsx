@@ -25,15 +25,9 @@ interface UserDetailsProps {
   user: User;
 }
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null | undefined;
-}) {
+function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   return (
-    <div className="flex justify-between py-2 border-b last:border-b-0">
+    <div className="flex justify-between border-b py-2 last:border-b-0">
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className="text-sm font-medium">{value || "—"}</span>
     </div>
@@ -128,30 +122,21 @@ export function UserDetails({ user }: UserDetailsProps) {
           <div className="flex flex-wrap gap-2">
             {userRolesQuery.data?.length ? (
               userRolesQuery.data.map((role) => (
-                <div
-                  key={role.id}
-                  className="flex items-center gap-1 rounded-md border px-2 py-1"
-                >
-                  <Badge variant="secondary">
-                    {role.name.replace(/_/g, " ")}
-                  </Badge>
+                <div key={role.id} className="flex items-center gap-1 rounded-md border px-2 py-1">
+                  <Badge variant="secondary">{role.name.replace(/_/g, " ")}</Badge>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-5 w-5 p-0 text-muted-foreground"
                     disabled={removeRole.isPending}
-                    onClick={() =>
-                      removeRole.mutate({ userId: user.id, roleId: role.id })
-                    }
+                    onClick={() => removeRole.mutate({ userId: user.id, roleId: role.id })}
                   >
                     ✕
                   </Button>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Nenhum papel atribuído.
-              </p>
+              <p className="text-sm text-muted-foreground">Nenhum papel atribuído.</p>
             )}
           </div>
 
@@ -169,10 +154,7 @@ export function UserDetails({ user }: UserDetailsProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <Button
-                disabled={!selectedRoleId || assignRole.isPending}
-                onClick={handleAssign}
-              >
+              <Button disabled={!selectedRoleId || assignRole.isPending} onClick={handleAssign}>
                 {assignRole.isPending ? "Atribuindo..." : "Atribuir"}
               </Button>
             </div>

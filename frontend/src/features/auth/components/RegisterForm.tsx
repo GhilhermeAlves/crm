@@ -62,12 +62,7 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="seu@email.com"
-                  type="email"
-                  autoComplete="email"
-                  {...field}
-                />
+                <Input placeholder="seu@email.com" type="email" autoComplete="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -109,23 +104,14 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={registerMutation.isPending}
-        >
-          {registerMutation.isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          )}
+        <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+          {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Criar conta
         </Button>
       </form>
       <div className="mt-4 text-center text-sm text-muted-foreground">
         Já tem uma conta?{" "}
-        <Link
-          href={ROUTES.LOGIN}
-          className="font-medium text-primary hover:underline"
-        >
+        <Link href={ROUTES.LOGIN} className="font-medium text-primary hover:underline">
           Entrar
         </Link>
       </div>

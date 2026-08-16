@@ -20,17 +20,13 @@ export function JsonViewer({ data, className }: JsonViewerProps) {
     <div className={cn("rounded-md border bg-muted/30 p-3", className)}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground mb-2"
+        className="mb-2 flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
-        {expanded ? (
-          <ChevronDown className="h-3 w-3" />
-        ) : (
-          <ChevronRight className="h-3 w-3" />
-        )}
+        {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         {expanded ? "Recolher" : "Expandir"}
       </button>
       {expanded && (
-        <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+        <pre className="whitespace-pre-wrap break-all font-mono text-xs">
           {JSON.stringify(data, null, 2)}
         </pre>
       )}

@@ -1,22 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { OpportunityService } from "../services/pipeline.service";
-import type {
-  CreateOpportunityRequest,
-  MoveDirection,
-} from "../types/pipeline.types";
+import type { CreateOpportunityRequest, MoveDirection } from "../types/pipeline.types";
 
-export function useOpportunities(
-  companyId: string | null,
-  pipelineId: string | null,
-) {
+export function useOpportunities(companyId: string | null, pipelineId: string | null) {
   return useQuery({
     queryKey: ["opportunities", companyId, pipelineId],
-    queryFn: () =>
-      OpportunityService.listByPipeline(
-        companyId as string,
-        pipelineId as string,
-      ),
+    queryFn: () => OpportunityService.listByPipeline(companyId as string, pipelineId as string),
     enabled: !!companyId && !!pipelineId,
   });
 }
@@ -34,18 +24,11 @@ function invalidateOpportunities(
   }
 }
 
-export function useCreateOpportunity(
-  companyId: string | null,
-  pipelineId: string | null,
-) {
+export function useCreateOpportunity(companyId: string | null, pipelineId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateOpportunityRequest) =>
-      OpportunityService.create(
-        companyId as string,
-        pipelineId as string,
-        data,
-      ),
+      OpportunityService.create(companyId as string, pipelineId as string, data),
     onSuccess: () => {
       invalidateOpportunities(queryClient, companyId, pipelineId ?? undefined);
       toast.success("Oportunidade criada com sucesso");
@@ -74,8 +57,7 @@ export function useMoveOpportunity(companyId: string | null) {
 export function useMarkWonOpportunity(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      OpportunityService.markWon(companyId as string, id),
+    mutationFn: (id: string) => OpportunityService.markWon(companyId as string, id),
     onSuccess: () => {
       invalidateOpportunities(queryClient, companyId);
       toast.success("Oportunidade marcada como ganha");
@@ -104,8 +86,7 @@ export function useMarkLostOpportunity(companyId: string | null) {
 export function useDeleteOpportunity(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      OpportunityService.delete(companyId as string, id),
+    mutationFn: (id: string) => OpportunityService.delete(companyId as string, id),
     onSuccess: () => {
       invalidateOpportunities(queryClient, companyId);
       toast.success("Oportunidade excluída");

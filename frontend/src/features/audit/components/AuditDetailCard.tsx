@@ -40,29 +40,20 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/audit">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="mr-1 h-4 w-4" />
             Voltar
           </Link>
         </Button>
       </div>
 
-      <div className="rounded-lg border p-6 space-y-6">
+      <div className="space-y-6 rounded-lg border p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <h2 className="text-xl font-bold">Detalhes do Log de Auditoria</h2>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>ID: {log.id}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5"
-                onClick={handleCopyId}
-              >
-                {copied ? (
-                  <Check className="h-3 w-3" />
-                ) : (
-                  <Copy className="h-3 w-3" />
-                )}
+              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={handleCopyId}>
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               </Button>
             </div>
           </div>
@@ -73,18 +64,14 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
 
         <Separator />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Data/Hora
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Data/Hora</p>
             <p className="text-sm">{formatDate(log.createdAt)}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Usuário</p>
-            <p className="text-sm">
-              {log.userName || log.userEmail || "Sistema"}
-            </p>
+            <p className="text-sm">{log.userName || log.userEmail || "Sistema"}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Email</p>
@@ -99,28 +86,24 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
             <AuditModuleBadge module={log.module} />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Entidade
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Entidade</p>
             <p className="text-sm">
               {log.entityName || "-"}
               {log.entityId ? ` (${log.entityId})` : ""}
             </p>
           </div>
           <div className="lg:col-span-3">
-            <p className="text-sm font-medium text-muted-foreground">
-              Descrição
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Descrição</p>
             <p className="text-sm">{log.description || "-"}</p>
           </div>
         </div>
 
         <Separator />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div>
             <p className="text-sm font-medium text-muted-foreground">IP</p>
-            <p className="text-sm font-mono">{log.ipAddress || "-"}</p>
+            <p className="font-mono text-sm">{log.ipAddress || "-"}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Método</p>
@@ -128,15 +111,11 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">URI</p>
-            <p className="text-sm font-mono text-xs break-all">
-              {log.requestUri || "-"}
-            </p>
+            <p className="break-all font-mono text-sm text-xs">{log.requestUri || "-"}</p>
           </div>
           <div className="lg:col-span-3">
-            <p className="text-sm font-medium text-muted-foreground">
-              User Agent
-            </p>
-            <p className="text-xs font-mono text-muted-foreground break-all">
+            <p className="text-sm font-medium text-muted-foreground">User Agent</p>
+            <p className="break-all font-mono text-xs text-muted-foreground">
               {log.userAgent || "-"}
             </p>
           </div>
@@ -145,10 +124,10 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
         {(log.oldValues || log.newValues) && (
           <>
             <Separator />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {log.oldValues && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                  <p className="mb-2 text-sm font-medium text-muted-foreground">
                     Valores Anteriores
                   </p>
                   <JsonViewer data={log.oldValues} />
@@ -156,9 +135,7 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
               )}
               {log.newValues && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    Valores Novos
-                  </p>
+                  <p className="mb-2 text-sm font-medium text-muted-foreground">Valores Novos</p>
                   <JsonViewer data={log.newValues} />
                 </div>
               )}

@@ -10,7 +10,7 @@ export default function PermissionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-2xl font-bold">
           <KeyRound className="h-6 w-6" />
           Permissões
         </h1>
@@ -20,7 +20,7 @@ export default function PermissionsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-32">
+        <div className="flex h-32 items-center justify-center">
           <p className="text-muted-foreground">Carregando permissões...</p>
         </div>
       ) : (

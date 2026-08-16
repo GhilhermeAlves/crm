@@ -45,24 +45,20 @@ export function PermissionMatrix({
       <CardContent className="space-y-4">
         {Object.entries(groupedByModule).map(([module, modulePermissions]) => (
           <div key={module}>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="mb-2 flex items-center gap-2">
               <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 {roleModuleName[module] || module}
               </h4>
               <Badge variant="outline" className="text-[10px]">
-                {
-                  modulePermissions.filter((p) =>
-                    selectedPermissionIds.includes(p.id),
-                  ).length
-                }
-                /{modulePermissions.length}
+                {modulePermissions.filter((p) => selectedPermissionIds.includes(p.id)).length}/
+                {modulePermissions.length}
               </Badge>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 pl-2">
+            <div className="grid grid-cols-2 gap-2 pl-2 md:grid-cols-3 lg:grid-cols-4">
               {modulePermissions.map((permission) => (
                 <label
                   key={permission.id}
-                  className={`flex items-center gap-2 rounded-md border p-2 cursor-pointer transition-colors ${
+                  className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-colors ${
                     selectedPermissionIds.includes(permission.id)
                       ? "border-primary bg-primary/5"
                       : "border-border hover:bg-muted/50"
@@ -74,11 +70,9 @@ export function PermissionMatrix({
                       onCheckedChange={() => onToggle(permission.id)}
                     />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">
-                      {permission.name}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground truncate">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium">{permission.name}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">
                       {permission.description}
                     </p>
                   </div>

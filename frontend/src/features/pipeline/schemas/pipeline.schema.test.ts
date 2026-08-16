@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  opportunityFormSchema,
-  formatCurrency,
-  formatPercent,
-} from "./pipeline.schema";
+import { opportunityFormSchema, formatCurrency, formatPercent } from "./pipeline.schema";
 
 const VALID_CONTACT = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
 
@@ -33,21 +29,13 @@ describe("pipeline.schema (Sprint 11 — validação de oportunidade)", () => {
   });
 
   it("rejeita valor zerado ou inválido", () => {
-    expect(
-      opportunityFormSchema.safeParse(makeValues({ value: "0" })).success,
-    ).toBe(false);
-    expect(
-      opportunityFormSchema.safeParse(makeValues({ value: "abc" })).success,
-    ).toBe(false);
-    expect(
-      opportunityFormSchema.safeParse(makeValues({ value: "-10" })).success,
-    ).toBe(false);
+    expect(opportunityFormSchema.safeParse(makeValues({ value: "0" })).success).toBe(false);
+    expect(opportunityFormSchema.safeParse(makeValues({ value: "abc" })).success).toBe(false);
+    expect(opportunityFormSchema.safeParse(makeValues({ value: "-10" })).success).toBe(false);
   });
 
   it("rejeita contato inválido (UUID obrigatório)", () => {
-    const result = opportunityFormSchema.safeParse(
-      makeValues({ contactId: "não-uuid" }),
-    );
+    const result = opportunityFormSchema.safeParse(makeValues({ contactId: "não-uuid" }));
     expect(result.success).toBe(false);
   });
 

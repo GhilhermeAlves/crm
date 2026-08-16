@@ -2,18 +2,10 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createTaskSchema,
-  type CreateTaskFormValues,
-} from "../schemas/task.schema";
+import { createTaskSchema, type CreateTaskFormValues } from "../schemas/task.schema";
 import type { TaskPriority } from "../types/task.types";
 import { TASK_PRIORITY_LABELS } from "../types/task.types";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -97,9 +89,7 @@ export function CreateTaskDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(
-                          Object.keys(TASK_PRIORITY_LABELS) as TaskPriority[]
-                        ).map((p) => (
+                        {(Object.keys(TASK_PRIORITY_LABELS) as TaskPriority[]).map((p) => (
                           <SelectItem key={p} value={p}>
                             {TASK_PRIORITY_LABELS[p]}
                           </SelectItem>
@@ -117,11 +107,7 @@ export function CreateTaskDialog({
                   <FormItem>
                     <FormLabel>Vencimento</FormLabel>
                     <FormControl>
-                      <Input
-                        type="datetime-local"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
+                      <Input type="datetime-local" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -142,11 +128,7 @@ export function CreateTaskDialog({
               )}
             />
             <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>

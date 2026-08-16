@@ -6,10 +6,7 @@ const phoneRegex = /^\(\d{2}\)\s?\d{4,5}-\d{4}$/;
 const cepRegex = /^\d{5}-\d{3}$/;
 
 export const tenantAddressSchema = z.object({
-  zipCode: z
-    .string()
-    .min(1, "CEP é obrigatório")
-    .regex(cepRegex, "CEP inválido (ex: 01001-000)"),
+  zipCode: z.string().min(1, "CEP é obrigatório").regex(cepRegex, "CEP inválido (ex: 01001-000)"),
   street: z.string().min(1, "Logradouro é obrigatório").max(200),
   number: z.string().min(1, "Número é obrigatório").max(20),
   complement: z.string().max(100).optional().default(""),

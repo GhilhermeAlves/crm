@@ -84,12 +84,7 @@ export type TimelineEvent = {
 };
 
 export type NextAction = {
-  type:
-    | "FOLLOW_UP"
-    | "COMPLETE_TASK"
-    | "REVIEW_CLOSING"
-    | "FORMAL_PROPOSAL"
-    | "NONE";
+  type: "FOLLOW_UP" | "COMPLETE_TASK" | "REVIEW_CLOSING" | "FORMAL_PROPOSAL" | "NONE";
   title: string;
   description: string;
   priority: number;

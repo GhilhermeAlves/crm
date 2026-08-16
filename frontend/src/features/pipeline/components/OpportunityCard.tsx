@@ -1,22 +1,10 @@
 "use client";
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  Trophy,
-  XCircle,
-  Trash2,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Trophy, XCircle, Trash2 } from "lucide-react";
 import type { Opportunity } from "../types/pipeline.types";
 import { formatCurrency } from "../schemas/pipeline.schema";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,14 +44,10 @@ export function OpportunityCard({
   return (
     <Card className="shadow-sm">
       <CardHeader className="p-3 pb-1">
-        <CardTitle className="text-sm font-medium leading-snug">
-          {opportunity.title}
-        </CardTitle>
+        <CardTitle className="text-sm font-medium leading-snug">{opportunity.title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-1 p-3 pt-0">
-        <p className="text-lg font-semibold">
-          {formatCurrency(opportunity.value)}
-        </p>
+        <p className="text-lg font-semibold">{formatCurrency(opportunity.value)}</p>
         <p className="text-xs text-muted-foreground">
           {opportunity.stageName ?? "—"} · {opportunity.probability}%
         </p>
@@ -83,12 +67,7 @@ export function OpportunityCard({
         {(canWin || canLose) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs"
-                disabled={busy}
-              >
+              <Button variant="outline" size="sm" className="h-7 text-xs" disabled={busy}>
                 Concluir
               </Button>
             </DropdownMenuTrigger>
@@ -106,10 +85,7 @@ export function OpportunityCard({
                 </DropdownMenuItem>
               )}
               {canDelete && (
-                <DropdownMenuItem
-                  onClick={onDelete}
-                  className="text-destructive"
-                >
+                <DropdownMenuItem onClick={onDelete} className="text-destructive">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Excluir
                 </DropdownMenuItem>

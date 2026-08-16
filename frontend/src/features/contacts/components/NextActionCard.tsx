@@ -6,10 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { NextAction } from "../types/contact.types";
 
-const META: Record<
-  NextAction["type"],
-  { label: string; icon: ReactNode; className: string }
-> = {
+const META: Record<NextAction["type"], { label: string; icon: ReactNode; className: string }> = {
   FOLLOW_UP: {
     label: "Agendar follow-up",
     icon: <Zap className="h-5 w-5" />,
@@ -55,9 +52,7 @@ export function NextActionCard({ nextAction }: { nextAction: NextAction }) {
             Próxima ação
           </p>
           <p className="text-sm font-semibold">{meta.label}</p>
-          <p className="text-xs text-muted-foreground">
-            {nextAction.description}
-          </p>
+          <p className="text-xs text-muted-foreground">{nextAction.description}</p>
         </div>
       </CardContent>
     </Card>

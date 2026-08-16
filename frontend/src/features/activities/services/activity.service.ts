@@ -9,9 +9,7 @@ const BASE = "/companies";
 
 export const ActivityService = {
   async list(companyId: string): Promise<Activity[]> {
-    const response = await api.get<Activity[]>(
-      `${BASE}/${companyId}/activities`,
-    );
+    const response = await api.get<Activity[]>(`${BASE}/${companyId}/activities`);
     return response.data;
   },
 
@@ -22,20 +20,14 @@ export const ActivityService = {
     return response.data;
   },
 
-  async listByContact(
-    companyId: string,
-    contactId: string,
-  ): Promise<Activity[]> {
+  async listByContact(companyId: string, contactId: string): Promise<Activity[]> {
     const response = await api.get<Activity[]>(
       `${BASE}/${companyId}/contacts/${contactId}/activities`,
     );
     return response.data;
   },
 
-  async listByOpportunity(
-    companyId: string,
-    opportunityId: string,
-  ): Promise<Activity[]> {
+  async listByOpportunity(companyId: string, opportunityId: string): Promise<Activity[]> {
     const response = await api.get<Activity[]>(
       `${BASE}/${companyId}/opportunities/${opportunityId}/activities`,
     );
@@ -43,32 +35,17 @@ export const ActivityService = {
   },
 
   async findById(companyId: string, id: string): Promise<Activity> {
-    const response = await api.get<Activity>(
-      `${BASE}/${companyId}/activities/${id}`,
-    );
+    const response = await api.get<Activity>(`${BASE}/${companyId}/activities/${id}`);
     return response.data;
   },
 
-  async create(
-    companyId: string,
-    data: CreateActivityRequest,
-  ): Promise<Activity> {
-    const response = await api.post<Activity>(
-      `${BASE}/${companyId}/activities`,
-      data,
-    );
+  async create(companyId: string, data: CreateActivityRequest): Promise<Activity> {
+    const response = await api.post<Activity>(`${BASE}/${companyId}/activities`, data);
     return response.data;
   },
 
-  async update(
-    companyId: string,
-    id: string,
-    data: UpdateActivityRequest,
-  ): Promise<Activity> {
-    const response = await api.put<Activity>(
-      `${BASE}/${companyId}/activities/${id}`,
-      data,
-    );
+  async update(companyId: string, id: string, data: UpdateActivityRequest): Promise<Activity> {
+    const response = await api.put<Activity>(`${BASE}/${companyId}/activities/${id}`, data);
     return response.data;
   },
 

@@ -28,7 +28,7 @@ export function AuditTimeline({ logs }: AuditTimelineProps) {
 
   if (logs.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      <div className="py-8 text-center text-muted-foreground">
         Nenhum evento para exibir na timeline
       </div>
     );
@@ -36,12 +36,12 @@ export function AuditTimeline({ logs }: AuditTimelineProps) {
 
   return (
     <div className="relative">
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+      <div className="absolute bottom-0 left-4 top-0 w-px bg-border" />
       <div className="space-y-4">
         {logs.map((log) => (
           <div key={log.id} className="relative pl-10">
             <div className="absolute left-2.5 top-1.5 h-3 w-3 rounded-full border-2 border-background bg-primary" />
-            <div className="rounded-md border p-3 space-y-1">
+            <div className="space-y-1 rounded-md border p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AuditActionBadge action={log.action} />

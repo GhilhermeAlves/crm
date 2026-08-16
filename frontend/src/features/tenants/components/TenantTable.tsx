@@ -65,12 +65,8 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {tenant.tradingName}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {tenant.cnpj}
-                    </p>
+                    <p className="truncate text-sm font-medium">{tenant.tradingName}</p>
+                    <p className="truncate text-xs text-muted-foreground">{tenant.cnpj}</p>
                   </div>
                 </div>
               </TableCell>
@@ -93,22 +89,12 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
               </TableCell>
               <TableCell>
                 <div className="flex justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    asChild
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                     <Link href={`${ROUTES.TENANTS}/${tenant.id}`}>
                       <Eye className="h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    asChild
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                     <Link href={`${ROUTES.TENANTS}/${tenant.id}/edit`}>
                       <Pencil className="h-4 w-4" />
                     </Link>

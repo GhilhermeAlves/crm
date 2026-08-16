@@ -32,7 +32,7 @@ export default function LeadDetailPage() {
 
   if (!lead) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground">Lead não encontrado.</p>
       </div>
     );
@@ -88,9 +88,7 @@ export default function LeadDetailPage() {
           {lead.notes && (
             <div className="mt-6 space-y-1">
               <dt className="text-sm text-muted-foreground">Notas</dt>
-              <dd className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {lead.notes}
-              </dd>
+              <dd className="whitespace-pre-wrap text-sm text-muted-foreground">{lead.notes}</dd>
             </div>
           )}
         </CardContent>
