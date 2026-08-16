@@ -52,6 +52,7 @@ services:
       - SPRING_FLYWAY_USER=crm_admin
       - SPRING_FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_FLYWAY_OUT_OF_ORDER=true
+      - OMNICHANNEL_WHATSAPP_WEBHOOK_VERIFY_TOKEN=${OMNICHANNEL_WHATSAPP_WEBHOOK_VERIFY_TOKEN:-}
     networks:
       - crm-network
     restart: unless-stopped
