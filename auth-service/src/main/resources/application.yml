@@ -2,6 +2,15 @@ spring:
   application:
     name: crm-auth-service
 
+  servlet:
+    multipart:
+      # BFF relay: o auth-service nao processa multipart e apenas repassa
+      # o corpo bruto ao crm-backend. Com multipart habilitado, o Spring
+      # encapsula a request e getInputStream() retorna vazio, fazendo o
+      # upload de arquivos chegar ao backend sem a parte 'file'
+      # (MissingServletRequestPartException -> HTTP 500).
+      enabled: false
+
   profiles:
     active: dev
 
