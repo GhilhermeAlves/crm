@@ -16,7 +16,14 @@ type CardStatProps = {
   className?: string;
 };
 
-export function CardStat({ title, value, description, icon, trend, className }: CardStatProps) {
+export function CardStat({
+  title,
+  value,
+  description,
+  icon,
+  trend,
+  className,
+}: CardStatProps) {
   return (
     <Card className={cn("transition-shadow hover:shadow-md", className)}>
       <CardContent className="p-6">
@@ -29,7 +36,9 @@ export function CardStat({ title, value, description, icon, trend, className }: 
                 <span
                   className={cn(
                     "text-xs font-medium",
-                    trend.isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+                    trend.isPositive
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-red-600 dark:text-red-400",
                   )}
                 >
                   {trend.isPositive ? "+" : ""}

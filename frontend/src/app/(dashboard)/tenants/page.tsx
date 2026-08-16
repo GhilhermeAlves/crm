@@ -73,7 +73,9 @@ export default function TenantsPage() {
       ) : filteredTenants.length === 0 ? (
         <EmptyState
           icon={<Building2 className="h-8 w-8 text-muted-foreground" />}
-          title={search ? "Nenhuma empresa encontrada" : "Nenhuma empresa cadastrada"}
+          title={
+            search ? "Nenhuma empresa encontrada" : "Nenhuma empresa cadastrada"
+          }
           description={
             search
               ? "Tente ajustar sua pesquisa."

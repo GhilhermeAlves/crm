@@ -31,7 +31,8 @@ export function useUpdateMemberRole(companyId: string) {
 export function useRemoveMember(companyId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (userId: string) => MemberService.removeMember(companyId, userId),
+    mutationFn: (userId: string) =>
+      MemberService.removeMember(companyId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members", companyId] });
       queryClient.invalidateQueries({ queryKey: ["users"] });

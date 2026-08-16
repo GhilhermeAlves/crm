@@ -38,7 +38,9 @@ function AcceptInvitationContent() {
       router.push(ROUTES.DASHBOARD);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Não foi possível processar o convite.";
+        error instanceof Error
+          ? error.message
+          : "Não foi possível processar o convite.";
       toast.error(message);
       setAction(null);
     }
@@ -84,7 +86,10 @@ function AcceptInvitationContent() {
           </>
         ) : (
           <CardFooter>
-            <Button variant="outline" onClick={() => router.push(ROUTES.DASHBOARD)}>
+            <Button
+              variant="outline"
+              onClick={() => router.push(ROUTES.DASHBOARD)}
+            >
               Voltar ao início
             </Button>
           </CardFooter>

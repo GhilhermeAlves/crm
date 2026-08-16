@@ -30,7 +30,9 @@ export default function OnboardingGroupLayout({
       return;
     }
     if (!isAuthenticated) {
-      router.push(`${ROUTES.LOGIN}?redirect=${encodeURIComponent("/onboarding")}`);
+      router.push(
+        `${ROUTES.LOGIN}?redirect=${encodeURIComponent("/onboarding")}`,
+      );
     } else if (user?.companyId) {
       router.push(ROUTES.DASHBOARD);
     }

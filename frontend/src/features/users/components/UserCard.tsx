@@ -25,7 +25,9 @@ export function UserCard({ user, onClick }: UserCardProps) {
           />
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate">{user.name}</p>
-            <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+            <p className="text-sm text-muted-foreground truncate">
+              {user.email}
+            </p>
           </div>
           <UserStatusBadge status={user.status} />
         </div>

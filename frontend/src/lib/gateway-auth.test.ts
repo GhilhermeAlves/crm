@@ -80,9 +80,9 @@ describe("gateway-auth (BFF session)", () => {
 
   it("refreshGatewaySession posts /auth/refresh with cookie-to-header CSRF", async () => {
     document.cookie = `${CSRF_COOKIE}=csrf-1; path=/`;
-    const fetchMock = vi.spyOn(window, "fetch").mockResolvedValue(
-      new Response(null, { status: 204 }),
-    );
+    const fetchMock = vi
+      .spyOn(window, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
 
     await expect(refreshGatewaySession()).resolves.toBe(true);
 
@@ -91,7 +91,9 @@ describe("gateway-auth (BFF session)", () => {
     expect(url).toBe("/auth/refresh");
     expect(init.method).toBe("POST");
     expect(init.credentials).toBe("include");
-    expect((init.headers as Record<string, string>)[CSRF_HEADER]).toBe("csrf-1");
+    expect((init.headers as Record<string, string>)[CSRF_HEADER]).toBe(
+      "csrf-1",
+    );
   });
 
   it("refreshGatewaySession deduplicates concurrent refreshes", async () => {
@@ -100,7 +102,10 @@ describe("gateway-auth (BFF session)", () => {
       new Response(null, { status: 204 }),
     );
 
-    const [a, b] = await Promise.all([refreshGatewaySession(), refreshGatewaySession()]);
+    const [a, b] = await Promise.all([
+      refreshGatewaySession(),
+      refreshGatewaySession(),
+    ]);
     expect(a).toBe(true);
     expect(b).toBe(true);
     expect(window.fetch).toHaveBeenCalledTimes(1);
@@ -117,10 +122,13 @@ describe("gateway-auth (BFF session)", () => {
 
   it("getLinkStatus reports a pending link with the account email", async () => {
     vi.spyOn(window, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ pending: true, email: "ana@exemplo.com" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
+      new Response(
+        JSON.stringify({ pending: true, email: "ana@exemplo.com" }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
     );
 
     await expect(getLinkStatus()).resolves.toEqual({
@@ -146,7 +154,9 @@ describe("gateway-auth (BFF session)", () => {
   });
 
   it("getLinkStatus returns pending=false when the server errors", async () => {
-    vi.spyOn(window, "fetch").mockResolvedValue(new Response(null, { status: 500 }));
+    vi.spyOn(window, "fetch").mockResolvedValue(
+      new Response(null, { status: 500 }),
+    );
     await expect(getLinkStatus()).resolves.toEqual({ pending: false });
   });
 

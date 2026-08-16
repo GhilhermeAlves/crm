@@ -13,7 +13,8 @@ export function useCreateCompany() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: OnboardingCompanyRequest) => OnboardingService.createCompany(data),
+    mutationFn: (data: OnboardingCompanyRequest) =>
+      OnboardingService.createCompany(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Empresa criada com sucesso. Bem-vindo ao CRM!");

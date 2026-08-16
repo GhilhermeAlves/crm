@@ -134,11 +134,15 @@ describe("AuthProvider (Sprint 6.4, session via gateway)", () => {
     // contexto e exige que, quando o loading termina com sucesso, a autenticação
     // já esteja presente no MESMO frame (sem janela de "deslogado" pós-login).
     meMock.mockResolvedValue(mockUser);
-    const snapshots: Array<{ isLoading: boolean; isAuthenticated: boolean }> = [];
+    const snapshots: Array<{ isLoading: boolean; isAuthenticated: boolean }> =
+      [];
 
     function AuthStateObserver() {
       const ctx = useAuth();
-      snapshots.push({ isLoading: ctx.isLoading, isAuthenticated: ctx.isAuthenticated });
+      snapshots.push({
+        isLoading: ctx.isLoading,
+        isAuthenticated: ctx.isAuthenticated,
+      });
       return null;
     }
 
@@ -153,7 +157,9 @@ describe("AuthProvider (Sprint 6.4, session via gateway)", () => {
     render(React.createElement(AuthStateObserver, null), { wrapper });
 
     await waitFor(() =>
-      expect(snapshots.some((s) => !s.isLoading && s.isAuthenticated)).toBe(true),
+      expect(snapshots.some((s) => !s.isLoading && s.isAuthenticated)).toBe(
+        true,
+      ),
     );
 
     const invalid = snapshots.filter((s) => !s.isLoading && !s.isAuthenticated);

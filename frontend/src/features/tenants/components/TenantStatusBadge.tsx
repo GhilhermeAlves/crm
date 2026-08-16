@@ -2,7 +2,10 @@ import { BadgeStatus } from "@/components/common/BadgeStatus";
 import type { TenantStatus } from "../types/tenant.types";
 import { tenantStatusLabels } from "../schemas/tenant.schema";
 
-const statusVariantMap: Record<TenantStatus, "success" | "warning" | "info" | "danger"> = {
+const statusVariantMap: Record<
+  TenantStatus,
+  "success" | "warning" | "info" | "danger"
+> = {
   active: "success",
   onboarding: "info",
   suspended: "warning",

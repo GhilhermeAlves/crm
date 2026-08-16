@@ -34,15 +34,20 @@ export function DeleteUserDialog({
         <DialogHeader>
           <DialogTitle>Excluir Usuário</DialogTitle>
           <DialogDescription>
-            Tem certeza que deseja excluir o usuário <strong>{user.name}</strong>?
-            Esta ação excluirá o usuário do sistema.
+            Tem certeza que deseja excluir o usuário{" "}
+            <strong>{user.name}</strong>? Esta ação excluirá o usuário do
+            sistema.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={isLoading}>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isLoading}
+          >
             {isLoading ? "Excluindo..." : "Excluir"}
           </Button>
         </DialogFooter>

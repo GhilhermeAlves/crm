@@ -23,7 +23,7 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
   const createRole = useCreateRole();
   const { data: allPermissions } = usePermissions();
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
-    defaultValues?.permissionIds ?? []
+    defaultValues?.permissionIds ?? [],
   );
 
   const {
@@ -44,7 +44,7 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
     setSelectedPermissionIds((prev) =>
       prev.includes(permissionId)
         ? prev.filter((id) => id !== permissionId)
-        : [...prev, permissionId]
+        : [...prev, permissionId],
     );
   };
 
@@ -55,7 +55,7 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
         onSuccess: () => {
           router.push("/roles");
         },
-      }
+      },
     );
   };
 
@@ -91,7 +91,9 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
               rows={3}
             />
             {errors.description && (
-              <p className="text-sm text-destructive">{errors.description.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.description.message}
+              </p>
             )}
           </div>
 

@@ -2,7 +2,11 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { User, CreateUserRequest, UpdateUserRequest } from "../types/user.types";
+import type {
+  User,
+  CreateUserRequest,
+  UpdateUserRequest,
+} from "../types/user.types";
 import { userSchema, type UserFormData } from "../schemas/user.schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +42,13 @@ const languages = [
   { value: "es", label: "Español" },
 ];
 
-export function UserForm({ user, onSubmit, onCancel, isLoading, mode }: UserFormProps) {
+export function UserForm({
+  user,
+  onSubmit,
+  onCancel,
+  isLoading,
+  mode,
+}: UserFormProps) {
   const {
     register,
     handleSubmit,
@@ -96,14 +106,18 @@ export function UserForm({ user, onSubmit, onCancel, isLoading, mode }: UserForm
               <Label htmlFor="firstName">Nome *</Label>
               <Input id="firstName" {...register("firstName")} />
               {errors.firstName && (
-                <p className="text-sm text-destructive">{errors.firstName.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.firstName.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Sobrenome *</Label>
               <Input id="lastName" {...register("lastName")} />
               {errors.lastName && (
-                <p className="text-sm text-destructive">{errors.lastName.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.lastName.message}
+                </p>
               )}
             </div>
           </div>
@@ -112,14 +126,22 @@ export function UserForm({ user, onSubmit, onCancel, isLoading, mode }: UserForm
               <Label htmlFor="email">Email *</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" placeholder="(XX) XXXXX-XXXX" {...register("phone")} />
+              <Input
+                id="phone"
+                placeholder="(XX) XXXXX-XXXX"
+                {...register("phone")}
+              />
               {errors.phone && (
-                <p className="text-sm text-destructive">{errors.phone.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.phone.message}
+                </p>
               )}
             </div>
           </div>
@@ -204,7 +226,11 @@ export function UserForm({ user, onSubmit, onCancel, isLoading, mode }: UserForm
           </Button>
         )}
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Salvando..." : mode === "create" ? "Criar Usuário" : "Salvar Alterações"}
+          {isLoading
+            ? "Salvando..."
+            : mode === "create"
+              ? "Criar Usuário"
+              : "Salvar Alterações"}
         </Button>
       </div>
     </form>

@@ -86,16 +86,26 @@ export default function ChannelsPage() {
               <TableBody>
                 {channels.map((channel) => (
                   <TableRow key={channel.id}>
-                    <TableCell className="font-medium">{channel.name}</TableCell>
-                    <TableCell>{CHANNEL_PROVIDER_LABELS[channel.provider]}</TableCell>
-                    <TableCell className="text-muted-foreground">{channel.externalId ?? "—"}</TableCell>
+                    <TableCell className="font-medium">
+                      {channel.name}
+                    </TableCell>
+                    <TableCell>
+                      {CHANNEL_PROVIDER_LABELS[channel.provider]}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {channel.externalId ?? "—"}
+                    </TableCell>
                     <TableCell>
                       <ChannelStatusBadge status={channel.status} />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         {canUpdate && (
-                          <Button variant="outline" size="sm" onClick={() => openEdit(channel)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEdit(channel)}
+                          >
                             Editar
                           </Button>
                         )}

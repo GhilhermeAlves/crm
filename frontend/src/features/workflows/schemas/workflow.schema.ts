@@ -28,7 +28,10 @@ export const CONDITION_OPERATORS = [
   "LESS_OR_EQUAL",
 ] as const;
 
-export const WORKFLOW_ACTION_TYPES = ["CREATE_TASK", "CREATE_ACTIVITY"] as const;
+export const WORKFLOW_ACTION_TYPES = [
+  "CREATE_TASK",
+  "CREATE_ACTIVITY",
+] as const;
 
 export const TASK_PRIORITIES = ["LOW", "MEDIUM", "HIGH"] as const;
 
@@ -98,7 +101,7 @@ export const workflowFormSchema = z.object({
 export type WorkflowFormValues = z.infer<typeof workflowFormSchema>;
 
 export function workflowFormToPayload(
-  values: WorkflowFormValues
+  values: WorkflowFormValues,
 ): CreateWorkflowRequest | UpdateWorkflowRequest {
   const conditions: WorkflowConditionInput[] = values.conditions
     .filter((c) => c.field && c.value)
@@ -166,7 +169,9 @@ export function workflowToFormValues(workflow: Workflow): WorkflowFormValues {
         actionType: a.actionType,
         title: (cfg.title ?? cfg.subject ?? "") as string,
         description: (cfg.description ?? "") as string,
-        priority: (cfg.priority as (typeof TASK_PRIORITIES)[number] | undefined) ?? undefined,
+        priority:
+          (cfg.priority as (typeof TASK_PRIORITIES)[number] | undefined) ??
+          undefined,
         dueInDays: cfg.dueInDays != null ? String(cfg.dueInDays) : "",
         activityType:
           (cfg.type as (typeof ACTIVITY_TYPES)[number] | undefined) ?? "OTHER",

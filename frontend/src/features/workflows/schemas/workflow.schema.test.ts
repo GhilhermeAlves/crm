@@ -41,7 +41,10 @@ describe("workflowFormToPayload", () => {
     expect(payload.name).toBe("Follow-up de proposta");
     expect(payload.trigger).toBe("OPPORTUNITY_STAGE_CHANGED");
     expect(payload.conditions).toHaveLength(1);
-    expect(payload.conditions[0]).toMatchObject({ sortOrder: 0, field: "opportunity.stage" });
+    expect(payload.conditions[0]).toMatchObject({
+      sortOrder: 0,
+      field: "opportunity.stage",
+    });
     expect(payload.actions).toHaveLength(2);
     expect(payload.actions[0]).toMatchObject({
       actionType: "CREATE_TASK",
@@ -105,14 +108,21 @@ describe("workflowToFormValues", () => {
       trigger: "OPPORTUNITY_CREATED",
       active: true,
       conditions: [
-        { id: "c1", field: "opportunity.value", operator: "GREATER_THAN", value: "5000", sortOrder: 0 },
+        {
+          id: "c1",
+          field: "opportunity.value",
+          operator: "GREATER_THAN",
+          value: "5000",
+          sortOrder: 0,
+        },
       ],
       actions: [
         {
           id: "a1",
           actionType: "CREATE_TASK",
           sortOrder: 0,
-          config: '{"title":"Entrar em contato","priority":"HIGH","dueInDays":1}',
+          config:
+            '{"title":"Entrar em contato","priority":"HIGH","dueInDays":1}',
         },
       ],
       createdAt: "2026-01-01T00:00:00",
@@ -123,7 +133,10 @@ describe("workflowToFormValues", () => {
 
     expect(values.name).toBe("Follow-up");
     expect(values.trigger).toBe("OPPORTUNITY_CREATED");
-    expect(values.conditions[0]).toMatchObject({ field: "opportunity.value", value: "5000" });
+    expect(values.conditions[0]).toMatchObject({
+      field: "opportunity.value",
+      value: "5000",
+    });
     expect(values.actions[0]).toMatchObject({
       actionType: "CREATE_TASK",
       title: "Entrar em contato",
@@ -142,7 +155,12 @@ describe("workflowToFormValues", () => {
       active: false,
       conditions: [],
       actions: [
-        { id: "a1", actionType: "CREATE_ACTIVITY", sortOrder: 0, config: '{"subject":"Reagendar"}' },
+        {
+          id: "a1",
+          actionType: "CREATE_ACTIVITY",
+          sortOrder: 0,
+          config: '{"subject":"Reagendar"}',
+        },
       ],
       createdAt: "2026-01-01T00:00:00",
       updatedAt: "2026-01-01T00:00:00",

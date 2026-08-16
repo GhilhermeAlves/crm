@@ -12,7 +12,9 @@ export function useIdentityProviders() {
   return useQuery({
     queryKey: ["identity-providers"],
     queryFn: async (): Promise<IdentityProviderInfo[]> => {
-      const response = await fetch("/auth/providers", { credentials: "include" });
+      const response = await fetch("/auth/providers", {
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error("Falha ao carregar os provedores de identidade.");
       }

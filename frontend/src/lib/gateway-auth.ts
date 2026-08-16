@@ -29,7 +29,8 @@ export const IDENTITY_PROVIDERS = {
   PHONE: "phone",
 } as const;
 
-export type IdentityProviderId = (typeof IDENTITY_PROVIDERS)[keyof typeof IDENTITY_PROVIDERS];
+export type IdentityProviderId =
+  (typeof IDENTITY_PROVIDERS)[keyof typeof IDENTITY_PROVIDERS];
 
 /**
  * Inicia o login via Access Gateway (`/auth/authorize`). O parâmetro
@@ -42,7 +43,9 @@ export function loginWithGateway(
   redirectPath?: string,
   provider?: IdentityProviderId,
 ): void {
-  const params = new URLSearchParams({ redirect: redirectPath || "/dashboard" });
+  const params = new URLSearchParams({
+    redirect: redirectPath || "/dashboard",
+  });
   if (provider) params.set("provider", provider);
   window.location.assign(`/auth/authorize?${params.toString()}`);
 }
@@ -164,7 +167,8 @@ export async function linkAccountWithPassword(
   try {
     const body = await response.json();
     if (typeof body.code === "string" && body.code) code = body.code;
-    if (typeof body.message === "string" && body.message) message = body.message;
+    if (typeof body.message === "string" && body.message)
+      message = body.message;
   } catch {
     // corpo não-JSON
   }

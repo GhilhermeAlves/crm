@@ -23,7 +23,12 @@ interface AuditTableProps {
   onRowClick: (log: AuditLog) => void;
 }
 
-export function AuditTable({ data, isLoading, onPageChange, onRowClick }: AuditTableProps) {
+export function AuditTable({
+  data,
+  isLoading,
+  onPageChange,
+  onRowClick,
+}: AuditTableProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -71,21 +76,34 @@ export function AuditTable({ data, isLoading, onPageChange, onRowClick }: AuditT
           <TableBody>
             {logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={8}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   Nenhum log de auditoria encontrado.
                 </TableCell>
               </TableRow>
             ) : (
               logs.map((log) => (
-                <TableRow key={log.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onRowClick(log)}>
+                <TableRow
+                  key={log.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => onRowClick(log)}
+                >
                   <TableCell className="whitespace-nowrap">
                     <div className="text-sm">{formatDate(log.createdAt)}</div>
-                    <div className="text-xs text-muted-foreground">{formatTime(log.createdAt)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatTime(log.createdAt)}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm font-medium">{log.userName || log.userEmail || "-"}</div>
+                    <div className="text-sm font-medium">
+                      {log.userName || log.userEmail || "-"}
+                    </div>
                     {log.userName && log.userEmail && (
-                      <div className="text-xs text-muted-foreground">{log.userEmail}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {log.userEmail}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell>
@@ -95,7 +113,9 @@ export function AuditTable({ data, isLoading, onPageChange, onRowClick }: AuditT
                     <AuditModuleBadge module={log.module} />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {log.entityName ? `${log.entityName}${log.entityId ? ` (${log.entityId.slice(0, 8)}...)` : ""}` : "-"}
+                    {log.entityName
+                      ? `${log.entityName}${log.entityId ? ` (${log.entityId.slice(0, 8)}...)` : ""}`
+                      : "-"}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                     {log.description || "-"}
@@ -104,7 +124,15 @@ export function AuditTable({ data, isLoading, onPageChange, onRowClick }: AuditT
                     <AuditStatusBadge status={log.status} />
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); onRowClick(log); }}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRowClick(log);
+                      }}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TableCell>

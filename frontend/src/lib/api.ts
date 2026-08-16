@@ -23,7 +23,9 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
     if (!originalRequest) {
       return Promise.reject(error);
     }
@@ -38,7 +40,10 @@ api.interceptors.response.use(
 
     // Sessão realmente inválida (refresh falhou ou o backend rejeitou de novo):
     // volta ao login uma única vez — o guard `_retry` garante que não há loop.
-    if (typeof window !== "undefined" && !isPublicPathname(window.location.pathname)) {
+    if (
+      typeof window !== "undefined" &&
+      !isPublicPathname(window.location.pathname)
+    ) {
       window.location.assign("/login");
     }
     return Promise.reject(error);

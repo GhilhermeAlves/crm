@@ -112,7 +112,11 @@ export function ChannelFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {(Object.keys(CHANNEL_PROVIDER_LABELS) as ChannelProvider[]).map((p) => (
+                      {(
+                        Object.keys(
+                          CHANNEL_PROVIDER_LABELS,
+                        ) as ChannelProvider[]
+                      ).map((p) => (
                         <SelectItem key={p} value={p}>
                           {CHANNEL_PROVIDER_LABELS[p]}
                         </SelectItem>
@@ -130,7 +134,10 @@ export function ChannelFormDialog({
                 <FormItem>
                   <FormLabel>ID externo (phone_number_id)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Identificador do número no provedor" {...field} />
+                    <Input
+                      placeholder="Identificador do número no provedor"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -179,7 +186,9 @@ export function ChannelFormDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(CHANNEL_STATUS_LABELS) as ChannelStatus[]).map((s) => (
+                        {(
+                          Object.keys(CHANNEL_STATUS_LABELS) as ChannelStatus[]
+                        ).map((s) => (
                           <SelectItem key={s} value={s}>
                             {CHANNEL_STATUS_LABELS[s]}
                           </SelectItem>
@@ -192,7 +201,11 @@ export function ChannelFormDialog({
               />
             )}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>

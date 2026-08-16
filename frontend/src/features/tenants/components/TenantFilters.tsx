@@ -11,7 +11,11 @@ type TenantFiltersProps = {
   onRefresh: () => void;
 };
 
-export function TenantFilters({ search, onSearchChange, onRefresh }: TenantFiltersProps) {
+export function TenantFilters({
+  search,
+  onSearchChange,
+  onRefresh,
+}: TenantFiltersProps) {
   return (
     <FilterBar>
       <SearchInput
@@ -21,7 +25,12 @@ export function TenantFilters({ search, onSearchChange, onRefresh }: TenantFilte
         onClear={() => onSearchChange("")}
         className="w-full sm:w-80"
       />
-      <Button variant="outline" size="icon" onClick={onRefresh} className="shrink-0">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={onRefresh}
+        className="shrink-0"
+      >
         <RefreshCw className="h-4 w-4" />
       </Button>
     </FilterBar>

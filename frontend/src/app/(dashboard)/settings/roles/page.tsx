@@ -56,7 +56,10 @@ export default function SettingsRolesPage() {
       (p) => !activePermissionIds.includes(p.id),
     );
     for (const permission of missing) {
-      assignPermission.mutate({ roleId: activeRole.id, data: { permissionId: permission.id } });
+      assignPermission.mutate({
+        roleId: activeRole.id,
+        data: { permissionId: permission.id },
+      });
     }
   }
 

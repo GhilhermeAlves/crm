@@ -39,9 +39,7 @@ export function PermissionMatrix({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Permissões</CardTitle>
-          <Badge variant="secondary">
-            {selectedCount} selecionada(s)
-          </Badge>
+          <Badge variant="secondary">{selectedCount} selecionada(s)</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -52,8 +50,12 @@ export function PermissionMatrix({
                 {roleModuleName[module] || module}
               </h4>
               <Badge variant="outline" className="text-[10px]">
-                {modulePermissions.filter((p) => selectedPermissionIds.includes(p.id)).length}/
-                {modulePermissions.length}
+                {
+                  modulePermissions.filter((p) =>
+                    selectedPermissionIds.includes(p.id),
+                  ).length
+                }
+                /{modulePermissions.length}
               </Badge>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 pl-2">
@@ -73,7 +75,9 @@ export function PermissionMatrix({
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{permission.name}</p>
+                    <p className="text-xs font-medium truncate">
+                      {permission.name}
+                    </p>
                     <p className="text-[10px] text-muted-foreground truncate">
                       {permission.description}
                     </p>

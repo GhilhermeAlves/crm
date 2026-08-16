@@ -16,4 +16,9 @@ export type CreateInvitationRequest = {
   role: string;
 };
 
-export const INVITATION_ROLES = ["ADMIN", "MANAGER", "AGENT", "VIEWER"] as const;
+export const INVITATION_ROLES = [
+  "ADMIN",
+  "MANAGER",
+  "AGENT",
+  "VIEWER",
+] as const;

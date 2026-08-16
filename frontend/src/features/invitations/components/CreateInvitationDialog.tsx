@@ -80,7 +80,11 @@ export function CreateInvitationDialog({ companyId }: { companyId: string }) {
                 <FormItem>
                   <FormLabel>E-mail</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="membro@empresa.com" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="membro@empresa.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -92,7 +96,10 @@ export function CreateInvitationDialog({ companyId }: { companyId: string }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Papel</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o papel" />
@@ -111,7 +118,11 @@ export function CreateInvitationDialog({ companyId }: { companyId: string }) {
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={create.isPending}>

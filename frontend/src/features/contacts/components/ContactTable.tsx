@@ -4,7 +4,9 @@ import Link from "next/link";
 import type { Contact } from "../types/contact.types";
 
 const formatDate = (iso: string): string =>
-  new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium" }).format(new Date(iso));
+  new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium" }).format(
+    new Date(iso),
+  );
 
 const initials = (c: Contact): string => {
   const first = c.firstName?.[0] ?? "";
@@ -22,7 +24,10 @@ export function ContactTable({ contacts, isLoading }: Props) {
     return (
       <div className="space-y-3">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
+          <div
+            key={i}
+            className="flex items-center gap-3 rounded-lg border p-3"
+          >
             <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
             <div className="flex-1 space-y-2">
               <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
@@ -58,7 +63,7 @@ export function ContactTable({ contacts, isLoading }: Props) {
                 {c.firstName} {c.lastName ?? ""}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {(c.email ?? c.phone ?? "—")}{" "}
+                {c.email ?? c.phone ?? "—"}{" "}
                 {c.createdAt ? `· desde ${formatDate(c.createdAt)}` : ""}
               </p>
             </div>

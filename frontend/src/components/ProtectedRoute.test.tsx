@@ -45,7 +45,9 @@ describe("ProtectedRoute (regression Sprint 6.9)", () => {
 
   it("does NOT navigate to /login after a successful /auth/me (login lands on dashboard)", async () => {
     meMock.mockResolvedValue(mockUser);
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
 
     render(
       <QueryClientProvider client={client}>

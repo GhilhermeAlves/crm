@@ -32,7 +32,7 @@ export default function EditLeadPage() {
           notes: data.notes || undefined,
         },
       },
-      { onSuccess: () => router.push(`${ROUTES.LEADS}/${id}`) }
+      { onSuccess: () => router.push(`${ROUTES.LEADS}/${id}`) },
     );
   };
 

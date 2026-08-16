@@ -2,7 +2,12 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useUsers, useDeleteUser, useActivateUser, useDeactivateUser } from "@/features/users/hooks/useUsers";
+import {
+  useUsers,
+  useDeleteUser,
+  useActivateUser,
+  useDeactivateUser,
+} from "@/features/users/hooks/useUsers";
 import { UserTable } from "@/features/users/components/UserTable";
 import { UserFilters } from "@/features/users/components/UserFilters";
 import { DeleteUserDialog } from "@/features/users/components/DeleteUserDialog";
@@ -99,7 +104,9 @@ export default function UsersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
+              onClick={() =>
+                setPage((p) => Math.min(data.totalPages - 1, p + 1))
+              }
               disabled={page >= data.totalPages - 1}
             >
               Próximo

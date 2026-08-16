@@ -35,7 +35,7 @@ export default function WorkflowsPage() {
     setBusyId(workflow.id);
     toggle.mutate(
       { id: workflow.id, active: workflow.active },
-      { onSettled: () => setBusyId(null) }
+      { onSettled: () => setBusyId(null) },
     );
   };
 

@@ -11,7 +11,10 @@ describe("createActivitySchema", () => {
   });
 
   it("rejects empty subject", () => {
-    const result = createActivitySchema.safeParse({ type: "MEETING", subject: "" });
+    const result = createActivitySchema.safeParse({
+      type: "MEETING",
+      subject: "",
+    });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues[0].path).toContain("subject");
@@ -19,12 +22,18 @@ describe("createActivitySchema", () => {
   });
 
   it("rejects unknown type", () => {
-    const result = createActivitySchema.safeParse({ type: "FAKE", subject: "x" });
+    const result = createActivitySchema.safeParse({
+      type: "FAKE",
+      subject: "x",
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects subject over 255 chars", () => {
-    const result = createActivitySchema.safeParse({ type: "NOTE", subject: "a".repeat(256) });
+    const result = createActivitySchema.safeParse({
+      type: "NOTE",
+      subject: "a".repeat(256),
+    });
     expect(result.success).toBe(false);
   });
 });

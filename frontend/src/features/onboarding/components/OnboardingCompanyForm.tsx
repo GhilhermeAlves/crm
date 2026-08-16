@@ -78,14 +78,18 @@ export function OnboardingCompanyForm({
               <Label htmlFor="legalName">Razão Social *</Label>
               <Input id="legalName" {...register("legalName")} />
               {errors.legalName && (
-                <p className="text-sm text-destructive">{errors.legalName.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.legalName.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="tradingName">Nome Fantasia *</Label>
               <Input id="tradingName" {...register("tradingName")} />
               {errors.tradingName && (
-                <p className="text-sm text-destructive">{errors.tradingName.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.tradingName.message}
+                </p>
               )}
             </div>
           </div>
@@ -93,23 +97,37 @@ export function OnboardingCompanyForm({
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="cnpj">CNPJ *</Label>
-              <Input id="cnpj" placeholder="00.000.000/0000-00" {...register("cnpj")} />
+              <Input
+                id="cnpj"
+                placeholder="00.000.000/0000-00"
+                {...register("cnpj")}
+              />
               {errors.cnpj && (
-                <p className="text-sm text-destructive">{errors.cnpj.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.cnpj.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">E-mail *</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone *</Label>
-              <Input id="phone" placeholder="(00) 00000-0000" {...register("phone")} />
+              <Input
+                id="phone"
+                placeholder="(00) 00000-0000"
+                {...register("phone")}
+              />
               {errors.phone && (
-                <p className="text-sm text-destructive">{errors.phone.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.phone.message}
+                </p>
               )}
             </div>
           </div>
@@ -125,23 +143,33 @@ export function OnboardingCompanyForm({
           <div className="grid gap-4 sm:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="address.zipCode">CEP *</Label>
-              <Input id="address.zipCode" placeholder="00000-000" {...register("address.zipCode")} />
+              <Input
+                id="address.zipCode"
+                placeholder="00000-000"
+                {...register("address.zipCode")}
+              />
               {errors.address?.zipCode && (
-                <p className="text-sm text-destructive">{errors.address.zipCode.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.address.zipCode.message}
+                </p>
               )}
             </div>
             <div className="col-span-2 space-y-2">
               <Label htmlFor="address.street">Logradouro *</Label>
               <Input id="address.street" {...register("address.street")} />
               {errors.address?.street && (
-                <p className="text-sm text-destructive">{errors.address.street.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.address.street.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="address.number">Número *</Label>
               <Input id="address.number" {...register("address.number")} />
               {errors.address?.number && (
-                <p className="text-sm text-destructive">{errors.address.number.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.address.number.message}
+                </p>
               )}
             </div>
           </div>
@@ -149,27 +177,44 @@ export function OnboardingCompanyForm({
           <div className="grid gap-4 sm:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="address.complement">Complemento</Label>
-              <Input id="address.complement" {...register("address.complement")} />
+              <Input
+                id="address.complement"
+                {...register("address.complement")}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="address.neighborhood">Bairro *</Label>
-              <Input id="address.neighborhood" {...register("address.neighborhood")} />
+              <Input
+                id="address.neighborhood"
+                {...register("address.neighborhood")}
+              />
               {errors.address?.neighborhood && (
-                <p className="text-sm text-destructive">{errors.address.neighborhood.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.address.neighborhood.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="address.city">Cidade *</Label>
               <Input id="address.city" {...register("address.city")} />
               {errors.address?.city && (
-                <p className="text-sm text-destructive">{errors.address.city.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.address.city.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="address.state">Estado *</Label>
-              <Input id="address.state" placeholder="SP" maxLength={2} {...register("address.state")} />
+              <Input
+                id="address.state"
+                placeholder="SP"
+                maxLength={2}
+                {...register("address.state")}
+              />
               {errors.address?.state && (
-                <p className="text-sm text-destructive">{errors.address.state.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.address.state.message}
+                </p>
               )}
             </div>
           </div>

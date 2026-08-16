@@ -6,30 +6,46 @@ import type {
   MoveDirection,
 } from "../types/pipeline.types";
 
-export function useOpportunities(companyId: string | null, pipelineId: string | null) {
+export function useOpportunities(
+  companyId: string | null,
+  pipelineId: string | null,
+) {
   return useQuery({
     queryKey: ["opportunities", companyId, pipelineId],
     queryFn: () =>
-      OpportunityService.listByPipeline(companyId as string, pipelineId as string),
+      OpportunityService.listByPipeline(
+        companyId as string,
+        pipelineId as string,
+      ),
     enabled: !!companyId && !!pipelineId,
   });
 }
 
-function invalidateOpportunities(queryClient: ReturnType<typeof useQueryClient>, companyId: string | null, pipelineId?: string) {
+function invalidateOpportunities(
+  queryClient: ReturnType<typeof useQueryClient>,
+  companyId: string | null,
+  pipelineId?: string,
+) {
   queryClient.invalidateQueries({ queryKey: ["opportunities", companyId] });
   if (pipelineId) {
-    queryClient.invalidateQueries({ queryKey: ["opportunities", companyId, pipelineId] });
+    queryClient.invalidateQueries({
+      queryKey: ["opportunities", companyId, pipelineId],
+    });
   }
 }
 
 export function useCreateOpportunity(
   companyId: string | null,
-  pipelineId: string | null
+  pipelineId: string | null,
 ) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateOpportunityRequest) =>
-      OpportunityService.create(companyId as string, pipelineId as string, data),
+      OpportunityService.create(
+        companyId as string,
+        pipelineId as string,
+        data,
+      ),
     onSuccess: () => {
       invalidateOpportunities(queryClient, companyId, pipelineId ?? undefined);
       toast.success("Oportunidade criada com sucesso");
@@ -58,7 +74,8 @@ export function useMoveOpportunity(companyId: string | null) {
 export function useMarkWonOpportunity(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => OpportunityService.markWon(companyId as string, id),
+    mutationFn: (id: string) =>
+      OpportunityService.markWon(companyId as string, id),
     onSuccess: () => {
       invalidateOpportunities(queryClient, companyId);
       toast.success("Oportunidade marcada como ganha");
@@ -87,7 +104,8 @@ export function useMarkLostOpportunity(companyId: string | null) {
 export function useDeleteOpportunity(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => OpportunityService.delete(companyId as string, id),
+    mutationFn: (id: string) =>
+      OpportunityService.delete(companyId as string, id),
     onSuccess: () => {
       invalidateOpportunities(queryClient, companyId);
       toast.success("Oportunidade excluída");

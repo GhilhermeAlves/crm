@@ -11,11 +11,11 @@ export const MemberService = {
   async updateRole(
     companyId: string,
     userId: string,
-    role: string
+    role: string,
   ): Promise<Member> {
     const response = await api.put<Member>(
       `${BASE}/${companyId}/members/${userId}`,
-      { role }
+      { role },
     );
     return response.data;
   },

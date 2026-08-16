@@ -44,10 +44,9 @@ export const tenantSchema = z.object({
     .string()
     .optional()
     .default("")
-    .refine(
-      (val) => !val || /^https?:\/\/.+/.test(val),
-      { message: "Website deve começar com http:// ou https://" },
-    ),
+    .refine((val) => !val || /^https?:\/\/.+/.test(val), {
+      message: "Website deve começar com http:// ou https://",
+    }),
   status: z.enum(["active", "suspended", "onboarding", "inactive"]),
   plan: z.enum(["starter", "professional", "business", "enterprise"]),
   maxUsers: z

@@ -60,7 +60,13 @@ function formatDateTime(dateStr: string | null): string {
   });
 }
 
-export function UserTable({ users, isLoading, onDelete, onActivate, onDeactivate }: UserTableProps) {
+export function UserTable({
+  users,
+  isLoading,
+  onDelete,
+  onActivate,
+  onDeactivate,
+}: UserTableProps) {
   const router = useRouter();
 
   if (isLoading) {
@@ -78,7 +84,9 @@ export function UserTable({ users, isLoading, onDelete, onActivate, onDeactivate
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
         <Mail className="h-12 w-12 mb-4 opacity-50" />
         <p className="text-lg font-medium">Nenhum usuário encontrado</p>
-        <p className="text-sm">Cadastre ou convide novos usuários para começar.</p>
+        <p className="text-sm">
+          Cadastre ou convide novos usuários para começar.
+        </p>
       </div>
     );
   }
@@ -110,7 +118,9 @@ export function UserTable({ users, isLoading, onDelete, onActivate, onDeactivate
                   />
                   <div>
                     <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {user.email}
+                    </p>
                   </div>
                 </div>
               </TableCell>
@@ -140,7 +150,9 @@ export function UserTable({ users, isLoading, onDelete, onActivate, onDeactivate
                       Visualizar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => router.push(`${ROUTES.USERS}/${user.id}/edit`)}
+                      onClick={() =>
+                        router.push(`${ROUTES.USERS}/${user.id}/edit`)
+                      }
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar

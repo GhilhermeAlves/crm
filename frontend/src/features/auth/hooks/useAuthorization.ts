@@ -31,10 +31,7 @@ export function useAuthorization() {
     [permissions],
   );
 
-  const cannot = useCallback(
-    (permission?: string) => !can(permission),
-    [can],
-  );
+  const cannot = useCallback((permission?: string) => !can(permission), [can]);
 
   const hasRole = useCallback(
     (role?: string) => !role || roles.includes(role),

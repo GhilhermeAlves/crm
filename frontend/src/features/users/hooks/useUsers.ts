@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserService } from "../services/user.service";
-import type { ListUsersParams, UpdateUserRequest, CreateUserRequest, InviteUserRequest, UpdateProfileRequest } from "../types/user.types";
+import type {
+  ListUsersParams,
+  UpdateUserRequest,
+  CreateUserRequest,
+  InviteUserRequest,
+  UpdateProfileRequest,
+} from "../types/user.types";
 
 export function useUsers(params?: ListUsersParams) {
   return useQuery({

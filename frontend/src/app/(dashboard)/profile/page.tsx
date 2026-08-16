@@ -129,7 +129,11 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" placeholder="(XX) XXXXX-XXXX" {...register("phone")} />
+                <Input
+                  id="phone"
+                  placeholder="(XX) XXXXX-XXXX"
+                  {...register("phone")}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="jobTitle">Cargo</Label>

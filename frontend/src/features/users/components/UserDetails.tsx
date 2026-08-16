@@ -25,7 +25,13 @@ interface UserDetailsProps {
   user: User;
 }
 
-function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
+function InfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null | undefined;
+}) {
   return (
     <div className="flex justify-between py-2 border-b last:border-b-0">
       <span className="text-sm text-muted-foreground">{label}</span>
@@ -53,14 +59,14 @@ export function UserDetails({ user }: UserDetailsProps) {
   const [selectedRoleId, setSelectedRoleId] = useState("");
 
   const availableRoles = (rolesQuery.data ?? []).filter(
-    (r) => !userRolesQuery.data?.some((ur) => ur.id === r.id)
+    (r) => !userRolesQuery.data?.some((ur) => ur.id === r.id),
   );
 
   const handleAssign = () => {
     if (!selectedRoleId) return;
     assignRole.mutate(
       { userId: user.id, data: { roleId: selectedRoleId } },
-      { onSuccess: () => setSelectedRoleId("") }
+      { onSuccess: () => setSelectedRoleId("") },
     );
   };
 

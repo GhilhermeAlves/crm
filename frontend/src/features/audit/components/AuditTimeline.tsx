@@ -52,7 +52,9 @@ export function AuditTimeline({ logs }: AuditTimelineProps) {
               <p className="text-sm">{log.description || "Sem descrição"}</p>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span>{log.userName || log.userEmail || "Sistema"}</span>
-                <span>{formatDate(log.createdAt)} {formatTime(log.createdAt)}</span>
+                <span>
+                  {formatDate(log.createdAt)} {formatTime(log.createdAt)}
+                </span>
               </div>
             </div>
           </div>

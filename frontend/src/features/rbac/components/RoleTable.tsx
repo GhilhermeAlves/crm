@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Pencil, Trash2, Eye, Shield, ShieldOff } from "lucide-react";
+import {
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Eye,
+  Shield,
+  ShieldOff,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -53,7 +60,10 @@ export function RoleTable({ roles }: RoleTableProps) {
           <TableBody>
             {roles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   Nenhuma role encontrada.
                 </TableCell>
               </TableRow>

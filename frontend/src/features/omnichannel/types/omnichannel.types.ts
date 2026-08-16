@@ -12,7 +12,8 @@ export type ConversationStatus = "OPEN" | "CLOSED";
 
 export type MessageDirection = "INBOUND" | "OUTBOUND";
 
-export type MessageStatus = "PENDING" | "SENT" | "DELIVERED" | "READ" | "FAILED";
+export type MessageStatus =
+  "PENDING" | "SENT" | "DELIVERED" | "READ" | "FAILED";
 
 export type MessageType = "TEXT";
 

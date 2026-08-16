@@ -22,7 +22,11 @@ export function JsonViewer({ data, className }: JsonViewerProps) {
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground mb-2"
       >
-        {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        {expanded ? (
+          <ChevronDown className="h-3 w-3" />
+        ) : (
+          <ChevronRight className="h-3 w-3" />
+        )}
         {expanded ? "Recolher" : "Expandir"}
       </button>
       {expanded && (

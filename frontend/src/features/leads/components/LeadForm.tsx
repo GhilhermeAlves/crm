@@ -34,7 +34,13 @@ interface LeadFormProps {
   mode: "create" | "edit";
 }
 
-export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadFormProps) {
+export function LeadForm({
+  lead,
+  onSubmit,
+  onCancel,
+  isLoading,
+  mode,
+}: LeadFormProps) {
   const isEdit = mode === "edit";
 
   const {
@@ -76,7 +82,9 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
                 {...register("contactId")}
               />
               {errors.contactId && (
-                <p className="text-sm text-destructive">{errors.contactId.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.contactId.message}
+                </p>
               )}
             </div>
           )}
@@ -86,7 +94,9 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
               <Label>Origem *</Label>
               <Select
                 value={watchedSource}
-                onValueChange={(val) => setValue("source", val as typeof watchedSource)}
+                onValueChange={(val) =>
+                  setValue("source", val as typeof watchedSource)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -104,7 +114,9 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
               <Label>Status</Label>
               <Select
                 value={watchedStatus}
-                onValueChange={(val) => setValue("status", val as typeof watchedStatus)}
+                onValueChange={(val) =>
+                  setValue("status", val as typeof watchedStatus)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -123,9 +135,16 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="score">Score (0-100)</Label>
-              <Input id="score" type="text" inputMode="numeric" {...register("score")} />
+              <Input
+                id="score"
+                type="text"
+                inputMode="numeric"
+                {...register("score")}
+              />
               {errors.score && (
-                <p className="text-sm text-destructive">{errors.score.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.score.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
@@ -135,7 +154,8 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
                 onValueChange={(val) =>
                   setValue(
                     "classification",
-                    (val === "none" ? "" : val) as "" | typeof watchedClassification
+                    (val === "none" ? "" : val) as
+                      "" | typeof watchedClassification,
                   )
                 }
               >
@@ -156,7 +176,11 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
 
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Responsável (ID do usuário)</Label>
-            <Input id="assignedTo" placeholder="UUID do usuário responsável" {...register("assignedTo")} />
+            <Input
+              id="assignedTo"
+              placeholder="UUID do usuário responsável"
+              {...register("assignedTo")}
+            />
           </div>
 
           <div className="space-y-2">
@@ -173,7 +197,11 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
           </Button>
         )}
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Salvando..." : isEdit ? "Salvar Alterações" : "Criar Lead"}
+          {isLoading
+            ? "Salvando..."
+            : isEdit
+              ? "Salvar Alterações"
+              : "Criar Lead"}
         </Button>
       </div>
     </form>

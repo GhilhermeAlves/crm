@@ -35,7 +35,10 @@ export type Tenant = {
   updatedAt: string;
 };
 
-export type CreateTenantRequest = Omit<Tenant, "id" | "createdAt" | "updatedAt">;
+export type CreateTenantRequest = Omit<
+  Tenant,
+  "id" | "createdAt" | "updatedAt"
+>;
 
 export type UpdateTenantRequest = Partial<CreateTenantRequest>;
 

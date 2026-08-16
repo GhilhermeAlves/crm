@@ -1,7 +1,11 @@
 "use client";
 
 import { Target } from "lucide-react";
-import type { Opportunity, Stage, MoveDirection } from "../types/pipeline.types";
+import type {
+  Opportunity,
+  Stage,
+  MoveDirection,
+} from "../types/pipeline.types";
 import { OpportunityCard } from "./OpportunityCard";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -66,7 +70,9 @@ export function PipelineBoard({
               >
                 <div className="space-y-0.5">
                   <p className="text-sm font-semibold">{stage.name}</p>
-                  <p className="text-xs text-muted-foreground">{stage.probability}%</p>
+                  <p className="text-xs text-muted-foreground">
+                    {stage.probability}%
+                  </p>
                 </div>
                 <div className="text-right text-xs text-muted-foreground">
                   <p>{columnOpps.length}</p>

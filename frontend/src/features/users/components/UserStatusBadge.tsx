@@ -7,11 +7,13 @@ import { cn } from "@/lib/utils";
 const statusConfig: Record<UserStatus, { label: string; className: string }> = {
   active: {
     label: "Ativo",
-    className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    className:
+      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   },
   inactive: {
     label: "Inativo",
-    className: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+    className:
+      "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
   },
   locked: {
     label: "Bloqueado",
@@ -19,7 +21,8 @@ const statusConfig: Record<UserStatus, { label: string; className: string }> = {
   },
   pending: {
     label: "Pendente",
-    className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+    className:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   },
 };
 
@@ -32,7 +35,10 @@ export function UserStatusBadge({ status, className }: UserStatusBadgeProps) {
   const config = statusConfig[status] || statusConfig.active;
 
   return (
-    <Badge variant="outline" className={cn("font-medium", config.className, className)}>
+    <Badge
+      variant="outline"
+      className={cn("font-medium", config.className, className)}
+    >
       {config.label}
     </Badge>
   );

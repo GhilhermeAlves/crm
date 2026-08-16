@@ -50,7 +50,9 @@ export const AuthService = {
 
   /** Alterna a empresa ativa do usuário (Sprint 8.4). */
   async switchCompany(companyId: string): Promise<CompanyOption> {
-    const response = await api.post<CompanyOption>("/me/switch-company", { companyId });
+    const response = await api.post<CompanyOption>("/me/switch-company", {
+      companyId,
+    });
     return response.data;
   },
 };

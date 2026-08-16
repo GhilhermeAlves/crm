@@ -15,23 +15,31 @@ export const ContactService = {
   },
 
   async findById(companyId: string, id: string): Promise<Contact> {
-    const response = await api.get<Contact>(`${BASE}/${companyId}/contacts/${id}`);
+    const response = await api.get<Contact>(
+      `${BASE}/${companyId}/contacts/${id}`,
+    );
     return response.data;
   },
 
-  async create(companyId: string, data: CreateContactRequest): Promise<Contact> {
-    const response = await api.post<Contact>(`${BASE}/${companyId}/contacts`, data);
+  async create(
+    companyId: string,
+    data: CreateContactRequest,
+  ): Promise<Contact> {
+    const response = await api.post<Contact>(
+      `${BASE}/${companyId}/contacts`,
+      data,
+    );
     return response.data;
   },
 
   async update(
     companyId: string,
     id: string,
-    data: UpdateContactRequest
+    data: UpdateContactRequest,
   ): Promise<Contact> {
     const response = await api.put<Contact>(
       `${BASE}/${companyId}/contacts/${id}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -43,7 +51,7 @@ export const ContactService = {
   /** Customer 360 (Sprint 13): visão consolidada do contato. */
   async customer360(companyId: string, id: string): Promise<Customer360> {
     const response = await api.get<Customer360>(
-      `${BASE}/${companyId}/contacts/${id}/360`
+      `${BASE}/${companyId}/contacts/${id}/360`,
     );
     return response.data;
   },

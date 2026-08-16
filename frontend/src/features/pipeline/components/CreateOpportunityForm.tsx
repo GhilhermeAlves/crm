@@ -52,25 +52,43 @@ export function CreateOpportunityForm({
           contactId: values.contactId,
           expectedCloseDate: values.expectedCloseDate || undefined,
           notes: values.notes || undefined,
-        })
+        }),
       )}
       className="space-y-4"
     >
       <div className="space-y-2">
         <Label htmlFor="title">Título *</Label>
-        <Input id="title" placeholder="Ex.: Contrato anual" {...register("title")} />
-        {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
+        <Input
+          id="title"
+          placeholder="Ex.: Contrato anual"
+          {...register("title")}
+        />
+        {errors.title && (
+          <p className="text-sm text-destructive">{errors.title.message}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="value">Valor (R$) *</Label>
-          <Input id="value" type="text" inputMode="decimal" placeholder="0,00" {...register("value")} />
-          {errors.value && <p className="text-sm text-destructive">{errors.value.message}</p>}
+          <Input
+            id="value"
+            type="text"
+            inputMode="decimal"
+            placeholder="0,00"
+            {...register("value")}
+          />
+          {errors.value && (
+            <p className="text-sm text-destructive">{errors.value.message}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="expectedCloseDate">Previsão de fechamento</Label>
-          <Input id="expectedCloseDate" type="datetime-local" {...register("expectedCloseDate")} />
+          <Input
+            id="expectedCloseDate"
+            type="datetime-local"
+            {...register("expectedCloseDate")}
+          />
         </div>
       </div>
 

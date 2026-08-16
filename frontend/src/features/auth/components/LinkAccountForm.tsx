@@ -85,7 +85,10 @@ export function LinkAccountForm() {
         <p className="text-sm text-crm-text-secondary">
           Não há vínculo pendente nesta sessão.
         </p>
-        <Link href="/login" className="block text-center text-sm font-medium text-crm-primary hover:underline">
+        <Link
+          href="/login"
+          className="block text-center text-sm font-medium text-crm-primary hover:underline"
+        >
           Ir para o login
         </Link>
       </div>
@@ -108,7 +111,9 @@ export function LinkAccountForm() {
       </div>
 
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-crm-text">Senha da conta local</span>
+        <span className="text-sm font-medium text-crm-text">
+          Senha da conta local
+        </span>
         <Input
           type="password"
           value={password}
@@ -130,7 +135,12 @@ export function LinkAccountForm() {
         </p>
       ) : null}
 
-      <Button type="submit" variant="crm" className="w-full" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        variant="crm"
+        className="w-full"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (

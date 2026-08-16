@@ -20,8 +20,13 @@ describe("NextActionCard (Sprint 13)", () => {
   it("shows a neutral state when nothing is urgent", () => {
     render(
       <NextActionCard
-        nextAction={{ type: "NONE", title: "Tudo em dia", description: "Sem urgência.", priority: 0 }}
-      />
+        nextAction={{
+          type: "NONE",
+          title: "Tudo em dia",
+          description: "Sem urgência.",
+          priority: 0,
+        }}
+      />,
     );
     expect(screen.getByText("Tudo em dia")).toBeTruthy();
   });

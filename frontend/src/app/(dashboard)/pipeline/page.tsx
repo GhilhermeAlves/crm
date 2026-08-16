@@ -37,34 +37,44 @@ export default function PipelinePage() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
 
-  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(
+    null,
+  );
   const [createOpen, setCreateOpen] = useState(false);
   const [lostOpp, setLostOpp] = useState<Opportunity | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const perms = useOpportunityPermissions();
 
-  const { data: pipelines = [], isLoading: pipelinesLoading } = usePipelines(companyId);
-  const selectedPipelineIdResolved = selectedPipelineId ?? pipelines[0]?.id ?? null;
+  const { data: pipelines = [], isLoading: pipelinesLoading } =
+    usePipelines(companyId);
+  const selectedPipelineIdResolved =
+    selectedPipelineId ?? pipelines[0]?.id ?? null;
 
   const { data: opportunities = [] } = useOpportunities(
     companyId,
-    selectedPipelineIdResolved
+    selectedPipelineIdResolved,
   );
 
   const activePipeline = useMemo(
     () => pipelines.find((p) => p.id === selectedPipelineIdResolved) ?? null,
-    [pipelines, selectedPipelineIdResolved]
+    [pipelines, selectedPipelineIdResolved],
   );
 
   const { data: metrics } = useQuery({
     queryKey: ["pipeline-metrics", companyId, selectedPipelineIdResolved],
     queryFn: () =>
-      PipelineService.metrics(companyId as string, selectedPipelineIdResolved as string),
+      PipelineService.metrics(
+        companyId as string,
+        selectedPipelineIdResolved as string,
+      ),
     enabled: !!companyId && !!selectedPipelineIdResolved,
   });
 
-  const createOpportunity = useCreateOpportunity(companyId, activePipeline?.id ?? null);
+  const createOpportunity = useCreateOpportunity(
+    companyId,
+    activePipeline?.id ?? null,
+  );
   const moveOpportunity = useMoveOpportunity(companyId);
   const markWon = useMarkWonOpportunity(companyId);
   const markLost = useMarkLostOpportunity(companyId);
@@ -74,7 +84,7 @@ export default function PipelinePage() {
     setBusyId(opportunity.id);
     moveOpportunity.mutate(
       { id: opportunity.id, direction },
-      { onSettled: () => setBusyId(null) }
+      { onSettled: () => setBusyId(null) },
     );
   };
 
@@ -85,7 +95,9 @@ export default function PipelinePage() {
 
   const handleDelete = (opportunity: Opportunity) => {
     setBusyId(opportunity.id);
-    deleteOpportunity.mutate(opportunity.id, { onSettled: () => setBusyId(null) });
+    deleteOpportunity.mutate(opportunity.id, {
+      onSettled: () => setBusyId(null),
+    });
   };
 
   return (
@@ -139,7 +151,9 @@ export default function PipelinePage() {
         onOpenChange={setCreateOpen}
         isLoading={createOpportunity.isPending}
         onSubmit={(values) =>
-          createOpportunity.mutate(values, { onSuccess: () => setCreateOpen(false) })
+          createOpportunity.mutate(values, {
+            onSuccess: () => setCreateOpen(false),
+          })
         }
       />
 
@@ -151,7 +165,7 @@ export default function PipelinePage() {
           if (lostOpp) {
             markLost.mutate(
               { id: lostOpp.id, lossReason: reason },
-              { onSuccess: () => setLostOpp(null) }
+              { onSuccess: () => setLostOpp(null) },
             );
           }
         }}

@@ -1,7 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { RbacService } from "../services/rbac.service";
-import type { CreateRoleRequest, UpdateRoleRequest, AssignRoleRequest, AssignPermissionRequest } from "../types/rbac.types";
+import type {
+  CreateRoleRequest,
+  UpdateRoleRequest,
+  AssignRoleRequest,
+  AssignPermissionRequest,
+} from "../types/rbac.types";
 
 export function useRoles() {
   return useQuery({
@@ -69,8 +74,13 @@ export function useAssignPermission() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ roleId, data }: { roleId: string; data: AssignPermissionRequest }) =>
-      RbacService.assignPermission(roleId, data),
+    mutationFn: ({
+      roleId,
+      data,
+    }: {
+      roleId: string;
+      data: AssignPermissionRequest;
+    }) => RbacService.assignPermission(roleId, data),
     onSuccess: (_, { roleId }) => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
       queryClient.invalidateQueries({ queryKey: ["roles", roleId] });
@@ -86,8 +96,13 @@ export function useRemovePermission() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ roleId, permissionId }: { roleId: string; permissionId: string }) =>
-      RbacService.removePermission(roleId, permissionId),
+    mutationFn: ({
+      roleId,
+      permissionId,
+    }: {
+      roleId: string;
+      permissionId: string;
+    }) => RbacService.removePermission(roleId, permissionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
       toast.success("Permissão removida com sucesso");
@@ -102,8 +117,13 @@ export function useAssignRoleToUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: AssignRoleRequest }) =>
-      RbacService.assignRoleToUser(userId, data),
+    mutationFn: ({
+      userId,
+      data,
+    }: {
+      userId: string;
+      data: AssignRoleRequest;
+    }) => RbacService.assignRoleToUser(userId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["roles"] });

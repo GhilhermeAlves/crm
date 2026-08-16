@@ -14,7 +14,8 @@ export function useInvitations(companyId: string | null) {
 export function useCreateInvitation(companyId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateInvitationRequest) => InvitationService.create(companyId, data),
+    mutationFn: (data: CreateInvitationRequest) =>
+      InvitationService.create(companyId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations", companyId] });
       toast.success("Convite criado com sucesso");
@@ -28,7 +29,8 @@ export function useCreateInvitation(companyId: string) {
 export function useRevokeInvitation(companyId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (invitationId: string) => InvitationService.revoke(companyId, invitationId),
+    mutationFn: (invitationId: string) =>
+      InvitationService.revoke(companyId, invitationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations", companyId] });
       toast.success("Convite revogado com sucesso");

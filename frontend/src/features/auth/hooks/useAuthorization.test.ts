@@ -13,10 +13,12 @@ vi.mock("./useAuth", () => ({
 // é aplicado acima, o caminho real de useAuth não é executado.
 import { useAuthorization, usePermission } from "./useAuthorization";
 
-function mockAuth(overrides: {
-  permissions?: string[];
-  roles?: string[];
-} = {}) {
+function mockAuth(
+  overrides: {
+    permissions?: string[];
+    roles?: string[];
+  } = {},
+) {
   authContextMock.mockReturnValue({
     user: null,
     isAuthenticated: true,

@@ -4,7 +4,11 @@ import { use } from "react";
 import { RoleDetails } from "@/features/rbac/components/RoleDetails";
 import { useRole } from "@/features/rbac/hooks/useRoles";
 
-export default function RoleDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function RoleDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const { data: role, isLoading } = useRole(id);
 

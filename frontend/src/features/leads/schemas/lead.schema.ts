@@ -1,6 +1,14 @@
 import { z } from "zod";
-import type { LeadClassification, LeadSource, LeadStatus } from "../types/lead.types";
-import { LEAD_STATUSES, LEAD_SOURCES, LEAD_CLASSIFICATIONS } from "../types/lead.types";
+import type {
+  LeadClassification,
+  LeadSource,
+  LeadStatus,
+} from "../types/lead.types";
+import {
+  LEAD_STATUSES,
+  LEAD_SOURCES,
+  LEAD_CLASSIFICATIONS,
+} from "../types/lead.types";
 
 export const leadStatusLabels: Record<LeadStatus, string> = {
   NEW: "Novo",
@@ -41,15 +49,13 @@ export const leadFormSchema = z.object({
     .uuid("Contato inválido (UUID)"),
   status: z.enum(leadStatuses),
   source: z.enum(leadSources),
-  score: z
-    .string()
-    .refine(
-      (val) => {
-        const n = Number(val);
-        return !isNaN(n) && n >= 0 && n <= 100;
-      },
-      { message: "Score deve ser um número entre 0 e 100" }
-    ),
+  score: z.string().refine(
+    (val) => {
+      const n = Number(val);
+      return !isNaN(n) && n >= 0 && n <= 100;
+    },
+    { message: "Score deve ser um número entre 0 e 100" },
+  ),
   classification: z.enum(LEAD_CLASSIFICATIONS).or(z.literal("")),
   assignedTo: z.string(),
   notes: z.string().optional(),

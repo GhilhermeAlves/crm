@@ -55,7 +55,8 @@ export default function InboxPage() {
               canSend={canSend}
               sending={sendMessage.isPending}
               onSend={(body) => {
-                if (selected) sendMessage.mutate({ conversationId: selected.id, body });
+                if (selected)
+                  sendMessage.mutate({ conversationId: selected.id, body });
               }}
             />
           </div>

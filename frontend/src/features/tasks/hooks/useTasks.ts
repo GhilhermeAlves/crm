@@ -23,24 +23,37 @@ export function useTasksDueToday(companyId: string | null) {
   });
 }
 
-export function useTasksByOpportunity(companyId: string | null, opportunityId: string | null) {
+export function useTasksByOpportunity(
+  companyId: string | null,
+  opportunityId: string | null,
+) {
   return useQuery({
     queryKey: ["tasks", companyId, "opportunity", opportunityId],
-    queryFn: () => TaskService.listByOpportunity(companyId as string, opportunityId as string),
+    queryFn: () =>
+      TaskService.listByOpportunity(
+        companyId as string,
+        opportunityId as string,
+      ),
     enabled: !!companyId && !!opportunityId,
   });
 }
 
-function invalidateTasks(queryClient: ReturnType<typeof useQueryClient>, companyId: string | null) {
+function invalidateTasks(
+  queryClient: ReturnType<typeof useQueryClient>,
+  companyId: string | null,
+) {
   queryClient.invalidateQueries({ queryKey: ["tasks", companyId] });
   queryClient.invalidateQueries({ queryKey: ["tasks-due-today", companyId] });
-  queryClient.invalidateQueries({ queryKey: ["operational-dashboard", companyId] });
+  queryClient.invalidateQueries({
+    queryKey: ["operational-dashboard", companyId],
+  });
 }
 
 export function useCreateTask(companyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateTaskRequest) => TaskService.create(companyId as string, data),
+    mutationFn: (data: CreateTaskRequest) =>
+      TaskService.create(companyId as string, data),
     onSuccess: () => {
       invalidateTasks(queryClient, companyId);
       toast.success("Tarefa criada");

@@ -4,7 +4,13 @@ import type { AuditAction } from "../types/audit.types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const actionConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const actionConfig: Record<
+  string,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
+> = {
   CREATE: { label: "Criar", variant: "default" },
   READ: { label: "Ler", variant: "secondary" },
   UPDATE: { label: "Atualizar", variant: "default" },
@@ -28,7 +34,10 @@ interface AuditActionBadgeProps {
 }
 
 export function AuditActionBadge({ action }: AuditActionBadgeProps) {
-  const config = actionConfig[action] || { label: action, variant: "secondary" as const };
+  const config = actionConfig[action] || {
+    label: action,
+    variant: "secondary" as const,
+  };
   return (
     <Badge variant={config.variant} className="text-xs">
       {config.label}

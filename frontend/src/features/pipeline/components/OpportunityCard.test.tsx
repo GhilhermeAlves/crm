@@ -27,7 +27,14 @@ const OPP: Opportunity = {
 describe("OpportunityCard (Sprint 11)", () => {
   it("renderiza título, valor formatado em BRL e estágio/probabilidade", () => {
     render(
-      <OpportunityCard opportunity={OPP} isFirst isLast canMove canWin canLose />
+      <OpportunityCard
+        opportunity={OPP}
+        isFirst
+        isLast
+        canMove
+        canWin
+        canLose
+      />,
     );
     expect(screen.getByText("Contrato anual")).toBeTruthy();
     expect(screen.getByText("1.500,50", { exact: false })).toBeTruthy();
@@ -36,14 +43,29 @@ describe("OpportunityCard (Sprint 11)", () => {
 
   it("desabilita voltar no primeiro estágio e avançar no último", () => {
     render(<OpportunityCard opportunity={OPP} isFirst isLast canMove />);
-    expect(screen.getByLabelText("Mover para trás").hasAttribute("disabled")).toBe(true);
-    expect(screen.getByLabelText("Avançar").hasAttribute("disabled")).toBe(true);
+    expect(
+      screen.getByLabelText("Mover para trás").hasAttribute("disabled"),
+    ).toBe(true);
+    expect(screen.getByLabelText("Avançar").hasAttribute("disabled")).toBe(
+      true,
+    );
   });
 
   it("habilita movimentos quando há margem e permissão", () => {
-    render(<OpportunityCard opportunity={OPP} isFirst={false} isLast={false} canMove />);
-    expect(screen.getByLabelText("Mover para trás").hasAttribute("disabled")).toBe(false);
-    expect(screen.getByLabelText("Avançar").hasAttribute("disabled")).toBe(false);
+    render(
+      <OpportunityCard
+        opportunity={OPP}
+        isFirst={false}
+        isLast={false}
+        canMove
+      />,
+    );
+    expect(
+      screen.getByLabelText("Mover para trás").hasAttribute("disabled"),
+    ).toBe(false);
+    expect(screen.getByLabelText("Avançar").hasAttribute("disabled")).toBe(
+      false,
+    );
   });
 
   it("exibe o menu Concluir quando há permissão de ganhar/perder", () => {
@@ -61,7 +83,7 @@ describe("OpportunityCard (Sprint 11)", () => {
         onWin={onWin}
         onLost={onLost}
         onDelete={onDelete}
-      />
+      />,
     );
     expect(screen.getByText("Concluir")).toBeTruthy();
   });

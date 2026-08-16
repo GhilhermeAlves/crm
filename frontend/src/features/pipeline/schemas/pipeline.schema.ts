@@ -30,7 +30,10 @@ export const opportunityFormSchema = z.object({
     .min(1, "Contato é obrigatório")
     .uuid("Contato inválido (UUID)"),
   expectedCloseDate: z.string().optional(),
-  notes: z.string().max(1000, "Notas devem ter no máximo 1000 caracteres").optional(),
+  notes: z
+    .string()
+    .max(1000, "Notas devem ter no máximo 1000 caracteres")
+    .optional(),
 });
 
 export type OpportunityFormValues = z.infer<typeof opportunityFormSchema>;

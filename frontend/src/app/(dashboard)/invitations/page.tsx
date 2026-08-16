@@ -1,7 +1,10 @@
 "use client";
 
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useInvitations, useRevokeInvitation } from "@/features/invitations/hooks/useInvitations";
+import {
+  useInvitations,
+  useRevokeInvitation,
+} from "@/features/invitations/hooks/useInvitations";
 import { CreateInvitationDialog } from "@/features/invitations/components/CreateInvitationDialog";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +23,13 @@ import { XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const STATUS_LABEL: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const STATUS_LABEL: Record<
+  string,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
+> = {
   PENDING: { label: "Pendente", variant: "secondary" },
   ACCEPTED: { label: "Aceito", variant: "default" },
   REVOKED: { label: "Revogado", variant: "destructive" },
@@ -93,9 +102,13 @@ export default function InvitationsPage() {
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </TableCell>
                       <TableCell>
-                        {format(new Date(invitation.expiresAt), "dd/MM/yyyy HH:mm", {
-                          locale: ptBR,
-                        })}
+                        {format(
+                          new Date(invitation.expiresAt),
+                          "dd/MM/yyyy HH:mm",
+                          {
+                            locale: ptBR,
+                          },
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         {invitation.status === "PENDING" && (

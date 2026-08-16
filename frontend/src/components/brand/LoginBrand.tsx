@@ -81,10 +81,7 @@ export function LoginBrand({
       )}
       data-testid="login-brand"
     >
-      <div
-        data-logo-slot
-        className={cn("shrink-0", SLOT_SIZES[size])}
-      >
+      <div data-logo-slot className={cn("shrink-0", SLOT_SIZES[size])}>
         {mark}
       </div>
       {variant === "desktop" && wordmarkElement}

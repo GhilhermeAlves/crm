@@ -1,8 +1,14 @@
 "use client";
 
 import { History } from "lucide-react";
-import type { WorkflowExecution, WorkflowExecutionStatus } from "../types/workflow.types";
-import { WORKFLOW_EXECUTION_STATUS_LABELS, WORKFLOW_ACTION_LABELS } from "../types/workflow.types";
+import type {
+  WorkflowExecution,
+  WorkflowExecutionStatus,
+} from "../types/workflow.types";
+import {
+  WORKFLOW_EXECUTION_STATUS_LABELS,
+  WORKFLOW_ACTION_LABELS,
+} from "../types/workflow.types";
 import {
   Table,
   TableBody,
@@ -20,8 +26,14 @@ interface WorkflowExecutionsPanelProps {
 
 function StatusBadge({ status }: { status: WorkflowExecutionStatus }) {
   const variant =
-    status === "SUCCESS" ? "default" : status === "FAILED" ? "destructive" : "outline";
-  return <Badge variant={variant}>{WORKFLOW_EXECUTION_STATUS_LABELS[status]}</Badge>;
+    status === "SUCCESS"
+      ? "default"
+      : status === "FAILED"
+        ? "destructive"
+        : "outline";
+  return (
+    <Badge variant={variant}>{WORKFLOW_EXECUTION_STATUS_LABELS[status]}</Badge>
+  );
 }
 
 function formatDate(dateStr: string): string {
@@ -47,7 +59,10 @@ function eventLabel(eventType: string): string {
   return map[eventType] ?? eventType;
 }
 
-export function WorkflowExecutionsPanel({ data = [], isLoading }: WorkflowExecutionsPanelProps) {
+export function WorkflowExecutionsPanel({
+  data = [],
+  isLoading,
+}: WorkflowExecutionsPanelProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -84,7 +99,9 @@ export function WorkflowExecutionsPanel({ data = [], isLoading }: WorkflowExecut
         <TableBody>
           {data.map((execution) => (
             <TableRow key={execution.id}>
-              <TableCell className="text-sm">{eventLabel(execution.eventType)}</TableCell>
+              <TableCell className="text-sm">
+                {eventLabel(execution.eventType)}
+              </TableCell>
               <TableCell className="text-sm">
                 {WORKFLOW_ACTION_LABELS[execution.actionType]}
               </TableCell>

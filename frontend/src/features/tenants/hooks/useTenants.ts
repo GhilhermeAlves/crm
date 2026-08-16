@@ -55,7 +55,8 @@ export function useUpdateTenant() {
       toast.success("Empresa atualizada com sucesso");
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
-      const message = error.response?.data?.message || "Erro ao atualizar empresa";
+      const message =
+        error.response?.data?.message || "Erro ao atualizar empresa";
       toast.error(message);
     },
   });
@@ -71,7 +72,8 @@ export function useDeleteTenant() {
       toast.success("Empresa excluída com sucesso");
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
-      const message = error.response?.data?.message || "Erro ao excluir empresa";
+      const message =
+        error.response?.data?.message || "Erro ao excluir empresa";
       toast.error(message);
     },
   });

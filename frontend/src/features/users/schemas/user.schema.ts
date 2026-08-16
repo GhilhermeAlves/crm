@@ -18,10 +18,7 @@ export const userSchema = z.object({
     .string()
     .min(1, "Sobrenome é obrigatório")
     .max(255, "Sobrenome deve ter no máximo 255 caracteres"),
-  email: z
-    .string()
-    .min(1, "Email é obrigatório")
-    .email("Email inválido"),
+  email: z.string().min(1, "Email é obrigatório").email("Email inválido"),
   phone: z
     .string()
     .optional()
@@ -44,10 +41,7 @@ export const inviteUserSchema = z.object({
     .string()
     .min(1, "Sobrenome é obrigatório")
     .max(255, "Sobrenome deve ter no máximo 255 caracteres"),
-  email: z
-    .string()
-    .min(1, "Email é obrigatório")
-    .email("Email inválido"),
+  email: z.string().min(1, "Email é obrigatório").email("Email inválido"),
   department: z.string().optional(),
   jobTitle: z.string().optional(),
 });

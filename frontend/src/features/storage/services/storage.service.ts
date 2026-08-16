@@ -10,7 +10,9 @@ import type { StorageObject } from "../types/storage.types";
  */
 export const StorageService = {
   async list(companyId: string): Promise<StorageObject[]> {
-    const response = await api.get<StorageObject[]>(`/companies/${companyId}/storage`);
+    const response = await api.get<StorageObject[]>(
+      `/companies/${companyId}/storage`,
+    );
     return response.data;
   },
 
@@ -30,9 +32,12 @@ export const StorageService = {
   },
 
   async download(companyId: string, objectId: string): Promise<Blob> {
-    const response = await api.get<Blob>(`/companies/${companyId}/storage/${objectId}`, {
-      responseType: "blob",
-    });
+    const response = await api.get<Blob>(
+      `/companies/${companyId}/storage/${objectId}`,
+      {
+        responseType: "blob",
+      },
+    );
     return response.data;
   },
 

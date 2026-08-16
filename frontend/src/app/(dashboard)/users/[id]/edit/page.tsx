@@ -17,9 +17,12 @@ export default function EditUserPage() {
   const updateUser = useUpdateUser();
 
   const handleSubmit = (data: UpdateUserRequest) => {
-    updateUser.mutate({ id, data }, {
-      onSuccess: () => router.push(`${ROUTES.USERS}/${id}`),
-    });
+    updateUser.mutate(
+      { id, data },
+      {
+        onSuccess: () => router.push(`${ROUTES.USERS}/${id}`),
+      },
+    );
   };
 
   if (isLoading) {

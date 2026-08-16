@@ -26,7 +26,7 @@ export default function NewLeadPage() {
         assignedTo: data.assignedTo || undefined,
         notes: data.notes || undefined,
       },
-      { onSuccess: () => router.push(ROUTES.LEADS) }
+      { onSuccess: () => router.push(ROUTES.LEADS) },
     );
   };
 

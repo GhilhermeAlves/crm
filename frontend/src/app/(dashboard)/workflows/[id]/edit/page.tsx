@@ -6,7 +6,10 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useWorkflow, useUpdateWorkflow } from "@/features/workflows/hooks/useWorkflows";
+import {
+  useWorkflow,
+  useUpdateWorkflow,
+} from "@/features/workflows/hooks/useWorkflows";
 import { WorkflowForm } from "@/features/workflows/components/WorkflowForm";
 import { useWorkflowPermissions } from "@/features/workflows/schemas/workflow.schema";
 import { ROUTES } from "@/lib/constants";
@@ -45,7 +48,11 @@ export default function EditWorkflowPage() {
   if (!workflow) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push(ROUTES.WORKFLOWS)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push(ROUTES.WORKFLOWS)}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <PageTitle>Workflow não encontrado</PageTitle>
@@ -56,7 +63,11 @@ export default function EditWorkflowPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.push(ROUTES.WORKFLOWS)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push(ROUTES.WORKFLOWS)}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <PageTitle>Editar workflow</PageTitle>
@@ -71,7 +82,10 @@ export default function EditWorkflowPage() {
             onSubmit={(payload) =>
               updateWorkflow.mutate(
                 { id: workflowId as string, data: payload },
-                { onSuccess: () => router.push(`${ROUTES.WORKFLOWS}/${workflowId}`) }
+                {
+                  onSuccess: () =>
+                    router.push(`${ROUTES.WORKFLOWS}/${workflowId}`),
+                },
               )
             }
           />

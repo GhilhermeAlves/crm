@@ -21,7 +21,11 @@ interface DeleteRoleDialogProps {
   role: Role;
 }
 
-export function DeleteRoleDialog({ open, onOpenChange, role }: DeleteRoleDialogProps) {
+export function DeleteRoleDialog({
+  open,
+  onOpenChange,
+  role,
+}: DeleteRoleDialogProps) {
   const router = useRouter();
   const deleteRole = useDeleteRole();
 
@@ -49,7 +53,8 @@ export function DeleteRoleDialog({ open, onOpenChange, role }: DeleteRoleDialogP
             )}
             {!role.isSystem && (
               <span className="block mt-2">
-                Esta ação não pode ser desfeita. Todas as permissões associadas serão removidas.
+                Esta ação não pode ser desfeita. Todas as permissões associadas
+                serão removidas.
               </span>
             )}
           </AlertDialogDescription>

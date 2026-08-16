@@ -7,8 +7,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { resetPasswordSchema, type ResetPasswordFormData } from "../schemas/auth.schema";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  resetPasswordSchema,
+  type ResetPasswordFormData,
+} from "../schemas/auth.schema";
 import { useResetPassword } from "../hooks/useAuthMutations";
 import { ROUTES } from "@/lib/constants";
 
@@ -87,8 +97,14 @@ export function ResetPasswordForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={resetMutation.isPending}>
-          {resetMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={resetMutation.isPending}
+        >
+          {resetMutation.isPending && (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          )}
           Redefinir senha
         </Button>
       </form>

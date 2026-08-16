@@ -18,7 +18,10 @@ type AdapterHandler = (
 let adapterHandler: AdapterHandler;
 let requestCount: number;
 
-function okResponse(config: InternalAxiosRequestConfig, data: unknown): AxiosResponse {
+function okResponse(
+  config: InternalAxiosRequestConfig,
+  data: unknown,
+): AxiosResponse {
   return { data, status: 200, statusText: "OK", headers: {}, config };
 }
 
@@ -43,22 +46,36 @@ function forbiddenError(config: InternalAxiosRequestConfig) {
 }
 
 function serverError(config: InternalAxiosRequestConfig) {
-  return new axios.AxiosError("Server error", "ERR_BAD_RESPONSE", config, null, {
-    status: 500,
-    statusText: "Internal Server Error",
-    headers: {},
-    data: {},
+  return new axios.AxiosError(
+    "Server error",
+    "ERR_BAD_RESPONSE",
     config,
-  });
+    null,
+    {
+      status: 500,
+      statusText: "Internal Server Error",
+      headers: {},
+      data: {},
+      config,
+    },
+  );
 }
 
 function authHeader(config: InternalAxiosRequestConfig): string | undefined {
-  const headers = config.headers as unknown as Record<string, string | undefined>;
+  const headers = config.headers as unknown as Record<
+    string,
+    string | undefined
+  >;
   return headers["Authorization"];
 }
 
-function contentTypeHeader(config: InternalAxiosRequestConfig): string | undefined {
-  const headers = config.headers as unknown as Record<string, string | undefined>;
+function contentTypeHeader(
+  config: InternalAxiosRequestConfig,
+): string | undefined {
+  const headers = config.headers as unknown as Record<
+    string,
+    string | undefined
+  >;
   return headers["Content-Type"];
 }
 
@@ -81,7 +98,8 @@ describe("api interceptors (cookie-based, Sprint 6.4)", () => {
     localStorage.clear();
     refreshMock.mockReset();
     requestCount = 0;
-    adapterHandler = async () => okResponse({} as InternalAxiosRequestConfig, {});
+    adapterHandler = async () =>
+      okResponse({} as InternalAxiosRequestConfig, {});
     api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
       requestCount += 1;
       return adapterHandler(config, requestCount);

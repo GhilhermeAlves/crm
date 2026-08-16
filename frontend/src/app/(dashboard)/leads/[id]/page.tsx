@@ -9,12 +9,7 @@ import {
   LeadClassificationBadge,
 } from "@/features/leads/components/LeadBadges";
 import { PageTitle } from "@/components/common/PageTitle";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pencil } from "lucide-react";
@@ -46,17 +41,24 @@ export default function LeadDetailPage() {
   const rows = [
     { label: "Status", value: <LeadStatusBadge status={lead.status} /> },
     { label: "Origem", value: <LeadSourceBadge source={lead.source} /> },
-    { label: "Classificação", value: <LeadClassificationBadge classification={lead.classification} /> },
+    {
+      label: "Classificação",
+      value: <LeadClassificationBadge classification={lead.classification} />,
+    },
     { label: "Score", value: lead.score },
     { label: "Contato (ID)", value: lead.contactId },
     { label: "Responsável (ID)", value: lead.assignedTo ?? "—" },
     {
       label: "Criado em",
-      value: format(new Date(lead.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR }),
+      value: format(new Date(lead.createdAt), "dd/MM/yyyy HH:mm", {
+        locale: ptBR,
+      }),
     },
     {
       label: "Atualizado em",
-      value: format(new Date(lead.updatedAt), "dd/MM/yyyy HH:mm", { locale: ptBR }),
+      value: format(new Date(lead.updatedAt), "dd/MM/yyyy HH:mm", {
+        locale: ptBR,
+      }),
     },
   ];
 

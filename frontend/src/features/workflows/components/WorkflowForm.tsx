@@ -50,23 +50,40 @@ type Props = {
   onSubmit: (payload: ReturnType<typeof workflowFormToPayload>) => void;
 };
 
-export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSubmit }: Props) {
+export function WorkflowForm({
+  initial,
+  isLoading,
+  submitLabel = "Salvar",
+  onSubmit,
+}: Props) {
   const form = useForm<WorkflowFormValues>({
     resolver: zodResolver(workflowFormSchema),
-    defaultValues: initial ? workflowToFormValues(initial) : {
-      name: "",
-      description: "",
-      trigger: "OPPORTUNITY_STAGE_CHANGED",
-      conditions: [],
-      actions: [
-        { actionType: "CREATE_TASK", title: "", description: "", priority: "MEDIUM", dueInDays: "", activityType: "OTHER" },
-      ],
-    },
+    defaultValues: initial
+      ? workflowToFormValues(initial)
+      : {
+          name: "",
+          description: "",
+          trigger: "OPPORTUNITY_STAGE_CHANGED",
+          conditions: [],
+          actions: [
+            {
+              actionType: "CREATE_TASK",
+              title: "",
+              description: "",
+              priority: "MEDIUM",
+              dueInDays: "",
+              activityType: "OTHER",
+            },
+          ],
+        },
   });
 
   const trigger = form.watch("trigger");
 
-  const conditions = useFieldArray({ control: form.control, name: "conditions" });
+  const conditions = useFieldArray({
+    control: form.control,
+    name: "conditions",
+  });
   const actions = useFieldArray({ control: form.control, name: "actions" });
 
   const handleTriggerChange = (value: string) => {
@@ -90,7 +107,10 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex.: Follow-up de proposta" {...field} />
+                    <Input
+                      placeholder="Ex.: Follow-up de proposta"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -103,7 +123,10 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                 <FormItem>
                   <FormLabel>Descrição</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Descreva o objetivo do workflow" {...field} />
+                    <Textarea
+                      placeholder="Descreva o objetivo do workflow"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,7 +138,10 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Disparo</FormLabel>
-                  <Select value={field.value} onValueChange={handleTriggerChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={handleTriggerChange}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o evento" />
@@ -144,7 +170,13 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => conditions.append({ field: CONDITION_FIELDS[trigger][0]?.value ?? "", operator: "EQUALS", value: "" })}
+                onClick={() =>
+                  conditions.append({
+                    field: CONDITION_FIELDS[trigger][0]?.value ?? "",
+                    operator: "EQUALS",
+                    value: "",
+                  })
+                }
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Adicionar condição
@@ -152,13 +184,19 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
             </div>
 
             {conditions.fields.map((field, index) => (
-              <div key={field.id} className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_1fr_auto]"
+              >
                 <FormField
                   control={form.control}
                   name={`conditions.${index}.field`}
                   render={({ field }) => (
                     <FormItem>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Campo" />
@@ -181,7 +219,10 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                   name={`conditions.${index}.operator`}
                   render={({ field }) => (
                     <FormItem>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Operador" />
@@ -205,7 +246,10 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input placeholder="Valor (ex.: Negociação)" {...field} />
+                        <Input
+                          placeholder="Valor (ex.: Negociação)"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -224,7 +268,8 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
             ))}
             {conditions.fields.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                Sem condições — o workflow será executado para todo evento do disparo.
+                Sem condições — o workflow será executado para todo evento do
+                disparo.
               </p>
             )}
           </CardContent>
@@ -238,7 +283,16 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => actions.append({ actionType: "CREATE_TASK", title: "", description: "", priority: "MEDIUM", dueInDays: "", activityType: "OTHER" })}
+                onClick={() =>
+                  actions.append({
+                    actionType: "CREATE_TASK",
+                    title: "",
+                    description: "",
+                    priority: "MEDIUM",
+                    dueInDays: "",
+                    activityType: "OTHER",
+                  })
+                }
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Adicionar ação
@@ -255,7 +309,10 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                       name={`actions.${index}.actionType`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <Select value={field.value} onValueChange={field.onChange}>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Tipo de ação" />
@@ -290,10 +347,15 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            {actionType === "CREATE_TASK" ? "Título da tarefa" : "Assunto da atividade"}
+                            {actionType === "CREATE_TASK"
+                              ? "Título da tarefa"
+                              : "Assunto da atividade"}
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex.: Entrar em contato" {...field} />
+                            <Input
+                              placeholder="Ex.: Entrar em contato"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -306,7 +368,10 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Prioridade</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Prioridade" />
@@ -331,7 +396,10 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Tipo</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Tipo" />
@@ -360,7 +428,12 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                         <FormItem>
                           <FormLabel>Vencimento (dias)</FormLabel>
                           <FormControl>
-                            <Input type="number" min={0} placeholder="0 = sem vencimento" {...field} />
+                            <Input
+                              type="number"
+                              min={0}
+                              placeholder="0 = sem vencimento"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -375,7 +448,11 @@ export function WorkflowForm({ initial, isLoading, submitLabel = "Salvar", onSub
                       <FormItem>
                         <FormLabel>Descrição</FormLabel>
                         <FormControl>
-                          <Textarea rows={2} placeholder="Detalhes" {...field} />
+                          <Textarea
+                            rows={2}
+                            placeholder="Detalhes"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

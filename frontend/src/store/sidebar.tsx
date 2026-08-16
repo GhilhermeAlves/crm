@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useCallback, useState, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 type SidebarContextType = {

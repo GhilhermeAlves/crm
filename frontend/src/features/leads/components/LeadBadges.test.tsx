@@ -46,7 +46,9 @@ describe("LeadBadges (Sprint 10)", () => {
       ["DISQUALIFIED", "Desqualificado"],
     ];
     for (const [value, label] of cases) {
-      const { unmount } = render(<LeadClassificationBadge classification={value} />);
+      const { unmount } = render(
+        <LeadClassificationBadge classification={value} />,
+      );
       expect(screen.getByText(label)).toBeTruthy();
       unmount();
     }

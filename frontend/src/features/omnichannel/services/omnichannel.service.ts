@@ -27,8 +27,13 @@ export const OmnichannelService = {
     return response.data;
   },
 
-  async setChannelStatus(id: string, status: Channel["status"]): Promise<Channel> {
-    const response = await api.patch<Channel>(`${BASE}/channels/${id}/status`, { status });
+  async setChannelStatus(
+    id: string,
+    status: Channel["status"],
+  ): Promise<Channel> {
+    const response = await api.patch<Channel>(`${BASE}/channels/${id}/status`, {
+      status,
+    });
     return response.data;
   },
 
@@ -37,7 +42,10 @@ export const OmnichannelService = {
   },
 
   // Inbox
-  async listConversations(page = 0, pageSize = 20): Promise<Page<Conversation>> {
+  async listConversations(
+    page = 0,
+    pageSize = 20,
+  ): Promise<Page<Conversation>> {
     const response = await api.get<Page<Conversation>>(`${BASE}/inbox`, {
       params: { page, pageSize },
     });
@@ -49,14 +57,20 @@ export const OmnichannelService = {
     page = 0,
     pageSize = 30,
   ): Promise<ConversationDetail> {
-    const response = await api.get<ConversationDetail>(`${BASE}/inbox/${conversationId}`, {
-      params: { page, pageSize },
-    });
+    const response = await api.get<ConversationDetail>(
+      `${BASE}/inbox/${conversationId}`,
+      {
+        params: { page, pageSize },
+      },
+    );
     return response.data;
   },
 
   async sendMessage(conversationId: string, body: string): Promise<Message> {
-    const response = await api.post<Message>(`${BASE}/inbox/${conversationId}/messages`, { body });
+    const response = await api.post<Message>(
+      `${BASE}/inbox/${conversationId}/messages`,
+      { body },
+    );
     return response.data;
   },
 

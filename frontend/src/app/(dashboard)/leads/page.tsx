@@ -11,7 +11,12 @@ import { DeleteLeadDialog } from "@/features/leads/components/DeleteLeadDialog";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import type { Lead, LeadSource, LeadStatus, LeadClassification } from "@/features/leads/types/lead.types";
+import type {
+  Lead,
+  LeadSource,
+  LeadStatus,
+  LeadClassification,
+} from "@/features/leads/types/lead.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function LeadsPage() {
@@ -31,7 +36,10 @@ export default function LeadsPage() {
     pageSize: 10,
     status: status !== "all" ? (status as LeadStatus) : undefined,
     source: source !== "all" ? (source as LeadSource) : undefined,
-    classification: classification !== "all" ? (classification as LeadClassification) : undefined,
+    classification:
+      classification !== "all"
+        ? (classification as LeadClassification)
+        : undefined,
     sortBy: "createdAt",
     sortDirection: "desc",
   });
@@ -102,7 +110,9 @@ export default function LeadsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
+              onClick={() =>
+                setPage((p) => Math.min(data.totalPages - 1, p + 1))
+              }
               disabled={page >= data.totalPages - 1}
             >
               Próximo

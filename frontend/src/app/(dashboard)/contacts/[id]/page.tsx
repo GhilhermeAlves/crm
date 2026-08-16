@@ -30,7 +30,11 @@ export default function Customer360Page() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
 
-  const { data: c360, isLoading, isError } = useCustomer360(companyId, contactId);
+  const {
+    data: c360,
+    isLoading,
+    isError,
+  } = useCustomer360(companyId, contactId);
   const queryClient = useQueryClient();
 
   const activityPerms = useActivityPermissions();
@@ -45,14 +49,23 @@ export default function Customer360Page() {
   // Ações rápidas alteram o contexto; recarrega o Customer 360.
   useEffect(() => {
     if (createActivity.isSuccess || createTask.isSuccess) {
-      queryClient.invalidateQueries({ queryKey: ["customer360", companyId, contactId] });
+      queryClient.invalidateQueries({
+        queryKey: ["customer360", companyId, contactId],
+      });
     }
-  }, [createActivity.isSuccess, createTask.isSuccess, companyId, contactId, queryClient]);
+  }, [
+    createActivity.isSuccess,
+    createTask.isSuccess,
+    companyId,
+    contactId,
+    queryClient,
+  ]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" /> Carregando visão do cliente…
+        <Loader2 className="h-5 w-5 animate-spin" /> Carregando visão do
+        cliente…
       </div>
     );
   }
@@ -84,7 +97,11 @@ export default function Customer360Page() {
             </Button>
           )}
           {taskPerms.canCreate && (
-            <Button size="sm" variant="outline" onClick={() => setTaskOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setTaskOpen(true)}
+            >
               <CalendarPlus className="mr-1 h-4 w-4" /> Nova tarefa
             </Button>
           )}
@@ -103,7 +120,9 @@ export default function Customer360Page() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-base font-semibold">Oportunidades</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Oportunidades
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <OpportunitiesPanel
@@ -126,7 +145,9 @@ export default function Customer360Page() {
 
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base font-semibold">Linha do tempo</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Linha do tempo
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <TimelinePanel events={c360.timeline} />

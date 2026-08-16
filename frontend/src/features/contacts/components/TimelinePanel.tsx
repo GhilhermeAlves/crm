@@ -40,9 +40,13 @@ export function TimelinePanel({ events }: { events: TimelineEvent[] }) {
               className={`absolute -left-[26px] top-1 h-3 w-3 rounded-full ${style.dot} ring-2 ring-background`}
             />
             <div className="space-y-0.5">
-              <p className={`text-sm font-medium ${style.accent}`}>{event.title}</p>
+              <p className={`text-sm font-medium ${style.accent}`}>
+                {event.title}
+              </p>
               {event.description && (
-                <p className="text-xs text-muted-foreground">{event.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {event.description}
+                </p>
               )}
               <p className="text-xs text-muted-foreground">
                 {formatDate(event.occurredAt)}

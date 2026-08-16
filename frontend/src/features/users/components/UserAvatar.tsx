@@ -37,7 +37,13 @@ function getAvatarColor(name: string): string {
   return colors[index];
 }
 
-export function UserAvatar({ firstName, lastName, avatarUrl, size = "md", className }: UserAvatarProps) {
+export function UserAvatar({
+  firstName,
+  lastName,
+  avatarUrl,
+  size = "md",
+  className,
+}: UserAvatarProps) {
   const initials = getInitials(firstName, lastName);
   const name = `${firstName || ""} ${lastName || ""}`.trim();
   const colorClass = getAvatarColor(name || "U");
@@ -47,7 +53,11 @@ export function UserAvatar({ firstName, lastName, avatarUrl, size = "md", classN
       <img
         src={avatarUrl}
         alt={name}
-        className={cn("rounded-full object-cover", sizeClasses[size], className)}
+        className={cn(
+          "rounded-full object-cover",
+          sizeClasses[size],
+          className,
+        )}
       />
     );
   }

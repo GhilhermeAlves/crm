@@ -14,7 +14,12 @@ type Props = {
   onSelect: (conversation: Conversation) => void;
 };
 
-export function ConversationList({ conversations, isLoading, activeId, onSelect }: Props) {
+export function ConversationList({
+  conversations,
+  isLoading,
+  activeId,
+  onSelect,
+}: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">

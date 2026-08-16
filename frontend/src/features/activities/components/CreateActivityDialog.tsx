@@ -4,7 +4,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ActivityType } from "../types/activity.types";
 import { ACTIVITY_TYPE_LABELS } from "../types/activity.types";
-import { createActivitySchema, type CreateActivityFormValues } from "../schemas/activity.schema";
+import {
+  createActivitySchema,
+  type CreateActivityFormValues,
+} from "../schemas/activity.schema";
 import {
   Dialog,
   DialogContent,
@@ -66,10 +69,7 @@ export function CreateActivityDialog({
           <DialogTitle>Registrar atividade</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="type"
@@ -86,7 +86,9 @@ export function CreateActivityDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {(Object.keys(ACTIVITY_TYPE_LABELS) as ActivityType[]).map((t) => (
+                      {(
+                        Object.keys(ACTIVITY_TYPE_LABELS) as ActivityType[]
+                      ).map((t) => (
                         <SelectItem key={t} value={t}>
                           {ACTIVITY_TYPE_LABELS[t]}
                         </SelectItem>
@@ -104,7 +106,10 @@ export function CreateActivityDialog({
                 <FormItem>
                   <FormLabel>Assunto</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex.: Ligação de qualificação" {...field} />
+                    <Input
+                      placeholder="Ex.: Ligação de qualificação"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

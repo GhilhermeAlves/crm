@@ -57,52 +57,140 @@ type NavGroup = {
 const navGroups: NavGroup[] = [
   {
     items: [
-      { label: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard, permission: "dashboard:view" },
+      {
+        label: "Dashboard",
+        href: ROUTES.DASHBOARD,
+        icon: LayoutDashboard,
+        permission: "dashboard:view",
+      },
     ],
   },
   {
     title: "Administração",
     items: [
-      { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, permission: "company:view" },
-          { label: "Usuários", href: ROUTES.USERS, icon: Users, permission: "user:read" },
-          { label: "Membros", href: ROUTES.MEMBERS, icon: Users, permission: "membership:view" },
-          { label: "Convites", href: ROUTES.INVITATIONS, icon: MailPlus, permission: "membership:view" },
-      { label: "Roles", href: ROUTES.ROLES, icon: Shield, permission: "role:read" },
-      { label: "Permissões", href: ROUTES.PERMISSIONS, icon: KeyRound, permission: "role:read" },
+      {
+        label: "Empresas",
+        href: ROUTES.TENANTS,
+        icon: Building2,
+        permission: "company:view",
+      },
+      {
+        label: "Usuários",
+        href: ROUTES.USERS,
+        icon: Users,
+        permission: "user:read",
+      },
+      {
+        label: "Membros",
+        href: ROUTES.MEMBERS,
+        icon: Users,
+        permission: "membership:view",
+      },
+      {
+        label: "Convites",
+        href: ROUTES.INVITATIONS,
+        icon: MailPlus,
+        permission: "membership:view",
+      },
+      {
+        label: "Roles",
+        href: ROUTES.ROLES,
+        icon: Shield,
+        permission: "role:read",
+      },
+      {
+        label: "Permissões",
+        href: ROUTES.PERMISSIONS,
+        icon: KeyRound,
+        permission: "role:read",
+      },
       { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
     ],
   },
   {
     title: "CRM",
     items: [
-      { label: "Leads", href: ROUTES.LEADS, icon: Users, permission: "lead:read" },
-      { label: "Contatos", href: ROUTES.CONTACTS, icon: Contact, permission: "contact:read" },
-      { label: "Pipeline", href: ROUTES.PIPELINE, icon: GitBranch, permission: "pipeline:view" },
-      { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:read" },
-      { label: "Timeline", href: ROUTES.ACTIVITIES, icon: MailPlus, permission: "activity:read" },
-      { label: "Workflows", href: ROUTES.WORKFLOWS, icon: WorkflowIcon, permission: "workflow:read" },
+      {
+        label: "Leads",
+        href: ROUTES.LEADS,
+        icon: Users,
+        permission: "lead:read",
+      },
+      {
+        label: "Contatos",
+        href: ROUTES.CONTACTS,
+        icon: Contact,
+        permission: "contact:read",
+      },
+      {
+        label: "Pipeline",
+        href: ROUTES.PIPELINE,
+        icon: GitBranch,
+        permission: "pipeline:view",
+      },
+      {
+        label: "Tarefas",
+        href: ROUTES.TASKS,
+        icon: ClipboardList,
+        permission: "task:read",
+      },
+      {
+        label: "Timeline",
+        href: ROUTES.ACTIVITIES,
+        icon: MailPlus,
+        permission: "activity:read",
+      },
+      {
+        label: "Workflows",
+        href: ROUTES.WORKFLOWS,
+        icon: WorkflowIcon,
+        permission: "workflow:read",
+      },
     ],
   },
   {
     title: "Comunicação",
     items: [
-      { label: "Inbox", href: ROUTES.INBOX, icon: MessageSquare, permission: "omnichannel:read" },
-      { label: "Canais", href: ROUTES.CHANNELS, icon: Megaphone, permission: "omnichannel:read" },
+      {
+        label: "Inbox",
+        href: ROUTES.INBOX,
+        icon: MessageSquare,
+        permission: "omnichannel:read",
+      },
+      {
+        label: "Canais",
+        href: ROUTES.CHANNELS,
+        icon: Megaphone,
+        permission: "omnichannel:read",
+      },
     ],
   },
   {
     title: "Análise",
-    items: [
-      { label: "Relatórios", href: ROUTES.REPORTS, icon: BarChart3 },
-    ],
+    items: [{ label: "Relatórios", href: ROUTES.REPORTS, icon: BarChart3 }],
   },
   {
     title: "Sistema",
     items: [
-      { label: "Auditoria", href: ROUTES.AUDIT, icon: ClipboardList, permission: "audit:read" },
+      {
+        label: "Auditoria",
+        href: ROUTES.AUDIT,
+        icon: ClipboardList,
+        permission: "audit:read",
+      },
       { label: "Configurações", href: ROUTES.SETTINGS, icon: Settings },
-      { label: "Usuários", href: ROUTES.SETTINGS_USERS, icon: Users, permission: "membership:view" },
-      { label: "Perfis & permissões", href: ROUTES.SETTINGS_ROLES, icon: Shield, permission: "role:read" },
+      {
+        label: "Usuários",
+        href: ROUTES.SETTINGS_USERS,
+        icon: Users,
+        permission: "membership:view",
+      },
+      {
+        label: "Perfis & permissões",
+        href: ROUTES.SETTINGS_ROLES,
+        icon: Shield,
+        permission: "role:read",
+      },
     ],
   },
 ];
@@ -138,7 +226,10 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
           </Link>
         )}
         {collapsed && (
-          <Link href={ROUTES.DASHBOARD} className="mx-auto flex items-center justify-center">
+          <Link
+            href={ROUTES.DASHBOARD}
+            className="mx-auto flex items-center justify-center"
+          >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
               C
             </div>
@@ -159,42 +250,50 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
                 )}
                 {group.title && collapsed && <Separator className="mb-2" />}
                 <div className="space-y-0.5">
-                  {group.items.filter((item) => hasPermission(item.permission)).map((item) => {
-                    const Icon = item.icon;
-                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                  {group.items
+                    .filter((item) => hasPermission(item.permission))
+                    .map((item) => {
+                      const Icon = item.icon;
+                      const isActive =
+                        pathname === item.href ||
+                        pathname.startsWith(item.href + "/");
 
-                    const navLink = (
-                      <Link
-                        href={item.href}
-                        onClick={onNavClick}
-                        className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                          "hover:bg-accent hover:text-accent-foreground",
-                          isActive && "bg-accent text-accent-foreground",
-                          collapsed && "justify-center px-2",
-                        )}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span className="flex-1">{item.label}</span>}
-                        {!collapsed && item.badge && (
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    );
-
-                    if (collapsed) {
-                      return (
-                        <Tooltip key={item.href}>
-                          <TooltipTrigger asChild>{navLink}</TooltipTrigger>
-                          <TooltipContent side="right">{item.label}</TooltipContent>
-                        </Tooltip>
+                      const navLink = (
+                        <Link
+                          href={item.href}
+                          onClick={onNavClick}
+                          className={cn(
+                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                            "hover:bg-accent hover:text-accent-foreground",
+                            isActive && "bg-accent text-accent-foreground",
+                            collapsed && "justify-center px-2",
+                          )}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          {!collapsed && (
+                            <span className="flex-1">{item.label}</span>
+                          )}
+                          {!collapsed && item.badge && (
+                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
                       );
-                    }
 
-                    return <div key={item.href}>{navLink}</div>;
-                  })}
+                      if (collapsed) {
+                        return (
+                          <Tooltip key={item.href}>
+                            <TooltipTrigger asChild>{navLink}</TooltipTrigger>
+                            <TooltipContent side="right">
+                              {item.label}
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+
+                      return <div key={item.href}>{navLink}</div>;
+                    })}
                 </div>
               </div>
             ))}
@@ -268,7 +367,9 @@ export function Sidebar() {
             size="icon"
             className="h-8 w-8"
             onClick={toggle}
-            aria-label={effectiveCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
+            aria-label={
+              effectiveCollapsed ? "Expandir sidebar" : "Recolher sidebar"
+            }
           >
             {effectiveCollapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -285,7 +386,10 @@ export function Sidebar() {
           <VisuallyHidden.Root>
             <SheetTitle>Menu</SheetTitle>
           </VisuallyHidden.Root>
-          <SidebarContent collapsed={false} onNavClick={() => setMobileOpen(false)} />
+          <SidebarContent
+            collapsed={false}
+            onNavClick={() => setMobileOpen(false)}
+          />
         </SheetContent>
       </Sheet>
     </>

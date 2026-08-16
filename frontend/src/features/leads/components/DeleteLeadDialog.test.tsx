@@ -86,7 +86,9 @@ describe("DeleteLeadDialog (Sprint 10)", () => {
         isLoading
       />,
     );
-    const confirm = screen.getByRole("button", { name: "Excluindo..." }) as HTMLButtonElement;
+    const confirm = screen.getByRole("button", {
+      name: "Excluindo...",
+    }) as HTMLButtonElement;
     expect(confirm.disabled).toBe(true);
   });
 });

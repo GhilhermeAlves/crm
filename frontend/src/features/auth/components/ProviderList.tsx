@@ -63,7 +63,9 @@ export function ProviderList() {
     };
   });
 
-  const phone = providers.find((provider) => provider.alias === IDENTITY_PROVIDERS.PHONE);
+  const phone = providers.find(
+    (provider) => provider.alias === IDENTITY_PROVIDERS.PHONE,
+  );
 
   function handleSelect(provider: IdentityProviderInfo) {
     if (!provider.available) return;
@@ -75,7 +77,9 @@ export function ProviderList() {
   }
 
   if (phoneMode && phone?.available) {
-    return <PhoneLoginForm redirect={redirect} onBack={() => setPhoneMode(false)} />;
+    return (
+      <PhoneLoginForm redirect={redirect} onBack={() => setPhoneMode(false)} />
+    );
   }
 
   return (

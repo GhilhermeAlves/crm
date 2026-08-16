@@ -64,11 +64,18 @@ const customer360 = {
   ],
   tasks: [],
   timeline: [],
-  nextAction: { type: "NONE", title: "Tudo em dia", description: "", priority: 0 },
+  nextAction: {
+    type: "NONE",
+    title: "Tudo em dia",
+    description: "",
+    priority: 0,
+  },
 };
 
 function renderWith<T>(render: () => T) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client }, children);
   return renderHook(render, { wrapper });
@@ -92,7 +99,7 @@ describe("useContacts (Sprint 13)", () => {
   it("loads the customer 360 for a contact", async () => {
     c360Mock.mockResolvedValue(customer360);
     const { result } = renderWith(() =>
-      useCustomer360("company-1", "contact-1")
+      useCustomer360("company-1", "contact-1"),
     );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -109,12 +116,16 @@ describe("useContacts (Sprint 13)", () => {
     createMock.mockResolvedValue(contact);
     const { result } = renderWith(() => useCreateContact("company-1"));
 
-    result.current.mutate({ firstName: "Ana", lastName: "Souza", email: "ana@e.com" });
+    result.current.mutate({
+      firstName: "Ana",
+      lastName: "Souza",
+      email: "ana@e.com",
+    });
     await waitFor(() =>
       expect(createMock).toHaveBeenCalledWith(
         "company-1",
-        expect.objectContaining({ firstName: "Ana" })
-      )
+        expect.objectContaining({ firstName: "Ana" }),
+      ),
     );
   });
 });

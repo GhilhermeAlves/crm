@@ -1,11 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ActivityService } from "../services/activity.service";
-import type { CreateActivityRequest, UpdateActivityRequest } from "../types/activity.types";
+import type {
+  CreateActivityRequest,
+  UpdateActivityRequest,
+} from "../types/activity.types";
 
-export function useActivities(companyId: string | null, filter: { contactId?: string; opportunityId?: string } = {}) {
+export function useActivities(
+  companyId: string | null,
+  filter: { contactId?: string; opportunityId?: string } = {},
+) {
   return useQuery({
-    queryKey: ["activities", companyId, filter.contactId ?? filter.opportunityId ?? "all"],
+    queryKey: [
+      "activities",
+      companyId,
+      filter.contactId ?? filter.opportunityId ?? "all",
+    ],
     queryFn: () => {
       const company = companyId as string;
       if (filter.contactId) {
@@ -32,8 +42,12 @@ function useActivityMutations(companyId: string | null) {
   const queryClient = useQueryClient();
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["activities", companyId] });
-    queryClient.invalidateQueries({ queryKey: ["recent-activities", companyId] });
-    queryClient.invalidateQueries({ queryKey: ["operational-dashboard", companyId] });
+    queryClient.invalidateQueries({
+      queryKey: ["recent-activities", companyId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["operational-dashboard", companyId],
+    });
   };
   return { queryClient, invalidate };
 }

@@ -16,7 +16,11 @@ import { usePermissions } from "@/features/rbac/hooks/useRoles";
 import { PermissionMatrix } from "@/features/rbac/components/PermissionMatrix";
 import { RoleBadge } from "@/features/rbac/components/RoleBadge";
 
-export default function EditRolePage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditRolePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const { data: role, isLoading: roleLoading } = useRole(id);
@@ -25,7 +29,9 @@ export default function EditRolePage({ params }: { params: Promise<{ id: string 
 
   const [description, setDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
+    [],
+  );
 
   const initialized = useMemo(() => {
     if (role) {
@@ -41,7 +47,7 @@ export default function EditRolePage({ params }: { params: Promise<{ id: string 
     setSelectedPermissionIds((prev) =>
       prev.includes(permissionId)
         ? prev.filter((id) => id !== permissionId)
-        : [...prev, permissionId]
+        : [...prev, permissionId],
     );
   }, []);
 
@@ -59,7 +65,7 @@ export default function EditRolePage({ params }: { params: Promise<{ id: string 
         onSuccess: () => {
           router.push(`/roles/${id}`);
         },
-      }
+      },
     );
   };
 

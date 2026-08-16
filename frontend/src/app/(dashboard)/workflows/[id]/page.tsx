@@ -30,10 +30,8 @@ export default function WorkflowDetailPage() {
   const perms = useWorkflowPermissions();
 
   const { data: workflow, isLoading } = useWorkflow(companyId, workflowId);
-  const { data: executions = [], isLoading: executionsLoading } = useWorkflowExecutions(
-    companyId,
-    workflowId
-  );
+  const { data: executions = [], isLoading: executionsLoading } =
+    useWorkflowExecutions(companyId, workflowId);
   const toggle = useToggleWorkflow(companyId);
 
   if (isLoading) {
@@ -48,7 +46,11 @@ export default function WorkflowDetailPage() {
   if (!workflow) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push(ROUTES.WORKFLOWS)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push(ROUTES.WORKFLOWS)}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <PageTitle>Workflow não encontrado</PageTitle>
@@ -60,7 +62,11 @@ export default function WorkflowDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push(ROUTES.WORKFLOWS)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push(ROUTES.WORKFLOWS)}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -71,7 +77,9 @@ export default function WorkflowDetailPage() {
               </Badge>
             </div>
             {workflow.description && (
-              <p className="text-sm text-muted-foreground">{workflow.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {workflow.description}
+              </p>
             )}
           </div>
         </div>
@@ -137,10 +145,14 @@ export default function WorkflowDetailPage() {
             ) : (
               workflow.conditions.map((c, i) => (
                 <div key={c.id ?? i} className="flex items-center gap-2">
-                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{c.field}</code>
+                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                    {c.field}
+                  </code>
                   <span>—</span>
                   <span>{CONDITION_OPERATOR_LABELS[c.operator]}</span>
-                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{c.value}</code>
+                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                    {c.value}
+                  </code>
                 </div>
               ))
             )}
@@ -150,10 +162,15 @@ export default function WorkflowDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Histórico de execuções</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Histórico de execuções
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <WorkflowExecutionsPanel data={executions} isLoading={executionsLoading} />
+          <WorkflowExecutionsPanel
+            data={executions}
+            isLoading={executionsLoading}
+          />
         </CardContent>
       </Card>
     </div>

@@ -18,20 +18,28 @@ export function useContacts(companyId: string | null) {
 export function useContact(companyId: string | null, contactId: string | null) {
   return useQuery({
     queryKey: ["contact", companyId, contactId],
-    queryFn: () => ContactService.findById(companyId as string, contactId as string),
+    queryFn: () =>
+      ContactService.findById(companyId as string, contactId as string),
     enabled: !!companyId && !!contactId,
   });
 }
 
-export function useCustomer360(companyId: string | null, contactId: string | null) {
+export function useCustomer360(
+  companyId: string | null,
+  contactId: string | null,
+) {
   return useQuery({
     queryKey: ["customer360", companyId, contactId],
-    queryFn: () => ContactService.customer360(companyId as string, contactId as string),
+    queryFn: () =>
+      ContactService.customer360(companyId as string, contactId as string),
     enabled: !!companyId && !!contactId,
   });
 }
 
-function invalidateContacts(queryClient: ReturnType<typeof useQueryClient>, companyId: string | null) {
+function invalidateContacts(
+  queryClient: ReturnType<typeof useQueryClient>,
+  companyId: string | null,
+) {
   queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
   queryClient.invalidateQueries({ queryKey: ["contact", companyId] });
   queryClient.invalidateQueries({ queryKey: ["customer360", companyId] });

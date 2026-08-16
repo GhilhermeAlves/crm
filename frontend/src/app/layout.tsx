@@ -8,7 +8,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "CRM SaaS Omnichannel",
-  description: "Sistema CRM Omnichannel para gestão de leads, contatos e comunicação",
+  description:
+    "Sistema CRM Omnichannel para gestão de leads, contatos e comunicação",
 };
 
 export default function RootLayout({

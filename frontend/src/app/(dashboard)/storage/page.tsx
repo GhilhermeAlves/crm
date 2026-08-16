@@ -21,7 +21,10 @@ import {
   useDownloadFile,
   useDeleteFile,
 } from "@/features/storage/hooks/useStorage";
-import { formatBytes, type StorageObject } from "@/features/storage/types/storage.types";
+import {
+  formatBytes,
+  type StorageObject,
+} from "@/features/storage/types/storage.types";
 
 export default function StoragePage() {
   const { user } = useAuth();
@@ -48,7 +51,8 @@ export default function StoragePage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Arquivos</h1>
           <p className="text-sm text-muted-foreground">
-            Armazenamento da sua empresa (escopado por tenant). Envie e baixe arquivos.
+            Armazenamento da sua empresa (escopado por tenant). Envie e baixe
+            arquivos.
           </p>
         </div>
         <div>
@@ -75,7 +79,9 @@ export default function StoragePage() {
       {selected && (
         <Card>
           <CardContent className="py-3 text-sm text-muted-foreground">
-            Enviando <span className="font-medium text-foreground">{selected.name}</span>…
+            Enviando{" "}
+            <span className="font-medium text-foreground">{selected.name}</span>
+            …
           </CardContent>
         </Card>
       )}
@@ -99,8 +105,12 @@ export default function StoragePage() {
               <TableBody>
                 {files.map((file) => (
                   <TableRow key={file.id}>
-                    <TableCell className="font-medium">{file.fileName}</TableCell>
-                    <TableCell className="text-muted-foreground">{file.contentType}</TableCell>
+                    <TableCell className="font-medium">
+                      {file.fileName}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {file.contentType}
+                    </TableCell>
                     <TableCell>{formatBytes(file.sizeBytes)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

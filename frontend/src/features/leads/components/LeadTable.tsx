@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Eye, Pencil, Trash2, Target } from "lucide-react";
 import type { Lead } from "../types/lead.types";
-import { LeadStatusBadge, LeadSourceBadge, LeadClassificationBadge } from "./LeadBadges";
+import {
+  LeadStatusBadge,
+  LeadSourceBadge,
+  LeadClassificationBadge,
+} from "./LeadBadges";
 import {
   Table,
   TableBody,
@@ -84,7 +88,9 @@ export function LeadTable({ leads, isLoading, onDelete }: LeadTableProps) {
               <TableCell>
                 <LeadClassificationBadge classification={lead.classification} />
               </TableCell>
-              <TableCell className="text-sm font-medium">{lead.score}</TableCell>
+              <TableCell className="text-sm font-medium">
+                {lead.score}
+              </TableCell>
               <TableCell className="text-sm text-muted-foreground">
                 {formatDate(lead.createdAt)}
               </TableCell>
@@ -103,7 +109,9 @@ export function LeadTable({ leads, isLoading, onDelete }: LeadTableProps) {
                       Visualizar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => router.push(`${ROUTES.LEADS}/${lead.id}/edit`)}
+                      onClick={() =>
+                        router.push(`${ROUTES.LEADS}/${lead.id}/edit`)
+                      }
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar

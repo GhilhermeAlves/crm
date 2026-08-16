@@ -2,7 +2,14 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, TrendingUp, Zap } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  Loader2,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -16,7 +23,9 @@ import { useOpportunityPermissions } from "@/features/pipeline/schemas/pipeline.
 import { ROUTES } from "@/lib/constants";
 
 const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+    value,
+  );
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -92,9 +101,19 @@ export default function DashboardPage() {
           <Card key={stat.title}>
             <CardContent className="flex items-center justify-between p-6">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                <p className="text-2xl font-bold">{isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </p>
+                <p className="text-2xl font-bold">
+                  {isLoading ? (
+                    <Loader2 className="animate-spin h-5 w-5" />
+                  ) : (
+                    stat.value
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
               </div>
               <div className="rounded-lg bg-muted p-3">{stat.icon}</div>
             </CardContent>
@@ -106,30 +125,49 @@ export default function DashboardPage() {
         {/* O que merece atenção */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-base font-semibold">Necessitam de atenção</CardTitle>
-            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" asChild>
+            <CardTitle className="text-base font-semibold">
+              Necessitam de atenção
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              asChild
+            >
               <Link href={ROUTES.PIPELINE}>Ver pipeline</Link>
             </Button>
           </CardHeader>
           <CardContent>
-            <AttentionList opportunities={data?.attentionOpportunities ?? []} isLoading={isLoading} />
+            <AttentionList
+              opportunities={data?.attentionOpportunities ?? []}
+              isLoading={isLoading}
+            />
           </CardContent>
         </Card>
 
         {/* Tarefas hoje */}
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-base font-semibold">Tarefas para hoje</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Tarefas para hoje
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <TaskList
               tasks={data?.dueToday ?? []}
               isLoading={isLoading}
               canUpdate={taskPerms.canUpdate}
-              onChangeStatus={(id, status) => changeStatus.mutate({ id, status })}
+              onChangeStatus={(id, status) =>
+                changeStatus.mutate({ id, status })
+              }
             />
             {taskPerms.canCreate && (
-              <Button variant="outline" size="sm" className="mt-3 w-full" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 w-full"
+                asChild
+              >
                 <Link href={ROUTES.TASKS}>Gerenciar tarefas</Link>
               </Button>
             )}
@@ -140,10 +178,15 @@ export default function DashboardPage() {
       {/* Recent activities */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base font-semibold">Atividades recentes</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Atividades recentes
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityTimeline activities={data?.recentActivities ?? []} isLoading={isLoading} />
+          <ActivityTimeline
+            activities={data?.recentActivities ?? []}
+            isLoading={isLoading}
+          />
         </CardContent>
       </Card>
     </div>

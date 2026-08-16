@@ -61,13 +61,15 @@ describe("useLeads (Sprint 10)", () => {
 
   it("fetches leads for the active company", async () => {
     listMock.mockResolvedValue(page);
-    const { result } = renderHookWith(() => useLeads("company-1", { page: 0, pageSize: 10 }));
+    const { result } = renderHookWith(() =>
+      useLeads("company-1", { page: 0, pageSize: 10 }),
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(listMock).toHaveBeenCalledWith(
       "company-1",
-      expect.objectContaining({ page: 0 })
+      expect.objectContaining({ page: 0 }),
     );
     expect(result.current.data?.totalElements).toBe(1);
   });
@@ -88,9 +90,11 @@ describe("useLeads (Sprint 10)", () => {
       score: 50,
     });
 
-    await waitFor(() => expect(createMock).toHaveBeenCalledWith(
-      "company-1",
-      expect.objectContaining({ source: "WHATSAPP" })
-    ));
+    await waitFor(() =>
+      expect(createMock).toHaveBeenCalledWith(
+        "company-1",
+        expect.objectContaining({ source: "WHATSAPP" }),
+      ),
+    );
   });
 });

@@ -12,11 +12,11 @@ const BASE = "/companies";
 export const LeadService = {
   async list(
     companyId: string,
-    params?: ListLeadsParams
+    params?: ListLeadsParams,
   ): Promise<PageResponse<Lead>> {
     const response = await api.get<PageResponse<Lead>>(
       `${BASE}/${companyId}/leads`,
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -34,11 +34,11 @@ export const LeadService = {
   async update(
     companyId: string,
     id: string,
-    data: UpdateLeadRequest
+    data: UpdateLeadRequest,
   ): Promise<Lead> {
     const response = await api.put<Lead>(
       `${BASE}/${companyId}/leads/${id}`,
-      data
+      data,
     );
     return response.data;
   },

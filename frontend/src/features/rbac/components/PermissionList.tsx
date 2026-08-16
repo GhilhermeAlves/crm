@@ -23,7 +23,7 @@ export function PermissionList({ permissions }: PermissionListProps) {
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
-        p.module.toLowerCase().includes(q)
+        p.module.toLowerCase().includes(q),
     );
   }, [permissions, search]);
 
@@ -70,7 +70,9 @@ export function PermissionList({ permissions }: PermissionListProps) {
                 >
                   <PermissionBadge name={permission.name} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{permission.description}</p>
+                    <p className="text-sm font-medium">
+                      {permission.description}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {actionName[permission.action] || permission.action}
                     </p>

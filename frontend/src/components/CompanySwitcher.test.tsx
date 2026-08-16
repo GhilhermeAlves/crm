@@ -20,7 +20,11 @@ vi.mock("next/navigation", () => ({
   usePathname: () => pathnameState.value,
 }));
 vi.mock("@/features/auth/services/auth.service", () => ({
-  AuthService: { me: meMock, myCompanies: myCompaniesMock, switchCompany: switchCompanyMock },
+  AuthService: {
+    me: meMock,
+    myCompanies: myCompaniesMock,
+    switchCompany: switchCompanyMock,
+  },
 }));
 vi.mock("@/lib/gateway-auth", () => ({
   loginWithGateway: vi.fn(),
@@ -44,13 +48,25 @@ function mockUser(companyId: string | null) {
 
 function companies(activeId: string): CompanyOption[] {
   return [
-    { companyId: COMPANY_A, name: "Empresa A", logo: null, active: activeId === COMPANY_A },
-    { companyId: COMPANY_B, name: "Empresa B", logo: null, active: activeId === COMPANY_B },
+    {
+      companyId: COMPANY_A,
+      name: "Empresa A",
+      logo: null,
+      active: activeId === COMPANY_A,
+    },
+    {
+      companyId: COMPANY_B,
+      name: "Empresa B",
+      logo: null,
+      active: activeId === COMPANY_B,
+    },
   ];
 }
 
 function renderSwitcher() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
     <QueryClientProvider client={client}>
       <AuthProvider>
@@ -61,7 +77,9 @@ function renderSwitcher() {
 }
 
 async function optionButton(id: string) {
-  return (await screen.findByTestId(`company-option-${id}`)) as HTMLButtonElement;
+  return (await screen.findByTestId(
+    `company-option-${id}`,
+  )) as HTMLButtonElement;
 }
 
 describe("CompanySwitcher (Sprint 8.4)", () => {
@@ -108,7 +126,9 @@ describe("CompanySwitcher (Sprint 8.4)", () => {
     const optionB = await optionButton(COMPANY_B);
     fireEvent.click(optionB);
 
-    await waitFor(() => expect(switchCompanyMock).toHaveBeenCalledWith(COMPANY_B));
+    await waitFor(() =>
+      expect(switchCompanyMock).toHaveBeenCalledWith(COMPANY_B),
+    );
     // After invalidation, /me returns company B -> B becomes the active/disabled option.
     await waitFor(async () => {
       const activeOption = await optionButton(COMPANY_B);

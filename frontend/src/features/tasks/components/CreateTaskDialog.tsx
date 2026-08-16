@@ -2,7 +2,10 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createTaskSchema, type CreateTaskFormValues } from "../schemas/task.schema";
+import {
+  createTaskSchema,
+  type CreateTaskFormValues,
+} from "../schemas/task.schema";
 import type { TaskPriority } from "../types/task.types";
 import { TASK_PRIORITY_LABELS } from "../types/task.types";
 import {
@@ -38,7 +41,13 @@ type Props = {
   onSubmit: (values: CreateTaskFormValues) => void;
 };
 
-export function CreateTaskDialog({ open, onOpenChange, isLoading, opportunityId, onSubmit }: Props) {
+export function CreateTaskDialog({
+  open,
+  onOpenChange,
+  isLoading,
+  opportunityId,
+  onSubmit,
+}: Props) {
   const form = useForm<CreateTaskFormValues>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
@@ -88,7 +97,9 @@ export function CreateTaskDialog({ open, onOpenChange, isLoading, opportunityId,
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(TASK_PRIORITY_LABELS) as TaskPriority[]).map((p) => (
+                        {(
+                          Object.keys(TASK_PRIORITY_LABELS) as TaskPriority[]
+                        ).map((p) => (
                           <SelectItem key={p} value={p}>
                             {TASK_PRIORITY_LABELS[p]}
                           </SelectItem>
@@ -106,7 +117,11 @@ export function CreateTaskDialog({ open, onOpenChange, isLoading, opportunityId,
                   <FormItem>
                     <FormLabel>Vencimento</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} value={field.value ?? ""} />
+                      <Input
+                        type="datetime-local"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,7 +142,11 @@ export function CreateTaskDialog({ open, onOpenChange, isLoading, opportunityId,
               )}
             />
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>

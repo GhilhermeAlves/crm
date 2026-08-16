@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useCallback,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useCallback, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useMe } from "./useAuthMutations";
 import { loginWithGateway, logoutWithGateway } from "@/lib/gateway-auth";

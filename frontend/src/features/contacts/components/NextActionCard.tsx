@@ -45,7 +45,7 @@ export function NextActionCard({ nextAction }: { nextAction: NextAction }) {
         <span
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-            meta.className
+            meta.className,
           )}
         >
           {meta.icon}
@@ -55,7 +55,9 @@ export function NextActionCard({ nextAction }: { nextAction: NextAction }) {
             Próxima ação
           </p>
           <p className="text-sm font-semibold">{meta.label}</p>
-          <p className="text-xs text-muted-foreground">{nextAction.description}</p>
+          <p className="text-xs text-muted-foreground">
+            {nextAction.description}
+          </p>
         </div>
       </CardContent>
     </Card>

@@ -13,12 +13,18 @@ describe("createTaskSchema", () => {
   });
 
   it("rejects unknown priority", () => {
-    const result = createTaskSchema.safeParse({ title: "x", priority: "URGENT" });
+    const result = createTaskSchema.safeParse({
+      title: "x",
+      priority: "URGENT",
+    });
     expect(result.success).toBe(false);
   });
 
   it("rejects invalid uuid for opportunityId", () => {
-    const result = createTaskSchema.safeParse({ title: "x", opportunityId: "not-a-uuid" });
+    const result = createTaskSchema.safeParse({
+      title: "x",
+      opportunityId: "not-a-uuid",
+    });
     expect(result.success).toBe(false);
   });
 });

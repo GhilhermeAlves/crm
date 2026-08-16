@@ -16,7 +16,9 @@ const { providersState } = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => ({ get: (key: string) => (key === "redirect" ? "/leads" : null) }),
+  useSearchParams: () => ({
+    get: (key: string) => (key === "redirect" ? "/leads" : null),
+  }),
 }));
 
 vi.mock("../hooks/useIdentityProviders", () => ({
@@ -61,7 +63,9 @@ describe("ProviderList (Sprint 7.0)", () => {
 
   it("renders the configured providers in a fixed order (google, telefone)", () => {
     render(<ProviderList />);
-    const buttons = screen.getAllByRole("button").map((b) => b.getAttribute("data-provider"));
+    const buttons = screen
+      .getAllByRole("button")
+      .map((b) => b.getAttribute("data-provider"));
     expect(buttons).toEqual(["google", "phone"]);
   });
 
@@ -84,10 +88,14 @@ describe("ProviderList (Sprint 7.0)", () => {
   it("opens the inline phone OTP flow instead of navigating when available", () => {
     providersState.data = serverCatalog({ phone: true });
     render(<ProviderList />);
-    fireEvent.click(screen.getByRole("button", { name: "Entrar com Telefone" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Entrar com Telefone" }),
+    );
     expect(loginWithGatewayMock).not.toHaveBeenCalled();
     expect(screen.getByPlaceholderText("+55 11 99999-0000")).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Enviar código" })).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Enviar código" }),
+    ).not.toBeNull();
   });
 
   it("does not navigate when the provider is unavailable (defense in depth)", () => {

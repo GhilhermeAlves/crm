@@ -27,7 +27,12 @@ export function ErrorCard({
         <h3 className="text-lg font-semibold">{title}</h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">{message}</p>
         {onRetry && (
-          <Button variant="outline" size="sm" className="mt-4 gap-2" onClick={onRetry}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 gap-2"
+            onClick={onRetry}
+          >
             <RefreshCw className="h-4 w-4" />
             Tentar novamente
           </Button>

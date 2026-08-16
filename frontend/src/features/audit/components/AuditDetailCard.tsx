@@ -52,8 +52,17 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
             <h2 className="text-xl font-bold">Detalhes do Log de Auditoria</h2>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>ID: {log.id}</span>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={handleCopyId}>
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                onClick={handleCopyId}
+              >
+                {copied ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
               </Button>
             </div>
           </div>
@@ -66,12 +75,16 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Data/Hora</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Data/Hora
+            </p>
             <p className="text-sm">{formatDate(log.createdAt)}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Usuário</p>
-            <p className="text-sm">{log.userName || log.userEmail || "Sistema"}</p>
+            <p className="text-sm">
+              {log.userName || log.userEmail || "Sistema"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Email</p>
@@ -86,11 +99,18 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
             <AuditModuleBadge module={log.module} />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Entidade</p>
-            <p className="text-sm">{log.entityName || "-"}{log.entityId ? ` (${log.entityId})` : ""}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Entidade
+            </p>
+            <p className="text-sm">
+              {log.entityName || "-"}
+              {log.entityId ? ` (${log.entityId})` : ""}
+            </p>
           </div>
           <div className="lg:col-span-3">
-            <p className="text-sm font-medium text-muted-foreground">Descrição</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Descrição
+            </p>
             <p className="text-sm">{log.description || "-"}</p>
           </div>
         </div>
@@ -108,11 +128,17 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">URI</p>
-            <p className="text-sm font-mono text-xs break-all">{log.requestUri || "-"}</p>
+            <p className="text-sm font-mono text-xs break-all">
+              {log.requestUri || "-"}
+            </p>
           </div>
           <div className="lg:col-span-3">
-            <p className="text-sm font-medium text-muted-foreground">User Agent</p>
-            <p className="text-xs font-mono text-muted-foreground break-all">{log.userAgent || "-"}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              User Agent
+            </p>
+            <p className="text-xs font-mono text-muted-foreground break-all">
+              {log.userAgent || "-"}
+            </p>
           </div>
         </div>
 
@@ -122,13 +148,17 @@ export function AuditDetailCard({ log }: AuditDetailCardProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {log.oldValues && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Valores Anteriores</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Valores Anteriores
+                  </p>
                   <JsonViewer data={log.oldValues} />
                 </div>
               )}
               {log.newValues && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Valores Novos</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Valores Novos
+                  </p>
                   <JsonViewer data={log.newValues} />
                 </div>
               )}

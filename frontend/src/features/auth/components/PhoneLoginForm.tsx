@@ -2,7 +2,13 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { AlertCircle, ArrowLeft, Loader2, Phone, ShieldCheck } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Loader2,
+  Phone,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneOtpService, PhoneOtpError } from "../services/phone-otp.service";
@@ -43,7 +49,9 @@ export function PhoneLoginForm({ redirect, onBack }: PhoneLoginFormProps) {
     try {
       const result = await PhoneOtpService.sendOtp(phone.trim());
       if (!result.sent) {
-        setError("Não foi possível enviar o código. Aguarde o cooldown e tente novamente.");
+        setError(
+          "Não foi possível enviar o código. Aguarde o cooldown e tente novamente.",
+        );
         return;
       }
       setInfo(
@@ -72,7 +80,9 @@ export function PhoneLoginForm({ redirect, onBack }: PhoneLoginFormProps) {
     try {
       const result = await PhoneOtpService.verifyOtp(phone.trim(), otp.trim());
       if (!result.userExists) {
-        setError("Telefone não encontrado. Verifique o número ou cadastre uma conta.");
+        setError(
+          "Telefone não encontrado. Verifique o número ou cadastre uma conta.",
+        );
         return;
       }
       // Telefone confirmado. Segue para o fluxo de senha do Keycloak — o
@@ -90,7 +100,10 @@ export function PhoneLoginForm({ redirect, onBack }: PhoneLoginFormProps) {
   }
 
   return (
-    <form onSubmit={step === "phone" ? handleSendOtp : handleConfirmOtp} className="space-y-4">
+    <form
+      onSubmit={step === "phone" ? handleSendOtp : handleConfirmOtp}
+      className="space-y-4"
+    >
       <div className="rounded-lg border border-crm-border bg-crm-background p-3 text-sm">
         <p className="flex items-center gap-2 font-medium text-crm-text">
           <ShieldCheck className="h-4 w-4 shrink-0 text-crm-primary" />
@@ -133,7 +146,9 @@ export function PhoneLoginForm({ redirect, onBack }: PhoneLoginFormProps) {
             </button>
           </div>
           <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-crm-text">Código OTP</span>
+            <span className="text-sm font-medium text-crm-text">
+              Código OTP
+            </span>
             <Input
               type="text"
               inputMode="numeric"
@@ -164,7 +179,12 @@ export function PhoneLoginForm({ redirect, onBack }: PhoneLoginFormProps) {
         </p>
       ) : null}
 
-      <Button type="submit" variant="crm" className="w-full" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        variant="crm"
+        className="w-full"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : step === "phone" ? (
