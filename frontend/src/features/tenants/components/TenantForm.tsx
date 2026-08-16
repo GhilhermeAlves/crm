@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { maskCep, maskCnpj, maskPhone } from "@/lib/masks";
 import { fetchAddressByCep } from "../services/cep.service";
@@ -33,8 +33,29 @@ type TenantFormProps = {
   isLoading?: boolean;
 };
 
+const STEPS = [
+  { id: "company", title: "Dados da Empresa", description: "Informações básicas da empresa" },
+  { id: "settings", title: "Configurações", description: "Plano, limites e status" },
+  { id: "address", title: "Endereço", description: "Endereço da empresa" },
+] as const;
+
+const STEP_FIELDS: Record<(typeof STEPS)[number]["id"], string[]> = {
+  company: ["legalName", "tradingName", "cnpj", "email", "phone"],
+  settings: ["status", "plan", "maxUsers", "maxStorageMb", "maxContacts"],
+  address: [
+    "address.zipCode",
+    "address.street",
+    "address.number",
+    "address.neighborhood",
+    "address.city",
+    "address.state",
+  ],
+};
+
 export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps) {
   const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(0);
+  const lastStepIndex = STEPS.length - 1;
 
   const {
     register,
@@ -43,6 +64,7 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
     setValue,
     setError,
     clearErrors,
+    trigger,
     watch,
     formState: { errors },
   } = useForm<TenantFormData>({
@@ -94,6 +116,18 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
     });
   };
 
+  const handleNext = async () => {
+    const fields = STEP_FIELDS[STEPS[currentStep].id];
+    const valid = await trigger(fields as (keyof TenantFormData)[]);
+    if (valid) {
+      setCurrentStep((step) => Math.min(step + 1, lastStepIndex));
+    }
+  };
+
+  const handlePrevious = () => {
+    setCurrentStep((step) => Math.max(step - 1, 0));
+  };
+
   const lastCepSearched = useRef("");
   const [isFetchingCep, setIsFetchingCep] = useState(false);
 
@@ -127,282 +161,340 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {/* Indicador de steps */}
+      <div className="flex items-center justify-center gap-2 sm:gap-4">
+        {STEPS.map((step, index) => {
+          const isActive = index === currentStep;
+          const isDone = index < currentStep;
+          return (
+            <div key={step.id} className="flex items-center gap-2 sm:gap-4">
+              {index > 0 && (
+                <div
+                  className={`h-0.5 w-6 sm:w-12 rounded-full ${
+                    index <= currentStep ? "bg-primary" : "bg-border"
+                  }`}
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => setCurrentStep(index)}
+                className={`flex items-center gap-2 rounded-full px-2 py-1 transition-colors ${
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                    isDone
+                      ? "bg-primary text-primary-foreground"
+                      : isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {isDone ? "✓" : index + 1}
+                </span>
+                <span className="hidden text-sm font-medium sm:inline">{step.title}</span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Dados da Empresa */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados da Empresa</CardTitle>
-          <CardDescription>Informações básicas da empresa</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="legalName">Razão Social *</Label>
-              <Input id="legalName" {...register("legalName")} />
-              {errors.legalName && (
-                <p className="text-sm text-destructive">{errors.legalName.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tradingName">Nome Fantasia *</Label>
-              <Input id="tradingName" {...register("tradingName")} />
-              {errors.tradingName && (
-                <p className="text-sm text-destructive">{errors.tradingName.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ *</Label>
-              <Controller
-                name="cnpj"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    id="cnpj"
-                    placeholder="00.000.000/0000-00"
-                    inputMode="numeric"
-                    value={field.value}
-                    onChange={(e) => field.onChange(maskCnpj(e.target.value))}
-                    ref={field.ref}
-                  />
+      {currentStep === 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{STEPS[0].title}</CardTitle>
+            <CardDescription>{STEPS[0].description}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="legalName">Razão Social *</Label>
+                <Input id="legalName" {...register("legalName")} />
+                {errors.legalName && (
+                  <p className="text-sm text-destructive">{errors.legalName.message}</p>
                 )}
-              />
-              {errors.cnpj && <p className="text-sm text-destructive">{errors.cnpj.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stateRegistration">Inscrição Estadual</Label>
-              <Input id="stateRegistration" {...register("stateRegistration")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="municipalRegistration">Inscrição Municipal</Label>
-              <Input id="municipalRegistration" {...register("municipalRegistration")} />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail *</Label>
-              <Input id="email" type="email" {...register("email")} />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone *</Label>
-              <Controller
-                name="phone"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    id="phone"
-                    placeholder="(00) 00000-0000"
-                    inputMode="numeric"
-                    value={field.value}
-                    onChange={(e) => field.onChange(maskPhone(e.target.value))}
-                    ref={field.ref}
-                  />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tradingName">Nome Fantasia *</Label>
+                <Input id="tradingName" {...register("tradingName")} />
+                {errors.tradingName && (
+                  <p className="text-sm text-destructive">{errors.tradingName.message}</p>
                 )}
-              />
-              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input id="website" placeholder="https://" {...register("website")} />
-              {errors.website && (
-                <p className="text-sm text-destructive">{errors.website.message}</p>
-              )}
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="cnpj">CNPJ *</Label>
+                <Controller
+                  name="cnpj"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="cnpj"
+                      placeholder="00.000.000/0000-00"
+                      inputMode="numeric"
+                      value={field.value}
+                      onChange={(e) => field.onChange(maskCnpj(e.target.value))}
+                      ref={field.ref}
+                    />
+                  )}
+                />
+                {errors.cnpj && <p className="text-sm text-destructive">{errors.cnpj.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stateRegistration">Inscrição Estadual</Label>
+                <Input id="stateRegistration" {...register("stateRegistration")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="municipalRegistration">Inscrição Municipal</Label>
+                <Input id="municipalRegistration" {...register("municipalRegistration")} />
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail *</Label>
+                <Input id="email" type="email" {...register("email")} />
+                {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone *</Label>
+                <Controller
+                  name="phone"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="phone"
+                      placeholder="(00) 00000-0000"
+                      inputMode="numeric"
+                      value={field.value}
+                      onChange={(e) => field.onChange(maskPhone(e.target.value))}
+                      ref={field.ref}
+                    />
+                  )}
+                />
+                {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input id="website" placeholder="https://" {...register("website")} />
+                {errors.website && (
+                  <p className="text-sm text-destructive">{errors.website.message}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Configurações */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Configurações</CardTitle>
-          <CardDescription>Plano, limites e status</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-4">
-            <div className="space-y-2">
-              <Label>Status *</Label>
-              <Select
-                value={statusValue}
-                onValueChange={(val) => setValue("status", val as TenantFormData["status"])}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(tenantStatusLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.status && <p className="text-sm text-destructive">{errors.status.message}</p>}
+      {currentStep === 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{STEPS[1].title}</CardTitle>
+            <CardDescription>{STEPS[1].description}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-4">
+              <div className="space-y-2">
+                <Label>Status *</Label>
+                <Select
+                  value={statusValue}
+                  onValueChange={(val) => setValue("status", val as TenantFormData["status"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(tenantStatusLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.status && <p className="text-sm text-destructive">{errors.status.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Plano *</Label>
+                <Select
+                  value={planValue}
+                  onValueChange={(val) => setValue("plan", val as TenantFormData["plan"])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(tenantPlanLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.plan && <p className="text-sm text-destructive">{errors.plan.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxUsers">Limite de Usuários *</Label>
+                <Input
+                  id="maxUsers"
+                  type="number"
+                  {...register("maxUsers", { valueAsNumber: true })}
+                />
+                {errors.maxUsers && (
+                  <p className="text-sm text-destructive">{errors.maxUsers.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxStorageMb">Armazenamento (MB) *</Label>
+                <Input
+                  id="maxStorageMb"
+                  type="number"
+                  {...register("maxStorageMb", { valueAsNumber: true })}
+                />
+                {errors.maxStorageMb && (
+                  <p className="text-sm text-destructive">{errors.maxStorageMb.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxContacts">Limite de Contatos *</Label>
+                <Input
+                  id="maxContacts"
+                  type="number"
+                  {...register("maxContacts", { valueAsNumber: true })}
+                />
+                {errors.maxContacts && (
+                  <p className="text-sm text-destructive">{errors.maxContacts.message}</p>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Plano *</Label>
-              <Select
-                value={planValue}
-                onValueChange={(val) => setValue("plan", val as TenantFormData["plan"])}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(tenantPlanLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.plan && <p className="text-sm text-destructive">{errors.plan.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="maxUsers">Limite de Usuários *</Label>
-              <Input
-                id="maxUsers"
-                type="number"
-                {...register("maxUsers", { valueAsNumber: true })}
-              />
-              {errors.maxUsers && (
-                <p className="text-sm text-destructive">{errors.maxUsers.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="maxStorageMb">Armazenamento (MB) *</Label>
-              <Input
-                id="maxStorageMb"
-                type="number"
-                {...register("maxStorageMb", { valueAsNumber: true })}
-              />
-              {errors.maxStorageMb && (
-                <p className="text-sm text-destructive">{errors.maxStorageMb.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="maxContacts">Limite de Contatos *</Label>
-              <Input
-                id="maxContacts"
-                type="number"
-                {...register("maxContacts", { valueAsNumber: true })}
-              />
-              {errors.maxContacts && (
-                <p className="text-sm text-destructive">{errors.maxContacts.message}</p>
-              )}
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea id="notes" rows={3} {...register("notes")} />
-          </div>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea id="notes" rows={3} {...register("notes")} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Endereço */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Endereço</CardTitle>
-          <CardDescription>Endereço da empresa</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-4">
-            <div className="space-y-2">
-              <Label htmlFor="address.zipCode">CEP *</Label>
-              <Controller
-                name="address.zipCode"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    id="address.zipCode"
-                    placeholder="00000-000"
-                    inputMode="numeric"
-                    value={field.value}
-                    disabled={isFetchingCep}
-                    ref={field.ref}
-                    onChange={(e) => {
-                      clearErrors("address.zipCode");
-                      field.onChange(maskCep(e.target.value));
-                    }}
-                    onBlur={() => handleCepBlur(field.value)}
-                  />
+      {currentStep === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{STEPS[2].title}</CardTitle>
+            <CardDescription>{STEPS[2].description}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-4">
+              <div className="space-y-2">
+                <Label htmlFor="address.zipCode">CEP *</Label>
+                <Controller
+                  name="address.zipCode"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="address.zipCode"
+                      placeholder="00000-000"
+                      inputMode="numeric"
+                      value={field.value}
+                      disabled={isFetchingCep}
+                      ref={field.ref}
+                      onChange={(e) => {
+                        clearErrors("address.zipCode");
+                        field.onChange(maskCep(e.target.value));
+                      }}
+                      onBlur={() => handleCepBlur(field.value)}
+                    />
+                  )}
+                />
+                {isFetchingCep && (
+                  <p className="text-sm text-muted-foreground">Buscando endereço...</p>
                 )}
-              />
-              {isFetchingCep && (
-                <p className="text-sm text-muted-foreground">Buscando endereço...</p>
-              )}
-              {!isFetchingCep && errors.address?.zipCode && (
-                <p className="text-sm text-destructive">{errors.address.zipCode.message}</p>
-              )}
+                {!isFetchingCep && errors.address?.zipCode && (
+                  <p className="text-sm text-destructive">{errors.address.zipCode.message}</p>
+                )}
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="address.street">Logradouro *</Label>
+                <Input id="address.street" {...register("address.street")} />
+                {errors.address?.street && (
+                  <p className="text-sm text-destructive">{errors.address.street.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address.number">Número *</Label>
+                <Input id="address.number" {...register("address.number")} />
+                {errors.address?.number && (
+                  <p className="text-sm text-destructive">{errors.address.number.message}</p>
+                )}
+              </div>
             </div>
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="address.street">Logradouro *</Label>
-              <Input id="address.street" {...register("address.street")} />
-              {errors.address?.street && (
-                <p className="text-sm text-destructive">{errors.address.street.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address.number">Número *</Label>
-              <Input id="address.number" {...register("address.number")} />
-              {errors.address?.number && (
-                <p className="text-sm text-destructive">{errors.address.number.message}</p>
-              )}
-            </div>
-          </div>
 
-          <div className="grid gap-4 sm:grid-cols-4">
-            <div className="space-y-2">
-              <Label htmlFor="address.complement">Complemento</Label>
-              <Input id="address.complement" {...register("address.complement")} />
+            <div className="grid gap-4 sm:grid-cols-4">
+              <div className="space-y-2">
+                <Label htmlFor="address.complement">Complemento</Label>
+                <Input id="address.complement" {...register("address.complement")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address.neighborhood">Bairro *</Label>
+                <Input id="address.neighborhood" {...register("address.neighborhood")} />
+                {errors.address?.neighborhood && (
+                  <p className="text-sm text-destructive">{errors.address.neighborhood.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address.city">Cidade *</Label>
+                <Input id="address.city" {...register("address.city")} />
+                {errors.address?.city && (
+                  <p className="text-sm text-destructive">{errors.address.city.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address.state">Estado *</Label>
+                <Input
+                  id="address.state"
+                  placeholder="SP"
+                  maxLength={2}
+                  {...register("address.state")}
+                />
+                {errors.address?.state && (
+                  <p className="text-sm text-destructive">{errors.address.state.message}</p>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="address.neighborhood">Bairro *</Label>
-              <Input id="address.neighborhood" {...register("address.neighborhood")} />
-              {errors.address?.neighborhood && (
-                <p className="text-sm text-destructive">{errors.address.neighborhood.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address.city">Cidade *</Label>
-              <Input id="address.city" {...register("address.city")} />
-              {errors.address?.city && (
-                <p className="text-sm text-destructive">{errors.address.city.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address.state">Estado *</Label>
-              <Input
-                id="address.state"
-                placeholder="SP"
-                maxLength={2}
-                {...register("address.state")}
-              />
-              {errors.address?.state && (
-                <p className="text-sm text-destructive">{errors.address.state.message}</p>
-              )}
-            </div>
-          </div>
 
-          <div className="w-full space-y-2 sm:w-1/4">
-            <Label htmlFor="address.country">País *</Label>
-            <Input id="address.country" {...register("address.country")} />
-          </div>
-        </CardContent>
-      </Card>
+            <div className="w-full space-y-2 sm:w-1/4">
+              <Label htmlFor="address.country">País *</Label>
+              <Input id="address.country" {...register("address.country")} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Actions */}
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={() => router.push(ROUTES.TENANTS)}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Salvando..." : initialData ? "Atualizar" : "Criar Empresa"}
-        </Button>
+      <div className="flex justify-between gap-3">
+        {currentStep > 0 ? (
+          <Button type="button" variant="outline" onClick={handlePrevious}>
+            Anterior
+          </Button>
+        ) : (
+          <Button type="button" variant="outline" onClick={() => router.push(ROUTES.TENANTS)}>
+            Cancelar
+          </Button>
+        )}
+
+        {currentStep < lastStepIndex ? (
+          <Button type="button" onClick={handleNext}>
+            Próximo
+          </Button>
+        ) : (
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Salvando..." : initialData ? "Atualizar" : "Criar Empresa"}
+          </Button>
+        )}
       </div>
     </form>
   );
