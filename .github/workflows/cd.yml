@@ -92,7 +92,7 @@ jobs:
           chmod 600 /tmp/deploy_key
           ssh -i /tmp/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=no \
             -o IdentitiesOnly=yes -p "$DEPLOY_PORT" \
-            "$DEPLOY_USER@$DEPLOY_HOST" "bash -s" <<'EOS'
+            "$DEPLOY_USER@$DEPLOY_HOST" "bash -s" <<EOS
           $DEPLOY_SCRIPT
           EOS
 
@@ -123,7 +123,7 @@ jobs:
           chmod 600 /tmp/deploy_key
           ssh -i /tmp/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=no \
             -o IdentitiesOnly=yes -p "$DEPLOY_PORT" \
-            "$DEPLOY_USER@$DEPLOY_HOST" "bash -s" <<'EOS'
+            "$DEPLOY_USER@$DEPLOY_HOST" "bash -s" <<EOS
           $DEPLOY_SCRIPT
           EOS
 
