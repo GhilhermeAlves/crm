@@ -73,13 +73,12 @@ jobs:
 
     steps:
       - name: Deploy to staging server
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
-          script: |
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY_B64: ${{ secrets.DEPLOY_KEY_B64 }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+          DEPLOY_SCRIPT: |
             set -e
             cd /opt/crm/docker
             curl -fsSL -o docker-compose.yml.new \
@@ -88,6 +87,14 @@ jobs:
             docker compose pull
             docker compose up -d
             echo "Deploy concluido (staging)"
+        run: |
+          echo "$DEPLOY_KEY_B64" | base64 -d > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=no \
+            -o IdentitiesOnly=yes -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "bash -s" <<'EOS'
+          $DEPLOY_SCRIPT
+          EOS
 
   deploy-production:
     name: Deploy to Production
@@ -97,13 +104,12 @@ jobs:
 
     steps:
       - name: Deploy to production server
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || '22' }}
-          script: |
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY_B64: ${{ secrets.DEPLOY_KEY_B64 }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+          DEPLOY_SCRIPT: |
             set -e
             cd /opt/crm/docker
             curl -fsSL -o docker-compose.yml.new \
@@ -112,6 +118,14 @@ jobs:
             docker compose pull
             docker compose up -d
             echo "Deploy concluido (production)"
+        run: |
+          echo "$DEPLOY_KEY_B64" | base64 -d > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=no \
+            -o IdentitiesOnly=yes -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "bash -s" <<'EOS'
+          $DEPLOY_SCRIPT
+          EOS
 
       - name: Create release
         uses: softprops/action-gh-release@v1
