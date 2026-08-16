@@ -170,7 +170,7 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
             <div key={step.id} className="flex items-center gap-2 sm:gap-4">
               {index > 0 && (
                 <div
-                  className={`h-0.5 w-6 sm:w-12 rounded-full ${
+                  className={`h-0.5 w-6 rounded-full sm:w-12 ${
                     index <= currentStep ? "bg-primary" : "bg-border"
                   }`}
                 />
@@ -316,7 +316,9 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.status && <p className="text-sm text-destructive">{errors.status.message}</p>}
+                {errors.status && (
+                  <p className="text-sm text-destructive">{errors.status.message}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Plano *</Label>
