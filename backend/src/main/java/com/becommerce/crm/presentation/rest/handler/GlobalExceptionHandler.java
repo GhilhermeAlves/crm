@@ -41,6 +41,7 @@ import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
 import com.becommerce.crm.domain.task.exception.TaskValidationException;
 import com.becommerce.crm.domain.notification.exception.NotificationNotFoundException;
 import com.becommerce.crm.domain.notification.exception.NotificationValidationException;
+import com.becommerce.crm.domain.ai.AiProviderException;
 import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
 import com.becommerce.crm.domain.workflow.WorkflowValidationException;
 
@@ -394,6 +395,17 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 400,
                 "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(AiProviderException.class)
+    public ResponseEntity<Map<String, Object>> handleAiProviderException(AiProviderException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+            .body(Map.of(
+                "status", 502,
+                "error", "Bad Gateway",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

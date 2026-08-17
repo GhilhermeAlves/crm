@@ -88,6 +88,12 @@ app:
     log-token: ${MAIL_LOG_TOKEN:false}
   invitations:
     base-url: ${INVITATION_BASE_URL:}
+  ai:
+    provider: ${AI_PROVIDER:fake}
+    api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-4o-mini}
+    openai:
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
 
 springdoc:
   api-docs:
