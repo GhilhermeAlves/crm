@@ -59,6 +59,12 @@
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
+        <!-- WebSocket/STOMP (notificações em tempo real) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- OAuth2 Resource Server (Keycloak) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -3,6 +3,7 @@ package com.becommerce.crm.application.notification.service;
 import com.becommerce.crm.application.notification.dto.CreateNotificationRequest;
 import com.becommerce.crm.application.notification.dto.NotificationResponse;
 import com.becommerce.crm.application.notification.port.input.NotificationUseCase;
+import com.becommerce.crm.application.notification.port.output.NotificationPusher;
 import com.becommerce.crm.application.notification.port.output.NotificationRepository;
 import com.becommerce.crm.domain.notification.Notification;
 import com.becommerce.crm.domain.notification.exception.NotificationNotFoundException;
@@ -24,9 +25,12 @@ import java.util.UUID;
 public class NotificationService implements NotificationUseCase {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationPusher notificationPusher;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository,
+                               NotificationPusher notificationPusher) {
         this.notificationRepository = notificationRepository;
+        this.notificationPusher = notificationPusher;
     }
 
     @Override
@@ -37,7 +41,15 @@ public class NotificationService implements NotificationUseCase {
             Notification notification = Notification.create(companyId, request.userId(), request.type(),
                     request.title(), request.body(), request.metadata(), createdBy);
             notificationRepository.save(notification);
-            return toResponse(notification);
+            NotificationResponse response = toResponse(notification);
+            // Push em tempo real após persistir; a falha aqui não deve abortar a
+            // criação (a notificação continua no banco e pode ser listada por REST).
+            try {
+                notificationPusher.push(response);
+            } catch (RuntimeException e) {
+                // logout e segue
+            }
+            return response;
         } finally {
             TenantContext.clear();
         }

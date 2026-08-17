@@ -1,6 +1,7 @@
 package com.becommerce.crm.application.notification.service;
 
 import com.becommerce.crm.application.notification.dto.CreateNotificationRequest;
+import com.becommerce.crm.application.notification.port.output.NotificationPusher;
 import com.becommerce.crm.application.notification.port.output.NotificationRepository;
 import com.becommerce.crm.domain.notification.Notification;
 import com.becommerce.crm.domain.notification.NotificationType;
@@ -27,6 +28,8 @@ import static org.mockito.Mockito.*;
 class NotificationServiceTest {
 
     @Mock NotificationRepository notificationRepository;
+
+    @Mock NotificationPusher notificationPusher;
 
     @InjectMocks NotificationService notificationService;
 
@@ -59,6 +62,7 @@ class NotificationServiceTest {
         assertEquals(NotificationType.INFO, response.type());
         assertFalse(response.read());
         verify(notificationRepository).save(any(Notification.class));
+        verify(notificationPusher).push(any());
         assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
     }
 
