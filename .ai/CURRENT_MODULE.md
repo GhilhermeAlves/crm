@@ -1,30 +1,32 @@
 # Módulo Atual
 
 ## Identificação
-- **Nome:** Notificações
-- **Tipo:** Backend + Frontend + Real-time
-- **Status:** 🚧 Em andamento (próximo módulo a implementar)
+- **Nome:** Campanhas (Sprint 17)
+- **Tipo:** Backend + Frontend
+- **Status:** ⏳ Próximo módulo a implementar
 
 ## Objetivo
-Sistema de notificações in-app completo: tabela + persistência, API (listar minhas, marcar como lida,
-contagem de não-lidas), entrega em tempo real (WebSocket/SSE) e integração com o sino do header.
+Sistema de campanhas de comunicação (email/whatsapp): cadastro de campanhas, definição de público
+(contatos), agendamento e execução de envios, com RLS por tenant e permissões `campaign:*`.
 
-## Estado Atual (antes deste módulo)
-- **Backend:** só `application/notification/EmailSender` (interface) + `ConsoleEmailSender` (fake que loga).
-- **Frontend:** sino decorativo hardcoded em `components/layout/Header.tsx` (3 itens fixos, sem ação).
-- **Banco:** sem tabela de notificações (só coluna `notification_preferences` em company_settings).
-- **WebSocket/SSE:** inexistente em backend e frontend.
+## Estado Atual (módulos recém-concluídos)
+- **Notificações:** ✅ backend (tabela `notifications` + RLS V047, permissões V048, controller REST, push
+  WebSocket/STOMP, auditoria) + frontend (sino real com badge, página `/notifications`, sidebar, polling).
+- **IA/Sugestão (Sprint 20):** ✅ backend (providers OpenAI real/fake + service + controller) + frontend
+  (botão ✨ no Inbox).
+- **Campanhas:** backend vazio (`application/campaign`, `domain/campaign`), frontend rota `/campaigns`
+  sem `page.tsx`, sem tabela no banco.
 
 ## Documentação Relacionada
-- `docs/01-backend/Notifications.md`
-- `docs/02-frontend/Notifications.md`
-- `docs/05-business-rules/Notification.md`
+- `docs/01-backend/Campaigns.md`
+- `docs/02-frontend/Campaigns.md`
+- `docs/05-business-rules/Campaign.md`
 
 ## Dependências
-- Nenhuma externa (módulo novo).
+- Contatos (lista de destinatários), omnichannel (envio WhatsApp), e-mail (`EmailSender`).
 
 ## Próxima Etapa
-Implementar Notificações (backend → push → frontend). Depois: **IA / Sugestão de resposta** (Sprint 20).
+Implementar Campanhas (backend → migrações → frontend). Depois: **Automações (18)** → **Analytics (19)**.
 
 ---
 

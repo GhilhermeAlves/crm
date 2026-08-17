@@ -1,42 +1,41 @@
 # Próximos Passos
 
-## 1. 🔴 Módulo de Notificações (próximo)
+## 1. 🔴 Módulo de Campanhas (Sprint 17) — próximo
 
 ### Status
-⏳ Próximo passo — roadmap atualizado em 2026-08-17
+⏳ Próximo módulo (após Notificações e IA concluídos) — 2026-08-17
 
 ### Backend (greenfield)
-- Migração Flyway: tabela `notifications` (id, company_id, user_id, type, title, body, metadata JSON,
-  read_at, created_at) + RLS tenant + grants `crm_app`.
-- Domain: `Notification`, `NotificationType` (enum), exceções.
-- Application: `NotificationService` (create, listMy, markAsRead, markAllRead, unreadCount),
-  ports (repository), DTOs.
+- Migração Flyway: tabela de campanhas (ex.: `campaigns` + `campaign_contacts`/`campaign_messages`) +
+  RLS tenant + permissões `campaign:*` + grants `crm_app`.
+- Domain: `Campaign`, `CampaignStatus`/`CampaignType` (ex.: email, whatsapp), exceções.
+- Application: `CampaignService` (create, list, detail, schedule, execute), ports, DTOs.
 - Infrastructure: entidade JPA, repositório, mapper.
-- Presentation: `NotificationController` (`GET /api/v1/notifications`, `POST /{id}/read`,
-  `POST /read-all`, `GET /unread-count`).
-- Push: **WebSocket/STOMP** (hoje não existe nenhum) OU SSE — decidir transporte.
-- Provider de e-mail real (hoje `ConsoleEmailSender` fake).
+- Presentation: `CampaignController`.
+- Integração com contatos (lista de destino) e envio (reuso de `EmailSender`/`WhatsAppProvider`).
 
 ### Frontend
-- Feature `notifications` (types, service, hook `useNotifications`).
-- Página `/notifications` (listar, marcar como lida).
-- Sino real no `Header.tsx` com badge de não-lidas + dropdown (hoje hardcoded decorativo).
-- Consumir WebSocket/SSE para atualização em tempo real.
+- Feature `campaigns` (types, service, hook `useCampaigns`).
+- Página `/campaigns` (hoje rota sem `page.tsx`): lista, criação, detalhe, status.
 
-## 2. 🔴 Módulo IA / Sugestão de Resposta (depois)
+## 2. 🔴 Automações Omnichannel (Sprint 18) — depois
 
 ### Status
-⏳ Após Notificações
+⏳ Após Campanhas
 
-- Integração LLM (OpenAI) — pasta `infrastructure/integration/openai` já existe (vazia).
-- Endpoint de sugestão de resposta no chat/omnichannel.
-- Botão "Sugerir resposta" no `ChatThread.tsx`.
-- Hint/fallback: hoje o dashboard usa `suggestion` determinístico (regras) — manter como fallback.
+- Automatizar envio de campanhas (agendamento, triggers) integrado ao módulo de Workflows.
 
-## 3. 🟠 Backlog
-- Campanhas (17) → Automações (18) → Analytics (19)
-- Fechamento Sprint 16 (WhatsApp deploy)
-- Reports (`/reports`)
+## 3. 🟠 Analytics / Dashboard avançado (Sprint 19)
+
+- Relatórios avançados; página `/reports` (hoje rota sem página).
+
+## 4. 🟡 Fechamento Sprint 16 (WhatsApp deploy)
+- Deploy/VPS + IT Testcontainers + E2E manual.
+
+## 5. 🟡 Itens de maturidade (já implementados)
+- **Notificações:** ✅ backend + WebSocket/STOMP + frontend. Resta e-mail real (hoje console fake) e,
+  opcionalmente, conectar o frontend ao STOMP (hoje polling 15s).
+- **IA/Sugestão:** ✅ backend + frontend. Resta chave OpenAI real (hoje `AI_PROVIDER=fake`).
 
 ---
 

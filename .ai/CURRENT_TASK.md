@@ -1,26 +1,25 @@
 # Tarefa Atual
 
 ## Identificação
-- **Tarefa:** Módulo de Notificações
-- **Sprint:** Roadmap / Notificações
+- **Tarefa:** Módulo de Campanhas (Sprint 17)
+- **Sprint:** 17 / Omnichannel
 - **Prioridade:** Alta
-- **Status:** ⏳ Próximo passo (roadmap atualizado)
+- **Status:** ⏳ Próximo módulo
 
 ## Descrição
-Após a revisão profunda do estado real dos módulos e a atualização do roadmap `.ai/`, o próximo
-módulo a implementar é **Notificações**:
+Notificações e IA/Sugestão de resposta foram **concluídos**. O próximo módulo a implementar é
+**Campanhas** (Sprint 17):
 
-- **Backend:** tabela `notifications`, entidade de domínio, repositório, serviço de criação/consulta,
-  controller REST (`GET` minhas notificações, `markAsRead`), mecanismo de push (WebSocket/SSE) e
-  provider de e-mail real (hoje é `ConsoleEmailSender` fake).
-- **Frontend:** página de notificações, hook `useNotifications`, serviço, badge/sino real no `Header.tsx`
-  (hoje é decorativo/hardcoded).
+- **Backend:** tabela de campanhas (ex.: `campaigns` + `campaign_contacts`/`campaign_messages`), domínio,
+  repositório, serviço (criação, agendamento, execução), controller REST e migrações com RLS/permissões.
+- **Frontend:** página `/campaigns` (hoje é rota sem `page.tsx`), hook `useCampaigns`, serviço, UI de
+  criação/lista/detalhe.
 
 ## Dependências
-- Nenhuma (módulo novo, greenfield).
+- Backend de campanhas greenfield; integra com contatos/omnichannel.
 
 ## Depois
-- **IA / Sugestão de resposta** (Sprint 20) — integração LLM para sugerir respostas no chat.
+- **Automações Omnichannel** (Sprint 18) → **Analytics** (19) → fechamento Sprint 16 (WhatsApp).
 
 ---
 

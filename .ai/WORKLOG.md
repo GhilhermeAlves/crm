@@ -167,6 +167,29 @@
 - **Testes:** backend +33 (domínio + 3 services); typecheck/lint OK; build prod OK. IT `OmnichannelIsolationIT` p/ rodar na VPS.
 - **Pendências:** deploy/VPS + IT Testcontainers + E2E manual.
 
+## Módulo de Notificações (2026-08-17) — ✅ Concluído
+- **Backend** (`f81fd27`): domain `Notification`/`NotificationType`/exceções; application
+  `NotificationUseCase`/`NotificationRepository`/`NotificationService` (isola `TenantContext`, defesa por
+  `user_id`); infra `NotificationJpa*`; `NotificationController` + handlers; migrações `V047` (tabela +
+  RLS FORCE) e `V048` (permissões `notification:*`); `AuditModule.NOTIFICATIONS`; `RoleSeedService`;
+  `NotificationServiceTest` (7).
+- **WebSocket/STOMP** (`38515f6`): `spring-boot-starter-websocket`; `WebSocketConfig` (`/api/v1/ws`,
+  broker simple, prefixo `/user`); `StompAuthChannelInterceptor` (JWT no CONNECT → `CurrentUser`);
+  `NotificationPusher` + `StompNotificationPusher`.
+- **Frontend** (`cf95513`): `NotificationBell` (sino real + badge), página `/notifications`,
+  hooks `useNotifications`/`useUnreadCount` (polling 15s), sidebar, rota.
+- **Testes:** backend 379 ✅; frontend typecheck/lint/build ✅.
+
+## Módulo IA / Sugestão de resposta — Sprint 20 (2026-08-17) — ✅ Concluído
+- **Backend** (`78ec979`): `AiSuggestionProvider` (port), `AiSuggestionService` (histórico omnichannel +
+  RLS via `TenantContext`), `OpenAiSuggestionProvider` (WebClient, `@ConditionalOnProperty
+  app.ai.provider=openai`) + `FakeAiSuggestionProvider` (default), `AiSuggestionController`
+  (`/api/v1/ai/suggestions/{conversationId}`, perm `ai:suggest`), migração `V049`, `RoleSeedService`,
+  config `application.yml` + `.env.example`, handler `AiProviderException`→502. `AiSuggestionServiceTest` (4).
+- **Frontend** (`7ecb427`): `AiService.suggest`, `useSuggestReply`/`useAiPermissions`, botão ✨ no
+  `ChatThread.tsx` (preenche o composer).
+- **Total backend:** 379 testes ✅ (BUILD SUCCESS).
+
 ## Revisão de Roadmap + Fix de Produção (2026-08-16/17)
 - **Fix de produção:** 500 em `POST /api/v1/companies` (RLS violation em `roles`). Causa: conexão
   reutilizada em `@Transactional` não reemitia `SET current_company_id`. Fix: proxy de conexão que
