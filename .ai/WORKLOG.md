@@ -167,6 +167,19 @@
 - **Testes:** backend +33 (domínio + 3 services); typecheck/lint OK; build prod OK. IT `OmnichannelIsolationIT` p/ rodar na VPS.
 - **Pendências:** deploy/VPS + IT Testcontainers + E2E manual.
 
+## Revisão de Roadmap + Fix de Produção (2026-08-16/17)
+- **Fix de produção:** 500 em `POST /api/v1/companies` (RLS violation em `roles`). Causa: conexão
+  reutilizada em `@Transactional` não reemitia `SET current_company_id`. Fix: proxy de conexão que
+  reaplica GUCs de tenant antes de cada statement (`TenantAwareDataSource.java`), commit `6b2729f`,
+  CI/CD verdes, deploy ok.
+- **Verificação profunda dos módulos** (backend 22 módulos, frontend, banco V001–V046).
+  - **Inexistentes:** notifications, analytics, campaign, communication, IA/OpenAI.
+  - **Frontend sem:** Notifications (sino decorativo), Campaigns, Reports, chat real-time, IA.
+  - **Banco sem tabela** de notificações.
+- **Roadmap `.ai/` atualizado:** IMPLEMENTATION_QUEUE, PROJECT_STATUS, CURRENT_SPRINT, CURRENT_TASK,
+  OPEN_TASKS, NEXT_STEPS, LAST_SESSION, CURRENT_MODULE.
+- **Próximo:** Módulo de **Notificações** → Módulo **IA / Sugestão de resposta**.
+
 ---
 
 *Última atualização: 2026-07-15*

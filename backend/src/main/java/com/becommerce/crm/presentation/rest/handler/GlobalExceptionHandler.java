@@ -39,11 +39,14 @@ import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 import com.becommerce.crm.domain.storage.exception.StorageObjectNotFoundException;
 import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
 import com.becommerce.crm.domain.task.exception.TaskValidationException;
+import com.becommerce.crm.domain.notification.exception.NotificationNotFoundException;
+import com.becommerce.crm.domain.notification.exception.NotificationValidationException;
 import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
 import com.becommerce.crm.domain.workflow.WorkflowValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -365,6 +368,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TaskValidationException.class)
     public ResponseEntity<Map<String, Object>> handleTaskValidationException(TaskValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(NotificationNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNotificationNotFoundException(NotificationNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(NotificationValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleNotificationValidationException(NotificationValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,

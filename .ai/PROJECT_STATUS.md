@@ -2,94 +2,51 @@
 
 ## Identificação
 - **Nome:** CRM SaaS Omnichannel
-- **Versão:** 4.3.0
+- **Versão:** 20.0.0 (roadmap até Sprint 20 — IA)
 - **Status Geral:** 🟢 Em desenvolvimento
-- **Data da Última Atualização:** 2026-07-15
+- **Data da Última Atualização:** 2026-08-17
 
 ## Sprint Atual
-- **Sprint:** 4.3 — Login
-- **Status:** ✅ Concluída (Development ✅ → Review ✅ → Close ✅)
+- **Sprint:** 16 — WhatsApp (base) 🚧 em andamento + **revisão de roadmap**
+- **Status:** Código + testes + build OK; pendente deploy/VPS + IT Testcontainers + E2E
 
-## Próxima Sprint
-- **Sprint:** 4.4 — Frontend Auth
-- **Status:** ⏳ Pronta para iniciar
-- **Módulo:** Frontend Authentication
-- **Playbook:** implement-auth.md
-- **Contexto:** auth.context.md
-
-## Métricas da Sprint 4.3
-
-| Métrica | Valor |
-|---------|-------|
-| Arquivos criados (Java) | 4 (3 events + JwtUserPrincipal) |
-| Arquivos modificados | 8 (AuthService, UserService, AuthController, SecurityConfig, JwtAuthenticationFilter, UserRepository, UserRepositoryImpl, SpringDataUserRepository) |
-| Correções no review | 3 (import removido, import restaurado, logout event companyId) |
-| Novos ADRs | 2 (ADR-012, ADR-013) |
-| Documentos atualizados (.ai) | 10 |
-| Documentos atualizados (sprints/) | 3 (REVIEW, RETROSPECTIVE, REPORT) |
-| Documentos atualizados (docs/) | 2 (CHANGELOG, ARCHITECTURE_DECISIONS) |
-| Nota da Revisão | 93/100 |
-| Tempo estimado total | ~3h (2h dev + 30min review + 30min close) |
-| Pendências técnicas | mvn compile (Maven indisponível), testes (Sprint 4.5) |
-
-## Progresso Geral
-
-| Fase | Total | Concluídas | Pendentes | Progresso |
-|------|-------|------------|-----------|-----------|
-| Planejamento | 3 | 3 | 0 | 100% |
-| Knowledge Layer | 3 | 3 | 0 | 100% |
-| Infraestrutura | 5 | 3 | 2 | 60% |
-| Segurança | 1 | 0 | 1 | 0% |
-| SaaS | 1 | 0 | 1 | 0% |
-| CRM | 4 | 0 | 4 | 0% |
-| Omnichannel | 3 | 0 | 3 | 0% |
-| Analytics | 1 | 0 | 1 | 0% |
-| IA | 1 | 0 | 1 | 0% |
-| **Total** | **22** | **9** | **13** | **41%** |
-
-## Estado por Camada
+## Estado Real dos Módulos (verificado em 2026-08-17)
 
 ### Backend
-- **Status:** 🟢 Auth implementado (Sprints 4.1 + 4.2 + 4.3)
-- **Arquivos:** pom.xml, CrmApplication.java, application.yml, 70+ Java files, 3 SQL migrations
-- **Próximo:** Sprint 4.4 — Frontend Auth
+| Módulo | Nível |
+|--------|-------|
+| identity, company, membership, invitation, contact, lead, pipeline, activity, task, customer360, audit, storage, workflow, omnichannel | ✅ completo |
+| dashboard, onboarding, me | 🟡 parcial (leitura/orquestração) |
+| **notification** | **🟡/❌ só `EmailSender` (console fake)** |
+| analytics, campaign, communication | ❌ pastas vazias |
+| **IA/OpenAI** | ❌ pasta `integration/openai` vazia |
 
 ### Frontend
-- **Status:** 🟡 Fundação criada (Sprint 1)
-- **Arquivos:** package.json, layout.tsx, providers, types, lib
-- **Próximo:** Sprint 4.4 — Frontend Auth
+| Área | Nível |
+|------|-------|
+| Auth, Dashboard, Contacts, Leads, Pipeline, Inbox/Channels, Tasks/Activities, Workflows, Tenants, Users/Members/Invitations, Roles/Permissions, Audit/Storage, Profile | ✅ |
+| Settings | 🟡 (falta `/settings` raiz) |
+| **Notifications** | ❌ só sino decorativo no `Header.tsx` |
+| **Campaigns** | ❌ rota sem página |
+| **Reports** | ❌ rota sem página |
+| **Chat real-time** | ⚠️ REST+React Query, sem WebSocket/SSE |
+| **IA/Sugestão** | ❌ inexistente |
 
 ### Banco de Dados
-- **Status:** 🟢 Tabelas Auth + RBAC criadas (Sprints 4.1 + 4.2)
-- **Arquivos:** V001__initial_schema.sql, V002__auth_tables.sql, V003__rbac_tables.sql
-- **Próximo:** Sprint 4.4
+- V001–V046 aplicadas. **Sem tabela de notificações** (só `notification_preferences` em company_settings).
+- Omnichannel (V044) e Workflows (V041/V043) presentes.
 
-### Infraestrutura
-- **Status:** 🟢 Auth configurado (Sprint 4.1)
-- **Arquivos:** docker-compose.yml, Dockerfiles
-- **Próximo:** Sprint 4.4
+## Métricas Gerais
+- **Sprints:** 49 total · 39 ✅ · 1 🚧 · 4 ⏳ · 5 ↪️
+- **Migrações Flyway:** V001–V046
+- **Deploy:** produção na VPS via GHCR (backend, auth-service, frontend), pipelines CI/CD verdes
 
-### Documentação
-- **Status:** 🟢 Completa
-- **Arquivos:** 43+ arquivos em docs/ (ARCHITECTURE_DECISIONS com ADR-012, ADR-013)
-- **Atualizado:** Sprint 4.3D
-
-### Knowledge Layer
-- **Status:** 🟢 Completa
-- **Arquivos:** 61 arquivos (docs-ai/, contexts/, playbooks/, prompts/)
-- **Atualizado:** Sprint 3.1
-
-### AI Runtime Layer
-- **Status:** 🟢 Completa
-- **Arquivos:** 20 arquivos em .ai/
-- **Atualizado:** Sprint 4.3D
-
-### Cobertura de Testes
-- **Status:** 🔴 Não iniciada
-- **Backend:** 0%
-- **Frontend:** 0%
-- **Próximo:** Sprint 4.5 — Testes Auth
+## Próximos Passos
+1. 🔴 **Módulo Notificações** — backend (tabela, serviço, controller, DTOs, WebSocket/SSE) + frontend (página, hook, badge no header)
+2. 🔴 **Módulo IA / Sugestão de resposta** (Sprint 20)
+3. 🟠 Campanhas (17) → Automações (18) → Analytics (19)
+4. 🟡 Fechamento Sprint 16 (deploy/VPS WhatsApp)
 
 ---
 
-*Atualizado em: 2026-07-15*
+*Atualizado em: 2026-08-17*

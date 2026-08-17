@@ -1,41 +1,29 @@
 # Sprint Atual
 
 ## Identificação
-- **Sprint:** 4.3
-- **Fase:** Login
-- **Nome:** Autenticação JWT
-- **Data Início:** 2026-07-15
-- **Data Fim:** 2026-07-15
-- **Status:** ✅ Concluída
+- **Fase:** Roadmap / Infraestrutura de Notificações
+- **Nome:** Revisão de roadmap + Módulo de Notificações
+- **Status:** 🚧 Em andamento
+- **Data Início:** 2026-08-17
 
-## Objetivo
-Implementar autenticação funcional: emissão de JWT, refresh token rotation, endpoint /me e logout.
+## Contexto
+O roadmap `.ai/` estava desatualizado (travado na Sprint 4.3, 15/07). Verificação profunda do código
+real (backend + frontend + banco) revelou o estado atual: 39/49 sprints concluídas. Os módulos
+**Notificações** e **IA/Sugestão de resposta** estão inexistentes (backend e frontend).
 
-## Progresso
-- [x] Eventos criados (TokenRefreshed, PasswordResetRequested, UserLoggedOut)
-- [x] @Service adicionados (AuthService, UserService)
-- [x] SecurityConfig — rotas protegidas + JwtAuthenticationFilter no chain
-- [x] JwtAuthenticationFilter — validação de token implementada
-- [x] AuthController — logout/changePassword corrigidos, /me endpoint adicionado
-- [x] UserRepository — findAllByCompanyId adicionado + implementado
-- [x] AuthService.changePassword — bug fix (senha não era salva)
-- [x] Review — nota 93/100, 3 correções aplicadas
-- [x] Close — documentação, .ai, milestones atualizados
+## Objetivo desta etapa
+1. ✅ Revisar o estado real de todos os módulos e atualizar o roadmap `.ai/`
+2. 🚧 Implementar o módulo de **Notificações** (próximo passo)
+3. ⏳ Implementar o módulo de **IA / Sugestão de resposta** (depois)
 
-## Próxima Sprint
-- **Sprint:** 4.4 — Frontend Auth
-- **Status:** ⏳ Pronta para iniciar
-- **Módulo:** Frontend Authentication
-- **Playbook:** `implement-auth.md`
-- **Contexto:** `auth.context.md`
-
-## Módulos Envolvidos
-- `domain/identity/` — Domain entities (17 arquivos, +3 events em 4.3)
-- `application/identity/` — Application services (19 arquivos)
-- `infrastructure/identity/` — Infrastructure (12 arquivos)
-- `infrastructure/security/` — Security (6 arquivos, +1 JwtUserPrincipal)
-- `presentation/rest/identity/` — REST controllers (5 arquivos)
+## Módulos Pendentes Confirmados
+| Módulo | Backend | Frontend | Banco |
+|--------|---------|----------|-------|
+| Notificações | só `EmailSender` (fake) | só sino decorativo | sem tabela |
+| IA/Sugestão | vazio | vazio | — |
+| Campanhas | vazio | rota sem página | — |
+| Relatórios | — | rota sem página | — |
 
 ---
 
-*Atualizado em: 2026-07-15*
+*Atualizado em: 2026-08-17*

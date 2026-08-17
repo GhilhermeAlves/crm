@@ -1,291 +1,158 @@
 # Gerenciador Mestre de Execução do Projeto
 
 **Projeto:** CRM SaaS Omnichannel
-**Versão:** 1.1.0
-**Última Atualização:** 2026-07-15
+**Versão:** 1.2.0
+**Última Atualização:** 2026-08-17
+
+> **Fonte de verdade:** [`sprints/SPRINT_INDEX.md`](../sprints/SPRINT_INDEX.md).
+> Este arquivo resume o roadmap e o estado atual. Numeração de sprints segue o índice canônico
+> (Segurança 5–6.10, Identidade 7.x, SaaS 8.x, CRM 9–15, Omnichannel 16–18, Analytics 19, IA 20).
 
 ---
 
-## 1. Visão Geral das Sprints
+## 1. Visão Geral das Sprints (resumo)
 
-| Sprint | Fase | Módulo | Status | Dependências | Playbook | Contexto |
-|--------|------|--------|--------|--------------|----------|----------|
-| 0 | Planejamento | Documentação | ✅ Concluída | — | — | — |
-| 1 | Planejamento | Fundação | ✅ Concluída | — | — | — |
-| 2 | Planejamento | Correções | ✅ Concluída | — | — | — |
-| 3.1 | Knowledge Layer | Navegação IA | ✅ Concluída | — | — | — |
-| 3.2 | AI Runtime Layer | Memória Projeto | ✅ Concluída | — | — | — |
-| 3.3 | Sprint Management | Sprint Layer | ✅ Concluída | — | — | — |
-| 4.1 | Infraestrutura | Auth Backend | ✅ Concluída | Nenhuma | implement-auth.md | auth.context.md |
-| 4.2 | Infraestrutura | Usuários | ⏳ Pendente | 4.1 | implement-users.md | user.context.md |
-| 4.3 | Infraestrutura | Login | ✅ Concluída | 4.1, 4.2 | implement-auth.md | auth.context.md |
-| 4.4 | Infraestrutura | Frontend Auth | ⏳ Pronta para iniciar | 4.3 | implement-auth.md | auth.context.md |
-| 4.5 | Infraestrutura | Testes Auth | ⏳ Pendente | 4.3, 4.4 | implement-auth.md | auth.context.md |
-| 5 | Segurança | Tenant | ⏳ Pendente | 4.1 | implement-company.md | tenant.context.md |
-| 6 | SaaS | Empresas | ⏳ Pendente | 5 | implement-company.md | tenant.context.md |
-| 7 | CRM | Contatos | ⏳ Pendente | 6 | implement-contact.md | contact.context.md |
-| 8 | CRM | Leads | ⏳ Pendente | 7 | implement-lead.md | lead.context.md |
-| 9 | CRM | Pipeline | ⏳ Pendente | 7 | implement-pipeline.md | pipeline.context.md |
-| 10 | CRM | Conversas | ⏳ Pendente | 7 | implement-chat.md | conversation.context.md |
-| 11 | Omnichannel | WhatsApp | ⏳ Pendente | 10 | implement-whatsapp.md | whatsapp.context.md |
-| 12 | Omnichannel | Campanhas | ⏳ Pendente | 10 | implement-automation.md | campaign.context.md |
-| 13 | Omnichannel | Automações | ⏳ Pendente | 12 | implement-automation.md | automation.context.md |
-| 14 | Analytics | Dashboard | ⏳ Pendente | 8, 9, 10 | implement-dashboard.md | dashboard.context.md |
-| 15 | IA | IA Features | ⏳ Pendente | 10 | implement-ai.md | ai.context.md |
+| Sprint | Fase | Módulo | Status |
+|--------|------|--------|--------|
+| 0–3.3 | Fundação / Knowledge / AI Runtime | Planejamento + Layers | ✅ Concluídas |
+| 4.1–4.5 | Infraestrutura | Auth monolítico (JWT) | ↪️ Absorvida pelo gateway OIDC/Keycloak |
+| 5–6.10 | Segurança | Tenant/RLS + Access Gateway OIDC + sessão Redis | ✅ Concluídas |
+| 7.0–7.5 | Identidade / Autenticação | Google, account linking, telefone/OTP, recuperação | ✅ Concluídas |
+| 8–8.6 | SaaS | Empresas, membership, onboarding, switcher, convites, hardening | ✅ Concluídas |
+| 9 | CRM | User & Permission Management / Contatos | ✅ Concluída |
+| 10 | CRM | Leads | ✅ Concluída |
+| 11 | CRM | Pipeline | ✅ Concluída |
+| 12 | CRM | Orientado à ação (Activities/Tasks/Dashboard) | ✅ Concluída |
+| 13–15 | CRM | Automação de Workflows + auditoria | ✅ Concluídas |
+| 16 | Omnichannel | WhatsApp (base) | 🚧 Em andamento (deploy pendente) |
+| 17 | Omnichannel | Campanhas | ⏳ Pendente |
+| 18 | Omnichannel | Automações | ⏳ Pendente |
+| 19 | Analytics | Dashboard | ⏳ Pendente |
+| 20 | IA | IA Features / Sugestão de resposta | ⏳ Pendente |
 
 ---
 
-## 2. Agrupamento por Fases
+## 2. Estado Real dos Módulos (verificado em 2026-08-17)
 
-### Fase 0: Planejamento ✅
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 0 | Documentação oficial (43+ arquivos) | ✅ Concluída |
-| 1 | Fundação (backend, frontend, docker, CI/CD) | ✅ Concluída |
-| 2 | Correções e melhorias (55 fixes) | ✅ Concluída |
+> Legenda: **✅** completo/robusto · **🟡** parcial/esqueleto · **❌** inexistente.
 
-### Fase 1: Knowledge Layer ✅
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 3.1 | Camada de Navegação IA (61 arquivos) | ✅ Concluída |
-| 3.2 | AI Runtime Layer (18 arquivos) | ✅ Concluída |
-| 3.3 | Sprint Management Layer (13 arquivos) | ✅ Concluída |
+### Backend (`backend/src/main/java/com/becommerce/crm/`)
 
-### Fase 2: Infraestrutura ⏳
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 4.1 | Auth Backend (domain, infrastructure, JWT, Spring Security) | ✅ Concluída |
-| 4.2 | Usuários (CRUD, convites, roles) | ✅ Concluída |
-| 4.3 | Login (refresh token, logout) | ✅ Concluída |
-| 4.4 | Frontend Auth (login, provider, routes) | ⏳ Pronta para iniciar |
-| 4.5 | Testes Auth (unit, integration) | ⏳ Pendente |
+| Módulo | Nível | Observações |
+|--------|-------|-------------|
+| identity | ✅ | Auth/OIDC, users, roles, permissions, OTP, reset — o maior módulo |
+| company | ✅ | CRUD, settings, plano, quota/uso, eventos |
+| membership | ✅ | Associação usuário-empresa, membros, papéis |
+| invitation | ✅ | Convites token-based, rate limit Redis, e-mail |
+| onboarding | 🟡 | Orquestra criação de empresa (sem DTOs próprios) |
+| contact | ✅ | CRUD completo |
+| lead | ✅ | CRUD + enums + isolamento RLS |
+| pipeline | ✅ | Pipelines, stages, opportunities, métricas |
+| activity | ✅ | Timeline CRUD |
+| task | ✅ | CRUD + transições |
+| customer360 | ✅ | Agregação de leitura (contato+pipeline+tarefas+atividades) |
+| dashboard | 🟡 | Operacional determinístico (leitura/KPIs) |
+| audit | ✅ | Auditoria transversal (AOP + eventos) |
+| storage | ✅ | Upload/download/lista + quota |
+| workflow | ✅ | Automação (triggers/condições/ações/runs/dry-run) |
+| omnichannel | ✅ | Canais, conversas, mensagens, webhook WhatsApp |
+| **notification** | **🟡/❌** | **Só `EmailSender` (interface) + `ConsoleEmailSender` (fake/log). Sem tabela, controller, DTO, push/WebSocket.** |
+| **analytics** | **❌** | Pastas vazias (`application/analytics`, `domain/analytics`) |
+| **campaign** | **❌** | Pastas vazias (`application/campaign`, `domain/campaign`) |
+| **communication** | **❌** | Pastas vazias |
+| shared | ❌ | Pastas vazias (compartilhado é por módulo) |
+| **IA/OpenAI** | **❌** | Pasta `infrastructure/integration/openai` **vazia**. Nenhum código LLM. |
 
-### Fase 3: Segurança ⏳
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 5 | Tenant (multi-tenancy, schema-per-tenant) | ⏳ Pendente |
+### Frontend (`frontend/src/`)
 
-### Fase 4: SaaS ⏳
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 6 | Empresas (CRUD, settings, subscriptions) | ⏳ Pendente |
+| Área | Nível | Observações |
+|------|-------|-------------|
+| Auth | ✅ | Login/registro/forgot/reset/link/callback (OIDC) |
+| Dashboard | ✅ | Página `/dashboard` orientada à ação |
+| Contacts | ✅ | `/contacts`, `/contacts/[id]` (Customer 360) |
+| Leads | ✅ | `/leads` + new/edit/[id] |
+| Pipeline | ✅ | `/pipeline` (board) |
+| Inbox/Channels | ✅ | `/inbox` (chat WhatsApp), `/channels` |
+| Tasks/Activities | ✅ | `/tasks`, `/activities` |
+| Workflows | ✅ | `/workflows` + new/edit/[id] |
+| Tenants | ✅ | `/tenants` + wizard de criação |
+| Users/Members/Invitations | ✅ | `/users`, `/members`, `/invitations` |
+| Roles/Permissions | ✅ | `/roles`, `/permissions` |
+| Settings | 🟡 | Só `settings/users` e `settings/roles` (falta `/settings` raiz) |
+| Audit/Storage | ✅ | `/audit`, `/storage` |
+| Profile | ✅ | `/profile` |
+| **Notifications** | **❌** | Só sino decorativo hardcoded no `Header.tsx`. Sem página, hook, serviço, badge real, WebSocket/SSE. |
+| **Campaigns** | **❌** | Rota `/campaigns` na Sidebar **sem page.tsx** |
+| **Reports** | **❌** | Rota `/reports` na Sidebar **sem page.tsx** |
+| **Chat real-time** | **⚠️** | REST + React Query; **sem WebSocket/SSE** — novas mensagens exigem refetch manual |
+| **IA/Sugestão** | **❌** | Não existe. Único `suggestion` é regra de negócio do dashboard |
 
-### Fase 5: CRM ⏳
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 7 | Contatos (CRUD, endereços, custom fields, tags) | ⏳ Pendente |
-| 8 | Leads (CRUD, scoring, lifecycle) | ⏳ Pendente |
-| 9 | Pipeline (stages, kanban, opportunities) | ⏳ Pendente |
-| 10 | Conversas (chat, mensagens, WebSocket) | ⏳ Pendente |
+### Banco de Dados (`backend/src/main/resources/db/migration/V001–V046`)
 
-### Fase 6: Omnichannel ⏳
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 11 | WhatsApp (Evolution API, Meta API, templates) | ⏳ Pendente |
-| 12 | Campanhas (campaigns, steps, sending) | ⏳ Pendente |
-| 13 | Automações (triggers, actions, RabbitMQ) | ⏳ Pendente |
-
-### Fase 7: Analytics ⏳
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 14 | Dashboard (KPIs, charts, real-time, cache) | ⏳ Pendente |
-
-### Fase 8: IA ⏳
-| Sprint | Módulo | Status |
-|--------|--------|--------|
-| 15 | IA Features (OpenAI, suggest-reply, scoring) | ⏳ Pendente |
-
----
-
-## 3. Matriz de Dependências
-
-```
-4.1 Auth Backend ─────────────────────────────────────────────┐
-    │                                                        │
-    ├─→ 4.2 Usuários ─→ 4.3 Login ─→ 4.4 Frontend Auth ─→ 4.5 Testes
-    │                        │
-    ├─→ 5 Tenant ─→ 6 Empresas ─→ 7 Contatos ─┬→ 8 Leads ─────┐
-    │                                          │               │
-    │                                          ├→ 9 Pipeline ──┤
-    │                                          │               │
-    │                                          └→ 10 Conversas ─┬→ 11 WhatsApp
-    │                                                          ├→ 12 Campanhas ─→ 13 Automações
-    │                                                          │
-    │                                                          └→ 14 Dashboard (depende de 8, 9, 10)
-    │
-    └─────────────────────────────────────────────────────────→ 15 IA (depende de 10)
-```
-
-### Legenda
-- `─→` dependência direta
-- `┬→` ramificação (depende do anterior)
-- `└→` último na cadeia
+- **Sem tabela de notificações.** Única menção: coluna `notification_preferences` em `company_settings` (V014).
+- **Sem tabela de campanhas/relatórios.**
+- WhatsApp/Omnichannel: `omnichannel_channels`, `omnichannel_conversations`, `omnichannel_messages` (V044) ✅.
+- Workflows: 5 tabelas (V041/V043) ✅.
 
 ---
 
-## 4. Critérios de Conclusão
+## 3. Sprints Pendentes (próximas)
 
-### Para considerar uma Sprint CONCLUÍDA:
+| Prioridade | Sprint | Módulo | Por quê |
+|-----------|--------|--------|---------|
+| 🔴 1 | **Notifications** | Notificações in-app + WebSocket/SSE + e-mail real | Sino hardcoded, sem backend. Requisito para UX e para o chat real-time |
+| 🔴 2 | 20 | IA / Sugestão de resposta | Funil (leads/pipeline) pronto; dashboard já sugere (determinístico); próximo passo IA |
+| 🟠 3 | 17 | Campanhas | Backend vazio + rota sem página |
+| 🟠 4 | 18 | Automações (Omnichannel) | Depende de 17 |
+| 🟠 5 | 19 | Analytics / Dashboard avançado | Depende de 9, 10, 12 |
+| 🟡 6 | 16 | WhatsApp (fechamento) | Código + testes + build OK; falta deploy/VPS + IT Testcontainers + E2E |
 
-#### Backend
-- [ ] Domain entities criadas com value objects
-- [ ] Application services com casos de uso
-- [ ] Infrastructure implementations (repositories, mappers)
-- [ ] REST controllers com DTOs
-- [ ] Migration Flyway criada e testada
-- [ ] Testes unitários (≥80% coverage)
-- [ ] Testes de integração (≥60% coverage)
-- [ ] Lint sem erros (`mvn compile`)
-- [ ] Swagger documentado
-
-#### Frontend
-- [ ] Components criados (≤200 linhas cada)
-- [ ] Hooks criados (useQuery/useMutation)
-- [ ] Pages criadas com layouts
-- [ ] Types definidos
-- [ ] Validações Zod implementadas
-- [ ] Lint sem erros (`npm run lint`)
-- [ ] TypeScript sem erros (`npm run typecheck`)
-
-#### Documentação
-- [ ] `docs/CHANGELOG.md` atualizado
-- [ ] `IMPLEMENTATION_REPORT.md` atualizado
-- [ ] `.ai/LAST_SESSION.md` atualizado
-- [ ] `.ai/WORKLOG.md` atualizado
-- [ ] `.ai/CURRENT_TASK.md` atualizado
-
-#### Qualidade
-- [ ] Código segue Clean Architecture
-- [ ] Sem duplicação de lógica
-- [ ] Sem secrets no código
-- [ ] Naming conventions seguidas
-- [ ] Soft delete implementado (deleted_at)
-- [ ] UUID v4 como PK
-- [ ] created_at/updated_at presentes
+> **Nota de sequência:** Notificações e IA não são sprints numeradas no índice canônico, mas o usuário
+> priorizou: **Notificações → IA/Sugestão de resposta**. Campanhas/Analytics permanecem no backlog
+> (17/18/19/20).
 
 ---
 
-## 5. Próxima Sprint Automática
+## 4. Fases por Estado
 
-### 🎯 Sprint 4.1 — Infraestrutura Auth
-
-| Campo | Valor |
-|-------|-------|
-| **Sprint** | 4.1 |
-| **Fase** | Infraestrutura |
-| **Módulo** | Auth Backend |
-| **Playbook** | `playbooks/implement-auth.md` |
-| **Contexto** | `contexts/auth.context.md` |
-| **Documentação Oficial** | `docs/01-backend/Auth.md`, `docs/05-business-rules/Permissions.md` |
-| **Status** | ⏳ Pendente |
-| **Dependências** | Nenhuma |
-| **Prioridade** | 🔴 Alta |
-
-#### Objetivo
-Criar domain entities, infrastructure, JWT, RBAC para o módulo de autenticação.
-
-#### Arquivos que serão criados
-
-##### Backend
-- `backend/src/main/java/com/becommerce/crm/domain/identity/` — Domain entities
-  - `User.java` — Entidade usuário
-  - `RefreshToken.java` — Entidade refresh token
-  - `Role.java` — Entidade role
-  - `UserRole.java` — Entidade user_role
-  - `valueobject/` — Value objects (Email, Password, etc.)
-  - `event/` — Domain events
-  - `exception/` — Domain exceptions
-
-- `backend/src/main/java/com/becommerce/crm/application/identity/` — Application services
-  - `port/` — Input/Output ports
-  - `service/` — Application services
-  - `dto/` — Request/Response DTOs
-
-- `backend/src/main/java/com/becommerce/crm/infrastructure/identity/` — Infrastructure
-  - `persistence/` — JPA repositories
-  - `security/` — JWT provider, filters
-  - `mapper/` — MapStruct mappers
-
-- `backend/src/main/java/com/becommerce/crm/presentation/rest/identity/` — REST
-  - `AuthController.java` — Login, refresh, logout
-  - `UserController.java` — CRUD usuários
-
-- `backend/src/main/resources/db/migration/V002__auth_tables.sql` — Migration
-
-##### Frontend
-- Nenhum (Sprint 4.4)
-
-#### Arquivos proibidos
-- `docs/**` — Documentação oficial
-- `docs-ai/**` — Knowledge Layer
-- `contexts/**` — Contextos
-- `playbooks/**` — Playbooks
-- `prompts/**` — Prompts
-- `frontend/**` — Código frontend (Sprint 4.4)
+| Fase | Total | ✅ | 🚧 | ⏳ | ↪️ |
+|------|-------|----|----|----|----|
+| Planejamento | 3 | 3 | 0 | 0 | 0 |
+| Knowledge Layer | 3 | 3 | 0 | 0 | 0 |
+| Infraestrutura | 5 | 0 | 0 | 0 | 5 |
+| Segurança | 12 | 12 | 0 | 0 | 0 |
+| Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
+| SaaS | 7 | 7 | 0 | 0 | 0 |
+| CRM | 8 | 8 | 0 | 0 | 0 |
+| Omnichannel | 3 | 0 | 1 | 2 | 0 |
+| Analytics | 1 | 0 | 0 | 1 | 0 |
+| IA | 1 | 0 | 0 | 1 | 0 |
+| **Total** | **49** | **39** | **1** | **4** | **5** |
 
 ---
 
-## 6. Status Padronizados
+## 5. Regras de Sequenciamento
 
-| Ícone | Status | Significado |
-|-------|--------|-------------|
-| ⏳ | Pendente | Sprint ainda não iniciada |
-| 🚧 | Em andamento | Sprint em execução |
-| ✅ | Concluída | Sprint completa e validada |
-| ⛔ | Bloqueada | Sprint bloqueada por dependência |
-| ❌ | Cancelada | Sprint cancelada |
-
----
-
-## 7. Regras de Sequenciamento
-
-1. **Auth primeiro** — Tudo depende de autenticação
-2. **Tenant depois de Auth** — Multi-tenancy requer JWT
-3. **Empresas depois de Tenant** — Companies precisam de schema
-4. **Contatos depois de Empresas** — Contacts são por empresa
-5. **Leads/Conversas depois de Contatos** — Referenciam contacts
-6. **Pipeline depois de Leads** — Opportunities são por lead
-7. **WhatsApp depois de Conversas** — Integra com mensagens
-8. **Campanhas depois de WhatsApp** — Envia mensagens
-9. **Automações depois de Campanhas** — Dispara campanhas
-10. **Dashboard/IA no final** — Consomem dados de todos
+1. Auth primeiro (gateway OIDC/Keycloak) → feito
+2. Tenant/RLS depois de Auth → feito
+3. Empresas depois de Tenant → feito
+4. Contatos/Leads/Pipeline → feito
+5. Workflows → feito
+6. WhatsApp (16) → em andamento
+7. **Notificações** → para suportar UX/chat real-time
+8. **IA/Sugestão de resposta** (20)
+9. Campanhas (17) → Automações (18) → Analytics (19)
 
 ---
 
-## 8. Métricas de Progresso
-
-| Fase | Total | Concluídas | Em Andamento | Pendentes |
-|------|-------|------------|--------------|-----------|
-| Planejamento | 3 | 3 | 0 | 0 |
-| Knowledge Layer | 3 | 3 | 0 | 0 |
-| Infraestrutura | 5 | 3 | 0 | 2 |
-| Segurança | 1 | 0 | 0 | 1 |
-| SaaS | 1 | 0 | 0 | 1 |
-| CRM | 4 | 0 | 0 | 4 |
-| Omnichannel | 3 | 0 | 0 | 3 |
-| Analytics | 1 | 0 | 0 | 1 |
-| IA | 1 | 0 | 0 | 1 |
-| **Total** | **22** | **9** | **0** | **13** |
-
-**Progresso Geral:** 41% (9/22)
-
----
-
-## 9. Histórico de Alterações
+## 6. Histórico de Alterações
 
 | Data | Sprint | Alteração |
 |------|--------|-----------|
-| 2026-07-15 | 4.3D | Encerramento da Sprint 4.3 — Login (nota 93/100) |
-| 2026-07-15 | 4.2 | Sprint 4.2 — User Identity Foundation |
-| 2026-07-15 | 4.1D | Encerramento da Sprint 4.1 |
-| 2026-07-15 | 4.1C | Revisão aprovada (93/100) |
-| 2026-07-15 | 4.1B | Infraestrutura Spring Security + JWT + Exception Handling |
-| 2026-07-15 | 4.1A | Planejamento formal da Sprint 4.1 |
-| 2026-07-15 | 3.3 | Criação da Sprint Management Layer |
-| 2026-07-15 | 3.2 | Criação do Gerenciador Mestre |
-| 2026-07-15 | 3.1 | Criação da Knowledge Layer |
-| 2026-07-15 | 1 | Fundação do Projeto |
+| 2026-08-17 | — | **Revisão profunda do estado real dos módulos** (backend/frontend/DB). Módulos inexistentes: notifications, analytics, campaign, communication, IA. Frontend sem Campaigns/Reports/Notifications/real-time. Banco sem tabela de notificações. Próximo: Notificações → IA/Sugestão. |
+| 2026-08-16 | — | Deploy real em produção via GHCR; fix RLS no createCompany (proxy de tenant GUC); wizard de criação de empresa |
+| 2026-08-15 | 16 | Início Sprint 16 — WhatsApp (código + testes + build OK) |
 
 ---
 
-*Última atualização: 2026-07-15*
+*Última atualização: 2026-08-17*

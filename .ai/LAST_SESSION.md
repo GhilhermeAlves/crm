@@ -1,31 +1,32 @@
 # Última Sessão
 
 ## Resumo Rápido
-- **Sprint:** 4.3C + 4.3D — Review + Close
-- **Módulo:** Auth Backend
-- **Tarefa:** Revisão técnica + encerramento oficial da Sprint 4.3
-- **Status:** ✅ Concluída
+- **Fase:** Revisão profunda do estado real dos módulos + fix de produção
+- **Data:** 2026-08-17
 
-## Revisão
-- **Arquivos Revisados:** 8+ (AuthService, UserService, AuthController, SecurityConfig, JwtAuthenticationFilter, JwtUserPrincipal, UserRepository e impl, SpringDataUserRepository)
-- **Correções Aplicadas:** 3
-  - AuthController — removed unused `import java.util.UUID`
-  - UserService — restored `import java.util.stream.Collectors` (was incorrectly removed)
-  - AuthService.logout — event now uses `companyId` instead of `userId`
-- **Arquitetura:** +2 ADRs (ADR-012 roles hardcoded, ADR-013 reset password placeholder)
-- **Nota:** 93/100
+## Fix de produção (antes)
+- **Bug:** `POST /api/v1/companies` retornava 500 (RLS violation em `roles`).
+- **Causa:** `TenantAwareDataSource` só emitia `SET app.current_company_id` ao obter conexão nova;
+  dentro de `@Transactional` a mesma conexão era reutilizada, então
+  `TenantContext.setCompanyId(novaEmpresa)` não era refletido no banco.
+- **Fix:** proxy de conexão que reaplica os GUCs de tenant antes de cada statement quando o contexto
+  muda (`TenantAwareDataSource.java`). Commit `6b2729f`, CI/CD verdes, deploy ok.
 
-## Documentação Atualizada
-- `.ai/` — 10 arquivos
-- `docs/CHANGELOG.md` — [4.3.0] adicionado
-- `docs/ARCHITECTURE_DECISIONS.md` — ADR-012, ADR-013
-- `sprints/4.3/` — REVIEW, RETROSPECTIVE, REPORT
-- `milestones/M2 - Authentication Foundation.md`
-- `backend/IMPLEMENTATION_REPORT.md`
+## Revisão de roadmap
+- Verificação profunda de backend (22 módulos), frontend (features/páginas) e banco (V001–V046).
+- Módulos **inexistentes**: notifications, analytics, campaign, communication, IA/OpenAI.
+- Frontend **sem**: Notifications (sino decorativo), Campaigns, Reports, chat real-time, IA.
+- Banco **sem tabela** de notificações.
+- Estado real: 39/49 sprints ✅.
+
+## Documentação Atualizada (.ai)
+- `IMPLEMENTATION_QUEUE.md`, `PROJECT_STATUS.md`, `CURRENT_SPRINT.md`, `CURRENT_TASK.md`,
+  `OPEN_TASKS.md`, `NEXT_STEPS.md`.
 
 ## Próximo
-- Aguardando autorização para **Sprint 4.4 — Frontend Auth**
+- 🔴 Implementar **Módulo de Notificações** (backend + frontend + WebSocket/SSE + e-mail real).
+- 🔴 Depois **Módulo IA / Sugestão de resposta**.
 
 ---
 
-*Atualizado em: 2026-07-15*
+*Atualizado em: 2026-08-17*
