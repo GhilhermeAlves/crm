@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
+import { useSuggestReply, useAiPermissions } from "@/features/ai/hooks/useAi";
 import { MESSAGE_STATUS_LABELS, type ConversationDetail } from "../types/omnichannel.types";
 
 type Props = {
@@ -21,6 +22,8 @@ type Props = {
 export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Props) {
   const [body, setBody] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const suggestReply = useSuggestReply();
+  const { canSuggest } = useAiPermissions();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -101,6 +104,28 @@ export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Prop
       </ScrollArea>
 
       <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t p-3">
+        {canSuggest && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="shrink-0"
+            aria-label="Sugerir resposta com IA"
+            title="Sugerir resposta com IA"
+            disabled={suggestReply.isPending || !detail}
+            onClick={() => {
+              suggestReply.mutate(detail.id, {
+                onSuccess: (res) => setBody(res.suggestion),
+              });
+            }}
+          >
+            {suggestReply.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+          </Button>
+        )}
         <Input
           value={body}
           onChange={(e) => setBody(e.target.value)}
