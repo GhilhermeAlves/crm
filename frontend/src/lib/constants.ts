@@ -35,6 +35,7 @@ export const ROUTES = {
   INBOX: "/inbox",
   CHANNELS: "/channels",
   STORAGE: "/storage",
+  NOTIFICATIONS: "/notifications",
 } as const;
 
 export const PUBLIC_ROUTES = [

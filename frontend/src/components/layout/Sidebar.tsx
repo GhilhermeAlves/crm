@@ -23,6 +23,7 @@ import {
   ClipboardList,
   HardDrive,
   Workflow as WorkflowIcon,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -140,6 +141,12 @@ const navGroups: NavGroup[] = [
         href: ROUTES.WORKFLOWS,
         icon: WorkflowIcon,
         permission: "workflow:read",
+      },
+      {
+        label: "Notificações",
+        href: ROUTES.NOTIFICATIONS,
+        icon: Bell,
+        permission: "notification:read",
       },
     ],
   },

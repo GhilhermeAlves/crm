@@ -1,20 +1,13 @@
 "use client";
 
-import { Bell, Menu, Search, Command } from "lucide-react";
+import { Menu, Search, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/UserMenu";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { useSidebar } from "@/store/sidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
 export function Header() {
   const { setMobileOpen } = useSidebar();
@@ -51,41 +44,7 @@ export function Header() {
       </Button>
 
       {/* Notifications */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative h-9 w-9">
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-80" align="end">
-          <DropdownMenuLabel className="flex items-center justify-between">
-            <span>Notificações</span>
-            <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-primary">
-              Marcar como lidas
-            </Button>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-            <p className="text-sm font-medium">Novo lead atribuído</p>
-            <p className="text-xs text-muted-foreground">
-              João Silva foi atribuído a você há 5 minutos
-            </p>
-          </DropdownMenuItem>
-          <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-            <p className="text-sm font-medium">Reunião agendada</p>
-            <p className="text-xs text-muted-foreground">Reunião com Empresa X amanhã às 14h</p>
-          </DropdownMenuItem>
-          <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-            <p className="text-sm font-medium">Negócio atualizado</p>
-            <p className="text-xs text-muted-foreground">Proposta aceita para Empresa Y</p>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="justify-center text-sm text-primary">
-            Ver todas as notificações
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <NotificationBell />
 
       {/* Theme Toggle */}
       <ThemeToggle />
