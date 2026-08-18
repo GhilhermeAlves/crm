@@ -20,5 +20,6 @@ public enum AuditModule {
     MEMBERSHIPS,
     INVITATIONS,
     NOTIFICATIONS,
-    SYSTEM
+    SYSTEM,
+    AI
 }

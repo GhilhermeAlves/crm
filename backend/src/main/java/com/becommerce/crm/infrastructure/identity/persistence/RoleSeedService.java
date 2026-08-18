@@ -67,6 +67,7 @@ public class RoleSeedService {
             "workflow:create", "workflow:read", "workflow:update", "workflow:delete",
             "notification:create", "notification:read", "notification:update", "notification:delete",
             "ai:suggest",
+            "ai:chat",
             "dashboard:operational"
         ));
         rolePermissions.put(RoleName.MANAGER, List.of(
@@ -88,6 +89,7 @@ public class RoleSeedService {
             "workflow:create", "workflow:read", "workflow:update", "workflow:delete",
             "notification:create", "notification:read", "notification:update",
             "ai:suggest",
+            "ai:chat",
             "dashboard:operational"
         ));
         rolePermissions.put(RoleName.AGENT, List.of(
@@ -104,6 +106,7 @@ public class RoleSeedService {
             "workflow:read",
             "notification:create", "notification:read", "notification:update",
             "ai:suggest",
+            "ai:chat",
             "dashboard:operational"
         ));
         rolePermissions.put(RoleName.VIEWER, List.of(
@@ -119,6 +122,7 @@ public class RoleSeedService {
             "task:read",
             "workflow:read",
             "notification:read",
+            "ai:chat",
             "dashboard:operational"
         ));
 
