@@ -64,6 +64,18 @@ spring:
       filter:
         enabled: false
 
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_STARTTLS:true}
+
 server:
   port: 8080
   servlet:
@@ -85,6 +97,9 @@ app:
       auth-service-url: ${AUTH_SERVICE_URL:}
       internal-api-token: ${AUTH_INTERNAL_API_TOKEN:}
   mail:
+    provider: ${MAIL_PROVIDER:console}
+    from: ${MAIL_FROM:}
+    frontend-base-url: ${MAIL_FRONTEND_BASE_URL:http://localhost:3000}
     log-token: ${MAIL_LOG_TOKEN:false}
   invitations:
     base-url: ${INVITATION_BASE_URL:}
