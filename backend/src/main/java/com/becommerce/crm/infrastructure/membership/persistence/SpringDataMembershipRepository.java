@@ -31,7 +31,7 @@ public interface SpringDataMembershipRepository extends JpaRepository<Membership
             FROM memberships m
             WHERE m.company_id = :companyId
               AND m.status = 'ACTIVE'
-              AND m.role IN ('ADMIN', 'OWNER')
+              AND m.role IN ('ADMIN', 'OWNER', 'SUPER_ADMIN')
             """, nativeQuery = true)
     long countActiveAdminsByCompanyId(@Param("companyId") UUID companyId);
 

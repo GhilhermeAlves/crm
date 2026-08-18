@@ -141,6 +141,24 @@ class MembershipServiceTest {
     }
 
     @Test
+    void shouldAllowPromotingLastAdminToSuperAdmin() {
+        Role superAdminRole = role(RoleName.SUPER_ADMIN);
+        Membership membership = Membership.activate(USER_ID, COMPANY_ID, "ADMIN");
+        when(membershipRepository.findActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID))
+                .thenReturn(Optional.of(membership));
+        when(roleRepository.findByNameAndCompanyId(RoleName.SUPER_ADMIN.name(), COMPANY_ID))
+                .thenReturn(Optional.of(superAdminRole));
+        when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, superAdminRole.getId())).thenReturn(false);
+        when(membershipRepository.save(any(Membership.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.updateMemberRole(COMPANY_ID, USER_ID, "SUPER_ADMIN", COMPANY_ID, false);
+
+        assertEquals("SUPER_ADMIN", membership.getRole());
+        verify(userRoleRepository).deleteByUserIdAndCompanyId(USER_ID, COMPANY_ID);
+        verify(userRoleRepository).save(any());
+    }
+
+    @Test
     void shouldRejectInvalidRole() {
         assertThrows(RoleNotFoundException.class,
                 () -> service.updateMemberRole(COMPANY_ID, USER_ID, "NAO_EXISTE", COMPANY_ID, false));

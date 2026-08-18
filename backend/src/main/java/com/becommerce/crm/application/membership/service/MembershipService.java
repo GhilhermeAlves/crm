@@ -94,7 +94,7 @@ public class MembershipService implements MembershipUseCase {
                         "Membro não encontrado nesta empresa: " + userId));
 
         boolean demotingAdmin = membership.isAdminRole()
-                && !targetRole.getName().equals(membership.getRole());
+                && !Membership.isAdminLevelRole(targetRole.getName());
         if (demotingAdmin) {
             assertNotLastAdmin(companyId, membership);
         }

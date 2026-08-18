@@ -6,6 +6,9 @@ import com.becommerce.crm.application.identity.port.output.EventPublisher;
 import com.becommerce.crm.application.identity.port.output.PasswordEncoder;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
+import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.application.notification.EmailSender;
+import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.UserStatus;
 import com.becommerce.crm.domain.membership.Membership;
@@ -29,13 +32,22 @@ public class UserService implements UserUseCase {
     private final PasswordEncoder passwordEncoder;
     private final EventPublisher eventPublisher;
     private final MembershipRepository membershipRepository;
+    private final CompanyRepository companyRepository;
+    private final EmailSender emailSender;
+
+    private final String invitationBaseUrl;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       EventPublisher eventPublisher, MembershipRepository membershipRepository) {
+                       EventPublisher eventPublisher, MembershipRepository membershipRepository,
+                       CompanyRepository companyRepository, EmailSender emailSender,
+                       @org.springframework.beans.factory.annotation.Value("${app.invitations.base-url:}") String invitationBaseUrl) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
         this.membershipRepository = membershipRepository;
+        this.companyRepository = companyRepository;
+        this.emailSender = emailSender;
+        this.invitationBaseUrl = invitationBaseUrl;
     }
 
     @Override
@@ -190,10 +202,21 @@ public class UserService implements UserUseCase {
                 saved.getId(), companyId, "AGENT", invitedBy));
 
         log.info("Convite enviado para: {} (token: {})", saved.getEmail().value(), saved.getInviteToken());
-        // TODO: Send invitation email when EmailService is fully implemented
-        // emailService.sendInviteEmail(saved.getEmail().value(), saved.getInviteToken(), saved.getFirstName());
+
+        String companyName = companyRepository.findById(companyId)
+                .map(Company::getTradingName)
+                .orElse("Sua empresa");
+        emailSender.sendInvitation(
+                saved.getEmail().value(), companyName, "AGENT", buildTokenUrl(saved.getInviteToken()));
 
         return mapToResponse(saved);
+    }
+
+    private String buildTokenUrl(String token) {
+        if (invitationBaseUrl != null && !invitationBaseUrl.isBlank()) {
+            return invitationBaseUrl.replaceAll("/+$", "") + "/invitations/accept?token=" + token;
+        }
+        return "/invitations/accept?token=" + token;
     }
 
     @Override
