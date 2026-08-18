@@ -53,6 +53,15 @@ services:
       - SPRING_FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_FLYWAY_OUT_OF_ORDER=true
       - OMNICHANNEL_WHATSAPP_WEBHOOK_VERIFY_TOKEN=${OMNICHANNEL_WHATSAPP_WEBHOOK_VERIFY_TOKEN:-}
+      - MAIL_PROVIDER=${MAIL_PROVIDER:-console}
+      - MAIL_FROM=${MAIL_FROM:-}
+      - MAIL_FRONTEND_BASE_URL=${MAIL_FRONTEND_BASE_URL:-https://srv1348261.hstgr.cloud}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_AUTH=${SMTP_AUTH:-true}
+      - SMTP_STARTTLS=${SMTP_STARTTLS:-true}
     networks:
       - crm-network
     restart: unless-stopped
