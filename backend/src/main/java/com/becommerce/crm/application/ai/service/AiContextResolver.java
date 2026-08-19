@@ -1,104 +1,91 @@
 package com.becommerce.crm.application.ai.service;
 
+import com.becommerce.crm.application.ai.context.AiApplicationContext;
+import com.becommerce.crm.application.ai.context.AiCompanyContext;
+import com.becommerce.crm.application.ai.context.AiPermissionContext;
+import com.becommerce.crm.application.ai.context.AiRecordContext;
+import com.becommerce.crm.application.ai.context.AiRecordContextResolver;
+import com.becommerce.crm.application.ai.context.AiUserContext;
+import com.becommerce.crm.application.ai.context.ResolvedAiContext;
 import com.becommerce.crm.application.ai.dto.AiContextPayload;
-import com.becommerce.crm.application.customer360.dto.ContactSummaryResponse;
-import com.becommerce.crm.application.customer360.dto.Customer360Response;
-import com.becommerce.crm.application.customer360.dto.NextActionResponse;
-import com.becommerce.crm.application.customer360.dto.OpportunityItemResponse;
-import com.becommerce.crm.application.customer360.dto.TaskItemResponse;
-import com.becommerce.crm.application.customer360.service.Customer360Service;
+import com.becommerce.crm.domain.ai.AiRecordType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * Resolvedor de contexto do assistente de IA (AI-01). Traduz a "dica de tela"
- * ({@link AiContextPayload}) em contexto de CRM REAL, reutilizando os services
- * existentes (nunca duplica regra de negócio).
+ * Context Engine (AI-02): dispatcher que resolve o contexto completo a partir
+ * do {@code CurrentUser} autenticado (companyId/userId/permissions) e das dicas
+ * de tela/rota/registro enviadas pelo frontend. O {@code AiContextPayload}
+ * apenas direciona; os dados reais vêm do CRM, nunca do payload.
  *
- * <p>O backend resolve o contexto a partir de {@code companyId} + {@code screen}
- * + {@code recordId} e carrega os dados de fato; não confia em texto enviado
- * pelo frontend. O contexto montado é injetado no prompt do modelo.
+ * <p>Para cada tipo de registro em foco, o dispatcher seleciona o
+ * {@link AiRecordContextResolver} correspondente e só o executa se o usuário
+ * possuir a permissão de leitura exigida. Sem permissão (ou sem registro),
+ * o contexto de CRM é omitido — o assistente responde apenas com o que é
+ * permitido ver.</p>
  */
 @Component
 public class AiContextResolver {
 
-    /** Telas que resolvem para um Customer 360 (registro = contactId). */
-    private static final String SCREEN_CUSTOMER = "customer";
-    private static final String SCREEN_CUSTOMER360 = "customer360";
-    private static final String SCREEN_CONTACT = "contact";
+    private static final Logger log = LoggerFactory.getLogger(AiContextResolver.class);
 
-    private final Customer360Service customer360Service;
+    private final Map<AiRecordType, AiRecordContextResolver> resolvers = new EnumMap<>(AiRecordType.class);
 
-    public AiContextResolver(Customer360Service customer360Service) {
-        this.customer360Service = customer360Service;
+    public AiContextResolver(List<AiRecordContextResolver> resolvers) {
+        for (AiRecordContextResolver r : resolvers) {
+            this.resolvers.put(r.type(), r);
+        }
     }
 
     /**
-     * Monta o bloco de contexto textual do registro em foco, ou {@code null} se
-     * não há contexto de registro aplicável.
+     * Resolve o contexto completo para uma interação do assistente.
+     *
+     * @param companyId empresa ativa (do CurrentUser)
+     * @param userId usuário autenticado (do CurrentUser)
+     * @param permissions permissões do usuário (do CurrentUser)
+     * @param context dica de navegação/registro enviada pelo frontend (pode ser null)
      */
-    public String resolve(UUID companyId, AiContextPayload context) {
+    public ResolvedAiContext resolve(UUID companyId, UUID userId, List<String> permissions,
+                                     AiContextPayload context) {
+        AiUserContext user = new AiUserContext(userId);
+        AiCompanyContext company = new AiCompanyContext(companyId);
+        AiPermissionContext permissionContext = new AiPermissionContext(permissions);
+        AiApplicationContext application = AiApplicationContext.of(
+                context != null ? context.screen() : null,
+                context != null ? context.route() : null);
+
         if (context == null || context.recordId() == null) {
-            return null;
-        }
-        String screen = context.screen() == null ? "" : context.screen();
-        if (isCustomerScreen(screen)) {
-            return customerContext(companyId, context.recordId());
-        }
-        return null;
-    }
-
-    private boolean isCustomerScreen(String screen) {
-        return SCREEN_CUSTOMER.equalsIgnoreCase(screen)
-                || SCREEN_CUSTOMER360.equalsIgnoreCase(screen)
-                || SCREEN_CONTACT.equalsIgnoreCase(screen);
-    }
-
-    private String customerContext(UUID companyId, UUID contactId) {
-        Customer360Response c360 = customer360Service.build(companyId, contactId);
-        StringBuilder sb = new StringBuilder();
-
-        ContactSummaryResponse c = c360.contact();
-        sb.append("Cliente: ").append(c.fullName()).append('\n');
-        if (c.email() != null) sb.append("E-mail: ").append(c.email()).append('\n');
-        if (c.phone() != null) sb.append("Telefone: ").append(c.phone()).append('\n');
-        if (c.notes() != null && !c.notes().isBlank()) sb.append("Notas: ").append(c.notes()).append('\n');
-        sb.append("Risco: ").append(Boolean.TRUE.equals(c.atRisk()) ? "ALTO" : "BAIXO")
-                .append(c.riskMessage() != null ? " (" + c.riskMessage() + ")" : "").append('\n');
-
-        sb.append("Oportunidades abertas: ").append(c360.openOpportunities()).append('\n');
-        sb.append("Valor potencial: R$ ").append(safe(c360.openValue())).append('\n');
-
-        if (!c360.opportunities().isEmpty()) {
-            sb.append("Oportunidades:\n");
-            for (OpportunityItemResponse o : c360.opportunities()) {
-                sb.append("  - ").append(o.title()).append(" | ").append(o.stageName())
-                        .append(" | prob. ").append(o.probability()).append("%")
-                        .append(" | valor R$ ").append(safe(o.value()))
-                        .append(" | ").append(o.statusLabel()).append('\n');
-            }
+            return ResolvedAiContext.empty(user, company, permissionContext, application);
         }
 
-        if (!c360.tasks().isEmpty()) {
-            sb.append("Tarefas:\n");
-            for (TaskItemResponse t : c360.tasks()) {
-                sb.append("  - ").append(t.title()).append(" | ").append(t.status())
-                        .append(t.overdue() ? " | VENCIDA" : "").append('\n');
-            }
+        AiRecordType type = context.resolvedType();
+        if (type == null) {
+            return ResolvedAiContext.empty(user, company, permissionContext, application);
         }
 
-        NextActionResponse n = c360.nextAction();
-        if (n != null) {
-            sb.append("Próxima ação recomendada: ").append(n.title())
-                    .append(" — ").append(n.description()).append('\n');
+        AiRecordContextResolver resolver = resolvers.get(type);
+        if (resolver == null) {
+            return ResolvedAiContext.empty(user, company, permissionContext, application);
         }
 
-        return sb.toString();
-    }
+        if (!permissionContext.has(resolver.requiredPermission())) {
+            log.info("Usuário {} sem permissão {}; contexto de {} omitido.",
+                    userId, resolver.requiredPermission(), type);
+            return ResolvedAiContext.empty(user, company, permissionContext, application);
+        }
 
-    private static String safe(BigDecimal value) {
-        return value == null ? "0,00" : value.toPlainString();
+        String crmContext = resolver.resolve(companyId, context.recordId());
+        if (crmContext == null) {
+            return ResolvedAiContext.empty(user, company, permissionContext, application);
+        }
+
+        return ResolvedAiContext.of(user, company, permissionContext, application,
+                new AiRecordContext(type, context.recordId()), crmContext);
     }
 }

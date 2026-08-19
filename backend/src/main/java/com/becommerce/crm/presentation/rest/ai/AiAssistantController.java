@@ -33,7 +33,8 @@ public class AiAssistantController {
         if (principal.companyId() == null) {
             throw new CrmAccessDeniedException("Você precisa de uma empresa ativa para usar a IA.");
         }
-        AiChatResponse response = aiAssistantUseCase.chat(principal.companyId(), principal.userId(), request);
+        AiChatResponse response = aiAssistantUseCase.chat(principal.companyId(), principal.userId(),
+                principal.permissions(), request);
         return ResponseEntity.ok(response);
     }
 }

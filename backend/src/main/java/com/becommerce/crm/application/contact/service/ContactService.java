@@ -86,6 +86,29 @@ public class ContactService implements ContactUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ContactResponse> search(UUID companyId, String query, int limit) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            String q = query == null ? "" : query.trim().toLowerCase();
+            return contactRepository.findByCompanyIdActive(companyId).stream()
+                    .filter(c -> q.isEmpty() || matches(c, q))
+                    .limit(Math.max(1, limit))
+                    .map(ContactService::toResponse)
+                    .toList();
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    private static boolean matches(Contact c, String q) {
+        return (c.getFirstName() != null && c.getFirstName().toLowerCase().contains(q))
+                || (c.getLastName() != null && c.getLastName().toLowerCase().contains(q))
+                || (c.getEmail() != null && c.getEmail().toLowerCase().contains(q))
+                || (c.getPhone() != null && c.getPhone().toLowerCase().contains(q));
+    }
+
+    @Override
     @Transactional
     public ContactResponse update(UUID companyId, UUID contactId, UpdateContactRequest request) {
         try {

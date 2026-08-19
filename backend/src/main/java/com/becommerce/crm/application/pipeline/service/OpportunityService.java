@@ -266,6 +266,31 @@ public class OpportunityService implements OpportunityUseCase {
 
     @Override
     @Transactional(readOnly = true)
+    public List<OpportunityResponse> search(UUID companyId, OpportunityStatus status, UUID pipelineId,
+                                            UUID contactId, UUID stageId, UUID assignedTo, int limit) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            Map<UUID, Stage> stageById = new java.util.HashMap<>();
+            stageRepository.findByCompanyId(companyId).forEach(s -> stageById.put(s.getId(), s));
+
+            return opportunityRepository.findByCompanyId(companyId).stream()
+                    .filter(o -> status == null || o.getStatus() == status)
+                    .filter(o -> pipelineId == null || pipelineId.equals(o.getPipelineId()))
+                    .filter(o -> contactId == null || contactId.equals(o.getContactId()))
+                    .filter(o -> stageId == null || stageId.equals(o.getStageId()))
+                    .filter(o -> assignedTo == null || assignedTo.equals(o.getAssignedTo()))
+                    .sorted(Comparator.comparing(Opportunity::getUpdatedAt,
+                            Comparator.nullsLast(Comparator.reverseOrder())))
+                    .limit(Math.max(1, limit))
+                    .map(o -> toResponse(o, stageById.get(o.getStageId())))
+                    .toList();
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<OpportunityHistoryResponse> history(UUID companyId, UUID opportunityId) {
         try {
             TenantContext.setCompanyId(companyId);

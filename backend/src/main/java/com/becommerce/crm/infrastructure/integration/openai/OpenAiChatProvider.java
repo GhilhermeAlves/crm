@@ -39,7 +39,7 @@ public class OpenAiChatProvider implements AiProvider {
     }
 
     @Override
-    public String chat(ChatRequest request) {
+    public ChatResult chatWithTools(ChatRequest request) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new AiProviderException("Chave de API do OpenAI não configurada (app.ai.api-key).");
         }
@@ -50,20 +50,29 @@ public class OpenAiChatProvider implements AiProvider {
         }
 
         try {
+            Map<String, Object> bodyMap = new java.util.HashMap<>();
+            bodyMap.put("model", model);
+            bodyMap.put("messages", messages);
+            bodyMap.put("max_tokens", 600);
+            bodyMap.put("temperature", 0.5);
+            if (request.tools() != null && !request.tools().isEmpty()) {
+                bodyMap.put("tools", request.tools().stream()
+                        .map(t -> Map.of("type", "function",
+                                "function", Map.of("name", t.name(), "description", t.description(),
+                                        "parameters", t.inputSchema())))
+                        .toList());
+            }
+
             Map<?, ?> body = webClient.post()
                     .uri("/v1/chat/completions")
                     .header("Authorization", "Bearer " + apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(Map.of(
-                            "model", model,
-                            "messages", messages,
-                            "max_tokens", 600,
-                            "temperature", 0.5))
+                    .bodyValue(bodyMap)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
 
-            return extractContent(body);
+            return extractChatResult(body);
         } catch (AiProviderException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -76,7 +85,7 @@ public class OpenAiChatProvider implements AiProvider {
         return "OPENAI";
     }
 
-    private String extractContent(Map<?, ?> body) {
+    private ChatResult extractChatResult(Map<?, ?> body) {
         if (body == null) {
             throw new AiProviderException("Resposta do OpenAI vazia.");
         }
@@ -86,9 +95,13 @@ public class OpenAiChatProvider implements AiProvider {
             if (first instanceof Map<?, ?> choice) {
                 Object message = choice.get("message");
                 if (message instanceof Map<?, ?> msg) {
+                    List<AiProvider.ToolCall> toolCalls = extractToolCalls(msg.get("tool_calls"));
+                    if (!toolCalls.isEmpty()) {
+                        return AiProvider.ChatResult.withToolCalls(toolCalls);
+                    }
                     Object content = msg.get("content");
                     if (content != null && !content.toString().trim().isBlank()) {
-                        return content.toString().trim();
+                        return AiProvider.ChatResult.content(content.toString().trim());
                     }
                 }
             }
@@ -96,7 +109,41 @@ public class OpenAiChatProvider implements AiProvider {
         throw new AiProviderException("Resposta do OpenAI sem conteúdo.");
     }
 
+    private List<AiProvider.ToolCall> extractToolCalls(Object raw) {
+        List<AiProvider.ToolCall> calls = new ArrayList<>();
+        if (raw instanceof List<?> list) {
+            for (Object item : list) {
+                if (item instanceof Map<?, ?> tc) {
+                    Object id = tc.get("id");
+                    Object fn = tc.get("function");
+                    if (fn instanceof Map<?, ?> f) {
+                        Object name = f.get("name");
+                        Object args = f.get("arguments");
+                        Map<String, Object> parsedArgs = parseArguments(args);
+                        calls.add(new AiProvider.ToolCall(
+                                id != null ? id.toString() : null,
+                                name != null ? name.toString() : "",
+                                parsedArgs));
+                    }
+                }
+            }
+        }
+        return calls;
+    }
+
+    private Map<String, Object> parseArguments(Object args) {
+        if (args == null) {
+            return Map.of();
+        }
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            return mapper.readValue(args.toString(), new com.fasterxml.jackson.core.type.TypeReference<>() {});
+        } catch (Exception e) {
+            return Map.of();
+        }
+    }
+
     private String mapRole(String role) {
-        return "user".equals(role) || "assistant".equals(role) ? role : "user";
+        return "user".equals(role) || "assistant".equals(role) || "tool".equals(role) ? role : "user";
     }
 }

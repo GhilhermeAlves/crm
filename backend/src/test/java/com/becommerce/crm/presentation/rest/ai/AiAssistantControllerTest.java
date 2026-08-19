@@ -69,8 +69,8 @@ class AiAssistantControllerTest {
     void shouldChat() throws Exception {
         login(List.of("ai:chat"));
         UUID convId = UUID.randomUUID();
-        when(aiAssistantUseCase.chat(eq(COMPANY_ID), eq(USER_ID), any(AiChatRequest.class)))
-                .thenReturn(new AiChatResponse(convId, "Resposta.", "FAKE"));
+        when(aiAssistantUseCase.chat(eq(COMPANY_ID), eq(USER_ID), eq(List.of("ai:chat")),
+                any(AiChatRequest.class))).thenReturn(new AiChatResponse(convId, "Resposta.", "FAKE"));
 
         mockMvc.perform(post("/api/v1/ai/chat")
                         .contentType("application/json")

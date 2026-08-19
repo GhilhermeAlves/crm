@@ -1,22 +1,16 @@
 package com.becommerce.crm.application.ai.service;
 
+import com.becommerce.crm.application.ai.context.AiRecordContext;
+import com.becommerce.crm.application.ai.context.AiRecordContextResolver;
+import com.becommerce.crm.application.ai.context.ContactContextResolver;
+import com.becommerce.crm.application.ai.context.CustomerContextResolver;
+import com.becommerce.crm.application.ai.context.Customer360ContextBuilder;
+import com.becommerce.crm.application.ai.context.ResolvedAiContext;
 import com.becommerce.crm.application.ai.dto.AiContextPayload;
-import com.becommerce.crm.application.customer360.dto.ContactSummaryResponse;
-import com.becommerce.crm.application.customer360.dto.Customer360Response;
-import com.becommerce.crm.application.customer360.dto.NextActionResponse;
-import com.becommerce.crm.application.customer360.dto.OpportunityItemResponse;
-import com.becommerce.crm.application.customer360.dto.TaskItemResponse;
-import com.becommerce.crm.application.customer360.service.Customer360Service;
-import com.becommerce.crm.domain.pipeline.OpportunityStatus;
-import com.becommerce.crm.domain.task.TaskPriority;
-import com.becommerce.crm.domain.task.TaskStatus;
+import com.becommerce.crm.domain.ai.AiRecordType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,62 +18,200 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class AiContextResolverTest {
 
-    @Mock Customer360Service customer360Service;
-
     private final UUID companyId = UUID.randomUUID();
-    private final UUID contactId = UUID.randomUUID();
+    private final UUID userId = UUID.randomUUID();
+    private final UUID recordId = UUID.randomUUID();
 
-    @Test
-    void shouldBuildCustomerContextForCustomerScreen() {
-        Customer360Response c360 = new Customer360Response(
-                companyId,
-                new ContactSummaryResponse(contactId, "João Silva", "joao@x.com", "+5511999999999",
-                        "cliente importante", "JS", LocalDateTime.now(), LocalDateTime.now().minusDays(1),
-                        true, "Sem interação há 8 dias"),
-                2,
-                new BigDecimal("15000.00"),
-                List.of(new OpportunityItemResponse(UUID.randomUUID(), "Proposta A", new BigDecimal("10000"),
-                        "Proposta", 70, OpportunityStatus.OPEN, "ABERTA", "Funil Principal", UUID.randomUUID(),
-                        LocalDateTime.now().plusDays(10))),
-                List.of(new TaskItemResponse(UUID.randomUUID(), "Ligar para João", TaskStatus.PENDING,
-                        TaskPriority.HIGH, LocalDateTime.now().plusDays(1), UUID.randomUUID(), null, false)),
-                List.of(),
-                new NextActionResponse("FOLLOW_UP", "Agendar follow-up", "Retome o contato.", 90));
+    private Customer360ContextBuilder customer360Builder;
+    private AiContextResolver resolver;
+    private final List<String> readPermissions = List.of(
+            "contact:read", "opportunity:read", "activity:read", "task:read");
 
-        when(customer360Service.build(eq(companyId), eq(contactId))).thenReturn(c360);
+    @BeforeEach
+    void setUp() {
+        customer360Builder = mock(Customer360ContextBuilder.class);
+        when(customer360Builder.build(any(), any())).thenReturn("Cliente: João\nOportunidades abertas: 2");
 
-        String context = new AiContextResolver(customer360Service).resolve(companyId,
-                new AiContextPayload("customer360", contactId));
+        AiRecordContextResolverStub opportunity = stub(AiRecordType.OPPORTUNITY, "opportunity:read", "Oportunidade: Proposta A");
+        AiRecordContextResolverStub activity = stub(AiRecordType.ACTIVITY, "activity:read", "Atividade (CALL): Ligar");
+        AiRecordContextResolverStub task = stub(AiRecordType.TASK, "task:read", "Tarefa: Follow-up");
 
-        assertNotNull(context);
-        assertTrue(context.contains("João Silva"));
-        assertTrue(context.contains("Oportunidades abertas: 2"));
-        assertTrue(context.contains("15000"));
-        assertTrue(context.contains("Proposta A"));
-        assertTrue(context.contains("Risco: ALTO"));
+        resolver = new AiContextResolver(List.of(
+                new CustomerContextResolver(customer360Builder),
+                new ContactContextResolver(customer360Builder),
+                opportunity, activity, task));
+    }
+
+    private static AiRecordContextResolverStub stub(AiRecordType type, String perm, String context) {
+        AiRecordContextResolverStub s = new AiRecordContextResolverStub();
+        s.type = type;
+        s.permission = perm;
+        s.context = context;
+        return s;
+    }
+
+    private ResolvedAiContext resolve(AiContextPayload payload, List<String> permissions) {
+        return resolver.resolve(companyId, userId, permissions, payload);
     }
 
     @Test
-    void shouldReturnNullWhenNoRecordId() {
-        String context = new AiContextResolver(customer360Service).resolve(companyId,
-                new AiContextPayload("customer360", null));
-        assertNull(context);
-        verify(customer360Service, never()).build(any(), any());
+    void shouldResolveUserContextFromCurrentUser() {
+        ResolvedAiContext c = resolve(new AiContextPayload("customer360", recordId), readPermissions);
+        assertNotNull(c.user());
+        assertEquals(userId, c.user().userId());
     }
 
     @Test
-    void shouldReturnNullWhenScreenNotSupported() {
-        String context = new AiContextResolver(customer360Service).resolve(companyId,
-                new AiContextPayload("pipeline", contactId));
-        assertNull(context);
-        verify(customer360Service, never()).build(any(), any());
+    void shouldResolveCompanyContextFromCurrentUser() {
+        ResolvedAiContext c = resolve(new AiContextPayload("customer360", recordId), readPermissions);
+        assertNotNull(c.company());
+        assertEquals(companyId, c.company().companyId());
     }
 
     @Test
-    void shouldReturnNullWhenNullContext() {
-        assertNull(new AiContextResolver(customer360Service).resolve(companyId, null));
+    void shouldResolvePermissionContextFromCurrentUser() {
+        ResolvedAiContext c = resolve(new AiContextPayload("customer360", recordId), readPermissions);
+        assertNotNull(c.permissions());
+        assertTrue(c.permissions().has("contact:read"));
+        assertFalse(c.permissions().has("settings:update"));
+    }
+
+    @Test
+    void shouldResolveApplicationContextFromRoute() {
+        ResolvedAiContext c = resolve(new AiContextPayload("customer360", "/contacts/xyz", "CUSTOMER", recordId),
+                readPermissions);
+        assertNotNull(c.application());
+        assertEquals("/contacts/xyz", c.application().route());
+        assertEquals("customer360", c.application().screen());
+        assertEquals("CUSTOMER", c.application().module());
+    }
+
+    @Test
+    void shouldResolveCustomerContext() {
+        ResolvedAiContext c = resolve(
+                new AiContextPayload("customer360", "/customers/xyz", "CUSTOMER", recordId),
+                readPermissions);
+        assertNotNull(c.record());
+        assertEquals(AiRecordType.CUSTOMER, c.record().type());
+        assertEquals(recordId, c.record().recordId());
+        assertTrue(c.crmContext().contains("João"));
+        verify(customer360Builder).build(companyId, recordId);
+    }
+
+    @Test
+    void shouldResolveContactContext() {
+        ResolvedAiContext c = resolve(
+                new AiContextPayload("contact", "/contacts/xyz", "CONTACT", recordId),
+                readPermissions);
+        assertNotNull(c.record());
+        assertEquals(AiRecordType.CONTACT, c.record().type());
+        assertTrue(c.crmContext().contains("João"));
+        verify(customer360Builder).build(companyId, recordId);
+    }
+
+    @Test
+    void shouldResolveOpportunityContext() {
+        ResolvedAiContext c = resolve(
+                new AiContextPayload("opportunity", "/opportunities/xyz", "OPPORTUNITY", recordId),
+                readPermissions);
+        assertNotNull(c.record());
+        assertEquals(AiRecordType.OPPORTUNITY, c.record().type());
+        assertTrue(c.crmContext().contains("Proposta A"));
+    }
+
+    @Test
+    void shouldResolveActivityContext() {
+        ResolvedAiContext c = resolve(
+                new AiContextPayload("activity", "/activities/xyz", "ACTIVITY", recordId),
+                readPermissions);
+        assertEquals(AiRecordType.ACTIVITY, c.record().type());
+        assertTrue(c.crmContext().contains("Ligar"));
+    }
+
+    @Test
+    void shouldResolveTaskContext() {
+        ResolvedAiContext c = resolve(
+                new AiContextPayload("task", "/tasks/xyz", "TASK", recordId),
+                readPermissions);
+        assertEquals(AiRecordType.TASK, c.record().type());
+        assertTrue(c.crmContext().contains("Follow-up"));
+    }
+
+    @Test
+    void shouldOmitRecordContextWhenPermissionMissing() {
+        ResolvedAiContext c = resolve(
+                new AiContextPayload("task", "/tasks/xyz", "TASK", recordId),
+                List.of("contact:read"));
+        assertNull(c.record());
+        assertNull(c.crmContext());
+        assertNotNull(c.application());
+    }
+
+    @Test
+    void shouldNotResolveWhenNoRecordId() {
+        ResolvedAiContext c = resolve(new AiContextPayload("customer360", "/customers/xyz", "CUSTOMER", null),
+                readPermissions);
+        assertNull(c.record());
+        assertNull(c.crmContext());
+        verify(customer360Builder, never()).build(any(), any());
+    }
+
+    @Test
+    void shouldNotResolveWhenRecordTypeUnknown() {
+        ResolvedAiContext c = resolve(
+                new AiContextPayload("something", "/x", "UNKNOWN_TYPE", recordId),
+                readPermissions);
+        assertNull(c.record());
+        assertNull(c.crmContext());
+        verify(customer360Builder, never()).build(any(), any());
+    }
+
+    @Test
+    void shouldNotResolveWhenNullContext() {
+        ResolvedAiContext c = resolve(null, readPermissions);
+        assertNotNull(c.user());
+        assertNotNull(c.company());
+        assertNotNull(c.permissions());
+        assertNotNull(c.application());
+        assertNull(c.record());
+        assertNull(c.crmContext());
+        verify(customer360Builder, never()).build(any(), any());
+    }
+
+    @Test
+    void shouldNotExposeWhenResolverReturnsNull() {
+        AiRecordContextResolverStub miss = new AiRecordContextResolverStub();
+        miss.type = AiRecordType.ACTIVITY;
+        miss.permission = "activity:read";
+        miss.context = null;
+        AiContextResolver local = new AiContextResolver(List.of(miss));
+
+        ResolvedAiContext c = local.resolve(companyId, userId, readPermissions,
+                new AiContextPayload("activity", "/activities/x", "ACTIVITY", recordId));
+        assertNull(c.record());
+        assertNull(c.crmContext());
+    }
+
+    private static class AiRecordContextResolverStub implements AiRecordContextResolver {
+        private AiRecordType type;
+        private String permission;
+        private String context;
+
+        @Override
+        public AiRecordType type() {
+            return type;
+        }
+
+        @Override
+        public String requiredPermission() {
+            return permission;
+        }
+
+        @Override
+        public String resolve(UUID companyId, UUID recordId) {
+            return context;
+        }
     }
 }

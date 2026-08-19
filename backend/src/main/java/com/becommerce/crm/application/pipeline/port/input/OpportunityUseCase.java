@@ -6,6 +6,7 @@ import com.becommerce.crm.application.pipeline.dto.MoveOpportunityRequest;
 import com.becommerce.crm.application.pipeline.dto.OpportunityHistoryResponse;
 import com.becommerce.crm.application.pipeline.dto.OpportunityResponse;
 import com.becommerce.crm.application.pipeline.dto.UpdateOpportunityRequest;
+import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,4 +31,8 @@ public interface OpportunityUseCase {
     List<OpportunityResponse> listByPipeline(UUID companyId, UUID pipelineId);
 
     List<OpportunityHistoryResponse> history(UUID companyId, UUID opportunityId);
+
+    /** Busca oportunidades com filtros opcionais (para a IA), limitada e ordenada por atualização. */
+    List<OpportunityResponse> search(UUID companyId, OpportunityStatus status, UUID pipelineId,
+                                     UUID contactId, UUID stageId, UUID assignedTo, int limit);
 }

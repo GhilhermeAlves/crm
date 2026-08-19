@@ -21,6 +21,9 @@ public interface ContactUseCase {
     /** Lista os contatos ativos da empresa (diretório de clientes). */
     List<ContactResponse> listByCompany(UUID companyId);
 
+    /** Busca contatos ativos por nome/e-mail/telefone, limitada (para a IA). */
+    List<ContactResponse> search(UUID companyId, String query, int limit);
+
     ContactResponse update(UUID companyId, UUID contactId, UpdateContactRequest request);
 
     void delete(UUID companyId, UUID contactId);
