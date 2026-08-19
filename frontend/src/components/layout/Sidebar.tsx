@@ -24,6 +24,7 @@ import {
   HardDrive,
   Workflow as WorkflowIcon,
   Bell,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -143,10 +144,16 @@ const navGroups: NavGroup[] = [
         permission: "workflow:read",
       },
       {
-        label: "Notificações",
+        label: "Notifica��es",
         href: ROUTES.NOTIFICATIONS,
         icon: Bell,
         permission: "notification:read",
+      },
+      {
+        label: "Assistente de IA",
+        href: ROUTES.ASSISTANT,
+        icon: Sparkles,
+        permission: "ai:chat",
       },
     ],
   },

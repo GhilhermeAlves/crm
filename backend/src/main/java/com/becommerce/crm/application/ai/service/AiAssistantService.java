@@ -2,9 +2,12 @@ package com.becommerce.crm.application.ai.service;
 
 import com.becommerce.crm.application.ai.context.AiPermissionContext;
 import com.becommerce.crm.application.ai.context.ResolvedAiContext;
+import com.becommerce.crm.application.ai.dto.AiActionResponse;
 import com.becommerce.crm.application.ai.dto.AiChatRequest;
 import com.becommerce.crm.application.ai.dto.AiChatResponse;
 import com.becommerce.crm.application.ai.dto.AiContextPayload;
+import com.becommerce.crm.application.ai.dto.AiConversationResponse;
+import com.becommerce.crm.application.ai.dto.AiMessageResponse;
 import com.becommerce.crm.application.ai.port.input.AiAssistantUseCase;
 import com.becommerce.crm.application.ai.port.output.AiChatRepository;
 import com.becommerce.crm.application.ai.port.output.AiProvider;
@@ -89,36 +92,76 @@ public class AiAssistantService implements AiAssistantUseCase {
 
             chatRepository.saveMessage(AiMessage.create(companyId, conversation.getId(), ROLE_USER, request.message()));
 
-            List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, request.message());
-            String answer = runToolLoop(companyId, userId, permissions, messages);
+List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, request.message());
+            ChatLoopResult loop = runToolLoop(companyId, userId, permissions, conversation.getId(), messages);
 
             // Tools chamam services que limpam o TenantContext em finally;
-            // re-estabelecemos antes das operações de persistência do orquestrador.
+            // re-estabelecemos antes das opera��es de persist�ncia do orquestrador.
             TenantContext.setCompanyId(companyId);
 
-            chatRepository.saveMessage(AiMessage.create(companyId, conversation.getId(), ROLE_ASSISTANT, answer));
+            chatRepository.saveMessage(AiMessage.create(companyId, conversation.getId(), ROLE_ASSISTANT, loop.content()));
             conversation.touch();
             chatRepository.saveConversation(conversation);
 
             audit(companyId, userId, conversation, request, crmContext);
 
-            return new AiChatResponse(conversation.getId(), answer, aiProvider.providerName());
+            return new AiChatResponse(conversation.getId(), loop.content(), aiProvider.providerName(),
+                    loop.actions());
         } finally {
             TenantContext.clear();
         }
     }
 
-    /**
+    @Override
+    @Transactional(readOnly = true)
+    public List<AiConversationResponse> listConversations(UUID companyId, UUID userId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            return chatRepository.findConversationsByUser(companyId, userId).stream()
+                    .map(AiConversationResponse::from)
+                    .toList();
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AiMessageResponse> getConversationMessages(UUID companyId, UUID userId, UUID conversationId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            AiConversation conversation = chatRepository.findConversationById(conversationId)
+                    .orElseThrow(() -> new AiConversationNotFoundException(
+                            "Conversa n�o encontrada ou sem acesso."));
+            if (!conversation.getCompanyId().equals(companyId) || !conversation.getUserId().equals(userId)) {
+                throw new AiConversationNotFoundException("Conversa n�o encontrada ou sem acesso.");
+            }
+            return chatRepository.findMessagesByConversation(conversationId).stream()
+                    .filter(m -> ROLE_USER.equals(m.getRole()) || ROLE_ASSISTANT.equals(m.getRole()))
+                    .map(AiMessageResponse::from)
+                    .toList();
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+/**
      * Loop de Tool Calling (AI-03): envia o prompt ao modelo com as Tools
-     * registradas; se o modelo solicitar uma ou mais Tools, cada uma é
-     * executada pelo backend (via {@link AiToolRegistry}, com verificação de
-     * permissão) e o resultado estruturado retorna ao modelo. Repete até o
-     * modelo produzir texto final ou atingir o limite de iterações.
+     * registradas; se o modelo solicitar uma ou mais Tools, cada uma �
+     * executada pelo backend (via {@link AiToolRegistry}, com verifica��o de
+     * permiss�o) e o resultado estruturado retorna ao modelo. Repete at� o
+     * modelo produzir texto final ou atingir o limite de itera��es.
+     *
+     * <p>AI-05: a conversa em curso � passada no {@link AiToolContext} para que
+     * write tools vinculem propostas a ela. Propostas criadas durante o loop
+     * s�o coletadas ({@code AiActionResponse}) e retornadas na resposta.</p>
      */
-    private String runToolLoop(UUID companyId, UUID userId, List<String> permissions,
-                               List<AiProvider.ChatMessage> messages) {
-        AiToolContext toolCtx = new AiToolContext(companyId, userId, new AiPermissionContext(permissions));
+    private ChatLoopResult runToolLoop(UUID companyId, UUID userId, List<String> permissions,
+                                       UUID conversationId, List<AiProvider.ChatMessage> messages) {
+        AiToolContext toolCtx = new AiToolContext(companyId, userId, new AiPermissionContext(permissions),
+                conversationId);
         List<AiProvider.ChatMessage> working = new ArrayList<>(messages);
+        List<AiActionResponse> actions = new ArrayList<>();
 
         AiProvider.ChatResult result = aiProvider.chatWithTools(new AiProvider.ChatRequest(
                 companyId, userId, working, toolRegistry.toolDefinitions()));
@@ -128,6 +171,9 @@ public class AiAssistantService implements AiAssistantUseCase {
             iterations++;
             for (AiProvider.ToolCall call : result.toolCalls()) {
                 AiToolResult toolResult = toolRegistry.execute(call.name(), toolCtx, call.arguments());
+                if (toolResult.success() && toolResult.data() instanceof AiActionResponse proposal) {
+                    actions.add(proposal);
+                }
                 auditToolCall(companyId, userId, call.name(), toolResult);
                 working.add(new AiProvider.ChatMessage(ROLE_ASSISTANT, toolCallNotice(call)));
                 working.add(new AiProvider.ChatMessage(ROLE_TOOL, serialize(toolResult)));
@@ -135,7 +181,11 @@ public class AiAssistantService implements AiAssistantUseCase {
             result = aiProvider.chatWithTools(new AiProvider.ChatRequest(
                     companyId, userId, working, toolRegistry.toolDefinitions()));
         }
-        return result.content() != null ? result.content() : "Não consegui produzir uma resposta final.";
+        String content = result.content() != null ? result.content() : "N�o consegui produzir uma resposta final.";
+        return new ChatLoopResult(content, actions);
+    }
+
+    private record ChatLoopResult(String content, List<AiActionResponse> actions) {
     }
 
     private String toolCallNotice(AiProvider.ToolCall call) {

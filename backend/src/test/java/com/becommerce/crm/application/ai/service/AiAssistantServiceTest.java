@@ -219,7 +219,7 @@ class AiAssistantServiceTest {
         assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
     }
 
-    @Test
+@Test
     void shouldAuditToolFailureWhenPermissionDenied() {
         when(aiProvider.chatWithTools(any()))
                 .thenReturn(AiProvider.ChatResult.withToolCalls(List.of(
@@ -227,7 +227,7 @@ class AiAssistantServiceTest {
                 .thenReturn(AiProvider.ChatResult.content("Sem acesso a oportunidades."));
         when(aiProvider.providerName()).thenReturn("FAKE");
 
-        AiToolResult denied = AiToolResult.fail("get_opportunity", "Sem permissão de leitura");
+        AiToolResult denied = AiToolResult.fail("get_opportunity", "Sem permiss�o de leitura");
         when(toolRegistry.execute(eq("get_opportunity"), any(), any())).thenReturn(denied);
 
         when(contextResolver.resolve(eq(companyId), eq(userId), eq(permissions), any()))
@@ -235,11 +235,93 @@ class AiAssistantServiceTest {
         when(chatRepository.saveConversation(any())).thenAnswer(inv -> inv.getArgument(0));
         when(chatRepository.findMessagesByConversation(any())).thenReturn(List.of());
 
-        var request = new AiChatRequest("Quais oportunidades estão abertas?", null, null);
+        var request = new AiChatRequest("Quais oportunidades est�o abertas?", null, null);
 
         var response = aiAssistantService.chat(companyId, userId, permissions, request);
         assertEquals("Sem acesso a oportunidades.", response.message());
         verify(auditor, atLeastOnce()).record(eq(companyId), any(), any(), eq("AiTool"),
                 eq("get_opportunity"), any(), eq(userId), any());
+    }
+
+    @Test
+    void shouldListConversationsScopedToUser() {
+        AiConversation c1 = AiConversation.reconstitute(UUID.randomUUID(), companyId, userId,
+                "customer360", UUID.randomUUID(), "Como est� o cliente?",
+                LocalDateTime.now(), LocalDateTime.now());
+        AiConversation c2 = AiConversation.reconstitute(UUID.randomUUID(), companyId, userId,
+                "opportunity", UUID.randomUUID(), "Quem � o cliente?",
+                LocalDateTime.now(), LocalDateTime.now());
+        when(chatRepository.findConversationsByUser(companyId, userId)).thenReturn(List.of(c1, c2));
+
+        var result = aiAssistantService.listConversations(companyId, userId);
+
+        assertEquals(2, result.size());
+        assertEquals(c1.getId(), result.get(0).id());
+        assertEquals("Como est� o cliente?", result.get(0).title());
+        verify(chatRepository).findConversationsByUser(companyId, userId);
+        assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
+    }
+
+    @Test
+    void shouldListMessagesOfOwnedConversationInOrder() {
+        UUID conversationId = UUID.randomUUID();
+        AiConversation owned = AiConversation.reconstitute(conversationId, companyId, userId,
+                "customer360", UUID.randomUUID(), "titulo", LocalDateTime.now(), LocalDateTime.now());
+        AiMessage userMsg = AiMessage.reconstitute(UUID.randomUUID(), companyId, conversationId,
+                "user", "Como est� esse cliente?", LocalDateTime.now());
+        AiMessage assistantMsg = AiMessage.reconstitute(UUID.randomUUID(), companyId, conversationId,
+                "assistant", "O cliente est� ativo.", LocalDateTime.now());
+        AiMessage toolMsg = AiMessage.reconstitute(UUID.randomUUID(), companyId, conversationId,
+                "tool", "{\"success\":true}", LocalDateTime.now());
+        when(chatRepository.findConversationById(conversationId)).thenReturn(Optional.of(owned));
+        when(chatRepository.findMessagesByConversation(conversationId))
+                .thenReturn(List.of(userMsg, toolMsg, assistantMsg));
+
+        var result = aiAssistantService.getConversationMessages(companyId, userId, conversationId);
+
+        // mensagens "system"/"tool" internas n�o s�o expostas ao frontend
+        assertEquals(2, result.size());
+        assertEquals("user", result.get(0).role());
+        assertEquals("assistant", result.get(1).role());
+        assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
+    }
+
+    @Test
+    void shouldRejectMessagesOfForeignConversation() {
+        UUID conversationId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        AiConversation foreign = AiConversation.reconstitute(conversationId, companyId, otherUserId,
+                "customer360", UUID.randomUUID(), "titulo", LocalDateTime.now(), LocalDateTime.now());
+        when(chatRepository.findConversationById(conversationId)).thenReturn(Optional.of(foreign));
+
+        assertThrows(AiConversationNotFoundException.class,
+                () -> aiAssistantService.getConversationMessages(companyId, userId, conversationId));
+        verify(chatRepository, never()).findMessagesByConversation(any());
+        assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
+    }
+
+    @Test
+    void shouldRejectMessagesOfForeignCompany() {
+        UUID conversationId = UUID.randomUUID();
+        UUID otherCompany = UUID.randomUUID();
+        AiConversation foreign = AiConversation.reconstitute(conversationId, otherCompany, userId,
+                "customer360", UUID.randomUUID(), "titulo", LocalDateTime.now(), LocalDateTime.now());
+        when(chatRepository.findConversationById(conversationId)).thenReturn(Optional.of(foreign));
+
+        assertThrows(AiConversationNotFoundException.class,
+                () -> aiAssistantService.getConversationMessages(companyId, userId, conversationId));
+        verify(chatRepository, never()).findMessagesByConversation(any());
+        assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
+    }
+
+    @Test
+    void shouldRejectMessagesOfMissingConversation() {
+        UUID conversationId = UUID.randomUUID();
+        when(chatRepository.findConversationById(conversationId)).thenReturn(Optional.empty());
+
+        assertThrows(AiConversationNotFoundException.class,
+                () -> aiAssistantService.getConversationMessages(companyId, userId, conversationId));
+        verify(chatRepository, never()).findMessagesByConversation(any());
+        assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
     }
 }

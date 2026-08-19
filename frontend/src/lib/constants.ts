@@ -36,6 +36,7 @@ export const ROUTES = {
   CHANNELS: "/channels",
   STORAGE: "/storage",
   NOTIFICATIONS: "/notifications",
+  ASSISTANT: "/assistant",
 } as const;
 
 export const PUBLIC_ROUTES = [

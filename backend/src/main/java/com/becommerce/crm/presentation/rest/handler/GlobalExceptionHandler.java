@@ -43,6 +43,8 @@ import com.becommerce.crm.domain.notification.exception.NotificationNotFoundExce
 import com.becommerce.crm.domain.notification.exception.NotificationValidationException;
 import com.becommerce.crm.domain.ai.AiProviderException;
 import com.becommerce.crm.domain.ai.AiConversationNotFoundException;
+import com.becommerce.crm.domain.ai.AiActionNotFoundException;
+import com.becommerce.crm.domain.ai.AiActionInvalidStateException;
 import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
 import com.becommerce.crm.domain.workflow.WorkflowValidationException;
 
@@ -419,6 +421,30 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 404,
                 "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(AiActionNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleAiActionNotFoundException(
+        AiActionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(AiActionInvalidStateException.class)
+    public ResponseEntity<Map<String, Object>> handleAiActionInvalidStateException(
+        AiActionInvalidStateException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));
