@@ -14,7 +14,10 @@ import {
   useNotificationPermissions,
 } from "@/features/notifications/hooks/useNotifications";
 import { formatRelativeTime } from "@/features/notifications/lib/format";
-import type { Notification, NotificationType } from "@/features/notifications/types/notification.types";
+import type {
+  Notification,
+  NotificationType,
+} from "@/features/notifications/types/notification.types";
 
 const TYPE_STYLE: Record<NotificationType, string> = {
   TASK: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",

@@ -1,12 +1,5 @@
 export type NotificationType =
-  | "TASK"
-  | "WORKFLOW"
-  | "INVITATION"
-  | "MESSAGE"
-  | "LEAD"
-  | "OPPORTUNITY"
-  | "SYSTEM"
-  | "INFO";
+  "TASK" | "WORKFLOW" | "INVITATION" | "MESSAGE" | "LEAD" | "OPPORTUNITY" | "SYSTEM" | "INFO";
 
 export interface Notification {
   id: string;

@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+
+    <!-- Line length kept generous for this codebase -->
+    <module name="LineLength">
+        <property name="max" value="200"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+    </module>
+
+    <module name="TreeWalker">
+        <property name="tabWidth" value="4"/>
+
+        <!-- No stray JDK-internal or UI imports -->
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="sun,java.awt,javax.swing"/>
+        </module>
+
+        <!-- One top level class per file -->
+        <module name="OneTopLevelClass"/>
+
+        <!-- Whitespace consistency -->
+        <module name="NoWhitespaceAfter"/>
+        <module name="NoWhitespaceBefore"/>
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLoops" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
+            <property name="allowEmptyCatches" value="true"/>
+        </module>
+        <module name="GenericWhitespace"/>
+        <module name="MethodParamPad"/>
+        <module name="ParenPad"/>
+
+        <!-- No empty code blocks -->
+        <module name="EmptyBlock">
+            <property name="option" value="text"/>
+        </module>
+
+        <!-- Naming conventions -->
+        <module name="PackageName"/>
+        <module name="TypeName"/>
+        <module name="ClassTypeParameterName"/>
+        <module name="MethodTypeParameterName"/>
+        <module name="InterfaceTypeParameterName"/>
+        <module name="MemberName"/>
+        <module name="StaticVariableName"/>
+        <module name="LocalVariableName"/>
+        <module name="ParameterName"/>
+        <module name="MethodName"/>
+        <module name="LambdaParameterName"/>
+        <module name="CatchParameterName"/>
+        <!-- Allow the Lombok @Slf4j generated `log` field -->
+        <module name="ConstantName">
+            <property name="format" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$|^log$"/>
+        </module>
+    </module>
+</module>
