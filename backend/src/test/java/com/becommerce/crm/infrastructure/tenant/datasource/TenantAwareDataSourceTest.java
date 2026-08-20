@@ -123,6 +123,57 @@ class TenantAwareDataSourceTest {
     }
 
     @Test
+    void shouldKeepTenantContextOnFlushWhenClearedInsideTransaction() throws SQLException {
+        UUID companyId = UUID.randomUUID();
+        TenantContext.setCompanyId(companyId);
+
+        Connection connection = mock(Connection.class);
+        Statement statement = mock(Statement.class);
+        when(delegateDataSource.getConnection()).thenReturn(connection);
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.execute(anyString())).thenReturn(true);
+
+        Connection conn = new TenantAwareDataSource(delegateDataSource).getConnection();
+
+        verify(statement).execute("SET app.current_company_id = '" + companyId + "'");
+        clearInvocations(statement);
+
+        conn.setAutoCommit(false);
+        TenantContext.clear();
+        conn.prepareStatement("INSERT INTO contacts (company_id) VALUES (?)");
+
+        // Dentro da transação, a limpeza do contexto NÃO deve gerar RESET: o
+        // flush no commit ainda enxerga app.current_company_id da empresa.
+        verify(statement, never()).execute(contains("RESET"));
+    }
+
+    @Test
+    void shouldResetTenantContextAfterTransactionCommitWhenCleared() throws SQLException {
+        UUID companyId = UUID.randomUUID();
+        TenantContext.setCompanyId(companyId);
+
+        Connection connection = mock(Connection.class);
+        Statement statement = mock(Statement.class);
+        when(delegateDataSource.getConnection()).thenReturn(connection);
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.execute(anyString())).thenReturn(true);
+
+        Connection conn = new TenantAwareDataSource(delegateDataSource).getConnection();
+
+        verify(statement).execute("SET app.current_company_id = '" + companyId + "'");
+        clearInvocations(statement);
+
+        conn.setAutoCommit(false);
+        conn.commit();
+        TenantContext.clear();
+        conn.prepareStatement("SELECT 1");
+
+        // Após o commit, o contexto limpo é aplicado de volta (RESET), evitando
+        // vazar a empresa da transação para o próximo uso da conexão.
+        verify(statement).execute("RESET app.current_company_id");
+    }
+
+    @Test
     void shouldDelegateGetConnectionWithCredentials() throws SQLException {
         UUID companyId = UUID.randomUUID();
         TenantContext.setCompanyId(companyId);

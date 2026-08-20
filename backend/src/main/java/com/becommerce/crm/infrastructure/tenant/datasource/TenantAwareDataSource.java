@@ -29,7 +29,7 @@ public class TenantAwareDataSource implements DataSource {
     public Connection getConnection() throws SQLException {
         Connection connection = delegate.getConnection();
         TenantSnapshot initial = new TenantSnapshot();
-        applyTenantContext(connection, initial);
+        applyTenantContext(connection, initial, true);
         return wrap(connection, initial);
     }
 
@@ -37,7 +37,7 @@ public class TenantAwareDataSource implements DataSource {
     public Connection getConnection(String username, String password) throws SQLException {
         Connection connection = delegate.getConnection(username, password);
         TenantSnapshot initial = new TenantSnapshot();
-        applyTenantContext(connection, initial);
+        applyTenantContext(connection, initial, true);
         return wrap(connection, initial);
     }
 
@@ -85,10 +85,12 @@ public class TenantAwareDataSource implements DataSource {
     private class TenantAwareConnectionHandler implements InvocationHandler {
         private final Connection target;
         private TenantSnapshot applied;
+        private boolean inTransaction;
 
         TenantAwareConnectionHandler(Connection target, TenantSnapshot applied) {
             this.target = target;
             this.applied = applied;
+            this.inTransaction = false;
         }
 
         @Override
@@ -96,6 +98,14 @@ public class TenantAwareDataSource implements DataSource {
             String name = method.getName();
             if (isStatementFactory(name)) {
                 ensureContextApplied();
+            } else if ("setAutoCommit".equals(name)) {
+                boolean autoCommit = (Boolean) args[0];
+                inTransaction = !autoCommit;
+                if (inTransaction) {
+                    ensureContextApplied();
+                }
+            } else if ("commit".equals(name) || "rollback".equals(name)) {
+                inTransaction = false;
             }
             try {
                 return method.invoke(target, args);
@@ -106,10 +116,17 @@ public class TenantAwareDataSource implements DataSource {
 
         private void ensureContextApplied() throws SQLException {
             TenantSnapshot current = new TenantSnapshot();
-            if (!current.sameAs(applied)) {
-                applyTenantContext(target, current);
-                applied = current;
+            if (current.sameAs(applied)) {
+                return;
             }
+            // Durante uma transação, apenas reaplicamos os GUCs cujo valor está
+            // presente (SET), e NUNCA fazemos RESET dos GUCs previamente definidos.
+            // Isso evita que o flush no commit (que ocorre depois que os services
+            // limpam o TenantContext em finally) viole as policies RLS (V019):
+            // o comando INSERT no commit enxerga app.current_tenant_id() ainda
+            // apontando para a empresa da transação.
+            applyTenantContext(target, current, !inTransaction);
+            applied = current;
         }
 
         private boolean isStatementFactory(String name) {
@@ -122,37 +139,37 @@ public class TenantAwareDataSource implements DataSource {
     /**
      * Aplica os GUCs de contexto de tenant na conexão, refletindo o snapshot atual.
      */
-    private void applyTenantContext(Connection connection, TenantSnapshot ctx) throws SQLException {
+    private void applyTenantContext(Connection connection, TenantSnapshot ctx, boolean reset) throws SQLException {
         try (var stmt = connection.createStatement()) {
             if (ctx.keycloakSub != null && !ctx.keycloakSub.isBlank()) {
                 String safeSub = ctx.keycloakSub.replace("'", "''");
                 stmt.execute("SET app.current_keycloak_sub = '" + safeSub + "'");
-            } else {
+            } else if (reset) {
                 stmt.execute("RESET app.current_keycloak_sub");
             }
             if (ctx.identityEmail != null && !ctx.identityEmail.isBlank()) {
                 String safeEmail = ctx.identityEmail.replace("'", "''");
                 stmt.execute("SET app.current_identity_email = '" + safeEmail + "'");
-            } else {
+            } else if (reset) {
                 stmt.execute("RESET app.current_identity_email");
             }
             if (ctx.identityPhone != null && !ctx.identityPhone.isBlank()) {
                 String safePhone = ctx.identityPhone.replace("'", "''");
                 stmt.execute("SET app.current_identity_phone = '" + safePhone + "'");
-            } else {
+            } else if (reset) {
                 stmt.execute("RESET app.current_identity_phone");
             }
             if (ctx.resetToken != null && !ctx.resetToken.isBlank()) {
                 String safeToken = ctx.resetToken.replace("'", "''");
                 stmt.execute("SET app.current_reset_token = '" + safeToken + "'");
-            } else {
+            } else if (reset) {
                 stmt.execute("RESET app.current_reset_token");
             }
             if (ctx.companyId != null) {
                 String safeId = ctx.companyId.toString();
                 stmt.execute("SET app.current_company_id = '" + safeId + "'");
                 log.info("[TENANT] conn={} SET app.current_company_id = {}", System.identityHashCode(connection), safeId);
-            } else {
+            } else if (reset) {
                 stmt.execute("RESET app.current_company_id");
                 log.info("[TENANT] conn={} RESET app.current_company_id (no tenant context)", System.identityHashCode(connection));
             }
