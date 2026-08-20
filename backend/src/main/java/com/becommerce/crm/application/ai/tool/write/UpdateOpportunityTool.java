@@ -8,6 +8,7 @@ import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -41,7 +42,7 @@ public class UpdateOpportunityTool implements AiTool {
     private final AiActionService actionService;
     private final OpportunityRepository opportunityRepository;
 
-    public UpdateOpportunityTool(AiActionService actionService,
+    public UpdateOpportunityTool(@Lazy AiActionService actionService,
                                  OpportunityRepository opportunityRepository) {
         this.actionService = actionService;
         this.opportunityRepository = opportunityRepository;

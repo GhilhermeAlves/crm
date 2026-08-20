@@ -10,6 +10,7 @@ import com.becommerce.crm.application.contact.port.output.ContactRepository;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.domain.contact.exception.ContactNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -40,7 +41,7 @@ public class CreateTaskTool implements AiTool {
     private final ContactRepository contactRepository;
     private final OpportunityRepository opportunityRepository;
 
-    public CreateTaskTool(AiActionService actionService,
+    public CreateTaskTool(@Lazy AiActionService actionService,
                           ContactRepository contactRepository,
                           OpportunityRepository opportunityRepository) {
         this.actionService = actionService;
