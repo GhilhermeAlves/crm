@@ -138,6 +138,11 @@ public class RoleSeedService {
             });
 
             if (permNames.contains("*")) {
+                for (Permission permission : permissionRepository.findAll()) {
+                    if (!rolePermissionRepository.existsByRoleIdAndPermissionId(role.getId(), permission.getId())) {
+                        rolePermissionRepository.save(RolePermission.create(role.getId(), permission.getId()));
+                    }
+                }
                 continue;
             }
 
