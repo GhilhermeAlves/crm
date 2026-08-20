@@ -248,7 +248,12 @@ describe("AiService analyze (AI-06)", () => {
       data: {
         summary: "Oportunidade saudável.",
         facts: [
-          { key: "opportunity.stage", label: "Estágio", value: "Proposta", source: "opportunity_context" },
+          {
+            key: "opportunity.stage",
+            label: "Estágio",
+            value: "Proposta",
+            source: "opportunity_context",
+          },
         ],
         inferences: [{ key: "inf-1", text: "Risco de perda de momentum.", confidence: 70 }],
         recommendations: [
@@ -284,7 +289,9 @@ describe("AiService analyze (AI-06)", () => {
       headers: {},
       config,
     };
-    postMock.mockRejectedValue(new AxiosError("Unauthorized", undefined, config, undefined, response));
+    postMock.mockRejectedValue(
+      new AxiosError("Unauthorized", undefined, config, undefined, response),
+    );
 
     await expect(AiService.analyze({ question: "x", context: null })).rejects.toThrow();
   });
@@ -305,8 +312,12 @@ describe("AiService analyze (AI-06)", () => {
       headers: {},
       config,
     };
-    postMock.mockRejectedValueOnce(new AxiosError("Forbidden", undefined, config, undefined, response403));
-    postMock.mockRejectedValueOnce(new AxiosError("Internal", undefined, config, undefined, response500));
+    postMock.mockRejectedValueOnce(
+      new AxiosError("Forbidden", undefined, config, undefined, response403),
+    );
+    postMock.mockRejectedValueOnce(
+      new AxiosError("Internal", undefined, config, undefined, response500),
+    );
 
     await expect(AiService.analyze({ question: "x", context: null })).rejects.toThrow();
     await expect(AiService.analyze({ question: "x", context: null })).rejects.toThrow();

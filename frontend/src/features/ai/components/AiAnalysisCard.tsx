@@ -131,7 +131,9 @@ export function AiAnalysisCard({ analysis, loading, error }: Props) {
             <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
               <ListChecks className="h-4 w-4 text-muted-foreground" />
               <Badge>Recomendações</Badge>
-              <span className="text-xs font-normal text-muted-foreground">Sugestões — não executadas</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                Sugestões — não executadas
+              </span>
             </h4>
             {analysis.recommendations.length === 0 ? (
               <p className="text-sm text-muted-foreground">Sem recomendações por enquanto.</p>

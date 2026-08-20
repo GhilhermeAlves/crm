@@ -13,9 +13,7 @@ const fullAnalysis: AiAnalysisResponse = {
       source: "opportunity_context",
     },
   ],
-  inferences: [
-    { key: "inf-1", text: "Existe risco de perda de momentum.", confidence: 70 },
-  ],
+  inferences: [{ key: "inf-1", text: "Existe risco de perda de momentum.", confidence: 70 }],
   recommendations: [
     {
       key: "rec-1",
@@ -56,7 +54,12 @@ describe("AiAnalysisCard (AI-06)", () => {
   });
 
   it("exibe empty states adequados quando não há dados (não 'Nenhum risco')", () => {
-    const empty: AiAnalysisResponse = { summary: "Sem dados.", facts: [], inferences: [], recommendations: [] };
+    const empty: AiAnalysisResponse = {
+      summary: "Sem dados.",
+      facts: [],
+      inferences: [],
+      recommendations: [],
+    };
     render(<AiAnalysisCard analysis={empty} loading={false} error={null} />);
 
     expect(screen.getByText("Não há dados suficientes para avaliar.")).toBeTruthy();
@@ -79,7 +82,9 @@ describe("AiAnalysisCard (AI-06)", () => {
         error="Você não tem permissão para acessar o contexto solicitado."
       />,
     );
-    expect(screen.getByText("Você não tem permissão para acessar o contexto solicitado.")).toBeTruthy();
+    expect(
+      screen.getByText("Você não tem permissão para acessar o contexto solicitado."),
+    ).toBeTruthy();
     expect(screen.queryByText(/stack trace/)).toBeNull();
   });
 });

@@ -8,12 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
   useAiAnalyze,
@@ -330,11 +325,7 @@ export function AiChatAssistant() {
             )}
             {(analyzing || analysis || analysisError) && (
               <div className="pt-1">
-                <AiAnalysisCard
-                  analysis={analysis}
-                  loading={analyzing}
-                  error={analysisError}
-                />
+                <AiAnalysisCard analysis={analysis} loading={analyzing} error={analysisError} />
               </div>
             )}
             <div ref={bottomRef} />
