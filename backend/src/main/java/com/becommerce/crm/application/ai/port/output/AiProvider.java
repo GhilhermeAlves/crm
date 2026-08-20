@@ -71,6 +71,19 @@ public interface AiProvider {
         return chatWithTools(request).content();
     }
 
+    /**
+     * Gera uma resposta ESTRUTURADA (AI-06): retorna o JSON bruto produzido pelo
+     * modelo a partir das mensagens (sem tool calling), usado pela análise
+     * contextual para obter resumo/inferências/recomendações dentro de um
+     * contrato. O parsing é responsabilidade do chamador (backend), nunca regex
+     * frágil. O default delega ao chat; providers devem usar JSON mode quando
+     * suportado para máxima fidelidade.
+     */
+    default String chatStructured(ChatRequest request) {
+        String content = chatWithTools(request).content();
+        return content != null ? content.trim() : "{}";
+    }
+
     /** Nome do provider (para logs/observabilidade, sem expor secrets). */
     String providerName();
 }

@@ -4,7 +4,9 @@ import com.becommerce.crm.domain.pipeline.Opportunity;
 import com.becommerce.crm.domain.pipeline.OpportunityHistory;
 import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,4 +30,10 @@ public interface OpportunityRepository {
     void saveHistory(OpportunityHistory history);
 
     List<OpportunityHistory> findHistoryByOpportunityId(UUID opportunityId);
+
+    /**
+     * Histórico de estágio de cada oportunidade informada, em uma única consulta
+     * em lote (evita N+1 no Customer 360 / análise contextual).
+     */
+    Map<UUID, List<OpportunityHistory>> findHistoryByOpportunityIds(Collection<UUID> opportunityIds);
 }

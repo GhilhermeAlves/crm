@@ -7,9 +7,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 public class ActivityRepositoryImpl implements ActivityRepository {
@@ -64,6 +68,17 @@ public class ActivityRepositoryImpl implements ActivityRepository {
     public Optional<LocalDateTime> findLatestActivityAtByContactId(UUID contactId) {
         return jpaRepository.findTopByContactIdOrderByActivityAtDesc(contactId)
                 .map(ActivityJpaEntity::getActivityAt);
+    }
+
+    @Override
+    public Map<UUID, LocalDateTime> findLatestActivityAtByOpportunityIds(Collection<UUID> opportunityIds) {
+        if (opportunityIds == null || opportunityIds.isEmpty()) {
+            return Map.of();
+        }
+        return jpaRepository.findByOpportunityIdIn(opportunityIds).stream()
+                .filter(a -> a.getOpportunityId() != null && a.getActivityAt() != null)
+                .collect(Collectors.toMap(ActivityJpaEntity::getOpportunityId, ActivityJpaEntity::getActivityAt,
+                        (a, b) -> a.isAfter(b) ? a : b, LinkedHashMap::new));
     }
 
     @Override

@@ -101,7 +101,8 @@ public class Customer360Service {
         LocalDateTime lastInteraction = lastInteractionAt(contact, open, now);
 
         List<TaskItemResponse> taskItems = buildTasks(tasks, now);
-        List<TimelineEventResponse> timeline = buildTimeline(opportunities, tasks, stageById, now);
+        List<TimelineEventResponse> timeline = buildTimeline(opportunities, tasks, stageById,
+                historyByOpportunity(opportunities), now);
         NextActionResponse nextAction = recommend(open, tasks, taskItems, lastInteraction, stageById, now);
 
         boolean atRisk = hasStaleOpen(open, lastInteraction, now);
@@ -185,9 +186,22 @@ public class Customer360Service {
     // Linha do tempo
     // ------------------------------------------------------------------
 
+    /**
+     * Histórico de estágio de todas as oportunidades, em uma única consulta em
+     * lote (evita N+1: antes era uma query por oportunidade).
+     */
+    private Map<UUID, List<OpportunityHistory>> historyByOpportunity(List<Opportunity> opportunities) {
+        if (opportunities.isEmpty()) {
+            return Map.of();
+        }
+        return opportunityRepository.findHistoryByOpportunityIds(
+                opportunities.stream().map(Opportunity::getId).toList());
+    }
+
     private List<TimelineEventResponse> buildTimeline(List<Opportunity> opportunities,
                                                       List<Task> tasks,
                                                       Map<UUID, Stage> stageById,
+                                                      Map<UUID, List<OpportunityHistory>> historyByOpp,
                                                       LocalDateTime now) {
         List<TimelineEventResponse> events = new ArrayList<>();
 
@@ -208,7 +222,7 @@ public class Customer360Service {
                     stageById.get(o.getStageId()) != null ? "Estágio inicial: " + stageById.get(o.getStageId()).getName() : null,
                     o.getCreatedAt(), o.getId(), o.getTitle()));
 
-            for (OpportunityHistory h : opportunityRepository.findHistoryByOpportunityId(o.getId())) {
+            for (OpportunityHistory h : historyByOpp.getOrDefault(o.getId(), List.of())) {
                 String from = h.getFromStageId() != null && stageById.get(h.getFromStageId()) != null
                         ? stageById.get(h.getFromStageId()).getName() : null;
                 String to = h.getToStageId() != null && stageById.get(h.getToStageId()) != null
@@ -265,10 +279,13 @@ public class Customer360Service {
 
     private LocalDateTime lastInteractionAt(Contact contact, List<Opportunity> open, LocalDateTime now) {
         LocalDateTime latest = activityRepository.findLatestActivityAtByContactId(contact.getId()).orElse(null);
-        for (Opportunity o : open) {
-            LocalDateTime l = activityRepository.findLatestActivityAtByOpportunityId(o.getId()).orElse(null);
-            if (l != null && (latest == null || l.isAfter(latest))) {
-                latest = l;
+        if (!open.isEmpty()) {
+            Map<UUID, LocalDateTime> latestByOpp = activityRepository
+                    .findLatestActivityAtByOpportunityIds(open.stream().map(Opportunity::getId).toList());
+            for (LocalDateTime l : latestByOpp.values()) {
+                if (l != null && (latest == null || l.isAfter(latest))) {
+                    latest = l;
+                }
             }
         }
         return latest != null ? latest : contact.getCreatedAt();

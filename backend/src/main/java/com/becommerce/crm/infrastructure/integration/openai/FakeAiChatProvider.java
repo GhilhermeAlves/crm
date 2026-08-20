@@ -62,6 +62,28 @@ public class FakeAiChatProvider implements AiProvider {
         return "FAKE";
     }
 
+    /**
+     * Análise contextual (AI-06): produz um JSON determinístico para testes a
+     * partir do bloco de dados do CRM presente no prompt (delimitado por
+     * {@code <crm_data>}). Se houver dados, gera resumo/inferência/recomendação;
+     * caso contrário, um resumo neutro sem falsa certeza. Sempre JSON válido,
+     * evitando parser frágil.
+     */
+    @Override
+    public String chatStructured(ChatRequest request) {
+        boolean hasCrmData = request.messages().stream()
+                .anyMatch(m -> m.content() != null && m.content().contains("<crm_data>"));
+        if (hasCrmData) {
+            return "{\"summary\":\"Oportunidade em análise com base nos dados do CRM.\","
+                    + "\"inferences\":[{\"key\":\"momentum\",\"text\":\"Pode haver perda de momentum comercial.\",\"confidence\":70}],"
+                    + "\"recommendations\":[{\"key\":\"follow_up\",\"title\":\"Fazer follow-up\","
+                    + "\"description\":\"Retomar o contato com o responsável pela oportunidade.\",\"priority\":80,"
+                    + "\"justification\":\"A oportunidade está parada no estágio atual.\",\"action\":\"create_task\"}]}";
+        }
+        return "{\"summary\":\"Sem dados do CRM disponíveis para esta análise.\","
+                + "\"inferences\":[],\"recommendations\":[]}";
+    }
+
     private boolean hasContext(ChatRequest request) {
         return request.messages().stream().anyMatch(m -> "system".equals(m.role()));
     }

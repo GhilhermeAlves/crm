@@ -85,6 +85,67 @@ public class OpenAiChatProvider implements AiProvider {
         return "OPENAI";
     }
 
+    /**
+     * Análise contextual (AI-06): usa JSON mode do OpenAI para produzir o
+     * contrato estruturado (resumo/inferências/recomendações). Melhor esforço —
+     * a fidelidade final é validada pelo backend (parsing + fallback controlado).
+     */
+    @Override
+    public String chatStructured(ChatRequest request) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new AiProviderException("Chave de API do OpenAI não configurada (app.ai.api-key).");
+        }
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        for (ChatMessage line : request.messages()) {
+            messages.add(Map.of("role", mapRole(line.role()), "content", line.content()));
+        }
+
+        try {
+            Map<String, Object> bodyMap = new java.util.HashMap<>();
+            bodyMap.put("model", model);
+            bodyMap.put("messages", messages);
+            bodyMap.put("max_tokens", 600);
+            bodyMap.put("temperature", 0.2);
+            bodyMap.put("response_format", Map.of("type", "json_object"));
+
+            Map<?, ?> body = webClient.post()
+                    .uri("/v1/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(bodyMap)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            String content = extractContent(body);
+            if (content == null || content.isBlank()) {
+                throw new AiProviderException("Resposta estruturada do OpenAI vazia.");
+            }
+            return content.trim();
+        } catch (AiProviderException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new AiProviderException("Falha ao consultar o OpenAI: " + e.getMessage(), e);
+        }
+    }
+
+    private String extractContent(Map<?, ?> body) {
+        if (body == null) {
+            return null;
+        }
+        Object choices = body.get("choices");
+        if (choices instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Map<?, ?> choice) {
+            if (choice.get("message") instanceof Map<?, ?> msg) {
+                Object content = msg.get("content");
+                if (content != null) {
+                    return content.toString();
+                }
+            }
+        }
+        return null;
+    }
+
     private ChatResult extractChatResult(Map<?, ?> body) {
         if (body == null) {
             throw new AiProviderException("Resposta do OpenAI vazia.");

@@ -31,6 +31,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,12 +81,13 @@ class Customer360ServiceTest {
         when(pipelineRepository.findByCompanyId(companyId)).thenReturn(List.of(pipeline));
         when(opportunityRepository.findByContactId(c.getId())).thenReturn(List.of(open));
         when(taskRepository.findByContactId(c.getId())).thenReturn(List.of(task));
-        when(opportunityRepository.findHistoryByOpportunityId(open.getId())).thenReturn(List.of());
+        when(opportunityRepository.findHistoryByOpportunityIds(java.util.List.of(open.getId())))
+                .thenReturn(java.util.Map.of());
         when(activityRepository.findByContactId(c.getId())).thenReturn(List.of(activity));
         when(activityRepository.findLatestActivityAtByContactId(c.getId()))
                 .thenReturn(Optional.of(LocalDateTime.now().minusDays(1)));
-        when(activityRepository.findLatestActivityAtByOpportunityId(open.getId()))
-                .thenReturn(Optional.of(LocalDateTime.now().minusDays(1)));
+        when(activityRepository.findLatestActivityAtByOpportunityIds(anyCollection()))
+                .thenReturn(java.util.Map.of(open.getId(), LocalDateTime.now().minusDays(1)));
 
         var result = customer360Service.build(companyId, c.getId());
 
@@ -122,12 +124,13 @@ class Customer360ServiceTest {
         when(pipelineRepository.findByCompanyId(companyId)).thenReturn(List.of(pipeline));
         when(opportunityRepository.findByContactId(c.getId())).thenReturn(List.of(stale));
         when(taskRepository.findByContactId(c.getId())).thenReturn(List.of());
-        when(opportunityRepository.findHistoryByOpportunityId(stale.getId())).thenReturn(List.of());
+        when(opportunityRepository.findHistoryByOpportunityIds(java.util.List.of(stale.getId())))
+                .thenReturn(java.util.Map.of());
         when(activityRepository.findByContactId(c.getId())).thenReturn(List.of());
         when(activityRepository.findLatestActivityAtByContactId(c.getId()))
                 .thenReturn(Optional.of(LocalDateTime.now().minusDays(10)));
-        when(activityRepository.findLatestActivityAtByOpportunityId(stale.getId()))
-                .thenReturn(Optional.of(LocalDateTime.now().minusDays(10)));
+        when(activityRepository.findLatestActivityAtByOpportunityIds(anyCollection()))
+                .thenReturn(java.util.Map.of(stale.getId(), LocalDateTime.now().minusDays(10)));
 
         var result = customer360Service.build(companyId, c.getId());
 
@@ -156,12 +159,13 @@ class Customer360ServiceTest {
         when(pipelineRepository.findByCompanyId(companyId)).thenReturn(List.of(pipeline));
         when(opportunityRepository.findByContactId(c.getId())).thenReturn(List.of(open));
         when(taskRepository.findByContactId(c.getId())).thenReturn(List.of(overdue));
-        when(opportunityRepository.findHistoryByOpportunityId(open.getId())).thenReturn(List.of());
+        when(opportunityRepository.findHistoryByOpportunityIds(java.util.List.of(open.getId())))
+                .thenReturn(java.util.Map.of());
         when(activityRepository.findByContactId(c.getId())).thenReturn(List.of());
         when(activityRepository.findLatestActivityAtByContactId(c.getId()))
                 .thenReturn(Optional.of(LocalDateTime.now().minusDays(1)));
-        when(activityRepository.findLatestActivityAtByOpportunityId(open.getId()))
-                .thenReturn(Optional.of(LocalDateTime.now().minusDays(1)));
+        when(activityRepository.findLatestActivityAtByOpportunityIds(anyCollection()))
+                .thenReturn(java.util.Map.of(open.getId(), LocalDateTime.now().minusDays(1)));
 
         var result = customer360Service.build(companyId, c.getId());
 

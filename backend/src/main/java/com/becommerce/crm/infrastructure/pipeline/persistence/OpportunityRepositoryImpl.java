@@ -6,9 +6,13 @@ import com.becommerce.crm.domain.pipeline.OpportunityHistory;
 import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 public class OpportunityRepositoryImpl implements OpportunityRepository {
@@ -73,6 +77,17 @@ public class OpportunityRepositoryImpl implements OpportunityRepository {
         return historyJpaRepository.findByOpportunityIdOrderByChangedAtAsc(opportunityId).stream()
                 .map(OpportunityRepositoryImpl::toHistoryDomain)
                 .toList();
+    }
+
+    @Override
+    public Map<UUID, List<OpportunityHistory>> findHistoryByOpportunityIds(Collection<UUID> opportunityIds) {
+        if (opportunityIds == null || opportunityIds.isEmpty()) {
+            return Map.of();
+        }
+        return historyJpaRepository.findByOpportunityIdInOrderByChangedAtAsc(opportunityIds).stream()
+                .map(OpportunityRepositoryImpl::toHistoryDomain)
+                .collect(Collectors.groupingBy(OpportunityHistory::getOpportunityId,
+                        LinkedHashMap::new, Collectors.toList()));
     }
 
     private static OpportunityJpaEntity toEntity(Opportunity o) {
