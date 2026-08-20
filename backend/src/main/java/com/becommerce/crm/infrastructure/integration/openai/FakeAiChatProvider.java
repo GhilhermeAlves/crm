@@ -4,6 +4,7 @@ import com.becommerce.crm.application.ai.port.output.AiProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,9 +40,9 @@ public class FakeAiChatProvider implements AiProvider {
 
         // 2) Sem resultado de Tool: se há Tools declaradas, solicita a primeira.
         if (request.tools() != null && !request.tools().isEmpty()) {
-            String firstTool = request.tools().get(0).name();
+            AiProvider.ToolDefinition first = request.tools().get(0);
             return ChatResult.withToolCalls(List.of(
-                    new ToolCall("call_fake_1", firstTool, Map.of())));
+                    new ToolCall("call_fake_1", first.name(), validArguments(first.inputSchema()))));
         }
 
         // 3) Sem Tools: resposta textual simples.
@@ -106,5 +107,41 @@ public class FakeAiChatProvider implements AiProvider {
 
     private String truncate(String value) {
         return value.length() <= 80 ? value : value.substring(0, 80) + "...";
+    }
+
+    private Map<String, Object> validArguments(Map<String, Object> schema) {
+        Map<String, Object> args = new LinkedHashMap<>();
+        if (!(schema.get("required") instanceof List<?> required)) {
+            return args;
+        }
+        if (!(schema.get("properties") instanceof Map<?, ?> properties)) {
+            return args;
+        }
+        for (Object field : required) {
+            Object property = properties.get(String.valueOf(field));
+            if (property instanceof Map<?, ?> propertySchema) {
+                args.put(String.valueOf(field), defaultValue(propertySchema));
+            }
+        }
+        return args;
+    }
+
+    private Object defaultValue(Map<?, ?> propertySchema) {
+        if (propertySchema.get("enum") instanceof List<?> enums && !enums.isEmpty()) {
+            return enums.get(0);
+        }
+        if ("string".equals(propertySchema.get("type"))) {
+            return "Registro do assistente";
+        }
+        if ("integer".equals(propertySchema.get("type")) || "number".equals(propertySchema.get("type"))) {
+            return 1;
+        }
+        if ("boolean".equals(propertySchema.get("type"))) {
+            return true;
+        }
+        if ("array".equals(propertySchema.get("type"))) {
+            return List.of();
+        }
+        return "Registro do assistente";
     }
 }
