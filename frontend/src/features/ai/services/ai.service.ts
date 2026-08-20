@@ -2,6 +2,8 @@ import { AxiosError } from "axios";
 import api from "@/lib/api";
 import type {
   AiAction,
+  AiAnalysisRequest,
+  AiAnalysisResponse,
   AiChatRequest,
   AiChatResponse,
   AiConversation,
@@ -49,6 +51,36 @@ export function aiErrorMessage(error: unknown): string {
   return "Não foi possível obter uma resposta da IA. Tente novamente.";
 }
 
+/**
+ * Converte erros da análise contextual em mensagens amigáveis (AI-06 §11).
+ * Nunca expõe stack traces nem detalhes internos. Distingue 401/403/404/429/500
+ * e erros de conexão; parsing inválido cai no fallback controlado.
+ */
+export function aiAnalysisErrorMessage(error: unknown): string {
+  if (error instanceof AxiosError) {
+    const status = error.response?.status;
+    if (status === 401) {
+      return "Sua sessão expirou. Faça login novamente.";
+    }
+    if (status === 403) {
+      return "Você não tem permissão para acessar o contexto solicitado.";
+    }
+    if (status === 404) {
+      return "Registro ou contexto não encontrado.";
+    }
+    if (status === 429) {
+      return "Muitas solicitações em sequência. Aguarde um instante e tente novamente.";
+    }
+    if (status === 500) {
+      return "Não foi possível realizar a análise. Tente novamente.";
+    }
+    if (!error.response) {
+      return "Falha de conexão. Verifique sua internet e tente novamente.";
+    }
+  }
+  return "Não foi possível realizar a análise. Tente novamente.";
+}
+
 export const AiService = {
   async suggest(conversationId: string): Promise<AiSuggestionResponse> {
     const response = await api.get<AiSuggestionResponse>(`/ai/suggestions/${conversationId}`);
@@ -57,6 +89,13 @@ export const AiService = {
 
   async chat(request: AiChatRequest): Promise<AiChatResponse> {
     const response = await api.post<AiChatResponse>("/ai/chat", request);
+    return response.data;
+  },
+
+  /** Análise contextual (POST /api/v1/ai/analyze) - AI-06. Envia apenas pergunta
+   * + contexto da tela/registro; identidade/permissões ficam com o backend. */
+  async analyze(request: AiAnalysisRequest): Promise<AiAnalysisResponse> {
+    const response = await api.post<AiAnalysisResponse>("/ai/analyze", request);
     return response.data;
   },
 

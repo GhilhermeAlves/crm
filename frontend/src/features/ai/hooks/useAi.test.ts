@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
 import {
   useAiPermissions,
+  useAiAnalyze,
   useAiChat,
   useAiConversations,
   useAiConversationMessages,
@@ -15,6 +16,7 @@ import {
 const {
   canMock,
   chatMock,
+  analyzeMock,
   listMock,
   messagesMock,
   listActionsMock,
@@ -25,6 +27,7 @@ const {
 } = vi.hoisted(() => ({
   canMock: vi.fn(),
   chatMock: vi.fn(),
+  analyzeMock: vi.fn(),
   listMock: vi.fn(),
   messagesMock: vi.fn(),
   listActionsMock: vi.fn(),
@@ -42,6 +45,7 @@ vi.mock("../services/ai.service", () => ({
   AiService: {
     suggest: vi.fn(),
     chat: chatMock,
+    analyze: analyzeMock,
     listConversations: listMock,
     getConversationMessages: messagesMock,
     listConversationActions: listActionsMock,
@@ -49,6 +53,7 @@ vi.mock("../services/ai.service", () => ({
     cancelAction: cancelMock,
   },
   aiErrorMessage: (error: unknown) => "Mensagem amigável.",
+  aiAnalysisErrorMessage: (error: unknown) => "Falha na análise.",
 }));
 
 vi.mock("sonner", () => ({ toast: { error: toastErrorMock } }));
@@ -158,6 +163,46 @@ describe("useAiChat (AI-04 §18-19)", () => {
     result.current.mutate({ message: "Oi", conversationId: null, context: null });
 
     await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith("Mensagem amigável."));
+  });
+});
+
+describe("useAiAnalyze (AI-06)", () => {
+  beforeEach(() => {
+    analyzeMock.mockReset();
+    toastErrorMock.mockReset();
+  });
+
+  it("chama POST /ai/analyze com pergunta e contexto", async () => {
+    analyzeMock.mockResolvedValue({
+      summary: "Resumo.",
+      facts: [],
+      inferences: [],
+      recommendations: [],
+    });
+    const { result } = renderHookWith(() => useAiAnalyze());
+
+    result.current.mutate({
+      question: "Analise.",
+      context: { screen: "opportunity", route: "/o/1", recordType: "OPPORTUNITY", recordId: "1" },
+    });
+
+    await waitFor(() =>
+      expect(analyzeMock).toHaveBeenCalledWith({
+        question: "Analise.",
+        context: { screen: "opportunity", route: "/o/1", recordType: "OPPORTUNITY", recordId: "1" },
+      }),
+    );
+    await waitFor(() => expect(result.current.data?.summary).toBe("Resumo."));
+  });
+
+  it("expõe o erro para tratamento inline (sem toast global)", async () => {
+    analyzeMock.mockRejectedValue(new Error("boom"));
+    const { result } = renderHookWith(() => useAiAnalyze());
+
+    result.current.mutate({ question: "x", context: null });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(toastErrorMock).not.toHaveBeenCalled();
   });
 });
 

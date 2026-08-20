@@ -2,7 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import { aiErrorMessage, AiService } from "../services/ai.service";
-import type { AiAction, AiChatRequest, AiChatResponse } from "../types/ai.types";
+import type {
+  AiAction,
+  AiAnalysisRequest,
+  AiAnalysisResponse,
+  AiChatRequest,
+  AiChatResponse,
+} from "../types/ai.types";
 
 export function useSuggestReply() {
   return useMutation({
@@ -37,6 +43,16 @@ export function useAiConversations(enabled: boolean) {
     queryKey: ["ai", "conversations"],
     queryFn: () => AiService.listConversations(),
     enabled,
+  });
+}
+
+/**
+ * Análise contextual (POST /api/v1/ai/analyze) - AI-06. Não emite toast global:
+ * o erro é exposto inline no AiAnalysisCard para controle de UX (§11).
+ */
+export function useAiAnalyze() {
+  return useMutation({
+    mutationFn: (request: AiAnalysisRequest) => AiService.analyze(request),
   });
 }
 
@@ -100,4 +116,4 @@ export function useAiPermissions() {
   };
 }
 
-export type { AiChatRequest, AiChatResponse };
+export type { AiChatRequest, AiChatResponse, AiAnalysisRequest, AiAnalysisResponse };

@@ -60,6 +60,52 @@ export type AiMessage = {
 /** Estados obrigatórios da UX do chat (AI-04 §12). */
 export type AiChatState = "idle" | "sending" | "processing" | "success" | "error";
 
+/** Payload de POST /api/v1/ai/analyze (AI-06). O backend resolve identidade/
+ * permissões/tenant do usuário autenticado; o frontend envia apenas a pergunta
+ * e o contexto da tela/registro em foco (nunca companyId/userId/tenantId). */
+export type AiAnalysisRequest = {
+  question: string;
+  context: AiContextPayload | null;
+};
+
+/** Fato derivado de dado REAL do CRM (AI-06). Montado pelo backend, nunca pelo
+ * modelo. A ausência de um dado não vira fato. */
+export type AiFact = {
+  key: string;
+  label: string;
+  value: string;
+  source: string;
+};
+
+/** Inferência da IA (AI-06): conclusão a partir dos fatos, estruturalmente
+ * separada de {@link AiFact} — jamais apresentada como dado armazenado. */
+export type AiInference = {
+  key: string;
+  text: string;
+  confidence: number | null;
+};
+
+/** Recomendação / próxima melhor ação (AI-06). A IA NUNCA executa: é apenas
+ * sugestão. Se futuramente executável, passa pela proposta/confirmação da
+ * AI-05 (PROPOSED → CONFIRMED/CANCELLED). */
+export type AiRecommendation = {
+  key: string;
+  title: string;
+  description: string | null;
+  priority: number | null;
+  justification: string | null;
+  action: string | null;
+};
+
+/** Resposta de POST /api/v1/ai/analyze (AI-06). Separa inequivocamente resumo,
+ * fatos, inferências e recomendações. */
+export type AiAnalysisResponse = {
+  summary: string;
+  facts: AiFact[];
+  inferences: AiInference[];
+  recommendations: AiRecommendation[];
+};
+
 /** Ciclo de vida de uma acao de escrita do assistente (AI-05). */
 export type AiActionStatus =
   "PROPOSED" | "CONFIRMED" | "EXECUTING" | "EXECUTED" | "FAILED" | "CANCELLED";

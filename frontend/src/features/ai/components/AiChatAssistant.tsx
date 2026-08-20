@@ -2,14 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Send, Sparkles } from "lucide-react";
+import { BrainCircuit, Loader2, Plus, Send, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
+  useAiAnalyze,
   useAiChat,
   useAiConversationActions,
   useAiConversationMessages,
@@ -17,11 +24,12 @@ import {
   useAiPermissions,
 } from "../hooks/useAi";
 import { useAiContext } from "../hooks/useAiContext";
-import { aiErrorMessage } from "../services/ai.service";
+import { aiAnalysisErrorMessage, aiErrorMessage } from "../services/ai.service";
 import { AiActionProposalCard } from "./AiActionProposalCard";
+import { AiAnalysisCard } from "./AiAnalysisCard";
 import { AiMessageBubble } from "./AiMessageBubble";
 import { AiConversationList } from "./AiConversationList";
-import type { AiChatRole, AiChatState } from "../types/ai.types";
+import type { AiAnalysisResponse, AiChatRole, AiChatState } from "../types/ai.types";
 
 type UiMessage = {
   key: string;
@@ -52,8 +60,13 @@ export function AiChatAssistant() {
 
   const enabled = !!user?.companyId && canChat;
   const chatMutation = useAiChat();
+  const analyzeMutation = useAiAnalyze();
   const queryClient = useQueryClient();
   const processing = chatMutation.isPending;
+  const analyzing = analyzeMutation.isPending;
+
+  const [analysis, setAnalysis] = useState<AiAnalysisResponse | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const { data: conversations = [], isLoading: conversationsLoading } = useAiConversations(enabled);
   const { data: historyMessages, isLoading: historyLoading } = useAiConversationMessages(
@@ -157,6 +170,27 @@ export function AiChatAssistant() {
     [chatMutation, context, conversationId, input, processing, queryClient],
   );
 
+  const runAnalysis = useCallback(() => {
+    if (analyzing || !context) {
+      return;
+    }
+    setAnalysis(null);
+    setAnalysisError(null);
+    analyzeMutation.mutate(
+      { question: "Analise este registro e sugira próximas ações.", context },
+      {
+        onSuccess: (res) => {
+          setAnalysis(res);
+          setAnalysisError(null);
+        },
+        onError: (err: Error) => {
+          setAnalysis(null);
+          setAnalysisError(aiAnalysisErrorMessage(err));
+        },
+      },
+    );
+  }, [analyzing, analyzeMutation, context]);
+
   if (!enabled) {
     return (
       <Card className="mx-auto mt-10 max-w-lg">
@@ -232,10 +266,41 @@ export function AiChatAssistant() {
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={startNewConversation}>
-            <Plus className="mr-1 h-4 w-4" />
-            Nova conversa
-          </Button>
+          <div className="flex items-center gap-2">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={runAnalysis}
+                    disabled={analyzing || !context}
+                    aria-label={
+                      context
+                        ? "Analisar o registro atual"
+                        : "Analisar o registro atual (nenhum registro em foco)"
+                    }
+                  >
+                    {analyzing ? (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    ) : (
+                      <BrainCircuit className="mr-1 h-4 w-4" />
+                    )}
+                    Analisar
+                  </Button>
+                </TooltipTrigger>
+                {!context && (
+                  <TooltipContent>
+                    Nenhum registro em foco. Abra uma tela de registro para analisar.
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            <Button variant="outline" size="sm" onClick={startNewConversation}>
+              <Plus className="mr-1 h-4 w-4" />
+              Nova conversa
+            </Button>
+          </div>
         </div>
 
         <ScrollArea className="min-h-0 flex-1">
@@ -261,6 +326,15 @@ export function AiChatAssistant() {
                 {conversationActions.map((action) => (
                   <AiActionProposalCard key={action.id} action={action} />
                 ))}
+              </div>
+            )}
+            {(analyzing || analysis || analysisError) && (
+              <div className="pt-1">
+                <AiAnalysisCard
+                  analysis={analysis}
+                  loading={analyzing}
+                  error={analysisError}
+                />
               </div>
             )}
             <div ref={bottomRef} />

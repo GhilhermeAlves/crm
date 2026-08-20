@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AxiosError, AxiosHeaders, type AxiosResponse } from "axios";
-import { AiService, aiErrorMessage } from "./ai.service";
+import { AiService, aiAnalysisErrorMessage, aiErrorMessage } from "./ai.service";
 
 const { getMock, postMock } = vi.hoisted(() => ({
   getMock: vi.fn(),
@@ -199,5 +199,163 @@ describe("AiService actions (AI-05)", () => {
 
     expect(postMock).toHaveBeenCalledWith("/ai/actions/act-1/cancel");
     expect(res.status).toBe("CANCELLED");
+  });
+});
+
+describe("AiService analyze (AI-06)", () => {
+  beforeEach(() => {
+    getMock.mockReset();
+    postMock.mockReset();
+  });
+
+  it("chama POST /ai/analyze com pergunta e contexto (sem identidade)", async () => {
+    postMock.mockResolvedValue({
+      data: {
+        summary: "Resumo.",
+        facts: [],
+        inferences: [],
+        recommendations: [],
+      },
+    });
+
+    await AiService.analyze({
+      question: "Analise este registro e sugira próximas ações.",
+      context: {
+        screen: "opportunity",
+        route: "/opportunities/123",
+        recordType: "OPPORTUNITY",
+        recordId: "123",
+      },
+    });
+
+    // Nunca envia companyId/userId/tenantId/permissions como autoridade.
+    expect(postMock).toHaveBeenCalledWith(
+      "/ai/analyze",
+      expect.objectContaining({
+        question: "Analise este registro e sugira próximas ações.",
+        context: {
+          screen: "opportunity",
+          route: "/opportunities/123",
+          recordType: "OPPORTUNITY",
+          recordId: "123",
+        },
+      }),
+    );
+  });
+
+  it("retorna o contrato completo (resumo, fatos, inferências, recomendações)", async () => {
+    postMock.mockResolvedValue({
+      data: {
+        summary: "Oportunidade saudável.",
+        facts: [
+          { key: "opportunity.stage", label: "Estágio", value: "Proposta", source: "opportunity_context" },
+        ],
+        inferences: [{ key: "inf-1", text: "Risco de perda de momentum.", confidence: 70 }],
+        recommendations: [
+          {
+            key: "rec-1",
+            title: "Fazer follow-up",
+            description: "Ligar para o contato",
+            priority: 80,
+            justification: "Sem interação há 5 dias.",
+            action: null,
+          },
+        ],
+      },
+    });
+
+    const res = await AiService.analyze({
+      question: "Analise.",
+      context: null,
+    });
+
+    expect(res.summary).toBe("Oportunidade saudável.");
+    expect(res.facts[0].value).toBe("Proposta");
+    expect(res.inferences[0].text).toContain("momentum");
+    expect(res.recommendations[0].title).toBe("Fazer follow-up");
+  });
+
+  it("propaga 401 (sessão expirada)", async () => {
+    const config = { headers: new AxiosHeaders() };
+    const response: AxiosResponse = {
+      data: {},
+      status: 401,
+      statusText: "",
+      headers: {},
+      config,
+    };
+    postMock.mockRejectedValue(new AxiosError("Unauthorized", undefined, config, undefined, response));
+
+    await expect(AiService.analyze({ question: "x", context: null })).rejects.toThrow();
+  });
+
+  it("propaga 403 (sem permissão) e 500 (erro interno)", async () => {
+    const config = { headers: new AxiosHeaders() };
+    const response403: AxiosResponse = {
+      data: {},
+      status: 403,
+      statusText: "",
+      headers: {},
+      config,
+    };
+    const response500: AxiosResponse = {
+      data: {},
+      status: 500,
+      statusText: "",
+      headers: {},
+      config,
+    };
+    postMock.mockRejectedValueOnce(new AxiosError("Forbidden", undefined, config, undefined, response403));
+    postMock.mockRejectedValueOnce(new AxiosError("Internal", undefined, config, undefined, response500));
+
+    await expect(AiService.analyze({ question: "x", context: null })).rejects.toThrow();
+    await expect(AiService.analyze({ question: "x", context: null })).rejects.toThrow();
+  });
+});
+
+describe("aiAnalysisErrorMessage (AI-06 §11)", () => {
+  function axiosError(status: number | null): AxiosError {
+    const config = { headers: new AxiosHeaders() };
+    if (status === null) {
+      return new AxiosError("Network Error", "ERR_NETWORK", config);
+    }
+    const response: AxiosResponse = {
+      data: { message: "erro" },
+      status,
+      statusText: "",
+      headers: {},
+      config,
+    };
+    return new AxiosError("Request failed", undefined, config, undefined, response);
+  }
+
+  it("mapeia 401 para sessão expirada", () => {
+    expect(aiAnalysisErrorMessage(axiosError(401))).toContain("sessão");
+  });
+
+  it("mapeia 403 para falta de permissão no contexto", () => {
+    expect(aiAnalysisErrorMessage(axiosError(403))).toContain("permissão");
+  });
+
+  it("mapeia 404 para registro/contexto não encontrado", () => {
+    expect(aiAnalysisErrorMessage(axiosError(404))).toContain("não encontrado");
+  });
+
+  it("mapeia 429 para excesso de solicitações", () => {
+    expect(aiAnalysisErrorMessage(axiosError(429))).toContain("Muitas solicitações");
+  });
+
+  it("mapeia 500 para erro interno (sem stack trace)", () => {
+    expect(aiAnalysisErrorMessage(axiosError(500))).toContain("Tente novamente");
+  });
+
+  it("mapeia erro de rede para falha de conexão", () => {
+    expect(aiAnalysisErrorMessage(axiosError(null))).toContain("conexão");
+  });
+
+  it("cai em fallback amigável para erros desconhecidos", () => {
+    expect(aiAnalysisErrorMessage(new Error("stack trace"))).toBe(
+      "Não foi possível realizar a análise. Tente novamente.",
+    );
   });
 });

@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { AiChatAssistant } from "./AiChatAssistant";
+import type { AiContextPayload } from "../types/ai.types";
 
 const {
   chatMutateMock,
+  analyzeMutateMock,
   conversationsQuery,
   messagesQuery,
   actionsQuery,
   canChatMock,
   invalidateMock,
+  useAiContextMock,
   state,
 } = vi.hoisted(() => {
   const state = {
@@ -16,11 +19,13 @@ const {
   };
   return {
     chatMutateMock: vi.fn(),
+    analyzeMutateMock: vi.fn(),
     conversationsQuery: vi.fn(),
     messagesQuery: vi.fn(),
     actionsQuery: vi.fn(),
     canChatMock: vi.fn(() => true),
     invalidateMock: vi.fn(),
+    useAiContextMock: vi.fn<() => AiContextPayload | null>(() => null),
     state,
   };
 });
@@ -28,6 +33,7 @@ const {
 vi.mock("../hooks/useAi", () => ({
   useAiPermissions: () => ({ canSuggest: true, canChat: canChatMock() }),
   useAiChat: () => ({ mutate: chatMutateMock, isPending: state.isPending }),
+  useAiAnalyze: () => ({ mutate: analyzeMutateMock, isPending: state.isPending }),
   useAiConversations: (enabled: boolean) => conversationsQuery(enabled),
   useAiConversationMessages: (id: string | null, enabled: boolean) => messagesQuery(id, enabled),
   useAiConversationActions: (id: string | null, enabled: boolean) => actionsQuery(id, enabled),
@@ -41,10 +47,11 @@ vi.mock("@tanstack/react-query", () => ({
 
 vi.mock("../services/ai.service", () => ({
   aiErrorMessage: () => "Não foi possível obter uma resposta da IA. Tente novamente.",
+  aiAnalysisErrorMessage: () => "Não foi possível realizar a análise. Tente novamente.",
 }));
 
 vi.mock("../hooks/useAiContext", () => ({
-  useAiContext: () => null,
+  useAiContext: () => useAiContextMock(),
 }));
 
 vi.mock("@/features/auth/hooks/useAuth", () => ({
@@ -53,11 +60,14 @@ vi.mock("@/features/auth/hooks/useAuth", () => ({
 
 beforeEach(() => {
   chatMutateMock.mockReset();
+  analyzeMutateMock.mockReset();
   conversationsQuery.mockReset();
   messagesQuery.mockReset();
   actionsQuery.mockReset();
   canChatMock.mockReset();
   invalidateMock.mockReset();
+  useAiContextMock.mockReset();
+  useAiContextMock.mockReturnValue(null);
   canChatMock.mockReturnValue(true);
   state.isPending = false;
   conversationsQuery.mockReturnValue({ data: [], isLoading: false });
@@ -277,5 +287,137 @@ describe("AiChatAssistant (AI-04)", () => {
     expect(screen.getByText("Criar tarefa: Ligar para Joao")).toBeTruthy();
     expect(screen.getByLabelText("Confirmar ação")).toBeTruthy();
     expect(screen.getByLabelText("Cancelar ação")).toBeTruthy();
+  });
+});
+
+describe("AiChatAssistant análise contextual (AI-06)", () => {
+  const ctx = {
+    screen: "opportunity",
+    route: "/opportunities/123",
+    recordType: "OPPORTUNITY" as const,
+    recordId: "123",
+  };
+
+  it("envia o contexto correto para POST /analyze ao clicar em Analisar", async () => {
+    useAiContextMock.mockReturnValue(ctx);
+    let options: { onSuccess?: (res: unknown) => void } = {};
+    analyzeMutateMock.mockImplementation((_req: unknown, opts: typeof options) => {
+      options = opts;
+    });
+
+    render(<AiChatAssistant />);
+
+    fireEvent.click(screen.getByLabelText("Analisar o registro atual"));
+
+    expect(analyzeMutateMock).toHaveBeenCalledWith(
+      {
+        question: "Analise este registro e sugira próximas ações.",
+        context: ctx,
+      },
+      expect.any(Object),
+    );
+
+    options.onSuccess?.({
+      summary: "Resumo.",
+      facts: [{ key: "f", label: "Estágio", value: "Proposta", source: "x" }],
+      inferences: [{ key: "i", text: "Inferência.", confidence: 70 }],
+      recommendations: [
+        {
+          key: "r",
+          title: "Follow-up",
+          description: null,
+          priority: 80,
+          justification: null,
+          action: null,
+        },
+      ],
+    });
+
+    await waitFor(() => expect(screen.getByText("Resumo.")).toBeTruthy());
+    expect(screen.getByLabelText("Fatos")).toBeTruthy();
+    expect(screen.getByLabelText("Inferências")).toBeTruthy();
+    expect(screen.getByLabelText("Recomendações")).toBeTruthy();
+  });
+
+  it("bloqueia duplo clique e mostra loading durante a análise", () => {
+    useAiContextMock.mockReturnValue(ctx);
+    let options: { onSuccess?: (res: unknown) => void } = {};
+    analyzeMutateMock.mockImplementation((_req: unknown, opts: typeof options) => {
+      options = opts;
+    });
+
+    const { rerender } = render(<AiChatAssistant />);
+
+    fireEvent.click(screen.getByLabelText("Analisar o registro atual"));
+    // simula a requisição em andamento (isPending do react-query) e re-renderiza
+    state.isPending = true;
+    rerender(<AiChatAssistant />);
+
+    const button = screen.getByLabelText("Analisar o registro atual");
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(button);
+
+    // guard de estado + botão desabilitado impedem a segunda chamada
+    expect(analyzeMutateMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText("Analisando registro")).toBeTruthy();
+  });
+
+  it("desabilita Analisar sem registro em foco (contexto não suportado)", () => {
+    render(<AiChatAssistant />);
+    const button = screen.getByLabelText(/Analisar o registro atual \(nenhum registro em foco\)/);
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(analyzeMutateMock).not.toHaveBeenCalled();
+  });
+
+  it("exibe erro amigável quando a análise falha (sem stack trace)", async () => {
+    useAiContextMock.mockReturnValue(ctx);
+    let options: { onError?: (error: Error) => void } = {};
+    analyzeMutateMock.mockImplementation((_req: unknown, opts: typeof options) => {
+      options = opts;
+    });
+
+    render(<AiChatAssistant />);
+
+    fireEvent.click(screen.getByLabelText("Analisar o registro atual"));
+    options.onError?.(new Error("erro interno stack trace"));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Não foi possível realizar a análise. Tente novamente."),
+      ).toBeTruthy(),
+    );
+    expect(screen.queryByText(/stack trace/)).toBeNull();
+  });
+
+  it("não confirma nenhuma ação automaticamente após a análise", async () => {
+    useAiContextMock.mockReturnValue(ctx);
+    let options: { onSuccess?: (res: unknown) => void } = {};
+    analyzeMutateMock.mockImplementation((_req: unknown, opts: typeof options) => {
+      options = opts;
+    });
+
+    render(<AiChatAssistant />);
+
+    fireEvent.click(screen.getByLabelText("Analisar o registro atual"));
+    options.onSuccess?.({
+      summary: "Resumo.",
+      facts: [],
+      inferences: [],
+      recommendations: [
+        {
+          key: "r",
+          title: "Follow-up",
+          description: null,
+          priority: 80,
+          justification: null,
+          action: "create_task",
+        },
+      ],
+    });
+
+    await waitFor(() => expect(screen.getByText("Resumo.")).toBeTruthy());
+    // nenhum botão de confirmação de Write Tool (AI-05) deve surgir da análise
+    expect(screen.queryByLabelText("Confirmar ação")).toBeNull();
+    expect(screen.queryByLabelText("Cancelar ação")).toBeNull();
   });
 });
