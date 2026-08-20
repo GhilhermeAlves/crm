@@ -14,8 +14,7 @@ import java.util.Map;
 
 /**
  * Adapter de produção do OpenAI (Chat Completions) para o assistente de IA
- * (AI-01). Ativo SOMENTE quando {@code app.ai.provider=openai}; por padrão
- * usa-se o {@link FakeAiChatProvider}.
+ * (AI-01). Ativo quando {@code app.ai.provider=openai} (default).
  *
  * <p>A API key vem de config/cofre ({@code app.ai.api-key}); nunca é logada nem
  * persistida. Reutiliza o mesmo endpoint/config do provider de sugestão.

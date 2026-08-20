@@ -13,8 +13,7 @@ import java.util.Map;
 
 /**
  * Adapter de produção do OpenAI (Chat Completions) para sugestão de resposta
- * (Sprint 20, Módulo de IA). Ativo SOMENTE quando {@code app.ai.provider=openai};
- * por padrão usa-se o {@link FakeAiSuggestionProvider}.
+ * (Sprint 20, Módulo de IA). Ativo quando {@code app.ai.provider=openai} (default).
  *
  * <p>A API key vem de config/cofre ({@code app.ai.api-key}); nunca é logada nem
  * persistida. Usa {@link WebClient} (spring-boot-starter-webflux já presente).

@@ -9,7 +9,7 @@ import java.util.UUID;
  * resposta do assistente dado um conjunto de mensagens (sistema + contexto +
  * histórico + pergunta) e, opcionalmente, declaração de Tools (AI-03). O
  * domínio de CRM não conhece classes de provedor específico; os adapters
- * (OpenAI, fake, etc.) implementam esta porta.
+ * (OpenAI, etc.) implementam esta porta.
  *
  * <p>AI-03 (Tool Calling): o provider pode receber a definição das Tools e
  * responder com uma chamada de Tool ({@link ToolCall}) em vez de texto final.

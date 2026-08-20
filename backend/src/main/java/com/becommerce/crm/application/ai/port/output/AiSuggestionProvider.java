@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Abstração de provider de IA para sugestão de resposta (Sprint 20).
  * O domínio de CRM não conhece classes da OpenAI/LangChain; o adapter concreto
- * (OpenAI, fake, etc.) implementa esta porta.
+ * (OpenAI, etc.) implementa esta porta.
  */
 public interface AiSuggestionProvider {
 

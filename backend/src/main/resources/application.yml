@@ -104,7 +104,7 @@ app:
   invitations:
     base-url: ${INVITATION_BASE_URL:}
   ai:
-    provider: ${AI_PROVIDER:fake}
+    provider: ${AI_PROVIDER:openai}
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-4o-mini}
     openai:

@@ -60,7 +60,7 @@ public class AiAction {
                                    String description) {
         LocalDateTime now = LocalDateTime.now();
         return new AiAction(UUID.randomUUID(), companyId, userId, conversationId, tool, entityType,
-                entityId, parameters, description, AiActionStatus.PROPOSED, null, null, now, now, 0L);
+                entityId, parameters, description, AiActionStatus.PROPOSED, null, null, now, now, null);
     }
 
     public static AiAction reconstitute(UUID id, UUID companyId, UUID userId, UUID conversationId,
