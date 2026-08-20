@@ -30,4 +30,15 @@ class GlobalExceptionHandlerTest {
         assertEquals(403, response.getStatusCode().value());
         assertEquals("CRM_ACCESS_DENIED", response.getBody().get("code"));
     }
+
+    @Test
+    void shouldMapOmnichannelNotFoundTo404() {
+        var response = handler.handleOmnichannelNotFoundException(
+                new com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException(
+                        java.util.UUID.randomUUID(), "Conversa"));
+
+        assertEquals(404, response.getStatusCode().value());
+        assertEquals(404, response.getBody().get("status"));
+        assertEquals("Not Found", response.getBody().get("error"));
+    }
 }

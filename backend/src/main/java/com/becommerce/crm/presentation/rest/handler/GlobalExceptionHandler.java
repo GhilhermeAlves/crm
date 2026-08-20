@@ -41,6 +41,7 @@ import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
 import com.becommerce.crm.domain.task.exception.TaskValidationException;
 import com.becommerce.crm.domain.notification.exception.NotificationNotFoundException;
 import com.becommerce.crm.domain.notification.exception.NotificationValidationException;
+import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
 import com.becommerce.crm.domain.ai.AiProviderException;
 import com.becommerce.crm.domain.ai.AiConversationNotFoundException;
 import com.becommerce.crm.domain.ai.AiActionNotFoundException;
@@ -265,6 +266,17 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 409,
                 "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(OmnichannelNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleOmnichannelNotFoundException(OmnichannelNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));
