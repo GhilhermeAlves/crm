@@ -6,6 +6,7 @@ import com.becommerce.crm.application.ai.tool.AiToolResult;
 import com.becommerce.crm.application.contact.port.input.ContactUseCase;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public class ContactTool extends AbstractAiReadTool {
     public ContactTool(ContactUseCase contactUseCase) {
         super(NAME, "Obtém os dados de um contato específico.",
                 "contact:read",
-                Map.of("contactId", stringProp("ID do contato", true)));
+                Map.of("contactId", stringProp("ID do contato")), List.of("contactId"));
         this.contactUseCase = contactUseCase;
     }
 

@@ -26,11 +26,11 @@ public class SearchOpportunitiesTool extends AbstractAiReadTool {
         super(NAME, "Busca oportunidades com filtros opcionais (status, pipeline, estágio, "
                         + "responsável, contato) — lista limitada.",
                 "opportunity:read",
-                Map.of("status", stringProp("Status: OPEN, WON ou LOST", false),
-                        "pipelineId", stringProp("ID do pipeline", false),
-                        "stageId", stringProp("ID do estágio", false),
-                        "contactId", stringProp("ID do contato/cliente", false),
-                        "assignedTo", stringProp("ID do responsável", false),
+                Map.of("status", stringProp("Status: OPEN, WON ou LOST"),
+                        "pipelineId", stringProp("ID do pipeline"),
+                        "stageId", stringProp("ID do estágio"),
+                        "contactId", stringProp("ID do contato/cliente"),
+                        "assignedTo", stringProp("ID do responsável"),
                         "limit", integerProp("Quantidade máxima de resultados (máx. 50)")));
         this.opportunityUseCase = opportunityUseCase;
     }

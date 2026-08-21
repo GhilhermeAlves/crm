@@ -6,6 +6,7 @@ import com.becommerce.crm.application.ai.tool.AiToolResult;
 import com.becommerce.crm.application.task.port.input.TaskUseCase;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public class TaskTool extends AbstractAiReadTool {
     public TaskTool(TaskUseCase taskUseCase) {
         super(NAME, "Obtém os dados de uma tarefa específica.",
                 "task:read",
-                Map.of("taskId", stringProp("ID da tarefa", true)));
+                Map.of("taskId", stringProp("ID da tarefa")), List.of("taskId"));
         this.taskUseCase = taskUseCase;
     }
 

@@ -23,7 +23,7 @@ public class SearchTasksTool extends AbstractAiReadTool {
     public SearchTasksTool(TaskUseCase taskUseCase) {
         super(NAME, "Busca tarefas por status (opcional) — lista limitada.",
                 "task:read",
-                Map.of("status", stringProp("Status: PENDING, IN_PROGRESS, COMPLETED ou CANCELLED", false),
+                Map.of("status", stringProp("Status: PENDING, IN_PROGRESS, COMPLETED ou CANCELLED"),
                         "limit", integerProp("Quantidade máxima de resultados (máx. 50)")));
         this.taskUseCase = taskUseCase;
     }

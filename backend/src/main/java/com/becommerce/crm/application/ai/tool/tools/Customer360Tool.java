@@ -6,6 +6,7 @@ import com.becommerce.crm.application.ai.tool.AiToolResult;
 import com.becommerce.crm.application.customer360.service.Customer360Service;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,7 +26,7 @@ public class Customer360Tool extends AbstractAiReadTool {
         super(NAME, "Obtém a visão completa (Customer 360) de um cliente: dados, "
                         + "oportunidades, tarefas, linha do tempo e próxima ação.",
                 "contact:read",
-                Map.of("customerId", stringProp("ID do cliente", true)));
+                Map.of("customerId", stringProp("ID do cliente")), List.of("customerId"));
         this.customer360Service = customer360Service;
     }
 

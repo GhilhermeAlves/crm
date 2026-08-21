@@ -22,7 +22,7 @@ public class SearchContactsTool extends AbstractAiReadTool {
     public SearchContactsTool(ContactUseCase contactUseCase) {
         super(NAME, "Busca contatos por nome, e-mail ou telefone (lista limitada).",
                 "contact:read",
-                Map.of("query", stringProp("Termo de busca (nome/e-mail/telefone)", false),
+                Map.of("query", stringProp("Termo de busca (nome/e-mail/telefone)"),
                         "limit", integerProp("Quantidade máxima de resultados (máx. 50)")));
         this.contactUseCase = contactUseCase;
     }

@@ -7,6 +7,7 @@ import com.becommerce.crm.application.pipeline.port.input.OpportunityUseCase;
 import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -24,7 +25,7 @@ public class OpportunityTool extends AbstractAiReadTool {
     public OpportunityTool(OpportunityUseCase opportunityUseCase) {
         super(NAME, "Obtém os dados de uma oportunidade específica.",
                 "opportunity:read",
-                Map.of("opportunityId", stringProp("ID da oportunidade", true)));
+                Map.of("opportunityId", stringProp("ID da oportunidade")), List.of("opportunityId"));
         this.opportunityUseCase = opportunityUseCase;
     }
 

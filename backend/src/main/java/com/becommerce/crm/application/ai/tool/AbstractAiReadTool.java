@@ -3,6 +3,7 @@ package com.becommerce.crm.application.ai.tool;
 import com.becommerce.crm.application.ai.port.output.AiProvider;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,13 +18,20 @@ public abstract class AbstractAiReadTool implements AiTool {
     private final String description;
     private final String requiredPermission;
     private final Map<String, Object> properties;
+    private final List<String> requiredFields;
 
     protected AbstractAiReadTool(String name, String description, String requiredPermission,
                                  Map<String, Object> properties) {
+        this(name, description, requiredPermission, properties, List.of());
+    }
+
+    protected AbstractAiReadTool(String name, String description, String requiredPermission,
+                                 Map<String, Object> properties, List<String> requiredFields) {
         this.name = name;
         this.description = description;
         this.requiredPermission = requiredPermission;
         this.properties = Map.copyOf(properties);
+        this.requiredFields = List.copyOf(requiredFields);
     }
 
     @Override
@@ -51,6 +59,9 @@ public abstract class AbstractAiReadTool implements AiTool {
         Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
         schema.put("properties", properties);
+        if (!requiredFields.isEmpty()) {
+            schema.put("required", requiredFields);
+        }
         return schema;
     }
 
@@ -118,13 +129,10 @@ public abstract class AbstractAiReadTool implements AiTool {
         }
     }
 
-    protected static Map<String, Object> stringProp(String description, boolean required) {
+    protected static Map<String, Object> stringProp(String description) {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("type", "string");
         p.put("description", description);
-        if (required) {
-            p.put("required", true);
-        }
         return p;
     }
 

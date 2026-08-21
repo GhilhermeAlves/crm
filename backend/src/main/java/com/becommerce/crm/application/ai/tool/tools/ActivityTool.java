@@ -6,6 +6,7 @@ import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public class ActivityTool extends AbstractAiReadTool {
     public ActivityTool(ActivityUseCase activityUseCase) {
         super(NAME, "Obtém os dados de uma atividade específica.",
                 "activity:read",
-                Map.of("activityId", stringProp("ID da atividade", true)));
+                Map.of("activityId", stringProp("ID da atividade")), List.of("activityId"));
         this.activityUseCase = activityUseCase;
     }
 

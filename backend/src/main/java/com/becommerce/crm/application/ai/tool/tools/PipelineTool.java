@@ -6,6 +6,7 @@ import com.becommerce.crm.application.ai.tool.AiToolResult;
 import com.becommerce.crm.application.pipeline.port.input.PipelineUseCase;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public class PipelineTool extends AbstractAiReadTool {
     public PipelineTool(PipelineUseCase pipelineUseCase) {
         super(NAME, "Obtém os dados de um pipeline (incluindo estágios).",
                 "pipeline:view",
-                Map.of("pipelineId", stringProp("ID do pipeline", true)));
+                Map.of("pipelineId", stringProp("ID do pipeline")), List.of("pipelineId"));
         this.pipelineUseCase = pipelineUseCase;
     }
 

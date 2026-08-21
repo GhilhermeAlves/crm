@@ -26,8 +26,8 @@ public class SearchActivitiesTool extends AbstractAiReadTool {
         super(NAME, "Busca atividades por contato, oportunidade ou da empresa toda "
                         + "(lista limitada).",
                 "activity:read",
-                Map.of("contactId", stringProp("ID do contato", false),
-                        "opportunityId", stringProp("ID da oportunidade", false),
+                Map.of("contactId", stringProp("ID do contato"),
+                        "opportunityId", stringProp("ID da oportunidade"),
                         "limit", integerProp("Quantidade máxima de resultados (máx. 50)")));
         this.activityUseCase = activityUseCase;
     }
