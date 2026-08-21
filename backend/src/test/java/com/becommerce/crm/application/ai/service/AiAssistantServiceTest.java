@@ -178,7 +178,7 @@ class AiAssistantServiceTest {
         ArgumentCaptor<AiProvider.ChatRequest> captor = ArgumentCaptor.forClass(AiProvider.ChatRequest.class);
         verify(aiProvider).chatWithTools(captor.capture());
         assertTrue(captor.getValue().messages().stream()
-                .noneMatch(m -> "system".equals(m.role()) && !m.content().startsWith("Você é o assistente")),
+                .noneMatch(m -> "system".equals(m.role()) && !m.content().startsWith("Você é o Léo")),
                 "nenhum contexto de registro deve ser injetado quando não há registro em foco");
     }
 

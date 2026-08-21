@@ -191,9 +191,9 @@ export function AiChatAssistant() {
       <Card className="mx-auto mt-10 max-w-lg">
         <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
           <Sparkles className="h-10 w-10 text-muted-foreground" />
-          <p className="font-semibold">Assistente de IA indisponível</p>
+          <p className="font-semibold">Léo indisponível</p>
           <p className="text-sm text-muted-foreground">
-            Você não tem permissão para usar o assistente de IA ({`ai:chat`}). Contate um
+            Você não tem permissão para usar o assistente Léo ({`ai:chat`}). Contate um
             administrador se acredita que isso é um erro.
           </p>
         </CardContent>
@@ -253,11 +253,11 @@ export function AiChatAssistant() {
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             <div>
-              <p className="font-semibold leading-tight">Assistente de IA</p>
+              <p className="font-semibold leading-tight">Léo</p>
               <p className="text-xs text-muted-foreground">
                 {context
                   ? `${context.screen} • ${context.route}`
-                  : "Converse com seus dados do CRM"}
+                  : "Assistente de IA do CRM — converse com seus dados"}
               </p>
             </div>
           </div>

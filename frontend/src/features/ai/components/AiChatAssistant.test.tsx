@@ -78,7 +78,7 @@ beforeEach(() => {
 describe("AiChatAssistant (AI-04)", () => {
   it("renderiza o assistente com estado vazio (idle)", () => {
     render(<AiChatAssistant />);
-    expect(screen.getByText("Assistente de IA")).toBeTruthy();
+    expect(screen.getByText("Léo")).toBeTruthy();
     expect(screen.getByText(/Pergunte sobre seus clientes/)).toBeTruthy();
   });
 
@@ -211,7 +211,7 @@ describe("AiChatAssistant (AI-04)", () => {
   it("exibe acesso negado sem a permissão ai:chat", () => {
     canChatMock.mockReturnValue(false);
     render(<AiChatAssistant />);
-    expect(screen.getByText(/Assistente de IA indisponível/)).toBeTruthy();
+    expect(screen.getByText(/Léo indisponível/)).toBeTruthy();
     expect(screen.getByText(/ai:chat/)).toBeTruthy();
   });
 

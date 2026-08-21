@@ -150,7 +150,7 @@ const navGroups: NavGroup[] = [
         permission: "notification:read",
       },
       {
-        label: "Assistente de IA",
+        label: "Léo · Assistente IA",
         href: ROUTES.ASSISTANT,
         icon: Sparkles,
         permission: "ai:chat",

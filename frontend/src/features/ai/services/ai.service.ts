@@ -27,7 +27,7 @@ export function aiErrorMessage(error: unknown): string {
       return "Sua sessão expirou. Faça login novamente.";
     }
     if (status === 403) {
-      return "Você não tem permissão para usar o assistente de IA.";
+      return "Você não tem permissão para usar o assistente Léo.";
     }
     if (status === 404) {
       return "Conversa não encontrada ou sem acesso.";
