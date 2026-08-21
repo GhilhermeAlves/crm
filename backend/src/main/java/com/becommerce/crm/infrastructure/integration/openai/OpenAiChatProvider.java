@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +44,9 @@ public class OpenAiChatProvider implements AiProvider {
             throw new AiProviderException("Chave de API do OpenAI não configurada (app.ai.api-key).");
         }
 
-        List<Map<String, String>> messages = new ArrayList<>();
+        List<Map<String, Object>> messages = new ArrayList<>();
         for (ChatMessage line : request.messages()) {
-            messages.add(Map.of("role", mapRole(line.role()), "content", line.content()));
+            messages.add(toApiMessage(line));
         }
 
         try {
@@ -74,9 +75,53 @@ public class OpenAiChatProvider implements AiProvider {
             return extractChatResult(body);
         } catch (AiProviderException e) {
             throw e;
+        } catch (WebClientResponseException e) {
+            throw new AiProviderException("Falha ao consultar o OpenAI: " + e.getStatusCode()
+                    + " - " + truncate(e.getResponseBodyAsString()), e);
         } catch (RuntimeException e) {
             throw new AiProviderException("Falha ao consultar o OpenAI: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Converte a mensagem interna para o formato da API, preservando o
+     * protocolo de Tool Calling: assistant com {@code tool_calls} e resposta de
+     * Tool com {@code tool_call_id} (a OpenAI rejeita role "tool" sem vínculo).
+     */
+    private Map<String, Object> toApiMessage(ChatMessage line) {
+        Map<String, Object> msg = new java.util.LinkedHashMap<>();
+        msg.put("role", mapRole(line.role()));
+        if (line.content() != null) {
+            msg.put("content", line.content());
+        }
+        if (line.toolCalls() != null && !line.toolCalls().isEmpty()) {
+            msg.put("tool_calls", line.toolCalls().stream()
+                    .map(tc -> Map.of("id", tc.id() != null ? tc.id() : "call_unknown",
+                            "type", "function",
+                            "function", Map.of("name", tc.name(), "arguments", toJson(tc.arguments()))))
+                    .toList());
+        }
+        if (line.toolCallId() != null) {
+            msg.put("tool_call_id", line.toolCallId());
+        }
+        return msg;
+    }
+
+    private String toJson(Map<String, Object> arguments) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                    arguments != null ? arguments : Map.of());
+        } catch (Exception e) {
+            return "{}";
+        }
+    }
+
+    private String truncate(String value) {
+        if (value == null) {
+            return "";
+        }
+        String flat = value.replace("\n", " ").trim();
+        return flat.length() > 300 ? flat.substring(0, 300) + "..." : flat;
     }
 
     @Override

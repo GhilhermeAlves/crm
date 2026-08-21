@@ -19,8 +19,17 @@ import java.util.UUID;
  */
 public interface AiProvider {
 
-    /** Mensagem trocada com o modelo. */
-    record ChatMessage(String role, String content) {
+    /**
+     * Mensagem trocada com o modelo. Para o protocolo de Tool Calling:
+     * {@code toolCalls} transporta as chamadas solicitadas pelo assistente
+     * (mensagem devolvida ao modelo) e {@code toolCallId} vincula a resposta
+     * de uma Tool (role "tool") à chamada correspondente.
+     */
+    record ChatMessage(String role, String content, List<ToolCall> toolCalls, String toolCallId) {
+
+        public ChatMessage(String role, String content) {
+            this(role, content, null, null);
+        }
     }
 
     /** Definição de uma Tool enviada ao modelo (nome, descrição e schema de entrada). */

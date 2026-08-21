@@ -169,14 +169,17 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
         int iterations = 0;
         while (result.hasToolCalls() && iterations < MAX_TOOL_ITERATIONS) {
             iterations++;
+            // Protocolo OpenAI: a mensagem do assistente que solicitou as tools
+            // deve ser devolvida COM o array tool_calls; cada resposta de Tool
+            // referencia a chamada correspondente via tool_call_id.
+            working.add(new AiProvider.ChatMessage(ROLE_ASSISTANT, result.content(), result.toolCalls(), null));
             for (AiProvider.ToolCall call : result.toolCalls()) {
                 AiToolResult toolResult = toolRegistry.execute(call.name(), toolCtx, call.arguments());
                 if (toolResult.success() && toolResult.data() instanceof AiActionResponse proposal) {
                     actions.add(proposal);
                 }
                 auditToolCall(companyId, userId, call.name(), toolResult);
-                working.add(new AiProvider.ChatMessage(ROLE_ASSISTANT, toolCallNotice(call)));
-                working.add(new AiProvider.ChatMessage(ROLE_TOOL, serialize(toolResult)));
+                working.add(new AiProvider.ChatMessage(ROLE_TOOL, serialize(toolResult), null, call.id()));
             }
             result = aiProvider.chatWithTools(new AiProvider.ChatRequest(
                     companyId, userId, working, toolRegistry.toolDefinitions()));
@@ -186,10 +189,6 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
     }
 
     private record ChatLoopResult(String content, List<AiActionResponse> actions) {
-    }
-
-    private String toolCallNotice(AiProvider.ToolCall call) {
-        return "Ferramenta solicitada: " + call.name();
     }
 
     private String serialize(AiToolResult result) {
