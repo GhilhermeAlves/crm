@@ -72,8 +72,8 @@ public class OmnichannelMessageRepositoryImpl implements OmnichannelMessageRepos
     }
 
     @Override
-    public void updateStatusByExternalId(String externalId, MessageStatus status, String error) {
-        jpaRepository.updateStatusByExternalId(externalId, status.name(), error, LocalDateTime.now());
+    public void updateStatusByExternalId(UUID companyId, String externalId, MessageStatus status, String error) {
+        jpaRepository.updateStatusByExternalId(companyId, externalId, status.name(), error, LocalDateTime.now());
     }
 
     private static OmnichannelMessageJpaEntity toEntity(Message m) {

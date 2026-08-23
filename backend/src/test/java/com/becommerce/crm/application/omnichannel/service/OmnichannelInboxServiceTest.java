@@ -44,6 +44,7 @@ class OmnichannelInboxServiceTest {
     @Mock OmnichannelMessageRepository messageRepository;
     @Mock OmnichannelChannelRepository channelRepository;
     @Mock WhatsAppProvider whatsAppProvider;
+    @Mock OmnichannelMessagePersister messagePersister;
 
     @InjectMocks OmnichannelInboxService service;
 
@@ -77,26 +78,31 @@ class OmnichannelInboxServiceTest {
         when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel()));
         when(whatsAppProvider.send(any(WhatsAppProvider.SendRequest.class)))
                 .thenReturn(new WhatsAppProvider.SendResult("wamid-1"));
-        when(messageRepository.save(any(Message.class))).thenAnswer(inv -> inv.getArgument(0));
+        Message pending = outbound();
+        when(messagePersister.persistPending(any(Message.class))).thenReturn(pending);
 
-        Message m = outbound();
         service.send(companyId, c.getId(), "Bom dia!");
 
         verify(whatsAppProvider).send(any(WhatsAppProvider.SendRequest.class));
-        verify(messageRepository, atLeast(2)).save(any(Message.class));
+        verify(messagePersister).persistPending(any(Message.class));
+        verify(messagePersister).markSent(eq(pending.getId()), eq(c.getId()), eq("wamid-1"));
+        verify(messagePersister, never()).markFailed(any(), any(), any());
     }
 
     @Test
-    void send_whenProviderFails_shouldMarkFailedAndThrow() {
+    void send_whenProviderFails_shouldPersistFailedInNewTransactionAndThrow() {
         Conversation c = conversation();
         when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
         when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel()));
         when(whatsAppProvider.send(any(WhatsAppProvider.SendRequest.class)))
                 .thenThrow(new OmnichannelProviderException("131026: n invalid"));
-        when(messageRepository.save(any(Message.class))).thenAnswer(inv -> inv.getArgument(0));
+        Message pending = outbound();
+        when(messagePersister.persistPending(any(Message.class))).thenReturn(pending);
 
         assertThrows(OmnichannelProviderException.class, () -> service.send(companyId, c.getId(), "oi"));
-        verify(messageRepository, atLeastOnce()).save(any(Message.class));
+        verify(messagePersister).persistPending(any(Message.class));
+        verify(messagePersister).markFailed(eq(pending.getId()), eq(c.getId()), eq("131026: n invalid"));
+        verify(messagePersister, never()).markSent(any(), any(), any());
     }
 
     @Test

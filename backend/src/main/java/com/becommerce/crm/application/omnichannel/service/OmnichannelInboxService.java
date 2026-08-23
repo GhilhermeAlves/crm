@@ -12,7 +12,6 @@ import com.becommerce.crm.application.omnichannel.port.output.WhatsAppProvider;
 import com.becommerce.crm.domain.omnichannel.Channel;
 import com.becommerce.crm.domain.omnichannel.Conversation;
 import com.becommerce.crm.domain.omnichannel.Message;
-import com.becommerce.crm.domain.omnichannel.MessageStatus;
 import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
 import com.becommerce.crm.domain.omnichannel.OmnichannelProviderException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
@@ -34,15 +33,18 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
     private final OmnichannelMessageRepository messageRepository;
     private final OmnichannelChannelRepository channelRepository;
     private final WhatsAppProvider whatsAppProvider;
+    private final OmnichannelMessagePersister messagePersister;
 
     public OmnichannelInboxService(OmnichannelConversationRepository conversationRepository,
                                    OmnichannelMessageRepository messageRepository,
                                    OmnichannelChannelRepository channelRepository,
-                                   WhatsAppProvider whatsAppProvider) {
+                                   WhatsAppProvider whatsAppProvider,
+                                   OmnichannelMessagePersister messagePersister) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.channelRepository = channelRepository;
         this.whatsAppProvider = whatsAppProvider;
+        this.messagePersister = messagePersister;
     }
 
     @Override
@@ -81,7 +83,7 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public MessageResponse send(UUID companyId, UUID conversationId, String body) {
         try {
             TenantContext.setCompanyId(companyId);
@@ -91,27 +93,22 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
 
             Message message = Message.createOutbound(companyId, conversationId, channel.getId(),
                     channel.getExternalId(), conversation.getExternalPhone(), body, UUID.randomUUID());
-            messageRepository.save(message);
+            Message persisted = messagePersister.persistPending(message);
 
             try {
                 WhatsAppProvider.SendResult result = whatsAppProvider.send(
                         new WhatsAppProvider.SendRequest(companyId, channel.getId(),
                                 channel.getExternalId(), conversation.getExternalPhone(), body));
-                message.markSent(result.externalMessageId());
+                messagePersister.markSent(persisted.getId(), conversationId, result.externalMessageId());
+                persisted.markSent(result.externalMessageId());
+                return toMessageResponse(persisted);
             } catch (OmnichannelProviderException e) {
-                message.markStatus(MessageStatus.FAILED, e.getMessage());
-                messageRepository.save(message);
-                conversation.touch(java.time.LocalDateTime.now(), false);
-                conversationRepository.save(conversation);
+                // Persistido em REQUIRES_NEW: sobrevive ao rollback da operação principal.
+                messagePersister.markFailed(persisted.getId(), conversationId, e.getMessage());
                 log.warn("Falha ao enviar mensagem company={} conversation={}: {}",
                         companyId, conversationId, e.getMessage());
                 throw e;
             }
-
-            Message saved = messageRepository.save(message);
-            conversation.touch(java.time.LocalDateTime.now(), false);
-            conversationRepository.save(conversation);
-            return toMessageResponse(saved);
         } finally {
             TenantContext.clear();
         }

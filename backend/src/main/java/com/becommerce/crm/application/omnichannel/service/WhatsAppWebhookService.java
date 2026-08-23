@@ -151,6 +151,6 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
             log.warn("Webhook de status sem dados válidos (company={})", companyId);
             return;
         }
-        messageRepository.updateStatusByExternalId(data.externalMessageId(), data.status(), data.error());
+        messageRepository.updateStatusByExternalId(companyId, data.externalMessageId(), data.status(), data.error());
     }
 }

@@ -124,7 +124,7 @@ class WhatsAppWebhookServiceTest {
 
         service.handleEvent(inboundPayload());
 
-        verify(messageRepository).updateStatusByExternalId("wamid-1", MessageStatus.DELIVERED, null);
+        verify(messageRepository).updateStatusByExternalId(companyId, "wamid-1", MessageStatus.DELIVERED, null);
         verify(eventPublisher, never()).publish(any());
     }
 

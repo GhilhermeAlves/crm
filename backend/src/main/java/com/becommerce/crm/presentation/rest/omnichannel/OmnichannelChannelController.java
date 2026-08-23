@@ -6,6 +6,7 @@ import com.becommerce.crm.application.omnichannel.port.input.OmnichannelChannelU
 import com.becommerce.crm.domain.omnichannel.ChannelStatus;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -58,7 +59,7 @@ public class OmnichannelChannelController {
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAuthority('omnichannel:update')")
     public ResponseEntity<ChannelResponse> setStatus(@PathVariable UUID id,
-                                                     @RequestBody StatusRequest request,
+                                                     @Valid @RequestBody StatusRequest request,
                                                      @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(channelUseCase.setStatus(principal.companyId(), id, request.status()));
     }
@@ -71,6 +72,6 @@ public class OmnichannelChannelController {
         return ResponseEntity.noContent().build();
     }
 
-    private record StatusRequest(ChannelStatus status) {
+    private record StatusRequest(@NotNull ChannelStatus status) {
     }
 }

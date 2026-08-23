@@ -56,9 +56,10 @@ public interface OmnichannelMessageJpaRepository extends JpaRepository<Omnichann
     @Query(value = """
             UPDATE omnichannel_messages
             SET status = :status, provider_error = :providerError, updated_at = :updatedAt
-            WHERE external_message_id = :externalMessageId
+            WHERE external_message_id = :externalMessageId AND company_id = :companyId
             """, nativeQuery = true)
     int updateStatusByExternalId(
+            @Param("companyId") UUID companyId,
             @Param("externalMessageId") String externalMessageId,
             @Param("status") String status,
             @Param("providerError") String providerError,

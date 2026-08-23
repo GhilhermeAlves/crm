@@ -109,6 +109,12 @@ app:
     model: ${OPENAI_MODEL:gpt-4o-mini}
     openai:
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+omnichannel:
+  whatsapp:
+    provider: ${WHATSAPP_PROVIDER:fake}
+    app-secret: ${CRM_WHATSAPP_APP_SECRET:}
+    webhook-verify-token: ${CRM_WHATSAPP_WEBHOOK_VERIFY_TOKEN:}
+    webhook-allow-unsigned: ${WHATSAPP_WEBHOOK_ALLOW_UNSIGNED:false}
 
 springdoc:
   api-docs:
