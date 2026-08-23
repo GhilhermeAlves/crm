@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## [6.2.0] - 2026-08-23 - Sprint 16 fechada: hardening WhatsApp/Omnichannel + deploy VPS
+
+### Added
+- **Permissões omnichannel** (`V053`): `omnichannel:*` concedidas por papel
+  (ADMIN/MANAGER/AGENT/VIEWER) em todas as empresas; `RoleSeedService` atualizado para
+  novos tenants.
+- **HMAC do webhook** (`X-Hub-Signature-256`, padrão Meta) com app secret configurável
+  (`omnichannel.whatsapp.app-secret`; modo dev explícito via
+  `omnichannel.whatsapp.webhook-allow-unsigned`) — requisições sem assinatura válida → 401.
+
+### Fixed
+- Mensagem enviada com falha do provider agora persiste status `FAILED` em transação
+  separada (`REQUIRES_NEW`, padrão `WorkflowActionRunner`) — não é perdida por rollback.
+- Ambiguidade de beans de provider resolvida: `FakeWhatsAppProvider` ativo apenas com
+  `omnichannel.whatsapp.provider=fake` (default); `cloud-api` seleciona o provider real.
+- `updateStatusByExternalId` agora filtra por `company_id` (defesa em profundidade além do RLS).
+- `StatusRequest.status` com `@NotNull`: body inválido retorna erro de validação (não 500).
+- FKs compostas com escopo de tenant (`V054`): mensagens não podem referenciar conversa/canal
+  de outro tenant no nível do banco.
+- Bootstraps SQL dos ITs versionados (`.gitignore` bloqueava `*.sql` em `test/resources`);
+  `maven-failsafe-plugin` configurado — `mvn verify` roda unit + Testcontainers (`*IT`),
+  incluindo `OmnichannelIsolationIT`.
+
+### Qualidade
+- Backend: 502 unit tests + ITs (Testcontainers PostgreSQL 17) verdes; CI/CD GREEN;
+  deploy validado na VPS (migrations aplicadas, containers saudáveis, smoke test).
+
+---
+
 ## [6.1.0] - 2026-08-15 - Storage: CRUD completo (download/exclusão) + tela de Arquivos
 
 ### Added

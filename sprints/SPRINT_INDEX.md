@@ -386,7 +386,7 @@
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 16 | WhatsApp | 🚧 Em andamento | 2026-08-15 | AI Agent | 12 |
+| 16 | WhatsApp | ✅ Concluída | 2026-08-23 | AI Agent | 12 |
 | 17 | Campanhas | ⏳ Pendente | — | — | 16 |
 | 18 | Automações | ⏳ Pendente | — | — | 17 |
 
