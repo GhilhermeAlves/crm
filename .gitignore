@@ -74,6 +74,8 @@ docker/.env
 # Exception to the *.sql rule above for the official migrations directory.
 !backend/src/main/resources/db/migration/*.sql
 !**/db/migration/*.sql
+# Integration test bootstrap scripts (Testcontainers RLS setup) are source code.
+!backend/src/test/resources/*.sql
 
 # OS
 Thumbs.db
