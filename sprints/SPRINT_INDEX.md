@@ -400,7 +400,7 @@
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 20 | IA | ⏳ Pendente | — | — | 12 |
+| 20 | IA | ✅ Concluída | 2026-08-23 | AI Agent | 12 |
 
 ---
 
@@ -415,10 +415,10 @@
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
 | SaaS | 7 | 7 | 0 | 0 | 0 |
 | CRM | 8 | 8 | 0 | 0 | 0 |
-| Omnichannel | 3 | 0 | 1 | 2 | 0 |
+| Omnichannel | 3 | 1 | 0 | 2 | 0 |
 | Analytics | 1 | 0 | 0 | 1 | 0 |
-| IA | 1 | 0 | 0 | 1 | 0 |
-| **Total** | **49** | **39** | **1** | **4** | **5** |
+| IA | 1 | 1 | 0 | 0 | 0 |
+| **Total** | **49** | **41** | **0** | **3** | **5** |
 
 ---
 
@@ -441,6 +441,7 @@ Sprint** — nunca é tarefa posterior/opcional):
 - [ ] Débitos conhecidos registrados
 - [ ] `SPRINT_INDEX.md` atualizado (status ✅, data real, responsável, resumo e última atualização)
 
+
 **Fluxo obrigatório (não iniciar a próxima Sprint antes do fim da anterior):**
 
 ```
@@ -449,5 +450,7 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 
 ---
 
-*Última atualização: 2026-08-15 — Sprint **16 — WhatsApp** iniciada (código + testes + build OK;
-deploy/VPS e IT Testcontainers pendentes). Resumo agora 49 sprints: 39 ✅, 1 🚧, 4 ⏳, 5 ↪️.*
+> **Governança:** uma implementação só é considerada sprint concluída quando código, testes, documentação, índice, CI/CD e deploy/validação na VPS estiverem consistentes.
+> **Entrega funcional (sem sprint):** Notificações In-app — implementada e em produção; ver `sprints/notifications/REPORT.md`.
+
+*última atualização: 2026-08-23 — Sprint 16 (WhatsApp) e Sprint 20 (IA) concluídas; regularização documental pós-Sprint 16.*

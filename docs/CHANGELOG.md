@@ -1,8 +1,15 @@
 # CHANGELOG
 
-## [6.2.0] - 2026-08-23 - Sprint 16 fechada: hardening WhatsApp/Omnichannel + deploy VPS
+## [6.2.0] - 2026-08-23 - Notificações, IA (Leo/OpenAI) e fechamento da Sprint 16 (WhatsApp/Omnichannel)
 
 ### Added
+- **Notificações in-app** (entrega funcional): backend `application/notification/` +
+  `StompNotificationPusher` (WebSocket/STOMP), migrações V047/V048 (tabela + permissões),
+  endpoints REST; frontend com sino/badge (`NotificationBell`) e página `/notifications`.
+- **IA do CRM — Sprint 20** (AI-01 a AI-06): orquestrador do assistente, context engine,
+  read tools, write tools com confirmação e proteção, inteligência contextual;
+  provider **OpenAI real** (fake removido); assistente nomeado **Leo**; migrações
+  V049–V052. Commits `07db73b`…`5a7db2f`.
 - **Permissões omnichannel** (`V053`): `omnichannel:*` concedidas por papel
   (ADMIN/MANAGER/AGENT/VIEWER) em todas as empresas; `RoleSeedService` atualizado para
   novos tenants.

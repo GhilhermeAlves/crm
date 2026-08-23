@@ -1,5 +1,9 @@
-# Frontend — Implementation Report
+# Frontend - Implementation Report
 
+> ⚠️ **DOCUMENTO HISTÓRICO/LEGADO (2026-07-15, v1.1.0).** Este relatório refere-se à Sprint 3.1
+> e NÃO reflete o estado atual do frontend. **A fonte de verdade atual** é:
+> `sprints/SPRINT_INDEX.md` (sprints), `.ai/PROJECT_STATUS.md` (snapshot do projeto) e
+> `sprints/[N]/REPORT.md`. Mantido apenas como registro histórico.
 ## Sprint 3.1: Camada de Conhecimento para IA
 
 **Data:** 2026-07-15
