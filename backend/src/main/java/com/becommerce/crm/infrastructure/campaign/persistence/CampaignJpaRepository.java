@@ -39,9 +39,4 @@ public interface CampaignJpaRepository extends JpaRepository<CampaignJpaEntity, 
     @Query(value = "UPDATE campaigns SET status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP, " +
             "updated_at = CURRENT_TIMESTAMP WHERE id = :id AND status = 'RUNNING'", nativeQuery = true)
     int completeIfRunning(@Param("id") UUID id);
-
-    @Query(value = "SELECT * FROM campaigns WHERE status = 'SCHEDULED' " +
-            "AND scheduled_at IS NOT NULL AND scheduled_at <= :now ORDER BY scheduled_at LIMIT :limit",
-            nativeQuery = true)
-    List<CampaignJpaEntity> findDueForExecution(@Param("now") LocalDateTime now, @Param("limit") int limit);
 }

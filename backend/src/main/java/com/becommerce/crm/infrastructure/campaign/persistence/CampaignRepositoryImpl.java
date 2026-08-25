@@ -10,7 +10,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,12 +65,6 @@ public class CampaignRepositoryImpl implements CampaignRepository {
     @Transactional
     public boolean completeIfRunning(UUID campaignId) {
         return jpaRepository.completeIfRunning(campaignId) == 1;
-    }
-
-    @Override
-    public List<Campaign> findDueForExecution(LocalDateTime now, int limit) {
-        return jpaRepository.findDueForExecution(now, limit).stream()
-                .map(CampaignRepositoryImpl::toDomain).toList();
     }
 
     private static CampaignJpaEntity toEntity(Campaign c) {

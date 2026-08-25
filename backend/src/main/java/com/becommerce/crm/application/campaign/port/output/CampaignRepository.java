@@ -3,7 +3,6 @@ package com.becommerce.crm.application.campaign.port.output;
 import com.becommerce.crm.domain.campaign.Campaign;
 import com.becommerce.crm.domain.campaign.MessageEventStatus;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,9 +34,6 @@ public interface CampaignRepository {
 
     /** Conclui a campanha atômicamente se estiver RUNNING. */
     boolean completeIfRunning(UUID campaignId);
-
-    /** Campanhas agendadas vencidas, para o scheduler (limite aplicado). */
-    List<Campaign> findDueForExecution(LocalDateTime now, int limit);
 
     record PageResult(List<Campaign> content, long totalElements) {}
 }
