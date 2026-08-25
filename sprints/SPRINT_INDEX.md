@@ -394,7 +394,7 @@
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
-| 19 | Dashboard | ⏳ Pendente | — | — | 9, 10, 12 |
+| 19 | Analytics | ✅ Concluída | 2350658/17f1c8f | V063 analytics:read; endpoint agregado /analytics/summary (~19 KPIs SQL, comparacao temporal, serie diária); frontend /reports com recharts; AnalyticsIsolationIT PASS; CI/CD GREEN e deploy VPS validado | 18 |
 
 ## IA
 
