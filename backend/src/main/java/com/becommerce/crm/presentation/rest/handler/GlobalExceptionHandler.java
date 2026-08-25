@@ -30,6 +30,8 @@ import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundException;
 import com.becommerce.crm.domain.lead.exception.DuplicateLeadException;
 import com.becommerce.crm.domain.lead.exception.LeadNotFoundException;
+import com.becommerce.crm.domain.campaign.exception.CampaignNotFoundException;
+import com.becommerce.crm.domain.template.exception.TemplateNotFoundException;
 import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.PipelineNotFoundException;
@@ -273,6 +275,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OmnichannelNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleOmnichannelNotFoundException(OmnichannelNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler({CampaignNotFoundException.class, TemplateNotFoundException.class})
+    public ResponseEntity<Map<String, Object>> handleCampaignOrTemplateNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
                 "status", 404,

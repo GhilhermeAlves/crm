@@ -172,6 +172,12 @@ const navGroups: NavGroup[] = [
         icon: Megaphone,
         permission: "omnichannel:read",
       },
+      {
+        label: "Campanhas",
+        href: ROUTES.CAMPAIGNS,
+        icon: Megaphone,
+        permission: "campaign:read",
+      },
     ],
   },
   {

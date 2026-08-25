@@ -21,5 +21,7 @@ public enum AuditModule {
     INVITATIONS,
     NOTIFICATIONS,
     SYSTEM,
-    AI
+    AI,
+    CAMPAIGNS,
+    TEMPLATES
 }

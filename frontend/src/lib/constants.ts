@@ -24,6 +24,7 @@ export const ROUTES = {
   PIPELINE: "/pipeline",
   CHAT: "/chat",
   CAMPAIGNS: "/campaigns",
+  CAMPAIGNS_NEW: "/campaigns/new",
   REPORTS: "/reports",
   SETTINGS: "/settings",
   SETTINGS_USERS: "/settings/users",
