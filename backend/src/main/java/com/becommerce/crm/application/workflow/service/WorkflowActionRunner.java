@@ -45,15 +45,21 @@ public class WorkflowActionRunner {
     private final WorkflowExecutionRepository executionRepository;
     private final TaskUseCase taskUseCase;
     private final ActivityUseCase activityUseCase;
+    private final com.becommerce.crm.application.notification.port.input.NotificationUseCase notificationUseCase;
+    private final com.becommerce.crm.application.campaign.port.input.CampaignUseCase campaignUseCase;
     private final ObjectMapper objectMapper;
 
     public WorkflowActionRunner(WorkflowExecutionRepository executionRepository,
                                 TaskUseCase taskUseCase,
                                 ActivityUseCase activityUseCase,
+                                com.becommerce.crm.application.notification.port.input.NotificationUseCase notificationUseCase,
+                                com.becommerce.crm.application.campaign.port.input.CampaignUseCase campaignUseCase,
                                 ObjectMapper objectMapper) {
         this.executionRepository = executionRepository;
         this.taskUseCase = taskUseCase;
         this.activityUseCase = activityUseCase;
+        this.notificationUseCase = notificationUseCase;
+        this.campaignUseCase = campaignUseCase;
         this.objectMapper = objectMapper;
     }
 
@@ -92,7 +98,65 @@ public class WorkflowActionRunner {
         return switch (action.getActionType()) {
             case CREATE_TASK -> executeCreateTask(workflow, action.getConfig(), event);
             case CREATE_ACTIVITY -> executeCreateActivity(workflow, action.getConfig(), event);
+            case SEND_NOTIFICATION -> executeSendNotification(action.getConfig(), event);
+            case EXECUTE_CAMPAIGN -> executeCampaign(action.getConfig(), event);
         };
+    }
+
+    /**
+     * Notificação in-app (Sprint 18). Config: userId (obrigatório — destinatário),
+     * title (default "Automação"), body. Reutiliza NotificationUseCase existente.
+     */
+    private String executeSendNotification(String configJson, WorkflowTriggerEvent event) {
+        JsonNode cfg = parseConfig(configJson);
+        String userIdRaw = text(cfg, "userId");
+        if (userIdRaw == null) {
+            throw new IllegalStateException(
+                    "Ação SEND_NOTIFICATION exige 'userId' no config da ação.");
+        }
+        UUID userId;
+        try {
+            userId = UUID.fromString(userIdRaw);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("'userId' inválido na ação SEND_NOTIFICATION.");
+        }
+        String title = text(cfg, "title");
+        if (title == null) {
+            title = "Atualização de automação";
+        }
+        String body = text(cfg, "body");
+        if (body == null) {
+            body = "Evento " + event.trigger() + " processado pela automação.";
+        }
+        var response = notificationUseCase.create(event.companyId(),
+                new com.becommerce.crm.application.notification.dto.CreateNotificationRequest(userId,
+                        com.becommerce.crm.domain.notification.NotificationType.WORKFLOW,
+                        title, body, null),
+                SYSTEM_ACTOR);
+        return "Notification criada: " + response.id();
+    }
+
+    /**
+     * Executa uma campanha existente (Sprint 18) via CampaignUseCase.executeNow
+     * — reutiliza o dispatcher/infraestrutura da Sprint 17 sem duplicá-los.
+     * A campanha precisa estar SCHEDULED; caso contrário a ação falha e é
+     * registrada como FAILED (sem retry automático de negócio).
+     */
+    private String executeCampaign(String configJson, WorkflowTriggerEvent event) {
+        JsonNode cfg = parseConfig(configJson);
+        String campaignIdRaw = text(cfg, "campaignId");
+        if (campaignIdRaw == null) {
+            throw new IllegalStateException(
+                    "Ação EXECUTE_CAMPAIGN exige 'campaignId' no config da ação.");
+        }
+        UUID campaignId;
+        try {
+            campaignId = UUID.fromString(campaignIdRaw);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("'campaignId' inválido na ação EXECUTE_CAMPAIGN.");
+        }
+        var execution = campaignUseCase.executeNow(event.companyId(), campaignId, SYSTEM_ACTOR);
+        return "Campaign execution: " + execution.id() + " (" + execution.status() + ")";
     }
 
     private String executeCreateTask(Workflow workflow, String configJson, WorkflowTriggerEvent event) {

@@ -134,6 +134,52 @@ public record WorkflowTriggerEvent(
                 LocalDateTime.now(), ctx);
     }
 
+    /**
+     * Contato criado (Sprint 18). Contexto: contact.email/phone.
+     */
+    public static WorkflowTriggerEvent contactCreated(UUID companyId, UUID contactId,
+                                                      String email, String phone) {
+        Map<String, Object> ctx = ctx();
+        ctx.put("contact.email", email);
+        ctx.put("contact.phone", phone);
+        return new WorkflowTriggerEvent(UUID.randomUUID(), companyId,
+                TriggerEvent.CONTACT_CREATED, null, contactId, null, null,
+                null, null, null, null, LocalDateTime.now(), ctx);
+    }
+
+    /**
+     * Status de lead alterado (Sprint 18). {@code eventId} é determinístico por
+     * transição (leadId + status novo + timestamp de minuto) para idempotência.
+     */
+    public static WorkflowTriggerEvent leadStatusChanged(UUID companyId, UUID leadId,
+                                                         UUID contactId, String previousStatus,
+                                                         String newStatus) {
+        Map<String, Object> ctx = ctx();
+        ctx.put("lead.status", newStatus);
+        ctx.put("lead.previousStatus", previousStatus);
+        return new WorkflowTriggerEvent(
+                UUID.nameUUIDFromBytes((leadId + ":" + newStatus + ":" + System.currentTimeMillis())
+                        .getBytes()),
+                companyId, TriggerEvent.LEAD_STATUS_CHANGED, null, contactId, null, null,
+                null, null, null, null, LocalDateTime.now(), ctx);
+    }
+
+    /**
+     * Execução de campanha concluída (Sprint 18). {@code eventId} determinístico
+     * (= executionId) — cada execução dispara as ações no máximo uma vez.
+     */
+    public static WorkflowTriggerEvent campaignCompleted(UUID companyId, UUID campaignId,
+                                                         UUID executionId, int failedCount,
+                                                         int totalRecipients) {
+        Map<String, Object> ctx = ctx();
+        ctx.put("campaign.id", campaignId.toString());
+        ctx.put("campaign.failedCount", failedCount);
+        ctx.put("campaign.totalRecipients", totalRecipients);
+        return new WorkflowTriggerEvent(executionId, companyId, TriggerEvent.CAMPAIGN_COMPLETED,
+                null, null, null, null, null, null, null, null,
+                LocalDateTime.now(), ctx);
+    }
+
     private static Map<String, Object> ctx() {
         return new LinkedHashMap<>();
     }

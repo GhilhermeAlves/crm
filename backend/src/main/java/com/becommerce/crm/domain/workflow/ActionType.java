@@ -7,5 +7,9 @@ package com.becommerce.crm.domain.workflow;
  */
 public enum ActionType {
     CREATE_TASK,
-    CREATE_ACTIVITY
+    CREATE_ACTIVITY,
+    /** Notificação in-app para um usuário (config: userId, title, body) — Sprint 18. */
+    SEND_NOTIFICATION,
+    /** Executa uma campanha existente (config: campaignId) via CampaignUseCase — Sprint 18. */
+    EXECUTE_CAMPAIGN
 }

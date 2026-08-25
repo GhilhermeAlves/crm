@@ -37,6 +37,8 @@ class WorkflowActionRunnerTest {
     @Mock WorkflowExecutionRepository executionRepository;
     @Mock TaskUseCase taskUseCase;
     @Mock ActivityUseCase activityUseCase;
+    @Mock com.becommerce.crm.application.notification.port.input.NotificationUseCase notificationUseCase;
+    @Mock com.becommerce.crm.application.campaign.port.input.CampaignUseCase campaignUseCase;
 
     WorkflowActionRunner runner;
 
@@ -46,7 +48,8 @@ class WorkflowActionRunnerTest {
 
     @BeforeEach
     void setUp() {
-        runner = new WorkflowActionRunner(executionRepository, taskUseCase, activityUseCase, new ObjectMapper());
+        runner = new WorkflowActionRunner(executionRepository, taskUseCase, activityUseCase,
+                notificationUseCase, campaignUseCase, new ObjectMapper());
     }
 
     private Workflow workflow() {

@@ -37,12 +37,15 @@ public class LeadService implements LeadUseCase {
     private final LeadRepository leadRepository;
     private final ContactRepository contactRepository;
     private final TenantAuditRecorder auditor;
+    private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
 
     public LeadService(LeadRepository leadRepository, ContactRepository contactRepository,
-                       TenantAuditRecorder auditor) {
+                       TenantAuditRecorder auditor,
+                       com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher) {
         this.leadRepository = leadRepository;
         this.contactRepository = contactRepository;
         this.auditor = auditor;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -91,6 +94,7 @@ public class LeadService implements LeadUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             Lead lead = requireOwned(companyId, leadId);
+            var previousStatus = lead.getStatus();
             if (request.status() != null) lead.transitionTo(request.status());
             if (request.score() != null) lead.updateScore(request.score());
             if (request.classification() != null) lead.updateClassification(request.classification());
@@ -104,6 +108,14 @@ public class LeadService implements LeadUseCase {
                     saved.getId().toString(), "Lead atualizado: status=" + saved.getStatus() +
                             ", score=" + saved.getScore(),
                     null, Map.of("status", String.valueOf(saved.getStatus())));
+
+            // Sprint 18: dispara automações quando o status do lead muda
+            if (request.status() != null && previousStatus != saved.getStatus()) {
+                eventPublisher.publish(
+                        com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent.leadStatusChanged(
+                                companyId, saved.getId(), saved.getContactId(),
+                                previousStatus.name(), saved.getStatus().name()));
+            }
             return toResponse(saved);
         } finally {
             TenantContext.clear();

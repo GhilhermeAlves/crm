@@ -138,7 +138,7 @@ const navGroups: NavGroup[] = [
         permission: "activity:read",
       },
       {
-        label: "Workflows",
+        label: "Automações",
         href: ROUTES.WORKFLOWS,
         icon: WorkflowIcon,
         permission: "workflow:read",

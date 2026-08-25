@@ -17,6 +17,10 @@ export const WORKFLOW_TRIGGERS = [
   "TASK_CREATED",
   "TASK_COMPLETED",
   "ACTIVITY_CREATED",
+  "WHATSAPP_MESSAGE_RECEIVED",
+  "CONTACT_CREATED",
+  "LEAD_STATUS_CHANGED",
+  "CAMPAIGN_COMPLETED",
 ] as const;
 
 export const CONDITION_OPERATORS = [
@@ -26,9 +30,17 @@ export const CONDITION_OPERATORS = [
   "LESS_THAN",
   "GREATER_OR_EQUAL",
   "LESS_OR_EQUAL",
+  "CONTAINS",
+  "IS_NULL",
+  "IS_NOT_NULL",
 ] as const;
 
-export const WORKFLOW_ACTION_TYPES = ["CREATE_TASK", "CREATE_ACTIVITY"] as const;
+export const WORKFLOW_ACTION_TYPES = [
+  "CREATE_TASK",
+  "CREATE_ACTIVITY",
+  "SEND_NOTIFICATION",
+  "EXECUTE_CAMPAIGN",
+] as const;
 
 export const TASK_PRIORITIES = ["LOW", "MEDIUM", "HIGH"] as const;
 
@@ -50,6 +62,9 @@ export const CONDITION_OPERATOR_LABELS: Record<string, string> = {
   LESS_THAN: "Menor que",
   GREATER_OR_EQUAL: "Maior ou igual",
   LESS_OR_EQUAL: "Menor ou igual",
+  CONTAINS: "Contém",
+  IS_NULL: "Está vazio",
+  IS_NOT_NULL: "Não está vazio",
 };
 
 export const TASK_PRIORITY_LABELS: Record<string, string> = {

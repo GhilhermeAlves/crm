@@ -29,13 +29,16 @@ public class ContactService implements ContactUseCase {
     private final ContactRepository contactRepository;
     private final CompanyQuotaService quotaService;
     private final TenantAuditRecorder auditor;
+    private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
 
     public ContactService(ContactRepository contactRepository,
                           CompanyQuotaService quotaService,
-                          TenantAuditRecorder auditor) {
+                          TenantAuditRecorder auditor,
+                          com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher) {
         this.contactRepository = contactRepository;
         this.quotaService = quotaService;
         this.auditor = auditor;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -54,6 +57,10 @@ public class ContactService implements ContactUseCase {
                     saved.getId().toString(),
                     "Contato criado: " + trim(firstName(saved)),
                     createdBy, Map.of("email", String.valueOf(contact.getEmail())));
+
+            // Sprint 18: dispara automações (workflows) de contato criado
+            eventPublisher.publish(com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent
+                    .contactCreated(companyId, saved.getId(), saved.getEmail(), saved.getPhone()));
             return toResponse(saved);
         } finally {
             TenantContext.clear();

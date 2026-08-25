@@ -56,6 +56,7 @@ public class CampaignExecutionService {
     private final OmnichannelChannelRepository channelRepository;
     private final List<CampaignChannelDispatcher> dispatchers;
     private final TenantAuditRecorder auditor;
+    private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
     private final long throttleMs;
     private final ExecutorService dispatchExecutor;
 
@@ -67,6 +68,7 @@ public class CampaignExecutionService {
                                     OmnichannelChannelRepository channelRepository,
                                     List<CampaignChannelDispatcher> dispatchers,
                                     TenantAuditRecorder auditor,
+                                    com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher,
                                     @Value("${campaign.dispatch.throttle-ms:200}") long throttleMs) {
         this.campaignRepository = campaignRepository;
         this.executionRepository = executionRepository;
@@ -76,6 +78,7 @@ public class CampaignExecutionService {
         this.channelRepository = channelRepository;
         this.dispatchers = dispatchers;
         this.auditor = auditor;
+        this.eventPublisher = eventPublisher;
         this.throttleMs = throttleMs;
         this.dispatchExecutor = Executors.newFixedThreadPool(2, r -> {
             Thread t = new Thread(r, "campaign-dispatch");
@@ -266,6 +269,12 @@ public class CampaignExecutionService {
                     execution.getCampaignId().toString(),
                     "Campanha concluída (falhas: " + execution.getFailedCount() + ")",
                     null, Map.of("executionId", execution.getId().toString()));
+
+            // Sprint 18: dispara automações (workflows) de campanha concluída
+            eventPublisher.publish(
+                    com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent.campaignCompleted(
+                            companyId, execution.getCampaignId(), execution.getId(),
+                            execution.getFailedCount(), execution.getTotalRecipients()));
         }
     }
 

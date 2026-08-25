@@ -25,6 +25,7 @@ class ContactServiceTest {
     @Mock ContactRepository contactRepository;
     @Mock CompanyQuotaService quotaService;
     @Mock TenantAuditRecorder auditor;
+    @Mock com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
 
     @InjectMocks ContactService contactService;
 

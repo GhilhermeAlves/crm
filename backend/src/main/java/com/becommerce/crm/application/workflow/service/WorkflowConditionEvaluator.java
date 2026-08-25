@@ -53,8 +53,21 @@ public class WorkflowConditionEvaluator {
     }
 
     private boolean compare(Object actual, ConditionOperator op, String expected) {
+        // Operadores de nulidade não dependem do valor esperado (Sprint 18)
+        if (op == ConditionOperator.IS_NULL) {
+            return actual == null;
+        }
+        if (op == ConditionOperator.IS_NOT_NULL) {
+            return actual != null;
+        }
         if (actual == null) {
             return false;
+        }
+        if (op == ConditionOperator.CONTAINS) {
+            if (expected == null) {
+                return false;
+            }
+            return actual.toString().toLowerCase().contains(expected.trim().toLowerCase());
         }
         if (actual instanceof BigDecimal bd) {
             return numericCompare(bd, op, expected);
@@ -66,6 +79,7 @@ public class WorkflowConditionEvaluator {
         return switch (op) {
             case EQUALS -> s.equalsIgnoreCase(expected.trim());
             case NOT_EQUALS -> !s.equalsIgnoreCase(expected.trim());
+            case CONTAINS, IS_NULL, IS_NOT_NULL -> false;
             default -> {
                 try {
                     yield numericCompare(new BigDecimal(s), op, expected);
@@ -91,6 +105,7 @@ public class WorkflowConditionEvaluator {
             case LESS_THAN -> cmp < 0;
             case GREATER_OR_EQUAL -> cmp >= 0;
             case LESS_OR_EQUAL -> cmp <= 0;
+            case CONTAINS, IS_NULL, IS_NOT_NULL -> false;
         };
     }
 }

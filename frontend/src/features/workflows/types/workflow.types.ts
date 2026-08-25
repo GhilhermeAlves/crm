@@ -5,12 +5,25 @@ export type WorkflowTrigger =
   | "OPPORTUNITY_LOST"
   | "TASK_CREATED"
   | "TASK_COMPLETED"
-  | "ACTIVITY_CREATED";
+  | "ACTIVITY_CREATED"
+  | "WHATSAPP_MESSAGE_RECEIVED"
+  | "CONTACT_CREATED"
+  | "LEAD_STATUS_CHANGED"
+  | "CAMPAIGN_COMPLETED";
 
 export type ConditionOperator =
-  "EQUALS" | "NOT_EQUALS" | "GREATER_THAN" | "LESS_THAN" | "GREATER_OR_EQUAL" | "LESS_OR_EQUAL";
+  | "EQUALS"
+  | "NOT_EQUALS"
+  | "GREATER_THAN"
+  | "LESS_THAN"
+  | "GREATER_OR_EQUAL"
+  | "LESS_OR_EQUAL"
+  | "CONTAINS"
+  | "IS_NULL"
+  | "IS_NOT_NULL";
 
-export type WorkflowActionType = "CREATE_TASK" | "CREATE_ACTIVITY";
+export type WorkflowActionType =
+  "CREATE_TASK" | "CREATE_ACTIVITY" | "SEND_NOTIFICATION" | "EXECUTE_CAMPAIGN";
 
 export type WorkflowExecutionStatus = "PROCESSING" | "SUCCESS" | "FAILED" | "SKIPPED";
 
@@ -87,6 +100,10 @@ export const WORKFLOW_TRIGGER_LABELS: Record<WorkflowTrigger, string> = {
   TASK_CREATED: "Tarefa criada",
   TASK_COMPLETED: "Tarefa concluída",
   ACTIVITY_CREATED: "Atividade criada",
+  WHATSAPP_MESSAGE_RECEIVED: "Mensagem WhatsApp recebida",
+  CONTACT_CREATED: "Contato criado",
+  LEAD_STATUS_CHANGED: "Status do lead alterado",
+  CAMPAIGN_COMPLETED: "Campanha concluída",
 };
 
 export const CONDITION_OPERATOR_LABELS: Record<ConditionOperator, string> = {
@@ -96,11 +113,16 @@ export const CONDITION_OPERATOR_LABELS: Record<ConditionOperator, string> = {
   LESS_THAN: "Menor que",
   GREATER_OR_EQUAL: "Maior ou igual",
   LESS_OR_EQUAL: "Menor ou igual",
+  CONTAINS: "Contém",
+  IS_NULL: "Está vazio",
+  IS_NOT_NULL: "Não está vazio",
 };
 
 export const WORKFLOW_ACTION_LABELS: Record<WorkflowActionType, string> = {
   CREATE_TASK: "Criar tarefa",
   CREATE_ACTIVITY: "Criar atividade",
+  SEND_NOTIFICATION: "Enviar notificação",
+  EXECUTE_CAMPAIGN: "Executar campanha",
 };
 
 export const WORKFLOW_EXECUTION_STATUS_LABELS: Record<WorkflowExecutionStatus, string> = {
@@ -132,4 +154,17 @@ export const CONDITION_FIELDS: Record<WorkflowTrigger, ConditionFieldOption[]> =
   TASK_CREATED: [{ value: "task.priority", label: "Prioridade da tarefa" }],
   TASK_COMPLETED: [{ value: "task.priority", label: "Prioridade da tarefa" }],
   ACTIVITY_CREATED: [{ value: "activity.type", label: "Tipo da atividade" }],
+  WHATSAPP_MESSAGE_RECEIVED: [
+    { value: "whatsapp.from", label: "Telefone de origem" },
+    { value: "whatsapp.body", label: "Conteúdo da mensagem" },
+  ],
+  CONTACT_CREATED: [
+    { value: "contact.email", label: "E-mail do contato" },
+    { value: "contact.phone", label: "Telefone do contato" },
+  ],
+  LEAD_STATUS_CHANGED: [
+    { value: "lead.status", label: "Novo status do lead" },
+    { value: "lead.previousStatus", label: "Status anterior do lead" },
+  ],
+  CAMPAIGN_COMPLETED: [{ value: "campaign.failedCount", label: "Falhas na campanha" }],
 };

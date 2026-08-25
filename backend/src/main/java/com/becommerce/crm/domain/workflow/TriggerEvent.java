@@ -16,5 +16,11 @@ public enum TriggerEvent {
     TASK_COMPLETED,
     ACTIVITY_CREATED,
     /** Mensagem de WhatsApp recebida (Sprint 16, FASE 14). */
-    WHATSAPP_MESSAGE_RECEIVED
+    WHATSAPP_MESSAGE_RECEIVED,
+    /** Contato criado (Sprint 18 — Automações Omnichannel). */
+    CONTACT_CREATED,
+    /** Status de lead alterado (Sprint 18). */
+    LEAD_STATUS_CHANGED,
+    /** Execução de campanha concluída (Sprint 18). */
+    CAMPAIGN_COMPLETED
 }
