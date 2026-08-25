@@ -75,10 +75,10 @@ public class AnalyticsService implements AnalyticsUseCase {
         long tasksCompleted = count(scope
                 .forTable("tasks", "updated_at")
                 .addValue("extraWhere", " AND status = 'COMPLETED' "));
-        long tasksOverdue = count(new MapSqlParameterSource()
-                .addValue("companyId", companyId)
-                .addValue("extraWhere",
-                        " AND status IN ('PENDING','IN_PROGRESS') AND due_at IS NOT NULL AND due_at < NOW() "));
+        long tasksOverdue = queryLong(
+                "SELECT COUNT(*) FROM tasks WHERE company_id = :companyId " +
+                        "AND status IN ('PENDING','IN_PROGRESS') " +
+                        "AND due_at IS NOT NULL AND due_at < NOW()", scope.base());
 
         long campaignsExecuted = count(scope
                 .forTable("campaign_executions", "finished_at")
@@ -174,6 +174,11 @@ public class AnalyticsService implements AnalyticsUseCase {
     private BigDecimal queryDecimal(String sql, MapSqlParameterSource params) {
         BigDecimal value = jdbc.queryForObject(sql, params, BigDecimal.class);
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private long queryLong(String sql, MapSqlParameterSource params) {
+        Long value = jdbc.queryForObject(sql, params, Long.class);
+        return value != null ? value : 0L;
     }
 
     /** Helper interno que monta os parâmetros padrão de contagem por tabela. */
