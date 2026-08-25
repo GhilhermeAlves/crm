@@ -158,19 +158,19 @@ class AnalyticsIsolationIT {
     }
 
     private static LocalDate today() {
-        return LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")).minusDays(1);
+        return LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo"));
     }
 
     @Test
     void summaryReturnsOnlyOwnTenantData() {
-        var periodA = AnalyticsPeriod.resolve(today(), today(), null);
+        var periodA = AnalyticsPeriod.resolve(today().minusDays(1), today(), null);
         var a = analytics.summary(TENANT_A, periodA);
 
         assertEquals(5, a.current().contactsCreated(), "Tenant A deve ver apenas seus 5 contatos");
         assertEquals(3, a.current().leadsCreated());
         assertEquals(1, a.current().opportunitiesWon());
 
-        var periodB = AnalyticsPeriod.resolve(today(), today(), null);
+        var periodB = AnalyticsPeriod.resolve(today().minusDays(1), today(), null);
         var b = analytics.summary(TENANT_B, periodB);
         assertEquals(2, b.current().contactsCreated(), "Tenant B deve ver apenas seus 2 contatos");
         assertEquals(7, b.current().leadsCreated());
@@ -192,7 +192,7 @@ class AnalyticsIsolationIT {
     @Test
     void previousPeriodComparisonIsPopulatedAndIndependent() {
         // cria dado somente no período atual; período anterior fica zerado
-        var period = AnalyticsPeriod.resolve(today(), today(), null);
+        var period = AnalyticsPeriod.resolve(today().minusDays(1), today(), null);
         var result = analytics.summary(TENANT_A, period);
         assertEquals(5, result.current().contactsCreated());
         assertEquals(0, result.previous().contactsCreated(),

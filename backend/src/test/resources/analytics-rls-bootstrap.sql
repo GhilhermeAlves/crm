@@ -114,3 +114,17 @@ DROP POLICY IF EXISTS tenant_isolation_policy ON workflow_runs;
 CREATE POLICY tenant_isolation_policy ON workflow_runs
     USING (company_id = app.current_tenant_id())
     WITH CHECK (company_id = app.current_tenant_id());
+
+CREATE TABLE IF NOT EXISTS campaign_executions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'RUNNING',
+    finished_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE campaign_executions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_executions FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation_policy ON campaign_executions;
+CREATE POLICY tenant_isolation_policy ON campaign_executions
+    USING (company_id = app.current_tenant_id())
+    WITH CHECK (company_id = app.current_tenant_id());
