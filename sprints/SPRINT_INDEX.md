@@ -388,7 +388,7 @@
 |--------|------|--------|------|-------------|-------------|
 | 16 | WhatsApp | ✅ Concluída | 2026-08-23 | AI Agent | 12 |
 | 17 | Campanhas | ✅ Concluída | 156b2d9/e77dea8 | V055–V062: CRUD + ciclo de vida, templates, dispatcher WhatsApp, execução agendada idempotente, RLS + isolation ITs, frontend /campaigns (lista/wizard/360); CI/CD GREEN e deploy VPS validado | 16 |
-| 18 | Automações | ⏳ Pendente | — | — | 17 |
+| 18 | Automações | ✅ Concluída | 792d3ab | Extensão do motor Workflow: triggers CONTACT_CREATED/LEAD_STATUS_CHANGED/CAMPAIGN_COMPLETED, operadores CONTAINS/IS_NULL/IS_NOT_NULL, ações SEND_NOTIFICATION/EXECUTE_CAMPAIGN; CI/CD GREEN e deploy VPS validado | 17 |
 
 ## Analytics
 
