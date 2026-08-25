@@ -1,7 +1,8 @@
 # SPRINT 17 — CAMPANHAS — REPORT
 
-> Status: 🚧 EM VALIDAÇÃO (implementação concluída; validação final na VPS em andamento)
+> Status: ✅ CONCLUÍDA
 > Planejamento: `sprints/17/PLAN.md`
+> Commits: `156b2d9` (implementação), `e77dea8` (V062 grants + scheduler multi-tenant)
 
 ## Objetivo
 
@@ -87,13 +88,29 @@ manual/agendada idempotente, eventos por destinatário, tenant isolation
 - Frontend: lint OK, typecheck OK, format OK, build prod OK, **208 testes
   vitest verdes (32 arquivos)**.
 
-## CI/CD e VPS
+## CI/CD e VPS (validação real)
 
-- Fluxo: push → CI GREEN → GHCR → CD GREEN → deploy crm-vps → smoke tests.
-- Resultados registrados ao final deste documento após validação.
+- **CI Pipeline: GREEN** (`156b2d9`, `e77dea8`) — backend `mvnw clean verify`
+  (inclui `CampaignIsolationIT` com Testcontainers/Docker no runner),
+  auth-service, frontend lint/typecheck/format/build, Docker build;
+- **GHCR: GREEN** — imagens backend/frontend/auth publicadas;
+- **CD Pipeline: GREEN** — deploy automático na `crm-vps`;
+- **VPS (`/opt/crm`)**:
+  - Flyway: 62 migrations validadas; V055–V062 aplicadas com `success = true`;
+  - RLS confirmado em produção: `rowsecurity = true` para as 5 tabelas novas;
+  - Permissões seedadas: 10 (`campaign:*`, `template:*`);
+  - Containers: frontend/backend/auth UP; postgres/redis/rabbitmq/minio/keycloak healthy;
+  - `/actuator/health` = `{"status":"UP"}`; frontend HTTP 200;
+  - Smoke: `/campaigns` API → **401 sem sessão** (protegida); `/templates` API → **401**;
+    frontend redireciona `/campaigns` → login quando não autenticado (307);
+  - Zero erros `permission denied for table campaigns` após V062
+    (correção do padrão V046) e scheduler multi-tenant operacional.
 
 ## Limitações
 
+- E2E autenticado na VPS não executado (credenciais Keycloak não disponíveis
+  nesta sessão) — débito já conhecido do projeto. Cobertura equivalente obtida
+  via `CampaignIsolationIT` (Testcontainers, CI GREEN) + smoke de proteção 401.
 - Envio WhatsApp real depende do provider configurado na VPS (`FakeWhatsAppProvider`
   é o default); dispatcher validado até a fronteira do provider.
 - DELIVERED/READ/RESPONDED/OPTED_OUT dependem de webhooks do provider
@@ -101,6 +118,7 @@ manual/agendada idempotente, eventos por destinatário, tenant isolation
 
 ## Débitos registrados
 
+- E2E autenticado na VPS (débito herdado do projeto);
 - RabbitMQ ainda sem producers/consumers reais → execução usa batch+cursor
   persistido (fallback previsto no PLAN.md);
 - E-mail canal: não implementado (débito pré-existente "e-mail real");

@@ -387,7 +387,7 @@
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
 | 16 | WhatsApp | ✅ Concluída | 2026-08-23 | AI Agent | 12 |
-| 17 | Campanhas | ⏳ Pendente | — | — | 16 |
+| 17 | Campanhas | ✅ Concluída | 156b2d9/e77dea8 | V055–V062: CRUD + ciclo de vida, templates, dispatcher WhatsApp, execução agendada idempotente, RLS + isolation ITs, frontend /campaigns (lista/wizard/360); CI/CD GREEN e deploy VPS validado | 16 |
 | 18 | Automações | ⏳ Pendente | — | — | 17 |
 
 ## Analytics
