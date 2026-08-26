@@ -7,6 +7,7 @@ import {
   usePermissions,
   useAssignPermission,
   useRemovePermission,
+  useCreateRole,
 } from "@/features/rbac/hooks/useRoles";
 import { RoleBadge } from "@/features/rbac/components/RoleBadge";
 import { PermissionMatrix } from "@/features/rbac/components/PermissionMatrix";
@@ -15,6 +16,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,8 +42,12 @@ export default function SettingsRolesPage() {
   const permissionsQuery = usePermissions();
   const assignPermission = useAssignPermission();
   const removePermission = useRemovePermission();
+  const createRole = useCreateRole();
 
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleDescription, setNewRoleDescription] = useState("");
 
   const roles = rolesQuery.data ?? [];
   const activeRole = roles.find((r) => r.id === selectedRoleId) ?? roles[0] ?? null;
@@ -69,6 +84,24 @@ export default function SettingsRolesPage() {
     }
   }
 
+  function handleCreateRole() {
+    if (!newRoleName.trim()) return;
+    createRole.mutate(
+      {
+        name: newRoleName.trim(),
+        description: newRoleDescription.trim() || undefined,
+      },
+      {
+        onSuccess: (created) => {
+          setCreateDialogOpen(false);
+          setNewRoleName("");
+          setNewRoleDescription("");
+          setSelectedRoleId(created.id);
+        },
+      },
+    );
+  }
+
   if (rolesQuery.isLoading) return <Skeleton className="h-64 w-full" />;
 
   return (
@@ -80,16 +113,27 @@ export default function SettingsRolesPage() {
             Papéis e permissões desta empresa. A empresa ativa determina o que é exibido.
           </p>
         </div>
-        {managePermissions && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAssignAllUnselected}
-            disabled={assignPermission.isPending}
-          >
-            Atribuir permissões em falta
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {managePermissions && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              Criar Perfil
+            </Button>
+          )}
+          {managePermissions && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAssignAllUnselected}
+              disabled={assignPermission.isPending}
+            >
+              Atribuir permissões em falta
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -137,6 +181,56 @@ export default function SettingsRolesPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Novo Perfil</DialogTitle>
+            <DialogDescription>
+              Crie um perfil customizado e atribua permissões específicas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="role-name">Nome</Label>
+              <Input
+                id="role-name"
+                placeholder="Ex: VENDEDOR"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value.toUpperCase())}
+                maxLength={50}
+              />
+              <p className="text-xs text-muted-foreground">
+                Apenas letras maiúsculas e underscores. Máximo 50 caracteres.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role-description">Descrição (opcional)</Label>
+              <Input
+                id="role-description"
+                placeholder="Descrição do perfil"
+                value={newRoleDescription}
+                onChange={(e) => setNewRoleDescription(e.target.value)}
+                maxLength={500}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreateDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateRole}
+              disabled={!newRoleName.trim() || createRole.isPending}
+            >
+              {createRole.isPending ? "Criando..." : "Criar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

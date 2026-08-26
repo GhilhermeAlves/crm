@@ -6,7 +6,6 @@ import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -15,6 +14,7 @@ import { useRole, useUpdateRole } from "@/features/rbac/hooks/useRoles";
 import { usePermissions } from "@/features/rbac/hooks/useRoles";
 import { PermissionMatrix } from "@/features/rbac/components/PermissionMatrix";
 import { RoleBadge } from "@/features/rbac/components/RoleBadge";
+import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 
 export default function EditRolePage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +22,7 @@ export default function EditRolePage() {
   const { data: role, isLoading: roleLoading } = useRole(id);
   const { data: allPermissions } = usePermissions();
   const updateRole = useUpdateRole();
+  const { can } = useAuthorization();
 
   const [description, setDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -62,6 +63,14 @@ export default function EditRolePage() {
       },
     );
   };
+
+  if (!can("role:manage")) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground">Sem permissão para editar roles.</p>
+      </div>
+    );
+  }
 
   if (roleLoading || !initialized) {
     return (

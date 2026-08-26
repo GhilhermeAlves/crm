@@ -22,6 +22,7 @@ import {
 import { RoleBadge } from "./RoleBadge";
 import type { Role } from "../types/rbac.types";
 import { DeleteRoleDialog } from "./DeleteRoleDialog";
+import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 
 interface RoleTableProps {
   roles: Role[];
@@ -30,6 +31,8 @@ interface RoleTableProps {
 export function RoleTable({ roles }: RoleTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const { can } = useAuthorization();
+  const canManage = can("role:manage");
 
   const handleDelete = (role: Role) => {
     setSelectedRole(role);
@@ -101,7 +104,7 @@ export function RoleTable({ roles }: RoleTableProps) {
                             Visualizar
                           </Link>
                         </DropdownMenuItem>
-                        {!role.isSystem && (
+                        {canManage && !role.isSystem && (
                           <>
                             <DropdownMenuItem asChild>
                               <Link href={`/roles/${role.id}/edit`}>

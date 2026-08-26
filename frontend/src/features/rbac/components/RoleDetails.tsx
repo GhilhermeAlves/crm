@@ -9,12 +9,16 @@ import { RoleBadge } from "./RoleBadge";
 import { PermissionBadge } from "./PermissionBadge";
 import type { Role } from "../types/rbac.types";
 import { roleModuleName } from "../schemas/role.schema";
+import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 
 interface RoleDetailsProps {
   role: Role;
 }
 
 export function RoleDetails({ role }: RoleDetailsProps) {
+  const { can } = useAuthorization();
+  const canManage = can("role:manage");
+
   const permissionsByModule = role.permissions.reduce<Record<string, typeof role.permissions>>(
     (acc, perm) => {
       if (!acc[perm.module]) acc[perm.module] = [];
@@ -38,7 +42,7 @@ export function RoleDetails({ role }: RoleDetailsProps) {
             <p className="text-muted-foreground">{role.description || "Sem descrição"}</p>
           </div>
         </div>
-        {!role.isSystem && (
+        {canManage && !role.isSystem && (
           <Button asChild>
             <Link href={`/roles/${role.id}/edit`}>
               <Pencil className="mr-2 h-4 w-4" />

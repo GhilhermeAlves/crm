@@ -110,6 +110,9 @@ public class RoleService implements RoleUseCase {
         Role saved = roleRepository.save(role);
 
         if (request.permissionIds() != null) {
+            if (role.isSystem() && "SUPER_ADMIN".equals(role.getName()) && request.permissionIds().isEmpty()) {
+                throw new IllegalStateException("Não é possível remover todas as permissões da role SUPER_ADMIN");
+            }
             List<RolePermission> existing = rolePermissionRepository.findByRoleId(id);
             for (RolePermission rp : existing) {
                 rolePermissionRepository.deleteByRoleIdAndPermissionId(id, rp.getPermissionId());
@@ -167,6 +170,14 @@ public class RoleService implements RoleUseCase {
     @Override
     @Transactional
     public void removePermissionFromRole(UUID roleId, String permissionId) {
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RoleNotFoundException("Role não encontrada"));
+        if (role.isSystem() && "SUPER_ADMIN".equals(role.getName())) {
+            long currentCount = rolePermissionRepository.findByRoleId(roleId).size();
+            if (currentCount <= 1) {
+                throw new IllegalStateException("Não é possível remover a última permissão da role SUPER_ADMIN");
+            }
+        }
         UUID permId = UUID.fromString(permissionId);
         rolePermissionRepository.deleteByRoleIdAndPermissionId(roleId, permId);
         log.info("Permissão {} removida da role {}", permissionId, roleId);

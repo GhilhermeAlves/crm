@@ -5,9 +5,12 @@ import { Plus, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoleTable } from "@/features/rbac/components/RoleTable";
 import { useRoles } from "@/features/rbac/hooks/useRoles";
+import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 
 export default function RolesPage() {
   const { data: roles, isLoading } = useRoles();
+  const { can } = useAuthorization();
+  const canManage = can("role:manage");
 
   return (
     <div className="space-y-6">
@@ -19,12 +22,14 @@ export default function RolesPage() {
           </h1>
           <p className="text-muted-foreground">Gerencie as roles e permissões do sistema</p>
         </div>
-        <Button asChild>
-          <Link href="/roles/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Role
-          </Link>
-        </Button>
+        {canManage && (
+          <Button asChild>
+            <Link href="/roles/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Role
+            </Link>
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
