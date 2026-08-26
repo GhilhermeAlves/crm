@@ -2,6 +2,7 @@ package com.becommerce.crm.presentation.rest.identity;
 
 import com.becommerce.crm.application.identity.dto.*;
 import com.becommerce.crm.application.identity.port.input.RoleUseCase;
+import com.becommerce.crm.application.identity.port.input.UserPermissionOverrideUseCase;
 import com.becommerce.crm.application.identity.port.input.UserUseCase;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -20,10 +22,13 @@ public class UserController {
 
     private final UserUseCase userUseCase;
     private final RoleUseCase roleUseCase;
+    private final UserPermissionOverrideUseCase overrideUseCase;
 
-    public UserController(UserUseCase userUseCase, RoleUseCase roleUseCase) {
+    public UserController(UserUseCase userUseCase, RoleUseCase roleUseCase,
+                          UserPermissionOverrideUseCase overrideUseCase) {
         this.userUseCase = userUseCase;
         this.roleUseCase = roleUseCase;
+        this.overrideUseCase = overrideUseCase;
     }
 
     @GetMapping
@@ -140,6 +145,38 @@ public class UserController {
             @PathVariable UUID id,
             @PathVariable UUID roleId) {
         roleUseCase.removeRoleFromUser(id, roleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ===== Sprint 20 (Fase 2) — overrides individuais de permissão =====
+
+    @GetMapping("/{id}/permissions")
+    @PreAuthorize("hasAuthority('permission:assign')")
+    public ResponseEntity<UserPermissionsResponse> getUserPermissions(
+            @AuthenticationPrincipal CurrentUser principal,
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(overrideUseCase.listPermissions(principal.companyId(), id));
+    }
+
+    @PutMapping("/{id}/permissions/{permissionId}")
+    @PreAuthorize("hasAuthority('permission:assign')")
+    public ResponseEntity<Void> setUserPermissionOverride(
+            @AuthenticationPrincipal CurrentUser principal,
+            @PathVariable UUID id,
+            @PathVariable UUID permissionId,
+            @RequestBody Map<String, String> body) {
+        overrideUseCase.setOverride(principal.companyId(), id, permissionId,
+                body.getOrDefault("effect", ""));
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/permissions/{permissionId}")
+    @PreAuthorize("hasAuthority('permission:assign')")
+    public ResponseEntity<Void> removeUserPermissionOverride(
+            @AuthenticationPrincipal CurrentUser principal,
+            @PathVariable UUID id,
+            @PathVariable UUID permissionId) {
+        overrideUseCase.removeOverride(principal.companyId(), id, permissionId);
         return ResponseEntity.noContent().build();
     }
 }

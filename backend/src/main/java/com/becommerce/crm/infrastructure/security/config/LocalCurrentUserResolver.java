@@ -124,10 +124,10 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
                     .map(role -> role.getName())
                     .collect(Collectors.toList());
 
-            List<String> permissions = roleNames.stream()
-                    .flatMap(roleName -> permissionsForRole(roleName, companyId))
-                    .distinct()
-                    .collect(Collectors.toList());
+            // Sprint 20 (Fase 2): resolução centralizada de permissões efetivas —
+            // (perfis ∪ ALLOW) − DENY, mesma regra do auth-service.
+            List<String> permissions = permissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId(
+                    userId, companyId);
 
             String membershipRole = membershipRepository
                     .findMembershipRoleByUserIdAndCompanyId(userId, companyId)
@@ -138,20 +138,6 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
             return CurrentUser.fromKeycloak(userId, email, companyId, roleNames, permissions, keycloakSub, displayName, membershipRole);
         } finally {
             TenantContext.clear();
-        }
-    }
-
-    private Stream<String> permissionsForRole(String roleName, UUID companyId) {
-        try {
-            Optional<Role> roleOpt = roleRepository.findByNameAndCompanyId(roleName, companyId);
-            return roleOpt.map(role -> rolePermissionRepository.findByRoleId(role.getId()).stream()
-                            .map(rp -> permissionRepository.findById(rp.getPermissionId()))
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .map(Permission::getName))
-                    .orElse(Stream.empty());
-        } catch (Exception e) {
-            return Stream.empty();
         }
     }
 

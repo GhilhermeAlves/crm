@@ -60,4 +60,9 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     public boolean existsByName(String name) {
         return repository.existsByName(name);
     }
+
+    @Override
+    public List<String> findEffectivePermissionNamesByUserIdAndCompanyId(UUID userId, UUID companyId) {
+        return repository.findEffectivePermissionNamesByUserIdAndCompanyId(userId, companyId);
+    }
 }

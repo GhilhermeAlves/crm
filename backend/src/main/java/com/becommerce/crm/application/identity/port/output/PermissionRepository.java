@@ -15,4 +15,5 @@ public interface PermissionRepository {
     List<Permission> findByRoleId(UUID roleId);
     void deleteById(UUID id);
     boolean existsByName(String name);
+    List<String> findEffectivePermissionNamesByUserIdAndCompanyId(java.util.UUID userId, java.util.UUID companyId);
 }
