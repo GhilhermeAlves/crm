@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, type ReactNode } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,7 +13,6 @@ import {
   BarChart3,
   Settings,
   Building2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -36,7 +35,6 @@ import { useSidebar } from "@/store/sidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ROUTES } from "@/lib/constants";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
-import { useState, useEffect } from "react";
 
 type NavItem = {
   label: string;
@@ -72,12 +70,6 @@ const navGroups: NavGroup[] = [
         permission: "company:view",
       },
       {
-        label: "Usuários",
-        href: ROUTES.USERS,
-        icon: Users,
-        permission: "user:read",
-      },
-      {
         label: "Membros",
         href: ROUTES.MEMBERS,
         icon: Users,
@@ -88,12 +80,6 @@ const navGroups: NavGroup[] = [
         href: ROUTES.INVITATIONS,
         icon: MailPlus,
         permission: "membership:view",
-      },
-      {
-        label: "Roles",
-        href: ROUTES.ROLES,
-        icon: Shield,
-        permission: "role:read",
       },
       {
         label: "Permissões",
@@ -211,18 +197,6 @@ const navGroups: NavGroup[] = [
         permission: "audit:page:view",
       },
       { label: "Configurações", href: ROUTES.SETTINGS, icon: Settings },
-      {
-        label: "Usuários",
-        href: ROUTES.SETTINGS_USERS,
-        icon: Users,
-        permission: "membership:view",
-      },
-      {
-        label: "Perfis & permissões",
-        href: ROUTES.SETTINGS_ROLES,
-        icon: Shield,
-        permission: "role:read",
-      },
     ],
   },
 ];

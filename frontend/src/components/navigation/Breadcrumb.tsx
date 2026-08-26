@@ -19,7 +19,8 @@ const routeLabels: Record<string, string> = {
   chat: "Chat",
   campaigns: "Campanhas",
   reports: "Relatórios",
-  settings: "Configurações",
+  settings: "Segurança",
+  roles: "Perfis",
 };
 
 type BreadcrumbProps = {
