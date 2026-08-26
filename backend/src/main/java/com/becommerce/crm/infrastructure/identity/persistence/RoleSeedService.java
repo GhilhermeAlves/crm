@@ -48,7 +48,7 @@ public class RoleSeedService {
         rolePermissions.put(RoleName.ADMIN, List.of(
             "user:create", "user:read", "user:update", "user:delete", "user:invite",
             "role:create", "role:read", "role:update", "role:delete", "role:assign",
-            "permission:assign",
+            "role:manage", "permission:assign",
             "company:view", "company:create", "company:update",
             "dashboard:view",
             "lead:create", "lead:read", "lead:update", "lead:delete",

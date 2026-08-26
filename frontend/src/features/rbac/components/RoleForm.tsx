@@ -9,18 +9,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCreateRole, usePermissions } from "../hooks/useRoles";
+import { useCreateRole, useUpdateRole, usePermissions } from "../hooks/useRoles";
 import { roleSchema, type RoleFormData } from "../schemas/role.schema";
 import { PermissionMatrix } from "./PermissionMatrix";
 
 interface RoleFormProps {
+  roleId?: string;
   defaultValues?: Partial<RoleFormData>;
   mode?: "create" | "edit";
 }
 
-export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
+export function RoleForm({ roleId, defaultValues, mode = "create" }: RoleFormProps) {
   const router = useRouter();
   const createRole = useCreateRole();
+  const updateRole = useUpdateRole();
   const { data: allPermissions } = usePermissions();
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
     defaultValues?.permissionIds ?? [],
@@ -49,14 +51,25 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
   };
 
   const onSubmit = async (data: RoleFormData) => {
-    createRole.mutate(
-      { ...data, permissionIds: selectedPermissionIds },
-      {
-        onSuccess: () => {
-          router.push("/roles");
+    if (mode === "edit" && roleId) {
+      updateRole.mutate(
+        { id: roleId, data: { description: data.description, isActive: true } },
+        {
+          onSuccess: () => {
+            router.push(`/roles/${roleId}`);
+          },
         },
-      },
-    );
+      );
+    } else {
+      createRole.mutate(
+        { ...data, permissionIds: selectedPermissionIds },
+        {
+          onSuccess: () => {
+            router.push("/roles");
+          },
+        },
+      );
+    }
   };
 
   return (
@@ -107,8 +120,8 @@ export function RoleForm({ defaultValues, mode = "create" }: RoleFormProps) {
             <Button type="button" variant="outline" onClick={() => router.push("/roles")}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={createRole.isPending}>
-              {createRole.isPending ? "Salvando..." : "Salvar"}
+            <Button type="submit" disabled={createRole.isPending || updateRole.isPending}>
+              {createRole.isPending || updateRole.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </div>
         </form>

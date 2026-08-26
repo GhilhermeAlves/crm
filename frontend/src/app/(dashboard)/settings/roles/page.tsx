@@ -45,8 +45,15 @@ export default function SettingsRolesPage() {
   );
 
   function handleToggle(permissionId: string) {
-    if (!activeRole || !activePermissionIds.includes(permissionId)) return;
-    removePermission.mutate({ roleId: activeRole.id, permissionId });
+    if (!activeRole) return;
+    if (activePermissionIds.includes(permissionId)) {
+      removePermission.mutate({ roleId: activeRole.id, permissionId });
+    } else {
+      assignPermission.mutate({
+        roleId: activeRole.id,
+        data: { permissionId },
+      });
+    }
   }
 
   function handleAssignAllUnselected() {
