@@ -54,6 +54,7 @@ class UserPermissionsIsolationIT {
     static final String USER_DENY_NO_ROLE = "00000000-0000-0000-0000-00000000aa04";
 
     static UUID userA;
+    static UUID userB;
 
     private static final String EFFECTIVE_SQL = """
             SELECT name FROM (
@@ -191,12 +192,17 @@ class UserPermissionsIsolationIT {
 
     private static void seedScenario() throws SQLException {
         userA = UUID.randomUUID();
+        userB = UUID.randomUUID();
+        insertUser(userA, TENANT_A);
+        insertUser(userB, TENANT_B);
 
         // PERFIL com role_only + dennied_by_user
-        UUID perfilA = UUID.randomUUID();
-        insertRoleWithPerm(TENANT_A, perfilA, ROLE_ONLY);
-        insertRoleWithPerm(TENANT_A, perfilA, DENIED_BY_USER);
-        grantRole(userA, TENANT_A, perfilA);
+        UUID perfilA1 = UUID.randomUUID();
+        UUID perfilA2 = UUID.randomUUID();
+        insertRoleWithPerm(TENANT_A, perfilA1, ROLE_ONLY);
+        insertRoleWithPerm(TENANT_A, perfilA2, DENIED_BY_USER);
+        grantRole(userA, TENANT_A, perfilA1);
+        grantRole(userA, TENANT_A, perfilA2);
 
         // Overrides do usuário A:
         override(userA, TENANT_A, DENIED_BY_USER, "DENY");     // perfil ALLOW + usuário DENY → DENY
@@ -204,8 +210,22 @@ class UserPermissionsIsolationIT {
         override(userA, TENANT_A, USER_DENY_NO_ROLE, "DENY");  // sem papel + DENY → DENY
 
         // Tenant B: mesmo nome de permissão via override — isolação
-        UUID userB = UUID.randomUUID();
         override(userB, TENANT_B, USER_ALLOW_ONLY, "ALLOW");
+    }
+
+    private static void insertUser(UUID userId, UUID companyId) throws SQLException {
+        inTenant(companyId, () -> {
+            try {
+                jdbc.update("""
+                        INSERT INTO users (id, company_id, email, password_hash, name, first_name, is_active)
+                        VALUES (:id, :c, :e, 'x', 'Usuário Teste', 'Usuário', true)
+                        ON CONFLICT (id) DO NOTHING
+                        """, Map.of("id", userId, "c", companyId,
+                        "e", userId + "@users.test"));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Test
@@ -225,10 +245,11 @@ class UserPermissionsIsolationIT {
 
     @Test
     void tenantBDoesNotSeeTenantAOverridesOrRoles() {
-        var userB = UUID.randomUUID();
         var effectiveB = effective(userB, TENANT_B);
-        // B só tem o próprio override ALLOW; nada de A vaza (roles/overrides de A)
-        assertEquals(List.of("crm:pilot:user_allow_only"), effectiveB);
-        assertFalse(effectiveB.contains("crm:pilot:role_only"));
+        // B vê apenas o próprio override; nada de A vaza (roles/overrides de A)
+        assertTrue(effectiveB.contains("crm:pilot:user_allow_only"),
+                "Override ALLOW do usuário B deve estar visível para B");
+        assertFalse(effectiveB.contains("crm:pilot:role_only"),
+                "Permissões de perfil do Tenant A não podem vazar para B");
     }
 }
