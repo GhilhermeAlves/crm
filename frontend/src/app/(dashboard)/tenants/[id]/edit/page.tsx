@@ -1,7 +1,6 @@
 "use client";
 
-import { use } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { PageTitle } from "@/components/common/PageTitle";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonForm } from "@/components/feedback/SkeletonForm";
@@ -10,10 +9,8 @@ import { useTenant, useUpdateTenant } from "@/features/tenants/hooks/useTenants"
 import { TenantForm } from "@/features/tenants/components/TenantForm";
 import type { CreateTenantRequest } from "@/features/tenants/types/tenant.types";
 
-type Params = { id: string };
-
-export default function EditTenantPage({ params }: { params: Promise<Params> }) {
-  const { id } = use(params);
+export default function EditTenantPage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: tenant, isLoading, error } = useTenant(id);
   const updateMutation = useUpdateTenant();

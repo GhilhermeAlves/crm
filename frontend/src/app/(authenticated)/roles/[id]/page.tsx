@@ -1,11 +1,11 @@
 "use client";
 
-import { use } from "react";
+import { useParams } from "next/navigation";
 import { RoleDetails } from "@/features/rbac/components/RoleDetails";
 import { useRole } from "@/features/rbac/hooks/useRoles";
 
-export default function RoleDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function RoleDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const { data: role, isLoading } = useRole(id);
 
   if (isLoading) {

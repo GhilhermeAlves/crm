@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,8 @@ import { usePermissions } from "@/features/rbac/hooks/useRoles";
 import { PermissionMatrix } from "@/features/rbac/components/PermissionMatrix";
 import { RoleBadge } from "@/features/rbac/components/RoleBadge";
 
-export default function EditRolePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function EditRolePage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: role, isLoading: roleLoading } = useRole(id);
   const { data: allPermissions } = usePermissions();

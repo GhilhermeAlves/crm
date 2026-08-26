@@ -1,16 +1,14 @@
 "use client";
 
-import { use } from "react";
+import { useParams } from "next/navigation";
 import { PageTitle } from "@/components/common/PageTitle";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonCard } from "@/components/feedback/SkeletonCard";
 import { useTenant } from "@/features/tenants/hooks/useTenants";
 import { TenantDetails } from "@/features/tenants/components/TenantDetails";
 
-type Params = { id: string };
-
-export default function TenantDetailPage({ params }: { params: Promise<Params> }) {
-  const { id } = use(params);
+export default function TenantDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const { data: tenant, isLoading, error } = useTenant(id);
 
   if (isLoading) {
