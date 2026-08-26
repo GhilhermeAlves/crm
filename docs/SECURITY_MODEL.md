@@ -47,10 +47,37 @@
 | contact:field:phone:update | ✓ | ✓ | ✓ | ✗ |
 | security:page:view | ✓ | ✗ | ✗ | ✗ |
 
-## FUTURE (decidir antes da Fase 2)
+## Fase 2 — Overrides individuais (implementada)
 
-- `user_permissions` (override individual) + política ALLOW/DENY/precedência;
-- expandir page:view para todos os módulos;
-- field-level nos demais módulos e campos (cpf, birth_date quando existirem);
-- UI hierárquica completa de permissões na tela de Perfis (PermissionMatrix evolui);
-- cache das autoridades se volume justificar.
+- **Tabela `user_permissions` (V065)**: `(company_id, user_id, permission_id, effect)`
+  com `effect ∈ {ALLOW, DENY}` e UNIQUE(user_id, permission_id). INHERIT = ausência de
+  linha. RLS FORCE + `tenant_isolation_policy`.
+- **Permissão efetiva centralizada** (mesma SQL nos dois serviços):
+  ```text
+  efetiva = (permissões dos perfis ∪ ALLOW do usuário) − DENY do usuário
+  ```
+  - backend: `PermissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId`
+    (`SpringDataPermissionRepository`, usada por `LocalCurrentUserResolver`);
+  - auth-service: `SpringDataUserRepository.findPermissionNamesByUserIdAndCompanyId`
+    (usada por `CurrentUserResolutionService`).
+  Efeito imediato: sem cache — a mesma característica da Fase 1 é preservada.
+- **Precedência**: DENY (usuário) > ALLOW (perfil) > ausência. Sem papel + ALLOW = ALLOW;
+  sem papel + DENY = negado.
+- **API** (`UserController`, exige `permission:assign`):
+  - `GET /api/v1/users/{id}/permissions` → roles, effective[], overrides[];
+  - `PUT /api/v1/users/{id}/permissions/{permissionId}` `{ "effect": "ALLOW"|"DENY" }`;
+  - `DELETE /api/v1/users/{id}/permissions/{permissionId}` → volta a INHERIT.
+  Multi-tenant: alvo precisa pertencer à empresa ativa + TenantContext + RLS.
+- **page:view expandido (V066)** para os módulos do menu: dashboard, leads, pipeline,
+  tasks, activities, workflows, notifications, campaigns, omnichannel, audit (+ contacts
+  e security já da Fase 1). Menu usa as novas permissões; as APIs continuam protegidas
+  pelas permissões de ação — proteção real permanece no backend.
+- **UI**: `/settings/users` ganhou diálogo "Permissões" por membro (perfis, efetivas e
+  overrides com botões Permitir/Negar); PermissionMatrix agrupa permissões por módulo.
+
+## FUTURE (decidir antes da Fase 3)
+
+- expandir field-level para novos campos/módulos (cpf, birth_date quando existirem);
+- UI hierárquica completa de permissões na tela de Perfis (subgrupos Página/Campos);
+- cache das autoridades se volume justificar;
+- auditoria detalhada de cada alteração de override (hoje via TenantAuditRecorder).

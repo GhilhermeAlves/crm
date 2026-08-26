@@ -72,10 +72,9 @@ class LocalCurrentUserResolverTest {
         when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), companyId))
                 .thenReturn(List.of(UserRole.assign(user.getId(), agentRole.getId(), companyId)));
         when(roleRepository.findById(agentRole.getId())).thenReturn(Optional.of(agentRole));
-        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), companyId)).thenReturn(Optional.of(agentRole));
-        when(rolePermissionRepository.findByRoleId(agentRole.getId()))
-                .thenReturn(List.of(RolePermission.create(agentRole.getId(), dashboardView.getId())));
-        when(permissionRepository.findById(dashboardView.getId())).thenReturn(Optional.of(dashboardView));
+        // Sprint 20 (Fase 2): resolução efetiva centralizada
+        when(permissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId(user.getId(), companyId))
+                .thenReturn(List.of("dashboard:view"));
         when(membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId)).thenReturn(true);
         when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(user.getId(), companyId))
                 .thenReturn(Optional.of("AGENT"));
@@ -181,17 +180,13 @@ class LocalCurrentUserResolverTest {
         when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
         when(membershipRepository.existsActiveByUserIdAndCompanyId(any(UUID.class), any(UUID.class))).thenReturn(true);
 
-        // Empresa A: user_roles = ADMIN; role_specific_permissions = create+read
+        // Empresa A: user_roles = ADMIN; permissões efetivas = create+read
         when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), companyA))
                 .thenReturn(List.of(UserRole.assign(user.getId(), adminRole.getId(), companyA)));
         when(roleRepository.findById(adminRole.getId())).thenReturn(Optional.of(adminRole));
-        when(roleRepository.findByNameAndCompanyId(RoleName.ADMIN.name(), companyA)).thenReturn(Optional.of(adminRole));
-        when(rolePermissionRepository.findByRoleId(adminRole.getId()))
-                .thenReturn(List.of(RolePermission.create(adminRole.getId(), usersRead.getId()),
-                        RolePermission.create(adminRole.getId(), usersCreate.getId())));
-        when(permissionRepository.findById(usersRead.getId())).thenReturn(Optional.of(usersRead));
-        when(permissionRepository.findById(usersCreate.getId())).thenReturn(Optional.of(usersCreate));
-        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(user.getId(), companyA))
+        when(permissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId(user.getId(), companyA))
+                .thenReturn(List.of("user:read", "user:create"));
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(eq(user.getId()), eq(companyA)))
                 .thenReturn(Optional.of("ADMIN"));
 
         Jwt jwt = Jwt.withTokenValue("token")
@@ -212,13 +207,12 @@ class LocalCurrentUserResolverTest {
         User userInB = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ghilherme", "Santos", companyB);
         userInB.linkKeycloak(SUB);
         when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(userInB);
-        when(userRoleRepository.findByUserIdAndCompanyId(any(UUID.class), eq(companyB)))
+        when(userRoleRepository.findByUserIdAndCompanyId(any(), eq(companyB)))
                 .thenReturn(List.of(UserRole.assign(user.getId(), viewerRole.getId(), companyB)));
         when(roleRepository.findById(viewerRole.getId())).thenReturn(Optional.of(viewerRole));
-        when(roleRepository.findByNameAndCompanyId(RoleName.VIEWER.name(), companyB)).thenReturn(Optional.of(viewerRole));
-        when(rolePermissionRepository.findByRoleId(viewerRole.getId()))
-                .thenReturn(List.of(RolePermission.create(viewerRole.getId(), usersRead.getId())));
-        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(any(UUID.class), eq(companyB)))
+        when(permissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId(any(), eq(companyB)))
+                .thenReturn(List.of("user:read"));
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(any(), eq(companyB)))
                 .thenReturn(Optional.of("VIEWER"));
 
         CurrentUser asCompanyB = resolver.resolve(jwt);

@@ -40,6 +40,20 @@ export type AssignPermissionRequest = {
   permissionId: string;
 };
 
+export type UserPermissionEffect = "ALLOW" | "DENY";
+
+export type UserPermissionOverride = {
+  permissionName: string;
+  effect: UserPermissionEffect;
+};
+
+export type UserPermissionsResponse = {
+  userId: string;
+  roles: string[];
+  effective: string[];
+  overrides: UserPermissionOverride[];
+};
+
 export type PermissionModule = {
   module: string;
   permissions: Permission[];

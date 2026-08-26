@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import {
@@ -9,6 +10,8 @@ import {
 } from "@/features/members/hooks/useMembers";
 import { useRoles } from "@/features/rbac/hooks/useRoles";
 import { InviteMemberDialog } from "@/features/members/components/InviteMemberDialog";
+import { UserPermissionsDialog } from "@/features/rbac/components/UserPermissionsDialog";
+import type { Member } from "@/features/members/types/member.types";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -22,7 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2 } from "lucide-react";
+import { Shield, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -42,6 +45,7 @@ export default function SettingsUsersPage() {
   const rolesQuery = useRoles();
   const updateRole = useUpdateMemberRole(companyId ?? "");
   const removeMember = useRemoveMember(companyId ?? "");
+  const [permissionsTarget, setPermissionsTarget] = useState<Member | null>(null);
 
   if (membersQuery.isLoading) {
     return <Skeleton className="h-64 w-full" />;
@@ -125,15 +129,25 @@ export default function SettingsUsersPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       {manageUsers && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Remover membro"
-                          onClick={() => removeMember.mutate(member.userId)}
-                          disabled={removeMember.isPending}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Permissões individuais"
+                            onClick={() => setPermissionsTarget(member)}
+                          >
+                            <Shield className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Remover membro"
+                            onClick={() => removeMember.mutate(member.userId)}
+                            disabled={removeMember.isPending}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -143,6 +157,12 @@ export default function SettingsUsersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <UserPermissionsDialog
+        member={permissionsTarget}
+        open={!!permissionsTarget}
+        onOpenChange={(open) => !open && setPermissionsTarget(null)}
+      />
     </div>
   );
 }

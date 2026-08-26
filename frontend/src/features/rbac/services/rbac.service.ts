@@ -6,6 +6,8 @@ import type {
   UpdateRoleRequest,
   AssignRoleRequest,
   AssignPermissionRequest,
+  UserPermissionsResponse,
+  UserPermissionEffect,
 } from "../types/rbac.types";
 
 const ROLES_PATH = "/roles";
@@ -71,5 +73,24 @@ export const RbacService = {
   async getPermissionById(id: string): Promise<Permission> {
     const response = await api.get<Permission>(`${PERMISSIONS_PATH}/${id}`);
     return response.data;
+  },
+
+  // ===== Sprint 20 (Fase 2) — overrides individuais de permissão =====
+
+  async getUserPermissions(userId: string): Promise<UserPermissionsResponse> {
+    const response = await api.get<UserPermissionsResponse>(`${USERS_PATH}/${userId}/permissions`);
+    return response.data;
+  },
+
+  async setUserPermissionOverride(
+    userId: string,
+    permissionId: string,
+    effect: UserPermissionEffect,
+  ): Promise<void> {
+    await api.put(`${USERS_PATH}/${userId}/permissions/${permissionId}`, { effect });
+  },
+
+  async removeUserPermissionOverride(userId: string, permissionId: string): Promise<void> {
+    await api.delete(`${USERS_PATH}/${userId}/permissions/${permissionId}`);
   },
 };
