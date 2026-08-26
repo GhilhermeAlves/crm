@@ -30,15 +30,18 @@ public class ContactService implements ContactUseCase {
     private final CompanyQuotaService quotaService;
     private final TenantAuditRecorder auditor;
     private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
+    private final com.becommerce.crm.infrastructure.security.authorization.CurrentUserAuthorities authorities;
 
     public ContactService(ContactRepository contactRepository,
                           CompanyQuotaService quotaService,
                           TenantAuditRecorder auditor,
-                          com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher) {
+                          com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher,
+                          com.becommerce.crm.infrastructure.security.authorization.CurrentUserAuthorities authorities) {
         this.contactRepository = contactRepository;
         this.quotaService = quotaService;
         this.auditor = auditor;
         this.eventPublisher = eventPublisher;
+        this.authorities = authorities;
     }
 
     @Override
@@ -108,6 +111,17 @@ public class ContactService implements ContactUseCase {
         }
     }
 
+    private void requireFieldPermission(String currentValue, String newValue,
+                                        String permission, String fieldLabel) {
+        if (newValue == null || newValue.equals(currentValue)) {
+            return;
+        }
+        if (!authorities.has(permission)) {
+            throw new com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException(
+                    "Você não tem permissão para alterar o campo " + fieldLabel + " do contato.");
+        }
+    }
+
     private static boolean matches(Contact c, String q) {
         return (c.getFirstName() != null && c.getFirstName().toLowerCase().contains(q))
                 || (c.getLastName() != null && c.getLastName().toLowerCase().contains(q))
@@ -121,6 +135,14 @@ public class ContactService implements ContactUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             Contact contact = requireOwnedActive(companyId, contactId);
+
+            // Sprint 20 — autorização granular por campo (piloto Contatos):
+            // alteração de e-mail/telefone exige a permissão específica do campo.
+            requireFieldPermission(contact.getEmail(), request.email(),
+                    "contact:field:email:update", "e-mail");
+            requireFieldPermission(contact.getPhone(), request.phone(),
+                    "contact:field:phone:update", "telefone");
+
             if (request.firstName() != null) contact.setFirstName(request.firstName());
             if (request.lastName() != null) contact.setLastName(request.lastName());
             if (request.email() != null) contact.setEmail(request.email());

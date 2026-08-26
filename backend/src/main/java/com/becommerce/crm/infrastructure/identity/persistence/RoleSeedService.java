@@ -70,7 +70,9 @@ public class RoleSeedService {
             "ai:chat",
             "dashboard:operational",
             "omnichannel:read", "omnichannel:create", "omnichannel:update",
-            "omnichannel:delete", "omnichannel:send"
+            "omnichannel:delete", "omnichannel:send",
+            "contact:page:view", "contact:field:email:update", "contact:field:phone:update",
+            "security:page:view"
         ));
         rolePermissions.put(RoleName.MANAGER, List.of(
             "user:read", "user:update",
@@ -93,7 +95,8 @@ public class RoleSeedService {
             "ai:suggest",
             "ai:chat",
             "dashboard:operational",
-            "omnichannel:read", "omnichannel:update", "omnichannel:send"
+            "omnichannel:read", "omnichannel:update", "omnichannel:send",
+            "contact:page:view", "contact:field:email:update", "contact:field:phone:update"
         ));
         rolePermissions.put(RoleName.AGENT, List.of(
             "dashboard:view",
@@ -111,7 +114,8 @@ public class RoleSeedService {
             "ai:suggest",
             "ai:chat",
             "dashboard:operational",
-            "omnichannel:read", "omnichannel:send"
+            "omnichannel:read", "omnichannel:send",
+            "contact:page:view", "contact:field:email:update", "contact:field:phone:update"
         ));
         rolePermissions.put(RoleName.VIEWER, List.of(
             "dashboard:view",
@@ -128,7 +132,8 @@ public class RoleSeedService {
             "notification:read",
             "ai:chat",
             "dashboard:operational",
-            "omnichannel:read"
+            "omnichannel:read",
+            "contact:page:view"
         ));
 
         for (Map.Entry<RoleName, List<String>> entry : rolePermissions.entrySet()) {

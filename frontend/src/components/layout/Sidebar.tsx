@@ -105,6 +105,23 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    title: "Segurança",
+    items: [
+      {
+        label: "Usuários",
+        href: ROUTES.SETTINGS_USERS,
+        icon: Users,
+        permission: "security:page:view",
+      },
+      {
+        label: "Perfis",
+        href: ROUTES.SETTINGS_ROLES,
+        icon: Shield,
+        permission: "security:page:view",
+      },
+    ],
+  },
+  {
     title: "CRM",
     items: [
       {
@@ -117,7 +134,7 @@ const navGroups: NavGroup[] = [
         label: "Contatos",
         href: ROUTES.CONTACTS,
         icon: Contact,
-        permission: "contact:read",
+        permission: "contact:page:view",
       },
       {
         label: "Pipeline",
