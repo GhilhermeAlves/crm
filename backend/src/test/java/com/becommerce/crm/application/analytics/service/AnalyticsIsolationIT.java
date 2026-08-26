@@ -154,23 +154,27 @@ class AnalyticsIsolationIT {
                     INSERT INTO omnichannel_messages (company_id, direction)
                     VALUES (:c, 'OUTBOUND')
                     """, java.util.Map.of("c", companyId));
+            Long seeded = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM contacts WHERE company_id = :c",
+                    java.util.Map.of("c", companyId), Long.class);
         }));
     }
 
     private static LocalDate today() {
-        return LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo"));
+        // O banco/JVM dos testes rodam em UTC; usar UTC para alinhar período e timestamps.
+        return LocalDate.now(java.time.ZoneId.of("UTC"));
     }
 
     @Test
     void summaryReturnsOnlyOwnTenantData() {
-        var periodA = AnalyticsPeriod.resolve(today().minusDays(1), today(), null);
+        var periodA = AnalyticsPeriod.resolve(today().minusDays(1), today(), "UTC");
         var a = analytics.summary(TENANT_A, periodA);
 
         assertEquals(5, a.current().contactsCreated(), "Tenant A deve ver apenas seus 5 contatos");
         assertEquals(3, a.current().leadsCreated());
         assertEquals(1, a.current().opportunitiesWon());
 
-        var periodB = AnalyticsPeriod.resolve(today().minusDays(1), today(), null);
+        var periodB = AnalyticsPeriod.resolve(today().minusDays(1), today(), "UTC");
         var b = analytics.summary(TENANT_B, periodB);
         assertEquals(2, b.current().contactsCreated(), "Tenant B deve ver apenas seus 2 contatos");
         assertEquals(7, b.current().leadsCreated());
@@ -179,12 +183,12 @@ class AnalyticsIsolationIT {
     @Test
     void dailySeriesIsIsolatedPerTenant() {
         var a = analytics.summary(TENANT_A,
-                AnalyticsPeriod.resolve(today().minusDays(1), today(), null));
+                AnalyticsPeriod.resolve(today().minusDays(1), today(), "UTC"));
         long totalLeadsA = a.series().stream().mapToLong(AnalyticsSummaryResponse.DailyPoint::leads).sum();
         assertEquals(3, totalLeadsA);
 
         var b = analytics.summary(TENANT_B,
-                AnalyticsPeriod.resolve(today().minusDays(1), today(), null));
+                AnalyticsPeriod.resolve(today().minusDays(1), today(), "UTC"));
         long totalLeadsB = b.series().stream().mapToLong(AnalyticsSummaryResponse.DailyPoint::leads).sum();
         assertEquals(7, totalLeadsB);
     }
@@ -192,7 +196,7 @@ class AnalyticsIsolationIT {
     @Test
     void previousPeriodComparisonIsPopulatedAndIndependent() {
         // cria dado somente no período atual; período anterior fica zerado
-        var period = AnalyticsPeriod.resolve(today().minusDays(1), today(), null);
+        var period = AnalyticsPeriod.resolve(today().minusDays(1), today(), "UTC");
         var result = analytics.summary(TENANT_A, period);
         assertEquals(5, result.current().contactsCreated());
         assertEquals(0, result.previous().contactsCreated(),
@@ -201,7 +205,7 @@ class AnalyticsIsolationIT {
 
     @Test
     void emptyPeriodReturnsZerosWithoutError() {
-        var farFuture = AnalyticsPeriod.resolve(LocalDate.of(2999, 1, 1), LocalDate.of(2999, 1, 2), null);
+        var farFuture = AnalyticsPeriod.resolve(LocalDate.of(2999, 1, 1), LocalDate.of(2999, 1, 2), "UTC");
         var result = analytics.summary(TENANT_A, farFuture);
         assertEquals(0, result.current().contactsCreated());
         assertEquals(0, result.current().workflowRunsMatched());
