@@ -115,11 +115,7 @@ export default function SettingsRolesPage() {
         </div>
         <div className="flex items-center gap-2">
           {managePermissions && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setCreateDialogOpen(true)}
-            >
+            <Button variant="default" size="sm" onClick={() => setCreateDialogOpen(true)}>
               Criar Perfil
             </Button>
           )}
@@ -216,10 +212,7 @@ export default function SettingsRolesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCreateDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               Cancelar
             </Button>
             <Button
