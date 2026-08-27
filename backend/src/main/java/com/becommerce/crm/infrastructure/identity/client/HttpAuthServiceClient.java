@@ -1,5 +1,7 @@
 package com.becommerce.crm.infrastructure.identity.client;
 
+import com.becommerce.crm.domain.identity.exception.DuplicateEmailException;
+import com.becommerce.crm.domain.identity.exception.IdentityServiceUnavailableException;
 import com.becommerce.crm.infrastructure.identity.client.dto.CreateKeycloakUserRequest;
 import com.becommerce.crm.infrastructure.identity.client.dto.CreateKeycloakUserResponse;
 import com.becommerce.crm.infrastructure.identity.client.dto.ResetCredentialRequest;
@@ -78,6 +80,15 @@ public class HttpAuthServiceClient implements AuthServiceClient {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new CreateKeycloakUserRequest(email, password, name))
                 .retrieve()
+                .onStatus(status -> status.value() == 409,
+                        (request, errorResponse) -> {
+                            throw new DuplicateEmailException("Este e-mail já está registrado.");
+                        })
+                .onStatus(status -> status.is5xxServerError(),
+                        (request, errorResponse) -> {
+                            throw new IdentityServiceUnavailableException(
+                                    "O serviço de identidade está temporariamente indisponível. Tente novamente mais tarde.");
+                        })
                 .body(CreateKeycloakUserResponse.class);
         if (response == null || response.keycloakUserId() == null) {
             throw new IllegalStateException("auth-service não retornou keycloakUserId");

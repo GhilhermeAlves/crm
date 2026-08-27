@@ -20,6 +20,7 @@ import com.becommerce.crm.domain.identity.event.PasswordChangedEvent;
 import com.becommerce.crm.domain.identity.event.PasswordResetRequestedEvent;
 import com.becommerce.crm.domain.identity.event.UserCreatedEvent;
 import com.becommerce.crm.domain.identity.exception.DuplicateEmailException;
+import com.becommerce.crm.domain.identity.exception.IdentityServiceUnavailableException;
 import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
 import com.becommerce.crm.domain.identity.exception.LinkingRequiredException;
@@ -116,7 +117,7 @@ public class AuthService implements AuthUseCase {
         try {
             keycloakUserId = authServiceClient.createKeycloakUser(
                     request.email(), request.password(), request.name());
-        } catch (DuplicateEmailException e) {
+        } catch (DuplicateEmailException | IdentityServiceUnavailableException e) {
             throw e;
         } catch (Exception e) {
             throw new UserProvisioningException(

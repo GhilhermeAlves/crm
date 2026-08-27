@@ -2,6 +2,7 @@ package com.becommerce.auth.presentation.rest;
 
 import com.becommerce.auth.application.identity.port.input.CurrentUserResolutionUseCase;
 import com.becommerce.auth.application.gateway.port.output.CredentialResetClient;
+import com.becommerce.auth.application.gateway.port.output.UserManagementClient;
 import com.becommerce.auth.domain.identity.AuthenticatedIdentity;
 import com.becommerce.auth.domain.identity.CurrentUser;
 import com.becommerce.auth.domain.identity.CurrentUserResolution;
@@ -36,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -60,6 +62,7 @@ class InternalAuthControllerTest {
     @MockBean private CurrentUserResolutionUseCase currentUserResolutionUseCase;
     @MockBean private DependencyProbe dependencyProbe;
     @MockBean private CredentialResetClient credentialResetClient;
+    @MockBean private UserManagementClient userManagementClient;
 
     @BeforeEach
     void setUp() {
@@ -194,6 +197,43 @@ class InternalAuthControllerTest {
                 .andExpect(jsonPath("$.code").value("INTERNAL_API_TOKEN_INVALID"));
     }
 
+    @Test
+    void shouldDelegateCreateUserToUserManagementClient() throws Exception {
+        when(userManagementClient.createUser(eq(EMAIL), anyString(), eq("Registro"), eq("Teste")))
+                .thenReturn("kc-user-id-123");
+
+        mockMvc.perform(post("/internal/auth/create-user")
+                        .header("X-Internal-Api-Token", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + EMAIL + "\",\"password\":\"Kc!Valid1Aa\",\"name\":\"Registro Teste\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.keycloakUserId").value("kc-user-id-123"));
+
+        verify(userManagementClient).createUser(EMAIL, "Kc!Valid1Aa", "Registro", "Teste");
+    }
+
+    @Test
+    void shouldDelegateDeleteUserToUserManagementClient() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete("/internal/auth/create-user/kc-user-id-123")
+                        .header("X-Internal-Api-Token", "valid-token"))
+                .andExpect(status().isNoContent());
+
+        verify(userManagementClient).deleteUser("kc-user-id-123");
+    }
+
+    @Test
+    void shouldRejectCreateUserWithWrongInternalToken() throws Exception {
+        mockMvc.perform(post("/internal/auth/create-user")
+                        .header("X-Internal-Api-Token", "wrong-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + EMAIL + "\",\"password\":\"Kc!Valid1Aa\",\"name\":\"Registro Teste\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INTERNAL_API_TOKEN_INVALID"));
+
+        verify(userManagementClient, org.mockito.Mockito.never()).createUser(anyString(), anyString(), anyString(), anyString());
+    }
+
     @TestConfiguration
     static class TestInternalApiTokenFilterConfig {
         @Bean
@@ -202,7 +242,7 @@ class InternalAuthControllerTest {
                 String apiToken, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
             FilterRegistrationBean<InternalApiTokenFilter> registration =
                     new FilterRegistrationBean<>(new InternalApiTokenFilter(apiToken, objectMapper));
-            registration.setUrlPatterns(List.of("/internal/auth/reset-password"));
+            registration.setUrlPatterns(List.of("/internal/auth/reset-password", "/internal/auth/create-user", "/internal/auth/create-user/*"));
             registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 2);
             return registration;
         }

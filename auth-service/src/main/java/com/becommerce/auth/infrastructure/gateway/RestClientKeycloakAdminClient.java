@@ -249,13 +249,13 @@ public class RestClientKeycloakAdminClient implements CredentialResetClient, Use
                     .body(body)
                     .retrieve()
                     .onStatus(status -> status == org.springframework.http.HttpStatus.CONFLICT,
-                            (request, response) -> {
+                            (request, errorResponse) -> {
                                 throw new OidcGatewayException("KEYCLOAK_USER_CONFLICT", 409,
                                         "E-mail já registrado no Keycloak.");
                             })
-                    .onStatus(status -> status.isError(), (request, response) -> {
+                    .onStatus(status -> status.isError(), (request, errorResponse) -> {
                         throw new OidcGatewayException("KEYCLOAK_CREATE_USER_FAILED",
-                                response.getStatusCode().value(),
+                                errorResponse.getStatusCode().value(),
                                 "O Keycloak rejeitou a criação do usuário.");
                     })
                     .toBodilessEntity();

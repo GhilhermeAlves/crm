@@ -17,6 +17,7 @@ import com.becommerce.crm.domain.company.CompanyNotFoundException;
 import com.becommerce.crm.domain.company.CompanyDeletionForbiddenException;
 import com.becommerce.crm.domain.identity.exception.DuplicateEmailException;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.domain.identity.exception.IdentityServiceUnavailableException;
 import com.becommerce.crm.domain.activity.exception.ActivityNotFoundException;
 import com.becommerce.crm.domain.activity.exception.ActivityValidationException;
 import com.becommerce.crm.domain.contact.exception.ContactNotFoundException;
@@ -525,6 +526,17 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 401,
                 "error", "Unauthorized",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(IdentityServiceUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handleIdentityServiceUnavailableException(IdentityServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(Map.of(
+                "status", 503,
+                "error", "Service Unavailable",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));
