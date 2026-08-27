@@ -64,6 +64,8 @@ public class SecurityConfig {
                         // de serviço a serviço, sem JWT de usuário. A autenticação é o
                         // header X-Internal-Api-Token, validado pelo InternalApiTokenFilter.
                         .requestMatchers("/internal/auth/reset-password").permitAll()
+                        .requestMatchers("/internal/auth/create-user").permitAll()
+                        .requestMatchers("/internal/auth/create-user/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)

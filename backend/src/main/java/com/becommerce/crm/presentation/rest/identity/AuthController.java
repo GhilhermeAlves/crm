@@ -4,6 +4,7 @@ import com.becommerce.crm.application.identity.dto.*;
 import com.becommerce.crm.application.identity.port.input.AuthUseCase;
 import com.becommerce.crm.application.identity.port.input.UserUseCase;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,7 +23,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest request) {
         authUseCase.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

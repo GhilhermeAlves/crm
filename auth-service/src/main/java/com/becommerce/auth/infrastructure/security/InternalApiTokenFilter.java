@@ -47,7 +47,9 @@ public class InternalApiTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().toLowerCase(Locale.ROOT).endsWith("/internal/auth/reset-password");
+        String uri = request.getRequestURI().toLowerCase(Locale.ROOT);
+        return !uri.endsWith("/internal/auth/reset-password")
+                && !uri.matches(".*/internal/auth/create-user(/[^/]+)?");
     }
 
     @Override

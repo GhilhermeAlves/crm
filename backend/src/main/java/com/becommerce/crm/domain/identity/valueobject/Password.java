@@ -13,7 +13,7 @@ public record Password(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Password cannot be null or blank");
         }
-        if (!BCRYPT_PATTERN.matcher(value).matches()) {
+        if (!BCRYPT_PATTERN.matcher(value).find()) {
             if (value.length() < 8) {
                 throw new IllegalArgumentException("Password must be at least 8 characters");
             }

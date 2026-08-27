@@ -1,6 +1,7 @@
 package com.becommerce.auth.infrastructure.gateway;
 
 import com.becommerce.auth.application.gateway.port.output.CredentialResetClient;
+import com.becommerce.auth.application.gateway.port.output.UserManagementClient;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +37,7 @@ import java.util.Map;
  * de comunicação são mapeados para {@link OidcGatewayException}.
  */
 @Component
-public class RestClientKeycloakAdminClient implements CredentialResetClient {
+public class RestClientKeycloakAdminClient implements CredentialResetClient, UserManagementClient {
 
     private static final String SUCCESS = "success";
 
@@ -172,6 +173,141 @@ public class RestClientKeycloakAdminClient implements CredentialResetClient {
             }
             throw new OidcGatewayException("KEYCLOAK_RESET_PASSWORD_UNAVAILABLE", 502,
                     "Falha na comunicação com o Keycloak ao redefinir a senha.");
+        }
+    }
+
+    // ── User Management (Sprint 8.5) ──────────────────────────────────────
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object>[] findUserByEmail(String email) {
+        if (!properties.isConfigured()) {
+            throw new OidcGatewayException("KEYCLOAK_ADMIN_NOT_CONFIGURED", 503,
+                    "AUTH_KEYCLOAK_ADMIN_CLIENT_ID/SECRET não configurado.");
+        }
+        String adminToken = adminToken();
+        String raw;
+        try {
+            raw = restClient.get()
+                    .uri(properties.getBaseUrl() + "/admin/realms/{realm}/users?email={email}&exact=true",
+                            properties.getRealm(), email)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                    .retrieve()
+                    .onStatus(status -> status.isError(), (request, response) -> {
+                        throw new OidcGatewayException("KEYCLOAK_ADMIN_USER_LOOKUP_FAILED",
+                                response.getStatusCode().value(),
+                                "Falha ao localizar o usuário no Keycloak.");
+                    })
+                    .body(String.class);
+            Map<String, Object>[] result = objectMapper.readValue(raw, Map[].class);
+            return result != null ? result : new Map[0];
+        } catch (IOException e) {
+            throw new OidcGatewayException("KEYCLOAK_ADMIN_BAD_RESPONSE", 502,
+                    "Resposta inválida do Keycloak ao buscar usuário.");
+        } catch (RestClientException e) {
+            if (isTimeout(e)) {
+                throw new OidcGatewayException("KEYCLOAK_ADMIN_TIMEOUT", 504,
+                        "Tempo esgotado ao buscar usuário no Keycloak.");
+            }
+            throw new OidcGatewayException("KEYCLOAK_ADMIN_UNAVAILABLE", 502,
+                    "Falha na comunicação com o Keycloak (busca de usuário).");
+        }
+    }
+
+    @Override
+    public String createUser(String email, String password, String firstName, String lastName) {
+        if (!properties.isConfigured()) {
+            throw new OidcGatewayException("KEYCLOAK_ADMIN_NOT_CONFIGURED", 503,
+                    "AUTH_KEYCLOAK_ADMIN_CLIENT_ID/SECRET não configurado.");
+        }
+        String adminToken = adminToken();
+
+        Map<String, Object> credential = Map.of(
+                "type", "password",
+                "value", password,
+                "temporary", false
+        );
+        Map<String, Object> body = Map.of(
+                "username", email,
+                "email", email,
+                "firstName", firstName != null ? firstName : "",
+                "lastName", lastName != null ? lastName : "",
+                "enabled", true,
+                "emailVerified", false,
+                "credentials", new Object[]{credential}
+        );
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            org.springframework.http.ResponseEntity<Void> response = restClient.post()
+                    .uri(properties.getBaseUrl() + "/admin/realms/{realm}/users",
+                            properties.getRealm())
+                    .headers(h -> h.setAll(headers.toSingleValueMap()))
+                    .body(body)
+                    .retrieve()
+                    .onStatus(status -> status == org.springframework.http.HttpStatus.CONFLICT,
+                            (request, response) -> {
+                                throw new OidcGatewayException("KEYCLOAK_USER_CONFLICT", 409,
+                                        "E-mail já registrado no Keycloak.");
+                            })
+                    .onStatus(status -> status.isError(), (request, response) -> {
+                        throw new OidcGatewayException("KEYCLOAK_CREATE_USER_FAILED",
+                                response.getStatusCode().value(),
+                                "O Keycloak rejeitou a criação do usuário.");
+                    })
+                    .toBodilessEntity();
+
+            String location = response.getHeaders().getLocation() != null
+                    ? response.getHeaders().getLocation().toString() : null;
+            if (location == null || location.isBlank()) {
+                throw new OidcGatewayException("KEYCLOAK_ADMIN_BAD_RESPONSE", 502,
+                        "Keycloak não retornou localização do usuário criado.");
+            }
+            String keycloakUserId = location.substring(location.lastIndexOf('/') + 1);
+            return keycloakUserId;
+        } catch (OidcGatewayException e) {
+            throw e;
+        } catch (RestClientException e) {
+            if (isTimeout(e)) {
+                throw new OidcGatewayException("KEYCLOAK_ADMIN_TIMEOUT", 504,
+                        "Tempo esgotado ao criar usuário no Keycloak.");
+            }
+            throw new OidcGatewayException("KEYCLOAK_CREATE_USER_UNAVAILABLE", 502,
+                    "Falha na comunicação com o Keycloak ao criar usuário.");
+        }
+    }
+
+    @Override
+    public void deleteUser(String keycloakUserId) {
+        if (!properties.isConfigured()) {
+            throw new OidcGatewayException("KEYCLOAK_ADMIN_NOT_CONFIGURED", 503,
+                    "AUTH_KEYCLOAK_ADMIN_CLIENT_ID/SECRET não configurado.");
+        }
+        String adminToken = adminToken();
+        try {
+            restClient.delete()
+                    .uri(properties.getBaseUrl() + "/admin/realms/{realm}/users/{id}",
+                            properties.getRealm(), keycloakUserId)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                    .retrieve()
+                    .onStatus(status -> status.isError(), (request, response) -> {
+                        throw new OidcGatewayException("KEYCLOAK_DELETE_USER_FAILED",
+                                response.getStatusCode().value(),
+                                "O Keycloak rejeitou a exclusão do usuário.");
+                    })
+                    .toBodilessEntity();
+        } catch (OidcGatewayException e) {
+            throw e;
+        } catch (RestClientException e) {
+            if (isTimeout(e)) {
+                throw new OidcGatewayException("KEYCLOAK_ADMIN_TIMEOUT", 504,
+                        "Tempo esgotado ao excluir usuário no Keycloak.");
+            }
+            throw new OidcGatewayException("KEYCLOAK_DELETE_USER_UNAVAILABLE", 502,
+                    "Falha na comunicação com o Keycloak ao excluir usuário.");
         }
     }
 

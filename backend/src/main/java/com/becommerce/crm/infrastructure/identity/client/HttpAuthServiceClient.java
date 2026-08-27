@@ -1,5 +1,7 @@
 package com.becommerce.crm.infrastructure.identity.client;
 
+import com.becommerce.crm.infrastructure.identity.client.dto.CreateKeycloakUserRequest;
+import com.becommerce.crm.infrastructure.identity.client.dto.CreateKeycloakUserResponse;
 import com.becommerce.crm.infrastructure.identity.client.dto.ResetCredentialRequest;
 import com.becommerce.crm.infrastructure.identity.client.dto.ResolutionResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,6 +62,38 @@ public class HttpAuthServiceClient implements AuthServiceClient {
                 .header(INTERNAL_API_TOKEN_HEADER, internalApiToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ResetCredentialRequest(keycloakSub, email, newPassword))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    @Override
+    public String createKeycloakUser(String email, String password, String name) {
+        if (restClient == null) {
+            throw new IllegalStateException(
+                    "app.auth.identity-layer.auth-service-url não configurado (AUTH_SERVICE_URL)");
+        }
+        CreateKeycloakUserResponse response = restClient.post()
+                .uri("/internal/auth/create-user")
+                .header(INTERNAL_API_TOKEN_HEADER, internalApiToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CreateKeycloakUserRequest(email, password, name))
+                .retrieve()
+                .body(CreateKeycloakUserResponse.class);
+        if (response == null || response.keycloakUserId() == null) {
+            throw new IllegalStateException("auth-service não retornou keycloakUserId");
+        }
+        return response.keycloakUserId();
+    }
+
+    @Override
+    public void deleteKeycloakUser(String keycloakUserId) {
+        if (restClient == null) {
+            throw new IllegalStateException(
+                    "app.auth.identity-layer.auth-service-url não configurado (AUTH_SERVICE_URL)");
+        }
+        restClient.delete()
+                .uri("/internal/auth/create-user/{id}", keycloakUserId)
+                .header(INTERNAL_API_TOKEN_HEADER, internalApiToken)
                 .retrieve()
                 .toBodilessEntity();
     }

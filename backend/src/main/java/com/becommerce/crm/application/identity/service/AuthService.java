@@ -19,6 +19,7 @@ import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.event.PasswordChangedEvent;
 import com.becommerce.crm.domain.identity.event.PasswordResetRequestedEvent;
 import com.becommerce.crm.domain.identity.event.UserCreatedEvent;
+import com.becommerce.crm.domain.identity.exception.DuplicateEmailException;
 import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;
 import com.becommerce.crm.domain.identity.exception.LinkingRequiredException;
@@ -98,19 +99,94 @@ public class AuthService implements AuthUseCase {
     }
 
     @Override
+    @Transactional
     public void register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalStateException("Email already exists");
+            throw new DuplicateEmailException("Este e-mail já está registrado.");
         }
 
         Email email = new Email(request.email());
-        Password password = new Password(request.password());
+        Password rawPassword = new Password(request.password());
+        String encodedPassword = passwordEncoder.encode(rawPassword.value());
 
-        UUID companyId = resolveCompanyForRegistration(request.companyId());
-        User user = User.create(email, password, request.name(), "", companyId);
-        userRepository.save(user);
+        UUID companyId = resolveDefaultCompanyId();
 
-        eventPublisher.publish(UserCreatedEvent.create(user.getId(), request.email(), companyId));
+        // 1. Criar usuário no Keycloak (fora da transação)
+        String keycloakUserId;
+        try {
+            keycloakUserId = authServiceClient.createKeycloakUser(
+                    request.email(), request.password(), request.name());
+        } catch (DuplicateEmailException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UserProvisioningException(
+                    "Falha ao criar usuário no Keycloak: " + e.getMessage());
+        }
+
+        // 2. Criar usuário CRM (transação)
+        try {
+            String[] nameParts = splitName(request.name());
+            User saved = createAndSaveCrmUser(
+                    keycloakUserId, email, encodedPassword,
+                    nameParts[0], nameParts[1], companyId);
+            eventPublisher.publish(
+                    UserCreatedEvent.create(saved.getId(), request.email(), companyId));
+        } catch (DuplicateEmailException e) {
+            throw e;
+        } catch (Exception e) {
+            // Compensação: excluir usuário do Keycloak
+            try {
+                authServiceClient.deleteKeycloakUser(keycloakUserId);
+            } catch (Exception ex) {
+                log.warn("Falha ao excluir usuário Keycloak como compensação (keycloakUserId={}): {}",
+                        keycloakUserId, ex.getMessage());
+            }
+            throw e;
+        }
+    }
+
+    private User createAndSaveCrmUser(String keycloakUserId, Email email,
+                                      String encodedPassword, String firstName,
+                                      String lastName, UUID companyId) {
+        if (companyId != null) {
+            TenantContext.setCompanyId(companyId);
+        }
+
+        User user = User.create(email, Password.fromHash(encodedPassword),
+                firstName, lastName, companyId);
+        user.linkKeycloak(keycloakUserId);
+        user.setName((firstName + " " + lastName).trim());
+        user.grantCrmAccess();
+
+        User saved;
+        try {
+            saved = userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            User existing = findExistingKeycloakUser(keycloakUserId, email.value());
+            if (existing != null) {
+                return existing;
+            }
+            throw e;
+        }
+
+        if (companyId != null) {
+            assignDefaultRole(saved);
+            if (!membershipRepository.existsActiveByUserIdAndCompanyId(saved.getId(), companyId)) {
+                membershipRepository.save(
+                        Membership.activate(saved.getId(), companyId,
+                                defaultRoleName.trim().toUpperCase()));
+            }
+        }
+        log.info("Usuário registrado: {} (keycloakSub={})", email.value(), keycloakUserId);
+        return saved;
+    }
+
+    private String[] splitName(String name) {
+        if (name == null || name.isBlank()) {
+            return new String[]{"", ""};
+        }
+        String[] parts = name.trim().split("\\s+", 2);
+        return new String[]{parts[0], parts.length > 1 ? parts[1] : ""};
     }
 
     @Override

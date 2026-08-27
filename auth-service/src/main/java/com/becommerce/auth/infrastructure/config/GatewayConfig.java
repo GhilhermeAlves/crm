@@ -138,7 +138,7 @@ public class GatewayConfig {
                                                                           ObjectMapper objectMapper) {
         FilterRegistrationBean<InternalApiTokenFilter> registration =
                 new FilterRegistrationBean<>(new InternalApiTokenFilter(apiToken, objectMapper));
-        registration.setUrlPatterns(List.of("/internal/auth/reset-password"));
+        registration.setUrlPatterns(List.of("/internal/auth/reset-password", "/internal/auth/create-user", "/internal/auth/create-user/*"));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 2);
         return registration;
     }
