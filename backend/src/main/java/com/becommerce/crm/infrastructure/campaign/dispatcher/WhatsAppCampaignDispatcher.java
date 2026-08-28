@@ -45,7 +45,7 @@ public class WhatsAppCampaignDispatcher implements CampaignChannelDispatcher {
         try {
             WhatsAppProvider.SendResult result = whatsAppProvider.send(new WhatsAppProvider.SendRequest(
                     command.companyId(), channel.getId(), channel.getExternalId(),
-                    command.to(), command.body()));
+                    command.to(), command.body(), channel.getSecretsRef()));
             log.info("Campanha: mensagem enviada company={} to={}", command.companyId(), command.to());
             return new SendResult(result != null ? result.externalMessageId() : null);
         } catch (RuntimeException e) {

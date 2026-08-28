@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Adapter de produção da WhatsApp Cloud API (Meta), FASE 4/24.
@@ -24,12 +25,19 @@ public class WhatsAppCloudApiProvider implements WhatsAppProvider {
 
     private final RestClient restClient;
     private final String graphUrl;
+    private final Function<String, String> env;
 
     public WhatsAppCloudApiProvider(
             @Value("${omnichannel.whatsapp.graph-url:https://graph.facebook.com/v19.0}") String graphUrl,
             RestClient.Builder restClientBuilder) {
+        this(graphUrl, restClientBuilder, System::getenv);
+    }
+
+    WhatsAppCloudApiProvider(String graphUrl, RestClient.Builder restClientBuilder,
+                             Function<String, String> env) {
         this.graphUrl = graphUrl;
         this.restClient = restClientBuilder.build();
+        this.env = env;
     }
 
     @Override
@@ -69,11 +77,28 @@ public class WhatsAppCloudApiProvider implements WhatsAppProvider {
         return "WHATSAPP_CLOUD_API";
     }
 
-    /** Token resolvido de config/cofre via a referência do canal (secrets_ref). */
+    /**
+     * Token resolvido por canal (via {@code secrets_ref}) com fallback global.
+     *
+     * <p>Quando o canal define {@code secretsRef}, o valor é tratado como o
+     * NOME de uma variável de ambiente que guarda o token daquele canal
+     * (ex.: {@code CRM_WHATSAPP_ACCOUNT_BANCOS_TOKEN}); se presente, é usado.
+     * Caso o segredo por canal não esteja disponível, cai para o token global
+     * ({@code CRM_WHATSAPP_ACCESS_TOKEN}) por compatibilidade. Nunca loga nem
+     * persiste o valor.
+     */
     private String resolveToken(SendRequest request) {
-        String token = System.getenv("CRM_WHATSAPP_ACCESS_TOKEN");
+        String ref = request.secretsRef();
+        if (ref != null && !ref.isBlank()) {
+            String channelToken = env.apply(ref);
+            if (channelToken != null && !channelToken.isBlank()) {
+                return channelToken;
+            }
+        }
+        String token = env.apply("CRM_WHATSAPP_ACCESS_TOKEN");
         if (token == null || token.isBlank()) {
-            throw new OmnichannelProviderException("Credencial de WhatsApp não configurada (CRM_WHATSAPP_ACCESS_TOKEN)");
+            throw new OmnichannelProviderException(
+                    "Credencial de WhatsApp não configurada (CRM_WHATSAPP_ACCESS_TOKEN)");
         }
         return token;
     }

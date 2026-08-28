@@ -98,7 +98,8 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
             try {
                 WhatsAppProvider.SendResult result = whatsAppProvider.send(
                         new WhatsAppProvider.SendRequest(companyId, channel.getId(),
-                                channel.getExternalId(), conversation.getExternalPhone(), body));
+                                channel.getExternalId(), conversation.getExternalPhone(), body,
+                                channel.getSecretsRef()));
                 messagePersister.markSent(persisted.getId(), conversationId, result.externalMessageId());
                 persisted.markSent(result.externalMessageId());
                 return toMessageResponse(persisted);

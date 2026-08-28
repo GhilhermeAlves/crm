@@ -14,7 +14,7 @@ public interface WhatsAppProvider {
     }
 
     record SendRequest(UUID companyId, UUID channelId, String phoneNumberId,
-                       String to, String body) {
+                       String to, String body, String secretsRef) {
     }
 
     /**
