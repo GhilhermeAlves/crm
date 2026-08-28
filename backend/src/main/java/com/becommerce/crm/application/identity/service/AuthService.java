@@ -110,7 +110,13 @@ public class AuthService implements AuthUseCase {
         Password rawPassword = new Password(request.password());
         String encodedPassword = passwordEncoder.encode(rawPassword.value());
 
-        UUID companyId = resolveDefaultCompanyId();
+        // Self-service: o usuário é criado SEM empresa (company_id = NULL). Ele
+        // será direcionado ao onboarding, onde criará a própria empresa (Sprint 8.3).
+        // Nota: os fluxos de login OIDC (createProvisionedUser) continuam usando
+        // resolveDefaultCompanyId() — se houver AUTH_DEFAULT_COMPANY_ID configurada,
+        // ainda provisionam na empresa padrão. O register de cadastro nunca
+        // provisiona tenant automaticamente.
+        UUID companyId = null;
 
         // 1. Criar usuário no Keycloak (fora da transação)
         String keycloakUserId;

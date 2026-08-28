@@ -67,18 +67,12 @@ class AuthServiceRegisterTest {
     }
 
     @Test
-    void shouldRegisterUserWithDefaultCompany() {
-        Role agentRole = new Role();
-        agentRole.setId(UUID.randomUUID());
-        agentRole.setName("AGENT");
-
+    void shouldRegisterUserWithoutCompanySelfService() {
         when(userRepository.existsByEmail("registro@crm.local")).thenReturn(false);
         when(authServiceClient.createKeycloakUser(eq("registro@crm.local"), anyString(), eq("Registro Teste")))
                 .thenReturn(MOCK_KEYCLOAK_USER_ID);
         when(passwordEncoder.encode("Kc!Valid1Aa1")).thenReturn("$2a$12$encodedpassword");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(roleRepository.findByNameAndCompanyId("AGENT", DEFAULT_COMPANY_ID))
-                .thenReturn(Optional.of(agentRole));
 
         RegisterRequest request = new RegisterRequest("registro@crm.local", "Kc!Valid1Aa1", "Registro Teste", null);
         authService.register(request);
@@ -87,7 +81,9 @@ class AuthServiceRegisterTest {
         verify(userRepository).save(captor.capture());
 
         User saved = captor.getValue();
-        assertEquals(DEFAULT_COMPANY_ID, saved.getCompanyId());
+        // Self-service (Sprint 8.3): usuário criado SEM empresa, sem membership
+        // e sem role tenant-specific — será direcionado ao onboarding.
+        assertEquals(null, saved.getCompanyId());
         assertEquals("registro@crm.local", saved.getEmail().value());
         assertEquals(MOCK_KEYCLOAK_USER_ID, saved.getKeycloakSub());
         assertTrue(saved.isCrmEnabled());
@@ -96,9 +92,13 @@ class AuthServiceRegisterTest {
 
         verify(authServiceClient).createKeycloakUser("registro@crm.local", "Kc!Valid1Aa1", "Registro Teste");
 
+        // NÃO deve atribuir role nem criar membership automaticamente.
+        verify(roleRepository, never()).findByNameAndCompanyId(anyString(), any());
+        verify(membershipRepository, never()).save(any());
+
         ArgumentCaptor<UserCreatedEvent> eventCaptor = ArgumentCaptor.forClass(UserCreatedEvent.class);
         verify(eventPublisher).publish(eventCaptor.capture());
-        assertEquals(DEFAULT_COMPANY_ID, eventCaptor.getValue().companyId());
+        assertEquals(null, eventCaptor.getValue().companyId());
     }
 
     @Test
