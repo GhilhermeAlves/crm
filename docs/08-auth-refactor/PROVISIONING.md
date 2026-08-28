@@ -120,7 +120,7 @@ O Sprint 1 (MIGRATION_PLAN.md §4) implementa o fluxo acima **no caminho atual d
 
 - **Onde**: `KeycloakJwtAuthenticationConverter` → `AuthService.provisionKeycloakUser` → `CrmPrincipal` (a migração desta lógica para o `crm-auth-service` está planejada para um sprint futuro — **não** faz parte do Sprint 2; ver §4.2).
 - **Resolução em ordem**: `keycloak_sub` → `email` → criação. Um usuário pré-existente encontrado por e-mail é **vinculado** ao `sub` (nunca duplicado); `given_name`/`family_name`/`name` são sincronizados apenas quando vazios.
-- **Empresa/role default**: `app.auth.provisioning.default-company-id` (`AUTH_DEFAULT_COMPANY_ID`) e `app.auth.provisioning.default-role` (`AUTH_DEFAULT_ROLE`, default `AGENT`). Sem empresa configurada, usa a primeira empresa ativa. A role default é buscada com `Role.SYSTEM_COMPANY_ID` (roles de sistema).
+- **Empresa/role default**: `app.auth.provisioning.default-company-id` (`AUTH_DEFAULT_COMPANY_ID`) e `app.auth.provisioning.default-role` (`AUTH_DEFAULT_ROLE`, default `AGENT`). **Sem empresa configurada, o provisionamento NÃO escolhe tenant arbitrário**: o cadastro self-service (Sprint 8.3) cria o usuário com `company_id NULL` (sem empresa/membership/role) e o direciona ao onboarding para criar a própria empresa; o login via OIDC (`createProvisionedUser`) faz o mesmo. Quando `AUTH_DEFAULT_COMPANY_ID` está configurada, o provisioning ainda provisiona na empresa padrão (fallback opcional, D4). A role default é buscada com `Role.SYSTEM_COMPANY_ID` (roles de sistema).
 - **Flag de rollback**: `app.auth.provisioning.enabled` (`AUTH_PROVISIONING_ENABLED`, default `true`). Desligada, usuários existentes seguem autenticando; usuários desconhecidos recebem **401** com mensagem clara (sem o 500 antigo).
 - **Concorrência**: dois primeiros logins simultâneos do mesmo usuário resultam em um único registro — a criação ocorre em transação `REQUIRES_NEW` isolada; em corrida de `UNIQUE (email)`, o perdedor reabre o vencedor e o vincula ao `sub`.
 - **Falhas previsíveis**: token sem `sub`/e-mail válido ou sem empresa ativa lançam `UserProvisioningException` → **401** no resource server (via `AuthenticationServiceException` na cadeia de segurança) ou pelo `GlobalExceptionHandler`; nunca mais o `InvalidDataAccessApiUsageException` com `userId = null`.
@@ -147,7 +147,7 @@ O Sprint 2 criou a **fundação** do `crm-auth-service` **sem migrar o provision
 | Usuário com `company_id` no claim / client role | Usa a empresa indicada |
 | Convite pendente (`users.invite_token` + e-mail) | Vincula o `sub`, ativa via `acceptInvite` |
 | Primeiro usuário da plataforma | Provisiona com a empresa default + `SUPER_ADMIN` (bootstrap) |
-| Novo usuário sem convite | Empresa default + role `AGENT` (configurável) |
+| Novo usuário sem convite (cadastro self-service, Sprint 8.3) | Criado **sem empresa** (`company_id NULL`), sem membership/role; direcionado ao **onboarding** para criar a própria empresa (Company → Membership OWNER → role ADMIN → `crm_enabled`) |
 
 A **role default** e a **empresa default** devem ser configuráveis por tenant (variável de ambiente ou tabela de configuração). O bootstrap de `SUPER_ADMIN` é documentado em AUTHORIZATION.md.
 
