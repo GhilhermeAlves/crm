@@ -157,35 +157,51 @@ public class AuthService implements AuthUseCase {
                                       String lastName, UUID companyId) {
         if (companyId != null) {
             TenantContext.setCompanyId(companyId);
+        } else {
+            // Self-service (Sprint 8.3): sem tenant definido. O INSERT em `users`
+            // com company_id NULL passa na RLS FORCE pela
+            // identity_onboarding_insert_policy (V032), que exige que o GUC
+            // `app.current_keycloak_sub` ou `app.current_identity_email` seja
+            // igual à identidade recém-criada — expõe-se aqui, no escopo do
+            // INSERT, e limpa-se no finally (requisição anônima, sem CurrentUser).
+            TenantContext.setKeycloakSub(keycloakUserId);
+            TenantContext.setIdentityEmail(email.value());
         }
 
-        User user = User.create(email, Password.fromHash(encodedPassword),
-                firstName, lastName, companyId);
-        user.linkKeycloak(keycloakUserId);
-        user.setName((firstName + " " + lastName).trim());
-        user.grantCrmAccess();
-
-        User saved;
         try {
-            saved = userRepository.save(user);
-        } catch (DataIntegrityViolationException e) {
-            User existing = findExistingKeycloakUser(keycloakUserId, email.value());
-            if (existing != null) {
-                return existing;
-            }
-            throw e;
-        }
+            User user = User.create(email, Password.fromHash(encodedPassword),
+                    firstName, lastName, companyId);
+            user.linkKeycloak(keycloakUserId);
+            user.setName((firstName + " " + lastName).trim());
+            user.grantCrmAccess();
 
-        if (companyId != null) {
-            assignDefaultRole(saved);
-            if (!membershipRepository.existsActiveByUserIdAndCompanyId(saved.getId(), companyId)) {
-                membershipRepository.save(
-                        Membership.activate(saved.getId(), companyId,
-                                defaultRoleName.trim().toUpperCase()));
+            User saved;
+            try {
+                saved = userRepository.save(user);
+            } catch (DataIntegrityViolationException e) {
+                User existing = findExistingKeycloakUser(keycloakUserId, email.value());
+                if (existing != null) {
+                    return existing;
+                }
+                throw e;
+            }
+
+            if (companyId != null) {
+                assignDefaultRole(saved);
+                if (!membershipRepository.existsActiveByUserIdAndCompanyId(saved.getId(), companyId)) {
+                    membershipRepository.save(
+                            Membership.activate(saved.getId(), companyId,
+                                    defaultRoleName.trim().toUpperCase()));
+                }
+            }
+            log.info("Usuário registrado: {} (keycloakSub={})", email.value(), keycloakUserId);
+            return saved;
+        } finally {
+            if (companyId == null) {
+                TenantContext.clearKeycloakSub();
+                TenantContext.clearIdentityEmail();
             }
         }
-        log.info("Usuário registrado: {} (keycloakSub={})", email.value(), keycloakUserId);
-        return saved;
     }
 
     private String[] splitName(String name) {

@@ -33,6 +33,14 @@ public class AuditEventListener {
         AuditContextData context = AuditContext.get();
         UUID companyId = context != null ? context.companyId() : event.companyId();
 
+        // Usuário criado via self-service (Sprint 8.3) ainda não tem empresa
+        // (company_id NULL até concluir o onboarding). Sem tenant não há o que
+        // auditar em uma empresa e o INSERT em audit_logs violaria a RLS
+        // (tenant_isolation_policy) — pula o registro de auditoria.
+        if (companyId == null) {
+            return;
+        }
+
         AuditLog auditLog = AuditLog.create(companyId, AuditAction.CREATE, AuditModule.USERS);
         auditLog.setUserId(event.userId());
         auditLog.setEntityName("User");

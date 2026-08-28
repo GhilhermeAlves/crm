@@ -42,6 +42,11 @@ public final class TenantContext {
         return CURRENT_KEYCLOAK_SUB.get() != null && !CURRENT_KEYCLOAK_SUB.get().isBlank();
     }
 
+    /** Limpa apenas o sub do Keycloak (sem afetar os demais contextos). */
+    public static void clearKeycloakSub() {
+        CURRENT_KEYCLOAK_SUB.remove();
+    }
+
     /**
      * E-mail da identidade autenticada (claim {@code email} do JWT), usado no
      * bootstrap de identidade por e-mail (V024): permite ler e vincular a

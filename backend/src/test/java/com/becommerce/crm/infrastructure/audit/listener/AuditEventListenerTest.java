@@ -36,6 +36,18 @@ class AuditEventListenerTest {
     }
 
     @Test
+    void shouldNotAuditUserCreatedWithoutTenant() {
+        UserCreatedEvent event = UserCreatedEvent.create(
+                UUID.randomUUID(), "selfservice@test.com", null
+        );
+
+        auditEventListener.handleUserCreated(event);
+
+        verify(auditService, never()).recordAudit(any(AuditLog.class));
+        assertFalse(TenantContext.hasCompanyId(), "TenantContext should remain empty");
+    }
+
+    @Test
     void shouldSetTenantContextBeforeAuditInsert() {
         UUID companyId = UUID.randomUUID();
         UserCreatedEvent event = UserCreatedEvent.create(
