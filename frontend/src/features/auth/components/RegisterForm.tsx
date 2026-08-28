@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -17,7 +16,6 @@ import {
 import { PasswordRequirements } from "./PasswordRequirements";
 import { registerSchema, type RegisterFormData } from "../schemas/auth.schema";
 import { useRegister } from "../hooks/useAuthMutations";
-import { ROUTES } from "@/lib/constants";
 
 export function RegisterForm() {
   const registerMutation = useRegister();
@@ -113,12 +111,6 @@ export function RegisterForm() {
           Criar conta
         </Button>
       </form>
-      <div className="mt-4 text-center text-sm text-muted-foreground">
-        Já tem uma conta?{" "}
-        <Link href={ROUTES.LOGIN} className="font-medium text-primary hover:underline">
-          Entrar
-        </Link>
-      </div>
     </Form>
   );
 }
