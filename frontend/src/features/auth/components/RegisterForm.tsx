@@ -14,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { PasswordRequirements } from "./PasswordRequirements";
 import { registerSchema, type RegisterFormData } from "../schemas/auth.schema";
 import { useRegister } from "../hooks/useAuthMutations";
 import { ROUTES } from "@/lib/constants";
@@ -30,6 +31,8 @@ export function RegisterForm() {
       confirmPassword: "",
     },
   });
+
+  const watchPassword = form.watch("password");
 
   function onSubmit(data: RegisterFormData) {
     registerMutation.mutate({
@@ -76,12 +79,13 @@ export function RegisterForm() {
               <FormLabel>Senha</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Digite uma senha forte"
                   type="password"
                   autoComplete="new-password"
                   {...field}
                 />
               </FormControl>
+              <PasswordRequirements value={watchPassword} />
               <FormMessage />
             </FormItem>
           )}
