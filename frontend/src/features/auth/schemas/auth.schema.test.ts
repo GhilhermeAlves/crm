@@ -6,7 +6,9 @@ import {
   passwordStrength,
 } from "./auth.schema";
 
-function makeValues(overrides: Partial<Record<"name" | "email" | "password" | "confirmPassword", string>> = {}) {
+function makeValues(
+  overrides: Partial<Record<"name" | "email" | "password" | "confirmPassword", string>> = {},
+) {
   return {
     name: "Ana Silva",
     email: "ana@example.com",
@@ -23,7 +25,9 @@ describe("auth.schema (Sprint 6.9 — política de senha espelhada do backend)",
   });
 
   it("aceita Kc!Valid1Aa", () => {
-    const result = registerSchema.safeParse(makeValues({ password: "Kc!Valid1Aa", confirmPassword: "Kc!Valid1Aa" }));
+    const result = registerSchema.safeParse(
+      makeValues({ password: "Kc!Valid1Aa", confirmPassword: "Kc!Valid1Aa" }),
+    );
     expect(result.success).toBe(true);
   });
 
@@ -57,7 +61,9 @@ describe("auth.schema (Sprint 6.9 — política de senha espelhada do backend)",
   });
 
   it("PASSWORD_PATTERN é idêntico à política do backend", () => {
-    expect(PASSWORD_PATTERN.source).toBe("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$");
+    expect(PASSWORD_PATTERN.source).toBe(
+      "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$",
+    );
   });
 
   it("PASSWORD_REQUIREMENTS perfaz exatamente os 5 requisitos do backend", () => {

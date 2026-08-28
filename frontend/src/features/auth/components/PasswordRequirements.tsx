@@ -2,10 +2,7 @@
 
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  PASSWORD_REQUIREMENTS,
-  passwordStrength,
-} from "../schemas/auth.schema";
+import { PASSWORD_REQUIREMENTS, passwordStrength } from "../schemas/auth.schema";
 
 interface PasswordRequirementsProps {
   value: string;
@@ -38,10 +35,16 @@ export function PasswordRequirements({ value }: PasswordRequirementsProps) {
             <li
               key={requirement.label}
               aria-label={`${ok ? "Atendido" : "Não atendido"}: ${requirement.label}`}
-              className={cn("flex items-center gap-2", ok ? "text-crm-text" : "text-crm-text-secondary")}
+              className={cn(
+                "flex items-center gap-2",
+                ok ? "text-crm-text" : "text-crm-text-secondary",
+              )}
             >
               {ok ? (
-                <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <Check
+                  className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                  aria-hidden="true"
+                />
               ) : (
                 <X className="h-4 w-4 shrink-0 text-crm-danger" aria-hidden="true" />
               )}
@@ -54,10 +57,13 @@ export function PasswordRequirements({ value }: PasswordRequirementsProps) {
         aria-live="polite"
         className={cn(
           "flex items-center gap-2 font-medium",
-          satisfied === PASSWORD_REQUIREMENTS.length ? "text-emerald-600 dark:text-emerald-400" : "text-crm-text-secondary",
+          satisfied === PASSWORD_REQUIREMENTS.length
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-crm-text-secondary",
         )}
       >
-        Força da senha: <span className={cn("font-semibold", STRENGTH_STYLE[strength])}>{strength}</span>
+        Força da senha:{" "}
+        <span className={cn("font-semibold", STRENGTH_STYLE[strength])}>{strength}</span>
       </p>
     </div>
   );

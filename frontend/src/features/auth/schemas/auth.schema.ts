@@ -34,9 +34,7 @@ export const registerSchema = z
   .object({
     name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
     email: z.string().email("Email inválido"),
-    password: z
-      .string()
-      .regex(PASSWORD_PATTERN, "Sua senha ainda não atende aos requisitos."),
+    password: z.string().regex(PASSWORD_PATTERN, "Sua senha ainda não atende aos requisitos."),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
