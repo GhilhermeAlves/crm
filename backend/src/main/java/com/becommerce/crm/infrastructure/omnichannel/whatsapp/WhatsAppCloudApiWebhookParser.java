@@ -101,6 +101,9 @@ public class WhatsAppCloudApiWebhookParser implements WhatsAppWebhookParser {
 
     @SuppressWarnings("unchecked")
     private static Optional<Map<String, Object>> channelValue(Map<String, Object> raw) {
+        if (raw == null) {
+            return Optional.empty();
+        }
         List<?> entries = raw.get("entry") instanceof List<?> e ? e : List.of();
         for (Object entryObj : entries) {
             if (!(entryObj instanceof Map<?, ?> entry)) {
