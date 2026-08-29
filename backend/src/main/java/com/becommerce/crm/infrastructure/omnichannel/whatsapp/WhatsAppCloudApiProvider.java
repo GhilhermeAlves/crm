@@ -2,6 +2,7 @@ package com.becommerce.crm.infrastructure.omnichannel.whatsapp;
 
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppProvider;
 import com.becommerce.crm.domain.omnichannel.OmnichannelProviderException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
@@ -27,6 +28,7 @@ public class WhatsAppCloudApiProvider implements WhatsAppProvider {
     private final String graphUrl;
     private final Function<String, String> env;
 
+    @Autowired
     public WhatsAppCloudApiProvider(
             @Value("${omnichannel.whatsapp.graph-url:https://graph.facebook.com/v19.0}") String graphUrl,
             RestClient.Builder restClientBuilder) {
