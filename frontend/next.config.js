@@ -18,18 +18,21 @@ const nextConfig = {
 if (devGatewayTarget) {
   // Dev local: espelha o roteamento de produção (nginx vhost envia /auth e /api
   // ao auth-service). Sem DEV_GATEWAY_TARGET (build de produção) não há rewrites.
-  // O proxy roda no processo Node (child_process ou rewrites do Next), nunca no
-  // Edge: o fetch do sandbox Edge falha em TLS cross-origin.
-  nextConfig.rewrites = async () => [
-    {
-      source: "/auth/:path*",
-      destination: `${devGatewayTarget}/auth/:path*`,
-    },
-    {
-      source: "/api/:path*",
-      destination: `${devGatewayTarget}/api/:path*`,
-    },
-  ];
+  // beforeFiles: roda ANTES do filesystem — sem isso, /auth/callback (página
+  // legada em app/auth/callback) capturaria o retorno do Keycloak e quebraria o
+  // login no dev (o nginx de produção nunca entrega /auth ao Next).
+  nextConfig.rewrites = async () => ({
+    beforeFiles: [
+      {
+        source: "/auth/:path*",
+        destination: `${devGatewayTarget}/auth/:path*`,
+      },
+      {
+        source: "/api/:path*",
+        destination: `${devGatewayTarget}/api/:path*`,
+      },
+    ],
+  });
 }
 
 module.exports = nextConfig;
