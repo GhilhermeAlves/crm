@@ -91,6 +91,24 @@ class RestClientOidcTokenClientTest {
     }
 
     @Test
+    void shouldUseEffectiveRedirectUriOverConfiguredOne() throws Exception {
+        server.createContext("/token", exchange -> {
+            lastBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            respond(exchange, 200, """
+                    {"access_token":"at","id_token":"idt","expires_in":300}
+                    """, 0);
+        });
+        RestClientOidcTokenClient client = new RestClientOidcTokenClient(properties);
+
+        client.exchange(new OidcTokenClient.ExchangeRequest("code", "verifier", "http://localhost:3000/auth/callback"));
+
+        assertTrue(decode(lastBody).contains("redirect_uri=http://localhost:3000/auth/callback"),
+                "o redirect_uri efetivo do fluxo deve ser enviado na troca de código");
+        assertFalse(decode(lastBody).contains("redirect_uri=http://localhost:8082/auth/callback"),
+                "não deve usar o redirect_uri fixo quando o fluxo define um dinâmico");
+    }
+
+    @Test
     void shouldIncludeClientSecretWhenConfigured() throws Exception {
         properties.setClientSecret("secret");
         server.createContext("/token", exchange -> {

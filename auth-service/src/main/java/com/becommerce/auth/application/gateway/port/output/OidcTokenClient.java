@@ -13,7 +13,12 @@ public interface OidcTokenClient {
 
     TokenResponse refresh(RefreshRequest request);
 
-    record ExchangeRequest(String code, String codeVerifier) {
+    record ExchangeRequest(String code, String codeVerifier, String redirectUri) {
+
+        /** Conveniência para fluxos com redirect_uri fixo configurado. */
+        public ExchangeRequest(String code, String codeVerifier) {
+            this(code, codeVerifier, null);
+        }
     }
 
     record RefreshRequest(String refreshToken) {

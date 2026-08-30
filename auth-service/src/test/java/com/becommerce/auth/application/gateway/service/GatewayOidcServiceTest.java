@@ -390,13 +390,14 @@ class GatewayOidcServiceTest {
     }
 
     @Test
-    void shouldPassCodeVerifierFromStateIntoExchange() {
+    void shouldPassCodeVerifierAndEffectiveRedirectUriIntoExchange() {
         String state = query(URI.create(service.beginAuthorization("/").authorizationUri()), "state");
         OidcAuthorizationRequestStore spyStore = mock(OidcAuthorizationRequestStore.class);
-        // covered indirectly; assert exchange receives a request for the stored verifier
         when(spyStore.consume(state)).thenAnswer(invocation -> {
             var req = new com.becommerce.auth.domain.gateway.OidcAuthorizationRequest(
-                    state, "nonce", "stored-verifier", "/", java.time.Instant.now().plusSeconds(600));
+                    state, "nonce", "stored-verifier", "/",
+                    java.time.Instant.now().plusSeconds(600),
+                    "http://localhost:3000", "http://localhost:3000/auth/callback");
             req.consume();
             return req;
         });
@@ -404,6 +405,8 @@ class GatewayOidcServiceTest {
                 .thenAnswer(invocation -> {
                     OidcTokenClient.ExchangeRequest req = invocation.getArgument(0);
                     assertEquals("stored-verifier", req.codeVerifier());
+                    assertEquals("http://localhost:3000/auth/callback", req.redirectUri(),
+                            "OIDC exige o MESMO redirect_uri do authorize na troca de código");
                     return new OidcTokenClient.TokenResponse("at", null, "idt", 300);
                 });
         when(tokenValidator.validateIdToken(any(), any()))

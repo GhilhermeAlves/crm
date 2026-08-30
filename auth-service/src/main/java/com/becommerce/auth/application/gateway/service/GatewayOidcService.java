@@ -126,7 +126,7 @@ public class GatewayOidcService implements GatewayOidcUseCase {
         OidcAuthorizationRequest request = new OidcAuthorizationRequest(
                 state, nonce, codeVerifier, redirectTarget,
                 Instant.now().plus(properties.getAuthorizationRequestTtl()),
-                endpoints.baseUrl());
+                endpoints.baseUrl(), endpoints.redirectUri());
         authorizationRequestStore.put(request);
         log.info("OIDC authorization started: correlation={} redirectUri={}", state, endpoints.redirectUri());
 
@@ -227,7 +227,8 @@ public class GatewayOidcService implements GatewayOidcUseCase {
 
         OidcTokenClient.TokenResponse tokens;
         try {
-            tokens = tokenClient.exchange(new OidcTokenClient.ExchangeRequest(code, request.getCodeVerifier()));
+            tokens = tokenClient.exchange(new OidcTokenClient.ExchangeRequest(
+                    code, request.getCodeVerifier(), request.getRedirectUri()));
         } catch (OidcGatewayException e) {
             log.warn("OIDC token exchange failed: correlation={} error={}", state, e.getCode());
             throw e;

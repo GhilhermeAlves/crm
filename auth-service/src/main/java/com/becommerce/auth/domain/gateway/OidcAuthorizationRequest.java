@@ -29,20 +29,34 @@ public final class OidcAuthorizationRequest {
      * Nula quando o redirect_uri é o fixo configurado (comportamento clássico).
      */
     private final String publicBaseUrl;
+    /**
+     * Redirect URI efetivo usado nesta autorização (ex.: dinâmico
+     * {@code http://localhost:3000/auth/callback} no dev local). O mesmo valor
+     * é reenviado ao provedor na troca de código (OIDC exige igualdade com o do
+     * authorize). Nulo = usa o fixo configurado.
+     */
+    private final String redirectUri;
 
     public OidcAuthorizationRequest(String state, String nonce, String codeVerifier,
                                     String redirectTarget, Instant expiresAt) {
-        this(state, nonce, codeVerifier, redirectTarget, expiresAt, null);
+        this(state, nonce, codeVerifier, redirectTarget, expiresAt, null, null);
     }
 
     public OidcAuthorizationRequest(String state, String nonce, String codeVerifier,
                                     String redirectTarget, Instant expiresAt, String publicBaseUrl) {
+        this(state, nonce, codeVerifier, redirectTarget, expiresAt, publicBaseUrl, null);
+    }
+
+    public OidcAuthorizationRequest(String state, String nonce, String codeVerifier,
+                                    String redirectTarget, Instant expiresAt, String publicBaseUrl,
+                                    String redirectUri) {
         this.state = Objects.requireNonNull(state, "state");
         this.nonce = Objects.requireNonNull(nonce, "nonce");
         this.codeVerifier = Objects.requireNonNull(codeVerifier, "codeVerifier");
         this.redirectTarget = Objects.requireNonNull(redirectTarget, "redirectTarget");
         this.expiresAt = Objects.requireNonNull(expiresAt, "expiresAt");
         this.publicBaseUrl = publicBaseUrl;
+        this.redirectUri = redirectUri;
     }
 
     /**
@@ -75,6 +89,10 @@ public final class OidcAuthorizationRequest {
 
     public String getPublicBaseUrl() {
         return publicBaseUrl;
+    }
+
+    public String getRedirectUri() {
+        return redirectUri;
     }
 
     public Instant getExpiresAt() {

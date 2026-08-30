@@ -52,7 +52,12 @@ public class RestClientOidcTokenClient implements OidcTokenClient {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", "authorization_code");
         form.add("code", request.code());
-        form.add("redirect_uri", properties.getRedirectUri());
+        // OIDC exige o MESMO redirect_uri do authorize no token request — o
+        // dinâmico (ex.: http://localhost:3000 no dev local) quando definido no
+        // fluxo, senão o fixo configurado (comportamento clássico).
+        form.add("redirect_uri",
+                StringUtils.hasText(request.redirectUri()) ? request.redirectUri()
+                        : properties.getRedirectUri());
         form.add("client_id", properties.getClientId());
         if (StringUtils.hasText(properties.getClientSecret())) {
             form.add("client_secret", properties.getClientSecret());
