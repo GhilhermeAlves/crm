@@ -94,3 +94,4 @@ src/
 | NEXT_PUBLIC_APP_NAME | Application name | CRM SaaS Omnichannel |
 | NEXT_PUBLIC_APP_URL | Application URL | http://localhost:3000 |
 | NEXT_PUBLIC_WS_URL | WebSocket URL | ws://localhost:8080 |
+| DEV_GATEWAY_TARGET | Dev local: upstream do gateway/APIs (ex.: https://srv1348261.hstgr.cloud). Server-side, usada pelo middleware para repassar `/auth/*` e `/api/*`. Sem valor (build de produção) = proxy desligado. | (vazio) |
