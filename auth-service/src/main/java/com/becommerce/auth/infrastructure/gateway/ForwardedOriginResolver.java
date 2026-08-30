@@ -31,18 +31,48 @@ public class ForwardedOriginResolver {
      *         quando não há como determinar um host confiável.
      */
     public String resolve(HttpServletRequest request) {
+        boolean hasForwardedHost = StringUtils.hasText(firstHeader(request, "X-Forwarded-Host"));
         String host = forwardedHost(request);
         if (!StringUtils.hasText(host)) {
             return null;
         }
         String normalized = host.trim().toLowerCase(Locale.ROOT);
-        String scheme = isLocalhostHost(normalized)
+        boolean localhost = isLocalhostHost(normalized);
+        String scheme = localhost
                 ? "http"
                 : firstHeader(request, "X-Forwarded-Proto");
-        if (StringUtils.hasText(scheme)) {
-            return scheme.trim().toLowerCase(Locale.ROOT) + "://" + normalized;
+        scheme = StringUtils.hasText(scheme) ? scheme.trim().toLowerCase(Locale.ROOT) : "https";
+
+        String origin = scheme + "://" + normalized;
+        if (!hasForwardedHost && !hasPort(normalized)) {
+            origin += withPort(request.getServerPort(), scheme);
         }
-        return "https://" + normalized;
+        return origin;
+    }
+
+    /**
+     * O {@code getServerName()} (Host repassado pelo nginx) não inclui a porta;
+     * apenas a adiciona quando não é a porta padrão do scheme. Menções de porta
+     * já presentes em {@code X-Forwarded-Host} (ex.: {@code localhost:3000})
+     * nunca são duplicadas.
+     */
+    private String withPort(int port, String scheme) {
+        int oneOf = 0;
+        if ("http".equals(scheme)) {
+            oneOf = 80;
+        } else if ("https".equals(scheme)) {
+            oneOf = 443;
+        }
+        if (port != -1 && port != oneOf) {
+            return ":" + port;
+        }
+        return "";
+    }
+
+    private boolean hasPort(String host) {
+        int bracket = host.lastIndexOf(']');
+        int colon = host.indexOf(':');
+        return colon != -1 && colon > bracket;
     }
 
     private String forwardedHost(HttpServletRequest request) {

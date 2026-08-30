@@ -19,8 +19,29 @@ class ForwardedOriginResolverTest {
         MockHttpServletRequest req = request();
         req.setServerName("srv1348261.hstgr.cloud");
         req.setScheme("https");
+        req.setServerPort(443);
 
         assertEquals("https://srv1348261.hstgr.cloud", resolver.resolve(req));
+    }
+
+    @Test
+    void shouldDeriveLocalhostOriginWithServerPort() {
+        MockHttpServletRequest req = request();
+        req.setServerName("localhost");
+        req.setScheme("http");
+        req.setServerPort(3000);
+
+        assertEquals("http://localhost:3000", resolver.resolve(req),
+                "sem X-Forwarded-Host o getServerPort() deve compor a porta na origem");
+    }
+
+    @Test
+    void shouldNotAppendDefaultPortForLocalhost() {
+        MockHttpServletRequest req = request();
+        req.setServerName("localhost");
+        req.setServerPort(80);
+
+        assertEquals("http://localhost", resolver.resolve(req));
     }
 
     @Test
@@ -59,6 +80,7 @@ class ForwardedOriginResolverTest {
         MockHttpServletRequest req = request();
         req.setServerName("crm.hstgr.cloud");
         req.setScheme("http");
+        req.setServerPort(443);
         req.addHeader("X-Forwarded-Proto", "https");
 
         assertEquals("https://crm.hstgr.cloud", resolver.resolve(req));
@@ -77,6 +99,7 @@ class ForwardedOriginResolverTest {
         MockHttpServletRequest req = request();
         req.addHeader("X-Forwarded-Host", "   ");
         req.setServerName("srv1348261.hstgr.cloud");
+        req.setServerPort(443);
 
         assertEquals("https://srv1348261.hstgr.cloud", resolver.resolve(req));
     }
