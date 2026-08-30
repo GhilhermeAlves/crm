@@ -92,7 +92,11 @@ services:
       - AUTH_GATEWAY_CLIENT_ID=crm-gateway
       - AUTH_GATEWAY_CLIENT_SECRET=${AUTH_GATEWAY_CLIENT_SECRET}
       - AUTH_GATEWAY_REDIRECT_URI=https://srv1348261.hstgr.cloud/auth/callback
-      - AUTH_GATEWAY_ALLOWED_REDIRECT_URIS=https://srv1348261.hstgr.cloud/login,https://srv1348261.hstgr.cloud/dashboard,https://srv1348261.hstgr.cloud
+      - AUTH_GATEWAY_ALLOWED_REDIRECT_URIS=https://srv1348261.hstgr.cloud/login,https://srv1348261.hstgr.cloud/dashboard,https://srv1348261.hstgr.cloud,http://localhost:3000
+      # Dev local: deriva o redirect_uri da origem do request (nginx repassa
+      # Host $host). Producao inalterada (origem = dominio > allowlist); permite
+      # o login via localhost:3000 com o middleware/proxy do Next.
+      - AUTH_GATEWAY_DYNAMIC_REDIRECT_URI=true
       - AUTH_GATEWAY_APP_BASE_URL=https://srv1348261.hstgr.cloud
       - AUTH_GATEWAY_API_BACKEND_URL=http://backend:8080
       - AUTH_GATEWAY_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM

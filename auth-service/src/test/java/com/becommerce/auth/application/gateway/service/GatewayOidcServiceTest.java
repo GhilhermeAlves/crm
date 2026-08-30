@@ -150,6 +150,58 @@ class GatewayOidcServiceTest {
         assertThrows(OidcGatewayException.class, () -> service.beginAuthorization("//evil.example"));
     }
 
+    // ---------------------------------------------- authorize (redirect dinâmico)
+
+    @Test
+    void shouldUsePublicOriginAsRedirectUriWhenDynamicModeEnabledAndOriginAllowlisted() {
+        properties.setDynamicRedirectUri(true);
+
+        URI uri = URI.create(service.beginAuthorization("/dashboard", null, "http://localhost:3000").authorizationUri());
+        assertEquals("http://localhost:3000/auth/callback", query(uri, "redirect_uri"));
+    }
+
+    @Test
+    void shouldUseHttpsDomainOriginAsRedirectUriWhenAllowlisted() {
+        properties.setDynamicRedirectUri(true);
+        properties.setAllowedRedirectUris(List.of("http://localhost:3000", "https://crm.hstgr.cloud"));
+
+        URI uri = URI.create(service.beginAuthorization("/", null, "https://crm.hstgr.cloud").authorizationUri());
+        assertEquals("https://crm.hstgr.cloud/auth/callback", query(uri, "redirect_uri"));
+    }
+
+    @Test
+    void shouldFallBackToFixedRedirectWhenDynamicOriginNotAllowlisted() {
+        properties.setDynamicRedirectUri(true);
+
+        URI uri = URI.create(service.beginAuthorization("/dashboard", null, "https://evil.example").authorizationUri());
+        assertEquals("http://localhost:8082/auth/callback", query(uri, "redirect_uri"));
+    }
+
+    @Test
+    void shouldIgnorePublicOriginWhenDynamicModeDisabled() {
+        URI uri = URI.create(service.beginAuthorization("/dashboard", null, "http://localhost:3000").authorizationUri());
+        assertEquals("http://localhost:8082/auth/callback", query(uri, "redirect_uri"));
+    }
+
+    @Test
+    void shouldBindDynamicBaseToStoredRequestAndUseItForPendingLink() {
+        properties.setDynamicRedirectUri(true);
+        properties.setAppBaseUrl("https://fixed.example");
+        mockHappyPathTokens();
+        when(currentUserResolutionUseCase.resolve(any(AuthenticatedIdentity.class)))
+                .thenReturn(new CurrentUserResolution.LinkingRequired(identity()));
+
+        GatewayOidcUseCase.BeginAuthorization begin =
+                service.beginAuthorization("/dashboard", null, "http://localhost:3000");
+        GatewayOidcUseCase.AuthenticationResult result =
+                service.completeAuthorization("code-1", query(URI.create(begin.authorizationUri()), "state"));
+
+        assertEquals("http://localhost:3000/link-account", result.redirectTarget(),
+                "o link-account deve usar a base dinâmica autorizada, não o appBaseUrl fixo");
+        assertNotNull(result.pendingLink());
+        assertEquals(0, requestStore.size(), "state consumido (single-use)");
+    }
+
     // ------------------------------------------- authorize + identity provider
 
     @Test

@@ -6,7 +6,9 @@ import com.becommerce.auth.domain.gateway.GatewaySession;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.auth.infrastructure.config.SecurityConfig;
+import com.becommerce.auth.infrastructure.gateway.ForwardedOriginResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
+import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import com.becommerce.auth.infrastructure.security.JwtAuthenticationEntryPoint;
 import com.becommerce.auth.infrastructure.security.KeycloakIdentityConverter;
 import com.becommerce.auth.presentation.rest.handler.GlobalExceptionHandler;
@@ -26,6 +28,8 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,6 +56,8 @@ class OidcGatewayControllerTest {
     @MockBean private GatewayOidcUseCase gatewayOidcUseCase;
     @MockBean private GatewayCookieFactory cookieFactory;
     @MockBean private IdentityProviderCatalog identityProviderCatalog;
+    @MockBean private OidcGatewayProperties properties;
+    @MockBean private ForwardedOriginResolver forwardedOriginResolver;
 
     private GatewaySession session() {
         Instant now = Instant.now();
@@ -74,7 +80,7 @@ class OidcGatewayControllerTest {
 
     @Test
     void shouldRedirectToKeycloakAuthorizationEndpoint() throws Exception {
-        when(gatewayOidcUseCase.beginAuthorization("/dashboard", null))
+        when(gatewayOidcUseCase.beginAuthorization(eq("/dashboard"), nullable(String.class), nullable(String.class)))
                 .thenReturn(new GatewayOidcUseCase.BeginAuthorization(AUTH_URI, "/dashboard"));
 
         mockMvc.perform(get("/auth/authorize").param("redirect", "/dashboard"))
@@ -84,7 +90,7 @@ class OidcGatewayControllerTest {
 
     @Test
     void shouldForwardProviderSelectionToTheGateway() throws Exception {
-        when(gatewayOidcUseCase.beginAuthorization("/dashboard", "google"))
+        when(gatewayOidcUseCase.beginAuthorization(eq("/dashboard"), eq("google"), nullable(String.class)))
                 .thenReturn(new GatewayOidcUseCase.BeginAuthorization(AUTH_URI + "&kc_idp_hint=google", "/dashboard"));
 
         mockMvc.perform(get("/auth/authorize").param("redirect", "/dashboard").param("provider", "google"))
@@ -109,7 +115,7 @@ class OidcGatewayControllerTest {
 
     @Test
     void shouldRejectOpenRedirectWith400() throws Exception {
-        when(gatewayOidcUseCase.beginAuthorization("//evil.example", null))
+        when(gatewayOidcUseCase.beginAuthorization(eq("//evil.example"), nullable(String.class), nullable(String.class)))
                 .thenThrow(new OidcGatewayException("OPEN_REDIRECT", 400, "Redirect não permitido pela allowlist."));
 
         mockMvc.perform(get("/auth/authorize").param("redirect", "//evil.example"))
@@ -120,7 +126,7 @@ class OidcGatewayControllerTest {
 
     @Test
     void shouldRejectDisabledProviderWith400ThroughAuthorize() throws Exception {
-        when(gatewayOidcUseCase.beginAuthorization("/dashboard", "microsoft"))
+        when(gatewayOidcUseCase.beginAuthorization(eq("/dashboard"), eq("microsoft"), nullable(String.class)))
                 .thenThrow(new OidcGatewayException("PROVIDER_NOT_AVAILABLE", 400,
                         "Provider de identidade não está disponível."));
 
@@ -180,7 +186,9 @@ class OidcGatewayControllerTest {
     @Test
     void shouldKeepAuthorizeAndCallbackPublic() throws Exception {
         stubCookies();
-        when(gatewayOidcUseCase.beginAuthorization(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+        when(gatewayOidcUseCase.beginAuthorization(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.nullable(String.class)))
                 .thenReturn(new GatewayOidcUseCase.BeginAuthorization(AUTH_URI, "/"));
         when(gatewayOidcUseCase.completeAuthorization("c", "s"))
                 .thenReturn(new GatewayOidcUseCase.AuthenticationResult(session(), null, "/"));
@@ -194,7 +202,7 @@ class OidcGatewayControllerTest {
     @Test
     void shouldRedirectToEndSessionAndClearCookieOnLogout() throws Exception {
         when(cookieFactory.readSessionToken(any())).thenReturn(java.util.Optional.of("opaque-session-token"));
-        when(gatewayOidcUseCase.logout("opaque-session-token", null))
+        when(gatewayOidcUseCase.logout(eq("opaque-session-token"), nullable(String.class), nullable(String.class)))
                 .thenReturn(new GatewayOidcUseCase.LogoutResult(END_SESSION_URI + "?id_token_hint=hint"));
         when(cookieFactory.createExpiredSessionCookie())
                 .thenReturn(ResponseCookie.from("crm_session", "").maxAge(java.time.Duration.ZERO).build());
@@ -208,7 +216,7 @@ class OidcGatewayControllerTest {
     @Test
     void shouldClearCookieAndRedirectLocallyWhenNoSessionOnLogout() throws Exception {
         when(cookieFactory.readSessionToken(any())).thenReturn(java.util.Optional.empty());
-        when(gatewayOidcUseCase.logout(null, "/dashboard"))
+        when(gatewayOidcUseCase.logout(nullable(String.class), eq("/dashboard"), nullable(String.class)))
                 .thenReturn(new GatewayOidcUseCase.LogoutResult("/dashboard"));
         when(cookieFactory.createExpiredSessionCookie())
                 .thenReturn(ResponseCookie.from("crm_session", "").maxAge(java.time.Duration.ZERO).build());

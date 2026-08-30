@@ -3,7 +3,9 @@ package com.becommerce.auth.presentation.rest;
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
 import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
+import com.becommerce.auth.infrastructure.gateway.ForwardedOriginResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
+import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -47,13 +49,19 @@ public class OidcGatewayController {
     private final GatewayOidcUseCase gatewayOidcUseCase;
     private final GatewayCookieFactory cookieFactory;
     private final IdentityProviderCatalog identityProviderCatalog;
+    private final OidcGatewayProperties properties;
+    private final ForwardedOriginResolver forwardedOriginResolver;
 
     public OidcGatewayController(GatewayOidcUseCase gatewayOidcUseCase,
                                  GatewayCookieFactory cookieFactory,
-                                 IdentityProviderCatalog identityProviderCatalog) {
+                                 IdentityProviderCatalog identityProviderCatalog,
+                                 OidcGatewayProperties properties,
+                                 ForwardedOriginResolver forwardedOriginResolver) {
         this.gatewayOidcUseCase = gatewayOidcUseCase;
         this.cookieFactory = cookieFactory;
         this.identityProviderCatalog = identityProviderCatalog;
+        this.properties = properties;
+        this.forwardedOriginResolver = forwardedOriginResolver;
     }
 
     @GetMapping("/auth/providers")
@@ -63,9 +71,11 @@ public class OidcGatewayController {
 
     @GetMapping("/auth/authorize")
     public ResponseEntity<Void> authorize(
+            HttpServletRequest request,
             @RequestParam(value = "redirect", required = false) String redirect,
             @RequestParam(value = "provider", required = false) String provider) {
-        GatewayOidcUseCase.BeginAuthorization result = gatewayOidcUseCase.beginAuthorization(redirect, provider);
+        GatewayOidcUseCase.BeginAuthorization result =
+                gatewayOidcUseCase.beginAuthorization(redirect, provider, publicOrigin(request));
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(result.authorizationUri()))
                 .build();
@@ -151,11 +161,23 @@ public class OidcGatewayController {
             HttpServletRequest request,
             @RequestParam(value = "post_logout_redirect_uri", required = false) String postLogoutRedirectUri) {
         String sessionToken = cookieFactory.readSessionToken(request.getCookies()).orElse(null);
-        GatewayOidcUseCase.LogoutResult result = gatewayOidcUseCase.logout(sessionToken, postLogoutRedirectUri);
+        GatewayOidcUseCase.LogoutResult result =
+                gatewayOidcUseCase.logout(sessionToken, postLogoutRedirectUri, publicOrigin(request));
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(result.redirectUri()))
                 .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpiredSessionCookie().toString())
                 .build();
+    }
+
+    /**
+     * Origem pública derivada do request, apenas quando o modo dinâmico está
+     * habilitado (null caso contrário — comportamento fixo clássico).
+     */
+    private String publicOrigin(HttpServletRequest request) {
+        if (!properties.isDynamicRedirectUri()) {
+            return null;
+        }
+        return forwardedOriginResolver.resolve(request);
     }
 
     @PostMapping("/auth/refresh")

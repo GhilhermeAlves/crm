@@ -109,7 +109,14 @@ public class GatewayOidcService implements GatewayOidcUseCase {
 
     @Override
     public BeginAuthorization beginAuthorization(String redirect, String provider) {
+        return beginAuthorization(redirect, provider, null);
+    }
+
+    @Override
+    public BeginAuthorization beginAuthorization(String redirect, String provider, String publicOrigin) {
         String redirectTarget = redirectUriValidator.validateAndNormalize(redirect);
+
+        EffectiveEndpoints endpoints = effectiveEndpoints(publicOrigin);
 
         String state = tokenGenerator.urlSafe(32);
         String nonce = tokenGenerator.urlSafe(32);
@@ -118,14 +125,15 @@ public class GatewayOidcService implements GatewayOidcUseCase {
 
         OidcAuthorizationRequest request = new OidcAuthorizationRequest(
                 state, nonce, codeVerifier, redirectTarget,
-                Instant.now().plus(properties.getAuthorizationRequestTtl()));
+                Instant.now().plus(properties.getAuthorizationRequestTtl()),
+                endpoints.baseUrl());
         authorizationRequestStore.put(request);
-        log.info("OIDC authorization started: correlation={}", state);
+        log.info("OIDC authorization started: correlation={} redirectUri={}", state, endpoints.redirectUri());
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(properties.getAuthorizationEndpoint())
                 .queryParam("response_type", "code")
                 .queryParam("client_id", properties.getClientId())
-                .queryParam("redirect_uri", properties.getRedirectUri())
+                .queryParam("redirect_uri", endpoints.redirectUri())
                 .queryParam("scope", properties.getScope())
                 .queryParam("state", state)
                 .queryParam("nonce", nonce)
@@ -137,6 +145,38 @@ public class GatewayOidcService implements GatewayOidcUseCase {
         String authorizationUri = builder.build().encode().toUriString();
 
         return new BeginAuthorization(authorizationUri, redirectTarget);
+    }
+
+    /**
+     * Resolve os endpoints de redirect deste fluxo. Com o modo dinâmico
+     * habilitado e uma origem pública derivada do request, o candidato
+     * {@code origem + /auth/callback} é aceito somente se a origem estiver na
+     * allowlist ({@code allowedRedirectUris}). Qualquer falha (origem fora da
+     * allowlist, host ausente/ambíguo, modo desabilitado) cai nos valores fixos
+     * configurados — comportamento clássico inalterado.
+     */
+    private EffectiveEndpoints effectiveEndpoints(String publicOrigin) {
+        if (properties.isDynamicRedirectUri() && StringUtils.hasText(publicOrigin)) {
+            String candidateBase = publicOrigin.trim().replaceAll("/+$", "");
+            String candidate = candidateBase + "/auth/callback";
+            try {
+                String validated = redirectUriValidator.validateAndNormalize(candidate);
+                if (candidate.equals(validated)) {
+                    log.info("OIDC effective redirect derived from request origin: origin={}", candidateBase);
+                    return new EffectiveEndpoints(candidate, candidateBase);
+                }
+                log.warn("OIDC candidate redirect not allowlisted, falling back to fixed: candidate={}", candidate);
+            } catch (OidcGatewayException e) {
+                log.warn("OIDC candidate redirect rejected, falling back to fixed: candidate={} error={}",
+                        candidate, e.getCode());
+            }
+        } else if (StringUtils.hasText(publicOrigin)) {
+            log.warn("OIDC dynamic redirect disabled, ignoring request origin: origin={}", publicOrigin);
+        }
+        return new EffectiveEndpoints(properties.getRedirectUri(), properties.getAppBaseUrl());
+    }
+
+    private record EffectiveEndpoints(String redirectUri, String baseUrl) {
     }
 
     /**
@@ -217,7 +257,7 @@ public class GatewayOidcService implements GatewayOidcUseCase {
             // local sem keycloak_sub. Sessão pendente curta → /link-account.
             log.warn("OIDC linking required (email matches local account): correlation={} subject={}",
                     state, identity.keycloakSub());
-            return beginPendingLink(identity, tokens, request.getRedirectTarget(), state);
+            return beginPendingLink(identity, tokens, request.getRedirectTarget(), state, request.getPublicBaseUrl());
         }
 
         // PROVISIONING_REQUIRED
@@ -243,13 +283,18 @@ public class GatewayOidcService implements GatewayOidcUseCase {
         // Corrida entre o check de e-mail e a provisão: conta local surgiu no
         // meio → segue o Caso B (verificação explícita).
         log.warn("OIDC provision answered LINKING_REQUIRED: correlation={} subject={}", state, identity.keycloakSub());
-        return beginPendingLink(identity, tokens, request.getRedirectTarget(), state);
+        return beginPendingLink(identity, tokens, request.getRedirectTarget(), state, request.getPublicBaseUrl());
     }
 
     @Override
     public LogoutResult logout(String sessionToken, String postLogoutRedirectUri) {
+        return logout(sessionToken, postLogoutRedirectUri, null);
+    }
+
+    @Override
+    public LogoutResult logout(String sessionToken, String postLogoutRedirectUri, String publicOrigin) {
         String validatedTarget = redirectUriValidator.validateAndNormalize(postLogoutRedirectUri);
-        String resolvedTarget = absolutize(validatedTarget);
+        String resolvedTarget = absolutize(validatedTarget, effectiveEndpoints(publicOrigin).baseUrl());
 
         SessionLookup lookup = sessionResolver.resolve(sessionToken);
         GatewaySession session = lookup.session();
@@ -420,7 +465,8 @@ public class GatewayOidcService implements GatewayOidcUseCase {
 
     private AuthenticationResult beginPendingLink(AuthenticatedIdentity identity,
                                                   OidcTokenClient.TokenResponse tokens,
-                                                  String redirectTarget, String correlation) {
+                                                  String redirectTarget, String correlation,
+                                                  String publicBaseUrl) {
         String token = tokenGenerator.urlSafe(32);
         String csrfToken = tokenGenerator.urlSafe(32);
         Instant now = Instant.now();
@@ -441,7 +487,8 @@ public class GatewayOidcService implements GatewayOidcUseCase {
         pendingLinkStore.put(pendingLink);
         log.info("OIDC pending link started: correlation={} subject={}", correlation, identity.keycloakSub());
 
-        String linkAccountUri = properties.getAppBaseUrl() + "/link-account";
+        String base = StringUtils.hasText(publicBaseUrl) ? publicBaseUrl : properties.getAppBaseUrl();
+        String linkAccountUri = base.replaceAll("/+$", "") + "/link-account";
         return new AuthenticationResult(null,
                 new PendingLinkInfo(pendingLink.token(), pendingLink.email(), pendingLink.csrfToken(), redirectTarget),
                 linkAccountUri);
@@ -474,8 +521,7 @@ public class GatewayOidcService implements GatewayOidcUseCase {
                 null);
     }
 
-    private String absolutize(String target) {
-        String base = properties.getAppBaseUrl();
+    private String absolutize(String target, String base) {
         if (StringUtils.hasText(base) && target.startsWith("/") && !target.startsWith("//")) {
             return base.replaceAll("/+$", "") + target;
         }

@@ -24,6 +24,16 @@ public class OidcGatewayProperties {
     private String clientId = "";
     private String clientSecret = "";
     private String redirectUri = "";
+    /**
+     * Quando {@code true}, o gateway deriva o {@code redirect_uri} (e a base
+     * {@code appBaseUrl}) do origem do request ({@code X-Forwarded-Host}/
+     * {@code X-Forwarded-Proto}, ou {@code Host} nginx). O candidato só é aceito
+     * se a origem estiver na allowlist ({@code allowedRedirectUris}); caso
+     * contrário, cai no {@code redirectUri} fixo (padrão). Default {@code false}
+     * = comportamento original inalterado. Habilitado para permitir login de dev
+     * local ({@code http://localhost:3000}) mantendo as demais origens fixas.
+     */
+    private boolean dynamicRedirectUri = false;
     private List<String> allowedRedirectUris = List.of();
     private List<String> tokenAudiences = List.of();
     private String defaultRedirect = "/";
@@ -150,6 +160,14 @@ public class OidcGatewayProperties {
 
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    public boolean isDynamicRedirectUri() {
+        return dynamicRedirectUri;
+    }
+
+    public void setDynamicRedirectUri(boolean dynamicRedirectUri) {
+        this.dynamicRedirectUri = dynamicRedirectUri;
     }
 
     public List<String> getAllowedRedirectUris() {

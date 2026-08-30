@@ -36,9 +36,28 @@ public interface GatewayOidcUseCase {
         return beginAuthorization(redirect, null);
     }
 
+    /**
+     * Overload com origem pública derivada do request (dev local / múltiplos
+     * hostnames). {@code publicOrigin} (ex.: {@code http://localhost:3000}) é
+     * aceito apenas quando o modo dinâmico está habilitado E a origem está na
+     * allowlist; caso contrário o serviço usa o {@code redirect_uri} fixo.
+     */
+    BeginAuthorization beginAuthorization(String redirect, String provider, String publicOrigin);
+
     AuthenticationResult completeAuthorization(String code, String state);
 
-    LogoutResult logout(String sessionToken, String postLogoutRedirectUri);
+    /**
+     * Overload que aceita a origem pública do request para resolver a base do
+     * {@code post_logout_redirect_uri} (mesmo critério do authorize).
+     */
+    LogoutResult logout(String sessionToken, String postLogoutRedirectUri, String publicOrigin);
+
+    /**
+     * Overload sem origem pública — preserva o fluxo atual.
+     */
+    default LogoutResult logout(String sessionToken, String postLogoutRedirectUri) {
+        return logout(sessionToken, postLogoutRedirectUri, null);
+    }
 
     RefreshResult refresh(String sessionToken);
 

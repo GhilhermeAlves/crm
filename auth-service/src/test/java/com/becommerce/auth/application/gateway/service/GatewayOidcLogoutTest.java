@@ -207,4 +207,27 @@ class GatewayOidcLogoutTest {
 
         assertEquals("http://localhost:3000/dashboard", query(result.redirectUri(), "post_logout_redirect_uri"));
     }
+
+    @Test
+    void shouldAbsolutizeRelativeTargetUsingDynamicOriginWhenEnabled() {
+        properties.setDynamicRedirectUri(true);
+        sessionStore.put(session("t9"));
+        when(providerMetadata.endSessionEndpoint()).thenReturn("https://idp.example/logout");
+
+        GatewayOidcUseCase.LogoutResult result = service.logout("t9", "/dashboard", "http://localhost:3000");
+
+        assertEquals("http://localhost:3000/dashboard", query(result.redirectUri(), "post_logout_redirect_uri"));
+    }
+
+    @Test
+    void shouldIgnoreDynamicOriginWhenNotAllowlistedOnLogout() {
+        properties.setDynamicRedirectUri(true);
+        properties.setAppBaseUrl("https://fixed.example");
+        sessionStore.put(session("t10"));
+        when(providerMetadata.endSessionEndpoint()).thenReturn("https://idp.example/logout");
+
+        GatewayOidcUseCase.LogoutResult result = service.logout("t10", "/dashboard", "https://evil.example");
+
+        assertEquals("https://fixed.example/dashboard", query(result.redirectUri(), "post_logout_redirect_uri"));
+    }
 }
