@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { LoadingScreen } from "@/components/LoadingScreen";
+import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { ROUTES } from "@/lib/constants";
 
 /**

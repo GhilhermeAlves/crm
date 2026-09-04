@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { InvitationService } from "@/features/invitations/services/invitation.service";
 import { toast } from "sonner";
-import { LoadingScreen } from "@/components/LoadingScreen";
+import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { Button } from "@/components/ui/button";
 import {
   Card,

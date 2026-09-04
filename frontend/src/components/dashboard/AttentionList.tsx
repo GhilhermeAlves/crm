@@ -1,6 +1,6 @@
 "use client";
 
-import type { AttentionOpportunity } from "../types/dashboard.types";
+import type { AttentionOpportunity } from "@/features/dashboard/types/dashboard.types";
 import { Badge } from "@/components/ui/badge";
 
 const formatCurrency = (value: number): string =>

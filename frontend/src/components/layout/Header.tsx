@@ -2,7 +2,7 @@
 
 import { Menu, Search, Command } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserMenu } from "@/components/UserMenu";
+import { UserMenu } from "@/components/layout/UserMenu";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { useSidebar } from "@/store/sidebar";

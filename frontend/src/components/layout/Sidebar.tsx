@@ -11,7 +11,6 @@ import {
   MessageSquare,
   Megaphone,
   BarChart3,
-  Settings,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +23,7 @@ import {
   Workflow as WorkflowIcon,
   Bell,
   Sparkles,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -111,6 +111,11 @@ const navGroups: NavGroup[] = [
     title: "CRM",
     items: [
       {
+        label: "Início",
+        href: ROUTES.CRM,
+        icon: Home,
+      },
+      {
         label: "Leads",
         href: ROUTES.LEADS,
         icon: Users,
@@ -147,7 +152,7 @@ const navGroups: NavGroup[] = [
         permission: "workflow:page:view",
       },
       {
-        label: "Notifica��es",
+        label: "Notificações",
         href: ROUTES.NOTIFICATIONS,
         icon: Bell,
         permission: "notification:page:view",
@@ -196,7 +201,6 @@ const navGroups: NavGroup[] = [
         icon: ClipboardList,
         permission: "audit:page:view",
       },
-      { label: "Configurações", href: ROUTES.SETTINGS, icon: Settings },
     ],
   },
 ];

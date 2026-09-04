@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useOperationalDashboard } from "@/features/dashboard/hooks/useOperationalDashboard";
-import { AttentionList } from "@/features/dashboard/components/AttentionList";
+import { AttentionList } from "@/components/dashboard/AttentionList";
 import { ActivityTimeline } from "@/features/activities/components/ActivityTimeline";
 import { TaskList } from "@/features/tasks/components/TaskList";
 import { useChangeTaskStatus } from "@/features/tasks/hooks/useTasks";

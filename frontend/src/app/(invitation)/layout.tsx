@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { LoadingScreen } from "@/components/LoadingScreen";
+import { LoadingScreen } from "@/components/layout/LoadingScreen";
 
 /**
  * Gate da página de aceite de convite (Sprint 8.5).
