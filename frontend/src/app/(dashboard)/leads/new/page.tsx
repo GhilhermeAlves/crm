@@ -35,6 +35,7 @@ export default function NewLeadPage() {
       <PageTitle>Novo Lead</PageTitle>
       <LeadForm
         mode="create"
+        companyId={companyId}
         onSubmit={handleSubmit}
         onCancel={() => router.back()}
         isLoading={createLead.isPending}

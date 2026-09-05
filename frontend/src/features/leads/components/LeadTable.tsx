@@ -35,8 +35,10 @@ interface LeadTableProps {
   isLoading?: boolean;
   onDelete?: (lead: Lead) => void;
   contacts?: Record<string, LeadContactInfo>;
+  responsibleMap?: Record<string, string>;
   onConvert?: (lead: Lead) => void;
   canConvert?: boolean;
+  emptyState?: boolean;
 }
 
 function formatDate(dateStr: string): string {
@@ -61,8 +63,10 @@ export function LeadTable({
   isLoading,
   onDelete,
   contacts,
+  responsibleMap,
   onConvert,
   canConvert,
+  emptyState = true,
 }: LeadTableProps) {
   const router = useRouter();
 
@@ -76,7 +80,7 @@ export function LeadTable({
     );
   }
 
-  if (leads.length === 0) {
+  if (leads.length === 0 && emptyState) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
         <Target className="mb-4 h-12 w-12 opacity-50" />
@@ -84,6 +88,10 @@ export function LeadTable({
         <p className="text-sm">Crie um lead para começar a qualificar.</p>
       </div>
     );
+  }
+
+  if (leads.length === 0) {
+    return null;
   }
 
   return (
@@ -137,7 +145,9 @@ export function LeadTable({
                   </TableCell>
                   <TableCell className="text-sm font-medium">{lead.score}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {lead.assignedTo ? lead.assignedTo.slice(0, 8) : "—"}
+                    {lead.assignedTo
+                      ? (responsibleMap?.[lead.assignedTo] ?? lead.assignedTo.slice(0, 8))
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDate(lead.createdAt)}

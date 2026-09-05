@@ -58,6 +58,7 @@ export default function EditLeadPage() {
       <LeadForm
         lead={lead}
         mode="edit"
+        companyId={companyId}
         onSubmit={handleSubmit}
         onCancel={() => router.back()}
         isLoading={updateLead.isPending}

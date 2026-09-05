@@ -6,16 +6,28 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import { useLeads, useDeleteLead, useUpdateLead } from "@/features/leads/hooks/useLeads";
 import { useContacts } from "@/features/contacts/hooks/useContacts";
+import { useMembers } from "@/features/members/hooks/useMembers";
 import { LeadTable } from "@/features/leads/components/LeadTable";
 import { LeadFilters } from "@/features/leads/components/LeadFilters";
 import { DeleteLeadDialog } from "@/features/leads/components/DeleteLeadDialog";
 import { ConvertLeadDialog } from "@/features/leads/components/ConvertLeadDialog";
+import { leadStatuses, leadStatusLabels } from "@/features/leads/schemas/lead.schema";
 import { PageTitle } from "@/components/common/PageTitle";
 import { SearchInput } from "@/components/common/SearchInput";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/EmptyState";
+import { ErrorCard } from "@/components/common/ErrorCard";
+import { FilterBar } from "@/components/common/FilterBar";
+import { SectionTitle } from "@/components/common/SectionTitle";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, SearchX } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, SearchX, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import type {
   Lead,
   LeadSource,
@@ -35,10 +47,12 @@ export default function LeadsPage() {
   const [classification, setClassification] = useState("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [groupBy, setGroupBy] = useState<"none" | "status">("none");
   const [deleteLead, setDeleteLead] = useState<Lead | null>(null);
   const [convertLead, setConvertLead] = useState<Lead | null>(null);
 
-  const { data, isLoading, refetch } = useLeads(companyId, {
+  const { data, isLoading, error, refetch } = useLeads(companyId, {
     page,
     pageSize: 10,
     status: status !== "all" ? (status as LeadStatus) : undefined,
@@ -49,6 +63,7 @@ export default function LeadsPage() {
   });
 
   const { data: contactsData } = useContacts(companyId);
+  const { data: members = [] } = useMembers(companyId);
 
   const contactsMap = useMemo(() => {
     const map: Record<
@@ -61,15 +76,22 @@ export default function LeadsPage() {
     return map;
   }, [contactsData]);
 
+  const responsibleMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    members.forEach((m) => {
+      map[m.userId] = m.name;
+    });
+    return map;
+  }, [members]);
+
   const deleteLeadMutation = useDeleteLead(companyId);
   const updateLeadMutation = useUpdateLead(companyId);
   const canCreate = can("lead:create");
   const canDelete = can("lead:delete");
   const canUpdate = can("lead:update");
 
-  const rawLeads = data?.content ?? [];
-
   const filteredLeads = useMemo(() => {
+    const rawLeads = data?.content ?? [];
     const q = search.trim().toLowerCase();
     if (!q) return rawLeads;
     return rawLeads.filter((lead) => {
@@ -83,7 +105,14 @@ export default function LeadsPage() {
         (contact?.phone ?? "").toLowerCase().includes(q)
       );
     });
-  }, [rawLeads, search, contactsMap]);
+  }, [data, search, contactsMap]);
+
+  const groupedLeads = useMemo(() => {
+    if (groupBy !== "status") return [];
+    return leadStatuses
+      .map((s) => ({ status: s, leads: filteredLeads.filter((lead) => lead.status === s) }))
+      .filter((g) => g.leads.length > 0);
+  }, [filteredLeads, groupBy]);
 
   const hasActiveFilters =
     status !== "all" || source !== "all" || classification !== "all" || search.trim() !== "";
@@ -147,12 +176,38 @@ export default function LeadsPage() {
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+            <Select value={groupBy} onValueChange={(val) => setGroupBy(val as "none" | "status")}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Agrupar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem agrupamento</SelectItem>
+                <SelectItem value="status">Status</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFiltersOpen((open) => !open)}
+            className="gap-2"
+          >
+            {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            Filtros
+          </Button>
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <SearchX className="mr-1 h-4 w-4" />
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+              <SearchX className="h-4 w-4" />
               Limpar filtros
             </Button>
           )}
+        </div>
+      </div>
+
+      {filtersOpen && (
+        <FilterBar>
           <LeadFilters
             status={status}
             source={source}
@@ -171,11 +226,13 @@ export default function LeadsPage() {
             }}
             onRefresh={() => refetch()}
           />
-        </div>
-      </div>
+        </FilterBar>
+      )}
 
       {isLoading ? (
         <LeadTable leads={[]} isLoading />
+      ) : error ? (
+        <ErrorCard message={error.message} onRetry={() => refetch()} />
       ) : filteredLeads.length === 0 ? (
         hasActiveFilters ? (
           <Card>
@@ -195,10 +252,32 @@ export default function LeadsPage() {
         ) : (
           <LeadTable leads={[]} />
         )
+      ) : groupBy === "status" ? (
+        <div className="space-y-8">
+          {groupedLeads.map((group) => (
+            <div key={group.status} className="space-y-3">
+              <SectionTitle
+                description={`${leadStatusLabels[group.status]} · ${group.leads.length} lead${group.leads.length === 1 ? "" : "s"}`}
+              >
+                {leadStatusLabels[group.status]}
+              </SectionTitle>
+              <LeadTable
+                leads={group.leads}
+                contacts={contactsMap}
+                responsibleMap={responsibleMap}
+                onDelete={canDelete ? setDeleteLead : undefined}
+                onConvert={canUpdate ? setConvertLead : undefined}
+                canConvert={canUpdate}
+                emptyState={false}
+              />
+            </div>
+          ))}
+        </div>
       ) : (
         <LeadTable
           leads={filteredLeads}
           contacts={contactsMap}
+          responsibleMap={responsibleMap}
           onDelete={canDelete ? setDeleteLead : undefined}
           onConvert={canUpdate ? setConvertLead : undefined}
           canConvert={canUpdate}

@@ -13,6 +13,8 @@ import {
   leadClassifications,
   type LeadFormValues,
 } from "../schemas/lead.schema";
+import { useContacts } from "@/features/contacts/hooks/useContacts";
+import { useMembers } from "@/features/members/hooks/useMembers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,13 +30,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface LeadFormProps {
   lead?: Lead;
+  companyId: string | null;
   onSubmit: (data: LeadFormValues) => void;
   onCancel?: () => void;
   isLoading?: boolean;
   mode: "create" | "edit";
 }
 
-export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadFormProps) {
+export function LeadForm({ lead, companyId, onSubmit, onCancel, isLoading, mode }: LeadFormProps) {
   const isEdit = mode === "edit";
 
   const {
@@ -56,9 +59,17 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
     },
   });
 
+  const isEnabled = !!companyId;
+  const { data: contacts = [], isLoading: contactsLoading } = useContacts(companyId);
+  const { data: members = [], isLoading: membersLoading } = useMembers(companyId);
+
   const watchedStatus = watch("status");
   const watchedSource = watch("source");
   const watchedClassification = watch("classification");
+  const watchedContactId = watch("contactId");
+  const watchedAssignedTo = watch("assignedTo");
+
+  const selectedContact = contacts.find((c) => c.id === watchedContactId);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -69,12 +80,38 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
         <CardContent className="space-y-4">
           {!isEdit && (
             <div className="space-y-2">
-              <Label htmlFor="contactId">Contato (ID) *</Label>
-              <Input
-                id="contactId"
-                placeholder="UUID do contato (ex.: 3fa85f64-5717-4562-b3fc-2c963f66afa6)"
-                {...register("contactId")}
-              />
+              <Label htmlFor="contactId">Contato *</Label>
+              <Select
+                value={watchedContactId}
+                onValueChange={(val) => setValue("contactId", val as string)}
+              >
+                <SelectTrigger id="contactId">
+                  <SelectValue placeholder="Selecione o contato..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contacts.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.firstName} {c.lastName ?? ""}
+                      {c.email ? ` · ${c.email}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {contactsLoading && isEnabled && (
+                <p className="text-sm text-muted-foreground">Carregando contatos...</p>
+              )}
+              {!contactsLoading && contacts.length === 0 && isEnabled && (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum contato cadastrado. Crie um contato antes de cadastrar o lead.
+                </p>
+              )}
+              {selectedContact && (
+                <p className="text-sm text-muted-foreground">
+                  {selectedContact.firstName} {selectedContact.lastName ?? ""} —{" "}
+                  {selectedContact.email ?? "sem e-mail"} ·{" "}
+                  {selectedContact.phone ?? "sem telefone"}
+                </p>
+              )}
               {errors.contactId && (
                 <p className="text-sm text-destructive">{errors.contactId.message}</p>
               )}
@@ -153,16 +190,30 @@ export function LeadForm({ lead, onSubmit, onCancel, isLoading, mode }: LeadForm
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="assignedTo">Responsável (ID do usuário)</Label>
-            <Input
-              id="assignedTo"
-              placeholder="UUID do usuário responsável"
-              {...register("assignedTo")}
-            />
+            <Label htmlFor="assignedTo">Responsável</Label>
+            <Select
+              value={watchedAssignedTo}
+              onValueChange={(val) => setValue("assignedTo", val as string)}
+            >
+              <SelectTrigger id="assignedTo">
+                <SelectValue placeholder="Selecione o responsável..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem responsável</SelectItem>
+                {members.map((member) => (
+                  <SelectItem key={member.userId} value={member.userId}>
+                    {member.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {membersLoading && isEnabled && (
+              <p className="text-sm text-muted-foreground">Carregando membros...</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notas</Label>
+            <Label htmlFor="notes">Observações</Label>
             <Textarea id="notes" rows={3} {...register("notes")} />
           </div>
         </CardContent>
