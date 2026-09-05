@@ -3,6 +3,7 @@
 import { type ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { AiAssistantLauncher } from "@/features/ai/components/AiAssistantLauncher";
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -16,6 +17,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Header />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
+      <AiAssistantLauncher />
     </div>
   );
 }

@@ -39,8 +39,13 @@ type UiMessage = {
  * contexto da página atual e o contrato POST /api/v1/ai/chat do backend.
  * Estados de UX: idle → sending → processing → success/error (AI-04 §12-13).
  * Não permite múltiplos envios simultâneos enquanto a requisição processa.
+ *
+ * <p>{@code embedded} indica que o componente está dentro de um contêiner já
+ * dimensionado (ex.: painel flutuante do launcher): nesse caso o chat ocupa
+ * 100% da altura/área disponível e os controles de navegação (histórico,
+ * cabeçalho com a nova conversa) são ocultados para caber no painel.</p>
  */
-export function AiChatAssistant() {
+export function AiChatAssistant({ embedded = false }: { embedded?: boolean } = {}) {
   const { user } = useAuth();
   const { canChat } = useAiPermissions();
   const context = useAiContext();
@@ -202,20 +207,28 @@ export function AiChatAssistant() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col gap-4 lg:flex-row">
+    <div
+      className={cn(
+        "flex flex-col",
+        embedded ? "h-full min-h-0" : "h-[calc(100vh-8rem)] gap-4 lg:flex-row",
+      )}
+    >
       {/* Histórico - desktop */}
-      <aside className="hidden w-72 shrink-0 flex-col overflow-hidden rounded-lg border bg-card lg:flex">
-        <AiConversationList
-          conversations={conversations}
-          selectedId={selectedConversationId}
-          loading={conversationsLoading}
-          onSelect={selectConversation}
-          onNewConversation={startNewConversation}
-        />
-      </aside>
+      {!embedded && (
+        <aside className="hidden w-72 shrink-0 flex-col overflow-hidden rounded-lg border bg-card lg:flex">
+          <AiConversationList
+            conversations={conversations}
+            selectedId={selectedConversationId}
+            loading={conversationsLoading}
+            onSelect={selectConversation}
+            onNewConversation={startNewConversation}
+          />
+        </aside>
+      )}
 
       {/* Histórico - mobile */}
-      <div className="flex flex-col gap-2 lg:hidden">
+      {!embedded && (
+        <div className="flex flex-col gap-2 lg:hidden">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold">Conversas</p>
           <Button variant="outline" size="sm" onClick={startNewConversation}>
@@ -246,6 +259,7 @@ export function AiChatAssistant() {
           </div>
         </ScrollArea>
       </div>
+      )}
 
       {/* Área do chat */}
       <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -262,39 +276,43 @@ export function AiChatAssistant() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={runAnalysis}
-                    disabled={analyzing || !context}
-                    aria-label={
-                      context
-                        ? "Analisar o registro atual"
-                        : "Analisar o registro atual (nenhum registro em foco)"
-                    }
-                  >
-                    {analyzing ? (
-                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                    ) : (
-                      <BrainCircuit className="mr-1 h-4 w-4" />
-                    )}
-                    Analisar
-                  </Button>
-                </TooltipTrigger>
-                {!context && (
-                  <TooltipContent>
-                    Nenhum registro em foco. Abra uma tela de registro para analisar.
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-            <Button variant="outline" size="sm" onClick={startNewConversation}>
-              <Plus className="mr-1 h-4 w-4" />
-              Nova conversa
-            </Button>
+            {!embedded && (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={runAnalysis}
+                      disabled={analyzing || !context}
+                      aria-label={
+                        context
+                          ? "Analisar o registro atual"
+                          : "Analisar o registro atual (nenhum registro em foco)"
+                      }
+                    >
+                      {analyzing ? (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      ) : (
+                        <BrainCircuit className="mr-1 h-4 w-4" />
+                      )}
+                      Analisar
+                    </Button>
+                  </TooltipTrigger>
+                  {!context && (
+                    <TooltipContent>
+                      Nenhum registro em foco. Abra uma tela de registro para analisar.
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {!embedded && (
+              <Button variant="outline" size="sm" onClick={startNewConversation}>
+                <Plus className="mr-1 h-4 w-4" />
+                Nova conversa
+              </Button>
+            )}
           </div>
         </div>
 
