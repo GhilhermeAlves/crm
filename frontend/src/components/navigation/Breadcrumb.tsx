@@ -5,8 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
 
 const routeLabels: Record<string, string> = {
+  crm: "CRM",
   dashboard: "Dashboard",
   tenants: "Empresas",
   users: "Usuários",
@@ -43,7 +45,10 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
       .filter(Boolean) as { label: string; href: string; isLast: boolean }[];
   }, [pathname]);
 
-  if (segments.length <= 1 && segments[0]?.label === "Dashboard") {
+  if (
+    segments.length <= 1 &&
+    (segments[0]?.label === "Dashboard" || segments[0]?.label === "CRM")
+  ) {
     return null;
   }
 
@@ -52,7 +57,7 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
       <ol className="flex items-center gap-1">
         <li>
           <Link
-            href="/dashboard"
+            href={ROUTES.DASHBOARD}
             className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
           >
             <Home className="h-3.5 w-3.5" />

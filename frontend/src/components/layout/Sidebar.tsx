@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   Users,
   Contact,
   GitBranch,
@@ -24,6 +23,7 @@ import {
   Bell,
   Sparkles,
   Home,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,63 +50,6 @@ type NavGroup = {
 };
 
 const navGroups: NavGroup[] = [
-  {
-    items: [
-      {
-        label: "Dashboard",
-        href: ROUTES.DASHBOARD,
-        icon: LayoutDashboard,
-        permission: "dashboard:page:view",
-      },
-    ],
-  },
-  {
-    title: "Administração",
-    items: [
-      {
-        label: "Empresas",
-        href: ROUTES.TENANTS,
-        icon: Building2,
-        permission: "company:view",
-      },
-      {
-        label: "Membros",
-        href: ROUTES.MEMBERS,
-        icon: Users,
-        permission: "membership:view",
-      },
-      {
-        label: "Convites",
-        href: ROUTES.INVITATIONS,
-        icon: MailPlus,
-        permission: "membership:view",
-      },
-      {
-        label: "Permissões",
-        href: ROUTES.PERMISSIONS,
-        icon: KeyRound,
-        permission: "role:read",
-      },
-      { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
-    ],
-  },
-  {
-    title: "Segurança",
-    items: [
-      {
-        label: "Usuários",
-        href: ROUTES.SETTINGS_USERS,
-        icon: Users,
-        permission: "security:page:view",
-      },
-      {
-        label: "Perfis",
-        href: ROUTES.SETTINGS_ROLES,
-        icon: Shield,
-        permission: "security:page:view",
-      },
-    ],
-  },
   {
     title: "CRM",
     items: [
@@ -189,6 +132,36 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    title: "Administração",
+    items: [
+      {
+        label: "Empresas",
+        href: ROUTES.TENANTS,
+        icon: Building2,
+        permission: "company:view",
+      },
+      {
+        label: "Membros",
+        href: ROUTES.MEMBERS,
+        icon: Users,
+        permission: "membership:view",
+      },
+      {
+        label: "Convites",
+        href: ROUTES.INVITATIONS,
+        icon: MailPlus,
+        permission: "membership:view",
+      },
+      {
+        label: "Permissões",
+        href: ROUTES.PERMISSIONS,
+        icon: KeyRound,
+        permission: "role:read",
+      },
+      { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
+    ],
+  },
+  {
     title: "Análise",
     items: [{ label: "Relatórios", href: ROUTES.REPORTS, icon: BarChart3 }],
   },
@@ -203,6 +176,23 @@ const navGroups: NavGroup[] = [
       },
     ],
   },
+  {
+    title: "Segurança",
+    items: [
+      {
+        label: "Usuários",
+        href: ROUTES.SETTINGS_USERS,
+        icon: Users,
+        permission: "security:page:view",
+      },
+      {
+        label: "Perfis",
+        href: ROUTES.SETTINGS_ROLES,
+        icon: Shield,
+        permission: "security:page:view",
+      },
+    ],
+  },
 ];
 
 type SidebarContentProps = {
@@ -213,6 +203,21 @@ type SidebarContentProps = {
 function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
   const pathname = usePathname();
   const { logout, permissions } = useAuth();
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
+
+  const toggleGroup = (index: number) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
+  const isGroupExpanded = (index: number) => !collapsedGroups.has(index);
 
   const hasPermission = (permission?: string) => {
     if (!permission) return true;
@@ -251,52 +256,65 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
             {navGroups.map((group, groupIndex) => (
               <div key={groupIndex}>
                 {group.title && !collapsed && (
-                  <div className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {group.title}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(groupIndex)}
+                    aria-expanded={isGroupExpanded(groupIndex)}
+                    className="mb-1 flex w-full items-center justify-between gap-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <span>{group.title}</span>
+                    <ChevronDown
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0 transition-transform",
+                        !isGroupExpanded(groupIndex) && "rotate-180",
+                      )}
+                    />
+                  </button>
                 )}
                 {group.title && collapsed && <Separator className="mb-2" />}
-                <div className="space-y-0.5">
-                  {group.items
-                    .filter((item) => hasPermission(item.permission))
-                    .map((item) => {
-                      const Icon = item.icon;
-                      const isActive =
-                        pathname === item.href || pathname.startsWith(item.href + "/");
+                {(!group.title || isGroupExpanded(groupIndex)) && (
+                  <div className="space-y-0.5">
+                    {group.items
+                      .filter((item) => hasPermission(item.permission))
+                      .map((item) => {
+                        const Icon = item.icon;
+                        const isActive =
+                          pathname === item.href || pathname.startsWith(item.href + "/");
 
-                      const navLink = (
-                        <Link
-                          href={item.href}
-                          onClick={onNavClick}
-                          className={cn(
-                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                            "hover:bg-accent hover:text-accent-foreground",
-                            isActive && "bg-accent text-accent-foreground",
-                            collapsed && "justify-center px-2",
-                          )}
-                        >
-                          <Icon className="h-4 w-4 shrink-0" />
-                          {!collapsed && <span className="flex-1">{item.label}</span>}
-                          {!collapsed && item.badge && (
-                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                              {item.badge}
-                            </span>
-                          )}
-                        </Link>
-                      );
-
-                      if (collapsed) {
-                        return (
-                          <Tooltip key={item.href}>
-                            <TooltipTrigger asChild>{navLink}</TooltipTrigger>
-                            <TooltipContent side="right">{item.label}</TooltipContent>
-                          </Tooltip>
+                        const navLink = (
+                          <Link
+                            href={item.href}
+                            onClick={onNavClick}
+                            className={cn(
+                              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                              "hover:bg-accent hover:text-accent-foreground",
+                              isActive && "bg-accent text-accent-foreground",
+                              collapsed && "justify-center px-2",
+                            )}
+                          >
+                            <Icon className="h-4 w-4 shrink-0" />
+                            {!collapsed && <span className="flex-1">{item.label}</span>}
+                            {!collapsed && item.badge && (
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                {item.badge}
+                              </span>
+                            )}
+                          </Link>
                         );
-                      }
 
-                      return <div key={item.href}>{navLink}</div>;
-                    })}
-                </div>
+                        if (collapsed) {
+                          return (
+                            <Tooltip key={item.href}>
+                              <TooltipTrigger asChild>{navLink}</TooltipTrigger>
+                              <TooltipContent side="right">{item.label}</TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+
+                        return <div key={item.href}>{navLink}</div>;
+                      })}
+                  </div>
+                )}
               </div>
             ))}
           </div>

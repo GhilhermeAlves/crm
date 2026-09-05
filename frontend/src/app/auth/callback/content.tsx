@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
+import { ROUTES } from "@/lib/constants";
+
 /**
  * Rota de compatibilidade (Sprint 6.4). O Access Gateway redireciona o browser
  * diretamente para o alvo pós-login (default `/`); este callback apenas encaminha
@@ -15,7 +17,7 @@ export function AuthCallbackContent() {
 
   useEffect(() => {
     const redirect = searchParams.get("redirect");
-    router.replace(redirect || "/dashboard");
+    router.replace(redirect || ROUTES.DASHBOARD);
   }, [router, searchParams]);
 
   return (

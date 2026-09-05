@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AlertTriangle, Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants";
 
 type ErrorPageProps = {
   code: string;
@@ -21,13 +22,13 @@ export function ErrorPage({ code, title, description }: ErrorPageProps) {
       <p className="mb-8 max-w-md text-muted-foreground">{description}</p>
       <div className="flex gap-3">
         <Button variant="outline" asChild>
-          <Link href="/dashboard">
+          <Link href={ROUTES.DASHBOARD}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Link>
         </Button>
         <Button asChild>
-          <Link href="/dashboard">
+          <Link href={ROUTES.DASHBOARD}>
             <Home className="mr-2 h-4 w-4" />
             Dashboard
           </Link>

@@ -12,6 +12,8 @@
  *       com proteção CSRF cookie-to-header (XSRF-TOKEN → X-XSRF-TOKEN).</li>
  * </ul>
  */
+import { ROUTES } from "./constants";
+
 export const SESSION_COOKIE = "crm_session";
 export const CSRF_COOKIE = "XSRF-TOKEN";
 export const CSRF_HEADER = "X-XSRF-TOKEN";
@@ -40,7 +42,7 @@ export type IdentityProviderId = (typeof IDENTITY_PROVIDERS)[keyof typeof IDENTI
  */
 export function loginWithGateway(redirectPath?: string, provider?: IdentityProviderId): void {
   const params = new URLSearchParams({
-    redirect: redirectPath || "/dashboard",
+    redirect: redirectPath || ROUTES.DASHBOARD,
   });
   if (provider) params.set("provider", provider);
   window.location.assign(`/auth/authorize?${params.toString()}`);
@@ -151,7 +153,7 @@ export async function linkAccountWithPassword(password: string): Promise<{ redir
 
   if (response.ok) {
     const body = await response.json();
-    return { redirect: body.redirect || "/dashboard" };
+    return { redirect: body.redirect || ROUTES.DASHBOARD };
   }
 
   let code = "LINK_FAILED";

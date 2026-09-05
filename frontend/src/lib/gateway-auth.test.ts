@@ -34,9 +34,9 @@ describe("gateway-auth (BFF session)", () => {
     expect(window.location.assign).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fleads");
   });
 
-  it("loginWithGateway defaults to /dashboard when no redirect is given", () => {
+  it("loginWithGateway defaults to crm home when no redirect is given", () => {
     loginWithGateway();
-    expect(window.location.assign).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fdashboard");
+    expect(window.location.assign).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fcrm");
   });
 
   it("loginWithGateway adds the provider hint preserving the redirect", () => {
@@ -49,7 +49,7 @@ describe("gateway-auth (BFF session)", () => {
   it("loginWithGateway without redirect keeps the provider hint", () => {
     loginWithGateway(undefined, "microsoft");
     expect(window.location.assign).toHaveBeenCalledWith(
-      "/auth/authorize?redirect=%2Fdashboard&provider=microsoft",
+      "/auth/authorize?redirect=%2Fcrm&provider=microsoft",
     );
   });
 

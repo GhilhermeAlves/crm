@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Search, Command } from "lucide-react";
+import { Menu, Search, Command, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
@@ -10,7 +10,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
 export function Header() {
-  const { setMobileOpen } = useSidebar();
+  const { collapsed, toggle, setMobileOpen } = useSidebar();
   const { user } = useAuth();
 
   return (
@@ -24,6 +24,17 @@ export function Header() {
         aria-label="Abrir menu"
       >
         <Menu className="h-5 w-5" />
+      </Button>
+
+      {/* Desktop sidebar collapse button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hidden h-9 w-9 lg:inline-flex"
+        onClick={toggle}
+        aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+      >
+        {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
       </Button>
 
       {/* Breadcrumb */}
