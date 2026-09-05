@@ -21,32 +21,34 @@ export function CrmModuleCard({ mod }: { mod: CrmModule }) {
   const content = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <div className="rounded-lg bg-muted p-3">{mod.icon}</div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+          {mod.icon}
+        </div>
         {comingSoon && (
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
             Em breve
           </span>
         )}
       </div>
-      <div className="mt-4 space-y-1">
-        <h3 className="font-semibold">{mod.title}</h3>
-        <p className="text-sm text-muted-foreground">{mod.description}</p>
+      <div className="mt-3 space-y-1">
+        <h3 className="text-sm font-semibold">{mod.title}</h3>
+        <p className="text-xs leading-snug text-muted-foreground">{mod.description}</p>
       </div>
       {!comingSoon && (
-        <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
+        <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">
           Acessar
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-3.5 w-3.5" />
         </span>
       )}
     </>
   );
 
-  const cardClass = "flex h-full flex-col transition-shadow hover:shadow-md";
-  const contentWrapper = <CardContent className="flex h-full flex-col p-6">{content}</CardContent>;
+  const cardClass = "flex h-full min-h-[108px] flex-col transition-colors";
+  const contentWrapper = <CardContent className="flex h-full flex-col p-4">{content}</CardContent>;
 
   if (comingSoon) {
     return (
-      <Card aria-disabled className={cn(cardClass, "opacity-60")}>
+      <Card aria-disabled className={cn(cardClass, "border-border/60 opacity-60")}>
         {contentWrapper}
       </Card>
     );
@@ -54,7 +56,14 @@ export function CrmModuleCard({ mod }: { mod: CrmModule }) {
 
   return (
     <Link href={mod.href!} className="block h-full">
-      <Card className={cn(cardClass, "group")}>{contentWrapper}</Card>
+      <Card
+        className={cn(
+          cardClass,
+          "group border-border/60 hover:border-primary/40 hover:bg-muted/30",
+        )}
+      >
+        {contentWrapper}
+      </Card>
     </Link>
   );
 }

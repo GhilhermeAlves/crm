@@ -3,6 +3,7 @@ package com.becommerce.crm.application.omnichannel.service;
 import com.becommerce.crm.application.ai.port.output.AgentAutoReplyRepository;
 import com.becommerce.crm.application.ai.port.output.AgentConfigRepository;
 import com.becommerce.crm.application.ai.port.output.AiProvider;
+import com.becommerce.crm.application.ai.service.AiChatFailover;
 import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
@@ -40,9 +41,20 @@ import java.util.UUID;
  *   <li>a resposta é truncada em {@code maxChars}.</li>
  * </ul>
  *
- * <p>O pipeline é: reserva → IA (via {@link AiProvider}, sem hardcode de prompt)
- * → persiste OUTBOUND pendente → envia via {@link WhatsAppProvider} → marca
- * enviado/falha com {@link OmnichannelMessagePersister} (REQUIRES_NEW).</p>
+ * <p>Sprint 2 (IA autônoma robusta):
+ * <ul>
+ *   <li>params de geração ({@code model}, {@code temperature}, {@code maxTokens})
+ *       vêm do {@link AgentConfig} (nulos → default do provider);</li>
+ *   <li>geração via {@link AiChatFailover}: timeout controlado, erros classificados,
+ *       failover limitado (primário → fallback, nunca infinito);</li>
+ *   <li>contexto real da conversa (Conversation/Message, INBOUND→user,
+ *       OUTBOUND→assistant) com janela limitada E consistente com o orçamento de
+ *       tokens configurado (prioridade: system → mais recentes → mensagem atual).</li>
+ * </ul>
+ *
+ * <p>O pipeline é: reserva → IA (via {@link AiChatFailover}, sem hardcode de
+ * prompt) → persiste OUTBOUND pendente → envia via {@link WhatsAppProvider} →
+ * marca enviado/falha com {@link OmnichannelMessagePersister} (REQUIRES_NEW).</p>
  */
 @Service
 public class WhatsAppInboundAutoReplyProcessor {
@@ -50,6 +62,15 @@ public class WhatsAppInboundAutoReplyProcessor {
     private static final Logger log = LoggerFactory.getLogger(WhatsAppInboundAutoReplyProcessor.class);
 
     private static final int HISTORY_LIMIT = 20;
+    private static final int DEFAULT_MAX_TOKENS = 600;
+    /**
+     * Sem tokenizer (o projeto não possui utilitário de contagem; decisão do
+     * Sprint 2), estima-se grosseiramente 1 token ≈ 4 caracteres. O histórico é
+     * limitado a ~{@code HISTORY_TOKEN_MULTIPLIER} × o orçamento de saída
+     * ({@code maxTokens}), priorizando as mensagens MAIS RECENTES.
+     */
+    private static final int CHARS_PER_TOKEN = 4;
+    private static final int HISTORY_TOKEN_MULTIPLIER = 2;
 
     private final AgentConfigRepository agentConfigRepository;
     private final AgentAutoReplyRepository autoReplyRepository;
@@ -57,7 +78,7 @@ public class WhatsAppInboundAutoReplyProcessor {
     private final OmnichannelChannelRepository channelRepository;
     private final OmnichannelMessageRepository messageRepository;
     private final WhatsAppProvider whatsAppProvider;
-    private final AiProvider aiProvider;
+    private final AiChatFailover aiChatFailover;
     private final OmnichannelMessagePersister messagePersister;
 
     public WhatsAppInboundAutoReplyProcessor(AgentConfigRepository agentConfigRepository,
@@ -66,7 +87,7 @@ public class WhatsAppInboundAutoReplyProcessor {
                                              OmnichannelChannelRepository channelRepository,
                                              OmnichannelMessageRepository messageRepository,
                                              WhatsAppProvider whatsAppProvider,
-                                             AiProvider aiProvider,
+                                             AiChatFailover aiChatFailover,
                                              OmnichannelMessagePersister messagePersister) {
         this.agentConfigRepository = agentConfigRepository;
         this.autoReplyRepository = autoReplyRepository;
@@ -74,7 +95,7 @@ public class WhatsAppInboundAutoReplyProcessor {
         this.channelRepository = channelRepository;
         this.messageRepository = messageRepository;
         this.whatsAppProvider = whatsAppProvider;
-        this.aiProvider = aiProvider;
+        this.aiChatFailover = aiChatFailover;
         this.messagePersister = messagePersister;
     }
 
@@ -120,7 +141,7 @@ public class WhatsAppInboundAutoReplyProcessor {
                 return;
             }
 
-            String reply = generateReply(agentConfig, conversationId, body);
+            String reply = generateReply(agentConfig, conversationId, inboundMessageId, body);
             if (reply == null) {
                 return;
             }
@@ -130,14 +151,16 @@ public class WhatsAppInboundAutoReplyProcessor {
                     channel.getExternalId(), conversation.getExternalPhone(), capped, UUID.randomUUID());
             Message persisted = messagePersister.persistPending(outbound);
 
+            long sendStart = System.nanoTime();
             try {
                 WhatsAppProvider.SendResult result = whatsAppProvider.send(
                         new WhatsAppProvider.SendRequest(companyId, channel.getId(),
                                 channel.getExternalId(), conversation.getExternalPhone(), capped,
                                 channel.getSecretsRef()));
                 messagePersister.markSent(persisted.getId(), conversationId, result.externalMessageId());
-                log.info("Auto-resposta enviada (company={}, conversation={}, inboundMessageId={})",
-                        companyId, conversationId, inboundMessageId);
+                log.info("Auto-resposta enviada (company={}, conversation={}, inboundMessageId={}, provider={}, elapsedMs={})",
+                        companyId, conversationId, inboundMessageId,
+                        whatsAppProvider.providerName(), elapsedMillis(sendStart));
             } catch (OmnichannelProviderException e) {
                 // Persistido em REQUIRES_NEW: sobrevive a falhas e não quebra o webhook.
                 messagePersister.markFailed(persisted.getId(), conversationId, e.getMessage());
@@ -149,33 +172,81 @@ public class WhatsAppInboundAutoReplyProcessor {
         }
     }
 
-    private String generateReply(AgentConfig agentConfig, UUID conversationId, String body) {
+    private String generateReply(AgentConfig agentConfig, UUID conversationId,
+                                 UUID inboundMessageId, String body) {
+        long generationStart = System.nanoTime();
         try {
-            List<AiProvider.ChatMessage> messages = new ArrayList<>();
-            messages.add(new AiProvider.ChatMessage("system", agentConfig.getSystemPrompt()));
+            List<AiProvider.ChatMessage> messages =
+                    buildContext(agentConfig, conversationId, inboundMessageId, body);
 
-            PageResponse<Message> history = messageRepository.findByConversation(conversationId, 0, HISTORY_LIMIT);
-            for (Message m : history.content()) {
-                if (m.getBody() == null || m.getBody().isBlank()) {
-                    continue;
-                }
-                String role = m.getDirection() == MessageDirection.INBOUND ? "user" : "assistant";
-                messages.add(new AiProvider.ChatMessage(role, m.getBody()));
-            }
-            messages.add(new AiProvider.ChatMessage("user", body));
+            AiProvider.GenerationParams params = new AiProvider.GenerationParams(
+                    agentConfig.getModel(), agentConfig.getTemperature(), agentConfig.getMaxTokens(), null);
+            AiProvider.ChatResult result = aiChatFailover.chat(new AiProvider.ChatRequest(
+                    agentConfig.getCompanyId(), null, messages).withParams(params));
 
-            String reply = aiProvider.chat(new AiProvider.ChatRequest(
-                    agentConfig.getCompanyId(), null, messages));
+            String reply = result != null ? result.content() : null;
             if (reply == null || reply.isBlank()) {
-                log.warn("IA retornou resposta vazia (company={})", agentConfig.getCompanyId());
+                log.warn("IA retornou resposta vazia (company={}, elapsedMs={})",
+                        agentConfig.getCompanyId(), elapsedMillis(generationStart));
                 return null;
             }
+            log.info("Auto-resposta gerada (company={}, conversation={}, model={}, elapsedMs={})",
+                    agentConfig.getCompanyId(), conversationId,
+                    params.model() != null ? params.model() : "default", elapsedMillis(generationStart));
             return reply.trim();
         } catch (AiProviderException e) {
-            log.error("Falha na geração da auto-resposta (company={}): {}",
-                    agentConfig.getCompanyId(), e.getMessage());
+            log.error("Falha na geração da auto-resposta (company={}, conversation={}, recuperável={}, elapsedMs={}): {}",
+                    agentConfig.getCompanyId(), conversationId, e.isRecoverable(),
+                    elapsedMillis(generationStart), safeMessage(e));
             return null;
         }
+    }
+
+    /**
+     * Monta o contexto da conversa REAL de WhatsApp (Conversation/Message — NUNCA
+     * AiConversation/AiMessage): system prompt exclusivamente do AgentConfig;
+     * histórico INBOUND→user / OUTBOUND→assistant; janela de 20 mensagens com
+     * poda consistente com o orçamento de tokens ({@code maxTokens}); mensagem
+     * atual sempre incluída (uma única vez — o inbound em curso é excluído do
+     * histórico e reaparece como a última mensagem {@code user}). Prioridade:
+     * system → mais recentes → atual.
+     */
+    private List<AiProvider.ChatMessage> buildContext(AgentConfig agentConfig, UUID conversationId,
+                                                      UUID inboundMessageId, String body) {
+        List<AiProvider.ChatMessage> messages = new ArrayList<>();
+        messages.add(new AiProvider.ChatMessage("system", agentConfig.getSystemPrompt()));
+
+        int outputBudget = agentConfig.getMaxTokens() != null && agentConfig.getMaxTokens() > 0
+                ? agentConfig.getMaxTokens() : DEFAULT_MAX_TOKENS;
+        int historyCharBudget = outputBudget * HISTORY_TOKEN_MULTIPLIER * CHARS_PER_TOKEN;
+
+        PageResponse<Message> history = messageRepository.findByConversation(conversationId, 0, HISTORY_LIMIT);
+        List<AiProvider.ChatMessage> kept = new ArrayList<>();
+        int usedChars = 0;
+        List<Message> content = history.content();
+        // Histórico vem em ordem cronológica; percorre dos mais recentes aos mais antigos.
+        for (int i = content.size() - 1; i >= 0; i--) {
+            Message m = content.get(i);
+            if (m.getBody() == null || m.getBody().isBlank()) {
+                continue;
+            }
+            // A mensagem entrante em processamento é a "mensagem atual": entra uma
+            // única vez (como última mensagem user), evitando duplicação no prompt.
+            if (inboundMessageId != null && inboundMessageId.equals(m.getId())) {
+                continue;
+            }
+            String role = m.getDirection() == MessageDirection.INBOUND ? "user" : "assistant";
+            int estimated = m.getBody().length() + role.length();
+            // Sempre mantém pelo menos a mensagem mais recente; depois obedece ao orçamento.
+            if (usedChars + estimated > historyCharBudget && !kept.isEmpty()) {
+                break;
+            }
+            kept.add(0, new AiProvider.ChatMessage(role, m.getBody()));
+            usedChars += estimated;
+        }
+        messages.addAll(kept);
+        messages.add(new AiProvider.ChatMessage("user", body));
+        return messages;
     }
 
     private boolean isWithinCooldown(AgentConfig agentConfig, UUID companyId, UUID conversationId) {
@@ -189,5 +260,14 @@ public class WhatsAppInboundAutoReplyProcessor {
 
     private String capLength(String value, int maxChars) {
         return value.length() <= maxChars ? value : value.substring(0, maxChars);
+    }
+
+    private static long elapsedMillis(long startNanos) {
+        return (System.nanoTime() - startNanos) / 1_000_000L;
+    }
+
+    private static String safeMessage(Throwable t) {
+        String msg = t.getMessage();
+        return msg == null ? t.getClass().getSimpleName() : msg;
     }
 }

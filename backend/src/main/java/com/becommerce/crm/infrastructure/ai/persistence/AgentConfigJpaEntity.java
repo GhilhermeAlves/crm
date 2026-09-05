@@ -27,6 +27,15 @@ public class AgentConfigJpaEntity {
     @Column(name = "system_prompt")
     private String systemPrompt;
 
+    @Column(name = "model")
+    private String model;
+
+    @Column(name = "temperature")
+    private Double temperature;
+
+    @Column(name = "max_tokens")
+    private Integer maxTokens;
+
     @Column(name = "cooldown_minutes")
     private int cooldownMinutes;
 
@@ -49,6 +58,12 @@ public class AgentConfigJpaEntity {
     public void setAllowAutoReply(boolean allowAutoReply) { this.allowAutoReply = allowAutoReply; }
     public String getSystemPrompt() { return systemPrompt; }
     public void setSystemPrompt(String systemPrompt) { this.systemPrompt = systemPrompt; }
+    public String getModel() { return model; }
+    public void setModel(String model) { this.model = model; }
+    public Double getTemperature() { return temperature; }
+    public void setTemperature(Double temperature) { this.temperature = temperature; }
+    public Integer getMaxTokens() { return maxTokens; }
+    public void setMaxTokens(Integer maxTokens) { this.maxTokens = maxTokens; }
     public int getCooldownMinutes() { return cooldownMinutes; }
     public void setCooldownMinutes(int cooldownMinutes) { this.cooldownMinutes = cooldownMinutes; }
     public int getMaxChars() { return maxChars; }

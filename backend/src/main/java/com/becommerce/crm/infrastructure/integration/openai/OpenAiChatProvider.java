@@ -7,18 +7,28 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Adapter de produção do OpenAI (Chat Completions) para o assistente de IA
  * (AI-01). Ativo quando {@code app.ai.provider=openai} (default).
  *
  * <p>A API key vem de config/cofre ({@code app.ai.api-key}); nunca é logada nem
- * persistida. Reutiliza o mesmo endpoint/config do provider de sugestão.
+ * persistida. Reutiliza o mesmo endpoint/config do provider de sugestão.</p>
+ *
+ * <p>Sprint 2 (IA autônoma): aceita {@code AiProvider.GenerationParams} por
+ * request (model/temperature/maxTokens/timeout). Timeout CENTRALIZADO aqui
+ * (config {@code app.ai.timeout}), nunca espalhado pelo processador; quando
+ * ocorre, vira {@code AiProviderException} RECUPERÁVEL para o failover. Erros
+ * HTTP 429/408/425/5xx e de rede/timeout são recuperáveis; demais 4xx (config/
+ * request inválidos) são NÃO recuperáveis (não provocam fallback indevido).</p>
  */
 @Service
 @ConditionalOnProperty(name = "app.ai.provider", havingValue = "openai")
@@ -27,15 +37,18 @@ public class OpenAiChatProvider implements AiProvider {
     private final WebClient webClient;
     private final String apiKey;
     private final String model;
+    private final Duration timeout;
 
     public OpenAiChatProvider(
             WebClient.Builder webClientBuilder,
             @Value("${app.ai.openai.base-url:https://api.openai.com}") String baseUrl,
             @Value("${app.ai.api-key:}") String apiKey,
-            @Value("${app.ai.model:gpt-4o-mini}") String model) {
+            @Value("${app.ai.model:gpt-4o-mini}") String model,
+            @Value("${app.ai.timeout:30s}") Duration timeout) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
         this.apiKey = apiKey;
         this.model = model;
+        this.timeout = timeout;
     }
 
     @Override
@@ -49,12 +62,14 @@ public class OpenAiChatProvider implements AiProvider {
             messages.add(toApiMessage(line));
         }
 
+        GenerationParams params = request.params() != null ? request.params() : GenerationParams.DEFAULT;
+
         try {
             Map<String, Object> bodyMap = new java.util.HashMap<>();
-            bodyMap.put("model", model);
+            bodyMap.put("model", params.model() != null ? params.model() : model);
             bodyMap.put("messages", messages);
-            bodyMap.put("max_tokens", 600);
-            bodyMap.put("temperature", 0.5);
+            bodyMap.put("max_tokens", params.maxTokens() != null ? params.maxTokens() : 600);
+            bodyMap.put("temperature", params.temperature() != null ? params.temperature() : 0.5);
             if (request.tools() != null && !request.tools().isEmpty()) {
                 bodyMap.put("tools", request.tools().stream()
                         .map(t -> Map.of("type", "function",
@@ -70,16 +85,14 @@ public class OpenAiChatProvider implements AiProvider {
                     .bodyValue(bodyMap)
                     .retrieve()
                     .bodyToMono(Map.class)
+                    .timeout(resolveTimeout(request))
                     .block();
 
             return extractChatResult(body);
         } catch (AiProviderException e) {
             throw e;
-        } catch (WebClientResponseException e) {
-            throw new AiProviderException("Falha ao consultar o OpenAI: " + e.getStatusCode()
-                    + " - " + truncate(e.getResponseBodyAsString()), e);
         } catch (RuntimeException e) {
-            throw new AiProviderException("Falha ao consultar o OpenAI: " + e.getMessage(), e);
+            throw toAiProviderException(e);
         }
     }
 
@@ -116,7 +129,7 @@ public class OpenAiChatProvider implements AiProvider {
         }
     }
 
-    private String truncate(String value) {
+    private static String truncate(String value) {
         if (value == null) {
             return "";
         }
@@ -140,6 +153,8 @@ public class OpenAiChatProvider implements AiProvider {
             throw new AiProviderException("Chave de API do OpenAI não configurada (app.ai.api-key).");
         }
 
+        GenerationParams params = request.params() != null ? request.params() : GenerationParams.DEFAULT;
+
         List<Map<String, String>> messages = new ArrayList<>();
         for (ChatMessage line : request.messages()) {
             messages.add(Map.of("role", mapRole(line.role()), "content", line.content()));
@@ -147,10 +162,10 @@ public class OpenAiChatProvider implements AiProvider {
 
         try {
             Map<String, Object> bodyMap = new java.util.HashMap<>();
-            bodyMap.put("model", model);
+            bodyMap.put("model", params.model() != null ? params.model() : model);
             bodyMap.put("messages", messages);
-            bodyMap.put("max_tokens", 600);
-            bodyMap.put("temperature", 0.2);
+            bodyMap.put("max_tokens", params.maxTokens() != null ? params.maxTokens() : 600);
+            bodyMap.put("temperature", params.temperature() != null ? params.temperature() : 0.2);
             bodyMap.put("response_format", Map.of("type", "json_object"));
 
             Map<?, ?> body = webClient.post()
@@ -160,6 +175,7 @@ public class OpenAiChatProvider implements AiProvider {
                     .bodyValue(bodyMap)
                     .retrieve()
                     .bodyToMono(Map.class)
+                    .timeout(resolveTimeout(request))
                     .block();
 
             String content = extractContent(body);
@@ -170,8 +186,47 @@ public class OpenAiChatProvider implements AiProvider {
         } catch (AiProviderException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new AiProviderException("Falha ao consultar o OpenAI: " + e.getMessage(), e);
+            throw toAiProviderException(e);
         }
+    }
+
+    /**
+     * Timeout centralizado: override do request (se o chamador tiver configurado)
+     * senão o valor de infra {@code app.ai.timeout} deste provider.
+     */
+    private Duration resolveTimeout(ChatRequest request) {
+        Duration override = request.params() != null ? request.params().timeout() : null;
+        return override != null ? override : timeout;
+    }
+
+    /**
+     * Classifica a exceção como RECUPERÁVEL (candidata a fallback) ou não.
+     *
+     * <p>Percorre a cadeia de causas: {@code block()} do WebClient re-embrulha
+     * exceções checadas (ex.: {@link TimeoutException} do {@code Mono.timeout})
+     * — assim o timeout continua sendo detectado e tratado como recuperável.</p>
+     */
+    static boolean isRecoverable(Throwable t) {
+        boolean sawTransport = false;
+        for (Throwable cur = t; cur != null; cur = cur.getCause()) {
+            if (cur instanceof WebClientResponseException w) {
+                int status = w.getStatusCode().value();
+                return status == 408 || status == 425 || status == 429 || status >= 500;
+            }
+            if (cur instanceof WebClientRequestException || cur instanceof TimeoutException
+                    || cur instanceof java.net.SocketTimeoutException) {
+                sawTransport = true;
+            }
+        }
+        return sawTransport;
+    }
+
+    private static AiProviderException toAiProviderException(RuntimeException e) {
+        String detail = e instanceof WebClientResponseException w
+                ? w.getStatusCode() + " - " + truncate(w.getResponseBodyAsString())
+                : e.getMessage();
+        return new AiProviderException("Falha ao consultar o OpenAI: " + detail,
+                e, isRecoverable(e));
     }
 
     private String extractContent(Map<?, ?> body) {

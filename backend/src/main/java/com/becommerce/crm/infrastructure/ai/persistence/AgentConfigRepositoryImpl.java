@@ -33,6 +33,9 @@ public class AgentConfigRepositoryImpl implements AgentConfigRepository {
         e.setAiEnabled(c.isAiEnabled());
         e.setAllowAutoReply(c.isAllowAutoReply());
         e.setSystemPrompt(c.getSystemPrompt());
+        e.setModel(c.getModel());
+        e.setTemperature(c.getTemperature());
+        e.setMaxTokens(c.getMaxTokens());
         e.setCooldownMinutes(c.getCooldownMinutes());
         e.setMaxChars(c.getMaxChars());
         e.setCreatedAt(c.getCreatedAt());
@@ -42,7 +45,8 @@ public class AgentConfigRepositoryImpl implements AgentConfigRepository {
 
     private static AgentConfig toDomain(AgentConfigJpaEntity e) {
         return AgentConfig.reconstitute(e.getId(), e.getCompanyId(), e.isAiEnabled(),
-                e.isAllowAutoReply(), e.getSystemPrompt(), e.getCooldownMinutes(),
-                e.getMaxChars(), e.getCreatedAt(), e.getUpdatedAt());
+                e.isAllowAutoReply(), e.getSystemPrompt(), e.getModel(), e.getTemperature(),
+                e.getMaxTokens(), e.getCooldownMinutes(), e.getMaxChars(), e.getCreatedAt(),
+                e.getUpdatedAt());
     }
 }

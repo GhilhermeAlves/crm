@@ -1,5 +1,6 @@
 package com.becommerce.crm.application.ai.port.output;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,12 +57,40 @@ public interface AiProvider {
         }
     }
 
-    record ChatRequest(UUID companyId, UUID userId, List<ChatMessage> messages,
-                       List<ToolDefinition> tools) {
+    /**
+     * Parâmetros de geração por request (Sprint 2 — IA autônoma). Tudo OPCIONAL:
+     * quando nulo, o provider usa o default próprio (ex.: OpenAI usa
+     * {@code app.ai.model}=gpt-4o-mini, {@code max_tokens}=600, {@code temperature}=0.5
+     * e timeout de {@code app.ai.timeout}). O {@code timeout} é um override do
+     * timeout centralizado do provider (config de infra), nunca espalhado pelo
+     * chamador; se nulo, vale o timeout do provider.
+     */
+    record GenerationParams(String model, Double temperature, Integer maxTokens, Duration timeout) {
 
-        /** Construtor de compatibilidade (AI-01/02): sem Tools. */
+        GenerationParams() {
+            this(null, null, null, null);
+        }
+
+        public static final GenerationParams DEFAULT = new GenerationParams();
+    }
+
+    record ChatRequest(UUID companyId, UUID userId, List<ChatMessage> messages,
+                       List<ToolDefinition> tools, GenerationParams params) {
+
+        /** Construtor de compatibilidade (AI-01/02): sem Tools e parâmetros default. */
         public ChatRequest(UUID companyId, UUID userId, List<ChatMessage> messages) {
-            this(companyId, userId, messages, List.of());
+            this(companyId, userId, messages, List.of(), GenerationParams.DEFAULT);
+        }
+
+        /** Construtor com Tools e parâmetros de geração default (AI-03). */
+        public ChatRequest(UUID companyId, UUID userId, List<ChatMessage> messages,
+                           List<ToolDefinition> tools) {
+            this(companyId, userId, messages, tools, GenerationParams.DEFAULT);
+        }
+
+        /** Cópia do request com parâmetros de geração (modelo/temperatura/tokens). */
+        public ChatRequest withParams(GenerationParams params) {
+            return new ChatRequest(companyId, userId, messages, tools, params);
         }
     }
 
