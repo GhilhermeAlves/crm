@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import type { Contact } from "../types/contact.types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,8 +22,8 @@ const createContactSchema = z.object({
   firstName: z.string().min(1, "Nome é obrigatório").max(100),
   lastName: z.string().max(100).optional(),
   email: z.string().email("E-mail inválido").max(255).optional().or(z.literal("")),
-  phone: z.string().max(30).optional(),
-  notes: z.string().max(2000).optional(),
+  phone: z.string().max(20).optional(),
+  notes: z.string().max(500).optional(),
 });
 
 type FormValues = z.infer<typeof createContactSchema>;
@@ -30,6 +32,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isLoading?: boolean;
+  contact?: Contact | null;
   onSubmit: (values: {
     firstName: string;
     lastName?: string;
@@ -39,17 +42,36 @@ type Props = {
   }) => void;
 };
 
-export function CreateContactDialog({ open, onOpenChange, isLoading, onSubmit }: Props) {
+const emptyValues: FormValues = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  notes: "",
+};
+
+export function CreateContactDialog({ open, onOpenChange, isLoading, contact, onSubmit }: Props) {
+  const isEdit = !!contact;
   const form = useForm<FormValues>({
     resolver: zodResolver(createContactSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      notes: "",
-    },
+    defaultValues: emptyValues,
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset(
+        contact
+          ? {
+              firstName: contact.firstName ?? "",
+              lastName: contact.lastName ?? "",
+              email: contact.email ?? "",
+              phone: contact.phone ?? "",
+              notes: contact.notes ?? "",
+            }
+          : emptyValues,
+      );
+    }
+  }, [open, contact, form]);
 
   const handleSubmit = (values: FormValues) => {
     onSubmit({
@@ -59,14 +81,13 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, onSubmit }:
       phone: values.phone || undefined,
       notes: values.notes || undefined,
     });
-    form.reset();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Novo contato</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar contato" : "Novo contato"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -142,7 +163,7 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, onSubmit }:
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Salvando…" : "Salvar"}
+                {isLoading ? "Salvando…" : isEdit ? "Salvar alterações" : "Salvar"}
               </Button>
             </div>
           </form>
