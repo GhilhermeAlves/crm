@@ -30,6 +30,9 @@ public class OmnichannelConversationJpaEntity {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "handoff_mode")
+    private String handoffMode;
+
     @Column(name = "last_message_at")
     private LocalDateTime lastMessageAt;
 
@@ -54,6 +57,8 @@ public class OmnichannelConversationJpaEntity {
     public void setExternalPhone(String externalPhone) { this.externalPhone = externalPhone; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getHandoffMode() { return handoffMode; }
+    public void setHandoffMode(String handoffMode) { this.handoffMode = handoffMode; }
     public LocalDateTime getLastMessageAt() { return lastMessageAt; }
     public void setLastMessageAt(LocalDateTime lastMessageAt) { this.lastMessageAt = lastMessageAt; }
     public int getUnreadCount() { return unreadCount; }

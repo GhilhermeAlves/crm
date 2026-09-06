@@ -1,6 +1,9 @@
 package com.becommerce.crm.application.omnichannel.service;
 
 import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.domain.audit.AuditAction;
+import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.application.omnichannel.dto.ConversationResponse;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
@@ -11,6 +14,7 @@ import com.becommerce.crm.domain.omnichannel.ChannelStatus;
 import com.becommerce.crm.domain.omnichannel.ChannelType;
 import com.becommerce.crm.domain.omnichannel.ChannelProvider;
 import com.becommerce.crm.domain.omnichannel.Conversation;
+import com.becommerce.crm.domain.omnichannel.ConversationMode;
 import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.MessageDirection;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
@@ -30,7 +34,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,6 +49,7 @@ class OmnichannelInboxServiceTest {
     @Mock OmnichannelChannelRepository channelRepository;
     @Mock WhatsAppProvider whatsAppProvider;
     @Mock OmnichannelMessagePersister messagePersister;
+    @Mock TenantAuditRecorder auditor;
 
     @InjectMocks OmnichannelInboxService service;
 
@@ -139,5 +144,62 @@ class OmnichannelInboxServiceTest {
 
         service.markRead(companyId, c.getId());
         assertEquals(0, c.getUnreadCount());
+    }
+
+    @Test
+    void takeover_shouldSwitchConversationToHumanMode() {
+        Conversation c = conversation();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(conversationRepository.save(any(Conversation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ConversationResponse response = service.takeover(companyId, c.getId());
+
+        assertEquals(ConversationMode.HUMAN, c.getMode());
+        assertEquals(ConversationMode.HUMAN, response.mode());
+        verify(conversationRepository).save(c);
+        verify(auditor).record(eq(companyId), eq(AuditAction.UPDATE), eq(AuditModule.OMNICHANNEL),
+                eq("Conversation"), eq(c.getId().toString()), any(), isNull(), isNull());
+    }
+
+    @Test
+    void takeover_whenConversationFromOtherCompany_shouldThrow() {
+        Conversation other = Conversation.reconstitute(UUID.randomUUID(), UUID.randomUUID(), channelId, null,
+                "+5511999998888", com.becommerce.crm.domain.omnichannel.ConversationStatus.OPEN,
+                null, 0, java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+        when(conversationRepository.findById(other.getId())).thenReturn(Optional.of(other));
+
+        assertThrows(OmnichannelNotFoundException.class,
+                () -> service.takeover(companyId, other.getId()));
+        verify(conversationRepository, never()).save(any());
+        verify(auditor, never()).record(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void release_shouldRestoreAutomaticMode() {
+        Conversation c = conversation();
+        c.takeover();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(conversationRepository.save(any(Conversation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ConversationResponse response = service.release(companyId, c.getId());
+
+        assertEquals(ConversationMode.AUTOMATIC, c.getMode());
+        assertEquals(ConversationMode.AUTOMATIC, response.mode());
+        verify(conversationRepository).save(c);
+        verify(auditor).record(eq(companyId), eq(AuditAction.UPDATE), eq(AuditModule.OMNICHANNEL),
+                eq("Conversation"), eq(c.getId().toString()), any(), isNull(), isNull());
+    }
+
+    @Test
+    void takeover_whenAuditFails_shouldNotFailOperation() {
+        Conversation c = conversation();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(conversationRepository.save(any(Conversation.class))).thenAnswer(inv -> inv.getArgument(0));
+        doThrow(new RuntimeException("audit down")).when(auditor).record(any(), any(), any(), any(), any(), any(), any(), any());
+
+        ConversationResponse response = service.takeover(companyId, c.getId());
+
+        assertEquals(ConversationMode.HUMAN, response.mode());
+        verify(conversationRepository).save(c);
     }
 }

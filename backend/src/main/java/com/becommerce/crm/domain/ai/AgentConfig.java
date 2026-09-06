@@ -69,6 +69,18 @@ public class AgentConfig {
                 temperature, maxTokens, cooldownMinutes, maxChars, createdAt, updatedAt);
     }
 
+    /**
+     * Retorna uma nova instância com os parâmetros atualizados, preservando
+     * {@code id}, {@code companyId} e {@code createdAt} e renovando
+     * {@code updatedAt} (Sprint 3 - AgentConfig Administrativo).
+     */
+    public AgentConfig withSettings(boolean aiEnabled, boolean allowAutoReply, String systemPrompt,
+                                    String model, Double temperature, Integer maxTokens,
+                                    int cooldownMinutes, int maxChars) {
+        return new AgentConfig(id, companyId, aiEnabled, allowAutoReply, systemPrompt, model,
+                temperature, maxTokens, cooldownMinutes, maxChars, createdAt, LocalDateTime.now());
+    }
+
     /** Auto-resposta habilitada apenas se {@code aiEnabled} E {@code allowAutoReply}. */
     public boolean canAutoReply() {
         return aiEnabled && allowAutoReply;

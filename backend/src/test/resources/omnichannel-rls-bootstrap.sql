@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS omnichannel_conversations (
     contact_id      UUID,
     external_phone  VARCHAR(40) NOT NULL,
     status          VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+    handoff_mode    VARCHAR(20) NOT NULL DEFAULT 'AUTOMATIC',
     last_message_at TIMESTAMP,
     unread_count    INT NOT NULL DEFAULT 0,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -1,5 +1,6 @@
 package com.becommerce.crm.application.omnichannel.dto;
 
+import com.becommerce.crm.domain.omnichannel.ConversationMode;
 import com.becommerce.crm.domain.omnichannel.ConversationStatus;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ public record ConversationResponse(
         UUID contactId,
         String externalPhone,
         ConversationStatus status,
+        ConversationMode mode,
         LocalDateTime lastMessageAt,
         String lastMessage,
         int unreadCount,

@@ -111,6 +111,36 @@ export type AiActionStatus =
   "PROPOSED" | "CONFIRMED" | "EXECUTING" | "EXECUTED" | "FAILED" | "CANCELLED";
 
 /**
+ * Configuração do agente de IA (Sprint 3 - AgentConfig Administrativo).
+ * Espelha AgentConfigResponse do backend. {@code id} é null quando a empresa
+ * ainda não configurou nada (safe defaults exibidos na tela de Admin).
+ */
+export type AgentConfig = {
+  id: string | null;
+  aiEnabled: boolean;
+  allowAutoReply: boolean;
+  systemPrompt: string | null;
+  model: string | null;
+  temperature: number | null;
+  maxTokens: number | null;
+  cooldownMinutes: number;
+  maxChars: number;
+  updatedAt: string | null;
+};
+
+/** Payload de PUT /api/v1/ai/agent-config (Sprint 3-A). */
+export type AgentConfigRequest = {
+  aiEnabled: boolean;
+  allowAutoReply: boolean;
+  systemPrompt: string | null;
+  model: string | null;
+  temperature: number | null;
+  maxTokens: number | null;
+  cooldownMinutes: number;
+  maxChars: number;
+};
+
+/**
  * Proposta de escrita do assistente (AI-05). Espelha AiActionResponse do
  * backend. Usada no cartao de confirmacao e na reconstrucao de historico.
  */

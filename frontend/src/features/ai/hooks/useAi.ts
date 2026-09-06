@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import { aiErrorMessage, AiService } from "../services/ai.service";
 import type {
+  AgentConfigRequest,
   AiAction,
   AiAnalysisRequest,
   AiAnalysisResponse,
@@ -113,7 +114,35 @@ export function useAiPermissions() {
   return {
     canSuggest: can("ai:suggest"),
     canChat: can("ai:chat"),
+    canManageAgentConfig: can("ai:agent-config"),
   };
+}
+
+/**
+ * Configuração do agente de IA (GET /api/v1/ai/agent-config) - Sprint 3-A.
+ * Desabilitada para quem não tem a permissão {@code ai:agent-config}.
+ */
+export function useAgentConfig(enabled: boolean) {
+  return useQuery({
+    queryKey: ["ai", "agent-config"],
+    queryFn: () => AiService.getAgentConfig(),
+    enabled,
+  });
+}
+
+/** Salva a configuração do agente de IA (PUT /api/v1/ai/agent-config) - Sprint 3-A. */
+export function useUpdateAgentConfig() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: AgentConfigRequest) => AiService.updateAgentConfig(request),
+    onError: (error: Error) => {
+      toast.error(aiErrorMessage(error));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai", "agent-config"] });
+      toast.success("Configuração do agente de IA salva.");
+    },
+  });
 }
 
 export type { AiChatRequest, AiChatResponse, AiAnalysisRequest, AiAnalysisResponse };

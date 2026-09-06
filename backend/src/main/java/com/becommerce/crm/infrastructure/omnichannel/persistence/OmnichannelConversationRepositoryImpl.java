@@ -3,6 +3,7 @@ package com.becommerce.crm.infrastructure.omnichannel.persistence;
 import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.domain.omnichannel.Conversation;
+import com.becommerce.crm.domain.omnichannel.ConversationMode;
 import com.becommerce.crm.domain.omnichannel.ConversationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -58,6 +59,7 @@ public class OmnichannelConversationRepositoryImpl implements OmnichannelConvers
         e.setContactId(c.getContactId());
         e.setExternalPhone(c.getExternalPhone());
         e.setStatus(c.getStatus().name());
+        e.setHandoffMode(c.getMode().name());
         e.setLastMessageAt(c.getLastMessageAt());
         e.setUnreadCount(c.getUnreadCount());
         e.setCreatedAt(c.getCreatedAt());
@@ -67,7 +69,8 @@ public class OmnichannelConversationRepositoryImpl implements OmnichannelConvers
 
     private static Conversation toDomain(OmnichannelConversationJpaEntity e) {
         return Conversation.reconstitute(e.getId(), e.getCompanyId(), e.getChannelId(), e.getContactId(),
-                e.getExternalPhone(), ConversationStatus.valueOf(e.getStatus()), e.getLastMessageAt(),
+                e.getExternalPhone(), ConversationStatus.valueOf(e.getStatus()),
+                ConversationMode.valueOf(e.getHandoffMode()), e.getLastMessageAt(),
                 e.getUnreadCount(), e.getCreatedAt(), e.getUpdatedAt());
     }
 }

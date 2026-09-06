@@ -287,6 +287,74 @@ class OmnichannelIsolationIT {
         assertEquals(1, countMessages(), "Webhook duplicado não pode gerar mensagem duplicada");
     }
 
+    // ---------------------- Human takeover (Sprint 3) ----------------------
+
+    @Test
+    void conversation_shouldDefaultToAutomaticMode() throws SQLException {
+        TenantContext.setCompanyId(TENANT_A);
+        try (Connection conn = tenantAwareDataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT handoff_mode FROM omnichannel_conversations WHERE id = ?")) {
+            ps.setObject(1, CONV_A);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                assertEquals("AUTOMATIC", rs.getString(1), "Conversa nova deve nascer em modo AUTOMATIC");
+            }
+        }
+    }
+
+    @Test
+    void takeover_shouldPersistHumanModeForOwnConversation() throws SQLException {
+        TenantContext.setCompanyId(TENANT_A);
+        try (Connection conn = tenantAwareDataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE omnichannel_conversations SET handoff_mode = 'HUMAN' WHERE id = ?")) {
+            ps.setObject(1, CONV_A);
+            assertEquals(1, ps.executeUpdate(), "Takeover da própria conversa deve afetar 1 linha");
+        }
+        TenantContext.setCompanyId(TENANT_A);
+        try (Connection conn = tenantAwareDataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT handoff_mode FROM omnichannel_conversations WHERE id = ?")) {
+            ps.setObject(1, CONV_A);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                assertEquals("HUMAN", rs.getString(1), "Takeover deve persistir o modo HUMAN");
+            }
+        }
+        TenantContext.setCompanyId(TENANT_A);
+        try (Connection conn = tenantAwareDataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE omnichannel_conversations SET handoff_mode = 'AUTOMATIC' WHERE id = ?")) {
+            ps.setObject(1, CONV_A);
+            ps.executeUpdate();
+        }
+    }
+
+    @Test
+    void crossTenantTakeover_shouldBeBlockedByRls() throws SQLException {
+        TenantContext.setCompanyId(TENANT_B);
+        try (Connection conn = tenantAwareDataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE omnichannel_conversations SET handoff_mode = 'HUMAN' WHERE id = ?")) {
+            ps.setObject(1, CONV_A);
+            assertEquals(0, ps.executeUpdate(), "A não pode mudar o modo de uma conversa de B (RLS)");
+        }
+    }
+
+    @Test
+    void invalidHandoffMode_shouldBeRejectedByCheckConstraint() {
+        TenantContext.setCompanyId(TENANT_A);
+        assertThrows(SQLException.class, () -> {
+            try (Connection conn = tenantAwareDataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                         "UPDATE omnichannel_conversations SET handoff_mode = 'ROBOT' WHERE id = ?")) {
+                ps.setObject(1, CONV_A);
+                ps.executeUpdate();
+            }
+        }, "Modo de atendimento fora do enum deve ser rejeitado pelo CHECK");
+    }
+
     // ---------------------- helpers ---------------------------------------
 
     private int countChannels() throws SQLException {

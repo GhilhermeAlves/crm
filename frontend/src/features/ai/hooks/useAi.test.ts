@@ -11,6 +11,8 @@ import {
   useAiConversationActions,
   useAiConfirmAction,
   useAiCancelAction,
+  useAgentConfig,
+  useUpdateAgentConfig,
 } from "./useAi";
 
 const {
@@ -22,7 +24,10 @@ const {
   listActionsMock,
   confirmMock,
   cancelMock,
+  getAgentConfigMock,
+  updateAgentConfigMock,
   toastErrorMock,
+  toastSuccessMock,
   invalidateMock,
 } = vi.hoisted(() => ({
   canMock: vi.fn(),
@@ -33,7 +38,10 @@ const {
   listActionsMock: vi.fn(),
   confirmMock: vi.fn(),
   cancelMock: vi.fn(),
+  getAgentConfigMock: vi.fn(),
+  updateAgentConfigMock: vi.fn(),
   toastErrorMock: vi.fn(),
+  toastSuccessMock: vi.fn(),
   invalidateMock: vi.fn(),
 }));
 
@@ -51,12 +59,16 @@ vi.mock("../services/ai.service", () => ({
     listConversationActions: listActionsMock,
     confirmAction: confirmMock,
     cancelAction: cancelMock,
+    getAgentConfig: getAgentConfigMock,
+    updateAgentConfig: updateAgentConfigMock,
   },
   aiErrorMessage: (error: unknown) => "Mensagem amigável.",
   aiAnalysisErrorMessage: (error: unknown) => "Falha na análise.",
 }));
 
-vi.mock("sonner", () => ({ toast: { error: toastErrorMock } }));
+vi.mock("sonner", () => ({
+  toast: { error: toastErrorMock, success: toastSuccessMock },
+}));
 
 const mockQueryClient = vi.hoisted(() => ({
   invalidateQueries: invalidateMock,
@@ -96,6 +108,102 @@ describe("useAiPermissions (AI-04 §21)", () => {
     canMock.mockReturnValue(true);
     const { result } = renderHookWith(() => useAiPermissions());
     expect(result.current.canSuggest).toBe(true);
+  });
+
+  it("expõe canManageAgentConfig conforme a permissão ai:agent-config", () => {
+    canMock.mockReturnValue(true);
+    const { result } = renderHookWith(() => useAiPermissions());
+    expect(result.current.canManageAgentConfig).toBe(true);
+
+    canMock.mockReturnValue(false);
+    const { result: denied } = renderHookWith(() => useAiPermissions());
+    expect(denied.current.canManageAgentConfig).toBe(false);
+  });
+});
+
+describe("useAgentConfig / useUpdateAgentConfig (Sprint 3-A)", () => {
+  beforeEach(() => {
+    getAgentConfigMock.mockReset();
+    updateAgentConfigMock.mockReset();
+    invalidateMock.mockReset();
+    toastErrorMock.mockReset();
+    toastSuccessMock.mockReset();
+  });
+
+  it("busca a configuração quando habilitado", async () => {
+    getAgentConfigMock.mockResolvedValue({
+      id: null,
+      aiEnabled: false,
+      allowAutoReply: false,
+      systemPrompt: null,
+      model: null,
+      temperature: null,
+      maxTokens: null,
+      cooldownMinutes: 60,
+      maxChars: 1000,
+      updatedAt: null,
+    });
+    const { result } = renderHookWith(() => useAgentConfig(true));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(getAgentConfigMock).toHaveBeenCalled();
+    expect(result.current.data?.cooldownMinutes).toBe(60);
+  });
+
+  it("não busca quando desabilitado", () => {
+    renderHookWith(() => useAgentConfig(false));
+    expect(getAgentConfigMock).not.toHaveBeenCalled();
+  });
+
+  it("salva, invalida a query e exibe toast de sucesso", async () => {
+    updateAgentConfigMock.mockResolvedValue({
+      id: "cfg-1",
+      aiEnabled: true,
+      allowAutoReply: true,
+      systemPrompt: "prompt",
+      model: "gpt-4o",
+      temperature: 0.7,
+      maxTokens: 300,
+      cooldownMinutes: 45,
+      maxChars: 900,
+      updatedAt: "2026-09-05T12:00:00",
+    });
+    const request = {
+      aiEnabled: true,
+      allowAutoReply: true,
+      systemPrompt: "prompt",
+      model: "gpt-4o",
+      temperature: 0.7,
+      maxTokens: 300,
+      cooldownMinutes: 45,
+      maxChars: 900,
+    };
+    const { result } = renderHookWith(() => useUpdateAgentConfig());
+
+    result.current.mutate(request);
+
+    await waitFor(() => expect(updateAgentConfigMock).toHaveBeenCalledWith(request));
+    await waitFor(() =>
+      expect(invalidateMock).toHaveBeenCalledWith({ queryKey: ["ai", "agent-config"] }),
+    );
+    expect(toastSuccessMock).toHaveBeenCalled();
+  });
+
+  it("exibe erro amigável em caso de falha", async () => {
+    updateAgentConfigMock.mockRejectedValue(new Error("boom"));
+    const { result } = renderHookWith(() => useUpdateAgentConfig());
+
+    result.current.mutate({
+      aiEnabled: false,
+      allowAutoReply: false,
+      systemPrompt: null,
+      model: null,
+      temperature: null,
+      maxTokens: null,
+      cooldownMinutes: 60,
+      maxChars: 1000,
+    });
+
+    await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith("Mensagem amigável."));
   });
 });
 

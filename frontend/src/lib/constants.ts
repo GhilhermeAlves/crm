@@ -28,6 +28,7 @@ export const ROUTES = {
   REPORTS: "/reports",
   SETTINGS_USERS: "/settings/users",
   SETTINGS_ROLES: "/settings/roles",
+  SETTINGS_AGENT_CONFIG: "/settings/agent-config",
   AUDIT: "/audit",
   TASKS: "/tasks",
   ACTIVITIES: "/activities",

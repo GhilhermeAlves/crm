@@ -68,9 +68,11 @@ public class RoleSeedService {
             "notification:create", "notification:read", "notification:update", "notification:delete",
             "ai:suggest",
             "ai:chat",
+            "ai:agent-config",
             "dashboard:operational",
             "omnichannel:read", "omnichannel:create", "omnichannel:update",
-            "omnichannel:delete", "omnichannel:send",
+            "omnichannel:delete", "omnichannel:send", "omnichannel:takeover",
+            "omnichannel:followup", "omnichannel:followup:read",
             "contact:page:view", "contact:field:email:update", "contact:field:phone:update",
             "security:page:view"
         ));
@@ -95,7 +97,8 @@ public class RoleSeedService {
             "ai:suggest",
             "ai:chat",
             "dashboard:operational",
-            "omnichannel:read", "omnichannel:update", "omnichannel:send",
+            "omnichannel:read", "omnichannel:update", "omnichannel:send", "omnichannel:takeover",
+            "omnichannel:followup", "omnichannel:followup:read",
             "contact:page:view", "contact:field:email:update", "contact:field:phone:update"
         ));
         rolePermissions.put(RoleName.AGENT, List.of(
@@ -114,7 +117,8 @@ public class RoleSeedService {
             "ai:suggest",
             "ai:chat",
             "dashboard:operational",
-            "omnichannel:read", "omnichannel:send",
+            "omnichannel:read", "omnichannel:send", "omnichannel:takeover",
+            "omnichannel:followup", "omnichannel:followup:read",
             "contact:page:view", "contact:field:email:update", "contact:field:phone:update"
         ));
         rolePermissions.put(RoleName.VIEWER, List.of(
@@ -133,6 +137,7 @@ public class RoleSeedService {
             "ai:chat",
             "dashboard:operational",
             "omnichannel:read",
+            "omnichannel:followup:read",
             "contact:page:view"
         ));
 

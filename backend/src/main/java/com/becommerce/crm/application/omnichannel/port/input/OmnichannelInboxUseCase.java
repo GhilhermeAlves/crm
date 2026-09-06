@@ -17,4 +17,10 @@ public interface OmnichannelInboxUseCase {
     MessageResponse send(UUID companyId, UUID conversationId, String body);
 
     void markRead(UUID companyId, UUID conversationId);
+
+    /** Um humano assume a conversa: a IA autônoma fica suspensa (Sprint 3). */
+    ConversationResponse takeover(UUID companyId, UUID conversationId);
+
+    /** Restabelece o atendimento automático (Sprint 3). */
+    ConversationResponse release(UUID companyId, UUID conversationId);
 }

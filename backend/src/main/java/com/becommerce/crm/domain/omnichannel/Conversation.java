@@ -13,6 +13,7 @@ public class Conversation {
     private java.util.UUID contactId;
     private final String externalPhone;
     private ConversationStatus status;
+    private ConversationMode mode;
     private java.time.LocalDateTime lastMessageAt;
     private int unreadCount;
     private final java.time.LocalDateTime createdAt;
@@ -20,7 +21,7 @@ public class Conversation {
 
     private Conversation(java.util.UUID id, java.util.UUID companyId, java.util.UUID channelId,
                          java.util.UUID contactId, String externalPhone, ConversationStatus status,
-                         java.time.LocalDateTime lastMessageAt, int unreadCount,
+                         ConversationMode mode, java.time.LocalDateTime lastMessageAt, int unreadCount,
                          java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
         this.id = id;
         this.companyId = companyId;
@@ -28,6 +29,7 @@ public class Conversation {
         this.contactId = contactId;
         this.externalPhone = externalPhone;
         this.status = status;
+        this.mode = mode;
         this.lastMessageAt = lastMessageAt;
         this.unreadCount = unreadCount;
         this.createdAt = createdAt;
@@ -37,17 +39,48 @@ public class Conversation {
     public static Conversation create(java.util.UUID companyId, java.util.UUID channelId,
                                       java.util.UUID contactId, String externalPhone) {
         return new Conversation(java.util.UUID.randomUUID(), companyId, channelId, contactId,
-                externalPhone, ConversationStatus.OPEN, null, 0,
+                externalPhone, ConversationStatus.OPEN, ConversationMode.AUTOMATIC, null, 0,
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
     }
 
+    /**
+     * Reconstitue uma conversa existente preservando o modo padrão
+     * {@code AUTOMATIC} (compatibilidade com dados pré-V072).
+     */
     public static Conversation reconstitute(java.util.UUID id, java.util.UUID companyId,
                                             java.util.UUID channelId, java.util.UUID contactId,
                                             String externalPhone, ConversationStatus status,
                                             java.time.LocalDateTime lastMessageAt, int unreadCount,
                                             java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
-        return new Conversation(id, companyId, channelId, contactId, externalPhone, status,
+        return reconstitute(id, companyId, channelId, contactId, externalPhone, status,
+                ConversationMode.AUTOMATIC, lastMessageAt, unreadCount, createdAt, updatedAt);
+    }
+
+    /** Reconstitue uma conversa existente com o modo de atendimento persistido. */
+    public static Conversation reconstitute(java.util.UUID id, java.util.UUID companyId,
+                                            java.util.UUID channelId, java.util.UUID contactId,
+                                            String externalPhone, ConversationStatus status,
+                                            ConversationMode mode, java.time.LocalDateTime lastMessageAt,
+                                            int unreadCount, java.time.LocalDateTime createdAt,
+                                            java.time.LocalDateTime updatedAt) {
+        return new Conversation(id, companyId, channelId, contactId, externalPhone, status, mode,
                 lastMessageAt, unreadCount, createdAt, updatedAt);
+    }
+
+    /** Um humano assume a conversa: a IA autônoma fica suspensa até {@link #releaseAutomation()}. */
+    public void takeover() {
+        this.mode = ConversationMode.HUMAN;
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
+    /** Restabelece o atendimento automático (IA autônoma volta a poder responder). */
+    public void releaseAutomation() {
+        this.mode = ConversationMode.AUTOMATIC;
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
+    public boolean isInHumanMode() {
+        return this.mode == ConversationMode.HUMAN;
     }
 
     public void touch(java.time.LocalDateTime at, boolean inbound) {
@@ -84,6 +117,7 @@ public class Conversation {
     public java.util.UUID getContactId() { return contactId; }
     public String getExternalPhone() { return externalPhone; }
     public ConversationStatus getStatus() { return status; }
+    public ConversationMode getMode() { return mode; }
     public java.time.LocalDateTime getLastMessageAt() { return lastMessageAt; }
     public int getUnreadCount() { return unreadCount; }
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }

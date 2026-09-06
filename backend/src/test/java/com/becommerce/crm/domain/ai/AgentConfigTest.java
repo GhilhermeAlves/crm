@@ -108,6 +108,49 @@ class AgentConfigTest {
                 "gpt-4o-mini", 0.3, 500, 30, 800, now, now));
     }
 
+    @Test
+    void withSettings_shouldUpdateFieldsAndRefreshUpdatedAt() {
+        AgentConfig config = config(true, false, "antigo", 60, 1000);
+        LocalDateTime original = config.getUpdatedAt();
+
+        AgentConfig updated = config.withSettings(true, true, "novo prompt", "gpt-4o",
+                0.7, 300, 45, 900);
+
+        assertEquals(config.getId(), updated.getId());
+        assertEquals(config.getCompanyId(), updated.getCompanyId());
+        assertEquals(config.getCreatedAt(), updated.getCreatedAt());
+        assertTrue(updated.isAiEnabled());
+        assertTrue(updated.isAllowAutoReply());
+        assertEquals("novo prompt", updated.getSystemPrompt());
+        assertEquals("gpt-4o", updated.getModel());
+        assertEquals(0.7, updated.getTemperature());
+        assertEquals(300, updated.getMaxTokens());
+        assertEquals(45, updated.getCooldownMinutes());
+        assertEquals(900, updated.getMaxChars());
+        assertEquals(false, updated.getUpdatedAt().isBefore(original));
+        // Imutável: a instância original não foi alterada.
+        assertEquals("antigo", config.getSystemPrompt());
+        assertFalse(config.isAllowAutoReply());
+        assertEquals(60, config.getCooldownMinutes());
+    }
+
+    @Test
+    void withSettings_onReconstituted_shouldKeepIdAndDates() {
+        UUID id = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now();
+        AgentConfig config = AgentConfig.reconstitute(id, companyId, false, false,
+                null, null, null, null, 60, 1000, now, now);
+
+        AgentConfig updated = config.withSettings(true, true, "x", "gpt-4o-mini",
+                null, null, 0, 5000);
+
+        assertEquals(id, updated.getId());
+        assertEquals(companyId, updated.getCompanyId());
+        assertEquals(now, updated.getCreatedAt());
+        assertEquals(0, updated.getCooldownMinutes());
+        assertEquals(5000, updated.getMaxChars());
+    }
+
     private AgentConfig config(boolean aiEnabled, boolean allowAutoReply, String prompt,
                                int cooldownMinutes, int maxChars) {
         return AgentConfig.create(companyId, aiEnabled, allowAutoReply, prompt,

@@ -6,7 +6,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConversationTest {
 
@@ -69,5 +71,71 @@ class ConversationTest {
         Conversation c = Conversation.create(companyId, channelId, null, "+5511999998888");
         c.assignContact(contactId);
         assertEquals(contactId, c.getContactId());
+    }
+
+    @Test
+    void create_shouldStartInAutomaticMode() {
+        Conversation c = Conversation.create(companyId, channelId, contactId, "+5511999998888");
+
+        assertEquals(ConversationMode.AUTOMATIC, c.getMode());
+        assertFalse(c.isInHumanMode());
+    }
+
+    @Test
+    void takeover_shouldSwitchToHumanMode() {
+        Conversation c = Conversation.create(companyId, channelId, contactId, "+5511999998888");
+
+        c.takeover();
+
+        assertEquals(ConversationMode.HUMAN, c.getMode());
+        assertTrue(c.isInHumanMode());
+    }
+
+    @Test
+    void takeover_whenAlreadyHuman_shouldBeIdempotent() {
+        Conversation c = Conversation.create(companyId, channelId, contactId, "+5511999998888");
+        c.takeover();
+        c.takeover();
+
+        assertEquals(ConversationMode.HUMAN, c.getMode());
+        assertTrue(c.isInHumanMode());
+    }
+
+    @Test
+    void releaseAutomation_shouldRestoreAutomaticMode() {
+        Conversation c = Conversation.create(companyId, channelId, contactId, "+5511999998888");
+        c.takeover();
+
+        c.releaseAutomation();
+
+        assertEquals(ConversationMode.AUTOMATIC, c.getMode());
+        assertFalse(c.isInHumanMode());
+    }
+
+    @Test
+    void releaseAutomation_whenAlreadyAutomatic_shouldBeIdempotent() {
+        Conversation c = Conversation.create(companyId, channelId, contactId, "+5511999998888");
+        c.releaseAutomation();
+        assertEquals(ConversationMode.AUTOMATIC, c.getMode());
+    }
+
+    @Test
+    void reconstitute_withMode_shouldRestoreHumanMode() {
+        LocalDateTime now = LocalDateTime.now();
+        Conversation c = Conversation.reconstitute(UUID.randomUUID(), companyId, channelId, contactId,
+                "+5511999998888", ConversationStatus.OPEN, ConversationMode.HUMAN,
+                now, 1, now, now);
+
+        assertEquals(ConversationMode.HUMAN, c.getMode());
+        assertTrue(c.isInHumanMode());
+    }
+
+    @Test
+    void reconstitute_tenArgs_shouldDefaultToAutomatic() {
+        LocalDateTime now = LocalDateTime.now();
+        Conversation c = Conversation.reconstitute(UUID.randomUUID(), companyId, channelId, contactId,
+                "+5511999998888", ConversationStatus.OPEN, now, 1, now, now);
+
+        assertEquals(ConversationMode.AUTOMATIC, c.getMode());
     }
 }

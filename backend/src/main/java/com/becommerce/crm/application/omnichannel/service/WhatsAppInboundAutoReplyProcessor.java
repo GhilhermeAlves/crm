@@ -124,6 +124,11 @@ public class WhatsAppInboundAutoReplyProcessor {
                 log.warn("Conversa não encontrada (company={}, conversation={})", companyId, conversationId);
                 return;
             }
+            if (conversation.isInHumanMode()) {
+                log.debug("Conversa em modo humano (company={}, conversation={}); IA autônoma suspensa",
+                        companyId, conversationId);
+                return;
+            }
             Channel channel = channelRepository.findById(conversation.getChannelId()).orElse(null);
             if (channel == null) {
                 log.warn("Canal não encontrado (company={}, channel={})", companyId, conversation.getChannelId());

@@ -1,6 +1,7 @@
 package com.becommerce.crm.application.omnichannel.service;
 
 import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.omnichannel.dto.ConversationDetailResponse;
 import com.becommerce.crm.application.omnichannel.dto.ConversationResponse;
 import com.becommerce.crm.application.omnichannel.dto.MessageResponse;
@@ -9,6 +10,8 @@ import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannel
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppProvider;
+import com.becommerce.crm.domain.audit.AuditAction;
+import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.omnichannel.Channel;
 import com.becommerce.crm.domain.omnichannel.Conversation;
 import com.becommerce.crm.domain.omnichannel.Message;
@@ -34,17 +37,20 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
     private final OmnichannelChannelRepository channelRepository;
     private final WhatsAppProvider whatsAppProvider;
     private final OmnichannelMessagePersister messagePersister;
+    private final TenantAuditRecorder auditor;
 
     public OmnichannelInboxService(OmnichannelConversationRepository conversationRepository,
                                    OmnichannelMessageRepository messageRepository,
                                    OmnichannelChannelRepository channelRepository,
                                    WhatsAppProvider whatsAppProvider,
-                                   OmnichannelMessagePersister messagePersister) {
+                                   OmnichannelMessagePersister messagePersister,
+                                   TenantAuditRecorder auditor) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.channelRepository = channelRepository;
         this.whatsAppProvider = whatsAppProvider;
         this.messagePersister = messagePersister;
+        this.auditor = auditor;
     }
 
     @Override
@@ -54,10 +60,7 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
             TenantContext.setCompanyId(companyId);
             PageResponse<Conversation> pageResult = conversationRepository.findByCompany(companyId, page, pageSize);
             List<ConversationResponse> content = pageResult.content().stream()
-                    .map(c -> new ConversationResponse(c.getId(), c.getChannelId(), c.getContactId(),
-                            c.getExternalPhone(), c.getStatus(), c.getLastMessageAt(),
-                            messageRepository.findLastBodyByConversation(c.getId()).orElse(null),
-                            c.getUnreadCount(), c.getCreatedAt()))
+                    .map(this::toConversationResponse)
                     .toList();
             return PageResponse.of(content, page, pageSize, pageResult.totalElements());
         } finally {
@@ -76,7 +79,7 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
                     messages.content().stream().map(OmnichannelInboxService::toMessageResponse).toList(),
                     page, pageSize, messages.totalElements());
             return new ConversationDetailResponse(c.getId(), c.getChannelId(), c.getContactId(),
-                    c.getExternalPhone(), c.getStatus(), c.getLastMessageAt(), c.getUnreadCount(), messageContent);
+                    c.getExternalPhone(), c.getStatus(), c.getMode(), c.getLastMessageAt(), c.getUnreadCount(), messageContent);
         } finally {
             TenantContext.clear();
         }
@@ -126,6 +129,53 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
         } finally {
             TenantContext.clear();
         }
+    }
+
+    @Override
+    @Transactional
+    public ConversationResponse takeover(UUID companyId, UUID conversationId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            Conversation conversation = requireOwned(companyId, conversationId);
+            conversation.takeover();
+            conversationRepository.save(conversation);
+            audit(companyId, conversationId, "Conversa assumida por atendimento humano (IA autônoma suspensa)");
+            return toConversationResponse(conversation);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional
+    public ConversationResponse release(UUID companyId, UUID conversationId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            Conversation conversation = requireOwned(companyId, conversationId);
+            conversation.releaseAutomation();
+            conversationRepository.save(conversation);
+            audit(companyId, conversationId, "Atendimento automático (IA) restabelecido na conversa");
+            return toConversationResponse(conversation);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    private void audit(UUID companyId, UUID conversationId, String description) {
+        try {
+            auditor.record(companyId, AuditAction.UPDATE, AuditModule.OMNICHANNEL,
+                    "Conversation", conversationId.toString(), description, null, null);
+        } catch (RuntimeException e) {
+            log.warn("Falha ao registrar auditoria (company={}, conversation={}): {}",
+                    companyId, conversationId, e.getMessage());
+        }
+    }
+
+    private ConversationResponse toConversationResponse(Conversation c) {
+        return new ConversationResponse(c.getId(), c.getChannelId(), c.getContactId(),
+                c.getExternalPhone(), c.getStatus(), c.getMode(), c.getLastMessageAt(),
+                messageRepository.findLastBodyByConversation(c.getId()).orElse(null),
+                c.getUnreadCount(), c.getCreatedAt());
     }
 
     private Conversation requireOwned(UUID companyId, UUID conversationId) {

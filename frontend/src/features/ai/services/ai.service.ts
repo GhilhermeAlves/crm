@@ -1,6 +1,8 @@
 import { AxiosError } from "axios";
 import api from "@/lib/api";
 import type {
+  AgentConfig,
+  AgentConfigRequest,
   AiAction,
   AiAnalysisRequest,
   AiAnalysisResponse,
@@ -124,6 +126,18 @@ export const AiService = {
   /** Cancela uma proposta (POST /ai/actions/{id}/cancel). */
   async cancelAction(actionId: string): Promise<AiAction> {
     const response = await api.post<AiAction>(`/ai/actions/${actionId}/cancel`);
+    return response.data;
+  },
+
+  /** Configuração do agente de IA (GET /ai/agent-config) - Sprint 3-A. */
+  async getAgentConfig(): Promise<AgentConfig> {
+    const response = await api.get<AgentConfig>("/ai/agent-config");
+    return response.data;
+  },
+
+  /** Salva a configuração do agente de IA (PUT /ai/agent-config) - Sprint 3-A. */
+  async updateAgentConfig(request: AgentConfigRequest): Promise<AgentConfig> {
+    const response = await api.put<AgentConfig>("/ai/agent-config", request);
     return response.data;
   },
 };

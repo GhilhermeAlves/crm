@@ -62,4 +62,18 @@ public class OmnichannelInboxController {
         inboxUseCase.markRead(principal.companyId(), conversationId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{conversationId}/takeover")
+    @PreAuthorize("hasAuthority('omnichannel:takeover')")
+    public ResponseEntity<ConversationResponse> takeover(@PathVariable UUID conversationId,
+                                                         @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(inboxUseCase.takeover(principal.companyId(), conversationId));
+    }
+
+    @PostMapping("/{conversationId}/release")
+    @PreAuthorize("hasAuthority('omnichannel:takeover')")
+    public ResponseEntity<ConversationResponse> release(@PathVariable UUID conversationId,
+                                                        @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(inboxUseCase.release(principal.companyId(), conversationId));
+    }
 }

@@ -16,6 +16,7 @@ import com.becommerce.crm.domain.omnichannel.ChannelProvider;
 import com.becommerce.crm.domain.omnichannel.ChannelStatus;
 import com.becommerce.crm.domain.omnichannel.ChannelType;
 import com.becommerce.crm.domain.omnichannel.Conversation;
+import com.becommerce.crm.domain.omnichannel.ConversationMode;
 import com.becommerce.crm.domain.omnichannel.ConversationStatus;
 import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.MessageDirection;
@@ -155,6 +156,32 @@ class WhatsAppInboundAutoReplyProcessorTest {
 
         verify(aiProvider, never()).chatWithTools(any());
         verify(messagePersister, never()).persistPending(any());
+    }
+
+    @Test
+    void shouldNotReplyWhenConversationInHumanMode() {
+        conversation.takeover();
+        config(true, true, "Você responde como Léo.", 60, 1000);
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        verify(aiProvider, never()).chatWithTools(any());
+        verify(autoReplyRepository, never()).reserve(any(), any(), any());
+        verify(messagePersister, never()).persistPending(any());
+        verify(whatsAppProvider, never()).send(any());
+    }
+
+    @Test
+    void shouldReplyNormallyWhenHumanModeReleased() {
+        conversation.takeover();
+        conversation.releaseAutomation();
+        config(true, true, "Você responde como Léo.", 60, 1000);
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        verify(aiProvider).chatWithTools(any());
+        verify(messagePersister).persistPending(any());
+        verify(whatsAppProvider).send(any());
     }
 
     @Test

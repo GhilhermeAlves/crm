@@ -2,13 +2,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AxiosError, AxiosHeaders, type AxiosResponse } from "axios";
 import { AiService, aiAnalysisErrorMessage, aiErrorMessage } from "./ai.service";
 
-const { getMock, postMock } = vi.hoisted(() => ({
+const { getMock, postMock, putMock } = vi.hoisted(() => ({
   getMock: vi.fn(),
   postMock: vi.fn(),
+  putMock: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
-  default: { get: getMock, post: postMock },
+  default: { get: getMock, post: postMock, put: putMock },
 }));
 
 describe("AiService (AI-04)", () => {
@@ -321,6 +322,95 @@ describe("AiService analyze (AI-06)", () => {
 
     await expect(AiService.analyze({ question: "x", context: null })).rejects.toThrow();
     await expect(AiService.analyze({ question: "x", context: null })).rejects.toThrow();
+  });
+});
+
+describe("AiService agent config (Sprint 3-A)", () => {
+  beforeEach(() => {
+    getMock.mockReset();
+    putMock.mockReset();
+  });
+
+  it("busca a configuração atual do agente", async () => {
+    getMock.mockResolvedValue({
+      data: {
+        id: "cfg-1",
+        aiEnabled: true,
+        allowAutoReply: false,
+        systemPrompt: "Você responde como Léo.",
+        model: null,
+        temperature: null,
+        maxTokens: null,
+        cooldownMinutes: 60,
+        maxChars: 1000,
+        updatedAt: "2026-09-01T10:00:00",
+      },
+    });
+
+    const res = await AiService.getAgentConfig();
+
+    expect(getMock).toHaveBeenCalledWith("/ai/agent-config");
+    expect(res.aiEnabled).toBe(true);
+    expect(res.cooldownMinutes).toBe(60);
+  });
+
+  it("salva a configuração do agente via PUT", async () => {
+    putMock.mockResolvedValue({
+      data: {
+        id: "cfg-1",
+        aiEnabled: true,
+        allowAutoReply: true,
+        systemPrompt: "Você responde como Léo.",
+        model: "gpt-4o",
+        temperature: 0.7,
+        maxTokens: 300,
+        cooldownMinutes: 45,
+        maxChars: 900,
+        updatedAt: "2026-09-05T12:00:00",
+      },
+    });
+
+    const res = await AiService.updateAgentConfig({
+      aiEnabled: true,
+      allowAutoReply: true,
+      systemPrompt: "Você responde como Léo.",
+      model: "gpt-4o",
+      temperature: 0.7,
+      maxTokens: 300,
+      cooldownMinutes: 45,
+      maxChars: 900,
+    });
+
+    expect(putMock).toHaveBeenCalledWith(
+      "/ai/agent-config",
+      expect.objectContaining({
+        aiEnabled: true,
+        allowAutoReply: true,
+        model: "gpt-4o",
+        cooldownMinutes: 45,
+      }),
+    );
+    expect(res.allowAutoReply).toBe(true);
+  });
+
+  it("não envia identidade/permissões no payload", async () => {
+    putMock.mockResolvedValue({ data: {} });
+
+    await AiService.updateAgentConfig({
+      aiEnabled: false,
+      allowAutoReply: false,
+      systemPrompt: null,
+      model: null,
+      temperature: null,
+      maxTokens: null,
+      cooldownMinutes: 60,
+      maxChars: 1000,
+    });
+
+    const [url, payload] = putMock.mock.calls[0];
+    expect(url).toBe("/ai/agent-config");
+    expect(payload).not.toHaveProperty("companyId");
+    expect(payload).not.toHaveProperty("userId");
   });
 });
 

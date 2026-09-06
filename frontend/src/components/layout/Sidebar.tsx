@@ -24,6 +24,7 @@ import {
   Sparkles,
   Home,
   ChevronDown,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -190,6 +191,12 @@ const navGroups: NavGroup[] = [
         href: ROUTES.SETTINGS_ROLES,
         icon: Shield,
         permission: "security:page:view",
+      },
+      {
+        label: "Agente de IA",
+        href: ROUTES.SETTINGS_AGENT_CONFIG,
+        icon: Bot,
+        permission: "ai:agent-config",
       },
     ],
   },
