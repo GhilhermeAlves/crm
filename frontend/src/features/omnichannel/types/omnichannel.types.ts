@@ -10,6 +10,10 @@ export type ChannelStatus = "ACTIVE" | "INACTIVE" | "ERROR";
 
 export type ConversationStatus = "OPEN" | "CLOSED";
 
+/** Modo de atendimento (Sprint 3 - Human Takeover): AUTOMATIC = IA autônoma
+ * habilitada; HUMAN = um humano assumiu e a IA está suspensa. */
+export type ConversationMode = "AUTOMATIC" | "HUMAN";
+
 export type MessageDirection = "INBOUND" | "OUTBOUND";
 
 export type MessageStatus = "PENDING" | "SENT" | "DELIVERED" | "READ" | "FAILED";
@@ -36,6 +40,7 @@ export type Conversation = {
   contactId: string | null;
   externalPhone: string;
   status: ConversationStatus;
+  mode: ConversationMode;
   lastMessageAt: string | null;
   lastMessage: string | null;
   unreadCount: number;
@@ -63,6 +68,7 @@ export type ConversationDetail = {
   contactId: string | null;
   externalPhone: string;
   status: ConversationStatus;
+  mode: ConversationMode;
   lastMessageAt: string | null;
   unreadCount: number;
   messages: Page<Message>;
@@ -106,10 +112,59 @@ export const CONVERSATION_STATUS_LABELS: Record<ConversationStatus, string> = {
   CLOSED: "Fechada",
 };
 
+export const CONVERSATION_MODE_LABELS: Record<ConversationMode, string> = {
+  AUTOMATIC: "IA autônoma",
+  HUMAN: "Atendimento humano",
+};
+
 export const MESSAGE_STATUS_LABELS: Record<MessageStatus, string> = {
   PENDING: "Pendente",
   SENT: "Enviada",
   DELIVERED: "Entregue",
   READ: "Lida",
+  FAILED: "Falhou",
+};
+
+// ---------------------------------------------------------------------------
+// Follow-ups (Sprint 4 - automação de retorno no WhatsApp)
+// ---------------------------------------------------------------------------
+
+export type FollowUpStatus = "PENDING" | "PROCESSING" | "SENT" | "CANCELLED" | "FAILED";
+
+export type FollowUpAction = "SEND_MESSAGE";
+
+export type FollowUpCancellationReason =
+  | "USER"
+  | "HUMAN_MODE"
+  | "SUPERSEDED_BY_NEW_MESSAGE";
+
+export type FollowUp = {
+  id: string;
+  conversationId: string;
+  status: FollowUpStatus;
+  actionType: FollowUpAction;
+  actionContent: string | null;
+  executeAt: string;
+  attempts: number;
+  lastError: string | null;
+  resultText: string | null;
+  cancelledAt: string | null;
+  cancelledReason: FollowUpCancellationReason | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FollowUpRequest = {
+  conversationId: string;
+  content: string;
+  executeAt: string;
+  idempotencyKey?: string;
+};
+
+export const FOLLOW_UP_STATUS_LABELS: Record<FollowUpStatus, string> = {
+  PENDING: "Pendente",
+  PROCESSING: "Processando",
+  SENT: "Enviado",
+  CANCELLED: "Cancelado",
   FAILED: "Falhou",
 };

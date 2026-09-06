@@ -4,6 +4,8 @@ import type {
   ChannelRequest,
   Conversation,
   ConversationDetail,
+  FollowUp,
+  FollowUpRequest,
   Message,
   Page,
 } from "../types/omnichannel.types";
@@ -64,5 +66,44 @@ export const OmnichannelService = {
 
   async markRead(conversationId: string): Promise<void> {
     await api.post(`${BASE}/inbox/${conversationId}/read`);
+  },
+
+  /** Um humano assume a conversa: IA autônoma fica suspensa (Sprint 3-B). */
+  async takeover(conversationId: string): Promise<Conversation> {
+    const response = await api.post<Conversation>(`${BASE}/inbox/${conversationId}/takeover`);
+    return response.data;
+  },
+
+  /** Restabelece o atendimento automático (Sprint 3-B). */
+  async release(conversationId: string): Promise<Conversation> {
+    const response = await api.post<Conversation>(`${BASE}/inbox/${conversationId}/release`);
+    return response.data;
+  },
+
+  // Follow-ups --------------------------------------------------------------
+  async listFollowUps(
+    conversationId?: string,
+    page = 0,
+    pageSize = 20,
+  ): Promise<Page<FollowUp>> {
+    const response = await api.get<Page<FollowUp>>(`${BASE}/follow-ups`, {
+      params: { conversationId, page, pageSize },
+    });
+    return response.data;
+  },
+
+  async createFollowUp(data: FollowUpRequest): Promise<FollowUp> {
+    const response = await api.post<FollowUp>(`${BASE}/follow-ups`, data);
+    return response.data;
+  },
+
+  async getFollowUp(followUpId: string): Promise<FollowUp> {
+    const response = await api.get<FollowUp>(`${BASE}/follow-ups/${followUpId}`);
+    return response.data;
+  },
+
+  async cancelFollowUp(followUpId: string): Promise<FollowUp> {
+    const response = await api.post<FollowUp>(`${BASE}/follow-ups/${followUpId}/cancel`);
+    return response.data;
   },
 };

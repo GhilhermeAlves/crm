@@ -21,6 +21,10 @@ public interface OmnichannelMessageJpaRepository extends JpaRepository<Omnichann
 
     Optional<OmnichannelMessageJpaEntity> findFirstByConversationIdOrderByCreatedAtDesc(UUID conversationId);
 
+    /** True se existe mensagem INBOUND criada depois de {@code after} na conversa (staleness de FollowUp). */
+    boolean existsByConversationIdAndDirectionAndCreatedAtAfter(
+            UUID conversationId, String direction, LocalDateTime after);
+
     /** Insert idempotente por (company_id, external_message_id) — ON CONFLICT DO NOTHING. */
     @Modifying
     @Query(value = """

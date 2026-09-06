@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { Bot, CalendarClock, Loader2, Send, Sparkles, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,31 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useSuggestReply, useAiPermissions } from "@/features/ai/hooks/useAi";
-import { MESSAGE_STATUS_LABELS, type ConversationDetail } from "../types/omnichannel.types";
+import {
+  useOmnichannelPermissions,
+  useTakeoverConversation,
+  useReleaseConversation,
+  useConversationFollowUps,
+  useCreateFollowUp,
+  useCancelFollowUp,
+} from "../hooks/useOmnichannel";
+import {
+  CONVERSATION_MODE_LABELS,
+  FOLLOW_UP_STATUS_LABELS,
+  MESSAGE_STATUS_LABELS,
+  type ConversationDetail,
+} from "../types/omnichannel.types";
+import { FollowUpDialog } from "./FollowUpDialog";
+
+function formatFollowUpDate(value: string): string {
+  return new Date(value).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 type Props = {
   detail: ConversationDetail | undefined;
@@ -21,9 +45,16 @@ type Props = {
 
 export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Props) {
   const [body, setBody] = useState("");
+  const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const suggestReply = useSuggestReply();
   const { canSuggest } = useAiPermissions();
+  const { canTakeover, canFollowUpRead, canFollowUpManage } = useOmnichannelPermissions();
+  const takeover = useTakeoverConversation();
+  const release = useReleaseConversation();
+  const followUps = useConversationFollowUps(detail ? detail.id : null);
+  const createFollowUp = useCreateFollowUp(detail ? detail.id : null);
+  const cancelFollowUp = useCancelFollowUp(detail ? detail.id : null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -54,19 +85,103 @@ export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Prop
     setBody("");
   };
 
+  const humanMode = detail.mode === "HUMAN";
+  const handoffPending = takeover.isPending || release.isPending;
+  const showFollowUps = canFollowUpRead || canFollowUpManage;
+  const nextFollowUp = followUps.data?.content.find((f) => f.status === "PENDING");
+
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
         <div>
           <p className="font-semibold">{detail.externalPhone}</p>
-          <p className="text-xs text-muted-foreground">
-            {detail.contactId ? "Contato vinculado" : "Contato não vinculado"}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground">
+              {detail.contactId ? "Contato vinculado" : "Contato não vinculado"}
+            </p>
+            {humanMode && (
+              <Badge variant="destructive">{CONVERSATION_MODE_LABELS.HUMAN}</Badge>
+            )}
+          </div>
         </div>
-        <Badge variant="secondary">
-          {detail.unreadCount > 0 ? `${detail.unreadCount} não lida(s)` : "Em dia"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">
+            {detail.unreadCount > 0 ? `${detail.unreadCount} não lida(s)` : "Em dia"}
+          </Badge>
+          {canTakeover && (
+            <Button
+              type="button"
+              variant={humanMode ? "outline" : "default"}
+              size="sm"
+              disabled={handoffPending}
+              onClick={() => {
+                if (humanMode) {
+                  release.mutate(detail.id);
+                } else {
+                  takeover.mutate(detail.id);
+                }
+              }}
+            >
+              {handoffPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : humanMode ? (
+                <Bot className="h-4 w-4" />
+              ) : (
+                <UserCheck className="h-4 w-4" />
+              )}
+              {humanMode ? "Retomar IA" : "Assumir manualmente"}
+            </Button>
+          )}
+        </div>
       </div>
+
+      {showFollowUps && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+            {nextFollowUp ? (
+              <>
+                <span className="font-medium">Próximo follow-up</span>
+                <span>{formatFollowUpDate(nextFollowUp.executeAt)}</span>
+                <Badge variant="secondary">{FOLLOW_UP_STATUS_LABELS[nextFollowUp.status]}</Badge>
+                <span className="max-w-[40ch] truncate text-muted-foreground">
+                  {nextFollowUp.actionContent || "Mensagem"}
+                </span>
+                {canFollowUpManage && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={cancelFollowUp.isPending}
+                    onClick={() => cancelFollowUp.mutate(nextFollowUp.id)}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </>
+            ) : (
+              <span className="text-muted-foreground">Nenhum follow-up agendado.</span>
+            )}
+          </div>
+          {canFollowUpManage && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={humanMode || createFollowUp.isPending}
+              title={
+                humanMode
+                  ? "Follow-ups automáticos ficam suspensos em atendimento humano"
+                  : undefined
+              }
+              onClick={() => setFollowUpDialogOpen(true)}
+            >
+              <CalendarClock className="h-4 w-4" />
+              Agendar follow-up
+            </Button>
+          )}
+        </div>
+      )}
 
       <ScrollArea className="flex-1">
         <div className="space-y-2 p-4">
@@ -136,6 +251,18 @@ export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Prop
           <Send className="h-4 w-4" />
         </Button>
       </form>
+
+      <FollowUpDialog
+        open={followUpDialogOpen}
+        onOpenChange={setFollowUpDialogOpen}
+        conversationId={detail.id}
+        isSubmitting={createFollowUp.isPending}
+        onSubmit={(request) => {
+          createFollowUp.mutate(request, {
+            onSuccess: () => setFollowUpDialogOpen(false),
+          });
+        }}
+      />
     </div>
   );
 }

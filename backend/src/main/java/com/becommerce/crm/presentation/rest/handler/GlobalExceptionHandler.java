@@ -51,6 +51,8 @@ import com.becommerce.crm.domain.ai.AiActionNotFoundException;
 import com.becommerce.crm.domain.ai.AiActionInvalidStateException;
 import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
 import com.becommerce.crm.domain.workflow.WorkflowValidationException;
+import com.becommerce.crm.domain.followup.exception.FollowUpNotFoundException;
+import com.becommerce.crm.domain.followup.exception.FollowUpValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -489,6 +491,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(WorkflowValidationException.class)
     public ResponseEntity<Map<String, Object>> handleWorkflowValidationException(WorkflowValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(FollowUpNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleFollowUpNotFoundException(FollowUpNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(FollowUpValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleFollowUpValidationException(FollowUpValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,

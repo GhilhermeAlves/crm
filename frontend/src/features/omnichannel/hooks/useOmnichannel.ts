@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import { OmnichannelService } from "../services/omnichannel.service";
-import type { ChannelRequest } from "../types/omnichannel.types";
+import type { ChannelRequest, FollowUpRequest } from "../types/omnichannel.types";
 
 // Canais --------------------------------------------------------------------
 
@@ -122,6 +122,42 @@ export function useMarkRead() {
   });
 }
 
+function invalidateConversationScope(
+  queryClient: ReturnType<typeof useQueryClient>,
+  conversationId: string,
+) {
+  queryClient.invalidateQueries({ queryKey: ["omnichannel", "conversations"] });
+  queryClient.invalidateQueries({ queryKey: ["omnichannel", "conversation", conversationId] });
+}
+
+export function useTakeoverConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (conversationId: string) => OmnichannelService.takeover(conversationId),
+    onSuccess: (_, conversationId) => {
+      invalidateConversationScope(queryClient, conversationId);
+      toast.success("Você assumiu a conversa. A IA autônoma foi suspensa.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao assumir a conversa");
+    },
+  });
+}
+
+export function useReleaseConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (conversationId: string) => OmnichannelService.release(conversationId),
+    onSuccess: (_, conversationId) => {
+      invalidateConversationScope(queryClient, conversationId);
+      toast.success("Atendimento automático (IA) restabelecido.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao restabelecer o atendimento automático");
+    },
+  });
+}
+
 export function useOmnichannelPermissions() {
   const { can } = useAuthorization();
   return {
@@ -130,5 +166,50 @@ export function useOmnichannelPermissions() {
     canCreate: can("omnichannel:create"),
     canUpdate: can("omnichannel:update"),
     canDelete: can("omnichannel:delete"),
+    canTakeover: can("omnichannel:takeover"),
+    canFollowUpRead: can("omnichannel:followup:read"),
+    canFollowUpManage: can("omnichannel:followup"),
   };
+}
+
+// Follow-ups (Sprint 4) ------------------------------------------------------
+
+export function useConversationFollowUps(conversationId: string | null) {
+  return useQuery({
+    queryKey: ["omnichannel", "conversation", conversationId, "follow-ups"],
+    queryFn: () => OmnichannelService.listFollowUps(conversationId as string, 0, 30),
+    enabled: !!conversationId,
+  });
+}
+
+export function useCreateFollowUp(conversationId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: FollowUpRequest) => OmnichannelService.createFollowUp(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["omnichannel", "conversation", conversationId, "follow-ups"],
+      });
+      toast.success("Follow-up agendado");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao agendar follow-up");
+    },
+  });
+}
+
+export function useCancelFollowUp(conversationId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (followUpId: string) => OmnichannelService.cancelFollowUp(followUpId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["omnichannel", "conversation", conversationId, "follow-ups"],
+      });
+      toast.success("Follow-up cancelado");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao cancelar follow-up");
+    },
+  });
 }

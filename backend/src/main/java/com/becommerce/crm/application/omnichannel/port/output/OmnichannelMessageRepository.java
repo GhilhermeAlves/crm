@@ -26,6 +26,13 @@ public interface OmnichannelMessageRepository {
     /** Corpo da última mensagem da conversa (para a lista do Inbox). */
     Optional<String> findLastBodyByConversation(UUID conversationId);
 
+    /**
+     * Existe mensagem INBOUND do cliente depois de {@code after} na conversa?
+     * Usada pelo processador de FollowUp (Sprint 22) para invalidar follow-up
+     * obsoleto quando o cliente respondeu depois que ele foi criado.
+     */
+    boolean existsInboundAfter(UUID conversationId, java.time.LocalDateTime after);
+
     /** Atualiza status e erro de uma mensagem identificada por id externo, escopada ao tenant. */
     void updateStatusByExternalId(UUID companyId, String externalId, MessageStatus status, String error);
 }

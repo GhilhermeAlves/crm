@@ -72,6 +72,12 @@ public class OmnichannelMessageRepositoryImpl implements OmnichannelMessageRepos
     }
 
     @Override
+    public boolean existsInboundAfter(UUID conversationId, LocalDateTime after) {
+        return jpaRepository.existsByConversationIdAndDirectionAndCreatedAtAfter(
+                conversationId, MessageDirection.INBOUND.name(), after);
+    }
+
+    @Override
     public void updateStatusByExternalId(UUID companyId, String externalId, MessageStatus status, String error) {
         jpaRepository.updateStatusByExternalId(companyId, externalId, status.name(), error, LocalDateTime.now());
     }
