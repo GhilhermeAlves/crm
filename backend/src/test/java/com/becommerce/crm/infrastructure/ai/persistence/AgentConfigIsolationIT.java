@@ -143,7 +143,6 @@ class AgentConfigIsolationIT {
                 """)) {
             ps.setObject(1, id);
             ps.setObject(2, companyId);
-            ps.setString(3, "+550011112222");
             ps.executeUpdate();
         }
     }

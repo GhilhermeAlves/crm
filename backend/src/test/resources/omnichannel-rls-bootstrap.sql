@@ -83,6 +83,11 @@ CREATE TABLE IF NOT EXISTS omnichannel_conversations (
 CREATE UNIQUE INDEX IF NOT EXISTS uq_omnichannel_conversations_channel_phone
     ON omnichannel_conversations (company_id, channel_id, external_phone);
 
+-- V072: CHECK de handoff_mode (human takeover) — mesma estrutura real.
+ALTER TABLE omnichannel_conversations DROP CONSTRAINT IF EXISTS chk_omnichannel_conversations_handoff_mode;
+ALTER TABLE omnichannel_conversations ADD CONSTRAINT chk_omnichannel_conversations_handoff_mode
+    CHECK (handoff_mode IN ('AUTOMATIC', 'HUMAN'));
+
 CREATE TABLE IF NOT EXISTS omnichannel_messages (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id          UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,

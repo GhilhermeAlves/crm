@@ -22,7 +22,13 @@ function normalizeLocalDateTime(value: string): string {
   return /:\d{2}$/.test(value) ? value : `${value}:00`;
 }
 
-export function FollowUpDialog({ open, onOpenChange, conversationId, isSubmitting, onSubmit }: Props) {
+export function FollowUpDialog({
+  open,
+  onOpenChange,
+  conversationId,
+  isSubmitting,
+  onSubmit,
+}: Props) {
   const [executeAt, setExecuteAt] = useState("");
   const [content, setContent] = useState("");
 

@@ -87,8 +87,8 @@ export default function AgentConfigPage() {
       <div>
         <PageTitle>Agente de IA</PageTitle>
         <p className="text-sm text-muted-foreground">
-          Controle o atendimento autônomo desta empresa. A IA só responde no WhatsApp
-          quando o agente estiver ligado e a permissão de auto-resposta estiver ativa.
+          Controle o atendimento autônomo desta empresa. A IA só responde no WhatsApp quando o
+          agente estiver ligado e a permissão de auto-resposta estiver ativa.
         </p>
       </div>
 
@@ -153,7 +153,9 @@ export default function AgentConfigPage() {
               value={draft.systemPrompt ?? ""}
               onChange={(event) => {
                 const value = event.target.value;
-                setDraft((d) => (d ? { ...d, systemPrompt: value.trim() === "" ? null : value } : d));
+                setDraft((d) =>
+                  d ? { ...d, systemPrompt: value.trim() === "" ? null : value } : d,
+                );
               }}
               placeholder="Ex.: Você responde como Léo, assistente do setor comercial."
               rows={5}

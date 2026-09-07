@@ -140,13 +140,10 @@ RETURNS TABLE(followup_id UUID, company_id UUID)
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
-AS $$
-    SELECT f.id, f.company_id
+AS 'SELECT f.id, f.company_id
       FROM followups f
-     WHERE (f.status = 'PENDING' AND f.execute_at <= NOW())
-        OR (f.status = 'PROCESSING' AND f.processing_started_at < NOW() - INTERVAL '15 minutes')
+     WHERE (f.status = ''PENDING'' AND f.execute_at <= NOW())
+        OR (f.status = ''PROCESSING'' AND f.processing_started_at < NOW() - INTERVAL ''15 minutes'')
      ORDER BY f.execute_at
-     LIMIT p_limit;
-$$;
+     LIMIT p_limit';
 REVOKE ALL ON FUNCTION app.followup_scheduler_candidates(INT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION app.followup_scheduler_candidates(INT) TO crm_app_user;

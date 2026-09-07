@@ -110,14 +110,26 @@ describe("ChatThread (Sprint 3 - Human Takeover / Sprint 4 - Follow-ups)", () =>
 
   it("mostra estado vazio quando nenhuma conversa é selecionada", () => {
     render(
-      <ChatThread detail={undefined} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={undefined}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
     expect(screen.getByText("Selecione uma conversa")).toBeTruthy();
   });
 
   it("mostra botão Assumir manualmente em modo AUTOMATIC e chama takeover", () => {
     render(
-      <ChatThread detail={detail("AUTOMATIC")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("AUTOMATIC")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     const button = screen.getByRole("button", { name: /Assumir manualmente/i });
@@ -130,7 +142,13 @@ describe("ChatThread (Sprint 3 - Human Takeover / Sprint 4 - Follow-ups)", () =>
 
   it("mostra badge de atendimento humano e botão Retomar IA em modo HUMAN", () => {
     render(
-      <ChatThread detail={detail("HUMAN")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("HUMAN")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     expect(screen.getByText("Atendimento humano")).toBeTruthy();
@@ -144,7 +162,13 @@ describe("ChatThread (Sprint 3 - Human Takeover / Sprint 4 - Follow-ups)", () =>
   it("não mostra o botão de takeover sem a permissão omnichannel:takeover", () => {
     canTakeoverMock.mockReturnValue(false);
     render(
-      <ChatThread detail={detail("AUTOMATIC")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("AUTOMATIC")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     expect(screen.queryByRole("button", { name: /Assumir manualmente/i })).toBeNull();
@@ -165,7 +189,13 @@ describe("ChatThread (Sprint 4 - Follow-ups)", () => {
 
   it("mostra estado vazio quando não há follow-ups agendados", () => {
     render(
-      <ChatThread detail={detail("AUTOMATIC")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("AUTOMATIC")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     expect(screen.getByText("Nenhum follow-up agendado.")).toBeTruthy();
@@ -196,7 +226,13 @@ describe("ChatThread (Sprint 4 - Follow-ups)", () => {
       totalPages: 1,
     });
     render(
-      <ChatThread detail={detail("AUTOMATIC")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("AUTOMATIC")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     expect(screen.getByText("Próximo follow-up")).toBeTruthy();
@@ -208,7 +244,13 @@ describe("ChatThread (Sprint 4 - Follow-ups)", () => {
 
   it("desabilita o agendamento de follow-up em atendimento humano", () => {
     render(
-      <ChatThread detail={detail("HUMAN")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("HUMAN")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     const button = screen.getByRole("button", { name: /Agendar follow-up/i }) as HTMLButtonElement;
@@ -219,7 +261,13 @@ describe("ChatThread (Sprint 4 - Follow-ups)", () => {
   it("não mostra o botão de agendamento sem a permissão omnichannel:followup", () => {
     canFollowUpManageMock.mockReturnValue(false);
     render(
-      <ChatThread detail={detail("AUTOMATIC")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("AUTOMATIC")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     expect(screen.queryByRole("button", { name: /Agendar follow-up/i })).toBeNull();
@@ -229,7 +277,13 @@ describe("ChatThread (Sprint 4 - Follow-ups)", () => {
     canFollowUpReadMock.mockReturnValue(false);
     canFollowUpManageMock.mockReturnValue(false);
     render(
-      <ChatThread detail={detail("AUTOMATIC")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("AUTOMATIC")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     expect(screen.queryByText("Nenhum follow-up agendado.")).toBeNull();
@@ -238,7 +292,13 @@ describe("ChatThread (Sprint 4 - Follow-ups)", () => {
 
   it("ageenda um follow-up pelo diálogo com data/hora normalizada", () => {
     render(
-      <ChatThread detail={detail("AUTOMATIC")} isLoading={false} canSend={true} onSend={vi.fn()} sending={false} />,
+      <ChatThread
+        detail={detail("AUTOMATIC")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /Agendar follow-up/i }));

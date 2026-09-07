@@ -229,36 +229,36 @@ export function AiChatAssistant({ embedded = false }: { embedded?: boolean } = {
       {/* Histórico - mobile */}
       {!embedded && (
         <div className="flex flex-col gap-2 lg:hidden">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold">Conversas</p>
-          <Button variant="outline" size="sm" onClick={startNewConversation}>
-            <Plus className="mr-1 h-4 w-4" />
-            Nova conversa
-          </Button>
-        </div>
-        <ScrollArea className="max-h-28">
-          <div className="flex gap-2 pb-1">
-            {conversations.map((conversation) => {
-              const active = conversation.id === selectedConversationId;
-              return (
-                <button
-                  key={conversation.id}
-                  type="button"
-                  onClick={() => selectConversation(conversation.id)}
-                  className={cn(
-                    "shrink-0 rounded-full border px-3 py-1 text-xs transition-colors",
-                    active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "bg-card hover:bg-accent",
-                  )}
-                >
-                  {conversation.title || "Conversa"}
-                </button>
-              );
-            })}
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold">Conversas</p>
+            <Button variant="outline" size="sm" onClick={startNewConversation}>
+              <Plus className="mr-1 h-4 w-4" />
+              Nova conversa
+            </Button>
           </div>
-        </ScrollArea>
-      </div>
+          <ScrollArea className="max-h-28">
+            <div className="flex gap-2 pb-1">
+              {conversations.map((conversation) => {
+                const active = conversation.id === selectedConversationId;
+                return (
+                  <button
+                    key={conversation.id}
+                    type="button"
+                    onClick={() => selectConversation(conversation.id)}
+                    className={cn(
+                      "shrink-0 rounded-full border px-3 py-1 text-xs transition-colors",
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "bg-card hover:bg-accent",
+                    )}
+                  >
+                    {conversation.title || "Conversa"}
+                  </button>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </div>
       )}
 
       {/* Área do chat */}

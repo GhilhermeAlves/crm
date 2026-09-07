@@ -99,9 +99,7 @@ export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Prop
             <p className="text-xs text-muted-foreground">
               {detail.contactId ? "Contato vinculado" : "Contato não vinculado"}
             </p>
-            {humanMode && (
-              <Badge variant="destructive">{CONVERSATION_MODE_LABELS.HUMAN}</Badge>
-            )}
+            {humanMode && <Badge variant="destructive">{CONVERSATION_MODE_LABELS.HUMAN}</Badge>}
           </div>
         </div>
         <div className="flex items-center gap-2">

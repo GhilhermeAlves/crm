@@ -133,10 +133,7 @@ export type FollowUpStatus = "PENDING" | "PROCESSING" | "SENT" | "CANCELLED" | "
 
 export type FollowUpAction = "SEND_MESSAGE";
 
-export type FollowUpCancellationReason =
-  | "USER"
-  | "HUMAN_MODE"
-  | "SUPERSEDED_BY_NEW_MESSAGE";
+export type FollowUpCancellationReason = "USER" | "HUMAN_MODE" | "SUPERSEDED_BY_NEW_MESSAGE";
 
 export type FollowUp = {
   id: string;

@@ -81,11 +81,7 @@ export const OmnichannelService = {
   },
 
   // Follow-ups --------------------------------------------------------------
-  async listFollowUps(
-    conversationId?: string,
-    page = 0,
-    pageSize = 20,
-  ): Promise<Page<FollowUp>> {
+  async listFollowUps(conversationId?: string, page = 0, pageSize = 20): Promise<Page<FollowUp>> {
     const response = await api.get<Page<FollowUp>>(`${BASE}/follow-ups`, {
       params: { conversationId, page, pageSize },
     });
