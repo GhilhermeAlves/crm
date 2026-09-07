@@ -115,6 +115,14 @@ class FollowUpIsolationIT {
         TenantContext.clear();
     }
 
+    @BeforeEach
+    void resetFollowUps() throws SQLException {
+        try (Connection conn = postgres.createConnection("");
+             Statement st = conn.createStatement()) {
+            st.executeUpdate("DELETE FROM followups");
+        }
+    }
+
     private static void seedTenants() throws SQLException {
         TenantContext.setCompanyId(TENANT_A);
         try (Connection conn = tenantAwareDataSource.getConnection()) {
