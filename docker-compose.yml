@@ -218,11 +218,17 @@ services:
       # Cache (descomentar para clusters)
       # KC_CACHE: ispn
       # KC_CACHE_STACK: kubernetes
+
+      # Temas customizados (Sprint 7): garante que o diretório de temas em
+      # disco seja escaneado pelo FileSystemThemeProvider.
+      KC_SPI_THEME_DIRS: /opt/keycloak/themes
     volumes:
       # Persistência de temas e provedores customizados
       - ./infrastructure/keycloak/data:/opt/keycloak/data
       # Importar realm automaticamente (opcional)
       - ./infrastructure/keycloak/import:/opt/keycloak/data/import:ro
+      # Tema custom de login do CRM (crm-login)
+      - ./infrastructure/keycloak/themes/crm-login:/opt/keycloak/themes/crm-login:ro
     healthcheck:
       test:
         [
