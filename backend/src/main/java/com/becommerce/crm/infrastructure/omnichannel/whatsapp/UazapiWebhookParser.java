@@ -2,6 +2,7 @@ package com.becommerce.crm.infrastructure.omnichannel.whatsapp;
 
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppWebhookParser;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;
@@ -20,9 +21,7 @@ import java.util.Optional;
  */
 /**
  * Parser dos webhooks da UAZAPI (uazapiGO V2).
- * Não é {@code @Component} diretamente — é injetado via {@link CompositeWhatsAppWebhookParser}.
- *
- * <p>Form UAZAPI: {@code {EventType, message: {chatid, messageid, text, fromMe, ...}, chat: {...}}}.
+ * Detecta e parseia o formato UAZAPI: {@code {EventType, message: {chatid, messageid, text, fromMe, ...}, chat: {...}}}.
  *
  * <p>Diferente do Meta Cloud API, a UAZAPI envia:
  * <ul>
@@ -32,6 +31,7 @@ import java.util.Optional;
  *   <li>{@code owner} (número da instância) como referência do canal</li>
  * </ul>
  */
+@Component
 public class UazapiWebhookParser implements WhatsAppWebhookParser {
 
     @Override

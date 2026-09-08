@@ -1,6 +1,7 @@
 package com.becommerce.crm.infrastructure.omnichannel.whatsapp;
 
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppWebhookParser;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Optional;
  * </ul>
  */
 @Component
+@Primary
 public class CompositeWhatsAppWebhookParser implements WhatsAppWebhookParser {
 
     private final List<WhatsAppWebhookParser> parsers;
