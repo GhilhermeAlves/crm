@@ -5,17 +5,17 @@ import com.becommerce.crm.application.ai.port.output.AgentConfigRepository;
 import com.becommerce.crm.application.ai.port.output.AiProvider;
 import com.becommerce.crm.application.ai.service.AiChatFailover;
 import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.application.omnichannel.event.WhatsAppSendEvent;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
-import com.becommerce.crm.application.omnichannel.port.output.WhatsAppProvider;
+import com.becommerce.crm.application.omnichannel.port.output.WhatsAppEventPublisher;
 import com.becommerce.crm.domain.ai.AgentConfig;
 import com.becommerce.crm.domain.ai.AiProviderException;
 import com.becommerce.crm.domain.omnichannel.Channel;
 import com.becommerce.crm.domain.omnichannel.Conversation;
 import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.MessageDirection;
-import com.becommerce.crm.domain.omnichannel.OmnichannelProviderException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +28,11 @@ import java.util.UUID;
 
 /**
  * Auto-resposta autônoma a mensagens de WhatsApp (Sprint 1 da portabilidade
- * Q7 → CRM). Consumido por um listener {@code AFTER_COMMIT} (fora da transação
- * do webhook) — as chamadas de LLM e WhatsApp ocorrem SEM transação de BD aberta.
+ * Q7 → CRM). A partir do Sprint 23 o processamento é ASSÍNCRONO (filas
+ * RabbitMQ): este component é o <b>consumer lógico da fila {@code crm.whatsapp.auto-ai}</b>,
+ * executado fora do request HTTP do webhook. Gera a resposta (IA), persiste o
+ * OUTBOUND como PENDING e publica {@link WhatsAppSendEvent} para a fila de
+ * sender — o ENVIO em si (provider/UAZAPI) ocorre no consumer de sender.
  *
  * <p>Regras (safe defaults):
  * <ul>
@@ -53,8 +56,8 @@ import java.util.UUID;
  * </ul>
  *
  * <p>O pipeline é: reserva → IA (via {@link AiChatFailover}, sem hardcode de
- * prompt) → persiste OUTBOUND pendente → envia via {@link WhatsAppProvider} →
- * marca enviado/falha com {@link OmnichannelMessagePersister} (REQUIRES_NEW).</p>
+ * prompt) → persiste OUTBOUND pendente → publica {@link WhatsAppSendEvent}
+ * (sender consumer envia via {@code WhatsAppProvider}).</p>
  */
 @Service
 public class WhatsAppInboundAutoReplyProcessor {
@@ -77,32 +80,33 @@ public class WhatsAppInboundAutoReplyProcessor {
     private final OmnichannelConversationRepository conversationRepository;
     private final OmnichannelChannelRepository channelRepository;
     private final OmnichannelMessageRepository messageRepository;
-    private final WhatsAppProvider whatsAppProvider;
     private final AiChatFailover aiChatFailover;
     private final OmnichannelMessagePersister messagePersister;
+    private final WhatsAppEventPublisher eventPublisher;
 
     public WhatsAppInboundAutoReplyProcessor(AgentConfigRepository agentConfigRepository,
                                              AgentAutoReplyRepository autoReplyRepository,
                                              OmnichannelConversationRepository conversationRepository,
                                              OmnichannelChannelRepository channelRepository,
                                              OmnichannelMessageRepository messageRepository,
-                                             WhatsAppProvider whatsAppProvider,
                                              AiChatFailover aiChatFailover,
-                                             OmnichannelMessagePersister messagePersister) {
+                                             OmnichannelMessagePersister messagePersister,
+                                             WhatsAppEventPublisher eventPublisher) {
         this.agentConfigRepository = agentConfigRepository;
         this.autoReplyRepository = autoReplyRepository;
         this.conversationRepository = conversationRepository;
         this.channelRepository = channelRepository;
         this.messageRepository = messageRepository;
-        this.whatsAppProvider = whatsAppProvider;
         this.aiChatFailover = aiChatFailover;
         this.messagePersister = messagePersister;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
      * Processa uma mensagem entrante e, se o agente estiver habilitado, produz a
-     * resposta autônoma. Sempre informacional: falhas do agente/IA/provedor são
-     * registradas e não propagadas (o webhook já confirmou o recebimento).
+     * resposta autônoma (persistida como PENDING e enfileirada para envio).
+     * Sempre informacional: falhas do agente/IA são registradas e não propagadas
+     * (o webhook já confirmou o recebimento).
      */
     public void processInbound(UUID companyId, UUID conversationId, UUID inboundMessageId,
                                String from, String body) {
@@ -156,20 +160,12 @@ public class WhatsAppInboundAutoReplyProcessor {
                     channel.getExternalId(), conversation.getExternalPhone(), capped, UUID.randomUUID());
             Message persisted = messagePersister.persistPending(outbound);
 
-            long sendStart = System.nanoTime();
             try {
-                WhatsAppProvider.SendResult result = whatsAppProvider.send(
-                        new WhatsAppProvider.SendRequest(companyId, channel.getId(),
-                                channel.getExternalId(), conversation.getExternalPhone(), capped,
-                                channel.getSecretsRef()));
-                messagePersister.markSent(persisted.getId(), conversationId, result.externalMessageId());
-                log.info("Auto-resposta enviada (company={}, conversation={}, inboundMessageId={}, provider={}, elapsedMs={})",
-                        companyId, conversationId, inboundMessageId,
-                        whatsAppProvider.providerName(), elapsedMillis(sendStart));
-            } catch (OmnichannelProviderException e) {
-                // Persistido em REQUIRES_NEW: sobrevive a falhas e não quebra o webhook.
+                eventPublisher.publishSend(WhatsAppSendEvent.of(companyId, conversationId,
+                        persisted.getId(), channel.getId(), conversation.getExternalPhone(), capped));
+            } catch (Exception e) {
                 messagePersister.markFailed(persisted.getId(), conversationId, e.getMessage());
-                log.warn("Falha ao enviar auto-resposta company={} conversation={}: {}",
+                log.warn("Falha ao enfileirar envio de auto-resposta company={} conversation={}: {}",
                         companyId, conversationId, e.getMessage());
             }
         } finally {

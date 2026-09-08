@@ -8,7 +8,7 @@ import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
-import com.becommerce.crm.application.omnichannel.port.output.WhatsAppProvider;
+import com.becommerce.crm.application.omnichannel.port.output.WhatsAppEventPublisher;
 import com.becommerce.crm.domain.ai.AgentConfig;
 import com.becommerce.crm.domain.ai.AiProviderException;
 import com.becommerce.crm.domain.omnichannel.Channel;
@@ -22,7 +22,6 @@ import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.MessageDirection;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
 import com.becommerce.crm.domain.omnichannel.MessageType;
-import com.becommerce.crm.domain.omnichannel.OmnichannelProviderException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +42,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -76,7 +76,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
             mock(OmnichannelConversationRepository.class);
     private final OmnichannelChannelRepository channelRepository = mock(OmnichannelChannelRepository.class);
     private final OmnichannelMessageRepository messageRepository = mock(OmnichannelMessageRepository.class);
-    private final WhatsAppProvider whatsAppProvider = mock(WhatsAppProvider.class);
+    private final WhatsAppEventPublisher eventPublisher = mock(WhatsAppEventPublisher.class);
     private final AiProvider aiProvider = mock(AiProvider.class);
     private final AiChatFailover aiChatFailover = new AiChatFailover(List.of(aiProvider));
     private final OmnichannelMessagePersister messagePersister = mock(OmnichannelMessagePersister.class);
@@ -88,8 +88,8 @@ class WhatsAppInboundAutoReplyProcessorTest {
     @BeforeEach
     void setUp() {
         processor = new WhatsAppInboundAutoReplyProcessor(agentConfigRepository, autoReplyRepository,
-                conversationRepository, channelRepository, messageRepository, whatsAppProvider,
-                aiChatFailover, messagePersister);
+                conversationRepository, channelRepository, messageRepository,
+                aiChatFailover, messagePersister, eventPublisher);
 
         conversation = Conversation.reconstitute(conversationId, companyId, channelId, null, from,
                 ConversationStatus.OPEN, LocalDateTime.now(), 1, LocalDateTime.now(), LocalDateTime.now());
@@ -105,7 +105,6 @@ class WhatsAppInboundAutoReplyProcessorTest {
         when(autoReplyRepository.lastAutoReplyAt(any(), any())).thenReturn(Optional.empty());
         when(autoReplyRepository.reserve(eq(companyId), eq(conversationId), eq(inboundMessageId)))
                 .thenReturn(true);
-        when(whatsAppProvider.send(any())).thenReturn(new WhatsAppProvider.SendResult("wamid-1"));
         when(messagePersister.persistPending(any())).thenAnswer(inv -> inv.getArgument(0));
         when(aiProvider.chatWithTools(any())).thenReturn(AiProvider.ChatResult.content("Atendemos de 08h às 18h."));
     }
@@ -125,7 +124,6 @@ class WhatsAppInboundAutoReplyProcessorTest {
 
         verify(aiProvider, never()).chatWithTools(any());
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
     }
 
     @Test
@@ -168,7 +166,6 @@ class WhatsAppInboundAutoReplyProcessorTest {
         verify(aiProvider, never()).chatWithTools(any());
         verify(autoReplyRepository, never()).reserve(any(), any(), any());
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
     }
 
     @Test
@@ -181,7 +178,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
 
         verify(aiProvider).chatWithTools(any());
         verify(messagePersister).persistPending(any());
-        verify(whatsAppProvider).send(any());
+        verify(eventPublisher).publishSend(any());
     }
 
     @Test
@@ -287,7 +284,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
     // -------------------------------------------------------------- pipeline IA
 
     @Test
-    void shouldGenerateReplyPersistPendingSendAndMarkSent() {
+    void shouldGenerateReplyPersistPendingPublishSend() {
         config(true, true);
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
@@ -298,12 +295,15 @@ class WhatsAppInboundAutoReplyProcessorTest {
                         && m.getCompanyId().equals(companyId)
                         && m.getConversationId().equals(conversationId)
                         && "Atendemos de 08h às 18h.".equals(m.getBody())));
-        verify(whatsAppProvider).send(argThat(r ->
-                r.companyId().equals(companyId)
-                        && r.channelId().equals(channelId)
-                        && r.to().equals(from)
-                        && "Atendemos de 08h às 18h.".equals(r.body())));
-        verify(messagePersister).markSent(any(), eq(conversationId), eq("wamid-1"));
+        verify(eventPublisher).publishSend(argThat(e ->
+                e.companyId().equals(companyId)
+                        && e.conversationId().equals(conversationId)
+                        && e.channelId().equals(channelId)
+                        && e.to().equals(from)
+                        && "Atendemos de 08h às 18h.".equals(e.body())
+                        && e.followUpId() == null));
+        // o envio efetivo/status (markSent/markFailed) passou a ser do consumer de sender.
+        verify(messagePersister, never()).markSent(any(), any(), any());
     }
 
     @Test
@@ -314,7 +314,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(messagePersister).persistPending(argThat(m -> "0123456789AB".equals(m.getBody())));
-        verify(whatsAppProvider).send(argThat(r -> "0123456789AB".equals(r.body())));
+        verify(eventPublisher).publishSend(argThat(e -> "0123456789AB".equals(e.body())));
     }
 
     @Test
@@ -325,7 +325,6 @@ class WhatsAppInboundAutoReplyProcessorTest {
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
     }
 
     @Test
@@ -336,7 +335,6 @@ class WhatsAppInboundAutoReplyProcessorTest {
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
     }
 
     @Test
@@ -347,7 +345,6 @@ class WhatsAppInboundAutoReplyProcessorTest {
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
     }
 
     @Test
@@ -358,7 +355,6 @@ class WhatsAppInboundAutoReplyProcessorTest {
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
         verify(messagePersister, never()).markFailed(any(), any(), anyString());
     }
 
@@ -371,19 +367,18 @@ class WhatsAppInboundAutoReplyProcessorTest {
 
         verify(aiProvider).chatWithTools(any());
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
     }
 
     @Test
-    void shouldMarkFailedWhenProviderSendThrows() {
+    void shouldMarkFailedWhenPublishSendThrows() {
         config(true, true);
-        when(whatsAppProvider.send(any()))
-                .thenThrow(new OmnichannelProviderException("provider down"));
+        doThrow(new IllegalStateException("broker down"))
+                .when(eventPublisher).publishSend(any());
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(messagePersister).persistPending(any());
-        verify(messagePersister).markFailed(any(), eq(conversationId), eq("provider down"));
+        verify(messagePersister).markFailed(any(), eq(conversationId), eq("broker down"));
         verify(messagePersister, never()).markSent(any(), any(), anyString());
     }
 
@@ -398,8 +393,8 @@ class WhatsAppInboundAutoReplyProcessorTest {
         when(aiProvider.chatWithTools(any())).thenThrow(new AiProviderException("timeout", true));
 
         processor = new WhatsAppInboundAutoReplyProcessor(agentConfigRepository, autoReplyRepository,
-                conversationRepository, channelRepository, messageRepository, whatsAppProvider,
-                new AiChatFailover(List.of(aiProvider, fallback)), messagePersister);
+                conversationRepository, channelRepository, messageRepository,
+                new AiChatFailover(List.of(aiProvider, fallback)), messagePersister, eventPublisher);
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
@@ -407,7 +402,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
         verify(fallback).chatWithTools(any());
         // Uma única resposta enviada — nunca duas (proteção contra duplicação no fallback).
         verify(messagePersister).persistPending(argThat(m -> "resposta do fallback".equals(m.getBody())));
-        verify(whatsAppProvider).send(argThat(r -> "resposta do fallback".equals(r.body())));
+        verify(eventPublisher).publishSend(argThat(e -> "resposta do fallback".equals(e.body())));
     }
 
     @Test
@@ -419,15 +414,14 @@ class WhatsAppInboundAutoReplyProcessorTest {
         when(fallback.chatWithTools(any())).thenThrow(new AiProviderException("provider down", true));
 
         processor = new WhatsAppInboundAutoReplyProcessor(agentConfigRepository, autoReplyRepository,
-                conversationRepository, channelRepository, messageRepository, whatsAppProvider,
-                new AiChatFailover(List.of(aiProvider, fallback)), messagePersister);
+                conversationRepository, channelRepository, messageRepository,
+                new AiChatFailover(List.of(aiProvider, fallback)), messagePersister, eventPublisher);
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(aiProvider).chatWithTools(any());
         verify(fallback).chatWithTools(any());
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
     }
 
     @Test
@@ -440,15 +434,14 @@ class WhatsAppInboundAutoReplyProcessorTest {
         when(aiProvider.providerName()).thenReturn("PRIMARY");
 
         processor = new WhatsAppInboundAutoReplyProcessor(agentConfigRepository, autoReplyRepository,
-                conversationRepository, channelRepository, messageRepository, whatsAppProvider,
-                new AiChatFailover(List.of(aiProvider, fallback)), messagePersister);
+                conversationRepository, channelRepository, messageRepository,
+                new AiChatFailover(List.of(aiProvider, fallback)), messagePersister, eventPublisher);
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(aiProvider).chatWithTools(any());
         verify(fallback, never()).chatWithTools(any());
         verify(messagePersister, never()).persistPending(any());
-        verify(whatsAppProvider, never()).send(any());
     }
 
     // -------------------------------------------------------------- histórico

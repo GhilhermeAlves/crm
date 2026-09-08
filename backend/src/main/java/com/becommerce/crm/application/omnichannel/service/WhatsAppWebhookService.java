@@ -7,7 +7,9 @@ import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannel
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelCompanyResolver;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
+import com.becommerce.crm.application.omnichannel.port.output.WhatsAppEventPublisher;
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppWebhookParser;
+import com.becommerce.crm.application.omnichannel.event.WhatsAppInboundEvent;
 import com.becommerce.crm.domain.contact.Contact;
 import com.becommerce.crm.domain.omnichannel.Channel;
 import com.becommerce.crm.domain.omnichannel.Conversation;
@@ -45,6 +47,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
     private final OmnichannelMessageRepository messageRepository;
     private final ContactRepository contactRepository;
     private final EventPublisher eventPublisher;
+    private final WhatsAppEventPublisher whatsAppEventPublisher;
     private final String verificationToken;
 
     public WhatsAppWebhookService(WhatsAppWebhookParser parser,
@@ -54,6 +57,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
                                   OmnichannelMessageRepository messageRepository,
                                   ContactRepository contactRepository,
                                   EventPublisher eventPublisher,
+                                  WhatsAppEventPublisher whatsAppEventPublisher,
                                   @Value("${omnichannel.whatsapp.webhook-verify-token:}") String verificationToken) {
         this.parser = parser;
         this.companyResolver = companyResolver;
@@ -62,6 +66,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         this.messageRepository = messageRepository;
         this.contactRepository = contactRepository;
         this.eventPublisher = eventPublisher;
+        this.whatsAppEventPublisher = whatsAppEventPublisher;
         this.verificationToken = verificationToken;
     }
 
@@ -143,6 +148,13 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         eventPublisher.publish(WorkflowTriggerEvent.whatsAppMessageReceived(
                 companyId, conversation.getContactId(), conversation.getId(), persisted.getId(),
                 data.from(), data.body()));
+
+        // Sprint 23: desacopla a resposta automática do request HTTP do webhook —
+        // publica o evento de inbound para a fila crm.whatsapp.inbound (AFTER_COMMIT);
+        // a IA e o envio passam a ocorrer nos consumers assíncronos.
+        whatsAppEventPublisher.publishInbound(WhatsAppInboundEvent.of(
+                companyId, conversation.getId(), persisted.getId(), channel.getId(),
+                data.externalMessageId(), data.from(), data.body()));
     }
 
     private void handleStatus(UUID companyId, Map<String, Object> payload) {

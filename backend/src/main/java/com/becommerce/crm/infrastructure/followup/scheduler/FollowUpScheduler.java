@@ -13,12 +13,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Scheduler de FollowUps (Sprint 22). A cada tick busca follow-ups vencidos em
+ * Scheduler de FollowUps (Sprint 22/23). A cada tick busca follow-ups vencidos em
  * TODAS as empresas via SECURITY DEFINER {@code app.followup_scheduler_candidates}
  * (mesmo padrão da V062/V044) e delega para o {@link FollowUpProcessingService}
+ * (claim atômico + publish do evento de execução na fila {@code crm.followup.executor}),
  * com o TenantContext da empresa. A idempotência/concorrência é garantida pelo
- * claim atômico no repositório — múltiplas instâncias podem rodar em paralelo
- * sem duplicar execução.
+ * claim no repositório — múltiplas instâncias podem rodar em paralelo sem
+ * duplicar execução.
  */
 @Component
 public class FollowUpScheduler {
@@ -45,7 +46,7 @@ public class FollowUpScheduler {
                         rs.getObject("company_id", UUID.class)));
         for (SchedulerCandidate candidate : due) {
             try {
-                processingService.process(candidate.companyId(), candidate.followUpId());
+                processingService.dispatch(candidate.companyId(), candidate.followUpId());
                 log.debug("Follow-up processado: {} (company={})", candidate.followUpId(), candidate.companyId());
             } catch (Exception e) {
                 log.error("Falha ao processar follow-up agendado {}: {}",

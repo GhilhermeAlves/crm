@@ -6,6 +6,7 @@ import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannel
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelCompanyResolver;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
+import com.becommerce.crm.application.omnichannel.port.output.WhatsAppEventPublisher;
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppWebhookParser;
 import com.becommerce.crm.domain.contact.Contact;
 import com.becommerce.crm.domain.omnichannel.Channel;
@@ -37,11 +38,12 @@ class WhatsAppWebhookServiceTest {
     private final OmnichannelMessageRepository messageRepository = mock(OmnichannelMessageRepository.class);
     private final ContactRepository contactRepository = mock(ContactRepository.class);
     private final EventPublisher eventPublisher = mock(EventPublisher.class);
+    private final WhatsAppEventPublisher whatsAppEventPublisher = mock(WhatsAppEventPublisher.class);
 
     private final String verificationToken = "token-x";
     private final WhatsAppWebhookService service =
             new WhatsAppWebhookService(parser, companyResolver, channelRepository, conversationRepository,
-                    messageRepository, contactRepository, eventPublisher, verificationToken);
+                    messageRepository, contactRepository, eventPublisher, whatsAppEventPublisher, verificationToken);
 
     private final UUID companyId = UUID.randomUUID();
     private final UUID channelId = UUID.randomUUID();
@@ -93,6 +95,7 @@ class WhatsAppWebhookServiceTest {
         verify(messageRepository).saveByExternalId(any(Message.class));
         verify(conversationRepository, times(2)).save(any(Conversation.class));
         verify(eventPublisher).publish(any(WorkflowTriggerEvent.class));
+        verify(whatsAppEventPublisher).publishInbound(any());
     }
 
     @Test

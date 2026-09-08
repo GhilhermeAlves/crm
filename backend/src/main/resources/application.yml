@@ -44,6 +44,20 @@ spring:
     port: ${CRM_RABBITMQ_PORT:5672}
     username: ${CRM_RABBITMQ_USERNAME:guest}
     password: ${CRM_RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        # Retry local (3 tentativas com backoff) antes de rejeitar para a DLQ.
+        retry:
+          enabled: true
+          initial-interval: 1000ms
+          multiplier: 2
+          max-attempts: 3
+          max-interval: 10000ms
+        # Após retry esgotado: rejeita e roteia para a DLQ (crm.whatsapp.<queue>.dlq).
+        default-requeue-rejected: false
+        # Em cold start (Broker da VPS ainda não deu o bind), o RabbitAdmin declara
+        # a topologia antes dos listeners ativarem — evita falha fatal de fila ausente.
+        missing-queues-fatal: false
 
   jackson:
     default-property-inclusion: non_null
