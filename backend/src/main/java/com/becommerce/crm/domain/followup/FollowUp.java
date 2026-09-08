@@ -35,6 +35,7 @@ public class FollowUp {
     private java.time.LocalDateTime cancelledAt;
     private FollowUpCancellationReason cancelledReason;
     private final java.util.UUID idempotencyKey;
+    private final java.util.UUID sequenceId;
     private final java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
 
@@ -43,7 +44,8 @@ public class FollowUp {
                      java.time.LocalDateTime executeAt, int attempts, String lastError, String resultText,
                      java.time.LocalDateTime processingStartedAt, java.time.LocalDateTime processedAt,
                      java.time.LocalDateTime cancelledAt, FollowUpCancellationReason cancelledReason,
-                     java.util.UUID idempotencyKey, java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
+                     java.util.UUID idempotencyKey, java.util.UUID sequenceId,
+                     java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
         this.id = id;
         this.companyId = companyId;
         this.conversationId = conversationId;
@@ -59,6 +61,7 @@ public class FollowUp {
         this.cancelledAt = cancelledAt;
         this.cancelledReason = cancelledReason;
         this.idempotencyKey = idempotencyKey;
+        this.sequenceId = sequenceId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -66,13 +69,20 @@ public class FollowUp {
     public static FollowUp create(java.util.UUID companyId, java.util.UUID conversationId,
                                   FollowUpAction actionType, String actionContent,
                                   java.time.LocalDateTime executeAt, java.util.UUID idempotencyKey) {
+        return create(companyId, conversationId, actionType, actionContent, executeAt, idempotencyKey, null);
+    }
+
+    public static FollowUp create(java.util.UUID companyId, java.util.UUID conversationId,
+                                  FollowUpAction actionType, String actionContent,
+                                  java.time.LocalDateTime executeAt, java.util.UUID idempotencyKey,
+                                  java.util.UUID sequenceId) {
         validateAction(actionType, actionContent);
         if (executeAt == null) {
             throw new FollowUpValidationException("A data/hora de execução é obrigatória");
         }
         return new FollowUp(java.util.UUID.randomUUID(), companyId, conversationId, FollowUpStatus.PENDING,
                 actionType, actionContent, executeAt, 0, null, null, null, null, null, null,
-                idempotencyKey, java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+                idempotencyKey, sequenceId, java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
     }
 
     public static FollowUp reconstitute(java.util.UUID id, java.util.UUID companyId, java.util.UUID conversationId,
@@ -81,10 +91,11 @@ public class FollowUp {
                                         String resultText, java.time.LocalDateTime processingStartedAt,
                                         java.time.LocalDateTime processedAt, java.time.LocalDateTime cancelledAt,
                                         FollowUpCancellationReason cancelledReason, java.util.UUID idempotencyKey,
+                                        java.util.UUID sequenceId,
                                         java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {
         return new FollowUp(id, companyId, conversationId, status, actionType, actionContent, executeAt,
                 attempts, lastError, resultText, processingStartedAt, processedAt, cancelledAt,
-                cancelledReason, idempotencyKey, createdAt, updatedAt);
+                cancelledReason, idempotencyKey, sequenceId, createdAt, updatedAt);
     }
 
     /** Cancelamento pelo usuário: apenas a partir de PENDING. */
@@ -185,6 +196,7 @@ public class FollowUp {
     public java.time.LocalDateTime getCancelledAt() { return cancelledAt; }
     public FollowUpCancellationReason getCancelledReason() { return cancelledReason; }
     public java.util.UUID getIdempotencyKey() { return idempotencyKey; }
+    public java.util.UUID getSequenceId() { return sequenceId; }
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }
     public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
 

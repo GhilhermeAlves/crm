@@ -116,6 +116,9 @@ omnichannel:
     app-secret: ${CRM_WHATSAPP_APP_SECRET:}
     webhook-verify-token: ${CRM_WHATSAPP_WEBHOOK_VERIFY_TOKEN:}
     webhook-allow-unsigned: ${WHATSAPP_WEBHOOK_ALLOW_UNSIGNED:false}
+    uazapi:
+      base-url: ${UAZAPI_BASE_URL:}         # base URL da instância UAZAPI (ex.: https://<subdomain>.uazapi.com)
+      token: ${UAZAPI_TOKEN:}               # token da instância (fallback global; por canal via UAZAPI_TOKEN_<ref>)
 
 springdoc:
   api-docs:

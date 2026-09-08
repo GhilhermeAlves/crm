@@ -65,7 +65,7 @@ class FollowUpProcessingServiceTest {
         return FollowUp.reconstitute(followUpId, companyId, conversationId, FollowUpStatus.PROCESSING,
                 FollowUpAction.SEND_MESSAGE, "Podemos retomar?", LocalDateTime.now().minusMinutes(5),
                 0, null, null, LocalDateTime.now(), null, null, null, null,
-                LocalDateTime.now(), LocalDateTime.now());
+                null, LocalDateTime.now(), LocalDateTime.now());
     }
 
     private Conversation conversation(ConversationMode mode) {
@@ -166,7 +166,7 @@ class FollowUpProcessingServiceTest {
         FollowUp f = FollowUp.reconstitute(followUpId, companyId, conversationId, FollowUpStatus.PROCESSING,
                 FollowUpAction.SEND_MESSAGE, "Podemos retomar?", LocalDateTime.now().minusMinutes(5),
                 2, null, null, LocalDateTime.now(), null, null, null, null,
-                LocalDateTime.now(), LocalDateTime.now());
+                null, LocalDateTime.now(), LocalDateTime.now());
         when(followUpRepository.claim(eq(companyId), eq(followUpId), any(), any())).thenReturn(true);
         when(followUpRepository.findById(followUpId)).thenReturn(Optional.of(f));
         when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation(ConversationMode.AUTOMATIC)));
@@ -203,7 +203,7 @@ class FollowUpProcessingServiceTest {
         FollowUp foreign = FollowUp.reconstitute(followUpId, UUID.randomUUID(), conversationId,
                 FollowUpStatus.PROCESSING, FollowUpAction.SEND_MESSAGE, "x", LocalDateTime.now(),
                 0, null, null, LocalDateTime.now(), null, null, null, null,
-                LocalDateTime.now(), LocalDateTime.now());
+                null, LocalDateTime.now(), LocalDateTime.now());
         when(followUpRepository.findById(followUpId)).thenReturn(Optional.of(foreign));
 
         service.process(companyId, followUpId);

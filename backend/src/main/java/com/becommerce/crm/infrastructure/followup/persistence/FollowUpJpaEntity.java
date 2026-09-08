@@ -58,6 +58,9 @@ public class FollowUpJpaEntity {
     @Column(name = "idempotency_key")
     private UUID idempotencyKey;
 
+    @Column(name = "sequence_id")
+    private UUID sequenceId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -94,6 +97,8 @@ public class FollowUpJpaEntity {
     public void setCancelledReason(String cancelledReason) { this.cancelledReason = cancelledReason; }
     public UUID getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(UUID idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+    public UUID getSequenceId() { return sequenceId; }
+    public void setSequenceId(UUID sequenceId) { this.sequenceId = sequenceId; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

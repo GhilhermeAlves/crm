@@ -21,12 +21,13 @@ public record FollowUpResponse(
         String resultText,
         LocalDateTime cancelledAt,
         FollowUpCancellationReason cancelledReason,
+        UUID sequenceId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
     public static FollowUpResponse from(FollowUp f) {
         return new FollowUpResponse(f.getId(), f.getConversationId(), f.getStatus(), f.getActionType(),
                 f.getActionContent(), f.getExecuteAt(), f.getAttempts(), f.getLastError(), f.getResultText(),
-                f.getCancelledAt(), f.getCancelledReason(), f.getCreatedAt(), f.getUpdatedAt());
+                f.getCancelledAt(), f.getCancelledReason(), f.getSequenceId(), f.getCreatedAt(), f.getUpdatedAt());
     }
 }

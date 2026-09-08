@@ -73,7 +73,7 @@ class FollowUpControllerTest {
     private FollowUpResponse response() {
         return new FollowUpResponse(UUID.randomUUID(), UUID.randomUUID(), FollowUpStatus.PENDING,
                 FollowUpAction.SEND_MESSAGE, "Obrigado pelo contato!", LocalDateTime.now().plusHours(1),
-                0, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
+                0, null, null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
     }
 
     @Test
@@ -125,7 +125,7 @@ class FollowUpControllerTest {
         FollowUpResponse cancelled = new FollowUpResponse(followUpId, UUID.randomUUID(),
                 FollowUpStatus.CANCELLED, FollowUpAction.SEND_MESSAGE, "Obrigado!", LocalDateTime.now(),
                 0, null, null, LocalDateTime.now(), com.becommerce.crm.domain.followup.FollowUpCancellationReason.USER,
-                LocalDateTime.now(), LocalDateTime.now());
+                null, LocalDateTime.now(), LocalDateTime.now());
         when(followUpUseCase.cancel(COMPANY_ID, followUpId)).thenReturn(cancelled);
 
         mockMvc.perform(post("/api/v1/omnichannel/follow-ups/" + followUpId + "/cancel"))

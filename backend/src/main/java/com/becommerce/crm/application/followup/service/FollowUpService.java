@@ -74,7 +74,7 @@ public class FollowUpService implements FollowUpUseCase {
             }
 
             FollowUp followUp = FollowUp.create(companyId, request.conversationId(), FollowUpAction.SEND_MESSAGE,
-                    request.content(), request.executeAt(), request.idempotencyKey());
+                    request.content(), request.executeAt(), request.idempotencyKey(), request.sequenceId());
             FollowUp saved = followUpRepository.save(followUp);
             audit(companyId, saved.getId(), AuditAction.CREATE,
                     "Follow-up agendado para " + request.executeAt());

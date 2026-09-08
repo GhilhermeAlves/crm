@@ -68,12 +68,12 @@ class FollowUpServiceTest {
         UUID id = UUID.randomUUID();
         return FollowUp.reconstitute(id, companyId, conversationId, status, FollowUpAction.SEND_MESSAGE,
                 "Obrigado pelo contato!", LocalDateTime.now().plusHours(2), 0, null, null, null, null,
-                null, null, null, LocalDateTime.now(), LocalDateTime.now());
+                null, null, null, null, LocalDateTime.now(), LocalDateTime.now());
     }
 
     private FollowUpRequest request() {
         return new FollowUpRequest(conversationId, "Obrigado pelo contato!",
-                LocalDateTime.now().plusHours(2), null);
+                LocalDateTime.now().plusHours(2), null, null);
     }
 
     @Test
@@ -113,9 +113,9 @@ class FollowUpServiceTest {
     @Test
     void create_missingFields_shouldBeRejected() {
         assertThrows(FollowUpValidationException.class,
-                () -> service.create(companyId, new FollowUpRequest(null, "msg", LocalDateTime.now(), null)));
+                () -> service.create(companyId, new FollowUpRequest(null, "msg", LocalDateTime.now(), null, null)));
         assertThrows(FollowUpValidationException.class,
-                () -> service.create(companyId, new FollowUpRequest(conversationId, null, LocalDateTime.now(), null)));
+                () -> service.create(companyId, new FollowUpRequest(conversationId, null, LocalDateTime.now(), null, null)));
     }
 
     @Test
@@ -126,7 +126,7 @@ class FollowUpServiceTest {
         when(followUpRepository.findByIdempotencyKey(companyId, key)).thenReturn(Optional.of(existing));
 
         FollowUpResponse response = service.create(companyId,
-                new FollowUpRequest(conversationId, "x", LocalDateTime.now().plusHours(1), key));
+                new FollowUpRequest(conversationId, "x", LocalDateTime.now().plusHours(1), key, null));
 
         assertEquals(existing.getId(), response.id());
         verify(followUpRepository, never()).save(any());

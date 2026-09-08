@@ -98,6 +98,7 @@ public class FollowUpRepositoryImpl implements FollowUpRepository {
         e.setCancelledAt(f.getCancelledAt());
         if (f.getCancelledReason() != null) { e.setCancelledReason(f.getCancelledReason().name()); }
         e.setIdempotencyKey(f.getIdempotencyKey());
+        e.setSequenceId(f.getSequenceId());
         e.setCreatedAt(f.getCreatedAt());
         e.setUpdatedAt(f.getUpdatedAt());
         return e;
@@ -110,6 +111,6 @@ public class FollowUpRepositoryImpl implements FollowUpRepository {
                 e.getActionContent(), e.getExecuteAt(), e.getAttempts(), e.getLastError(), e.getResultText(),
                 e.getProcessingStartedAt(), e.getProcessedAt(), e.getCancelledAt(),
                 e.getCancelledReason() == null ? null : FollowUpCancellationReason.valueOf(e.getCancelledReason()),
-                e.getIdempotencyKey(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getIdempotencyKey(), e.getSequenceId(), e.getCreatedAt(), e.getUpdatedAt());
     }
 }
