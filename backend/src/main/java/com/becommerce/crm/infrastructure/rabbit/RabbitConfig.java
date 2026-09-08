@@ -22,17 +22,21 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-    /** Pacotes confiáveis para desserialização JSON tipada dos eventos.
-     *  O sufixo {@code .*} cobre TODOS os subpacotes (os eventos ficam em
-     *  {@code com.becommerce.crm.application.*.event}); sem o wildcard apenas o
-     *  pacote exato seria confiável e a desserialização do consumer falharia. */
-    private static final String TRUSTED_PACKAGE = "com.becommerce.crm.*";
+    /** Pacotes confiáveis p/ desserialização JSON tipada dos eventos.
+     *  O {@code DefaultJackson2JavaTypeMapper} compara o pacote da classe com
+     *  {@code String.equals} (sem wildcard) — portanto listamos EXATAMENTE os
+     *  pacotes onde vivem os eventos do barramento (e manter isso é requisito
+     *  p/ novos eventos). Pacote pai ou sufixo {@code .*} NÃO funcionam. */
+    private static final String[] TRUSTED_PACKAGES = {
+            "com.becommerce.crm.application.omnichannel.event",
+            "com.becommerce.crm.application.followup.event"
+    };
 
     @Bean
     public MessageConverter messageConverter(ObjectMapper objectMapper) {
         Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
         DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
-        typeMapper.setTrustedPackages(TRUSTED_PACKAGE);
+        typeMapper.setTrustedPackages(TRUSTED_PACKAGES);
         converter.setJavaTypeMapper(typeMapper);
         return converter;
     }
