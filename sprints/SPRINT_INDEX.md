@@ -23,6 +23,8 @@
 | 18 | Omnichannel — Automações |
 | 19 | Analytics — Dashboard |
 | 20 | IA |
+| 21 | IA — AgentConfig Admin + Human Takeover (sem commit/deploy) |
+| 22 | Omnichannel — Follow-up + Scheduler + UAZAPI |
 
 ## Planejamento
 
@@ -389,8 +391,31 @@
 | 16 | WhatsApp | ✅ Concluída | 2026-08-23 | AI Agent | 12 |
 | 17 | Campanhas | ✅ Concluída | 156b2d9/e77dea8 | V055–V062: CRUD + ciclo de vida, templates, dispatcher WhatsApp, execução agendada idempotente, RLS + isolation ITs, frontend /campaigns (lista/wizard/360); CI/CD GREEN e deploy VPS validado | 16 |
 | 18 | Automações | ✅ Concluída | 792d3ab | Extensão do motor Workflow: triggers CONTACT_CREATED/LEAD_STATUS_CHANGED/CAMPAIGN_COMPLETED, operadores CONTAINS/IS_NULL/IS_NOT_NULL, ações SEND_NOTIFICATION/EXECUTE_CAMPAIGN; CI/CD GREEN e deploy VPS validado | 17 |
+| 21 | IA: AgentConfig Admin + Human Takeover | 🚧 Sem commit/deploy (por instrução) | 2026-09-06 | AI Agent | 20 |
+| 22 | Follow-up + Scheduler + UAZAPI | ✅ Concluída | 2026-09-08 | AI Agent | 16/21 |
 
-## Analytics
+> **22 — Follow-up + Scheduler + UAZAPI ✅ Concluída (2026-09-08).**
+> - ✅ **Auditoria (fluxo passo 1)**: FollowUp/domain+status+MAX_ATTEMPTS, `FollowUpScheduler`
+>   (`@Scheduled`), `FollowUpProcessingService` (claim atômico, HUMAN_MODE, SUPERSEDED_BY_NEW_MESSAGE,
+>   retry terminal), `FollowUpController` + `omnichannel:followup{,:read}` + RLS FORCE, cancelamento
+>   por resposta do cliente e testes já existiam — **sem duplicar**;
+> - ✅ **UazapiWhatsAppProvider**: adapter UAZAPI V2 (uazapiGO), `POST /send/text` com header
+>   `token` (não Bearer), base `UAZAPI_BASE_URL`, token via secretsRef/`UAZAPI_TOKEN`; ativo só com
+>   `WHATSAPP_PROVIDER=uazapi`; `ChannelProvider.UAZAPI`; `UazapiWhatsAppProviderTest` 7/7
+>   (MockRestServiceServer);
+> - ✅ **FollowUpSequence**: entidade + `V076` (`followup_sequences` + RLS FORCE +
+>   `followups.sequence_id` nullable FK ON DELETE SET NULL + permissões
+>   `omnichannel:followup:sequence{,:read}` ADMIN/MANAGER) + CRUD HTTP
+>   `/api/v1/omnichannel/follow-up-sequences` (POST/GET/PUT/DELETE/activate/deactivate) +
+>   testes domain/service/controller;
+> - ✅ **Suíte backend 724 testes verdes**; CI verde (Backend+ITs Testcontainers, Auth, Frontend,
+>   Docker Build); CD falhou no *deploy step* por rede transitória do runner → **deploy manual na VPS**
+>   (`1a53a53`+`9f49c3c`): **V076 aplicada**, containers recriados, **UAZAPI ativado** com credenciais
+>   de teste no `.env` (backup), health 200 (/actuator, /auth, frontend / e /login) e
+>   `/follow-up-sequences` 401 sem sessão;
+> - ⚠️ Débitos: frontend de follow-up/sequences, E2E autenticado manual, RabbitMQ (próxima etapa),
+>   envio UAZAPI E2E com canal ativo;
+> - 📄 `sprints/22/REPORT.md`.
 
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
@@ -453,4 +478,4 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 > **Governança:** uma implementação só é considerada sprint concluída quando código, testes, documentação, índice, CI/CD e deploy/validação na VPS estiverem consistentes.
 > **Entrega funcional (sem sprint):** Notificações In-app — implementada e em produção; ver `sprints/notifications/REPORT.md`.
 
-*última atualização: 2026-08-23 — Sprint 16 (WhatsApp) e Sprint 20 (IA) concluídas; regularização documental pós-Sprint 16.*
+*última atualização: 2026-09-08 — Sprint 22 (Follow-up + Scheduler + UAZAPI) concluída e deploy na VPS com UAZAPI ativado; Sprint 21 (IA: AgentConfig Admin + Human Takeover) sem commit/deploy (por instrução).*
