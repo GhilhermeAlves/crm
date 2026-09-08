@@ -2,7 +2,6 @@ package com.becommerce.crm.infrastructure.omnichannel.whatsapp;
 
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppWebhookParser;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +23,10 @@ import java.util.Optional;
  * Em simulação/fake o {@code phone_number_id} da empresa é usado como a
  * referência do canal (mesmo formato do prod).
  */
-@Component
+/**
+ * Parser dos webhooks da WhatsApp Cloud API (Meta), FASE 6/10/17.
+ * Não é {@code @Component} diretamente — é injetado via {@link CompositeWhatsAppWebhookParser}.
+ */
 public class WhatsAppCloudApiWebhookParser implements WhatsAppWebhookParser {
 
     @Override
