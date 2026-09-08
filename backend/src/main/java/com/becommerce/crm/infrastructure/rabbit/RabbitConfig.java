@@ -22,8 +22,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-    /** Pacotes confiáveis para desserialização JSON tipada dos eventos. */
-    private static final String TRUSTED_PACKAGE = "com.becommerce.crm";
+    /** Pacotes confiáveis para desserialização JSON tipada dos eventos.
+     *  O sufixo {@code .*} cobre TODOS os subpacotes (os eventos ficam em
+     *  {@code com.becommerce.crm.application.*.event}); sem o wildcard apenas o
+     *  pacote exato seria confiável e a desserialização do consumer falharia. */
+    private static final String TRUSTED_PACKAGE = "com.becommerce.crm.*";
 
     @Bean
     public MessageConverter messageConverter(ObjectMapper objectMapper) {
