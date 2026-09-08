@@ -25,6 +25,7 @@
 | 20 | IA |
 | 21 | IA — AgentConfig Admin + Human Takeover (sem commit/deploy) |
 | 22 | Omnichannel — Follow-up + Scheduler + UAZAPI |
+| 23 | Omnichannel — Pipeline Assíncrono (RabbitMQ) |
 
 ## Planejamento
 
@@ -393,6 +394,7 @@
 | 18 | Automações | ✅ Concluída | 792d3ab | Extensão do motor Workflow: triggers CONTACT_CREATED/LEAD_STATUS_CHANGED/CAMPAIGN_COMPLETED, operadores CONTAINS/IS_NULL/IS_NOT_NULL, ações SEND_NOTIFICATION/EXECUTE_CAMPAIGN; CI/CD GREEN e deploy VPS validado | 17 |
 | 21 | IA: AgentConfig Admin + Human Takeover | 🚧 Sem commit/deploy (por instrução) | 2026-09-06 | AI Agent | 20 |
 | 22 | Follow-up + Scheduler + UAZAPI | ✅ Concluída | 2026-09-08 | AI Agent | 16/21 |
+| 23 | Pipeline Assíncrono (RabbitMQ) | ✅ Concluída | 2026-09-08 | AI Agent | 16/21/22 |
 
 > **22 — Follow-up + Scheduler + UAZAPI ✅ Concluída (2026-09-08).**
 > - ✅ **Auditoria (fluxo passo 1)**: FollowUp/domain+status+MAX_ATTEMPTS, `FollowUpScheduler`
@@ -417,6 +419,38 @@
 >   envio UAZAPI E2E com canal ativo;
 > - 📄 `sprints/22/REPORT.md`.
 
+> **23 — Pipeline Assíncrono (RabbitMQ) ✅ Concluída (2026-09-08).**
+> - ✅ **Infra fina RabbitMQ (2ª infra, única adição)**: exchange `crm.whatsapp` (topic) + DLX
+>   `crm.whatsapp.dlx`; queues `crm.whatsapp.inbound`/`auto-ai`/`sender` + `crm.followup.executor`
+>   (+ `.dlq` cada); rotas `whatsapp.inbound`/`auto-ai`/`sender` + `followup.executor`; retry
+>   (max-attempts 3 + backoff) e `default-requeue-rejected:false` → DLQ; consumidores gated por
+>   `crm.messaging.consumers.enabled` (default on); sem uso de Rabbit no domínio/aplicação;
+> - ✅ **Cadeia assíncrona**: webhook persiste e publica → `WhatsAppInboundConsumer`→
+>   `WhatsAppInboundProcessor` (idempotência V044) → `WhatsAppAutoAiConsumer`→
+>   `WhatsAppInboundAutoReplyProcessor` (persiste PENDING / respeita HUMAN block) →
+>   `WhatsAppSenderConsumer`→ `WhatsAppSendService`/UAZAPI (clientMessageId único);
+>   follow-up pelo `FollowUpExecutorConsumer`→ claim atômico + outcome handler (backoff 15m/1h/4h,
+>   MAX_ATTEMPTS=3);
+> - ✅ **Regras de consumidor**: tenant reconstruído de `event.companyId()` com clear no `finally`;
+>   companyId ausente = fail-safe sem retry; permanente engolido, transitório rethrown; 3 tentativas
+>   → DLQ;
+> - ✅ **Trusted packages (bug real pego pela CI)**: `DefaultJackson2JavaTypeMapper` faz **exact
+>   match** (`String.equals`, sem wildcard) — `RabbitConfig` usa os pacotes exatos
+>   `application.omnichannel.event` + `application.followup.event`; `RabbitConfigTest` pina a regressão;
+> - ✅ **Testes**: suíte completa offline BUILD SUCCESS (747 + `RabbitConfigTest`), checkstyle 0;
+>   `RabbitMessagingFlowIT` (Testcontainers RabbitMQ na CI) prova topologia real, round-trip do
+>   conversor e rota poison → DLQ;
+> - ✅ **CI GREEN** (Backend incl. ITs, Auth, Frontend, Docker Build) e **CD GREEN** em `9e1406d`
+>   (commits `d6955de`/`ade88ba`/`9e1406d`); deploy-staging auto-executado recriou o backend na VPS;
+> - ✅ **VPS validada**: RabbitMQ `rabbitmq:4-management-alpine` com topologia completa declarada e
+>   1 consumer/queue (backend), imagens contêm as classes do sprint, health 200, ~5h de logs **0
+>   ERROR/WARN** de messaging, webhook 401 com token errado, schema `followups` verificado (`execute_at`,
+>   `idx_followups_due` parcial, `idempotency_key` único parcial, RLS FORCE);
+> - ⚠️ **Débitos**: E2E real do happy-path (requer número/teste ativo da UAZAPI), frontend de
+>   follow-up (herdado), E2E autenticado manual (herdado); riscos residuais (§27): sem Outbox,
+>   corner de re-publish do executor, trusted packages exact-match em novos pacotes;
+> - 📄 `sprints/23/REPORT.md`.
+
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
 | 19 | Analytics | ✅ Concluída | 2350658/17f1c8f | V063 analytics:read; endpoint agregado /analytics/summary (~19 KPIs SQL, comparacao temporal, serie diária); frontend /reports com recharts; AnalyticsIsolationIT PASS; CI/CD GREEN e deploy VPS validado | 18 |
@@ -439,11 +473,11 @@
 | Segurança | 12 | 12 | 0 | 0 | 0 |
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
 | SaaS | 7 | 7 | 0 | 0 | 0 |
-| CRM | 8 | 8 | 0 | 0 | 0 |
-| Omnichannel | 3 | 1 | 0 | 2 | 0 |
-| Analytics | 1 | 0 | 0 | 1 | 0 |
+| CRM | 7 | 7 | 0 | 0 | 0 |
+| Omnichannel | 6 | 5 | 1 | 0 | 0 |
+| Analytics | 1 | 1 | 0 | 0 | 0 |
 | IA | 1 | 1 | 0 | 0 | 0 |
-| **Total** | **49** | **41** | **0** | **3** | **5** |
+| **Total** | **51** | **45** | **1** | **0** | **5** |
 
 ---
 
@@ -478,4 +512,4 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 > **Governança:** uma implementação só é considerada sprint concluída quando código, testes, documentação, índice, CI/CD e deploy/validação na VPS estiverem consistentes.
 > **Entrega funcional (sem sprint):** Notificações In-app — implementada e em produção; ver `sprints/notifications/REPORT.md`.
 
-*última atualização: 2026-09-08 — Sprint 22 (Follow-up + Scheduler + UAZAPI) concluída e deploy na VPS com UAZAPI ativado; Sprint 21 (IA: AgentConfig Admin + Human Takeover) sem commit/deploy (por instrução).*
+*última atualização: 2026-09-08 — Sprint 23 (Omnichannel · Pipeline Assíncrono RabbitMQ) concluída: CI/CD GREEN, pipeline live na VPS (RabbitMQ 4, topologia completa, 0 erros); Sprint 21 (IA: AgentConfig Admin + Human Takeover) sem commit/deploy (por instrução).*
