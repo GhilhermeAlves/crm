@@ -17,7 +17,7 @@ export default function LoginPage() {
   return (
     <Suspense>
       <div className="space-y-6">
-        <LoginBrand variant="mobile" wordmark="CRM" className="pt-2" />
+        <LoginBrand variant="mobile" wordmark="CRM" markClassName="w-20" className="pt-2" />
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-crm-text">Entrar</h1>
           <p className="text-sm text-crm-text-secondary">Acesse sua conta para continuar</p>

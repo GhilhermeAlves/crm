@@ -23,6 +23,8 @@ export type LoginBrandProps = {
   size?: "sm" | "md" | "lg";
   variant?: "desktop" | "mobile";
   wordmark?: string;
+  /** Classes extras no marcador de fallback (ex.: largura igual ao título da tela). */
+  markClassName?: string;
   className?: string;
 };
 
@@ -44,6 +46,7 @@ export function LoginBrand({
   size = "md",
   variant = "desktop",
   wordmark = "CRM",
+  markClassName,
   className,
 }: LoginBrandProps) {
   const mark = logoSrc ? (
@@ -59,10 +62,13 @@ export function LoginBrand({
       className={cn(
         "flex h-full w-full select-none items-center justify-center bg-crm-primary font-semibold tracking-tight text-crm-primary-foreground",
         MARK_SIZES[size],
+        markClassName,
       )}
       data-testid="login-brand-fallback"
+      role="img"
+      aria-label="Logo CRM"
     >
-      {wordmark.slice(0, 2).toUpperCase()}
+      ∞
     </div>
   );
 
@@ -79,7 +85,10 @@ export function LoginBrand({
       )}
       data-testid="login-brand"
     >
-      <div data-logo-slot className={cn("shrink-0", SLOT_SIZES[size])}>
+      <div
+        data-logo-slot
+        className={cn("flex shrink-0 items-center justify-center", SLOT_SIZES[size])}
+      >
         {mark}
       </div>
       {variant === "desktop" && wordmarkElement}

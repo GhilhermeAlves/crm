@@ -3,9 +3,9 @@ import { render, screen } from "@testing-library/react";
 import { LoginBrand } from "./LoginBrand";
 
 describe("LoginBrand (Sprint 7.0)", () => {
-  it("renders the textual fallback with the wordmark initials when no logo is set", () => {
+  it("renders the blue infinity-symbol fallback when no logo is set", () => {
     render(<LoginBrand wordmark="CRM" />);
-    expect(screen.queryByTestId("login-brand-fallback")?.textContent).toBe("CR");
+    expect(screen.queryByTestId("login-brand-fallback")?.textContent).toBe("∞");
     expect(screen.queryByTestId("login-brand")).not.toBeNull();
   });
 
@@ -21,6 +21,11 @@ describe("LoginBrand (Sprint 7.0)", () => {
   it("renders the wordmark next to the mark in desktop variant", () => {
     render(<LoginBrand wordmark="MeuCRM" variant="desktop" />);
     expect(screen.queryByTestId("login-brand")?.textContent).toContain("MeuCRM");
+  });
+
+  it("applies markClassName to the fallback mark", () => {
+    render(<LoginBrand wordmark="CRM" markClassName="w-20" />);
+    expect(screen.queryByTestId("login-brand-fallback")?.getAttribute("class")).toContain("w-20");
   });
 
   it("applies size classes to the mark slot", () => {
