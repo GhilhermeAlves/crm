@@ -33,7 +33,7 @@ import {
 const channelSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(120),
   type: z.literal("WHATSAPP"),
-  provider: z.enum(["WHATSAPP_CLOUD_API", "FAKE"] as const),
+  provider: z.enum(["WHATSAPP_CLOUD_API", "UAZAPI", "FAKE"] as const),
   externalId: z.string().max(120).optional(),
   config: z.string().max(4000).optional(),
   secretsRef: z.string().max(200).optional(),

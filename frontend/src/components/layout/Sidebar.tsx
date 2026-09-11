@@ -125,6 +125,12 @@ const navGroups: NavGroup[] = [
         permission: "omnichannel:page:view",
       },
       {
+        label: "Sequências de Follow-up",
+        href: ROUTES.FOLLOW_UP_SEQUENCES,
+        icon: ClipboardList,
+        permission: "omnichannel:followup:sequence:read",
+      },
+      {
         label: "Campanhas",
         href: ROUTES.CAMPAIGNS,
         icon: Megaphone,

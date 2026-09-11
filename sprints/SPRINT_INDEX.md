@@ -26,6 +26,7 @@
 | 21 | IA — AgentConfig Admin + Human Takeover (sem commit/deploy) |
 | 22 | Omnichannel — Follow-up + Scheduler + UAZAPI |
 | 23 | Omnichannel — Pipeline Assíncrono (RabbitMQ) |
+| 24 | Omnichannel — FollowUpSequence Frontend + UAZAPI Type Fix |
 
 ## Planejamento
 
@@ -395,6 +396,7 @@
 | 21 | IA: AgentConfig Admin + Human Takeover | 🚧 Sem commit/deploy (por instrução) | 2026-09-06 | AI Agent | 20 |
 | 22 | Follow-up + Scheduler + UAZAPI | ✅ Concluída | 2026-09-08 | AI Agent | 16/21 |
 | 23 | Pipeline Assíncrono (RabbitMQ) | ✅ Concluída | 2026-09-08 | AI Agent | 16/21/22 |
+| 24 | FollowUpSequence Frontend + UAZAPI Type Fix | ✅ Concluída | 2026-09-11 | AI Agent | 22/23 |
 
 > **22 — Follow-up + Scheduler + UAZAPI ✅ Concluída (2026-09-08).**
 > - ✅ **Auditoria (fluxo passo 1)**: FollowUp/domain+status+MAX_ATTEMPTS, `FollowUpScheduler`
@@ -451,6 +453,20 @@
 >   corner de re-publish do executor, trusted packages exact-match em novos pacotes;
 > - 📄 `sprints/23/REPORT.md`.
 
+> **24 — FollowUpSequence Frontend + UAZAPI Type Fix ✅ Concluída (2026-09-11).**
+> - ✅ **Frontend FollowUpSequence** (débito Sprints 22/23): types, service, hooks React Query,
+>   dialog de criação/edição, página CRUD `/follow-up-sequences` com tabela + badges + ações
+>   (ativar/desativar/editar/excluir) + confirm dialog;
+> - ✅ **ChannelProvider.UAZAPI**: tipo `ChannelProvider` expandido com `"UAZAPI"`, label
+>   `"UAZAPI (uazapiGO)"`, enum no `ChannelFormDialog` atualizado;
+> - ✅ **Rota e Sidebar**: `FOLLOW_UP_SEQUENCES` em constants, item de navegação no grupo
+>   "Comunicação" gated por `omnichannel:followup:sequence:read`;
+> - ✅ **Validação**: `npm run typecheck` 0 erros, `npm run lint` 0 erros novos, `npm run build`
+>   compiled successfully;
+> - ⚠️ **Débitos**: E2E autenticado manual, WebSocket/polling real-time, mídia, vinculação
+>   follow-up→sequência na UI;
+> - 📄 `sprints/24/REPORT.md`.
+
 | Sprint | Nome | Status | Data | Responsável | Dependência |
 |--------|------|--------|------|-------------|-------------|
 | 19 | Analytics | ✅ Concluída | 2350658/17f1c8f | V063 analytics:read; endpoint agregado /analytics/summary (~19 KPIs SQL, comparacao temporal, serie diária); frontend /reports com recharts; AnalyticsIsolationIT PASS; CI/CD GREEN e deploy VPS validado | 18 |
@@ -474,10 +490,10 @@
 | Identidade / Autenticação | 6 | 6 | 0 | 0 | 0 |
 | SaaS | 7 | 7 | 0 | 0 | 0 |
 | CRM | 7 | 7 | 0 | 0 | 0 |
-| Omnichannel | 6 | 5 | 1 | 0 | 0 |
+| Omnichannel | 7 | 6 | 1 | 0 | 0 |
 | Analytics | 1 | 1 | 0 | 0 | 0 |
 | IA | 1 | 1 | 0 | 0 | 0 |
-| **Total** | **51** | **45** | **1** | **0** | **5** |
+| **Total** | **52** | **46** | **1** | **0** | **5** |
 
 ---
 
@@ -512,4 +528,4 @@ Implementar → Testar → Validar → Documentar → Commit → Atualizar SPRIN
 > **Governança:** uma implementação só é considerada sprint concluída quando código, testes, documentação, índice, CI/CD e deploy/validação na VPS estiverem consistentes.
 > **Entrega funcional (sem sprint):** Notificações In-app — implementada e em produção; ver `sprints/notifications/REPORT.md`.
 
-*última atualização: 2026-09-08 — Sprint 23 (Omnichannel · Pipeline Assíncrono RabbitMQ) concluída: CI/CD GREEN, pipeline live na VPS (RabbitMQ 4, topologia completa, 0 erros); Sprint 21 (IA: AgentConfig Admin + Human Takeover) sem commit/deploy (por instrução).*
+*última atualização: 2026-09-11 — Sprint 24 (FollowUpSequence Frontend + UAZAPI Type Fix) concluída: frontend CRUD de sequências + tipo UAZAPI, typecheck/lint/build verdes; Sprint 21 (IA: AgentConfig Admin + Human Takeover) sem commit/deploy (por instrução).*

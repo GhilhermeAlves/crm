@@ -4,7 +4,7 @@
 
 export type ChannelType = "WHATSAPP";
 
-export type ChannelProvider = "WHATSAPP_CLOUD_API" | "FAKE";
+export type ChannelProvider = "WHATSAPP_CLOUD_API" | "UAZAPI" | "FAKE";
 
 export type ChannelStatus = "ACTIVE" | "INACTIVE" | "ERROR";
 
@@ -104,6 +104,7 @@ export const CHANNEL_STATUS_LABELS: Record<ChannelStatus, string> = {
 
 export const CHANNEL_PROVIDER_LABELS: Record<ChannelProvider, string> = {
   WHATSAPP_CLOUD_API: "WhatsApp Cloud API",
+  UAZAPI: "UAZAPI (uazapiGO)",
   FAKE: "Fake (desenvolvimento)",
 };
 

@@ -35,6 +35,7 @@ export const ROUTES = {
   WORKFLOWS: "/workflows",
   INBOX: "/inbox",
   CHANNELS: "/channels",
+  FOLLOW_UP_SEQUENCES: "/follow-up-sequences",
   STORAGE: "/storage",
   NOTIFICATIONS: "/notifications",
   ASSISTANT: "/assistant",
