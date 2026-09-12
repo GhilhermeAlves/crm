@@ -18,6 +18,7 @@ import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -39,11 +40,12 @@ class WhatsAppWebhookServiceTest {
     private final ContactRepository contactRepository = mock(ContactRepository.class);
     private final EventPublisher eventPublisher = mock(EventPublisher.class);
     private final WhatsAppEventPublisher whatsAppEventPublisher = mock(WhatsAppEventPublisher.class);
+    private final JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
 
     private final String verificationToken = "token-x";
     private final WhatsAppWebhookService service =
             new WhatsAppWebhookService(parser, companyResolver, channelRepository, conversationRepository,
-                    messageRepository, contactRepository, eventPublisher, whatsAppEventPublisher, verificationToken);
+                    messageRepository, contactRepository, eventPublisher, whatsAppEventPublisher, verificationToken, jdbcTemplate);
 
     private final UUID companyId = UUID.randomUUID();
     private final UUID channelId = UUID.randomUUID();

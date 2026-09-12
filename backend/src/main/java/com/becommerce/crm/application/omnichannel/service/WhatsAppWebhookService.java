@@ -20,6 +20,7 @@ import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +50,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
     private final EventPublisher eventPublisher;
     private final WhatsAppEventPublisher whatsAppEventPublisher;
     private final String verificationToken;
+    private final JdbcTemplate jdbcTemplate;
 
     public WhatsAppWebhookService(WhatsAppWebhookParser parser,
                                   OmnichannelCompanyResolver companyResolver,
@@ -58,7 +60,8 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
                                   ContactRepository contactRepository,
                                   EventPublisher eventPublisher,
                                   WhatsAppEventPublisher whatsAppEventPublisher,
-                                  @Value("${omnichannel.whatsapp.webhook-verify-token:}") String verificationToken) {
+                                  @Value("${omnichannel.whatsapp.webhook-verify-token:}") String verificationToken,
+                                  JdbcTemplate jdbcTemplate) {
         this.parser = parser;
         this.companyResolver = companyResolver;
         this.channelRepository = channelRepository;
@@ -68,6 +71,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         this.eventPublisher = eventPublisher;
         this.whatsAppEventPublisher = whatsAppEventPublisher;
         this.verificationToken = verificationToken;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -85,9 +89,10 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         try {
             String channelRef = parser.providerChannelReference(payload);
             if (channelRef == null || channelRef.isBlank()) {
-                log.warn("Webhook sem referência de canal; ignorando");
+                log.warn("Webhook sem referência de canal; ignorando (keys={})", payload.keySet());
                 return;
             }
+            log.info("Webhook recebido: channelRef={}, keys={}", channelRef, payload.keySet());
             UUID companyId = companyResolver.resolveCompanyByChannelReference(channelRef).orElse(null);
             if (companyId == null) {
                 log.warn("Webhook para canal desconhecido ({}); ignorando", channelRef);
