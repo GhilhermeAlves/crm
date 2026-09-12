@@ -2,6 +2,8 @@ package com.becommerce.crm.infrastructure.omnichannel.whatsapp;
 
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppWebhookParser;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -34,12 +36,18 @@ import java.util.Optional;
 @Component
 public class UazapiWebhookParser implements WhatsAppWebhookParser {
 
+    private static final Logger log = LoggerFactory.getLogger(UazapiWebhookParser.class);
+
     @Override
     public boolean isInboundMessage(Map<String, Object> raw) {
         if (!isUazapiFormat(raw)) {
             return false;
         }
-        Object message = raw.get("message");
+        Object eventObj = raw.get("event");
+        if (eventObj instanceof String event && !"messages".equals(event)) {
+            return false;
+        }
+        Object message = getMessageFromPayload(raw);
         if (!(message instanceof Map<?, ?> msg)) {
             return false;
         }
@@ -53,14 +61,21 @@ public class UazapiWebhookParser implements WhatsAppWebhookParser {
         if (!isUazapiFormat(raw)) {
             return Optional.empty();
         }
-        Map<?, ?> message = getMessageMap(raw);
+        Map<?, ?> message = getMessageMap(getMessageFromPayload(raw));
         if (message == null) {
             return Optional.empty();
         }
         String externalId = stringField(message, "messageid");
+        if (externalId == null) {
+            externalId = extractMessageIdFromData(raw);
+        }
         String from = extractSender(message);
-        String to = stringField(raw, "owner");
+        if (from == null) {
+            from = extractSenderFromData(raw);
+        }
+        String to = extractTo(raw);
         String body = extractBody(message);
+        log.info("[UAZAPI-PARSE] from={} to={} body={} extId={} | data={}", from, to, body, externalId, raw.get("data"));
         if (externalId == null || from == null) {
             return Optional.empty();
         }
@@ -72,7 +87,7 @@ public class UazapiWebhookParser implements WhatsAppWebhookParser {
         if (!isUazapiFormat(raw)) {
             return false;
         }
-        String eventType = stringField(raw, "EventType");
+        String eventType = getEventType(raw);
         return "messages_update".equals(eventType) || "connection".equals(eventType);
     }
 
@@ -81,7 +96,7 @@ public class UazapiWebhookParser implements WhatsAppWebhookParser {
         if (!isUazapiFormat(raw)) {
             return Optional.empty();
         }
-        Map<?, ?> message = getMessageMap(raw);
+        Map<?, ?> message = getMessageMap(getMessageFromPayload(raw));
         if (message == null) {
             return Optional.empty();
         }
@@ -108,8 +123,7 @@ public class UazapiWebhookParser implements WhatsAppWebhookParser {
         if (!isUazapiFormat(raw)) {
             return null;
         }
-        // O número da instância (owner) é a referência do canal
-        return stringField(raw, "owner");
+        return extractTo(raw);
     }
 
     @Override
@@ -123,18 +137,116 @@ public class UazapiWebhookParser implements WhatsAppWebhookParser {
 
     /**
      * Detecta se o payload é no formato UAZAPI.
-     * UAZAPI tem {@code EventType} e {@code message} no topo.
+     * Suporta dois formatos:
+     * <ul>
+     *   <li>V1 (legado): {@code EventType} + {@code message} no topo</li>
+     *   <li>V2 (uazapiGO): {@code event} + {@code instance} + {@code data} no topo</li>
+     * </ul>
      */
     static boolean isUazapiFormat(Map<String, Object> raw) {
         if (raw == null) {
             return false;
         }
-        return raw.containsKey("EventType") && raw.containsKey("message");
+        if (raw.containsKey("EventType")) {
+            return true;
+        }
+        return raw.containsKey("event") && raw.containsKey("instance");
     }
 
-    private static Map<?, ?> getMessageMap(Map<String, Object> raw) {
+    private static Map<?, ?> getMessageMap(Object messageObj) {
+        return messageObj instanceof Map<?, ?> msg ? msg : null;
+    }
+
+    /**
+     * Extrai o mapa de mensagem do payload, suportando V1 (top-level) e V2 (dentro de "data").
+     */
+    private static Object getMessageFromPayload(Map<String, Object> raw) {
+        // V1: message direto no topo
         Object message = raw.get("message");
-        return message instanceof Map<?, ?> msg ? msg : null;
+        if (message instanceof Map<?, ?>) {
+            return message;
+        }
+        // V2: data contém o payload do evento
+        Object data = raw.get("data");
+        if (data instanceof Map<?, ?> dataMap) {
+            // Caso 1: data.message existe (formato wrapper)
+            Object nested = dataMap.get("message");
+            if (nested instanceof Map<?, ?>) {
+                return nested;
+            }
+            // Caso 2: data é diretamente a mensagem (campos como chatid, text, etc.)
+            if (dataMap.containsKey("chatid") || dataMap.containsKey("messageid")
+                    || dataMap.containsKey("text") || dataMap.containsKey("fromMe")) {
+                return dataMap;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Extrai o tipo do evento, suportando V1 ("EventType") e V2 ("event").
+     */
+    private static String getEventType(Map<String, Object> raw) {
+        String v1 = stringField(raw, "EventType");
+        if (v1 != null) {
+            return v1;
+        }
+        return stringField(raw, "event");
+    }
+
+    /**
+     * Extrai o destinatário (owner/number da instância) do payload V1 ou V2.
+     * V1: {@code owner} no topo.
+     * V2: {@code data.owner} ou {@code instance} no topo.
+     */
+    private static String extractTo(Map<String, Object> raw) {
+        String owner = stringField(raw, "owner");
+        if (owner != null && !owner.isBlank()) {
+            return owner;
+        }
+        Object data = raw.get("data");
+        if (data instanceof Map<?, ?> dataMap) {
+            String dataOwner = stringField(dataMap, "owner");
+            if (dataOwner != null && !dataOwner.isBlank()) {
+                return dataOwner;
+            }
+        }
+        return stringField(raw, "instance");
+    }
+
+    /**
+     * Extrai messageid do V2 data quando não está em data.message.
+     */
+    private static String extractMessageIdFromData(Map<String, Object> raw) {
+        Object data = raw.get("data");
+        if (data instanceof Map<?, ?> dataMap) {
+            Object key = dataMap.get("key");
+            if (key instanceof Map<?, ?> keyMap) {
+                return stringField(keyMap, "id");
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Extrai o sender do V2 data quando não está em data.message.
+     */
+    private static String extractSenderFromData(Map<String, Object> raw) {
+        Object data = raw.get("data");
+        if (data instanceof Map<?, ?> dataMap) {
+            Object key = dataMap.get("key");
+            if (key instanceof Map<?, ?> keyMap) {
+                String remoteJid = stringField(keyMap, "remoteJid");
+                if (remoteJid != null && !remoteJid.isBlank()) {
+                    return stripSuffix(remoteJid);
+                }
+            }
+            String sender = stringField(dataMap, "sender");
+            if (sender != null && !sender.isBlank()) {
+                return stripSuffix(sender);
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")
