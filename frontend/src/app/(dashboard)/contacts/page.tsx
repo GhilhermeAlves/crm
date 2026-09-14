@@ -15,7 +15,7 @@ import {
   useDeleteContact,
   useContactPermissions,
 } from "@/features/contacts/hooks/useContacts";
-import { PageTitle } from "@/components/common/PageTitle";
+import { PageHeader } from "@/components/common/PageHeader";
 import { SearchInput } from "@/components/common/SearchInput";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorCard } from "@/components/common/ErrorCard";
@@ -108,19 +108,14 @@ export default function ContactsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <PageTitle>Contatos</PageTitle>
-          <p className="text-sm text-muted-foreground">
-            Gerencie seus contatos, empresas relacionadas e relacionamentos comerciais.
-          </p>
-        </div>
-        {canCreate && (
+      <PageHeader
+        title="Contatos"
+        actions={canCreate && (
           <Button onClick={() => setCreateOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Novo contato
           </Button>
         )}
-      </div>
+      />
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="w-full max-w-sm">

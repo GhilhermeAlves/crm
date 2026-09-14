@@ -25,6 +25,7 @@ import {
   Home,
   ChevronDown,
   Bot,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -180,6 +181,11 @@ const navGroups: NavGroup[] = [
         href: ROUTES.AUDIT,
         icon: ClipboardList,
         permission: "audit:page:view",
+      },
+      {
+        label: "Design System",
+        href: ROUTES.DESIGN_SYSTEM,
+        icon: Palette,
       },
     ],
   },

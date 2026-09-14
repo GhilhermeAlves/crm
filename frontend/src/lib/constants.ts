@@ -39,6 +39,7 @@ export const ROUTES = {
   STORAGE: "/storage",
   NOTIFICATIONS: "/notifications",
   ASSISTANT: "/assistant",
+  DESIGN_SYSTEM: "/design-system",
 } as const;
 
 export const PUBLIC_ROUTES = [
