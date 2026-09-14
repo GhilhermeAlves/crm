@@ -99,6 +99,8 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
                 return;
             }
             TenantContext.setCompanyId(companyId);
+            // Garante a variável de sessão do Postgres p/ as queries SECURITY DEFINER.
+            jdbcTemplate.execute("SET app.current_company_id = '" + companyId + "'");
 
             if (parser.isInboundMessage(payload)) {
                 handleInbound(companyId, payload);
