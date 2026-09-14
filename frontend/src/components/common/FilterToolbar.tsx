@@ -48,11 +48,7 @@ export function FilterToolbar({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Pesquisar..."
         />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setFiltersOpen(!filtersOpen)}
-        >
+        <Button variant="outline" size="sm" onClick={() => setFiltersOpen(!filtersOpen)}>
           {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           Filtros
         </Button>

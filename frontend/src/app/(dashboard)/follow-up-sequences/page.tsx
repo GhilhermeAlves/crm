@@ -57,9 +57,7 @@ export default function FollowUpSequencesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Sequências de Follow-up
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight">Sequências de Follow-up</h1>
           <p className="text-sm text-muted-foreground">
             Gerencie grupos de follow-up reutilizáveis para automação de retorno.
           </p>
@@ -94,11 +92,7 @@ export default function FollowUpSequencesPage() {
                       {seq.description ?? "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          seq.status === "ACTIVE" ? "default" : "secondary"
-                        }
-                      >
+                      <Badge variant={seq.status === "ACTIVE" ? "default" : "secondary"}>
                         {FOLLOW_UP_SEQUENCE_STATUS_LABELS[seq.status]}
                       </Badge>
                     </TableCell>
@@ -110,10 +104,7 @@ export default function FollowUpSequencesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={
-                            activateSequence.isPending ||
-                            deactivateSequence.isPending
-                          }
+                          disabled={activateSequence.isPending || deactivateSequence.isPending}
                           onClick={() =>
                             seq.status === "ACTIVE"
                               ? deactivateSequence.mutate(seq.id)
@@ -122,11 +113,7 @@ export default function FollowUpSequencesPage() {
                         >
                           {seq.status === "ACTIVE" ? "Desativar" : "Ativar"}
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEdit(seq)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => openEdit(seq)}>
                           Editar
                         </Button>
                         <Button

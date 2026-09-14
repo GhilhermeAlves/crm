@@ -17,8 +17,7 @@ export const statusBadgeVariants = cva(
           "bg-amber-50 text-amber-900 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50",
         danger:
           "bg-rose-50 text-rose-800 border-rose-200/80 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50",
-        info:
-          "bg-blue-50 text-blue-800 border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50",
+        info: "bg-blue-50 text-blue-800 border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50",
         indigo:
           "bg-indigo-50 text-indigo-800 border-indigo-200/80 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/50",
         purple:
@@ -83,8 +82,7 @@ export const statusBadgeVariants = cva(
 export type StatusIntent = NonNullable<VariantProps<typeof statusBadgeVariants>["intent"]>;
 
 export interface StatusBadgeProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof statusBadgeVariants> {
+  extends React.HTMLAttributes<HTMLSpanElement>, VariantProps<typeof statusBadgeVariants> {
   /** Adiciona um círculo indicador à esquerda do texto */
   withDot?: boolean;
   /** Faz o indicador de status pulsar suavemente (útil para canais online, SLA ou estados ativos) */
@@ -214,7 +212,10 @@ export function UserStatusBadgePreset({
 }
 
 // Preset de Canais Omnichannel
-const CHANNEL_STATUS_CONFIG: Record<string, { label: string; intent: StatusIntent; pulse?: boolean }> = {
+const CHANNEL_STATUS_CONFIG: Record<
+  string,
+  { label: string; intent: StatusIntent; pulse?: boolean }
+> = {
   ACTIVE: { label: "Conectado", intent: "success", pulse: true },
   CONNECTED: { label: "Conectado", intent: "success", pulse: true },
   INACTIVE: { label: "Desconectado", intent: "neutral" },
@@ -223,7 +224,10 @@ const CHANNEL_STATUS_CONFIG: Record<string, { label: string; intent: StatusInten
   ERROR: { label: "Falha de Conexão", intent: "danger" },
 };
 
-export interface ChannelStatusBadgePresetProps extends Omit<StatusBadgeProps, "intent" | "children"> {
+export interface ChannelStatusBadgePresetProps extends Omit<
+  StatusBadgeProps,
+  "intent" | "children"
+> {
   status: string;
 }
 

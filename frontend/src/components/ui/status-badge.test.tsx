@@ -27,13 +27,21 @@ describe("StatusBadge Component", () => {
   });
 
   it("renders with pulseDot animation when enabled", () => {
-    const { container } = render(<StatusBadge withDot pulseDot>Pulsante</StatusBadge>);
+    const { container } = render(
+      <StatusBadge withDot pulseDot>
+        Pulsante
+      </StatusBadge>,
+    );
     const pingDot = container.querySelector(".animate-ping");
     expect(pingDot).toBeTruthy();
   });
 
   it("renders solid appearance with proper high-contrast text", () => {
-    const { container } = render(<StatusBadge intent="success" appearance="solid">Sólido</StatusBadge>);
+    const { container } = render(
+      <StatusBadge intent="success" appearance="solid">
+        Sólido
+      </StatusBadge>,
+    );
     const badge = container.querySelector("span");
     expect(badge?.className).toContain("bg-emerald-600");
     expect(badge?.className).toContain("text-white");

@@ -21,8 +21,7 @@ export function useFollowUpSequence(sequenceId: string | null) {
 export function useCreateFollowUpSequence() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: FollowUpSequenceRequest) =>
-      FollowUpSequenceService.create(data),
+    mutationFn: (data: FollowUpSequenceRequest) => FollowUpSequenceService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["omnichannel", "follow-up-sequences"],

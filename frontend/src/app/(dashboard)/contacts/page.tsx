@@ -110,11 +110,13 @@ export default function ContactsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Contatos"
-        actions={canCreate && (
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Novo contato
-          </Button>
-        )}
+        actions={
+          canCreate && (
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Novo contato
+            </Button>
+          )
+        }
       />
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

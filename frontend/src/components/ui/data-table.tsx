@@ -182,7 +182,7 @@ export function DataTable<T>({
                   );
                 })}
                 {hasActions && (
-                  <TableHead className="w-[60px] text-right font-semibold text-xs">Ações</TableHead>
+                  <TableHead className="w-[60px] text-right text-xs font-semibold">Ações</TableHead>
                 )}
               </TableRow>
             </TableHeader>
@@ -205,7 +205,7 @@ export function DataTable<T>({
                 ))
               ) : data.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={totalColumns} className="h-48 text-center p-6">
+                  <TableCell colSpan={totalColumns} className="h-48 p-6 text-center">
                     <EmptyState
                       icon={emptyState?.icon || <Inbox className="h-8 w-8 text-muted-foreground" />}
                       title={emptyState?.title || "Nenhum dado encontrado"}
@@ -218,8 +218,7 @@ export function DataTable<T>({
                 </TableRow>
               ) : (
                 data.map((row, rowIdx) => {
-                  const rowActions =
-                    typeof actions === "function" ? actions(row) : (actions ?? []);
+                  const rowActions = typeof actions === "function" ? actions(row) : (actions ?? []);
                   const visibleActions = rowActions.filter((a) =>
                     typeof a.hidden === "function" ? !a.hidden(row) : !a.hidden,
                   );
@@ -243,10 +242,7 @@ export function DataTable<T>({
                       ))}
 
                       {hasActions && (
-                        <TableCell
-                          className="p-3 text-right"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <TableCell className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
                           {visibleActions.length > 0 && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -302,7 +298,7 @@ export function DataTable<T>({
       {/* BARRA DE PAGINAÇÃO                                                      */}
       {/* ======================================================================= */}
       {pagination && (
-        <div className="flex flex-col gap-3 px-1 py-2 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+        <div className="flex flex-col gap-3 px-1 py-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             {pagination.totalItems !== undefined && (
               <span>
@@ -317,14 +313,13 @@ export function DataTable<T>({
                 <span className="font-medium text-foreground">
                   {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)}
                 </span>{" "}
-                de{" "}
-                <span className="font-medium text-foreground">{pagination.totalItems}</span>{" "}
+                de <span className="font-medium text-foreground">{pagination.totalItems}</span>{" "}
                 registro(s)
               </span>
             )}
 
             {pagination.onPageSizeChange && (
-              <div className="flex items-center gap-1.5 ml-4">
+              <div className="ml-4 flex items-center gap-1.5">
                 <span>Itens por pág:</span>
                 <Select
                   value={String(pagination.pageSize)}
@@ -348,9 +343,8 @@ export function DataTable<T>({
           <div className="flex items-center gap-1 self-end sm:self-auto">
             {pagination.totalPages && (
               <span className="mr-2">
-                Página{" "}
-                <span className="font-medium text-foreground">{pagination.currentPage}</span> de{" "}
-                <span className="font-medium text-foreground">{pagination.totalPages}</span>
+                Página <span className="font-medium text-foreground">{pagination.currentPage}</span>{" "}
+                de <span className="font-medium text-foreground">{pagination.totalPages}</span>
               </span>
             )}
 
