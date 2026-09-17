@@ -84,5 +84,13 @@ Thumbs.db
 hs_err_pid*
 replay_pid*
 
+# Scripts ad-hoc locais
+fix_test.py
+fix_webhook.py
+tmp_apply.sh
+
+# Tooling de IA local
+.github/recordToolUse.*
+
 # Worktrees
 .worktrees/
