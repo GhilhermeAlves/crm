@@ -1,6 +1,8 @@
 package com.becommerce.crm.infrastructure.security.config;
 
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, UsernamePasswordAuthenticationToken> {
+
+    private static final Logger log = LoggerFactory.getLogger(KeycloakJwtAuthenticationConverter.class);
 
     private final CurrentUserResolver currentUserResolver;
 
@@ -61,7 +65,9 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Userna
                             .collect(Collectors.toList());
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("Falha ao extrair realm roles do JWT: {}", e.getMessage(), e);
+        }
         return Collections.emptyList();
     }
 
@@ -83,7 +89,9 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Userna
                     }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("Falha ao extrair client roles do JWT: {}", e.getMessage(), e);
+        }
         return result;
     }
 }
