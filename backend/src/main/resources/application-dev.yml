@@ -34,7 +34,8 @@ logging:
 
 app:
   cors:
-    allowed-origins: http://localhost:3000
+    # Frontend Next.js local (porta 3000); sobrescrevível por CORS_ALLOWED_ORIGINS.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   security:
     reset-token:
       expiration-hours: 1

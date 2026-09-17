@@ -43,6 +43,9 @@ services:
       - AUTH_DEFAULT_COMPANY_ID=${AUTH_DEFAULT_COMPANY_ID:-}
       - AUTH_INTERNAL_API_TOKEN=${AUTH_INTERNAL_API_TOKEN}
       - APP_CORS_ALLOWED_ORIGINS=https://srv1348261.hstgr.cloud,http://localhost:3000
+      # Fonte canônica lida por app.cors.allowed-origins (application*.yml). O
+      # APP_* acima é mantido por compatibilidade (relaxed binding do Spring).
+      - CORS_ALLOWED_ORIGINS=https://srv1348261.hstgr.cloud,http://localhost:3000
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKS_URI=http://crm-keycloak:8080/realms/CRM/protocol/openid-connect/certs
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://crm-keycloak:8080/realms/CRM/protocol/openid-connect/certs
