@@ -1,6 +1,7 @@
 package com.becommerce.crm.presentation.rest.omnichannel;
 
 import com.becommerce.crm.application.omnichannel.port.input.WhatsAppWebhookUseCase;
+import com.becommerce.crm.infrastructure.omnichannel.whatsapp.WhatsAppWebhookTokenVerifier;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -25,13 +26,16 @@ public class WhatsAppWebhookController {
 
     private final WhatsAppWebhookUseCase webhookUseCase;
     private final WhatsAppWebhookSignatureVerifier signatureVerifier;
+    private final WhatsAppWebhookTokenVerifier tokenVerifier;
     private final ObjectMapper objectMapper;
 
     public WhatsAppWebhookController(WhatsAppWebhookUseCase webhookUseCase,
                                      WhatsAppWebhookSignatureVerifier signatureVerifier,
+                                     WhatsAppWebhookTokenVerifier tokenVerifier,
                                      ObjectMapper objectMapper) {
         this.webhookUseCase = webhookUseCase;
         this.signatureVerifier = signatureVerifier;
+        this.tokenVerifier = tokenVerifier;
         this.objectMapper = objectMapper;
     }
 
@@ -44,13 +48,17 @@ public class WhatsAppWebhookController {
 
     /**
      * Evento recebido (mensagem ou status). Idempotente.
-     * Valida HMAC SHA-256 (X-Hub-Signature-256) sobre o body bruto antes de processar.
+     * Aceito se o HMAC SHA-256 da Meta (X-Hub-Signature-256) OR o token
+     * do UAZAPI (query {@code token} ou header X-Uazapi-Token) forem válidos.
      */
     @PostMapping
     public ResponseEntity<Void> handle(
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature,
+            @RequestParam(name = "token", required = false) String token,
+            @RequestHeader(value = "X-Uazapi-Token", required = false) String uazapiToken,
             @RequestBody String rawPayload) {
-        if (!signatureVerifier.isValid(signature, rawPayload)) {
+        if (!signatureVerifier.isValid(signature, rawPayload)
+                && !tokenVerifier.isAuthenticated(rawPayload, signature, token != null ? token : uazapiToken)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         Map<String, Object> payload;
