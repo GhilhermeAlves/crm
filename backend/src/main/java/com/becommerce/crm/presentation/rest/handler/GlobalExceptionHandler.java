@@ -118,7 +118,7 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 401,
                 "error", "Unauthorized",
-                "message", ex.getMessage(),
+                "message", "Credenciais inválidas.",
                 "timestamp", LocalDateTime.now().toString()
             ));
     }
@@ -571,34 +571,39 @@ public class GlobalExceptionHandler {
             ));
     }
 
-    @ExceptionHandler(UserProvisioningException.class)    public ResponseEntity<Map<String, Object>> handleUserProvisioningException(UserProvisioningException ex) {
+    @ExceptionHandler(UserProvisioningException.class)
+    public ResponseEntity<Map<String, Object>> handleUserProvisioningException(UserProvisioningException ex) {
+        log.warn("UserProvisioning falhou: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(Map.of(
                 "status", 401,
                 "error", "Unauthorized",
-                "message", ex.getMessage(),
+                "message", "Não foi possível concluir o cadastro, tente novamente.",
                 "timestamp", LocalDateTime.now().toString()
             ));
     }
 
     @ExceptionHandler(IdentityServiceUnavailableException.class)
-    public ResponseEntity<Map<String, Object>> handleIdentityServiceUnavailableException(IdentityServiceUnavailableException ex) {
+    public ResponseEntity<Map<String, Object>> handleIdentityServiceUnavailableException(
+            IdentityServiceUnavailableException ex) {
+        log.error("IdentityService indisponível: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
             .body(Map.of(
                 "status", 503,
                 "error", "Service Unavailable",
-                "message", ex.getMessage(),
+                "message", "Serviço de identidade indisponível, tente novamente.",
                 "timestamp", LocalDateTime.now().toString()
             ));
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalStateException(IllegalStateException ex) {
+        log.warn("IllegalState: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,
                 "error", "Bad Request",
-                "message", ex.getMessage(),
+                "message", "Operação não pode ser concluída.",
                 "timestamp", LocalDateTime.now().toString()
             ));
     }

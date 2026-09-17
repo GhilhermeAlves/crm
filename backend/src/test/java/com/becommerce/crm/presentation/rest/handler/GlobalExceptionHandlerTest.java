@@ -1,5 +1,8 @@
 package com.becommerce.crm.presentation.rest.handler;
 
+import com.becommerce.crm.domain.identity.exception.IdentityServiceUnavailableException;
+import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
+import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 import org.junit.jupiter.api.Test;
 
@@ -40,5 +43,51 @@ class GlobalExceptionHandlerTest {
         assertEquals(404, response.getStatusCode().value());
         assertEquals(404, response.getBody().get("status"));
         assertEquals("Not Found", response.getBody().get("error"));
+    }
+
+    @Test
+    void identityServiceUnavailable_naoVazaMensagemInterna() {
+        var response = handler.handleIdentityServiceUnavailableException(
+                new IdentityServiceUnavailableException("Falha na conexão com auth-service: connection refused"));
+
+        assertEquals(503, response.getStatusCode().value());
+        assertEquals("Serviço de identidade indisponível, tente novamente.", response.getBody().get("message"));
+        assertFalse(response.getBody().get("message").toString().contains("auth-service"));
+    }
+
+    @Test
+    void invalidCredentials_deveRetornarMensagemGenerica() {
+        var response = handler.handleInvalidCredentialsException(
+                new InvalidCredentialsException("Login failed: bad credentials"));
+
+        assertEquals(401, response.getStatusCode().value());
+        assertEquals("Credenciais inválidas.", response.getBody().get("message"));
+    }
+
+    @Test
+    void userProvisioning_deveRetornarMensagemGenerica() {
+        var response = handler.handleUserProvisioningException(
+                new UserProvisioningException("Falha ao sincronizar usuário no Keycloak: connection refused"));
+
+        assertEquals(401, response.getStatusCode().value());
+        assertEquals("Não foi possível concluir o cadastro, tente novamente.", response.getBody().get("message"));
+    }
+
+    @Test
+    void illegalState_deveRetornarMensagemGenerica() {
+        var response = handler.handleIllegalStateException(
+                new IllegalStateException("Estado interno inválido: cache corrompido"));
+
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals("Operação não pode ser concluída.", response.getBody().get("message"));
+    }
+
+    @Test
+    void generalException_deveRetornarMensagemGenerica() {
+        var response = handler.handleGeneralException(
+                new RuntimeException("Segredo expirado: AWS secret rejeitado"));
+
+        assertEquals(500, response.getStatusCode().value());
+        assertEquals("An unexpected error occurred", response.getBody().get("message"));
     }
 }
