@@ -23,7 +23,8 @@ public interface LeadJpaRepository extends JpaRepository<LeadJpaEntity, UUID> {
             "     OR LOWER(COALESCE(c.firstName,'')) LIKE LOWER(:like) " +
             "     OR LOWER(COALESCE(c.lastName,'')) LIKE LOWER(:like) " +
             "     OR LOWER(COALESCE(c.email,'')) LIKE LOWER(:like) " +
-            "     OR LOWER(COALESCE(c.phone,'')) LIKE LOWER(:like))")
+            "     OR LOWER(COALESCE(c.phone,'')) LIKE LOWER(:like) " +
+            "     OR LOWER(CONCAT(COALESCE(c.firstName,''),' ',COALESCE(c.lastName,''))) LIKE LOWER(:like))")
     Page<LeadJpaEntity> findByCompanyWithFilters(
             @Param("companyId") UUID companyId,
             @Param("status") String status,

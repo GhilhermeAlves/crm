@@ -258,6 +258,8 @@ class LeadIsolationIT {
                     "Busca por 'joão' deve retornar apenas o lead do contato João");
             assertEquals(1, countLeadsMatchingContactSearch("maria"),
                     "Busca por 'maria' deve retornar apenas o lead do contato Maria");
+            assertEquals(1, countLeadsMatchingContactSearch("João Silva"),
+                    "Busca por nome completo ('João Silva') deve retornar o lead do contato João");
             assertEquals(1, countLeadsMatchingContactSearch("joao@a.com"),
                     "Busca por e-mail deve retornar o lead correspondente");
             assertEquals(0, countLeadsMatchingContactSearch("inexistente"),
@@ -281,10 +283,12 @@ class LeadIsolationIT {
                          LOWER(COALESCE(c.first_name,'')) LIKE LOWER(?) OR
                          LOWER(COALESCE(c.last_name,'')) LIKE LOWER(?) OR
                          LOWER(COALESCE(c.email,'')) LIKE LOWER(?) OR
-                         LOWER(COALESCE(c.phone,'')) LIKE LOWER(?))
+                         LOWER(COALESCE(c.phone,'')) LIKE LOWER(?) OR
+                         -- espelha o CONCAT do JPQL em LeadJpaRepository (busca por nome completo)
+                         LOWER(CONCAT(COALESCE(c.first_name,''),' ',COALESCE(c.last_name,''))) LIKE LOWER(?))
                      """)) {
             String like = "%" + term.toLowerCase() + "%";
-            for (int i = 1; i <= 4; i++) {
+            for (int i = 1; i <= 5; i++) {
                 ps.setString(i, like);
             }
             try (ResultSet rs = ps.executeQuery()) {
