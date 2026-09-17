@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { Plus, SearchX, ShieldOff } from "lucide-react";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
-import { mockDeals } from "@/features/pipeline/data/deals.mock";
 import type {
   Deal,
   DealFormValues,
@@ -28,7 +27,7 @@ const groupTitles: Record<DealGroup, string> = {
 
 export default function PipelinePage() {
   const { can } = useAuthorization();
-  const [deals, setDeals] = useState<Deal[]>(mockDeals);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
   const [responsibleFilter, setResponsibleFilter] = useState("all");
@@ -198,7 +197,16 @@ export default function PipelinePage() {
         />
       </div>
 
-      {hasActiveFilters && filteredDeals.length === 0 ? (
+      {deals.length === 0 ? (
+        <Card>
+          <CardContent>
+            <EmptyState
+              title="Nenhuma negociação"
+              description="Crie sua primeira negociação para começar a acompanhar oportunidades e o pipeline comercial."
+            />
+          </CardContent>
+        </Card>
+      ) : hasActiveFilters && filteredDeals.length === 0 ? (
         <Card>
           <CardContent>
             <EmptyState
