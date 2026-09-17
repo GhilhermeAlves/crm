@@ -22,5 +22,5 @@ public interface LeadUseCase {
     void delete(UUID companyId, UUID leadId);
 
     PageResponse<LeadResponse> list(UUID companyId, String status, String source, String classification,
-                                    int page, int pageSize, String sortBy, String sortDirection);
+                                    String search, int page, int pageSize, String sortBy, String sortDirection);
 }

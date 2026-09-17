@@ -23,7 +23,7 @@ public interface LeadRepository {
     boolean existsByContactIdAndCompanyId(UUID contactId, UUID companyId);
 
     PageResult findByCompanyWithFilters(UUID companyId, String status, String source, String classification,
-                                        int page, int pageSize, String sortBy, String sortDirection);
+                                        String search, int page, int pageSize, String sortBy, String sortDirection);
 
     record PageResult(List<Lead> content, long totalElements) {}
 }

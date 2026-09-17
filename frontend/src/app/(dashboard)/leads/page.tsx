@@ -7,6 +7,7 @@ import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import { useLeads, useDeleteLead, useUpdateLead } from "@/features/leads/hooks/useLeads";
 import { useContacts } from "@/features/contacts/hooks/useContacts";
 import { useMembers } from "@/features/members/hooks/useMembers";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { LeadTable } from "@/features/leads/components/LeadTable";
 import { LeadFilters } from "@/features/leads/components/LeadFilters";
 import { DeleteLeadDialog } from "@/features/leads/components/DeleteLeadDialog";
@@ -46,6 +47,7 @@ export default function LeadsPage() {
   const [source, setSource] = useState("all");
   const [classification, setClassification] = useState("all");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 400);
   const [page, setPage] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [groupBy, setGroupBy] = useState<"none" | "status">("none");
@@ -55,12 +57,15 @@ export default function LeadsPage() {
   const { data, isLoading, error, refetch } = useLeads(companyId, {
     page,
     pageSize: 10,
+    search: debouncedSearch.trim() || undefined,
     status: status !== "all" ? (status as LeadStatus) : undefined,
     source: source !== "all" ? (source as LeadSource) : undefined,
     classification: classification !== "all" ? (classification as LeadClassification) : undefined,
     sortBy: "createdAt",
     sortDirection: "desc",
   });
+
+  const leads = useMemo(() => data?.content ?? [], [data]);
 
   const { data: contactsData } = useContacts(companyId);
   const { data: members = [] } = useMembers(companyId);
@@ -90,29 +95,12 @@ export default function LeadsPage() {
   const canDelete = can("lead:delete");
   const canUpdate = can("lead:update");
 
-  const filteredLeads = useMemo(() => {
-    const rawLeads = data?.content ?? [];
-    const q = search.trim().toLowerCase();
-    if (!q) return rawLeads;
-    return rawLeads.filter((lead) => {
-      const contact = lead.contactId ? contactsMap[lead.contactId] : undefined;
-      const name = contact
-        ? `${contact.firstName}${contact.lastName ? ` ${contact.lastName}` : ""}`
-        : "";
-      return (
-        name.toLowerCase().includes(q) ||
-        (contact?.email ?? "").toLowerCase().includes(q) ||
-        (contact?.phone ?? "").toLowerCase().includes(q)
-      );
-    });
-  }, [data, search, contactsMap]);
-
   const groupedLeads = useMemo(() => {
     if (groupBy !== "status") return [];
     return leadStatuses
-      .map((s) => ({ status: s, leads: filteredLeads.filter((lead) => lead.status === s) }))
+      .map((s) => ({ status: s, leads: leads.filter((lead) => lead.status === s) }))
       .filter((g) => g.leads.length > 0);
-  }, [filteredLeads, groupBy]);
+  }, [leads, groupBy]);
 
   const hasActiveFilters =
     status !== "all" || source !== "all" || classification !== "all" || search.trim() !== "";
@@ -233,7 +221,7 @@ export default function LeadsPage() {
         <LeadTable leads={[]} isLoading />
       ) : error ? (
         <ErrorCard message={error.message} onRetry={() => refetch()} />
-      ) : filteredLeads.length === 0 ? (
+      ) : leads.length === 0 ? (
         hasActiveFilters ? (
           <Card>
             <CardContent>
@@ -275,7 +263,7 @@ export default function LeadsPage() {
         </div>
       ) : (
         <LeadTable
-          leads={filteredLeads}
+          leads={leads}
           contacts={contactsMap}
           responsibleMap={responsibleMap}
           onDelete={canDelete ? setDeleteLead : undefined}
@@ -287,7 +275,7 @@ export default function LeadsPage() {
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Mostrando {filteredLeads.length} de {data.totalElements} leads
+            Mostrando {leads.length} de {data.totalElements} leads
           </p>
           <div className="flex gap-2">
             <Button

@@ -63,6 +63,7 @@ export type ListLeadsParams = {
   status?: LeadStatus;
   source?: LeadSource;
   classification?: LeadClassification;
+  search?: string;
   sortBy?: string;
   sortDirection?: "asc" | "desc";
 };

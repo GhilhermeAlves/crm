@@ -14,14 +14,21 @@ public interface LeadJpaRepository extends JpaRepository<LeadJpaEntity, UUID> {
 
     boolean existsByContactIdAndCompanyId(UUID contactId, UUID companyId);
 
-    @Query("SELECT l FROM LeadJpaEntity l WHERE l.companyId = :companyId " +
+    @Query("SELECT l FROM LeadJpaEntity l LEFT JOIN ContactJpaEntity c ON c.id = l.contactId " +
+            "WHERE l.companyId = :companyId " +
             "AND (:status IS NULL OR :status = '' OR l.status = :status) " +
             "AND (:source IS NULL OR :source = '' OR l.source = :source) " +
-            "AND (:classification IS NULL OR :classification = '' OR l.classification = :classification)")
+            "AND (:classification IS NULL OR :classification = '' OR l.classification = :classification) " +
+            "AND (:like IS NULL OR :like = '' " +
+            "     OR LOWER(COALESCE(c.firstName,'')) LIKE LOWER(:like) " +
+            "     OR LOWER(COALESCE(c.lastName,'')) LIKE LOWER(:like) " +
+            "     OR LOWER(COALESCE(c.email,'')) LIKE LOWER(:like) " +
+            "     OR LOWER(COALESCE(c.phone,'')) LIKE LOWER(:like))")
     Page<LeadJpaEntity> findByCompanyWithFilters(
             @Param("companyId") UUID companyId,
             @Param("status") String status,
             @Param("source") String source,
             @Param("classification") String classification,
+            @Param("like") String like,
             Pageable pageable);
 }

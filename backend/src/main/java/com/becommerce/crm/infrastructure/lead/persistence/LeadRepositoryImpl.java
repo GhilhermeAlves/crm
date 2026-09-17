@@ -45,13 +45,15 @@ public class LeadRepositoryImpl implements LeadRepository {
 
     @Override
     public PageResult findByCompanyWithFilters(UUID companyId, String status, String source, String classification,
-                                               int page, int pageSize, String sortBy, String sortDirection) {
+                                               String search, int page, int pageSize, String sortBy,
+                                               String sortDirection) {
         Sort sort = Sort.by("desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC,
                 sortBy != null ? sortBy : "createdAt");
         PageRequest pageRequest = PageRequest.of(page, pageSize, sort);
 
+        String like = "%" + (search == null ? "" : search.trim().toLowerCase()) + "%";
         Page<LeadJpaEntity> result = jpaRepository.findByCompanyWithFilters(
-                companyId, status, source, classification, pageRequest);
+                companyId, status, source, classification, like, pageRequest);
 
         List<Lead> leads = result.getContent().stream()
                 .map(LeadRepositoryImpl::toDomain)

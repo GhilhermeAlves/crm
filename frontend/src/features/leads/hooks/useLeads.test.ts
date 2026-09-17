@@ -69,6 +69,17 @@ describe("useLeads (Sprint 10)", () => {
     expect(result.current.data?.totalElements).toBe(1);
   });
 
+  it("forwards the search term to the service", async () => {
+    listMock.mockResolvedValue(page);
+    const { result } = renderHookWith(() =>
+      useLeads("company-1", { page: 0, pageSize: 10, search: "joao" }),
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(listMock).toHaveBeenCalledWith("company-1", expect.objectContaining({ search: "joao" }));
+  });
+
   it("does not fetch when there is no active company", async () => {
     renderHookWith(() => useLeads(null));
     expect(listMock).not.toHaveBeenCalled();

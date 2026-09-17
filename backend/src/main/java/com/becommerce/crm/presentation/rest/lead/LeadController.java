@@ -39,13 +39,14 @@ public class LeadController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String source,
             @RequestParam(required = false) String classification,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
         requireCompanyAccess(companyId, principal);
         return ResponseEntity.ok(leadUseCase.list(
-                companyId, status, source, classification, page, pageSize, sortBy, sortDirection));
+                companyId, status, source, classification, search, page, pageSize, sortBy, sortDirection));
     }
 
     @PostMapping
