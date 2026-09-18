@@ -2,217 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  Users,
-  Contact,
-  GitBranch,
-  MessageSquare,
-  Megaphone,
-  BarChart3,
-  Building2,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Shield,
-  MailPlus,
-  KeyRound,
-  ClipboardList,
-  HardDrive,
-  Workflow as WorkflowIcon,
-  Bell,
-  Sparkles,
-  Home,
-  ChevronDown,
-  Bot,
-  Palette,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useSidebar } from "@/store/sidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
+import { NAVIGATION } from "./navigation";
+import { SidebarGroup } from "./SidebarGroup";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
-
-type NavItem = {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
-  permission?: string;
-};
-
-type NavGroup = {
-  title?: string;
-  items: NavItem[];
-};
-
-const navGroups: NavGroup[] = [
-  {
-    title: "CRM",
-    items: [
-      {
-        label: "Início",
-        href: ROUTES.CRM,
-        icon: Home,
-      },
-      {
-        label: "Leads",
-        href: ROUTES.LEADS,
-        icon: Users,
-        permission: "lead:page:view",
-      },
-      {
-        label: "Contatos",
-        href: ROUTES.CONTACTS,
-        icon: Contact,
-        permission: "contact:page:view",
-      },
-      {
-        label: "Pipeline",
-        href: ROUTES.PIPELINE,
-        icon: GitBranch,
-        permission: "pipeline:page:view",
-      },
-      {
-        label: "Tarefas",
-        href: ROUTES.TASKS,
-        icon: ClipboardList,
-        permission: "task:page:view",
-      },
-      {
-        label: "Timeline",
-        href: ROUTES.ACTIVITIES,
-        icon: MailPlus,
-        permission: "activity:page:view",
-      },
-      {
-        label: "Automações",
-        href: ROUTES.WORKFLOWS,
-        icon: WorkflowIcon,
-        permission: "workflow:page:view",
-      },
-      {
-        label: "Notificações",
-        href: ROUTES.NOTIFICATIONS,
-        icon: Bell,
-        permission: "notification:page:view",
-      },
-      {
-        label: "Léo · Assistente IA",
-        href: ROUTES.ASSISTANT,
-        icon: Sparkles,
-        permission: "ai:chat",
-      },
-    ],
-  },
-  {
-    title: "Comunicação",
-    items: [
-      {
-        label: "Inbox",
-        href: ROUTES.INBOX,
-        icon: MessageSquare,
-        permission: "omnichannel:page:view",
-      },
-      {
-        label: "Canais",
-        href: ROUTES.CHANNELS,
-        icon: Megaphone,
-        permission: "omnichannel:page:view",
-      },
-      {
-        label: "Sequências de Follow-up",
-        href: ROUTES.FOLLOW_UP_SEQUENCES,
-        icon: ClipboardList,
-        permission: "omnichannel:followup:sequence:read",
-      },
-      {
-        label: "Campanhas",
-        href: ROUTES.CAMPAIGNS,
-        icon: Megaphone,
-        permission: "campaign:page:view",
-      },
-    ],
-  },
-  {
-    title: "Administração",
-    items: [
-      {
-        label: "Empresas",
-        href: ROUTES.TENANTS,
-        icon: Building2,
-        permission: "company:view",
-      },
-      {
-        label: "Membros",
-        href: ROUTES.MEMBERS,
-        icon: Users,
-        permission: "membership:view",
-      },
-      {
-        label: "Convites",
-        href: ROUTES.INVITATIONS,
-        icon: MailPlus,
-        permission: "membership:view",
-      },
-      {
-        label: "Permissões",
-        href: ROUTES.PERMISSIONS,
-        icon: KeyRound,
-        permission: "role:read",
-      },
-      { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
-    ],
-  },
-  {
-    title: "Análise",
-    items: [{ label: "Relatórios", href: ROUTES.REPORTS, icon: BarChart3 }],
-  },
-  {
-    title: "Sistema",
-    items: [
-      {
-        label: "Auditoria",
-        href: ROUTES.AUDIT,
-        icon: ClipboardList,
-        permission: "audit:page:view",
-      },
-      {
-        label: "Design System",
-        href: ROUTES.DESIGN_SYSTEM,
-        icon: Palette,
-      },
-    ],
-  },
-  {
-    title: "Segurança",
-    items: [
-      {
-        label: "Usuários",
-        href: ROUTES.SETTINGS_USERS,
-        icon: Users,
-        permission: "security:page:view",
-      },
-      {
-        label: "Perfis",
-        href: ROUTES.SETTINGS_ROLES,
-        icon: Shield,
-        permission: "security:page:view",
-      },
-      {
-        label: "Agente de IA",
-        href: ROUTES.SETTINGS_AGENT_CONFIG,
-        icon: Bot,
-        permission: "ai:agent-config",
-      },
-    ],
-  },
-];
 
 type SidebarContentProps = {
   collapsed: boolean;
@@ -220,32 +21,7 @@ type SidebarContentProps = {
 };
 
 function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
-  const pathname = usePathname();
-  const { logout, permissions } = useAuth();
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
-
-  const toggleGroup = (index: number) => {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
-  };
-
-  const isGroupExpanded = (index: number) => !collapsedGroups.has(index);
-
-  const hasPermission = (permission?: string) => {
-    if (!permission) return true;
-    // UX apenas: sem permissões de negócio carregadas (CurrentUser ainda não
-    // está disponível via endpoint público), mantém tudo visível. A autorização
-    // final é sempre validada pelo backend. Vira gating real no Sprint 4.
-    if (!permissions || permissions.length === 0) return true;
-    return permissions.includes(permission);
-  };
+  const { logout } = useAuth();
 
   return (
     <div className="flex h-full flex-col">
@@ -272,69 +48,13 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
       <ScrollArea className="flex-1 py-2">
         <TooltipProvider delayDuration={0}>
           <div className="space-y-4 px-2">
-            {navGroups.map((group, groupIndex) => (
-              <div key={groupIndex}>
-                {group.title && !collapsed && (
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(groupIndex)}
-                    aria-expanded={isGroupExpanded(groupIndex)}
-                    className="mb-1 flex w-full items-center justify-between gap-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <span>{group.title}</span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3.5 w-3.5 shrink-0 transition-transform",
-                        !isGroupExpanded(groupIndex) && "rotate-180",
-                      )}
-                    />
-                  </button>
-                )}
-                {group.title && collapsed && <Separator className="mb-2" />}
-                {(!group.title || isGroupExpanded(groupIndex)) && (
-                  <div className="space-y-0.5">
-                    {group.items
-                      .filter((item) => hasPermission(item.permission))
-                      .map((item) => {
-                        const Icon = item.icon;
-                        const isActive =
-                          pathname === item.href || pathname.startsWith(item.href + "/");
-
-                        const navLink = (
-                          <Link
-                            href={item.href}
-                            onClick={onNavClick}
-                            className={cn(
-                              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                              "hover:bg-accent hover:text-accent-foreground",
-                              isActive && "bg-accent text-accent-foreground",
-                              collapsed && "justify-center px-2",
-                            )}
-                          >
-                            <Icon className="h-4 w-4 shrink-0" />
-                            {!collapsed && <span className="flex-1">{item.label}</span>}
-                            {!collapsed && item.badge && (
-                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                                {item.badge}
-                              </span>
-                            )}
-                          </Link>
-                        );
-
-                        if (collapsed) {
-                          return (
-                            <Tooltip key={item.href}>
-                              <TooltipTrigger asChild>{navLink}</TooltipTrigger>
-                              <TooltipContent side="right">{item.label}</TooltipContent>
-                            </Tooltip>
-                          );
-                        }
-
-                        return <div key={item.href}>{navLink}</div>;
-                      })}
-                  </div>
-                )}
-              </div>
+            {NAVIGATION.map((group, groupIndex) => (
+              <SidebarGroup
+                key={groupIndex}
+                group={group}
+                collapsed={collapsed}
+                onNavClick={onNavClick}
+              />
             ))}
           </div>
         </TooltipProvider>
