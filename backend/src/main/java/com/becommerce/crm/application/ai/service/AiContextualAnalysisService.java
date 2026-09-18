@@ -239,7 +239,8 @@ public class AiContextualAnalysisService implements AiContextualAnalysisUseCase 
                             "recommendations", response.recommendations().size(),
                             "provider", aiProvider.providerName()));
         } catch (Exception e) {
-            log.warn("Falha ao registrar auditoria de análise contextual: {}", e.getMessage());
+            log.warn("Falha ao registrar auditoria de análise contextual (company={}, userId={}): {}",
+                    companyId, userId, e.getMessage());
         }
     }
 }

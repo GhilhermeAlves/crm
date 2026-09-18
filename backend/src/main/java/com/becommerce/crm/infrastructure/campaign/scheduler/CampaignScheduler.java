@@ -53,8 +53,8 @@ public class CampaignScheduler {
                 // já reivindicada por outra instância ou público vazio: ignora silenciosamente
                 log.debug("Campanha {} não iniciada: {}", candidate.campaignId(), e.getMessage());
             } catch (Exception e) {
-                log.error("Falha ao iniciar campanha agendada {}: {}",
-                        candidate.campaignId(), e.getMessage(), e);
+                log.error("Falha ao iniciar campanha agendada {} (company={}): {}",
+                        candidate.campaignId(), candidate.companyId(), e.getMessage(), e);
             } finally {
                 TenantContext.clear();
             }

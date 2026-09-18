@@ -96,10 +96,10 @@ public class CreateTaskTool implements AiTool {
     public AiToolResult execute(AiToolContext ctx, Map<String, Object> args) {
         String title = text(args, "title");
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("O titulo da tarefa e obrigatorio.");
+            throw new IllegalArgumentException("O título da tarefa é obrigatório.");
         }
         if (title.length() > 200) {
-            throw new IllegalArgumentException("O titulo deve ter no maximo 200 caracteres.");
+            throw new IllegalArgumentException("O título deve ter no máximo 200 caracteres.");
         }
         UUID contactId = uuid(args, "contactId");
         UUID opportunityId = uuid(args, "opportunityId");

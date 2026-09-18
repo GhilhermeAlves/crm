@@ -65,7 +65,8 @@ public class AuditService implements AuditUseCase {
         try {
             auditLogRepository.save(auditLog);
         } catch (Exception e) {
-            log.error("Failed to record audit log: {}", e.getMessage(), e);
+            log.error("Failed to record audit log (company={}, userId={}): {}",
+                    auditLog.getCompanyId(), auditLog.getUserId(), e.getMessage(), e);
         }
     }
 

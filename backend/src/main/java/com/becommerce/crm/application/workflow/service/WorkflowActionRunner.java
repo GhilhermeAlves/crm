@@ -90,8 +90,8 @@ public class WorkflowActionRunner {
             message = message.substring(0, 2000);
         }
         executionRepository.updateResult(executionId, event.companyId(), ExecutionStatus.FAILED, null, message);
-        log.warn("Workflow action FAILED: workflow={}, action={}, error={}",
-                workflow.getName(), action.getActionType(), message);
+        log.warn("Workflow action FAILED: company={}, workflow={}, action={}, error={}",
+                event.companyId(), workflow.getName(), action.getActionType(), message);
     }
 
     private String execute(Workflow workflow, WorkflowAction action, WorkflowTriggerEvent event) {

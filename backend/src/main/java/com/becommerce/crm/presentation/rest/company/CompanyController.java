@@ -67,7 +67,7 @@ public class CompanyController {
     @PutMapping("/{id}/settings")
     @PreAuthorize("hasAuthority('settings:update')")
     public ResponseEntity<CompanySettingsResponse> updateSettings(@PathVariable UUID id,
-                                                                  @RequestBody UpdateCompanySettingsRequest request,
+                                                                  @Valid @RequestBody UpdateCompanySettingsRequest request,
                                                                   @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(companyUseCase.updateCompanySettings(id, request, principal.companyId()));
     }
@@ -83,7 +83,7 @@ public class CompanyController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('company:update')")
     public ResponseEntity<CompanyResponse> update(@PathVariable UUID id,
-                                                  @RequestBody UpdateCompanyRequest request,
+                                                  @Valid @RequestBody UpdateCompanyRequest request,
                                                   @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(companyUseCase.updateCompany(id, request, principal.companyId(), isSuperAdmin(principal)));
     }

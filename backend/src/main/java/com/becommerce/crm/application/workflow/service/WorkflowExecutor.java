@@ -102,8 +102,8 @@ public class WorkflowExecutor {
                             actionRunner.recordFailure(workflow, action, event, ex);
                         } catch (Exception recordEx) {
                             log.error("Não foi possível registrar falha de workflow "
-                                    + "workflow={} action={}: {}", workflow.getName(),
-                                    action.getActionType(), recordEx.getMessage(), recordEx);
+                                    + "company={} workflow={} action={}: {}", companyId,
+                                    workflow.getName(), action.getActionType(), recordEx.getMessage(), recordEx);
                         }
                     }
                 }

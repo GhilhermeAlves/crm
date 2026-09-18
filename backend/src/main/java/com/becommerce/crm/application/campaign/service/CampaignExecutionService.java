@@ -202,7 +202,8 @@ public class CampaignExecutionService {
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception e) {
-                log.error("Falha ao processar lote da execução {}: {}", executionId, e.getMessage(), e);
+                log.error("Falha ao processar lote da execução {} (company={}): {}", executionId, companyId,
+                        e.getMessage(), e);
                 break;
             } finally {
                 TenantContext.clear();

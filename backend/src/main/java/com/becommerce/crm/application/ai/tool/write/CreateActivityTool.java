@@ -97,14 +97,14 @@ public class CreateActivityTool implements AiTool {
     public AiToolResult execute(AiToolContext ctx, Map<String, Object> args) {
         ActivityType type = enumValue(args, "type", ActivityType.class);
         if (type == null) {
-            throw new IllegalArgumentException("O tipo da atividade e obrigatorio.");
+            throw new IllegalArgumentException("O tipo da atividade é obrigatório.");
         }
         String subject = text(args, "subject");
         if (subject == null || subject.isBlank()) {
-            throw new IllegalArgumentException("O assunto da atividade e obrigatorio.");
+            throw new IllegalArgumentException("O assunto da atividade é obrigatório.");
         }
         if (subject.length() > 255) {
-            throw new IllegalArgumentException("O assunto deve ter no maximo 255 caracteres.");
+            throw new IllegalArgumentException("O assunto deve ter no máximo 255 caracteres.");
         }
         UUID contactId = uuid(args, "contactId");
         UUID opportunityId = uuid(args, "opportunityId");
