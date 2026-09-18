@@ -1,0 +1,174 @@
+# =============================================================================
+# e2e/compose.ci.yml — Stack FULL para testes E2E (Playwright) no CI
+# =============================================================================
+# Task 4.2. Pode ser rodada localmente: `docker compose -f e2e/compose.ci.yml up -d --wait`.
+#
+# Reutiliza as MESMAS imagens/versões dos compose de produção:
+#   * postgres:17-alpine   (docker-compose.yml raiz)      → banco crm_main
+#   * redis:7-alpine       (docker-compose.yml raiz)
+#   * rabbitmq:4-management-alpine (docker-compose.yml raiz)
+#   * keycloak:26.3        (docker-compose.yml raiz)      → realm CRM do realm dev
+#   * backend e auth-service buildados pelos Dockerfiles do repo
+#     (docker/docker-compose.prod.yml).
+#
+# Apenas as portas necessárias são publicadas no host:
+#   * 8080 → Keycloak  (o browser do Playwright acessa via `keycloak` em /etc/hosts
+#                       resolvido para 127.0.0.1 no runner; issuer=chave única)
+#   * 8082 → auth-service/gateway  (rewrites do next.config.js DEV_GATEWAY_TARGET)
+# Containeres comunicam por DNS da rede (`keycloak:8080`, `backend:8080`, ...).
+#
+# Diferente do prod (que usa REALM/credenciais reais via .env), aqui os valores
+# são fixos e DEV-ONLY — nenhum segredo real é usado.
+# =============================================================================
+
+name: crm-e2e
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: crm_admin
+      POSTGRES_PASSWORD: crm_admin
+      POSTGRES_DB: crm_main
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_admin -d crm_main"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass crm-e2e-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "crm-e2e-redis", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: crm_rabbitmq
+      RABBITMQ_DEFAULT_PASS: crm_rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    command: ["start-dev", "--import-realm"]
+    ports:
+      - "8080:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # Hostname ÚNICO (`keycloak`) para issuer-uri e URLs front-channel:
+      # o browser resolve via /etc/hosts (CI) e o backend/auth-service via DNS
+      # do Docker — mesma história do prod (hostname público single).
+      KC_HOSTNAME: http://keycloak:8080
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: crm_admin
+      KC_DB_PASSWORD: crm_admin
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ../infrastructure/keycloak/import:/opt/keycloak/data/import:ro
+    healthcheck:
+      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/9000; printf \"GET /health/ready HTTP/1.0\\r\\n\\r\\n\" >&3; cat <&3 | grep -q READY'"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      CRM_DATABASE_HOST: postgres
+      CRM_DATABASE_PORT: "5432"
+      CRM_DATABASE_NAME: crm_main
+      CRM_DATABASE_USERNAME: crm_admin
+      CRM_DATABASE_PASSWORD: crm_admin
+      CRM_REDIS_HOST: redis
+      CRM_REDIS_PORT: "6379"
+      CRM_REDIS_PASSWORD: crm-e2e-redis
+      CRM_RABBITMQ_HOST: rabbitmq
+      CRM_RABBITMQ_PORT: "5672"
+      CRM_RABBITMQ_USERNAME: crm_rabbitmq
+      CRM_RABBITMQ_PASSWORD: crm_rabbitmq
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/CRM
+      KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/CRM/protocol/openid-connect/certs
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      AUTH_IDENTITY_LAYER_ENABLED: "false"
+      AUTH_PROVISIONING_ENABLED: "true"
+      # Empresa default do V018 — usada pelo auto-provisioning e pelo seed.
+      AUTH_DEFAULT_COMPANY_ID: "00000000-0000-0000-0000-000000000001"
+      AUTH_DEFAULT_ROLE: AGENT
+      SERVER_SERVLET_CONTEXT_PATH: ""
+    healthcheck:
+      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /actuator/health HTTP/1.0\\r\\n\\r\\n\" >&3; cat <&3 | grep -q UP'"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  auth-service:
+    build:
+      context: ../auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/crm_main
+      SPRING_DATASOURCE_USERNAME: crm_admin
+      SPRING_DATASOURCE_PASSWORD: crm_admin
+      AUTH_KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/CRM
+      AUTH_KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/CRM/protocol/openid-connect/certs
+      AUTH_GATEWAY_CLIENT_ID: crm-gateway
+      AUTH_GATEWAY_CLIENT_SECRET: e2e-dev-crm-gateway-secret
+      AUTH_GATEWAY_REDIRECT_URI: http://localhost:8082/auth/callback
+      AUTH_GATEWAY_ALLOWED_REDIRECT_URIS: http://localhost:3000
+      AUTH_GATEWAY_APP_BASE_URL: http://localhost:3000
+      AUTH_GATEWAY_SECURE_COOKIE: "false"
+      AUTH_GATEWAY_SESSION_STORE: memory
+      AUTH_GATEWAY_RATE_LIMIT_ENABLED: "true"
+      AUTH_GATEWAY_API_BACKEND_URL: http://backend:8080
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: crm-e2e-redis
+    healthcheck:
+      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /auth/health/ready HTTP/1.0\\r\\n\\r\\n\" >&3; cat <&3 | grep -q UP'"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      backend:
+        condition: service_healthy

@@ -76,6 +76,8 @@ docker/.env
 !**/db/migration/*.sql
 # Integration test bootstrap scripts (Testcontainers RLS setup) are source code.
 !backend/src/test/resources/*.sql
+# E2E seed script (realm-matching CRM user) is source code and MUST be versioned.
+!e2e/seed/*.sql
 
 # OS
 Thumbs.db

@@ -1,0 +1,57 @@
+{
+  "realm": "CRM",
+  "enabled": true,
+  "displayName": "CRM - SaaS Omnichannel (dev/E2E)",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "verifyEmail": false,
+  "resetPasswordAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "users": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "username": "e2e.admin@crm.local",
+      "email": "e2e.admin@crm.local",
+      "firstName": "Admin",
+      "lastName": "E2E",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "E2e-adm!2026",
+          "temporary": false
+        }
+      ],
+      "attributes": {}
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "crm-gateway",
+      "name": "CRM Access Gateway (dev)",
+      "description": "Client confidencial OIDC do Access Gateway (auth-service). Dev/E2E apenas — o secret aqui é fixo e não-sensível (não usar em produção).",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "e2e-dev-crm-gateway-secret",
+      "rootUrl": "http://localhost:8082",
+      "adminUrl": "http://localhost:8082",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8082/auth/callback"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      }
+    }
+  ]
+}
