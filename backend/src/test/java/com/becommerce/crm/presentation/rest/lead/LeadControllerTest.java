@@ -8,6 +8,7 @@ import com.becommerce.crm.application.lead.port.input.LeadUseCase;
 import com.becommerce.crm.domain.lead.LeadClassification;
 import com.becommerce.crm.domain.lead.LeadSource;
 import com.becommerce.crm.domain.lead.LeadStatus;
+import com.becommerce.crm.infrastructure.security.config.CurrentCompanyIdArgumentResolver;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import com.becommerce.crm.presentation.rest.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
@@ -54,7 +55,7 @@ class LeadControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(leadController)
                 .setControllerAdvice(new GlobalExceptionHandler())
-                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
+                .setCustomArgumentResolvers(new CurrentCompanyIdArgumentResolver(), new AuthenticationPrincipalArgumentResolver())
                 .build();
     }
 
