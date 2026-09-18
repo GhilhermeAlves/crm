@@ -1,149 +1,95 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, SearchX, ShieldOff } from "lucide-react";
+import { Plus, ShieldOff, Target } from "lucide-react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
-import type {
-  Deal,
-  DealFormValues,
-  DealGroup,
-  DealStage,
-} from "@/features/pipeline/types/deal.types";
-import { DealTable } from "@/features/pipeline/components/DealTable";
-import { DealFilters } from "@/features/pipeline/components/DealFilters";
-import { DealFormDialog } from "@/features/pipeline/components/DealFormDialog";
-import { DeleteDealDialog } from "@/features/pipeline/components/DeleteDealDialog";
-import { ChangeStageDialog } from "@/features/pipeline/components/ChangeStageDialog";
+import { usePipelines } from "@/features/pipeline/hooks/usePipelines";
+import {
+  useCreateOpportunity,
+  useDeleteOpportunity,
+  useMarkLostOpportunity,
+  useMarkWonOpportunity,
+  useMoveOpportunity,
+  useOpportunities,
+} from "@/features/pipeline/hooks/useOpportunities";
+import { useOpportunityPermissions } from "@/features/pipeline/schemas/pipeline.schema";
+import type { Opportunity } from "@/features/pipeline/types/pipeline.types";
+import { PipelineBoard } from "@/features/pipeline/components/PipelineBoard";
+import { CreateOpportunityDialog } from "@/features/pipeline/components/CreateOpportunityDialog";
+import { LostReasonDialog } from "@/features/pipeline/components/LostReasonDialog";
 import { PageTitle } from "@/components/common/PageTitle";
-import { SearchInput } from "@/components/common/SearchInput";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { EmptyState } from "@/components/common/EmptyState";
+import { ErrorCard } from "@/components/common/ErrorCard";
+import { SkeletonTable } from "@/components/feedback/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/components/common/EmptyState";
-
-const groupTitles: Record<DealGroup, string> = {
-  active: "Oportunidades Ativas",
-  won: "Fechado/Ganho",
-};
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function PipelinePage() {
+  const { user } = useAuth();
   const { can } = useAuthorization();
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState("all");
-  const [responsibleFilter, setResponsibleFilter] = useState("all");
-  const [forecastFilter, setForecastFilter] = useState("all");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Deal | null>(null);
-  const [deleting, setDeleting] = useState<Deal | null>(null);
-  const [changingStage, setChangingStage] = useState<Deal | null>(null);
+  const companyId = user?.companyId ?? null;
+  const { canCreate, canMove, canWin, canLose, canDelete } = useOpportunityPermissions();
 
-  const responsibles = useMemo(
-    () => Array.from(new Set(deals.map((d) => d.responsible).filter((r): r is string => !!r))),
-    [deals],
-  );
+  const {
+    data: pipelines,
+    isLoading: pipelinesLoading,
+    error: pipelinesError,
+    refetch: refetchPipelines,
+  } = usePipelines(companyId);
 
-  const hasActiveFilters =
-    search.trim() !== "" ||
-    stageFilter !== "all" ||
-    responsibleFilter !== "all" ||
-    forecastFilter !== "all";
+  const activePipelines = useMemo(() => (pipelines ?? []).filter((p) => p.active), [pipelines]);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
-  const clearFilters = () => {
-    setSearch("");
-    setStageFilter("all");
-    setResponsibleFilter("all");
-    setForecastFilter("all");
-  };
-
-  const filteredDeals = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return deals.filter((deal) => {
-      if (stageFilter !== "all" && deal.stage !== stageFilter) return false;
-      if (responsibleFilter !== "all" && deal.responsible !== responsibleFilter) return false;
-      if (forecastFilter !== "all" && deal.forecastCategory !== forecastFilter) return false;
-      if (q) {
-        const haystack = `${deal.name} ${deal.contact} ${deal.responsible ?? ""}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [deals, search, stageFilter, responsibleFilter, forecastFilter]);
-
-  const activeDeals = filteredDeals.filter((d) => d.group === "active");
-  const wonDeals = filteredDeals.filter((d) => d.group === "won");
-
-  const handleCreate = (values: DealFormValues) => {
-    const newDeal: Deal = {
-      id: `deal-${Date.now()}`,
-      name: values.name,
-      stage: values.stage,
-      value: values.value.trim() === "" ? null : Number(values.value.replace(",", ".")),
-      contact: values.contact,
-      expectedCloseDate: values.expectedCloseDate || null,
-      probability: Number(values.probability),
-      expectedValue:
-        values.expectedValue.trim() === "" ? null : Number(values.expectedValue.replace(",", ".")),
-      forecastCategory: values.forecastCategory || null,
-      group: "active",
-      responsible: values.responsible || null,
-      tasks: null,
-      schedule: null,
-      lastInteraction: null,
-      quotesInvoices: null,
-    };
-    setDeals((prev) => [...prev, newDeal]);
-    setFormOpen(false);
-  };
-
-  const handleEdit = (values: DealFormValues) => {
-    if (!editing) return;
-    setDeals((prev) =>
-      prev.map((d) =>
-        d.id === editing.id
-          ? {
-              ...d,
-              name: values.name,
-              stage: values.stage,
-              value: values.value.trim() === "" ? null : Number(values.value.replace(",", ".")),
-              contact: values.contact,
-              expectedCloseDate: values.expectedCloseDate || null,
-              probability: Number(values.probability),
-              expectedValue:
-                values.expectedValue.trim() === ""
-                  ? null
-                  : Number(values.expectedValue.replace(",", ".")),
-              forecastCategory: values.forecastCategory || null,
-              responsible: values.responsible || null,
-            }
-          : d,
-      ),
-    );
-    setEditing(null);
-    setFormOpen(false);
-  };
-
-  const handleDelete = () => {
-    if (deleting) {
-      setDeals((prev) => prev.filter((d) => d.id !== deleting.id));
-      setDeleting(null);
+  const activePipeline = useMemo(() => {
+    if (selectedPipelineId) {
+      return activePipelines.find((p) => p.id === selectedPipelineId) ?? activePipelines[0] ?? null;
     }
+    return activePipelines[0] ?? null;
+  }, [activePipelines, selectedPipelineId]);
+
+  const {
+    data: opportunities = [],
+    isLoading: opportunitiesLoading,
+    error: opportunitiesError,
+    refetch: refetchOpportunities,
+  } = useOpportunities(companyId, activePipeline?.id ?? null);
+
+  const createOpportunity = useCreateOpportunity(companyId, activePipeline?.id ?? null);
+  const moveOpportunity = useMoveOpportunity(companyId);
+  const markWon = useMarkWonOpportunity(companyId);
+  const markLost = useMarkLostOpportunity(companyId);
+  const deleteOpportunity = useDeleteOpportunity(companyId);
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [losing, setLosing] = useState<Opportunity | null>(null);
+  const [toDelete, setToDelete] = useState<Opportunity | null>(null);
+
+  const isLoading = pipelinesLoading || opportunitiesLoading;
+  const error = pipelinesError ?? opportunitiesError;
+
+  const handleRetry = () => {
+    if (pipelinesError) refetchPipelines();
+    if (opportunitiesError) refetchOpportunities();
   };
 
-  const handleChangeStage = (stage: DealStage) => {
-    if (!changingStage) return;
-    setDeals((prev) =>
-      prev.map((d) =>
-        d.id === changingStage.id
-          ? {
-              ...d,
-              stage,
-              group: stage === "Fechado/Ganho" ? "won" : stage === "Perdido" ? "active" : d.group,
-            }
-          : d,
-      ),
-    );
-    setChangingStage(null);
-  };
+  const busyOpportunityId = moveOpportunity.isPending
+    ? (moveOpportunity.variables?.id ?? null)
+    : markWon.isPending
+      ? (markWon.variables ?? null)
+      : markLost.isPending
+        ? (markLost.variables?.id ?? null)
+        : deleteOpportunity.isPending
+          ? (deleteOpportunity.variables ?? null)
+          : null;
 
   if (!can("pipeline:page:view")) {
     return (
@@ -165,102 +111,115 @@ export default function PipelinePage() {
             Acompanhe oportunidades e o pipeline comercial.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Nova negociação
-        </Button>
-      </div>
-
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="w-full max-w-sm">
-          <SearchInput
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClear={() => setSearch("")}
-            placeholder="Pesquisar por nome, contato ou responsável..."
-          />
+        <div className="flex items-center gap-3">
+          {activePipelines.length > 1 && (
+            <Select
+              value={activePipeline?.id ?? ""}
+              onValueChange={(id) => setSelectedPipelineId(id)}
+            >
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="Selecione o pipeline" />
+              </SelectTrigger>
+              <SelectContent>
+                {activePipelines.map((pipeline) => (
+                  <SelectItem key={pipeline.id} value={pipeline.id}>
+                    {pipeline.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {canCreate && (
+            <Button onClick={() => setCreateOpen(true)} disabled={!activePipeline}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova oportunidade
+            </Button>
+          )}
         </div>
-        <DealFilters
-          stage={stageFilter}
-          responsible={responsibleFilter}
-          forecastCategory={forecastFilter}
-          responsibles={responsibles}
-          onStageChange={setStageFilter}
-          onResponsibleChange={setResponsibleFilter}
-          onForecastChange={setForecastFilter}
-          onClear={clearFilters}
-        />
       </div>
 
-      {deals.length === 0 ? (
+      {isLoading ? (
+        <SkeletonTable rows={6} columns={4} />
+      ) : error ? (
+        <ErrorCard message={error.message} onRetry={handleRetry} />
+      ) : activePipelines.length === 0 ? (
         <Card>
           <CardContent>
             <EmptyState
-              title="Nenhuma negociação"
-              description="Crie sua primeira negociação para começar a acompanhar oportunidades e o pipeline comercial."
+              icon={<Target className="h-8 w-8" />}
+              title="Nenhum pipeline"
+              description="Crie um pipeline para começar a vender."
             />
           </CardContent>
         </Card>
-      ) : hasActiveFilters && filteredDeals.length === 0 ? (
+      ) : opportunities.length === 0 ? (
         <Card>
           <CardContent>
             <EmptyState
-              icon={<SearchX className="h-8 w-8" />}
-              title="Nenhum resultado"
-              description="Não encontramos negociações para a pesquisa ou filtros aplicados."
+              icon={<Target className="h-8 w-8" />}
+              title="Nenhuma oportunidade"
+              description="Crie sua primeira oportunidade para começar a acompanhar o pipeline comercial."
               action={
-                <Button variant="outline" size="sm" onClick={clearFilters}>
-                  Limpar filtros
-                </Button>
+                canCreate ? (
+                  <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
+                    Nova oportunidade
+                  </Button>
+                ) : undefined
               }
             />
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          <DealTable
-            deals={activeDeals}
-            groupTitle={groupTitles.active}
-            onEdit={(d) => {
-              setEditing(d);
-              setFormOpen(true);
-            }}
-            onDelete={setDeleting}
-            onChangeStage={setChangingStage}
-          />
-          <DealTable
-            deals={wonDeals}
-            groupTitle={groupTitles.won}
-            onEdit={(d) => {
-              setEditing(d);
-              setFormOpen(true);
-            }}
-            onDelete={setDeleting}
-            onChangeStage={setChangingStage}
-          />
-        </div>
+        <PipelineBoard
+          stages={activePipeline?.stages ?? []}
+          opportunities={opportunities}
+          canMove={canMove}
+          canWin={canWin}
+          canLose={canLose}
+          canDelete={canDelete}
+          busyOpportunityId={busyOpportunityId}
+          onMove={(opportunity, direction) =>
+            moveOpportunity.mutate({ id: opportunity.id, direction })
+          }
+          onWin={(opportunity) => markWon.mutate(opportunity.id)}
+          onLost={(opportunity) => setLosing(opportunity)}
+          onDelete={(opportunity) => setToDelete(opportunity)}
+        />
       )}
 
-      <DealFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        deal={editing}
-        onSubmit={editing ? handleEdit : handleCreate}
+      {activePipeline && (
+        <CreateOpportunityDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          isLoading={createOpportunity.isPending}
+          onSubmit={(values) =>
+            createOpportunity.mutate(values, { onSuccess: () => setCreateOpen(false) })
+          }
+        />
+      )}
+
+      <LostReasonDialog
+        open={!!losing}
+        onOpenChange={(open) => !open && setLosing(null)}
+        isLoading={markLost.isPending}
+        onConfirm={(reason) => {
+          if (losing) markLost.mutate({ id: losing.id, lossReason: reason });
+          setLosing(null);
+        }}
       />
-      <DeleteDealDialog
-        deal={deleting}
-        onOpenChange={(o) => !o && setDeleting(null)}
-        onConfirm={handleDelete}
-      />
-      <ChangeStageDialog
-        deal={changingStage}
-        onOpenChange={(o) => !o && setChangingStage(null)}
-        onConfirm={handleChangeStage}
+
+      <ConfirmDialog
+        open={!!toDelete}
+        onOpenChange={(open) => !open && setToDelete(null)}
+        title="Excluir oportunidade"
+        description={`Excluir a oportunidade "${toDelete?.title}"? Essa ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        variant="destructive"
+        isLoading={deleteOpportunity.isPending}
+        onConfirm={() => {
+          if (toDelete) deleteOpportunity.mutate(toDelete.id);
+          setToDelete(null);
+        }}
       />
     </div>
   );

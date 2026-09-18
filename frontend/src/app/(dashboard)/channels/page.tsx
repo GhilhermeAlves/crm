@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { MessageSquareOff, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,9 +12,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
+import { ErrorCard } from "@/components/common/ErrorCard";
+import { SkeletonTable } from "@/components/feedback/SkeletonTable";
 import { ChannelFormDialog } from "@/features/omnichannel/components/ChannelFormDialog";
 import { ChannelStatusBadge } from "@/features/omnichannel/components/ChannelStatusBadge";
 import {
@@ -30,7 +31,7 @@ import {
 } from "@/features/omnichannel/types/omnichannel.types";
 
 export default function ChannelsPage() {
-  const { data: channels, isLoading } = useChannels();
+  const { data: channels, isLoading, error, refetch } = useChannels();
   const createChannel = useCreateChannel();
   const updateChannel = useUpdateChannel();
   const deleteChannel = useDeleteChannel();
@@ -66,65 +67,68 @@ export default function ChannelsPage() {
         )}
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Carregando…
-            </div>
-          ) : channels && channels.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Provedor</TableHead>
-                  <TableHead>ID externo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {channels.map((channel) => (
-                  <TableRow key={channel.id}>
-                    <TableCell className="font-medium">{channel.name}</TableCell>
-                    <TableCell>{CHANNEL_PROVIDER_LABELS[channel.provider]}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {channel.externalId ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <ChannelStatusBadge status={channel.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {canUpdate && (
-                          <Button variant="outline" size="sm" onClick={() => openEdit(channel)}>
-                            Editar
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive"
-                            onClick={() => setToDelete(channel)}
-                          >
-                            Excluir
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+      {isLoading ? (
+        <SkeletonTable rows={5} columns={4} />
+      ) : error ? (
+        <ErrorCard message={error.message} onRetry={() => refetch()} />
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            {channels && channels.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Provedor</TableHead>
+                    <TableHead>ID externo</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <EmptyState
-              title="Nenhum canal configurado"
-              description="Crie um canal para começar a receber e responder mensagens."
-            />
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {channels.map((channel) => (
+                    <TableRow key={channel.id}>
+                      <TableCell className="font-medium">{channel.name}</TableCell>
+                      <TableCell>{CHANNEL_PROVIDER_LABELS[channel.provider]}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {channel.externalId ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <ChannelStatusBadge status={channel.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {canUpdate && (
+                            <Button variant="outline" size="sm" onClick={() => openEdit(channel)}>
+                              Editar
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-destructive"
+                              onClick={() => setToDelete(channel)}
+                            >
+                              Excluir
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <EmptyState
+                icon={<MessageSquareOff className="h-8 w-8" />}
+                title="Nenhum canal configurado"
+                description="Crie um canal para começar a receber e responder mensagens."
+              />
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <ChannelFormDialog
         open={dialogOpen}
