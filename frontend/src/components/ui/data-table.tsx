@@ -1,17 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  MoreHorizontal,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Inbox,
-} from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -22,22 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { EmptyState } from "@/components/common/EmptyState";
+import { DataTableEmpty } from "./data-table/DataTableEmpty";
+import { DataTablePagination } from "./data-table/DataTablePagination";
+import { DataTableRowActions } from "./data-table/DataTableRowActions";
+import { DataTableSkeleton } from "./data-table/DataTableSkeleton";
 
 export interface ColumnDef<T> {
   id?: string;
@@ -189,39 +167,16 @@ export function DataTable<T>({
 
             <TableBody>
               {isLoading ? (
-                Array.from({ length: loadingRows }).map((_, rIdx) => (
-                  <TableRow key={`skeleton-row-${rIdx}`} className="hover:bg-transparent">
-                    {columns.map((col, cIdx) => (
-                      <TableCell key={`skeleton-cell-${cIdx}`} className="p-3">
-                        <Skeleton className="h-5 w-full max-w-[140px] rounded" />
-                      </TableCell>
-                    ))}
-                    {hasActions && (
-                      <TableCell className="p-3 text-right">
-                        <Skeleton className="ml-auto h-7 w-7 rounded-md" />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
+                <DataTableSkeleton
+                  columns={columns.length}
+                  loadingRows={loadingRows}
+                  hasActions={hasActions}
+                />
               ) : data.length === 0 ? (
-                <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={totalColumns} className="h-48 p-6 text-center">
-                    <EmptyState
-                      icon={emptyState?.icon || <Inbox className="h-8 w-8 text-muted-foreground" />}
-                      title={emptyState?.title || "Nenhum dado encontrado"}
-                      description={
-                        emptyState?.description || "Não há registros correspondentes cadastrados."
-                      }
-                      action={emptyState?.action}
-                    />
-                  </TableCell>
-                </TableRow>
+                <DataTableEmpty totalColumns={totalColumns} emptyState={emptyState} />
               ) : (
                 data.map((row, rowIdx) => {
                   const rowActions = typeof actions === "function" ? actions(row) : (actions ?? []);
-                  const visibleActions = rowActions.filter((a) =>
-                    typeof a.hidden === "function" ? !a.hidden(row) : !a.hidden,
-                  );
 
                   return (
                     <TableRow
@@ -241,50 +196,7 @@ export function DataTable<T>({
                         </TableCell>
                       ))}
 
-                      {hasActions && (
-                        <TableCell className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          {visibleActions.length > 0 && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                  aria-label="Abrir menu de ações"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-44">
-                                {visibleActions.map((act, aIdx) => {
-                                  const isDisabled =
-                                    typeof act.disabled === "function"
-                                      ? act.disabled(row)
-                                      : Boolean(act.disabled);
-                                  const Icon = act.icon;
-
-                                  return (
-                                    <React.Fragment key={`${act.label}-${aIdx}`}>
-                                      {act.destructive && aIdx > 0 && <DropdownMenuSeparator />}
-                                      <DropdownMenuItem
-                                        onClick={() => act.onClick(row)}
-                                        disabled={isDisabled}
-                                        className={cn(
-                                          act.destructive &&
-                                            "text-destructive focus:text-destructive",
-                                        )}
-                                      >
-                                        {Icon && <Icon className="mr-2 h-4 w-4" />}
-                                        <span>{act.label}</span>
-                                      </DropdownMenuItem>
-                                    </React.Fragment>
-                                  );
-                                })}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </TableCell>
-                      )}
+                      {hasActions && <DataTableRowActions row={row} actions={rowActions} />}
                     </TableRow>
                   );
                 })
@@ -294,109 +206,7 @@ export function DataTable<T>({
         </div>
       </div>
 
-      {/* ======================================================================= */}
-      {/* BARRA DE PAGINAÇÃO                                                      */}
-      {/* ======================================================================= */}
-      {pagination && (
-        <div className="flex flex-col gap-3 px-1 py-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            {pagination.totalItems !== undefined && (
-              <span>
-                Mostrando{" "}
-                <span className="font-medium text-foreground">
-                  {Math.min(
-                    (pagination.currentPage - 1) * pagination.pageSize + 1,
-                    pagination.totalItems,
-                  )}
-                </span>{" "}
-                a{" "}
-                <span className="font-medium text-foreground">
-                  {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalItems)}
-                </span>{" "}
-                de <span className="font-medium text-foreground">{pagination.totalItems}</span>{" "}
-                registro(s)
-              </span>
-            )}
-
-            {pagination.onPageSizeChange && (
-              <div className="ml-4 flex items-center gap-1.5">
-                <span>Itens por pág:</span>
-                <Select
-                  value={String(pagination.pageSize)}
-                  onValueChange={(v) => pagination.onPageSizeChange?.(Number(v))}
-                >
-                  <SelectTrigger className="h-7 w-16 text-xs">
-                    <SelectValue placeholder={String(pagination.pageSize)} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(pagination.pageSizeOptions ?? [10, 20, 50, 100]).map((opt) => (
-                      <SelectItem key={opt} value={String(opt)} className="text-xs">
-                        {opt}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1 self-end sm:self-auto">
-            {pagination.totalPages && (
-              <span className="mr-2">
-                Página <span className="font-medium text-foreground">{pagination.currentPage}</span>{" "}
-                de <span className="font-medium text-foreground">{pagination.totalPages}</span>
-              </span>
-            )}
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => pagination.onPageChange(1)}
-              disabled={pagination.currentPage <= 1 || isLoading}
-              title="Primeira página"
-            >
-              <ChevronsLeft className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
-              disabled={pagination.currentPage <= 1 || isLoading}
-              title="Página anterior"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
-              disabled={
-                Boolean(pagination.totalPages && pagination.currentPage >= pagination.totalPages) ||
-                isLoading
-              }
-              title="Próxima página"
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-            {pagination.totalPages && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => pagination.onPageChange(pagination.totalPages!)}
-                disabled={pagination.currentPage >= pagination.totalPages || isLoading}
-                title="Última página"
-              >
-                <ChevronsRight className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
+      {pagination && <DataTablePagination pagination={pagination} isLoading={isLoading} />}
     </div>
   );
 }
