@@ -133,6 +133,63 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [frontend]
+
+    # 4.1 — Setup de tooling. O Playwright gerencia SOMENTE o frontend
+    # (webServer do playwright.config.ts) e o smoke atual usa apenas rotas
+    # públicas, portanto não precisa da stack de apoio.
+    #
+    # 4.2+ (login/logout e specs de negócio) — este job passa a subir a stack
+    # completa antes do `npm run test:e2e`, reutilizando as MESMAS
+    # imagens/versões dos compose do repo (docker-compose.yml na raiz para
+    # postgres:17-alpine/redis:7-alpine/rabbitmq:4-management-alpine/keycloak:26.3
+    # e docker/docker-compose.yml para backend/auth-service/frontend):
+    #   * keycloak com realm "CRM" + client `crm-gateway` importados e usuário
+    #     E2E seedado (fixtures/users.json) — ver Task 4.2.
+    #   * backend com SPRING_PROFILES_ACTIVE=prod,
+    #     CORS_ALLOWED_ORIGINS=http://localhost:3000 e
+    #     SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_* apontando para o Keycloak.
+    #   * auth-service com AUTH_GATEWAY_* apontando para o Keycloak e
+    #     AUTH_GATEWAY_API_BACKEND_URL=http://backend:8080.
+    #   * frontend buildado pelo webServer com DEV_GATEWAY_TARGET=http://localhost:8082
+    #     (rewrites de /auth/** e /api/** para o gateway, substituindo o nginx).
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: frontend
+        env:
+          CI: 'true'
+        run: npm run test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
   docker:
     name: Docker Build
     runs-on: ubuntu-latest

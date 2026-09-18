@@ -1,0 +1,3 @@
+# Playwright E2E specs: lintadas apenas pelo ESLint do Playwright, fora do
+# escopo do `next lint` (evita churn de regras de app sobre código de teste).
+e2e/
