@@ -136,7 +136,6 @@ jobs:
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
-    needs: [frontend]
 
     # 4.2 — Os testes de login/logout (auth.spec.ts) rodam contra a stack
     # completa, subida por `e2e/compose.ci.yml` (postgres:17-alpine,

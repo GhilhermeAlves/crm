@@ -29,7 +29,13 @@ services:
     environment:
       POSTGRES_USER: crm_admin
       POSTGRES_PASSWORD: crm_admin
+      # Apenas crm_main é criado pelo entrypoint; o banco do Keycloak
+      # (keycloak_db) é criado pelo init script abaixo.
       POSTGRES_DB: crm_main
+    volumes:
+      # Mesma convenção do prod (docker-compose.yml → postgres). O Keycloak NÃO
+      # cria o próprio banco — sem isto o boot falha.
+      - ./init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U crm_admin -d crm_main"]
       interval: 10s
@@ -74,14 +80,17 @@ services:
       KC_DB: postgres
       KC_DB_URL_HOST: postgres
       KC_DB_URL_PORT: 5432
-      KC_DB_URL_DATABASE: keycloak
+      KC_DB_URL_DATABASE: keycloak_db
       KC_DB_USERNAME: crm_admin
       KC_DB_PASSWORD: crm_admin
       KC_HEALTH_ENABLED: "true"
     volumes:
       - ../infrastructure/keycloak/import:/opt/keycloak/data/import:ro
     healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/9000; printf \"GET /health/ready HTTP/1.0\\r\\n\\r\\n\" >&3; cat <&3 | grep -q READY'"]
+      # Mesmo padrão do prod (docker-compose.yml → keycloak): `/health` do
+      # Keycloak 26 retorna JSON MicroProfile com "status":"UP" — NÃO existe o
+      # literal READY em /health/ready. Porta 9000 = management interface.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q 'UP'"]
       interval: 15s
       timeout: 10s
       retries: 20

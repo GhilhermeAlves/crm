@@ -5,9 +5,10 @@ import users from "./users.json";
  * Fixtures de autenticação E2E (Task 4.2).
  *
  * O usuário vive no realm dev do Keycloak (crm-realm-dev.json) e na API do CRM
- * (seed e2e/seed/user.sql). Credenciais podem ser sobrescritas por env
- * (`E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`), com fallback para o fixture — o
- * job `e2e` do CI exporta as mesmas do realm/seed.
+ * (seed e2e/seed/user.sql). As credenciais são as do fixture `users.json`
+ * (fonte única, versionada e dev-only); `E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD`
+ * são overrides OPCIONAIS para rodar localmente contra outro realm. O job `e2e`
+ * do CI NÃO exporta essas vars — usa o fixture.
  */
 export const E2E_ADMIN = {
   email: process.env.E2E_ADMIN_EMAIL ?? users.admin.email,
