@@ -1,7 +1,7 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutationDefaults } from "@/lib/query/mutation-utils";
 import { TenantService } from "../services/tenant.service";
 import type {
   CreateTenantRequest,
@@ -29,50 +29,41 @@ export function useTenant(id: string) {
 }
 
 export function useCreateTenant() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: (data: CreateTenantRequest) => TenantService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success("Empresa criada com sucesso");
-    },
-    onError: (error: { response?: { data?: { message?: string } } }) => {
-      const message = error.response?.data?.message || "Erro ao criar empresa";
-      toast.error(message);
-    },
+    onSuccess: onSuccess({
+      successMessage: "Empresa criada com sucesso",
+      invalidateKeys: [[QUERY_KEY]],
+    }),
+    onError: onError({ errorMessage: "Erro ao criar empresa" }),
   });
 }
 
 export function useUpdateTenant() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateTenantRequest }) =>
       TenantService.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success("Empresa atualizada com sucesso");
-    },
-    onError: (error: { response?: { data?: { message?: string } } }) => {
-      const message = error.response?.data?.message || "Erro ao atualizar empresa";
-      toast.error(message);
-    },
+    onSuccess: onSuccess({
+      successMessage: "Empresa atualizada com sucesso",
+      invalidateKeys: [[QUERY_KEY]],
+    }),
+    onError: onError({ errorMessage: "Erro ao atualizar empresa" }),
   });
 }
 
 export function useDeleteTenant() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: (id: string) => TenantService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success("Empresa excluída com sucesso");
-    },
-    onError: (error: { response?: { data?: { message?: string } } }) => {
-      const message = error.response?.data?.message || "Erro ao excluir empresa";
-      toast.error(message);
-    },
+    onSuccess: onSuccess({
+      successMessage: "Empresa excluída com sucesso",
+      invalidateKeys: [[QUERY_KEY]],
+    }),
+    onError: onError({ errorMessage: "Erro ao excluir empresa" }),
   });
 }

@@ -18,39 +18,50 @@ export interface AiSuggestionResponse {
   provider: string;
 }
 
+const CONNECTION_ERROR_MESSAGE = "Falha de conexão. Verifique sua internet e tente novamente.";
+const FALLBACK_ERROR_MESSAGE = "Não foi possível obter uma resposta da IA. Tente novamente.";
+
+/**
+ * Unifica o mapeamento de erros de IA por status HTTP. Os contexts de chat e
+ * análise têm mensagens próprias por status, mas compartilham: a checagem de
+ * AxiosError, o fallback de conexão (sem response) e o fallback genérico.
+ * Nunca expõe stack traces nem detalhes internos do provedor.
+ */
+function aiErrorByStatus(
+  error: unknown,
+  statusMessages: Record<number, string>,
+  fallback: string,
+): string {
+  if (error instanceof AxiosError) {
+    const status = error.response?.status;
+    if (status !== undefined && statusMessages[status]) {
+      return statusMessages[status];
+    }
+    if (status === undefined || !error.response) {
+      return CONNECTION_ERROR_MESSAGE;
+    }
+  }
+  return fallback;
+}
+
 /**
  * Converte erros do chat em mensagens amigáveis (AI-04 §22). Nunca expõe
  * stack traces nem detalhes internos do provedor.
  */
 export function aiErrorMessage(error: unknown): string {
-  if (error instanceof AxiosError) {
-    const status = error.response?.status;
-    if (status === 401) {
-      return "Sua sessão expirou. Faça login novamente.";
-    }
-    if (status === 403) {
-      return "Você não tem permissão para usar o assistente Léo.";
-    }
-    if (status === 404) {
-      return "Conversa não encontrada ou sem acesso.";
-    }
-    if (status === 400) {
-      return "Não foi possível processar sua mensagem. Verifique e tente novamente.";
-    }
-    if (status === 429) {
-      return "Muitas solicitações em sequência. Aguarde um instante e tente novamente.";
-    }
-    if (status === 502) {
-      return "O provedor de IA está indisponível no momento. Tente novamente em instantes.";
-    }
-    if (status === 500) {
-      return "Não foi possível obter uma resposta da IA. Tente novamente.";
-    }
-    if (!error.response) {
-      return "Falha de conexão. Verifique sua internet e tente novamente.";
-    }
-  }
-  return "Não foi possível obter uma resposta da IA. Tente novamente.";
+  return aiErrorByStatus(
+    error,
+    {
+      400: "Não foi possível processar sua mensagem. Verifique e tente novamente.",
+      401: "Sua sessão expirou. Faça login novamente.",
+      403: "Você não tem permissão para usar o assistente Léo.",
+      404: "Conversa não encontrada ou sem acesso.",
+      429: "Muitas solicitações em sequência. Aguarde um instante e tente novamente.",
+      500: FALLBACK_ERROR_MESSAGE,
+      502: "O provedor de IA está indisponível no momento. Tente novamente em instantes.",
+    },
+    FALLBACK_ERROR_MESSAGE,
+  );
 }
 
 /**
@@ -59,28 +70,17 @@ export function aiErrorMessage(error: unknown): string {
  * e erros de conexão; parsing inválido cai no fallback controlado.
  */
 export function aiAnalysisErrorMessage(error: unknown): string {
-  if (error instanceof AxiosError) {
-    const status = error.response?.status;
-    if (status === 401) {
-      return "Sua sessão expirou. Faça login novamente.";
-    }
-    if (status === 403) {
-      return "Você não tem permissão para acessar o contexto solicitado.";
-    }
-    if (status === 404) {
-      return "Registro ou contexto não encontrado.";
-    }
-    if (status === 429) {
-      return "Muitas solicitações em sequência. Aguarde um instante e tente novamente.";
-    }
-    if (status === 500) {
-      return "Não foi possível realizar a análise. Tente novamente.";
-    }
-    if (!error.response) {
-      return "Falha de conexão. Verifique sua internet e tente novamente.";
-    }
-  }
-  return "Não foi possível realizar a análise. Tente novamente.";
+  return aiErrorByStatus(
+    error,
+    {
+      401: "Sua sessão expirou. Faça login novamente.",
+      403: "Você não tem permissão para acessar o contexto solicitado.",
+      404: "Registro ou contexto não encontrado.",
+      429: "Muitas solicitações em sequência. Aguarde um instante e tente novamente.",
+      500: "Não foi possível realizar a análise. Tente novamente.",
+    },
+    "Não foi possível realizar a análise. Tente novamente.",
+  );
 }
 
 export const AiService = {
