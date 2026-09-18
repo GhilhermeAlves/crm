@@ -58,7 +58,7 @@ export default function EditRolePage() {
       },
       {
         onSuccess: () => {
-          router.push(`/roles/${id}`);
+          router.push(`/settings/roles/${id}`);
         },
       },
     );
@@ -85,7 +85,7 @@ export default function EditRolePage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
-            <Link href={`/roles/${id}`}>
+            <Link href={`/settings/roles/${id}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

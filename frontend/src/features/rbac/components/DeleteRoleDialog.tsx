@@ -29,7 +29,7 @@ export function DeleteRoleDialog({ open, onOpenChange, role }: DeleteRoleDialogP
     deleteRole.mutate(role.id, {
       onSuccess: () => {
         onOpenChange(false);
-        router.push("/roles");
+        router.push("/settings/roles");
       },
     });
   };
