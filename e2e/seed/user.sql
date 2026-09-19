@@ -29,11 +29,15 @@ VALUES ('11111111-1111-1111-1111-111111111111',
         TRUE)
 ON CONFLICT (email) DO NOTHING;
 
--- Role AGENT da empresa default (criada por V002/V018/RoleDataSeeder).
+-- Roles da empresa default (criadas por V002/V018/RoleDataSeeder).
+-- AGENT: conjunto mínimo para todas as pág. de negócio (leads, pipeline,
+-- inbox). ADMIN: estende o E2E aos fluxos que exigem `role:manage`,
+-- `pipeline:update` (criação de pipeline no seed de negócio) e ops de
+-- cleanup (delete) via API nas specs 4.3 — hoje o seed do E2E é AGENT∪ADMIN.
 INSERT INTO user_roles (user_id, role_id, company_id)
 SELECT '11111111-1111-1111-1111-111111111111', r.id, r.company_id
 FROM roles r
-WHERE r.name = 'AGENT'
+WHERE r.name IN ('AGENT', 'ADMIN')
   AND r.company_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT DO NOTHING;
 
@@ -41,6 +45,41 @@ ON CONFLICT DO NOTHING;
 INSERT INTO memberships (user_id, company_id, role, status)
 VALUES ('11111111-1111-1111-1111-111111111111',
         '00000000-0000-0000-0000-000000000001',
-        'AGENT',
+        'ADMIN',
+        'ACTIVE')
+ON CONFLICT DO NOTHING;
+
+-- ===========================================================================
+-- Usuário manual DEV (login real no realm dev com a própria senha).
+-- ghilherme007@gmail.com / admin123 — existe no crm-realm-dev.json e aqui com
+-- ADMIN na empresa default. É dev-only (o realm de produção não importa este
+-- arquivo) e vive junto do usuário E2E para o desenvolvedor testar a UI
+-- manualmente sem depender do Keycloak E2E.
+-- ===========================================================================
+INSERT INTO users (id, email, password_hash, name, first_name, last_name,
+                   company_id, is_active, status, crm_enabled)
+VALUES ('22222222-2222-2222-2222-222222222222',
+        'ghilherme007@gmail.com',
+        'dev-seed-only', -- hash inerte: login 100% via Keycloak (realm dev)
+        'Ghilherme',
+        'Ghilherme',
+        '',
+        '00000000-0000-0000-0000-000000000001',
+        TRUE,
+        'ACTIVE',
+        TRUE)
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO user_roles (user_id, role_id, company_id)
+SELECT '22222222-2222-2222-2222-222222222222', r.id, r.company_id
+FROM roles r
+WHERE r.name = 'ADMIN'
+  AND r.company_id = '00000000-0000-0000-0000-000000000001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO memberships (user_id, company_id, role, status)
+VALUES ('22222222-2222-2222-2222-222222222222',
+        '00000000-0000-0000-0000-000000000001',
+        'ADMIN',
         'ACTIVE')
 ON CONFLICT DO NOTHING;

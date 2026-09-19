@@ -193,6 +193,10 @@ jobs:
             -e PGPASSWORD=crm_admin \
             postgres \
             psql -U crm_admin -d crm_main -v ON_ERROR_STOP=1 < e2e/seed/user.sql
+          docker compose -f e2e/compose.ci.yml exec -T \
+            -e PGPASSWORD=crm_admin \
+            postgres \
+            psql -U crm_admin -d crm_main -v ON_ERROR_STOP=1 < e2e/seed/inbox.sql
 
       - name: Run E2E tests
         working-directory: frontend

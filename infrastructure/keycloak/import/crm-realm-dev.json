@@ -26,6 +26,23 @@
         }
       ],
       "attributes": {}
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "username": "ghilherme007@gmail.com",
+      "email": "ghilherme007@gmail.com",
+      "firstName": "Ghilherme",
+      "lastName": "",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "attributes": {}
     }
   ],
   "clients": [
