@@ -76,6 +76,13 @@ services:
       - AI_PROVIDER=${AI_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      # Sprint 6.10 (Task 1.8) — healthcheck do backend para docker compose.
+      - ACTUATOR_HEALTH_PATH=/actuator/health
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     networks:
       - crm-network
     restart: unless-stopped
@@ -107,8 +114,9 @@ services:
       - AUTH_GATEWAY_API_BACKEND_URL=http://backend:8080
       - AUTH_GATEWAY_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
       - AUTH_GATEWAY_SESSION_STORE=redis
-      - AUTH_GATEWAY_SESSION_TTL=8h
-      - AUTH_GATEWAY_SESSION_IDLE_TIMEOUT=0s
+      # Sprint 6.10 (Task 1.8) — timeout de sessão ociosa do gateway:
+      # sessões permanecem ativas por 4h de inatividade (padrão era 0s = sem timeout).
+      - AUTH_GATEWAY_SESSION_IDLE_TIMEOUT=4h
       - AUTH_GATEWAY_AUTHORIZATION_REQUEST_TTL=30m
       - REDIS_HOST=redis
       - REDIS_PORT=6379
