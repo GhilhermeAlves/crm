@@ -203,7 +203,7 @@ jobs:
         env:
           CI: 'true'
           DEV_GATEWAY_TARGET: http://localhost:8082
-        run: npm run test:e2e
+        run: npm run test:e2e -- --shard=1/1 --forbid-only
 
       - name: Upload Playwright report on failure
         if: failure()
