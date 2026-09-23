@@ -1,6 +1,7 @@
 package com.becommerce.auth.infrastructure.gateway;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
@@ -23,48 +24,50 @@ import java.util.Optional;
 public class GatewayCookieFactory {
 
     private final OidcGatewayProperties properties;
+    private final ForwardedOriginResolver forwardedOriginResolver;
 
-    public GatewayCookieFactory(OidcGatewayProperties properties) {
+    public GatewayCookieFactory(OidcGatewayProperties properties, ForwardedOriginResolver forwardedOriginResolver) {
         this.properties = properties;
+        this.forwardedOriginResolver = forwardedOriginResolver;
     }
 
-    public ResponseCookie createSessionCookie(String sessionToken) {
-        return base(properties.getCookieName(), sessionToken)
+    public ResponseCookie createSessionCookie(String sessionToken, HttpServletRequest request) {
+        return base(properties.getCookieName(), sessionToken, request)
                 .httpOnly(true)
                 .maxAge(properties.getSessionTtl())
                 .build();
     }
 
-    public ResponseCookie createCsrfCookie(String csrfToken) {
-        return base(properties.getCsrfCookieName(), csrfToken)
+    public ResponseCookie createCsrfCookie(String csrfToken, HttpServletRequest request) {
+        return base(properties.getCsrfCookieName(), csrfToken, request)
                 .httpOnly(false)
                 .maxAge(properties.getSessionTtl())
                 .build();
     }
 
-    public ResponseCookie createExpiredSessionCookie() {
-        return base(properties.getCookieName(), "")
+    public ResponseCookie createExpiredSessionCookie(HttpServletRequest request) {
+        return base(properties.getCookieName(), "", request)
                 .httpOnly(true)
                 .maxAge(Duration.ZERO)
                 .build();
     }
 
-    public ResponseCookie createExpiredCsrfCookie() {
-        return base(properties.getCsrfCookieName(), "")
+    public ResponseCookie createExpiredCsrfCookie(HttpServletRequest request) {
+        return base(properties.getCsrfCookieName(), "", request)
                 .httpOnly(false)
                 .maxAge(Duration.ZERO)
                 .build();
     }
 
-    public ResponseCookie createPendingLinkCookie(String pendingToken) {
-        return base(properties.getPendingLinkCookieName(), pendingToken)
+    public ResponseCookie createPendingLinkCookie(String pendingToken, HttpServletRequest request) {
+        return base(properties.getPendingLinkCookieName(), pendingToken, request)
                 .httpOnly(true)
                 .maxAge(properties.getPendingLinkTtl())
                 .build();
     }
 
-    public ResponseCookie createExpiredPendingLinkCookie() {
-        return base(properties.getPendingLinkCookieName(), "")
+    public ResponseCookie createExpiredPendingLinkCookie(HttpServletRequest request) {
+        return base(properties.getPendingLinkCookieName(), "", request)
                 .httpOnly(true)
                 .maxAge(Duration.ZERO)
                 .build();
@@ -82,15 +85,33 @@ public class GatewayCookieFactory {
         return read(cookies, properties.getPendingLinkCookieName());
     }
 
-    private ResponseCookie.ResponseCookieBuilder base(String name, String value) {
+    private ResponseCookie.ResponseCookieBuilder base(String name, String value, HttpServletRequest request) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
                 .path("/")
                 .sameSite("Lax")
                 .maxAge(properties.getSessionTtl());
-        if (properties.isSecureCookie()) {
+        if (properties.isSecureCookie() && !isLocalDevOrigin(request)) {
             builder.secure(true);
         }
         return builder;
+    }
+
+    /**
+     * Dev local (ex.: {@code http://localhost:3000} via proxy/middleware do
+     * Next.js): o browser rejeita cookie com {@code Secure} sobre http, então
+     * o flag é omitido apenas quando a origem deriva de localhost. Produção
+     * (https via nginx) e qualquer origem sem host confiável mantêm o flag
+     * conforme configurado ({@link OidcGatewayProperties#isSecureCookie()}).
+     */
+    private boolean isLocalDevOrigin(HttpServletRequest request) {
+        if (request == null) {
+            return false;
+        }
+        String origin = forwardedOriginResolver.resolve(request);
+        return origin != null
+                && (origin.startsWith("http://localhost")
+                || origin.startsWith("http://127.0.0.1")
+                || origin.startsWith("http://[::1]"));
     }
 
     private Optional<String> read(Cookie[] cookies, String name) {

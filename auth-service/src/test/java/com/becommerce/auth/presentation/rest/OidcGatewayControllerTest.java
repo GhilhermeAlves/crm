@@ -72,9 +72,9 @@ class OidcGatewayControllerTest {
     }
 
     private void stubCookies() {
-        when(cookieFactory.createSessionCookie(anyString()))
+        when(cookieFactory.createSessionCookie(anyString(), any()))
                 .thenReturn(ResponseCookie.from("crm_session", "opaque").build());
-        when(cookieFactory.createCsrfCookie(anyString()))
+        when(cookieFactory.createCsrfCookie(anyString(), any()))
                 .thenReturn(ResponseCookie.from("XSRF-TOKEN", "csrf").build());
     }
 
@@ -140,10 +140,10 @@ class OidcGatewayControllerTest {
     void shouldSetSessionAndCsrfCookieAndRedirectAfterSuccessfulLogin() throws Exception {
         when(gatewayOidcUseCase.completeAuthorization("code-1", "state-1"))
                 .thenReturn(new GatewayOidcUseCase.AuthenticationResult(session(), null, "/dashboard"));
-        when(cookieFactory.createSessionCookie("opaque-session-token"))
+        when(cookieFactory.createSessionCookie(eq("opaque-session-token"), any()))
                 .thenReturn(ResponseCookie.from("crm_session", "opaque-session-token")
                         .httpOnly(true).path("/").maxAge(java.time.Duration.ofHours(8)).build());
-        when(cookieFactory.createCsrfCookie("csrf-token"))
+        when(cookieFactory.createCsrfCookie(eq("csrf-token"), any()))
                 .thenReturn(ResponseCookie.from("XSRF-TOKEN", "csrf-token")
                         .path("/").maxAge(java.time.Duration.ofHours(8)).build());
 
@@ -204,7 +204,7 @@ class OidcGatewayControllerTest {
         when(cookieFactory.readSessionToken(any())).thenReturn(java.util.Optional.of("opaque-session-token"));
         when(gatewayOidcUseCase.logout(eq("opaque-session-token"), nullable(String.class), nullable(String.class)))
                 .thenReturn(new GatewayOidcUseCase.LogoutResult(END_SESSION_URI + "?id_token_hint=hint"));
-        when(cookieFactory.createExpiredSessionCookie())
+        when(cookieFactory.createExpiredSessionCookie(any()))
                 .thenReturn(ResponseCookie.from("crm_session", "").maxAge(java.time.Duration.ZERO).build());
 
         mockMvc.perform(get("/auth/logout").cookie(sessionCookie()))
@@ -218,7 +218,7 @@ class OidcGatewayControllerTest {
         when(cookieFactory.readSessionToken(any())).thenReturn(java.util.Optional.empty());
         when(gatewayOidcUseCase.logout(nullable(String.class), eq("/dashboard"), nullable(String.class)))
                 .thenReturn(new GatewayOidcUseCase.LogoutResult("/dashboard"));
-        when(cookieFactory.createExpiredSessionCookie())
+        when(cookieFactory.createExpiredSessionCookie(any()))
                 .thenReturn(ResponseCookie.from("crm_session", "").maxAge(java.time.Duration.ZERO).build());
 
         mockMvc.perform(get("/auth/logout").param("post_logout_redirect_uri", "/dashboard"))
@@ -311,11 +311,11 @@ class OidcGatewayControllerTest {
         when(cookieFactory.readPendingLinkToken(any())).thenReturn(java.util.Optional.of("opaque-pending-token"));
         when(gatewayOidcUseCase.completeLink("opaque-pending-token", "senha-certa"))
                 .thenReturn(new GatewayOidcUseCase.LinkResult("/dashboard", session()));
-        when(cookieFactory.createSessionCookie(anyString()))
+        when(cookieFactory.createSessionCookie(anyString(), any()))
                 .thenReturn(ResponseCookie.from("crm_session", "opaque-session-token").build());
-        when(cookieFactory.createCsrfCookie(anyString()))
+        when(cookieFactory.createCsrfCookie(anyString(), any()))
                 .thenReturn(ResponseCookie.from("XSRF-TOKEN", "csrf").build());
-        when(cookieFactory.createExpiredPendingLinkCookie())
+        when(cookieFactory.createExpiredPendingLinkCookie(any()))
                 .thenReturn(ResponseCookie.from("crm_pending_link", "").maxAge(java.time.Duration.ZERO).build());
 
         mockMvc.perform(post("/auth/link")

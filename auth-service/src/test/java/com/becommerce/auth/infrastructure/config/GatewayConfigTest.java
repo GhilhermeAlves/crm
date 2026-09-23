@@ -1,6 +1,7 @@
 package com.becommerce.auth.infrastructure.config;
 
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
+import com.becommerce.auth.infrastructure.gateway.ForwardedOriginResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
 import com.becommerce.auth.infrastructure.security.GatewayCsrfFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,7 +56,7 @@ class GatewayConfigTest {
     void shouldRegisterCsrfFilterForBothRefreshAndLink() {
         OidcGatewayProperties properties = new OidcGatewayProperties();
         GatewayConfig config = new GatewayConfig(properties, environment);
-        GatewayCookieFactory cookieFactory = new GatewayCookieFactory(properties);
+        GatewayCookieFactory cookieFactory = new GatewayCookieFactory(properties, new ForwardedOriginResolver());
 
         FilterRegistrationBean<GatewayCsrfFilter> registration =
                 config.gatewayCsrfFilter(cookieFactory, properties, new ObjectMapper());

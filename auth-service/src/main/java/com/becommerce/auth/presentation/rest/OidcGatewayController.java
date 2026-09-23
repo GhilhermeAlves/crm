@@ -83,6 +83,7 @@ public class OidcGatewayController {
 
     @GetMapping("/auth/callback")
     public ResponseEntity<Void> callback(
+            HttpServletRequest request,
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "code", required = false) String code,
             @RequestParam(value = "state", required = false) String state) {
@@ -98,16 +99,16 @@ public class OidcGatewayController {
             // o token CSRF novo habilita o POST /auth/link (cookie-to-header).
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(URI.create(result.redirectTarget()))
-                    .header(HttpHeaders.SET_COOKIE, cookieFactory.createPendingLinkCookie(result.pendingLink().token()).toString())
-                    .header(HttpHeaders.SET_COOKIE, cookieFactory.createCsrfCookie(result.pendingLink().csrfToken()).toString())
-                    .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpiredSessionCookie().toString())
+                    .header(HttpHeaders.SET_COOKIE, cookieFactory.createPendingLinkCookie(result.pendingLink().token(), request).toString())
+                    .header(HttpHeaders.SET_COOKIE, cookieFactory.createCsrfCookie(result.pendingLink().csrfToken(), request).toString())
+                    .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpiredSessionCookie(request).toString())
                     .build();
         }
 
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(result.redirectTarget()))
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.createSessionCookie(result.session().sessionToken()).toString())
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.createCsrfCookie(result.session().csrfToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.createSessionCookie(result.session().sessionToken(), request).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.createCsrfCookie(result.session().csrfToken(), request).toString())
                 .build();
     }
 
@@ -144,9 +145,9 @@ public class OidcGatewayController {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("redirect", result.redirectTarget());
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.createSessionCookie(result.session().sessionToken()).toString())
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.createCsrfCookie(result.session().csrfToken()).toString())
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpiredPendingLinkCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.createSessionCookie(result.session().sessionToken(), request).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.createCsrfCookie(result.session().csrfToken(), request).toString())
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpiredPendingLinkCookie(request).toString())
                 .body(response);
     }
 
@@ -165,7 +166,7 @@ public class OidcGatewayController {
                 gatewayOidcUseCase.logout(sessionToken, postLogoutRedirectUri, publicOrigin(request));
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(result.redirectUri()))
-                .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpiredSessionCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, cookieFactory.createExpiredSessionCookie(request).toString())
                 .build();
     }
 

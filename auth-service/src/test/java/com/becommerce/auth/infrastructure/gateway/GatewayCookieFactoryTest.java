@@ -1,8 +1,10 @@
 package com.becommerce.auth.infrastructure.gateway;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseCookie;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -19,14 +21,21 @@ class GatewayCookieFactoryTest {
         properties.setCsrfCookieName("XSRF-TOKEN");
         properties.setSecureCookie(secure);
         properties.setSessionTtl(Duration.ofHours(8));
-        return new GatewayCookieFactory(properties);
+        return new GatewayCookieFactory(properties, new ForwardedOriginResolver());
+    }
+
+    private HttpServletRequest request(String host, int port) {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/");
+        request.setServerName(host);
+        request.setServerPort(port);
+        return request;
     }
 
     @Test
     void shouldBuildHttpOnlySameSiteSecureCookie() {
         GatewayCookieFactory factory = factory(true);
 
-        ResponseCookie cookie = factory.createSessionCookie("opaque-token");
+        ResponseCookie cookie = factory.createSessionCookie("opaque-token", request("srv1348261.hstgr.cloud", 443));
 
         assertEquals("crm_session", cookie.getName());
         assertEquals("opaque-token", cookie.getValue());
@@ -41,17 +50,30 @@ class GatewayCookieFactoryTest {
     void shouldNotSetSecureFlagWhenDisabled() {
         GatewayCookieFactory factory = factory(false);
 
-        ResponseCookie cookie = factory.createSessionCookie("opaque-token");
+        ResponseCookie cookie = factory.createSessionCookie("opaque-token", request("srv1348261.hstgr.cloud", 443));
 
         assertFalse(cookie.isSecure());
         assertTrue(cookie.isHttpOnly());
     }
 
     @Test
+    void shouldNotSetSecureFlagForLocalhostDevOrigin() {
+        GatewayCookieFactory factory = factory(true);
+
+        ResponseCookie cookie = factory.createSessionCookie("opaque-token", request("localhost", 3000));
+
+        assertEquals("crm_session", cookie.getName());
+        assertFalse(cookie.isSecure(), "browser rejeita cookie Secure sobre http localhost");
+        assertTrue(cookie.isHttpOnly());
+        assertEquals("Lax", cookie.getSameSite());
+        assertEquals(Duration.ofHours(8), cookie.getMaxAge());
+    }
+
+    @Test
     void shouldBuildCsrfCookieReadableByJavascript() {
         GatewayCookieFactory factory = factory(true);
 
-        ResponseCookie cookie = factory.createCsrfCookie("csrf-token");
+        ResponseCookie cookie = factory.createCsrfCookie("csrf-token", request("srv1348261.hstgr.cloud", 443));
 
         assertEquals("XSRF-TOKEN", cookie.getName());
         assertEquals("csrf-token", cookie.getValue());
@@ -64,7 +86,7 @@ class GatewayCookieFactoryTest {
     void shouldBuildExpiredSessionCookieWithZeroMaxAge() {
         GatewayCookieFactory factory = factory(true);
 
-        ResponseCookie cookie = factory.createExpiredSessionCookie();
+        ResponseCookie cookie = factory.createExpiredSessionCookie(request("srv1348261.hstgr.cloud", 443));
 
         assertEquals("crm_session", cookie.getName());
         assertEquals(Duration.ZERO, cookie.getMaxAge(), "cookie de logout deve expirar imediatamente");

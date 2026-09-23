@@ -1,5 +1,6 @@
 package com.becommerce.auth.infrastructure.security;
 
+import com.becommerce.auth.infrastructure.gateway.ForwardedOriginResolver;
 import com.becommerce.auth.infrastructure.gateway.GatewayCookieFactory;
 import com.becommerce.auth.infrastructure.gateway.OidcGatewayProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +26,7 @@ class GatewayCsrfFilterTest {
         properties.setCsrfCookieName("XSRF-TOKEN");
         properties.setCsrfHeaderName("X-XSRF-TOKEN");
         properties.setSecureCookie(true);
-        filter = new GatewayCsrfFilter(new GatewayCookieFactory(properties), properties, new ObjectMapper());
+        filter = new GatewayCsrfFilter(new GatewayCookieFactory(properties, new ForwardedOriginResolver()), properties, new ObjectMapper());
     }
 
     private MockHttpServletRequest post(String path) {
