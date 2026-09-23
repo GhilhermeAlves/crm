@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Search, Command, ChevronLeft, ChevronRight } from "lucide-react";
+import { Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
@@ -44,15 +44,6 @@ export function Header() {
 
       {/* Spacer */}
       <div className="flex-1" />
-
-      {/* Search (UI only) */}
-      <Button variant="outline" size="sm" className="hidden h-9 gap-2 md:flex md:w-64 lg:w-80">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <span className="flex-1 text-left text-sm text-muted-foreground">Pesquisar...</span>
-        <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">
-          <Command className="h-3 w-3" />K
-        </kbd>
-      </Button>
 
       {/* Notifications */}
       <NotificationBell />

@@ -133,6 +133,90 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+
+    # 4.2 — Os testes de login/logout (auth.spec.ts) rodam contra a stack
+    # completa, subida por `e2e/compose.ci.yml` (postgres:17-alpine,
+    # redis:7-alpine, rabbitmq:4-management-alpine, keycloak:26.3 + backend e
+    # auth-service buildados dos Dockerfiles do repo). O Playwright gerencia
+    # SOMENTE o frontend (webServer do playwright.config.ts).
+    #
+    # Fluxo:
+    #   * /etc/hosts: `127.0.0.1 keycloak` para o browser resolver o hostname
+    #     único do Keycloak (containeres resolvem via DNS da rede Docker).
+    #   * realm dev "CRM" + client `crm-gateway` importados no boot do
+    #     Keycloak (--import-realm → infrastructure/keycloak/import);
+    #     usuário E2E seedado na API do CRM após o backend ficar saudável
+    #     (e2e/seed/user.sql) — o auto-provisioning criaria crm_enabled=false.
+    #   * auth-service com AUTH_GATEWAY_* apontando para o Keycloak,
+    #     redirect fixo http://localhost:8082/auth/callback e
+    #     AUTH_GATEWAY_API_BACKEND_URL=http://backend:8080.
+    #   * frontend buildado pelo webServer com DEV_GATEWAY_TARGET=http://localhost:8082
+    #     (rewrites de /auth/** e /api/** para o gateway, substituindo o nginx).
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Map keycloak hostname to localhost
+        run: sudo tee -a /etc/hosts > /dev/null <<< "127.0.0.1 keycloak"
+
+      - name: Build E2E stack images
+        run: docker compose -f e2e/compose.ci.yml build
+        env:
+          DOCKER_BUILDKIT: "1"
+
+      - name: Start E2E stack
+        run: docker compose -f e2e/compose.ci.yml up -d --wait
+        timeout-minutes: 15
+
+      - name: Seed E2E user (após Flyway/seeders do backend)
+        run: |
+          docker compose -f e2e/compose.ci.yml exec -T \
+            -e PGPASSWORD=crm_admin \
+            postgres \
+            psql -U crm_admin -d crm_main -v ON_ERROR_STOP=1 < e2e/seed/user.sql
+          docker compose -f e2e/compose.ci.yml exec -T \
+            -e PGPASSWORD=crm_admin \
+            postgres \
+            psql -U crm_admin -d crm_main -v ON_ERROR_STOP=1 < e2e/seed/inbox.sql
+
+      - name: Run E2E tests
+        working-directory: frontend
+        env:
+          CI: 'true'
+          DEV_GATEWAY_TARGET: http://localhost:8082
+        run: npm run test:e2e -- --shard=1/1 --forbid-only
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+      - name: Tear down E2E stack
+        if: always()
+        run: docker compose -f e2e/compose.ci.yml down -v --remove-orphans
+
   docker:
     name: Docker Build
     runs-on: ubuntu-latest

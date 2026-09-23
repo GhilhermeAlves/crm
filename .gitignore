@@ -76,6 +76,8 @@ docker/.env
 !**/db/migration/*.sql
 # Integration test bootstrap scripts (Testcontainers RLS setup) are source code.
 !backend/src/test/resources/*.sql
+# E2E bootstrap SQL (seed do usuário + init de bancos) é source code e DEVE ser versionado.
+!e2e/**/*.sql
 
 # OS
 Thumbs.db
@@ -83,6 +85,14 @@ Thumbs.db
 # Virtual machine crash logs
 hs_err_pid*
 replay_pid*
+
+# Scripts ad-hoc locais
+fix_test.py
+fix_webhook.py
+tmp_apply.sh
+
+# Tooling de IA local
+.github/recordToolUse.*
 
 # Worktrees
 .worktrees/

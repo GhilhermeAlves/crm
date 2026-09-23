@@ -1,6 +1,7 @@
 package com.becommerce.crm.presentation.rest.omnichannel;
 
 import com.becommerce.crm.application.omnichannel.port.input.WhatsAppWebhookUseCase;
+import com.becommerce.crm.infrastructure.omnichannel.whatsapp.WhatsAppWebhookTokenVerifier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,10 @@ class WhatsAppWebhookControllerTest {
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(new WhatsAppWebhookController(
-                        useCase, new WhatsAppWebhookSignatureVerifier(SECRET, false), new ObjectMapper()))
+                        useCase,
+                        new WhatsAppWebhookSignatureVerifier(SECRET, false),
+                        new WhatsAppWebhookTokenVerifier(false, "segredo-token"),
+                        new ObjectMapper()))
                 .build();
     }
 
@@ -94,5 +98,24 @@ class WhatsAppWebhookControllerTest {
                         .content(tampered))
                 .andExpect(status().isUnauthorized());
         verify(useCase, never()).handleEvent(any());
+    }
+
+    @Test
+    void uazapiSemToken_shouldReturn401() throws Exception {
+        mockMvc.perform(post("/api/v1/omnichannel/whatsapp/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"event\":\"messages\"}"))
+                .andExpect(status().isUnauthorized());
+        verify(useCase, never()).handleEvent(any());
+    }
+
+    @Test
+    void uazapiComTokenCorreto_shouldReturn200() throws Exception {
+        mockMvc.perform(post("/api/v1/omnichannel/whatsapp/webhook")
+                        .param("token", "segredo-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"event\":\"messages\"}"))
+                .andExpect(status().isOk());
+        verify(useCase).handleEvent(any());
     }
 }

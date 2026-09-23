@@ -29,20 +29,20 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authUseCase.forgotPassword(request.email());
         return ResponseEntity.accepted().build();
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authUseCase.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/change-password")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal CurrentUser principal,
-                                               @RequestBody ChangePasswordRequest request) {
+                                               @Valid @RequestBody ChangePasswordRequest request) {
         authUseCase.changePassword(principal.userId(), request.oldPassword(), request.newPassword());
         return ResponseEntity.ok().build();
     }

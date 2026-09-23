@@ -243,6 +243,61 @@ class LeadIsolationIT {
         assertEquals(2, countLeads(), "Tenant A deve ver seu novo lead na mesma empresa");
     }
 
+    @Test
+    void searchFilter_shouldMatchOnlyLeadsWhoseContactMatchesTerm() throws SQLException {
+        UUID contactJoao = UUID.fromString("dddddddd-0000-0000-0000-000000000004");
+        UUID contactMaria = UUID.fromString("eeeeeeee-0000-0000-0000-000000000005");
+        TenantContext.setCompanyId(TENANT_A);
+        try (Connection conn = tenantAwareDataSource.getConnection()) {
+            insertContact(conn, contactJoao, TENANT_A, "João", "Silva", "joao@a.com");
+            insertLead(conn, TENANT_A, contactJoao, "NEW", "MANUAL");
+            insertContact(conn, contactMaria, TENANT_A, "Maria", "Oliveira", "maria@a.com");
+            insertLead(conn, TENANT_A, contactMaria, "NEW", "MANUAL");
+
+            assertEquals(1, countLeadsMatchingContactSearch("joão"),
+                    "Busca por 'joão' deve retornar apenas o lead do contato João");
+            assertEquals(1, countLeadsMatchingContactSearch("maria"),
+                    "Busca por 'maria' deve retornar apenas o lead do contato Maria");
+            assertEquals(1, countLeadsMatchingContactSearch("João Silva"),
+                    "Busca por nome completo ('João Silva') deve retornar o lead do contato João");
+            assertEquals(1, countLeadsMatchingContactSearch("joao@a.com"),
+                    "Busca por e-mail deve retornar o lead correspondente");
+            assertEquals(0, countLeadsMatchingContactSearch("inexistente"),
+                    "Busca sem correspondência deve retornar 0");
+
+            try (PreparedStatement cleanup = conn.prepareStatement(
+                     "DELETE FROM leads WHERE contact_id IN (?, ?)")) {
+                cleanup.setObject(1, contactJoao);
+                cleanup.setObject(2, contactMaria);
+                cleanup.executeUpdate();
+            }
+        }
+    }
+
+    private int countLeadsMatchingContactSearch(String term) throws SQLException {
+        try (Connection conn = tenantAwareDataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement("""
+                     SELECT count(*) FROM leads l
+                     JOIN contacts c ON c.id = l.contact_id
+                     WHERE l.company_id = app.current_tenant_id() AND (
+                         LOWER(COALESCE(c.first_name,'')) LIKE LOWER(?) OR
+                         LOWER(COALESCE(c.last_name,'')) LIKE LOWER(?) OR
+                         LOWER(COALESCE(c.email,'')) LIKE LOWER(?) OR
+                         LOWER(COALESCE(c.phone,'')) LIKE LOWER(?) OR
+                         -- espelha o CONCAT do JPQL em LeadJpaRepository (busca por nome completo)
+                         LOWER(CONCAT(COALESCE(c.first_name,''),' ',COALESCE(c.last_name,''))) LIKE LOWER(?))
+                     """)) {
+            String like = "%" + term.toLowerCase() + "%";
+            for (int i = 1; i <= 5; i++) {
+                ps.setString(i, like);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
     private int countLeads() throws SQLException {
         try (Connection conn = tenantAwareDataSource.getConnection();
              Statement st = conn.createStatement();

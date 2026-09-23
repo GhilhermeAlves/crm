@@ -74,6 +74,36 @@ class KeycloakJwtAuthenticationConverterTest {
     }
 
     @Test
+    void shouldConvertTokenWithoutRolesReturningResolverAuthoritiesOnly() {
+        UUID userId = UUID.randomUUID();
+        UUID companyId = UUID.randomUUID();
+        CurrentUser currentUser = CurrentUser.fromKeycloak(
+                userId, EMAIL, companyId, List.of("AGENT"),
+                List.of("dashboard:view"), SUB, "Ghilherme Santos");
+
+        when(currentUserResolver.resolve(any(Jwt.class))).thenReturn(currentUser);
+
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .issuer("http://keycloak")
+                .subject(SUB)
+                .claim("email", EMAIL)
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+
+        UsernamePasswordAuthenticationToken authentication = converter.convert(jwt);
+
+        assertNotNull(authentication);
+        assertTrue(authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_AGENT")));
+        assertTrue(authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("dashboard:view")));
+        assertEquals(0, authentication.getAuthorities().stream()
+                .filter(a -> a.getAuthority().equals("ROLE_USER")).count());
+    }
+
+    @Test
     void shouldPropagateAuthenticationServiceExceptionFromResolver() {
         when(currentUserResolver.resolve(any(Jwt.class)))
                 .thenThrow(new AuthenticationServiceException("Auto-provisioning indisponível"));

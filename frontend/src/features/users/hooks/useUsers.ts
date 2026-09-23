@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutationDefaults } from "@/lib/query/mutation-utils";
 import { UserService } from "../services/user.service";
 import type {
   ListUsersParams,
@@ -25,94 +25,85 @@ export function useUser(id: string) {
 }
 
 export function useCreateUser() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: (data: CreateUserRequest) => UserService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Usuário criado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao criar usuário");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Usuário criado com sucesso",
+      invalidateKeys: [["users"]],
+    }),
+    onError: onError({ errorMessage: "Erro ao criar usuário" }),
   });
 }
 
 export function useUpdateUser() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults<
+    unknown,
+    { id: string; data: UpdateUserRequest }
+  >();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateUserRequest }) =>
       UserService.update(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["users", id] });
-      toast.success("Usuário atualizado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao atualizar usuário");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Usuário atualizado com sucesso",
+      invalidateKeys: [["users"]],
+      extraInvalidate: (qc, _d, { id }) => qc.invalidateQueries({ queryKey: ["users", id] }),
+    }),
+    onError: onError({ errorMessage: "Erro ao atualizar usuário" }),
   });
 }
 
 export function useDeleteUser() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: (id: string) => UserService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Usuário excluído com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao excluir usuário");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Usuário excluído com sucesso",
+      invalidateKeys: [["users"]],
+    }),
+    onError: onError({ errorMessage: "Erro ao excluir usuário" }),
   });
 }
 
 export function useActivateUser() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: (id: string) => UserService.activate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Usuário ativado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao ativar usuário");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Usuário ativado com sucesso",
+      invalidateKeys: [["users"]],
+    }),
+    onError: onError({ errorMessage: "Erro ao ativar usuário" }),
   });
 }
 
 export function useDeactivateUser() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: (id: string) => UserService.deactivate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Usuário desativado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao desativar usuário");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Usuário desativado com sucesso",
+      invalidateKeys: [["users"]],
+    }),
+    onError: onError({ errorMessage: "Erro ao desativar usuário" }),
   });
 }
 
 export function useInviteUser() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: (data: InviteUserRequest) => UserService.invite(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Convite enviado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao enviar convite");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Convite enviado com sucesso",
+      invalidateKeys: [["users"]],
+    }),
+    onError: onError({ errorMessage: "Erro ao enviar convite" }),
   });
 }
 
@@ -124,16 +115,14 @@ export function useProfile() {
 }
 
 export function useUpdateProfile() {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
 
   return useMutation({
     mutationFn: (data: UpdateProfileRequest) => UserService.updateProfile(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Perfil atualizado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao atualizar perfil");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Perfil atualizado com sucesso",
+      invalidateKeys: [["profile"]],
+    }),
+    onError: onError({ errorMessage: "Erro ao atualizar perfil" }),
   });
 }

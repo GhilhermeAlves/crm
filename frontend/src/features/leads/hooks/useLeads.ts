@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutationDefaults } from "@/lib/query/mutation-utils";
 import { LeadService } from "../services/lead.service";
 import type { CreateLeadRequest, ListLeadsParams, UpdateLeadRequest } from "../types/lead.types";
 
@@ -20,45 +20,43 @@ export function useLead(companyId: string | null, id: string) {
 }
 
 export function useCreateLead(companyId: string | null) {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
   return useMutation({
     mutationFn: (data: CreateLeadRequest) => LeadService.create(companyId as string, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads", companyId] });
-      toast.success("Lead criado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao criar lead");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Lead criado com sucesso",
+      invalidateKeys: [["leads", companyId]],
+    }),
+    onError: onError({ errorMessage: "Erro ao criar lead" }),
   });
 }
 
 export function useUpdateLead(companyId: string | null) {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults<
+    unknown,
+    { id: string; data: UpdateLeadRequest }
+  >();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateLeadRequest }) =>
       LeadService.update(companyId as string, id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ["leads", companyId] });
-      queryClient.invalidateQueries({ queryKey: ["leads", companyId, id] });
-      toast.success("Lead atualizado com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao atualizar lead");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Lead atualizado com sucesso",
+      invalidateKeys: [["leads", companyId]],
+      extraInvalidate: (qc, _d, { id }) =>
+        qc.invalidateQueries({ queryKey: ["leads", companyId, id] }),
+    }),
+    onError: onError({ errorMessage: "Erro ao atualizar lead" }),
   });
 }
 
 export function useDeleteLead(companyId: string | null) {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
   return useMutation({
     mutationFn: (id: string) => LeadService.delete(companyId as string, id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leads", companyId] });
-      toast.success("Lead excluído com sucesso");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao excluir lead");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Lead excluído com sucesso",
+      invalidateKeys: [["leads", companyId]],
+    }),
+    onError: onError({ errorMessage: "Erro ao excluir lead" }),
   });
 }

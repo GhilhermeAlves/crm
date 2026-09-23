@@ -86,6 +86,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
     @Override
     @Transactional
     public void handleEvent(Map<String, Object> payload) {
+        UUID companyId = null;
         try {
             String channelRef = parser.providerChannelReference(payload);
             if (channelRef == null || channelRef.isBlank()) {
@@ -93,7 +94,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
                 return;
             }
             log.info("Webhook recebido: channelRef={}, keys={}", channelRef, payload.keySet());
-            UUID companyId = companyResolver.resolveCompanyByChannelReference(channelRef).orElse(null);
+            companyId = companyResolver.resolveCompanyByChannelReference(channelRef).orElse(null);
             if (companyId == null) {
                 log.warn("Webhook para canal desconhecido ({}); ignorando", channelRef);
                 return;
@@ -111,7 +112,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
             }
         } catch (Exception e) {
             // Nunca logar payload/secrets; apenas ids e mensagem de erro.
-            log.error("Erro ao processar webhook: {}", e.getMessage());
+            log.error("Erro ao processar webhook (company={}): {}", companyId, e.getMessage());
             throw e;
         } finally {
             TenantContext.clear();

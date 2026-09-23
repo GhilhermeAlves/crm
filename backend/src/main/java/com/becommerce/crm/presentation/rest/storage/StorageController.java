@@ -3,7 +3,7 @@ package com.becommerce.crm.presentation.rest.storage;
 import com.becommerce.crm.application.storage.dto.StorageDownload;
 import com.becommerce.crm.application.storage.dto.StorageResponse;
 import com.becommerce.crm.application.storage.port.input.StorageUseCase;
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.infrastructure.security.config.CurrentCompanyId;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,8 +21,9 @@ import java.util.UUID;
 /**
  * Armazenamento (Sprint 8.6). Upload, listagem, download e exclusão restritos à
  * própria empresa; a quota {@code max_storage_mb} é validada antes de gravar
- * (422 QUOTA_EXCEEDED). O isolamento cross-tenant é garantido por
- * {@link #requireCompanyAccess} + RLS FORCE na tabela {@code storage_objects}.
+ * (422 QUOTA_EXCEEDED). O isolamento cross-tenant é garantido pela checagem
+ * central de tenant (@CurrentCompanyId) + RLS FORCE na tabela
+ * {@code storage_objects}.
  */
 @RestController
 @RequestMapping("/api/v1/companies/{companyId}/storage")
@@ -36,10 +37,10 @@ public class StorageController {
 
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<StorageResponse> upload(@PathVariable UUID companyId,
-                                                  @RequestParam("file") MultipartFile file,
-                                                  @AuthenticationPrincipal CurrentUser principal) throws IOException {
-        requireCompanyAccess(companyId, principal);
+    public ResponseEntity<StorageResponse> upload(
+            @CurrentCompanyId("Você só pode enviar arquivos para a sua própria empresa.") UUID companyId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal CurrentUser principal) throws IOException {
         StorageResponse response = storageUseCase.upload(
                 companyId,
                 file.getOriginalFilename(),
@@ -51,18 +52,16 @@ public class StorageController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<StorageResponse>> list(@PathVariable UUID companyId,
-                                                      @AuthenticationPrincipal CurrentUser principal) {
-        requireCompanyAccess(companyId, principal);
+    public ResponseEntity<List<StorageResponse>> list(
+            @CurrentCompanyId("Você só pode enviar arquivos para a sua própria empresa.") UUID companyId) {
         return ResponseEntity.ok(storageUseCase.list(companyId));
     }
 
     @GetMapping("/{objectId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<byte[]> download(@PathVariable UUID companyId,
-                                           @PathVariable UUID objectId,
-                                           @AuthenticationPrincipal CurrentUser principal) {
-        requireCompanyAccess(companyId, principal);
+    public ResponseEntity<byte[]> download(
+            @CurrentCompanyId("Você só pode enviar arquivos para a sua própria empresa.") UUID companyId,
+            @PathVariable UUID objectId) {
         StorageDownload download = storageUseCase.download(companyId, objectId);
         String contentType = download.contentType() == null || download.contentType().isBlank()
                 ? "application/octet-stream"
@@ -76,18 +75,10 @@ public class StorageController {
 
     @DeleteMapping("/{objectId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> delete(@PathVariable UUID companyId,
-                                       @PathVariable UUID objectId,
-                                       @AuthenticationPrincipal CurrentUser principal) {
-        requireCompanyAccess(companyId, principal);
+    public ResponseEntity<Void> delete(
+            @CurrentCompanyId("Você só pode enviar arquivos para a sua própria empresa.") UUID companyId,
+            @PathVariable UUID objectId) {
         storageUseCase.delete(companyId, objectId);
         return ResponseEntity.noContent().build();
-    }
-
-    private void requireCompanyAccess(UUID companyId, CurrentUser principal) {
-        boolean superAdmin = principal.roles().contains("SUPER_ADMIN");
-        if (!superAdmin && !companyId.equals(principal.companyId())) {
-            throw new CrmAccessDeniedException("Você só pode enviar arquivos para a sua própria empresa.");
-        }
     }
 }

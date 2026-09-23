@@ -1,0 +1,16 @@
+-- e2e/init/00-create-keycloak-db.sql
+-- Task 4.2 (review fix) — banco dedicado do Keycloak no stack E2E.
+--
+-- Montado em /docker-entrypoint-initdb.d no serviço `postgres` do
+-- e2e/compose.ci.yml (mesma convenção do prod: docker-compose.yml →  postgres
+-- volumes → ./infrastructure/postgres/init). Roda UMA vez, no primeiro init do
+-- volume, como superuser (POSTGRES_USER=crm_admin).
+--
+-- Por que é necessário: o entrypoint do postgres cria apenas POSTGRES_DB
+-- (crm_main). O Keycloak (KC_DB=postgres) NÃO cria o banco — apenas o schema —
+-- portanto sem este script o boot falha com `database "keycloak_db" does not
+-- exist`. O nome espelha o prod (KC_DB_URL_DATABASE=keycloak_db).
+--
+-- CREATE DATABASE não roda dentro de transação; o entrypoint executa o .sql via
+-- psql em autocommit, então é válido aqui.
+CREATE DATABASE keycloak_db OWNER crm_admin;

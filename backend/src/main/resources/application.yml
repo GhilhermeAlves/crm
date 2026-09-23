@@ -97,7 +97,10 @@ server:
 
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+    # Default restrito: sem CORS_ALLOWED_ORIGINS, nenhuma origem cross-origin é
+    # aceita (o perfil dev libera o frontend local em application-dev.yml e o
+    # perfil prod exige configuração explícita). Nunca cair para "*".
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
   tenant:
     header: ${TENANT_HEADER:X-Tenant-ID}
     resolver: ${TENANT_RESOLVER:jwt}
@@ -130,6 +133,7 @@ omnichannel:
     app-secret: ${CRM_WHATSAPP_APP_SECRET:}
     webhook-verify-token: ${CRM_WHATSAPP_WEBHOOK_VERIFY_TOKEN:}
     webhook-allow-unsigned: ${WHATSAPP_WEBHOOK_ALLOW_UNSIGNED:false}
+    webhook-token: ${OMNICHANNEL_WHATSAPP_WEBHOOK_TOKEN:}
     uazapi:
       base-url: ${UAZAPI_BASE_URL:}         # base URL da instância UAZAPI (ex.: https://<subdomain>.uazapi.com)
       token: ${UAZAPI_TOKEN:}               # token da instância (fallback global; por canal via UAZAPI_TOKEN_<ref>)

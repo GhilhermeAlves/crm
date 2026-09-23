@@ -2,6 +2,7 @@ package com.becommerce.crm.application.lead.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.contact.port.output.ContactRepository;
+import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.lead.dto.CreateLeadRequest;
 import com.becommerce.crm.application.lead.dto.LeadResponse;
 import com.becommerce.crm.application.lead.port.output.LeadRepository;
@@ -18,10 +19,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -87,5 +90,20 @@ class LeadServiceTest {
         when(leadRepository.findById(any(UUID.class))).thenReturn(java.util.Optional.empty());
         assertThrows(com.becommerce.crm.domain.lead.exception.LeadNotFoundException.class,
                 () -> leadService.getById(companyId, UUID.randomUUID()));
+    }
+
+    @Test
+    void shouldForwardSearchTermWhenListing() {
+        when(leadRepository.findByCompanyWithFilters(eq(companyId), any(), any(), any(), eq("joao"),
+                eq(0), eq(10), any(), any()))
+                .thenReturn(new LeadRepository.PageResult(List.of(), 0));
+
+        PageResponse<LeadResponse> page = leadService.list(
+                companyId, null, null, null, "joao", 0, 10, "createdAt", "desc");
+
+        assertNotNull(page);
+        assertEquals(0, page.totalElements());
+        verify(leadRepository).findByCompanyWithFilters(eq(companyId), any(), any(), any(), eq("joao"),
+                eq(0), eq(10), any(), any());
     }
 }

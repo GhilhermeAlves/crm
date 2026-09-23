@@ -101,7 +101,7 @@ class CompanyControllerTest {
                 companyId.toString(),
                 "Empresa LTDA", "Empresa", "12345678000190",
                 "contato@empresa.com", "(11) 99999-0000",
-                "active", "starter"
+                "active", "starter", 5, 500, LocalDateTime.now(), LocalDateTime.now()
         );
 
         when(companyUseCase.listCompanies(eq(companyId), eq(false))).thenReturn(List.of(summary));
@@ -119,7 +119,7 @@ class CompanyControllerTest {
                 companyId.toString(),
                 "Empresa LTDA", "Empresa", "12345678000190",
                 "contato@empresa.com", "(11) 99999-0000",
-                "active", "starter"
+                "active", "starter", 5, 500, LocalDateTime.now(), LocalDateTime.now()
         );
 
         when(companyUseCase.listCompanies(eq(companyId), eq(true))).thenReturn(List.of(summary));

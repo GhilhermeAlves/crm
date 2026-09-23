@@ -96,7 +96,7 @@ public class UpdateOpportunityTool implements AiTool {
     public AiToolResult execute(AiToolContext ctx, Map<String, Object> args) {
         UUID opportunityId = uuid(args, "opportunityId");
         if (opportunityId == null) {
-            throw new IllegalArgumentException("O id da oportunidade e obrigatorio.");
+            throw new IllegalArgumentException("O ID da oportunidade é obrigatório.");
         }
         var opportunity = opportunityRepository.findById(opportunityId)
                 .orElseThrow(() -> new OpportunityNotFoundException(opportunityId));

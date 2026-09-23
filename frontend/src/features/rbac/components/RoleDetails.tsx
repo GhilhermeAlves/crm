@@ -33,7 +33,7 @@ export function RoleDetails({ role }: RoleDetailsProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/roles">
+            <Link href="/settings/roles">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -44,7 +44,7 @@ export function RoleDetails({ role }: RoleDetailsProps) {
         </div>
         {canManage && !role.isSystem && (
           <Button asChild>
-            <Link href={`/roles/${role.id}/edit`}>
+            <Link href={`/settings/roles/${role.id}/edit`}>
               <Pencil className="mr-2 h-4 w-4" />
               Editar
             </Link>

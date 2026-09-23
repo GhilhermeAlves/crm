@@ -29,7 +29,7 @@ public class WorkflowEventListener {
         try {
             workflowExecutor.process(event);
         } catch (Exception e) {
-            log.error("Falha no processamento de workflow: {}", e.getMessage(), e);
+            log.error("Falha no processamento de workflow (company={}): {}", event.companyId(), e.getMessage(), e);
         }
     }
 }

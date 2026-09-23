@@ -221,7 +221,8 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
                     userId,
                     Map.of("tool", toolName, "success", result.success()));
         } catch (Exception e) {
-            log.warn("Falha ao registrar auditoria de Tool {}: {}", toolName, e.getMessage());
+            log.warn("Falha ao registrar auditoria de Tool {} (company={}, userId={}): {}",
+                    toolName, companyId, userId, e.getMessage());
         }
     }
 
@@ -297,7 +298,8 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
                             "hasContext", context != null && !context.isBlank(),
                             "provider", aiProvider.providerName()));
         } catch (Exception e) {
-            log.warn("Falha ao registrar auditoria de IA: {}", e.getMessage());
+            log.warn("Falha ao registrar auditoria de IA (company={}, userId={}): {}",
+                    companyId, userId, e.getMessage());
         }
     }
 }

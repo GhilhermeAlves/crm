@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutationDefaults } from "@/lib/query/mutation-utils";
 import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import { ContactService } from "../services/contact.service";
 import type { CreateContactRequest, UpdateContactRequest } from "../types/contact.types";
@@ -28,55 +28,48 @@ export function useCustomer360(companyId: string | null, contactId: string | nul
   });
 }
 
-function invalidateContacts(
-  queryClient: ReturnType<typeof useQueryClient>,
-  companyId: string | null,
-) {
-  queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-  queryClient.invalidateQueries({ queryKey: ["contact", companyId] });
-  queryClient.invalidateQueries({ queryKey: ["customer360", companyId] });
+function invalidateContactsKeys(companyId: string | null): unknown[][] {
+  return [
+    ["contacts", companyId],
+    ["contact", companyId],
+    ["customer360", companyId],
+  ];
 }
 
 export function useCreateContact(companyId: string | null) {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
   return useMutation({
     mutationFn: (data: CreateContactRequest) => ContactService.create(companyId as string, data),
-    onSuccess: () => {
-      invalidateContacts(queryClient, companyId);
-      toast.success("Contato criado");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao criar contato");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Contato criado",
+      invalidateKeys: invalidateContactsKeys(companyId),
+    }),
+    onError: onError({ errorMessage: "Erro ao criar contato" }),
   });
 }
 
 export function useUpdateContact(companyId: string | null) {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateContactRequest }) =>
       ContactService.update(companyId as string, id, data),
-    onSuccess: () => {
-      invalidateContacts(queryClient, companyId);
-      toast.success("Contato atualizado");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao atualizar contato");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Contato atualizado",
+      invalidateKeys: invalidateContactsKeys(companyId),
+    }),
+    onError: onError({ errorMessage: "Erro ao atualizar contato" }),
   });
 }
 
 export function useDeleteContact(companyId: string | null) {
-  const queryClient = useQueryClient();
+  const { onSuccess, onError } = useMutationDefaults();
   return useMutation({
     mutationFn: (id: string) => ContactService.delete(companyId as string, id),
-    onSuccess: () => {
-      invalidateContacts(queryClient, companyId);
-      toast.success("Contato excluído");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao excluir contato");
-    },
+    onSuccess: onSuccess({
+      successMessage: "Contato excluído",
+      invalidateKeys: invalidateContactsKeys(companyId),
+    }),
+    onError: onError({ errorMessage: "Erro ao excluir contato" }),
   });
 }
 

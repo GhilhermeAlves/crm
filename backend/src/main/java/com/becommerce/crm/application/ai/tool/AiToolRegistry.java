@@ -63,7 +63,8 @@ public class AiToolRegistry {
         try {
             return tool.execute(ctx, arguments);
         } catch (Exception e) {
-            log.warn("Tool {} falhou: {}", name, e.getMessage());
+            log.warn("Tool {} falhou (company={}, userId={}): {}", name, ctx.companyId(), ctx.userId(),
+                    e.getMessage());
             return AiToolResult.fail(name, "Falha ao executar a ferramenta: " + e.getMessage());
         }
     }

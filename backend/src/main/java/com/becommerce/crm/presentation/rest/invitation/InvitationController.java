@@ -3,8 +3,8 @@ package com.becommerce.crm.presentation.rest.invitation;
 import com.becommerce.crm.application.invitation.dto.CreateInvitationRequest;
 import com.becommerce.crm.application.invitation.dto.InvitationResponse;
 import com.becommerce.crm.application.invitation.port.input.InvitationUseCase;
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.invitation.InvitationStatus;
+import com.becommerce.crm.infrastructure.security.config.CurrentCompanyId;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -40,20 +40,19 @@ public class InvitationController {
 
     @PostMapping("/companies/{companyId}/invitations")
     @PreAuthorize("hasAuthority('membership:manage')")
-    public ResponseEntity<InvitationResponse> create(@PathVariable UUID companyId,
-                                                     @Valid @RequestBody CreateInvitationRequest request,
-                                                     @AuthenticationPrincipal CurrentUser principal) {
-        requireAdminAccess(companyId, principal);
+    public ResponseEntity<InvitationResponse> create(
+            @CurrentCompanyId("Você só pode administrar convites da sua própria empresa.") UUID companyId,
+            @Valid @RequestBody CreateInvitationRequest request,
+            @AuthenticationPrincipal CurrentUser principal) {
         InvitationResponse response = invitationUseCase.create(companyId, request, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/companies/{companyId}/invitations")
     @PreAuthorize("hasAuthority('membership:view')")
-    public ResponseEntity<List<InvitationResponse>> list(@PathVariable UUID companyId,
-                                                         @RequestParam(required = false) String status,
-                                                         @AuthenticationPrincipal CurrentUser principal) {
-        requireAdminAccess(companyId, principal);
+    public ResponseEntity<List<InvitationResponse>> list(
+            @CurrentCompanyId("Você só pode administrar convites da sua própria empresa.") UUID companyId,
+            @RequestParam(required = false) String status) {
         InvitationStatus filter = status == null || status.isBlank()
                 ? null : InvitationStatus.valueOf(status.toUpperCase());
         return ResponseEntity.ok(invitationUseCase.listByCompany(companyId, filter));
@@ -61,10 +60,9 @@ public class InvitationController {
 
     @DeleteMapping("/companies/{companyId}/invitations/{invitationId}")
     @PreAuthorize("hasAuthority('membership:manage')")
-    public ResponseEntity<Void> revoke(@PathVariable UUID companyId,
-                                       @PathVariable UUID invitationId,
-                                       @AuthenticationPrincipal CurrentUser principal) {
-        requireAdminAccess(companyId, principal);
+    public ResponseEntity<Void> revoke(
+            @CurrentCompanyId("Você só pode administrar convites da sua própria empresa.") UUID companyId,
+            @PathVariable UUID invitationId) {
         invitationUseCase.revoke(invitationId, companyId);
         return ResponseEntity.noContent().build();
     }
@@ -83,12 +81,5 @@ public class InvitationController {
                                                       @AuthenticationPrincipal CurrentUser principal) {
         InvitationResponse response = invitationUseCase.decline(token, principal.userId());
         return ResponseEntity.ok(response);
-    }
-
-    private void requireAdminAccess(UUID companyId, CurrentUser principal) {
-        boolean superAdmin = principal.roles().contains("SUPER_ADMIN");
-        if (!superAdmin && !companyId.equals(principal.companyId())) {
-            throw new CrmAccessDeniedException("Você só pode administrar convites da sua própria empresa.");
-        }
     }
 }

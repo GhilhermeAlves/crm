@@ -141,12 +141,13 @@ public class LeadService implements LeadUseCase {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<LeadResponse> list(UUID companyId, String status, String source, String classification,
-                                           int page, int pageSize, String sortBy, String sortDirection) {
+                                           String search, int page, int pageSize, String sortBy,
+                                           String sortDirection) {
         try {
             TenantContext.setCompanyId(companyId);
             LeadRepository.PageResult result = leadRepository.findByCompanyWithFilters(
                     companyId, normalize(status), normalize(source), normalize(classification),
-                    page, pageSize, sortBy, sortDirection);
+                    search, page, pageSize, sortBy, sortDirection);
             var leads = result.content().stream().map(LeadService::toResponse).toList();
             return PageResponse.of(leads, page, pageSize, result.totalElements());
         } finally {

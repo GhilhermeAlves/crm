@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Building2, Eye, Pencil, Trash2 } from "lucide-react";
+import { Building2, Eye, History, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,9 +13,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants";
+import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
 import type { Tenant } from "../types/tenant.types";
 import { TenantStatusBadge } from "./TenantStatusBadge";
 import { TenantPlanBadge } from "./TenantPlanBadge";
+import { TenantAuditDialog } from "./TenantAuditDialog";
 
 type TenantTableProps = {
   tenants: Tenant[];
@@ -23,6 +25,9 @@ type TenantTableProps = {
 };
 
 export function TenantTable({ tenants, onDelete }: TenantTableProps) {
+  const { can } = useAuthorization();
+  const [auditTenant, setAuditTenant] = useState<Tenant | null>(null);
+
   const formatDate = useMemo(
     () => (dateStr: string) => {
       return new Date(dateStr).toLocaleDateString("pt-BR", {
@@ -35,9 +40,10 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
   );
 
   return (
-    <div className="rounded-lg border">
-      <Table>
-        <TableHeader>
+    <>
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
           <TableRow>
             <TableHead className="w-[300px]">Empresa</TableHead>
             <TableHead>Plano</TableHead>
@@ -99,6 +105,17 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
                       <Pencil className="h-4 w-4" />
                     </Link>
                   </Button>
+                  {can("audit:read") && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Ver auditoria"
+                      onClick={() => setAuditTenant(tenant)}
+                    >
+                      <History className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -113,6 +130,15 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
           ))}
         </TableBody>
       </Table>
-    </div>
+      </div>
+
+      <TenantAuditDialog
+        tenant={auditTenant}
+        open={!!auditTenant}
+        onOpenChange={(open) => {
+          if (!open) setAuditTenant(null);
+        }}
+      />
+    </>
   );
 }

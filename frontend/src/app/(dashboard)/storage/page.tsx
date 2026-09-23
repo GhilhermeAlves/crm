@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Download, Loader2, Trash2, Upload } from "lucide-react";
+import { Download, FolderOpen, Loader2, Trash2, Upload } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/table";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
+import { ErrorCard } from "@/components/common/ErrorCard";
+import { SkeletonTable } from "@/components/feedback/SkeletonTable";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
   useStorageObjects,
@@ -27,7 +29,7 @@ export default function StoragePage() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
 
-  const { data: files, isLoading } = useStorageObjects(companyId);
+  const { data: files, isLoading, error, refetch } = useStorageObjects(companyId);
   const uploadFile = useUploadFile(companyId);
   const downloadFile = useDownloadFile(companyId);
   const deleteFile = useDeleteFile(companyId);
@@ -80,60 +82,63 @@ export default function StoragePage() {
         </Card>
       )}
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Carregando…
-            </div>
-          ) : files && files.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Tamanho</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {files.map((file) => (
-                  <TableRow key={file.id}>
-                    <TableCell className="font-medium">{file.fileName}</TableCell>
-                    <TableCell className="text-muted-foreground">{file.contentType}</TableCell>
-                    <TableCell>{formatBytes(file.sizeBytes)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => downloadFile.mutate(file)}
-                          disabled={downloadFile.isPending}
-                        >
-                          <Download className="mr-1 h-4 w-4" /> Baixar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => setToDelete(file)}
-                        >
-                          <Trash2 className="mr-1 h-4 w-4" /> Excluir
-                        </Button>
-                      </div>
-                    </TableCell>
+      {isLoading ? (
+        <SkeletonTable rows={5} columns={4} />
+      ) : error ? (
+        <ErrorCard message={error.message} onRetry={() => refetch()} />
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            {files && files.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Tamanho</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <EmptyState
-              title="Nenhum arquivo"
-              description="Envie um arquivo para começar a usar o armazenamento."
-            />
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {files.map((file) => (
+                    <TableRow key={file.id}>
+                      <TableCell className="font-medium">{file.fileName}</TableCell>
+                      <TableCell className="text-muted-foreground">{file.contentType}</TableCell>
+                      <TableCell>{formatBytes(file.sizeBytes)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadFile.mutate(file)}
+                            disabled={downloadFile.isPending}
+                          >
+                            <Download className="mr-1 h-4 w-4" /> Baixar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => setToDelete(file)}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" /> Excluir
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <EmptyState
+                icon={<FolderOpen className="h-8 w-8" />}
+                title="Nenhum arquivo"
+                description="Envie um arquivo para começar a usar o armazenamento."
+              />
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <ConfirmDialog
         open={!!toDelete}

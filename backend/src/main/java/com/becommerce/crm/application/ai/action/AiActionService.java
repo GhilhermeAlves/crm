@@ -126,7 +126,8 @@ public class AiActionService implements AiActionUseCase {
                         "Acao executada: " + action.getDescription());
                 return AiActionResponse.from(action);
             } catch (Exception e) {
-                log.warn("Falha ao executar acao de IA {}: {}", actionId, e.getMessage());
+                log.warn("Falha ao executar acao de IA {} (company={}, userId={}): {}",
+                        actionId, companyId, userId, e.getMessage());
                 TenantContext.setCompanyId(companyId);
                 action.markFailed("Falha ao executar a acao: " + e.getMessage());
                 actionRepository.save(action);
@@ -206,8 +207,8 @@ public class AiActionService implements AiActionUseCase {
                             "status", action.getStatus() != null ? action.getStatus().name() : "",
                             "result", action.getResult() != null ? action.getResult().toString() : ""));
         } catch (Exception e) {
-            log.warn("Falha ao registrar auditoria de acao de IA {}: {}",
-                    action.getId(), e.getMessage());
+            log.warn("Falha ao registrar auditoria de acao de IA {} (company={}, userId={}): {}",
+                    action.getId(), companyId, userId, e.getMessage());
         }
     }
 }

@@ -31,3 +31,9 @@ next-env.d.ts
 # Configurações/Dados do OpenCode
 .opencode/
 opencode.json
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

@@ -56,7 +56,7 @@ export function RoleForm({ roleId, defaultValues, mode = "create" }: RoleFormPro
         { id: roleId, data: { description: data.description, isActive: true } },
         {
           onSuccess: () => {
-            router.push(`/roles/${roleId}`);
+            router.push(`/settings/roles/${roleId}`);
           },
         },
       );
@@ -65,7 +65,7 @@ export function RoleForm({ roleId, defaultValues, mode = "create" }: RoleFormPro
         { ...data, permissionIds: selectedPermissionIds },
         {
           onSuccess: () => {
-            router.push("/roles");
+            router.push("/settings/roles");
           },
         },
       );
@@ -117,7 +117,7 @@ export function RoleForm({ roleId, defaultValues, mode = "create" }: RoleFormPro
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push("/roles")}>
+            <Button type="button" variant="outline" onClick={() => router.push("/settings/roles")}>
               Cancelar
             </Button>
             <Button type="submit" disabled={createRole.isPending || updateRole.isPending}>

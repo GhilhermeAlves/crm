@@ -31,3 +31,11 @@ logging:
     com.becommerce.crm: INFO
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
+
+# CORS: em produção a allowlist é obrigatória. O frontend é servido no mesmo
+# domínio (o nginx roteia /api e /auth) e não depende de CORS, mas a ausência de
+# origens falha na inicialização (CorsConfig) para evitar política indefinida.
+# Defina CORS_ALLOWED_ORIGINS (ou APP_CORS_ALLOWED_ORIGINS) na VPS.
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}

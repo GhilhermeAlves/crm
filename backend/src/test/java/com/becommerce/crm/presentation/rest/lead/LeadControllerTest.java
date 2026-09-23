@@ -8,6 +8,7 @@ import com.becommerce.crm.application.lead.port.input.LeadUseCase;
 import com.becommerce.crm.domain.lead.LeadClassification;
 import com.becommerce.crm.domain.lead.LeadSource;
 import com.becommerce.crm.domain.lead.LeadStatus;
+import com.becommerce.crm.infrastructure.security.config.CurrentCompanyIdArgumentResolver;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import com.becommerce.crm.presentation.rest.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -53,7 +55,7 @@ class LeadControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(leadController)
                 .setControllerAdvice(new GlobalExceptionHandler())
-                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
+                .setCustomArgumentResolvers(new CurrentCompanyIdArgumentResolver(), new AuthenticationPrincipalArgumentResolver())
                 .build();
     }
 
@@ -77,7 +79,7 @@ class LeadControllerTest {
     void shouldListLeadsOfOwnCompany() throws Exception {
         login(companyId);
         UUID contactId = UUID.randomUUID();
-        when(leadUseCase.list(eq(companyId), any(), any(), any(), any(Integer.class),
+        when(leadUseCase.list(eq(companyId), any(), any(), any(), any(), any(Integer.class),
                 any(Integer.class), any(), any()))
                 .thenReturn(PageResponse.of(List.of(
                         new LeadResponse(UUID.randomUUID(), companyId, contactId, LeadStatus.NEW,
@@ -87,6 +89,17 @@ class LeadControllerTest {
         mockMvc.perform(get("/api/v1/companies/" + companyId + "/leads"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void shouldForwardSearchParamToListing() throws Exception {
+        login(companyId);
+        mockMvc.perform(get("/api/v1/companies/" + companyId + "/leads")
+                        .param("search", "joao"))
+                .andExpect(status().isOk());
+
+        verify(leadUseCase).list(eq(companyId), isNull(), isNull(), isNull(), eq("joao"),
+                eq(0), eq(10), eq("createdAt"), eq("desc"));
     }
 
     @Test

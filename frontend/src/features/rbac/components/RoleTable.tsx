@@ -64,7 +64,10 @@ export function RoleTable({ roles }: RoleTableProps) {
               roles.map((role) => (
                 <TableRow key={role.id}>
                   <TableCell>
-                    <Link href={`/roles/${role.id}`} className="font-medium hover:underline">
+                    <Link
+                      href={`/settings/roles/${role.id}`}
+                      className="font-medium hover:underline"
+                    >
                       {role.name.replace(/_/g, " ")}
                     </Link>
                   </TableCell>
@@ -99,7 +102,7 @@ export function RoleTable({ roles }: RoleTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/roles/${role.id}`}>
+                          <Link href={`/settings/roles/${role.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             Visualizar
                           </Link>
@@ -107,7 +110,7 @@ export function RoleTable({ roles }: RoleTableProps) {
                         {canManage && !role.isSystem && (
                           <>
                             <DropdownMenuItem asChild>
-                              <Link href={`/roles/${role.id}/edit`}>
+                              <Link href={`/settings/roles/${role.id}/edit`}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Editar
                               </Link>

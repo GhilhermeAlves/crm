@@ -49,8 +49,8 @@ public class FollowUpScheduler {
                 processingService.dispatch(candidate.companyId(), candidate.followUpId());
                 log.debug("Follow-up processado: {} (company={})", candidate.followUpId(), candidate.companyId());
             } catch (Exception e) {
-                log.error("Falha ao processar follow-up agendado {}: {}",
-                        candidate.followUpId(), e.getMessage(), e);
+                log.error("Falha ao processar follow-up agendado {} (company={}): {}",
+                        candidate.followUpId(), candidate.companyId(), e.getMessage(), e);
             } finally {
                 TenantContext.clear();
             }
