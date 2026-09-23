@@ -348,7 +348,11 @@ public class CompanyService implements CompanyUseCase {
                 company.getEmail(),
                 company.getPhone(),
                 company.getStatus().name().toLowerCase(),
-                company.getPlan().name().toLowerCase()
+                company.getPlan().name().toLowerCase(),
+                company.getMaxUsers(),
+                company.getMaxContacts(),
+                company.getCreatedAt(),
+                company.getUpdatedAt()
         );
     }
 
