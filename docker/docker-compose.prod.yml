@@ -43,7 +43,7 @@ services:
 
   frontend:
     build:
-      context: ../frontend
+      context: ../frontend-refine
       dockerfile: Dockerfile
     container_name: crm-frontend-prod
     ports:

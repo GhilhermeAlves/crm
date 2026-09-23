@@ -35,7 +35,7 @@ cd ..
 
 # Setup frontend
 echo "📦 Setting up frontend..."
-cd frontend
+cd frontend-refine
 npm install
 cd ..
 
@@ -50,7 +50,7 @@ echo "   - MinIO: localhost:9000 (Console: http://localhost:9001)"
 echo ""
 echo "🚀 To start the application:"
 echo "   Backend:  cd backend && ./mvnw spring-boot:run"
-echo "   Frontend: cd frontend && npm run dev"
+echo "   Frontend: cd frontend-refine && npm run dev"
 echo ""
 echo "📖 API Documentation: http://localhost:8080/api/v1/docs/swagger"
 echo "🌐 Frontend: http://localhost:3000"

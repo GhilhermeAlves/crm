@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "npm --prefix frontend run dev",
-    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "npm --prefix frontend-refine run dev",
+    "dev:frontend": "npm --prefix frontend-refine run dev",
     "dev:infra": "docker compose -f docker/docker-compose.dev.yml up -d"
   }
 }
