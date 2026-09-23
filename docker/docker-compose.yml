@@ -80,10 +80,14 @@ services:
       # Sprint 6.10 (Task 1.8) — healthcheck do backend para docker compose.
       - ACTUATOR_HEALTH_PATH=/actuator/health
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health >/dev/null 2>&1 || exit 1"]
+      # Sonda bakeada na imagem usa wget, ausente da imagem em execução (bug
+      # latente). Override com bash + /dev/tcp (presentes no runtime) fazendo
+      # GET real em /actuator/health (200). start_period cobre boot+keycloak.
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; timeout 5 bash -c \"printf \\\"GET /actuator/health HTTP/1.0\\\\r\\\\n\\\\r\\\\n\\\" >&3; head -1 <&3\" | grep -q \"200\"; ec=$?; exec 3>&-; exit $ec'"]
       interval: 30s
-      timeout: 5s
+      timeout: 10s
       retries: 3
+      start_period: 45s
     networks:
       - crm-network
     restart: unless-stopped
