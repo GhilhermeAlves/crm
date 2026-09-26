@@ -114,7 +114,9 @@ function FormattedValues({ values }: { values: Record<string, unknown> }) {
       {Object.entries(values).map(([key, value]) => (
         <div key={key} className="flex gap-2">
           <span className="w-32 shrink-0 truncate font-medium text-muted-foreground">{key}</span>
-          <span className="break-all">{value === null || value === undefined ? "—" : String(value)}</span>
+          <span className="break-all">
+            {value === null || value === undefined ? "—" : String(value)}
+          </span>
         </div>
       ))}
     </div>

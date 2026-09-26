@@ -216,6 +216,10 @@ jobs:
           path: frontend-refine/playwright-report/
           retention-days: 7
 
+      - name: Dump E2E stack logs on failure
+        if: failure()
+        run: docker compose -f e2e/compose.ci.yml logs --no-color --tail=300 backend auth-service keycloak
+
       - name: Tear down E2E stack
         if: always()
         run: docker compose -f e2e/compose.ci.yml down -v --remove-orphans

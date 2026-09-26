@@ -14,8 +14,7 @@ export function useMutationDefaults<TData = unknown, TVariables = unknown, TErro
   return {
     queryClient,
     onSuccess:
-      (opts: MutationOptions<TData, TVariables>) =>
-      (data: TData, variables: TVariables) => {
+      (opts: MutationOptions<TData, TVariables>) => (data: TData, variables: TVariables) => {
         opts.invalidateKeys?.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
         opts.extraInvalidate?.(queryClient, data, variables);
         const message =

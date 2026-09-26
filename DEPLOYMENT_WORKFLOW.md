@@ -11,35 +11,54 @@ Modelo: **Frontend Local + Backend/Keycloak Production (VPS)**
 ## Estrutura de Branches
 
 ```
-┌─ feature/frontend-refine (seu sandbox frontend)
-│   ↓ testa localmente: npm run dev
-│   ↓ git commit aqui PRIMEIRO
-│   ↓ quando pronto → merge para deploy-phase
-│
-├─ feature/backend-microservices (seu sandbox backend)
-│   ↓ testa localmente (se rodar backend local)
-│   ↓ git commit aqui PRIMEIRO
-│   ↓ quando pronto → merge para deploy-phase
-│
-└─ crm-improvements-deploy-phase (branch de staging - agregador)
-    ↓ recebe merges de refine + microservices
-    ↓ git push origin
-    ↓ ssh crm-vps + deploy
-    
-VPS Staging/Production
-    ↓ ambiente final de teste
+  SEU PC (local)
+  ─────────────────────────────────────────────────────────────────
+   frontend-refine/  (npm run dev)          backend/
+          │                                     │
+          │ git commit                          │ git commit
+          ▼                                     ▼
+ ┌──────────────────────────┐        ┌───────────────────────────────┐
+ │ feature/frontend-refine  │        │ feature/backend-microservices │
+ └────────────┬─────────────┘        └──────────────┬────────────────┘
+              │ git push                            │ git push
+              ▼                                     ▼
+  GITHUB  ──────────────────────────────────────────────────────────
+     ┌────────────────────┐                ┌────────────────────┐
+     │ CI roda sozinho    │                │ CI roda sozinho    │
+     │ Frontend + E2E     │                │ Backend + Auth     │
+     │                    │                │ (migrations num    │
+     │                    │                │  Postgres de teste)│
+     └─────────┬──────────┘                └─────────┬──────────┘
+               │ ✅ verde?                           │ ✅ verde?
+               │   merge                             │   merge
+               └────────────────┐     ┌──────────────┘
+                                ▼     ▼
+                ┌──────────────────────────────────────┐
+                │    crm-improvements-deploy-phase     │
+                │   (junta front + back · CI roda de   │
+                │    novo com tudo integrado)          │
+                └──────────────────┬───────────────────┘
+                                   │ ✅ verde?
+                                   │
+  VPS (produção) ──────────────────┼────────────────────────────────
+                                   │ ✋ MANUAL
+                                   │ 1. backup do banco
+                                   │ 2. ssh crm-vps
+                                   │ 3. git pull + docker compose up
+                                   ▼
+                ┌──────────────────────────────────────┐
+                │  VPS: front + back + Keycloak + DB   │
+                │  (migrations como a V077 rodam aqui) │
+                └──────────────────────────────────────┘
 ```
 
-**Fluxo de commits:** 
-```
-refine + microservices (com commits individuais)
-    ↓
-(quando testado e pronto)
-    ↓
-deploy-phase (agrupa ambas)
-    ↓
-VPS (deploy final)
-```
+**Regras:**
+1. **Nunca commitar direto em `crm-improvements-deploy-phase`** — ela só recebe merge das duas feature branches.
+2. **Só mergear com CI verde** na feature branch. Migration quebrada aparece no CI, não na produção.
+3. **Deploy é manual** e só a partir de `crm-improvements-deploy-phase` com CI verde. Se tiver migration nova → **backup do banco antes**.
+4. **Depois de cada merge, sincronize as feature branches** com `crm-improvements-deploy-phase` (`git merge crm-improvements-deploy-phase` em cada uma), para uma ver o que a outra mudou.
+
+> ⚠️ A VPS é produção e não há staging separado: push **não** atualiza a VPS, só o deploy manual.
 
 ---
 
@@ -51,7 +70,7 @@ cd C:/Users/ghilh/Desktop/PROJETO/crm
 git checkout feature/frontend-refine
 
 # Abra outro terminal
-cd frontend
+cd frontend-refine
 npm run dev
 # Acesse http://localhost:3000
 # Faça mudanças no código
@@ -67,7 +86,7 @@ npm run dev
 ### 3️⃣ Commit em `feature/frontend-refine` (PRIMEIRO)
 ```bash
 # Terminal 1: parar npm run dev (Ctrl+C)
-cd frontend
+cd frontend-refine
 
 git add .
 git commit -m "feat(frontend): descrição da mudança"
@@ -127,7 +146,7 @@ mvn spring-boot:run  # Terminal separado
 Opção A: **Usar backend da VPS** (mais comum)
 ```bash
 # Frontend local já conecta ao backend da VPS por padrão
-npm run dev  # Terminal separado, em ./frontend
+npm run dev  # Terminal separado, em ./frontend-refine
 ```
 
 Opção B: **Rodar backend local**
@@ -137,7 +156,7 @@ mvn clean install
 mvn spring-boot:run
 
 # Em outro terminal, frontend conecta local:
-cd frontend
+cd frontend-refine
 NEXT_PUBLIC_API_URL=http://localhost:8082 npm run dev
 ```
 
@@ -225,15 +244,12 @@ git push origin crm-improvements-deploy-phase
 
 ---
 
-## CI/CD Automático (Futuro)
+## CI/CD
 
-```
-main (CI/CD automático)
-  ↓ Tests pass → docker push → staging
-  ↓ Tag v* → docker push → production + release notes
-```
-
-Hoje: Manual. Fazer PR pra `main` quando quiser automatizar.
+- **CI (`ci.yml`)** roda automaticamente em push para `crm-improvements-deploy-phase` e `feature/**`,
+  em PR para `crm-improvements-deploy-phase`, e manualmente (Actions → CI Pipeline → Run workflow).
+- **CD (`cd.yml`)** está preso à branch `main`, que não existe mais → **nunca roda sozinho**.
+  O deploy é manual (seção acima). Automatizar só quando houver staging separado.
 
 ---
 
@@ -265,7 +281,7 @@ Hoje: Manual. Fazer PR pra `main` quando quiser automatizar.
 ```
 DESENVOLVIMENTO (sua máquina)
 ├─ Terminal 1: git checkout feature/frontend-refine
-│  └─ cd frontend && npm run dev → http://localhost:3000
+│  └─ cd frontend-refine && npm run dev → http://localhost:3000
 │
 └─ Terminal 2: git checkout feature/backend-microservices
    └─ (opcional) cd backend && mvn spring-boot:run
@@ -294,4 +310,4 @@ PRODUÇÃO (VPS)
 
 ---
 
-**Última atualização:** 2026-09-24
+**Última atualização:** 2026-09-26
