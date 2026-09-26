@@ -69,7 +69,7 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-full text-slate-300 hover:bg-purple-500/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-white"
+                  className="h-9 w-full text-slate-300 hover:bg-purple-500/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                   onClick={logout}
                 >
                   <LogOut className="h-4 w-4" />
@@ -81,7 +81,7 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
         ) : (
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-slate-300 hover:bg-purple-500/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-white"
+            className="w-full justify-start gap-3 text-slate-300 hover:bg-purple-500/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             onClick={logout}
           >
             <LogOut className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-slate-300 hover:bg-purple-500/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-white"
+            className="h-8 w-8 text-slate-300 hover:bg-purple-500/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             onClick={toggle}
             aria-label={effectiveCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
           >

@@ -26,14 +26,11 @@ const cardVariants = cva(
 );
 
 export interface CardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof cardVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {}
 
-const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, accent, ...props }, ref) => (
-    <div ref={ref} className={cn(cardVariants({ accent, className }))} {...props} />
-  ),
-);
+const Card = React.forwardRef<HTMLDivElement, CardProps>(({ className, accent, ...props }, ref) => (
+  <div ref={ref} className={cn(cardVariants({ accent, className }))} {...props} />
+));
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(

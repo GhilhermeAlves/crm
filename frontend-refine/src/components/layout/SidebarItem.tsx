@@ -24,7 +24,7 @@ export function SidebarItem({ item, collapsed, onNavClick }: SidebarItemProps) {
       className={cn(
         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-200 transition-all duration-crm-default ease-in-out",
         "hover:translate-x-1 hover:bg-purple-500/20 hover:text-white",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-white",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
         isActive &&
           "bg-gradient-to-r from-crm-secondary-purple to-crm-secondary-indigo text-white shadow-crm-lg",
         collapsed && "justify-center px-2",
