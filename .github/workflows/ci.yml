@@ -1,10 +1,13 @@
 name: CI Pipeline
 
 on:
+  # Branches do fluxo em DEPLOYMENT_WORKFLOW.md: feature/* -> crm-improvements-deploy-phase.
+  # O deploy segue manual; este workflow só testa.
   push:
-    branches: [main, develop]
+    branches: [crm-improvements-deploy-phase, 'feature/**']
   pull_request:
-    branches: [main, develop]
+    branches: [crm-improvements-deploy-phase]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
