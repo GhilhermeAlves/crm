@@ -105,8 +105,6 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      # Sem SMTP no E2E: o health de e-mail derrubaria /actuator/health (DOWN).
-      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       CRM_DATABASE_HOST: postgres
       CRM_DATABASE_PORT: "5432"
       CRM_DATABASE_NAME: crm_main

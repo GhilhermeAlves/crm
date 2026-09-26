@@ -60,7 +60,8 @@ docker/.env
 
 # Docker volumes
 **/data/
-**/postgres/
+**/postgres/*
+!infrastructure/postgres/init/
 **/redis/
 **/rabbitmq/
 **/minio/

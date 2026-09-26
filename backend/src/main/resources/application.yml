@@ -159,6 +159,10 @@ management:
       enabled: true
     rabbit:
       enabled: true
+    # SMTP fora do ar não deixa o app indisponível (e-mail é best-effort):
+    # não derruba o /actuator/health, o healthcheck do Docker nem o deploy.sh.
+    mail:
+      enabled: false
 
 logging:
   level:
