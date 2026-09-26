@@ -382,6 +382,11 @@ git commit -m "feat(ai): add AgentTool, ToolPermission, AgentActionAudit domain 
 - Create: `backend/src/main/resources/db/migration/V077__CreateAgentToolsAndAudit.sql`
 - Test: Manual verification (run migration on dev database)
 
+> **Nota (implementado):** o SQL abaixo é o rascunho original. A migration real segue o padrão
+> do banco: tabelas `companies` e `omnichannel_conversations`, função `app.current_tenant_id()`,
+> `FORCE ROW LEVEL SECURITY` com `tenant_isolation_policy` (USING + WITH CHECK), e GRANTs para
+> `crm_app` (auditoria append-only). Use o arquivo V077 como fonte de verdade.
+
 **Steps:**
 
 - [ ] Create migration SQL file
