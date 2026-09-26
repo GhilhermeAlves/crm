@@ -19,7 +19,7 @@ INSERT INTO users (id, email, password_hash, name, first_name, last_name,
                    company_id, is_active, status, crm_enabled)
 VALUES ('11111111-1111-1111-1111-111111111111',
         'e2e.admin@crm.local',
-        'e2e-local-seed-only', -- hash inerte: login deste usuário é 100% via Keycloak
+        '$2a$10$nG0zePI30krbSCIJVTvBfcCfsj8JPkha6DMuYhjIJ3leaDwLOVb6m', -- bcrypt inerte (senha aleatória descartada): login só via Keycloak
         'Admin E2E',
         'Admin',
         'E2E',
@@ -60,7 +60,7 @@ INSERT INTO users (id, email, password_hash, name, first_name, last_name,
                    company_id, is_active, status, crm_enabled)
 VALUES ('22222222-2222-2222-2222-222222222222',
         'ghilherme007@gmail.com',
-        'dev-seed-only', -- hash inerte: login 100% via Keycloak (realm dev)
+        '$2a$10$QWnfzq2fnCbMeO1YIB2c.wEE88QLNDX9UjcVUKbRCZcWsirkQwgyV', -- bcrypt inerte (senha aleatória descartada): login só via Keycloak
         'Ghilherme',
         'Ghilherme',
         '',
