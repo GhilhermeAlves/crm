@@ -41,7 +41,7 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
           type="button"
           onClick={toggleGroup}
           aria-expanded={isExpanded}
-          className="mb-1 flex w-full items-center justify-between gap-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+          className="mb-1 flex w-full items-center justify-between gap-1 rounded-md px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-white"
         >
           <span>{group.title}</span>
           <ChevronDown
@@ -49,7 +49,7 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
           />
         </button>
       )}
-      {group.title && collapsed && <Separator className="mb-2" />}
+      {group.title && collapsed && <Separator className="mb-2 bg-white/10" />}
       {(!group.title || isExpanded) && (
         <div className="space-y-0.5">
           {visibleItems.map((item) => (

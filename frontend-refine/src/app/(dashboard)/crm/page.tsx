@@ -28,6 +28,7 @@ import { useOpportunityPermissions } from "@/features/pipeline/schemas/pipeline.
 import { CrmModuleCard, type CrmModule } from "@/features/crm/components/CrmModuleCard";
 import { CrmRecentItems } from "@/features/crm/components/CrmRecentItems";
 import { ROUTES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -101,25 +102,33 @@ export default function CrmHomePage() {
       title: "Oportunidades para atenção",
       value: data?.opportunitiesNeedingAttention ?? 0,
       description: "Precisam de follow-up",
-      icon: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+      icon: <AlertTriangle className="h-5 w-5" />,
+      accent: "warning" as const,
+      iconGradient: "bg-crm-gradient-warning",
     },
     {
       title: "Tarefas hoje",
       value: data?.tasksDueToday ?? 0,
       description: "Vencendo hoje",
-      icon: <CalendarClock className="h-4 w-4 text-blue-500" />,
+      icon: <CalendarClock className="h-5 w-5" />,
+      accent: "primary" as const,
+      iconGradient: "bg-crm-gradient-primary",
     },
     {
       title: "Pipeline em aberto",
       value: data?.openOpportunities ?? 0,
       description: `${formatCurrency(data?.openValue ?? 0)} em jogo`,
-      icon: <TrendingUp className="h-4 w-4 text-emerald-500" />,
+      icon: <TrendingUp className="h-5 w-5" />,
+      accent: "success" as const,
+      iconGradient: "bg-crm-gradient-success",
     },
     {
       title: "Oportunidades paradas",
       value: data?.staleOpportunities ?? 0,
       description: "Sem atividade há 7+ dias",
-      icon: <Zap className="h-4 w-4 text-purple-500" />,
+      icon: <Zap className="h-5 w-5" />,
+      accent: "purple" as const,
+      iconGradient: "bg-crm-gradient-secondary",
     },
   ];
 
@@ -128,12 +137,12 @@ export default function CrmHomePage() {
   return (
     <div className="space-y-6">
       {/* Welcome */}
-      <Card className="border-primary/20 bg-primary/5">
+      <Card accent="primary">
         <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-0.5">
-            <h2 className="text-lg font-semibold lg:text-xl">
+            <PageTitle as="h2" className="text-xl lg:text-2xl">
               {greeting}, {user?.name?.split(" ")[0] || "usuário"}!
-            </h2>
+            </PageTitle>
             <p className="text-sm text-muted-foreground">
               {isLoading
                 ? "Reunindo o que merece sua atenção…"
@@ -154,7 +163,11 @@ export default function CrmHomePage() {
       {/* KPI strip */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="border-border/60">
+          <Card
+            key={stat.title}
+            accent={stat.accent}
+            className="hover:-translate-y-1 hover:shadow-crm-lg"
+          >
             <CardContent className="flex items-center justify-between gap-3 p-4">
               <div className="min-w-0 space-y-0.5">
                 <p className="truncate text-sm text-muted-foreground">{stat.title}</p>
@@ -163,7 +176,12 @@ export default function CrmHomePage() {
                 </p>
                 <p className="truncate text-xs text-muted-foreground">{stat.description}</p>
               </div>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white shadow-crm-sm",
+                  stat.iconGradient,
+                )}
+              >
                 {stat.icon}
               </div>
             </CardContent>

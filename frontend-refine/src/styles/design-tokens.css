@@ -1,0 +1,65 @@
+/* design-tokens.css
+ * Tokens do redesign. Cores sao triplets HSL (sem hsl()) para que o Tailwind
+ * gere modificadores de opacidade (ex.: bg-crm-error/10) via
+ * `hsl(var(--x) / <alpha-value>)`.
+ *
+ * Nomes NAO colidem com os tokens de globals.css (--crm-primary, --crm-success,
+ * --crm-border, ...). Primario e sucesso reaproveitam o sistema HSL existente:
+ * use `crm-primary` / `crm-success` (tokens de globals.css).
+ * Dark mode: a app usa darkMode: ["class"], entao os overrides ficam em `.dark`.
+ */
+:root {
+  /* Cores Primárias (complementam --crm-primary de globals.css) */
+  --crm-primary-dark: 226 71% 40%;      /* #1e40af */
+  --crm-primary-darker: 224 64% 33%;    /* #1e3a8a */
+
+  /* Gradientes Primários */
+  --crm-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --crm-gradient-primary-hover: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+
+  /* Cores Secundárias */
+  --crm-secondary-purple: 271 91% 65%;  /* #a855f7 */
+  --crm-secondary-indigo: 239 84% 67%;  /* #6366f1 */
+  --crm-gradient-secondary: linear-gradient(135deg, #a855f7 0%, #6d28d9 100%);
+
+  /* Cores Terciárias */
+  --crm-tertiary-cyan: 189 94% 43%;     /* #06b6d4 */
+  --crm-tertiary-pink: 330 81% 60%;     /* #ec4899 */
+  --crm-tertiary-amber: 38 92% 50%;     /* #f59e0b */
+  --crm-gradient-cyan: linear-gradient(135deg, #06b6d4 0%, #0369a1 100%);
+
+  /* Status Semânticos (sucesso = --crm-success de globals.css) */
+  --crm-warning: 21 90% 48%;            /* #ea580c */
+  --crm-error: 0 84% 60%;               /* #ef4444 */
+  --crm-info: 173 80% 40%;              /* #14b8a6 */
+
+  --crm-gradient-success: linear-gradient(135deg, #10b981 0%, #065f46 100%);
+  --crm-gradient-warning: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
+  --crm-gradient-error: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+  --crm-gradient-info: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+
+  /* Superfícies */
+  --crm-surface-bg: 0 0% 100%;          /* #ffffff */
+  --crm-surface-light: 210 40% 98%;     /* #f8fafc */
+  --crm-surface-sidebar: 217 33% 17%;   /* #1e293b */
+  --crm-surface-sidebar-dark: 222 47% 11%; /* #0f172a */
+
+  /* Bordas (borda padrao = --crm-border de globals.css) */
+  --crm-border-dark: 215 25% 27%;       /* #334155 */
+
+  /* Sombras */
+  --crm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --crm-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --crm-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --crm-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+
+  /* Transições */
+  --crm-transition-fast: all 0.2s ease;
+  --crm-transition-default: all 0.3s ease;
+  --crm-transition-slow: all 0.5s ease;
+}
+
+.dark {
+  --crm-surface-bg: 240 28% 14%;        /* #1a1a2e */
+  --crm-surface-light: 222 47% 11%;     /* #0f172a */
+}

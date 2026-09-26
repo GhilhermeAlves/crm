@@ -14,12 +14,16 @@ export function Header() {
   const { user } = useAuth();
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:px-6">
+    <header className="relative flex h-14 items-center gap-4 border-b bg-card px-4 shadow-sm lg:px-6">
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-crm-secondary-purple via-crm-secondary-indigo to-crm-tertiary-cyan"
+      />
       {/* Mobile menu button */}
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 lg:hidden"
+        className="h-9 w-9 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crm-secondary-indigo lg:hidden"
         onClick={() => setMobileOpen(true)}
         aria-label="Abrir menu"
       >
@@ -30,7 +34,7 @@ export function Header() {
       <Button
         variant="ghost"
         size="icon"
-        className="hidden h-9 w-9 lg:inline-flex"
+        className="hidden h-9 w-9 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crm-secondary-indigo lg:inline-flex"
         onClick={toggle}
         aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
       >

@@ -22,16 +22,23 @@ export function SidebarItem({ item, collapsed, onNavClick }: SidebarItemProps) {
       href={item.href}
       onClick={onNavClick}
       className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-        "hover:bg-accent hover:text-accent-foreground",
-        isActive && "bg-accent text-accent-foreground",
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-200 transition-all duration-crm-default ease-in-out",
+        "hover:translate-x-1 hover:bg-purple-500/20 hover:text-white",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-white",
+        isActive &&
+          "bg-gradient-to-r from-crm-secondary-purple to-crm-secondary-indigo text-white shadow-crm-lg",
         collapsed && "justify-center px-2",
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
       {!collapsed && <span className="flex-1">{item.label}</span>}
       {!collapsed && item.badge && (
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-xs font-medium",
+            isActive ? "bg-white/20 text-white" : "bg-white/10 text-slate-200",
+          )}
+        >
           {item.badge}
         </span>
       )}
