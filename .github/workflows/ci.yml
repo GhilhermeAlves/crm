@@ -222,7 +222,17 @@ jobs:
 
       - name: Dump E2E stack logs on failure
         if: failure()
-        run: docker compose -f e2e/compose.ci.yml logs --no-color --tail=300 backend auth-service keycloak
+        run: |
+          docker compose -f e2e/compose.ci.yml logs --no-color --timestamps > e2e-stack.log
+          tail -n 300 e2e-stack.log
+
+      - name: Upload E2E stack logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-stack-logs
+          path: e2e-stack.log
+          retention-days: 7
 
       - name: Tear down E2E stack
         if: always()

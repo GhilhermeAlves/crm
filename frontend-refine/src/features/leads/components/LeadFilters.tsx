@@ -37,7 +37,7 @@ export function LeadFilters({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <Select value={status} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-full sm:w-44">
+        <SelectTrigger className="w-full sm:w-44" aria-label="Status">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
@@ -50,7 +50,7 @@ export function LeadFilters({
         </SelectContent>
       </Select>
       <Select value={source} onValueChange={onSourceChange}>
-        <SelectTrigger className="w-full sm:w-44">
+        <SelectTrigger className="w-full sm:w-44" aria-label="Origem">
           <SelectValue placeholder="Origem" />
         </SelectTrigger>
         <SelectContent>
@@ -63,7 +63,7 @@ export function LeadFilters({
         </SelectContent>
       </Select>
       <Select value={classification} onValueChange={onClassificationChange}>
-        <SelectTrigger className="w-full sm:w-44">
+        <SelectTrigger className="w-full sm:w-44" aria-label="Classificação">
           <SelectValue placeholder="Classificação" />
         </SelectTrigger>
         <SelectContent>

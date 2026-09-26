@@ -70,6 +70,7 @@ test.describe("Inbox — conversas do seed (Task 4.3)", () => {
     await input.fill(body);
     await input.press("Enter");
 
-    await expect(page.getByText(body)).toBeVisible({ timeout: 15_000 });
+    // O texto aparece no thread e na prévia da conversa na lista: basta um visível.
+    await expect(page.getByText(body).first()).toBeVisible({ timeout: 15_000 });
   });
 });

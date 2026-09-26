@@ -60,7 +60,11 @@ export function LeadForm({ lead, companyId, onSubmit, onCancel, isLoading, mode 
   });
 
   const isEnabled = !!companyId;
-  const { data: contacts = [], isLoading: contactsLoading } = useContacts(companyId);
+  const {
+    data: contacts = [],
+    isLoading: contactsLoading,
+    isError: contactsError,
+  } = useContacts(companyId);
   const { data: members = [], isLoading: membersLoading } = useMembers(companyId);
 
   const watchedStatus = watch("status");
@@ -100,7 +104,12 @@ export function LeadForm({ lead, companyId, onSubmit, onCancel, isLoading, mode 
               {contactsLoading && isEnabled && (
                 <p className="text-sm text-muted-foreground">Carregando contatos...</p>
               )}
-              {!contactsLoading && contacts.length === 0 && isEnabled && (
+              {contactsError && isEnabled && (
+                <p className="text-sm text-destructive">
+                  Não foi possível carregar os contatos. Recarregue a página.
+                </p>
+              )}
+              {!contactsLoading && !contactsError && contacts.length === 0 && isEnabled && (
                 <p className="text-sm text-muted-foreground">
                   Nenhum contato cadastrado. Crie um contato antes de cadastrar o lead.
                 </p>

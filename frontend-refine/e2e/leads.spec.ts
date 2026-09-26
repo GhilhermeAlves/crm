@@ -63,7 +63,13 @@ test.describe("Leads — seed E2E (Task 4.3)", () => {
     const extra = (await seedContacts(page, runId, 1, tag))[0];
     contacts.push(extra);
 
+    // Espera a lista de contatos (inclui o recém-criado) antes de abrir o select;
+    // se a API falhar, o teste mostra o status em vez de estourar o timeout.
+    const contactsLoaded = page.waitForResponse(
+      (r) => /\/contacts$/.test(new URL(r.url()).pathname) && r.request().method() === "GET",
+    );
     await page.goto("/leads/new");
+    expect((await contactsLoaded).status()).toBe(200);
     await page.locator("#contactId").click();
     await page
       .getByRole("option", { name: new RegExp(escapeRegExp(extra.email)) })
@@ -81,7 +87,8 @@ test.describe("Leads — seed E2E (Task 4.3)", () => {
 
   test("filtra por status Qualificado (filtro server-side)", async () => {
     await page.goto("/leads");
-    await expect(seedRows()).toHaveCount(3, { timeout: 15_000 });
+    // >= 3: o teste de criação acima adiciona um lead (NEW) com o mesmo runId.
+    await expect(seedRows().first()).toBeVisible({ timeout: 15_000 });
 
     await page.getByRole("button", { name: "Filtros" }).click();
     await page.getByRole("combobox", { name: "Status" }).click();

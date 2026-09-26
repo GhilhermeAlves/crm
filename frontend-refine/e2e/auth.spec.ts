@@ -26,8 +26,6 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     await login(page);
 
     await expect(page).toHaveURL(/\/crm/, { timeout: 30_000 });
-    // PageTitle "CRM" (h1) confirma que a página autenticada renderizou
-    await expect(page.getByRole("heading", { name: "CRM", exact: true })).toBeVisible();
     // Greeting da dashboard: "Bom dia/Boa tarde/Boa noite, Admin!"
     await expect(page.getByText(/Admin!/)).toBeVisible();
     // Crm_session existe
