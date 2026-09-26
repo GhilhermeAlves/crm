@@ -118,11 +118,8 @@ git push origin crm-improvements-deploy-phase
 
 ### 6️⃣ Deploy na VPS
 ```bash
-ssh crm-vps bash <<'DEPLOY'
-cd /opt/crm/docker
-docker compose pull crm-frontend
-docker compose up -d crm-frontend
-DEPLOY
+# Em crm-improvements-deploy-phase, com CI verde:
+scripts/deploy.sh frontend
 ```
 
 ---
@@ -195,12 +192,19 @@ git push origin crm-improvements-deploy-phase
 
 ### 6️⃣ Deploy Backend na VPS
 ```bash
-ssh crm-vps bash <<'DEPLOY'
-cd /opt/crm/docker
-docker compose pull crm-backend crm-auth-service
-docker compose up -d crm-backend crm-auth-service
-DEPLOY
+# Em crm-improvements-deploy-phase, com CI verde:
+scripts/deploy.sh backend auth-service
 ```
+
+### 🔧 O que o `scripts/deploy.sh` faz
+1. Confere: branch `crm-improvements-deploy-phase`, sem alterações pendentes, igual ao `origin`, **CI verde**.
+2. **Backup** do banco na VPS (`/opt/crm/backups`, também roda todo dia às 3h via cron).
+3. Envia o commit para `/opt/crm/releases/<sha>` (mantém as 5 últimas).
+4. Build das imagens na VPS, com o commit gravado (`org.opencontainers.image.revision`).
+   A imagem que estava rodando vira `:previous`.
+5. Sobe os containers e **espera o health** (até 5 min).
+6. Se falhar: mostra os logs. Para voltar: `scripts/deploy.sh --rollback backend`.
+   ⚠️ Rollback volta o código, **não** a migration — para isso, restaure o backup (`scripts/restore-db.sh`).
 
 ---
 
