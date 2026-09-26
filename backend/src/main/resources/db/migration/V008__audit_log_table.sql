@@ -1,5 +1,11 @@
 -- V008__audit_log_table.sql
 -- Create audit_logs table and seed audit permissions
+--
+-- V001 cria um audit_logs com schema antigo (sem company_id). Em banco novo ele
+-- está vazio e é substituído aqui; sem o DROP, o CREATE falha (relation exists).
+-- Bancos que já aplicaram V008 não são afetados (Flyway não reexecuta).
+
+DROP TABLE IF EXISTS audit_logs;
 
 CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
