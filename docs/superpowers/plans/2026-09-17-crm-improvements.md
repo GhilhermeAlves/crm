@@ -10,6 +10,35 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-17-crm-improvements-design.md` — o plano argumenta a partir do spec; executores leem ambos.
 
+## Status (conferido em 2026-09-26)
+
+**Plano concluído** — todas as tasks têm commit. Checkboxes marcados retroativamente a partir do histórico.
+
+| Task | Commit(s) | Observação |
+|---|---|---|
+| 1.1 Webhook UAZAPI | `0f40558`, `cf96800` | |
+| 1.2 Rate limit OTP | `bcb278a` | |
+| 1.3 `@Valid` auth | `55238d8` | |
+| 1.4 Não vazar mensagens | `e810144` | |
+| 1.5 CORS | `dcb1d63` | |
+| 1.6 Log no converter JWT | `6cb19c0` | |
+| 1.7 Higiene do repo | `8df8d18`, `d119548` | |
+| 1.8 Hardening da VPS | `eb54504` | ⚠️ Cron de backup apontava para caminho inexistente e banco `crm` (não `crm_main`): **nenhum backup até 2026-09-26**, corrigido em `0ec7742`. |
+| 2.1 Busca server-side de leads | `1dd0a4e`, `58b579c` | |
+| 2.2 Busca decorativa do Header | `ff56018` | |
+| 2.3 `deals.mock.ts` | `3766506` | |
+| 2.4 Estados loading/error/empty | `7ccc419` | |
+| 2.5 Rotas legadas → settings | `eed5ccf` | |
+| 2.6 `design-system/page.tsx` | `e6db629` | |
+| 2.7 `TenantForm.tsx` | `02d775d` | |
+| 2.8 `WorkflowForm.tsx` | `2369d97` | |
+| 2.9 `Sidebar.tsx` | `ca74b51` | |
+| 2.10 `data-table.tsx` | `5ada2f5` | |
+| 2.11 Mutation helper | `a66062e` | |
+| 3.1 Autorização de tenant | `9191cc4` | |
+| 3.2 Consistência | `3c932e8` | |
+| 4.1–4.4 E2E Playwright | `778963f`, `94ac846`, `78e6152`, `2e0e1e8` | ⚠️ O job nunca rodou verde: o CI parou de disparar quando a `main` foi removida. Consertado em 2026-09-26 (V008, role `crm_app`, audience, seed bcrypt, specs); job ficou `continue-on-error` até ficar verde. |
+
 ---
 
 ## Global Constraints
@@ -47,7 +76,7 @@ Copiado do spec; TODAS as tasks herdam isto. Valores exatos, verbatim:
 - Consumes: `WhatsAppWebhookSignatureVerifier.isValid(signature, payload)` (existe).
 - Produces: `WhatsAppWebhookTokenVerifier` com método `boolean isAuthenticated(String rawPayload, String signatureHeader, String tokenParam)`. O controller passa a chamar `tokenVerifier.isAuthenticated(...)`.
 
-- [ ] **Step 1: Investigar como o UAZAPI autentica o callback**
+- [x] **Step 1: Investigar como o UAZAPI autentica o callback**
       Executar na VPS e decidir o método que a instância UAZAPI consegue enviar na URL do webhook:
 
       ```bash
@@ -57,7 +86,7 @@ Copiado do spec; TODAS as tasks herdam isto. Valores exatos, verbatim:
       Verificar na dashboard da instância UAZAPI se a URL do webhook registrada aceita query param (`?token=...`) ou header. **Decisão tomada aqui define a coleta do token** (query param → propriedade `webhook-token`; header `X-Uazapi-Token` → mesmo valor). Se a UAZAPI não suportar nenhum dos dois, o fallback é restringir a `location` do webhook no nginx por IP (registrado no Step 7). Em qualquer caso, `WHATSAPP_WEBHOOK_ALLOW_UNSIGNED` passa a `false`.
       Expected: método de transporte do token identificado.
 
-- [ ] **Step 2: Escrever o teste que falha (novo verifier)**
+- [x] **Step 2: Escrever o teste que falha (novo verifier)**
 
 ```java
 package com.becommerce.crm.infrastructure.omnichannel.whatsapp;
@@ -102,12 +131,12 @@ class WhatsAppWebhookTokenVerifierTest {
 }
 ```
 
-- [ ] **Step 3: Rodar para ver falhar**
+- [x] **Step 3: Rodar para ver falhar**
 
 Run: `.\mvnw.cmd test -Dtest=WhatsAppWebhookTokenVerifierTest -pl .` (na raiz `backend/`)
 Expected: FAIL — `WhatsAppWebhookTokenVerifier` não existe / não compila.
 
-- [ ] **Step 4: Implementar o verifier**
+- [x] **Step 4: Implementar o verifier**
 
 ```java
 package com.becommerce.crm.infrastructure.omnichannel.whatsapp;
@@ -173,7 +202,7 @@ public class WhatsAppWebhookTokenVerifier {
 }
 ```
 
-- [ ] **Step 5: Atualizar o controller para usar o verifier**
+- [x] **Step 5: Atualizar o controller para usar o verifier**
 
 ```java
     private final WhatsAppWebhookUseCase webhookUseCase;
@@ -209,7 +238,7 @@ E o `@PostMapping` passa a aceitar o token:
 ```
 Nota: a ordem `signatureVerifier.isValid(...) || tokenVerifier.isAuthenticated(...)` mantém o HMAC da Meta (cloud-api) e permite o token do UAZAPI.
 
-- [ ] **Step 6: Corrigir o teste do controller (2 primeiros casos com app-secret continuam; adicionar caso de token)**
+- [x] **Step 6: Corrigir o teste do controller (2 primeiros casos com app-secret continuam; adicionar caso de token)**
 
 No `@BeforeEach`:
 ```java
@@ -243,7 +272,7 @@ Adicionar:
 ```
 Rode `.\mvnw.cmd test -Dtest=WhatsAppWebhookControllerTest` — todos verdes.
 
-- [ ] **Step 7: Ajustar config (application.yml, compose app, .env.example)**
+- [x] **Step 7: Ajustar config (application.yml, compose app, .env.example)**
 
 `application.yml` (bloco `omnichannel.whatsapp`), acrescentar após `webhook-allow-unsigned`:
 ```yaml
@@ -260,7 +289,7 @@ OMNICHANNEL_WHATSAPP_WEBHOOK_TOKEN=
 WHATSAPP_WEBHOOK_ALLOW_UNSIGNED=false
 ```
 
-- [ ] **Step 8: Rollout em produção com backup**
+- [x] **Step 8: Rollout em produção com backup**
 
 ```bash
 # backup obrigatório antes
@@ -274,7 +303,7 @@ OMNICHANNEL_WHATSAPP_WEBHOOK_TOKEN=<valor>
 Reiniciar apenas backend: `ssh crm-vps "cd /opt/crm/docker && docker compose up -d backend"`. Validar: (a) webhook do UAZAPI (enviar mensagem real de teste) entra; (b) `curl -X POST https://srv1348261.hstgr.cloud/api/v1/omnichannel/whatsapp/webhook -d '{}'` retorna **401** (sem token).
 Se o UAZAPI não suportar token, aplicar fallback nginx: na `location /api/v1/omnichannel/whatsapp/webhook`, restringir por IP de origem com `allow <ip>; deny all;` e documentar; MAS o código acima garante que mesmo assim o endpoint rejeita sem token quando token configurado.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add backend/src/main/java/com/becommerce/crm/infrastructure/omnichannel/whatsapp/WhatsAppWebhookTokenVerifier.java \
@@ -301,7 +330,7 @@ git commit -m "fix(omnichannel): exigir token no webhook UAZAPI (allow-unsigned=
 - Consumes: `StringRedisTemplate` (bean do Spring Data Redis) — mesmo tipo do `InvitationRateLimiter`.
 - Produces: `OtpRateLimiter.trySend(String clientIp): boolean` e `OtpRateLimiter.tryVerify(String phoneE164): boolean`.
 
-- [ ] **Step 1: Escrever o teste que falha**
+- [x] **Step 1: Escrever o teste que falha**
 
 ```java
 package com.becommerce.crm.infrastructure.otp.rate;
@@ -358,12 +387,12 @@ class OtpRateLimiterTest {
 }
 ```
 
-- [ ] **Step 2: Rodar para ver falhar**
+- [x] **Step 2: Rodar para ver falhar**
 
 Run: `.\mvnw.cmd test -Dtest=OtpRateLimiterTest`
 Expected: FAIL — classe não existe.
 
-- [ ] **Step 3: Implementar o limiter**
+- [x] **Step 3: Implementar o limiter**
 
 ```java
 package com.becommerce.crm.infrastructure.otp.rate;
@@ -447,7 +476,7 @@ public class OtpRateLimiter {
 }
 ```
 
-- [ ] **Step 4: Integrar no controller**
+- [x] **Step 4: Integrar no controller**
 
 ```java
 import com.becommerce.crm.infrastructure.otp.rate.OtpRateLimiter;
@@ -486,7 +515,7 @@ private static final int TOO_MANY_REQUESTS = 429;
 ```
 Nota: `X-Real-IP` já é repassado pelo nginx na `location /api/v1/auth/phone/` (confirmado no nginx da VPS). O teste de controller deve mockar `OtpRateLimiter` retornando `true`.
 
-- [ ] **Step 5: Rodar testes e commit**
+- [x] **Step 5: Rodar testes e commit**
 
 Run: `.\mvnw.cmd test -Dtest=OtpRateLimiterTest,PhoneAuthControllerTest`
 Expected: PASS.
@@ -510,12 +539,12 @@ git commit -m "fix(auth): rate limit distribuído no fluxo OTP por IP/telefone"
 - Modify: DTOs (`application/identity/dto/*.java`): `ForgotPasswordRequest`, `ResetPasswordRequest`, `ChangePasswordRequest`, `InviteUserRequest`
 - Modify tests: `backend/src/test/java/com/becommerce/crm/presentation/rest/identity/*ControllerTest.java`
 
-- [ ] **Step 1: Verificar DTOs atuais**
+- [x] **Step 1: Verificar DTOs atuais**
 
 Run: `rg -n "record (ForgotPasswordRequest|ResetPasswordRequest|ChangePasswordRequest|InviteUserRequest)" backend/src/main/java/com/becommerce/crm/application/identity/dto/`
 Expected: localizar os records. Eles não têm anotações `@NotBlank`/`@Email` hoje (confirmar e anotar).
 
-- [ ] **Step 2: Anotar os DTOs** (exemplo — aplicar o mesmo padrão aos 4 records listados)
+- [x] **Step 2: Anotar os DTOs** (exemplo — aplicar o mesmo padrão aos 4 records listados)
 
 ```java
     public record ForgotPasswordRequest(
@@ -529,7 +558,7 @@ Expected: localizar os records. Eles não têm anotações `@NotBlank`/`@Email` 
 ```
 Ajustar conforme o domínio: o value object `domain/identity/valueobject/Password.java` já valida senha (força BCrypt strength=12 no uso); o `@Size` do DTO é camada de validação rápida — não duplicar regra conflitante com o `Password`.
 
-- [ ] **Step 3: Adicionar `@Valid` nos controllers**
+- [x] **Step 3: Adicionar `@Valid` nos controllers**
 
 ```java
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
@@ -538,7 +567,7 @@ Ajustar conforme o domínio: o value object `domain/identity/valueobject/Passwor
                                                @Valid @RequestBody ChangePasswordRequest request) {
 ```
 
-- [ ] **Step 4: Teste que valida 400 em payload inválido**
+- [x] **Step 4: Teste que valida 400 em payload inválido**
 
 Em `AuthControllerTest` (ou criar, seguindo `WhatsAppWebhookControllerTest` como base standalone):
 ```java
@@ -550,7 +579,7 @@ Em `AuthControllerTest` (ou criar, seguindo `WhatsAppWebhookControllerTest` como
                 .andExpect(status().isBadRequest());
     }
 ```
-- [ ] **Step 5: Rodar todos os testes de auth e commit**
+- [x] **Step 5: Rodar todos os testes de auth e commit**
 
 Run: `.\mvnw.cmd test -Dtest='*Auth*Test,*User*Test'`
 Expected: PASS (com os mocks de `AuthUseCase` — lembrar que `@Valid` falha ANTES de chamar o use case).
@@ -571,7 +600,7 @@ git commit -m "fix(auth): adicionar Bean Validation nos fluxos forgot/reset/chan
 - Modify: `backend/src/main/java/com/becommerce/crm/presentation/rest/handler/GlobalExceptionHandler.java`
 - Modify: `backend/src/test/java/com/becommerce/crm/presentation/rest/handler/GlobalExceptionHandlerTest.java`
 
-- [ ] **Step 1: Escrever teste que falha (mensagem genérica em infra)**
+- [x] **Step 1: Escrever teste que falha (mensagem genérica em infra)**
 
 ```java
     @Test
@@ -581,7 +610,7 @@ git commit -m "fix(auth): adicionar Bean Validation nos fluxos forgot/reset/chan
                 .andExpect(jsonPath("$.message").value("Serviço de identidade indisponível, tente novamente."));
     }
 ```
-- [ ] **Step 2: Adicionar helper seguro e aplicar**
+- [x] **Step 2: Adicionar helper seguro e aplicar**
 
 Introduzir no handler:
 ```java
@@ -599,7 +628,7 @@ Trocar nas respostas dos handlers de **infra** (`IllegalStateException`, `Identi
 
 As exceções de domínio (NotFound/Validation/etc.) **permanecem** com `ex.getMessage()` — são DTOs controlados.
 
-- [ ] **Step 3: Rodar testes e commit**
+- [x] **Step 3: Rodar testes e commit**
 
 Run: `.\mvnw.cmd test -Dtest=GlobalExceptionHandlerTest`
 Expected: PASS.
@@ -620,24 +649,24 @@ git commit -m "fix(api): não vazar mensagens internas em respostas de erro"
 - Modify: `backend/src/main/resources/application-prod.yml` (se definir CORS, manter o valor atual)
 - Modify: `backend/src/main/resources/application-test.yml` (se necessário)
 
-- [ ] **Step 1: Mudar o default**
+- [x] **Step 1: Mudar o default**
 
 ```yaml
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
 ```
-- [ ] **Step 2: Confirmar que o código de CORS trata lista vazia como "sem origens" (não como "*")**
+- [x] **Step 2: Confirmar que o código de CORS trata lista vazia como "sem origens" (não como "*")**
 
 Run: `rg -rn "allowed-origins|AllowedOriginPatterns|CorsConfiguration" backend/src/main/java/com/becommerce/crm/infrastructure/security/`
 Expected: localizar a classe de configuração CORS. Se ela fizer `allowedOriginPatterns("*")` quando vazio, ajustar para: lista vazia → nenhum padrão permitido (bloqueia cross-origin sem configuração; o frontend Next.js dev via proxy NÃO precisa de CORS pois é mesma origem).
 
-- [ ] **Step 3: Teste de configuração**
+- [x] **Step 3: Teste de configuração**
 
 Run: `.\mvnw.cmd test -Dtest='*SecurityConfig*Test,*Cors*Test'` — se inexistente, rodar a suíte principal `.\mvnw.cmd verify` (sem ITs: `-DskipITs`).
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/src/main/resources/application.yml backend/src/main/resources/application-prod.yml backend/src/main/resources/application-test.yml backend/src/main/java/com/becommerce/crm/infrastructure/security/
@@ -654,7 +683,7 @@ git commit -m "fix(security): CORS sem origem wildcard por padrão"
 - Modify: `backend/src/main/java/com/becommerce/crm/infrastructure/security/config/KeycloakJwtAuthenticationConverter.java`
 - Modify: `backend/src/test/java/com/becommerce/crm/infrastructure/security/config/KeycloakJwtAuthenticationConverterTest.java` (se existir; senão criar)
 
-- [ ] **Step 1: Adicionar logger e trocar catch**
+- [x] **Step 1: Adicionar logger e trocar catch**
 
 ```java
     private static final Logger log = LoggerFactory.getLogger(KeycloakJwtAuthenticationConverter.class);
@@ -666,7 +695,7 @@ git commit -m "fix(security): CORS sem origem wildcard por padrão"
 ```
 (Idem para `extractClientRoles`.)
 
-- [ ] **Step 2: Teste que valida log (sem ter que mockar logger — verificar comportamento inalterado)**
+- [x] **Step 2: Teste que valida log (sem ter que mockar logger — verificar comportamento inalterado)**
 
 Garantir que o comportamento público não muda:
 ```java
@@ -679,7 +708,7 @@ Garantir que o comportamento público não muda:
         assertNotNull(auth);
     }
 ```
-- [ ] **Step 3: Rodar testes e commit**
+- [x] **Step 3: Rodar testes e commit**
 
 Run: `.\mvnw.cmd test -Dtest=KeycloakJwtAuthenticationConverterTest`
 Expected: PASS.
@@ -697,12 +726,12 @@ git commit -m "fix(security): logar falhas de extração de roles no converter J
 - Delete: arquivos de tooling de IA em `.github/` (UUIDs `*.json` e scripts `recordToolUse.*`)
 - Modify: `.gitignore` (raiz e `backend/.gitignore` se houver)
 
-- [ ] **Step 1: Inventariar**
+- [x] **Step 1: Inventariar**
 
 Run: `git status --short` e `git ls-files | rg -i "hs_err|replay_pid|fix_test|fix_webhook|tmp_apply|recordToolUse|\.json$" | rg -i "backend|\.github" | head -50`
 Expected: lista exata de arquivos a remover (confirmar untracked vs tracked — se untracked, basta excluir do disco; se tracked, `git rm`).
 
-- [ ] **Step 2: Remover**
+- [x] **Step 2: Remover**
 
 ```bash
 # untracked (existem no status como ??): apenas excluir do disco
@@ -711,7 +740,7 @@ Remove-Item backend/fix_test.py,backend/fix_webhook.py -ErrorAction Continue
 git rm --ignore-unmatch backend/tmp_apply.sh 'backend/hs_err_pid*.log' 'backend/replay_pid*.log' .github/*.json .github/recordToolUse.ps1 .github/recordToolUse.sh
 ```
 
-- [ ] **Step 3: Reforçar `.gitignore`**
+- [x] **Step 3: Reforçar `.gitignore`**
 
 Adicionar ao `.gitignore` raiz:
 ```gitignore
@@ -728,7 +757,7 @@ tmp_apply.sh
 .github/recordToolUse.*
 ```
 
-- [ ] **Step 4: Verificar que nada quebrou**
+- [x] **Step 4: Verificar que nada quebrou**
 
 Run: `git status --short` (somente os arquivos pretendidos) e `git commit`:
 ```bash
@@ -752,21 +781,21 @@ git commit -m "chore: remover artefatos de debug e tooling de IA; reforçar .git
 - `/opt/crm/docker/docker-compose.yml` (healthcheck backend, `AUTH_GATEWAY_SESSION_IDLE_TIMEOUT=4h`)
 - Crontab (backup diário)
 
-- [ ] **Step 1: `.env` com permissão 600 (VPS)**
+- [x] **Step 1: `.env` com permissão 600 (VPS)**
 
 ```bash
 ssh crm-vps "chmod 600 /opt/crm/.env /opt/crm/docker/.env && ls -l /opt/crm/.env /opt/crm/docker/.env"
 ```
 Expected: `-rw------- 1 root root`.
 
-- [ ] **Step 2: Remover bootstrap do Keycloak (VPS)**
+- [x] **Step 2: Remover bootstrap do Keycloak (VPS)**
 
 ```bash
 ssh crm-vps "rg -n 'KC_BOOTSTRAP' /opt/crm/docker-compose.yml"
 ```
 Editar `/opt/crm/docker-compose.yml`: remover as duas linhas `KC_BOOTSTRAP_ADMIN_USERNAME` e `KC_BOOTSTRAP_ADMIN_PASSWORD` (a senha de admin já foi definida e fica no console do Keycloak). Aplicar: `cd /opt/crm && docker compose up -d keycloak` (aceitar recreate com healthcheck). Validar com `docker ps | grep keycloak` → healthy.
 
-- [ ] **Step 3: Healthcheck do backend (repo + VPS)**
+- [x] **Step 3: Healthcheck do backend (repo + VPS)**
 
 No repo, `docker/docker-compose.yml`, serviço `backend`:
 ```yaml
@@ -778,7 +807,7 @@ No repo, `docker/docker-compose.yml`, serviço `backend`:
 ```
 Aplicar na VPS em `/opt/crm/docker/docker-compose.yml` (mesmo bloco) e `cd /opt/crm/docker && docker compose up -d backend`. Validar `docker ps` → `crm-backend` healthy.
 
-- [ ] **Step 4: Sessões ociosas do gateway (VPS)**
+- [x] **Step 4: Sessões ociosas do gateway (VPS)**
 
 No `.env` da infra ou no compose app, definir:
 ```
@@ -786,7 +815,7 @@ AUTH_GATEWAY_SESSION_IDLE_TIMEOUT=4h
 ```
 No repo, documentar no `docker/.env.example` e `docker-compose.yml` do app com comentário de intenção. Aplicar e reiniciar o auth-service: `cd /opt/crm/docker && docker compose up -d auth-service`. Validar login/logout manual rápido.
 
-- [ ] **Step 5: Criar scripts de backup (repo)**
+- [x] **Step 5: Criar scripts de backup (repo)**
 
 `scripts/backup-db.sh`:
 ```bash
@@ -823,7 +852,7 @@ echo "Restore de $DB concluído."
 ```
 Tornar executáveis (`chmod +x`) e adicionar ao `.gitignore` se o diretório `backups/` for gerado no repo (não é — executa na VPS).
 
-- [ ] **Step 6: Instalar na VPS + cron + swap**
+- [x] **Step 6: Instalar na VPS + cron + swap**
 
 ```bash
 # instalar scripts
@@ -842,7 +871,7 @@ ssh crm-vps "fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfil
 ```
 Expected: `free -h` mostra swap; `swapon --show` lista; crontab contém o job.
 
-- [ ] **Step 7: Limpeza de árvores órfãs (VPS)**
+- [x] **Step 7: Limpeza de árvores órfãs (VPS)**
 
 ```bash
 ssh crm-vps "
@@ -856,7 +885,7 @@ ssh crm-vps "
 ```
 Expected: disco liberado; `/root` contém apenas `out/`, `.docker/`, `.m2/`, `crm-backup-forest-*.tar.gz` e o ambiente normal.
 
-- [ ] **Step 8: Rodar `git status` e commit do repo**
+- [x] **Step 8: Rodar `git status` e commit do repo**
 
 Run: `git status --short` (deve conter apenas `scripts/backup-db.sh`, `scripts/restore-db.sh`, `docker/docker-compose.yml`, `.env.example`)
 ```bash
@@ -887,7 +916,7 @@ git commit -m "chore(ops): backup/restore scripts, healthcheck e default de sess
 - Modify: `src/features/leads/hooks/useLeads.ts` (pass through — já aceita params)
 - Modify: `src/app/(dashboard)/leads/page.tsx` (remover `filteredLeads` client-side; passar `search` ao `useLeads`)
 
-- [ ] **Step 1 (backend): TDD da busca na query JPA**
+- [x] **Step 1 (backend): TDD da busca na query JPA**
 
 Escrever teste de integração em `LeadIsolationIT`:
 ```java
@@ -900,7 +929,7 @@ Escrever teste de integração em `LeadIsolationIT`:
 ```
 Run: `.\mvnw.cmd test -Dtest=LeadIsolationIT` → FAIL (search não é passado).
 
-- [ ] **Step 2 (backend): Implementar**
+- [x] **Step 2 (backend): Implementar**
 
 `LeadJpaRepository`:
 ```java
@@ -924,11 +953,11 @@ Run: `.\mvnw.cmd test -Dtest=LeadIsolationIT` → FAIL (search não é passado).
 `LeadRepositoryImpl.findByCompanyWithFilters`: adicionar parâmetro `String search` e montar `like` no `Specification`/`PageRequest`: `String like = "%" + (search == null ? "" : search.trim().toLowerCase()) + "%";` e chamar `jpaRepository.findByCompanyWithFilters(companyId, status, source, classification, like, pageRequest)`. Propagar `search` nas assinaturas de `LeadRepository`, `LeadUseCase.list` e `LeadService.list` (passando `like` já formatado para a query).
 `LeadController.list`: adicionar `@RequestParam(required = false) String search` e repassar.
 
-- [ ] **Step 3 (backend): rodar e passar**
+- [x] **Step 3 (backend): rodar e passar**
 
 Run: `.\mvnw.cmd verify` (ou `-DskipITs` para unit) — Expected: PASS.
 
-- [ ] **Step 4 (frontend): tipos + página**
+- [x] **Step 4 (frontend): tipos + página**
 
 `lead.types.ts` — `ListLeadsParams`:
 ```ts
@@ -958,7 +987,7 @@ export interface ListLeadsParams {
 ```
 Trocar todas as referências a `filteredLeads` por `data?.content ?? []`. Manter `setPage(0)` ao digitar.
 
-- [ ] **Step 5 (frontend): testes + format + commit**
+- [x] **Step 5 (frontend): testes + format + commit**
 
 Criar/ajustar teste em `src/features/leads/hooks/useLeads.test.ts` para o novo parâmetro `search` (mock de `LeadService.list` retorna página com 1 item) e em `src/features/leads/services/lead.service.test.ts` validar que `api.get` recebe `params.search`. Rodar `npm test` (filtrado a leads), `npm run typecheck`, `npm run lint`, `npm run format`.
 ```bash
@@ -973,15 +1002,15 @@ git commit -m "fix(leads): busca server-side de leads por nome/email/telefone"
 **Files:**
 - Modify: `src/components/layout/Header.tsx` (remover o Button "Pesquisar..." e imports `Search`, `Command`)
 
-- [ ] **Step 1: Remover**
+- [x] **Step 1: Remover**
 
 Apagar o bloco `{/* Search (UI only) */} <Button ...>...</Button>` e os imports não usados (`Search`, `Command`).
 
-- [ ] **Step 2: Verificar**
+- [x] **Step 2: Verificar**
 
 Run: `npm run typecheck`, `npm test` (componente Header não tem teste próprio; `ProtectedRoute`/layout não dependem dele). Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/layout/Header.tsx
@@ -996,16 +1025,16 @@ git commit -m "chore(header): remover busca decorativa (UI only)"
 - Delete: `src/features/pipeline/data/deals.mock.ts`
 - Modify: dependentes encontrados por grep de `deals.mock` / `dealsMock` / `mockDeals`
 
-- [ ] **Step 1: Achar dependências**
+- [x] **Step 1: Achar dependências**
 
 Run: `rg -n "deals.mock|dealsMock|mockDeals|from.*pipeline/data/deals" src/`
 Expected: lista de imports. Se `pipeline/page.tsx` usa dados mock como seed em vez da API, substituir por dados reais vindo de `useOpportunities`/`usePipelines` (indicar em que trecho) para validar que a página não regride.
 
-- [ ] **Step 2: Remover e atualizar**
+- [x] **Step 2: Remover e atualizar**
 
 `Remove-Item src/features/pipeline/data/deals.mock.ts` e ajustar os imports/uso encontrados (se um componente usa mock como fallback de UI, trocar por `EmptyState`).
 
-- [ ] **Step 3: Verificar e commit**
+- [x] **Step 3: Verificar e commit**
 
 Run: `npm run typecheck`, `npm test`, `npm run lint`.
 ```bash
@@ -1025,7 +1054,7 @@ git commit -m "chore(pipeline): remover mock de deals deixado no código"
 - Modify: `src/app/(dashboard)/pipeline/page.tsx`
 - Modify: `src/app/(dashboard)/follow-up-sequences/page.tsx`
 
-- [ ] **Step 1: Padrão a aplicar (exemplo concreto para `channels/page.tsx`)**
+- [x] **Step 1: Padrão a aplicar (exemplo concreto para `channels/page.tsx`)**
 
 Substituir o bloco de renderização por:
 ```tsx
@@ -1045,11 +1074,11 @@ Substituir o bloco de renderização por:
 ```
 Imports: `SkeletonTable` de `@/components/feedback/SkeletonTable`, `ErrorCard` de `@/components/common/ErrorCard`, `EmptyState` de `@/components/common/EmptyState` (todos já existem). Manter `PageTitle`/header existente fora do bloco condicional.
 
-- [ ] **Step 2: Aplicar o mesmo em `storage`, `pipeline`, `follow-up-sequences`**
+- [x] **Step 2: Aplicar o mesmo em `storage`, `pipeline`, `follow-up-sequences`**
 
 Mesmo padrão, adaptando título/ícone/descrição de cada empty state e o hook usado (`useStorageObjects`, `usePipelines`/`useOpportunities`, `useFollowUpSequences`).
 
-- [ ] **Step 3: Verificar e commit**
+- [x] **Step 3: Verificar e commit**
 
 Run: `npm run typecheck`, `npm test`, `npm run lint`, `npm run format`.
 ```bash
@@ -1071,12 +1100,12 @@ git commit -m "feat(pages): padronizar loading/error/empty em channels/storage/p
 - Modify: `src/components/layout/Sidebar.tsx` (links existentes para `/roles` → `ROUTES.SETTINGS_ROLES` já existente ou novo)
 - Modify: quaisquer `router.push(ROUTES.ROLES...)` encontrados
 
-- [ ] **Step 1: Inventariar referências**
+- [x] **Step 1: Inventariar referências**
 
 Run: `rg -n "ROUTES\.ROLES|ROUTES\.PERMISSIONS|/roles|/permissions" src/ --glob '!**/*.test.*' | rg -v 'settings/roles|settings/users|settings/agent'`
 Expected: lista de pontos a atualizar.
 
-- [ ] **Step 2: Mover páginas**
+- [x] **Step 2: Mover páginas**
 
 Usar `git mv` (preserva histórico):
 ```bash
@@ -1087,7 +1116,7 @@ git rm --ignore-unmatch "src/app/(authenticated)/layout.tsx"
 ```
 Lembrar: `(dashboard)/settings/roles/page.tsx` já existe? Confirmar — `settings/roles` aparece no mapa (settings/roles). Se JÁ existir página em `(dashboard)/settings/roles`, então **mover o que falta** (new/[id]/[id]/edit), mesclar e remover duplicado. O executor deve `ls src/app/(dashboard)/settings/` primeiro e ajustar (isso é a decisão da task — eliminar a duplicação escolhendo o caminho canônico `/settings/roles`).
 
-- [ ] **Step 3: Atualizar constantes**
+- [x] **Step 3: Atualizar constantes**
 
 ```ts
   ROLES: "/settings/roles",
@@ -1097,11 +1126,11 @@ Lembrar: `(dashboard)/settings/roles/page.tsx` já existe? Confirmar — `settin
 ```
 Ajustar `ROUTES.ROLES_NEW` e usos de `ROLES.ROLES_NEW` para `/settings/roles/new` (o grupo edit/[id] mantém `/settings/roles/[id]`).
 
-- [ ] **Step 4: Atualizar referências e verificar**
+- [x] **Step 4: Atualizar referências e verificar**
 
 Trocar `ROUTES.ROLES`, `ROUTES.ROLES_NEW`, `ROUTES.PERMISSIONS` nos pontos do Step 1 para os novos valores. Rodar `npm run typecheck`, `npm test`, `npm run lint`. Adicionar teste de navegação se o Sidebar tiver (verificar `Sidebar`/`navigation` já testados).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -1116,7 +1145,7 @@ git commit -m "refactor(routes): consolidar RBAC em /settings/roles e /settings/
 - Create: `src/app/(dashboard)/design-system/sections/` com `TypographySection.tsx`, `ColorsSection.tsx`, `ButtonSection.tsx`, `FormSection.tsx`, `FeedbackSection.tsx`, `DataDisplaySection.tsx`, `OverlaySection.tsx`
 - Modify: `src/app/(dashboard)/design-system/page.tsx` (compor as seções)
 
-- [ ] **Step 1: Estruturar**
+- [x] **Step 1: Estruturar**
 
 Mover cada bloco atual da página (identificável pelos `SectionTitle`/comentários de seção) para um componente `*Section.tsx` com a mesma marcação. A página passa a:
 ```tsx
@@ -1134,11 +1163,11 @@ export default function DesignSystemPage() {
   );
 }
 ```
-- [ ] **Step 2: Verificar**
+- [x] **Step 2: Verificar**
 
 Run: `npm run typecheck` e navegação manual em `/design-system` (dev) para conferir que as seções renderizam (sem teste visual automático; existe página, não componente). `npm test` para não regredir o resto.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -1153,15 +1182,15 @@ git commit -m "refactor(design-system): fatiar showcases em seções por categor
 - Create: `src/features/tenants/components/tenant-form/CompanyInfoFields.tsx`, `SettingsFields.tsx`, `QuotaFields.tsx`, `TenantFormSection.tsx`
 - Modify: `src/features/tenants/components/TenantForm.tsx` (compor seções)
 
-- [ ] **Step 1: Fatiar**
+- [x] **Step 1: Fatiar**
 
 Extrair 3 grupos de campos (dados da empresa, settings/planos, quota/billing) em componentes de campos controlados (`Controller` do react-hook-form já usado). Cada componente expõe props `control` (tal como o hook usa). `TenantFormSection` encapsula título + `Card`. Verificar o `tenant.schema` para nomes de campos exatos.
 
-- [ ] **Step 2: Verificar**
+- [x] **Step 2: Verificar**
 
 Run: `npm test` (se houver teste de TenantForm, atualizar imports), `npm run typecheck`, `npm run lint`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -1176,15 +1205,15 @@ git commit -m "refactor(tenants): quebrar TenantForm em seções de campos"
 - Create: `src/features/workflows/components/workflow-form/ConditionBuilder.tsx`, `ActionBuilder.tsx`, `ExecutionList.tsx`, `WorkflowFormSection.tsx`
 - Modify: `src/features/workflows/components/WorkflowForm.tsx` (compor)
 
-- [ ] **Step 1: Fatiar**
+- [x] **Step 1: Fatiar**
 
 Extrair: (a) builder de condições (condições atuais, add/remove, validação), (b) builder de ações (tipo+ação, input dinâmico por ação), (c) lista de execuções recentes, (d) wrapper de seção. Conferir `workflow.schema.ts` para nomes de campos e tipos. Manter o `handleSubmit`/validação na página.
 
-- [ ] **Step 2: Verificar**
+- [x] **Step 2: Verificar**
 
 Run: `npm test` (testes de schema/hook de workflow), `npm run typecheck`, `npm run lint`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -1199,7 +1228,7 @@ git commit -m "refactor(workflows): extrair builders de condições/ações e li
 - Create: `src/components/layout/SidebarGroup.tsx`, `src/components/layout/SidebarItem.tsx`, `src/components/layout/navigation.ts`
 - Modify: `src/components/layout/Sidebar.tsx`
 
-- [ ] **Step 1: Extrair dados + subcomponentes**
+- [x] **Step 1: Extrair dados + subcomponentes**
 
 `navigation.ts` exporta a estrutura de navegação copiada do corpo atual do `Sidebar`:
 ```ts
@@ -1214,11 +1243,11 @@ export const NAVIGATION: NavGroup[] = [ /* conteúdo extraído do Sidebar */ ];
 ```
 `SidebarItem.tsx`: item único (ícone + label + active). `SidebarGroup.tsx`: título + itens (controla `aria-expanded`, estado colapsado). `Sidebar.tsx` itera `NAVIGATION` renderizando `SidebarGroup`.
 
-- [ ] **Step 2: Verificar**
+- [x] **Step 2: Verificar**
 
 Run: `npm test` (existe `ProtectedRoute.test` e testes de layout; se houver `Sidebar.test`, atualizar imports), `npm run typecheck`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -1233,15 +1262,15 @@ git commit -m "refactor(layout): extrair SidebarGroup/SidebarItem e dados de nav
 - Create: `src/components/ui/data-table/DataTablePagination.tsx`, `DataTableSkeleton.tsx`, `DataTableRowActions.tsx`, `DataTableEmpty.tsx`
 - Modify: `src/components/ui/data-table.tsx` (recompor usando os subcomponentes)
 
-- [ ] **Step 1: Extrair**
+- [x] **Step 1: Extrair**
 
 Mover para subcomponentes: paginação (a seção "Anterior/Próximo"/páginas), o skeleton de carregamento, o dropdown de ações por linha e o empty state. **API pública do componente não muda** (export `DataTable` com as props atuais usadas por `LeadTable`, `ContactTable`, `DealTable` etc.).
 
-- [ ] **Step 2: Verificar**
+- [x] **Step 2: Verificar**
 
 Run: `npm test` — `src/components/ui/data-table.test.tsx` existe e valida a API pública. Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -1259,7 +1288,7 @@ git commit -m "refactor(ui): desmembrar data-table em subcomponentes"
 - Modify: hooks de features (começar por leads — `useLeads.ts`; replicar em users, tenants, tasks, workflows, contacts, campaigns)
 - Modify: `src/features/ai/services/ai.service.ts` (unificar mapeamento de erro)
 
-- [ ] **Step 1: Criar helper**
+- [x] **Step 1: Criar helper**
 
 ```ts
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
@@ -1296,7 +1325,7 @@ export function useMutationDefaults<
 }
 ```
 
-- [ ] **Step 2: Aplicar em `useLeads.ts` (exemplo completo)**
+- [x] **Step 2: Aplicar em `useLeads.ts` (exemplo completo)**
 
 ```ts
 export function useCreateLead(companyId: string | null) {
@@ -1326,15 +1355,15 @@ export function useUpdateLead(companyId: string | null) {
 }
 ```
 
-- [ ] **Step 3: Replicar nos demais hooks**
+- [x] **Step 3: Replicar nos demais hooks**
 
 O mesmo esqueleto nos hooks de `users`, `tenants`, `tasks`, `workflows`, `contacts`, `campaigns` (arquivos `src/features/<feature>/hooks/*.ts`), substituindo as mensagens de sucesso atuais (mantendo o texto pt-BR atual de cada toast).
 
-- [ ] **Step 4: Unificar mapeamento de erro de IA**
+- [x] **Step 4: Unificar mapeamento de erro de IA**
 
 Em `ai.service.ts`, extrair um único `aiErrorMessage(status)` usado por `aiErrorMessage` e `aiAnalysisErrorMessage`.
 
-- [ ] **Step 5: Verificar e commit**
+- [x] **Step 5: Verificar e commit**
 
 Run: `npm test`, `npm run typecheck`, `npm run lint`, `npm run format` (ajustar asserts de toast/hooks nos testes existentes — `useLeads.test.ts` etc. validam toast e invalidação).
 ```bash
@@ -1356,14 +1385,14 @@ git commit -m "refactor(hooks): mutation helper único para onSuccess/invalidate
 - Modify: `backend/src/main/java/com/becommerce/crm/infrastructure/security/config/TenantContext.java` (se necessário para propagar companyId consistente)
 - Modify: services sem `TenantContext` (adicionar escopo de companyId)
 
-- [ ] **Step 1: Inventariar (as-is, antes de codar)**
+- [x] **Step 1: Inventariar (as-is, antes de codar)**
 
 ```bash
 rg -rn "requireCompanyAccess|TenantContext|@PreAuthorize" backend/src/main/java --glob '*.java' | Cut -d: -f1 | Sort-Object -Unique
 ```
 Expected: lista de controllers vs services vs gateways. Registrar: (a) recursos com tríplice verificação, (b) recursos com apenas 1-2 verificações (vendor lock potencial), (c) controllers onde `@PreAuthorize` já cobre a rota (ex.: leads usam `lead:read`).
 
-- [ ] **Step 2: Decidir o mecanismo único (anotar no commit) e garantir guardas**
+- [x] **Step 2: Decidir o mecanismo único (anotar no commit) e garantir guardas**
 
 Baseline de guarda ANTES de qualquer mudança:
 ```bash
@@ -1372,7 +1401,7 @@ Baseline de guarda ANTES de qualquer mudança:
 Expected: verde. Se alguma `*IsolationIT` já falhar, registrar no commit como débito e seguir só após env. verde.
 Mecanismo: adicionar `@CurrentCompanyId` + resolver que lê o `companyId` do JWT (uma única fonte) em vez de ler do corpo/path em cada controller. O service faz `tenantContext.require(companyId, recurso)` (mesma semântica do `requireCompanyAccess` atual, movida para o service). Controllers deixam de chamar `requireCompanyAccess` e passam a depender do `@PreAuthorize` + argumento `@CurrentCompanyId`.
 
-- [ ] **Step 3: Aplicar recurso a recurso (TDD por iteração)**
+- [x] **Step 3: Aplicar recurso a recurso (TDD por iteração)**
 
 Para cada recurso `X` do Step 1:
 1. Escrever/determinar teste de isolamento em `XIsolationIT` que tenta acessar recurso de OUTRA empresa → hoje já deve estar protegido por alguma das 3 camadas.
@@ -1381,7 +1410,7 @@ Para cada recurso `X` do Step 1:
 4. Rodar `.\mvnw.cmd test -Dtest='*IsolationIT'` — Expected: verde a cada passo.
 Começar por leads (mais coberto), seguir para contacts, opportunities, tasks, workflows, e os demais listados. Parar ao esgotar a lista — commits em lotes de ~1-3 recursos.
 
-- [ ] **Step 4: Verificação e commits**
+- [x] **Step 4: Verificação e commits**
 
 ```bash
 .\mvnw.cmd verify
@@ -1398,7 +1427,7 @@ Critério: sem duplicação nova (na listagem do Step 1, nenhum controller novo 
 
 **Files:** os apontados pela varredura.
 
-- [ ] **Step 1: Varredura de inconsistências**
+- [x] **Step 1: Varredura de inconsistências**
 
 ```bash
 rg -rn "throw new (IllegalArgumentException|IllegalStateException|BusinessRuleException)\(" backend/src/main/java --glob '*.java'
@@ -1407,13 +1436,13 @@ rg -rn "logger\.(error|warn)" backend/src/main/java --glob '*.java' | rg -v "com
 ```
 Expected: lista de (a) mensagens de regra em pt-BR com grafia inconsistente (ex.: "nao" vs "não", "registro"/"recurso"), (b) rotas PUT/PATCH sem `@Valid`, (c) logs sem contexto de empresa/usuário.
 
-- [ ] **Step 2: Curar por categoria**
+- [x] **Step 2: Curar por categoria**
 
 1. **Validação:** adicionar `@Valid` a rotas PUT/PATCH que recebem `@RequestBody` (dentro do grupo de segurança — sem tocar identidade). Teste: nenhum teste de validação existente quebra.
 2. **Mensagens:** normalizar mensagens de regra business para o padrão do `GlobalExceptionHandler`/`BusinessRuleException` já existente (memo do padrão que já domina; unificar o restante).
 3. **Logs:** adicionar `companyId={}` / `userId={}` aos logs de erro/warn que tratam recursos de tenant.
 
-- [ ] **Step 3: Verificar e commit**
+- [x] **Step 3: Verificar e commit**
 
 ```bash
 .\mvnw.cmd verify
@@ -1435,7 +1464,7 @@ git add -A && git commit -m "refactor(business): consistentes validações (@Val
 - Modify: `frontend/package.json` (devDependencies `@playwright/test`, scripts)
 - Modify: workflow CI existente (`.github/workflows/*.yml`) — adicionar job e2e
 
-- [ ] **Step 1: Instalar e configurar**
+- [x] **Step 1: Instalar e configurar**
 
 ```bash
 npm install -D @playwright/test
@@ -1476,11 +1505,11 @@ export default defineConfig({
 ```
 CI (.github/workflows/ci-e2e.yml): job `e2e` com `npm ci`, `npx playwright install --with-deps chromium`, `npm run e2e`, upload do HTML report em falha.
 
-- [ ] **Step 2: Smoke spec de prova**
+- [x] **Step 2: Smoke spec de prova**
 
 `frontend/e2e/smoke.spec.ts`: carrega `/login`, espera o título "Entrar"/"Login" (confirmar o texto real na página de login) e navega a `/health` (ou rota pública real). Rodar `npm run e2e` — Expected: 1 pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -1494,11 +1523,11 @@ git commit -m "test(e2e): setup Playwright com webServer e job no CI"
 **Files:**
 - Create: `frontend/e2e/auth.spec.ts`, `frontend/e2e/fixtures/users.json`
 
-- [ ] **Step 1: Seed de usuário E2E**
+- [x] **Step 1: Seed de usuário E2E**
 
 Criar usuário de teste (via API do backend ou script de seed) com e-mail fixo `e2e.admin@crm.local` e senha conhecida — ALTA prioridade definir via env `E2E_ADMIN_*` para não colidir com dados reais. `fixtures/users.json` guarda os valores usados em testes.
 
-- [ ] **Step 2: Specs**
+- [x] **Step 2: Specs**
 
 `auth.spec.ts`:
 ```ts
@@ -1526,11 +1555,11 @@ test("logout retorna ao login", async ({ page }) => {
 ```
 Criar helper `frontend/e2e/fixtures/auth.ts` com `login(page)` reutilizável. Ajustar labels/roles ao real (verificar `src/app/(auth)/login/page.tsx`).
 
-- [ ] **Step 3: Rodar e estabilizar**
+- [x] **Step 3: Rodar e estabilizar**
 
 `npm run e2e -- e2e/auth.spec.ts` — Expected: 3 pass. Se o fluxo requer OTP e o gateway exige 2FA só com `SESSION_IDLE_TIMEOUT` zerado — anotar env `AUTH_GATEWAY_SESSION_IDLE_TIMEOUT` para o teste não depender de exceção.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -1544,11 +1573,11 @@ git commit -m "test(e2e): fluxos de login, erro e logout"
 **Files:**
 - Create: `frontend/e2e/leads.spec.ts`, `frontend/e2e/pipeline.spec.ts`, `frontend/e2e/inbox.spec.ts`, `frontend/e2e/settings-roles.spec.ts`
 
-- [ ] **Step 1: Seed de dados (fixture)**
+- [x] **Step 1: Seed de dados (fixture)**
 
 Seed por API (`POST /backend/...` com token do E2E) ou via DB; `frontend/e2e/fixtures/seed.ts` cria: 1 empresa, 5 contatos, 3 leads em estágios variados. Limpar ao fim (afterAll) para isolamento.
 
-- [ ] **Step 2: Specs**
+- [x] **Step 2: Specs**
 
 `leads.spec.ts`:
 - Lista renderiza leads do seed (contar linhas da tabela)
@@ -1566,11 +1595,11 @@ Seed por API (`POST /backend/...` com token do E2E) ou via DB; `frontend/e2e/fix
 `settings-roles.spec.ts`:
 - Navegar a `/settings/roles` renderiza a lista; criar role com permissão; editar nome; remover
 
-- [ ] **Step 3: Rodar e estabilizar**
+- [x] **Step 3: Rodar e estabilizar**
 
 `npm run e2e` — Expected: todos pass. Tratar flakiness com `getByRole`/`toBeVisible` (nunca sleep), `expect.poll`/`toBeVisible({ timeout })` para estados pós-mutação.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -1584,15 +1613,15 @@ git commit -m "test(e2e): leads, pipeline, inbox e members/roles"
 **Files:**
 - Modify: `frontend/e2e/fixtures/*` e specs (ajustar conforme achados)
 
-- [ ] **Step 1: Auditoria de isolamento**
+- [x] **Step 1: Auditoria de isolamento**
 
 Garantir: nunca atingir produção (baseURL fixo local; nenhum `page.goto` com URL externa), `workers: 1`, seeds criados/limpos por spec, e nenhum teste que depende da ordem (executar com `--shard` ou ordem aleatória no CI: `npm run e2e -- --shard=1/1 --forbid-only`).
 
-- [ ] **Step 2: Pipeline no CI com artefatos**
+- [x] **Step 2: Pipeline no CI com artefatos**
 
 Roda full suite no PR job `e2e` (CI): retries 2, HTML report uploaded em falha. Validar rodando o job no CI (ou local com `process.env.CI=1 npm run e2e`).
 
-- [ ] **Step 3: Commit final**
+- [x] **Step 3: Commit final**
 
 ```bash
 npm run typecheck && npm run lint && npm test
