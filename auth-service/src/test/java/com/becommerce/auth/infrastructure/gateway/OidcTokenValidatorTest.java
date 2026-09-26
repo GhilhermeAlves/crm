@@ -155,6 +155,24 @@ class OidcTokenValidatorTest {
     }
 
     @Test
+    void shouldRejectAccessTokenWithoutAudienceAs401() {
+        // Keycloak sem audience mapper emite access token sem "aud": deve ser
+        // 401 (claim inválido), não UnsupportedOperationException → 500.
+        Jwt access = Jwt.withTokenValue("access-token")
+                .header("alg", "RS256")
+                .issuer(ISSUER)
+                .subject("sub-1")
+                .issuedAt(Instant.now().minusSeconds(60))
+                .expiresAt(Instant.now().plusSeconds(300))
+                .build();
+        when(jwtDecoder.decode("access-token")).thenReturn(access);
+
+        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
+                () -> validator.validateAccessToken("access-token"));
+        assertEquals(401, ex.getStatus());
+    }
+
+    @Test
     void shouldRejectBlankOrNullToken() {
         assertThrows(OidcGatewayException.class, () -> validator.validateIdToken("", "nonce-1"));
         assertThrows(OidcGatewayException.class, () -> validator.validateAccessToken(null));

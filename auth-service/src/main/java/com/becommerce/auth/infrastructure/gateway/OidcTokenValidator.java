@@ -86,7 +86,8 @@ public class OidcTokenValidator {
     }
 
     private void requireAudience(Jwt jwt, Set<String> allowed) {
-        List<String> audience = jwt.getAudience() == null ? List.of() : new ArrayList<>(jwt.getAudience());
+        // Mutável nos dois ramos: retainAll em List.of() lança UnsupportedOperationException (→ 500).
+        List<String> audience = jwt.getAudience() == null ? new ArrayList<>() : new ArrayList<>(jwt.getAudience());
         audience.retainAll(allowed);
         if (audience.isEmpty()) {
             throw invalid("aud");
