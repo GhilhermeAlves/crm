@@ -40,7 +40,9 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
   }) => {
     await page.goto("/login");
     await page.getByRole("button", { name: "Entrar com e-mail e senha" }).click();
-    await expect(page).toHaveURL(/realms\/CRM\/login-actions/);
+    // Keycloak 26 renderiza o form no próprio /openid-connect/auth.
+    await expect(page).toHaveURL(/realms\/CRM\//);
+    await expect(page.locator("#username")).toBeVisible();
 
     await page.locator("#username").fill("nao-existe@crm.local");
     await page.locator("#password").fill("senha-incorreta");

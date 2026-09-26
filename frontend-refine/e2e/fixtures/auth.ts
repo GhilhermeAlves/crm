@@ -32,7 +32,10 @@ export async function login(
   await page.getByRole("button", { name: "Entrar com e-mail e senha" }).click();
 
   // Página de login do Keycloak dev (hostname `keycloak`, tema padrão 26.x).
-  await expect(page).toHaveURL(/realms\/CRM\/login-actions/);
+  // O 26.x renderiza o form no próprio /openid-connect/auth (login-actions só
+  // aparece após o POST), então esperamos o campo, não a URL.
+  await expect(page).toHaveURL(/realms\/CRM\//);
+  await expect(page.locator("#username")).toBeVisible();
   await page.locator("#username").fill(credentials.email);
   await page.locator("#password").fill(credentials.password);
   await page.locator("#kc-login").click();
