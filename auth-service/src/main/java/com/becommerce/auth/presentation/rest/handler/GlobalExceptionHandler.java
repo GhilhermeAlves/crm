@@ -4,6 +4,8 @@ import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.gateway.RateLimitExceededException;
 import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.auth.infrastructure.observability.CorrelationIdContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,8 @@ import java.util.Map;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(CrmAccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleCrmAccessDenied(CrmAccessDeniedException ex) {
@@ -56,6 +60,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
+        // Sem este log o 500 fica invisível (só o correlationId volta ao cliente).
+        log.error("Unhandled exception: correlation={}", CorrelationIdContext.get(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(errorBody(500, null, "Internal Server Error", "Erro interno inesperado."));
     }
