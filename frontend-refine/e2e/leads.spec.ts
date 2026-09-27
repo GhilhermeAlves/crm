@@ -92,7 +92,7 @@ test.describe("Leads — seed E2E (Task 4.3)", () => {
 
     await page.getByRole("button", { name: "Filtros" }).click();
     await page.getByRole("combobox", { name: "Status" }).click();
-    await page.getByRole("option", { name: "Qualificado" }).click();
+    await page.getByRole("option", { name: "Qualificado", exact: true }).click();
 
     // Apenas o lead QUALIFIED do seed passa no filtro (criado pela spec é NEW).
     await expect(seedRows()).toHaveCount(1, { timeout: 15_000 });

@@ -165,6 +165,12 @@ services:
       AUTH_GATEWAY_SECURE_COOKIE: "false"
       AUTH_GATEWAY_SESSION_STORE: memory
       AUTH_GATEWAY_RATE_LIMIT_ENABLED: "true"
+      # Um único usuário E2E faz seed via API + login por spec: os limites de
+      # prod (60 req/min na API, 20 logins/min) estouram com 429. Mantém o rate
+      # limit ativo, com teto folgado; os limites reais têm testes unitários.
+      AUTH_GATEWAY_RATE_LIMIT_API: "2000"
+      AUTH_GATEWAY_RATE_LIMIT_AUTHORIZE: "200"
+      AUTH_GATEWAY_RATE_LIMIT_CALLBACK: "200"
       AUTH_GATEWAY_API_BACKEND_URL: http://backend:8080
       REDIS_HOST: redis
       REDIS_PORT: "6379"
