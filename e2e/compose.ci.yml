@@ -156,7 +156,10 @@ services:
       AUTH_KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/CRM/protocol/openid-connect/certs
       AUTH_GATEWAY_CLIENT_ID: crm-gateway
       AUTH_GATEWAY_CLIENT_SECRET: e2e-dev-crm-gateway-secret
-      AUTH_GATEWAY_REDIRECT_URI: http://localhost:8082/auth/callback
+      # Callback pela origem do app (rewrite /auth/** do Next -> gateway), como no
+      # prod atrás do nginx: o redirect relativo "/crm" do gateway cai no app, e
+      # não em localhost:8082/crm (auth-service direto -> 401 em JSON).
+      AUTH_GATEWAY_REDIRECT_URI: http://localhost:3000/auth/callback
       AUTH_GATEWAY_ALLOWED_REDIRECT_URIS: http://localhost:3000
       AUTH_GATEWAY_APP_BASE_URL: http://localhost:3000
       AUTH_GATEWAY_SECURE_COOKIE: "false"
