@@ -18,7 +18,10 @@ export function useCreateCatalogItem(companyId: string | null) {
   const { onSuccess, onError } = useMutationDefaults();
   return useMutation({
     mutationFn: (data: CatalogItemRequest) => CatalogService.create(companyId as string, data),
-    onSuccess: onSuccess({ successMessage: "Item criado", invalidateKeys: [["catalog", companyId]] }),
+    onSuccess: onSuccess({
+      successMessage: "Item criado",
+      invalidateKeys: [["catalog", companyId]],
+    }),
     onError: onError({ errorMessage: "Erro ao criar item" }),
   });
 }

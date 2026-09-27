@@ -78,10 +78,12 @@ export default function CatalogPage() {
     setDialogOpen(true);
   };
 
-  const resetPage = <T,>(setter: (v: T) => void) => (value: T) => {
-    setter(value);
-    setPage(0);
-  };
+  const resetPage =
+    <T,>(setter: (v: T) => void) =>
+    (value: T) => {
+      setter(value);
+      setPage(0);
+    };
 
   return (
     <div className="space-y-6">
@@ -109,7 +111,10 @@ export default function CatalogPage() {
           onClear={() => resetPage(setSearch)("")}
           className="sm:max-w-sm"
         />
-        <Select value={type} onValueChange={(v) => resetPage(setType)(v as CatalogItemType | typeof ALL)}>
+        <Select
+          value={type}
+          onValueChange={(v) => resetPage(setType)(v as CatalogItemType | typeof ALL)}
+        >
           <SelectTrigger className="w-full sm:w-40" aria-label="Tipo">
             <SelectValue />
           </SelectTrigger>
@@ -163,7 +168,9 @@ export default function CatalogPage() {
                         )}
                       </TableCell>
                       <TableCell>{CATALOG_TYPE_LABELS[item.type]}</TableCell>
-                      <TableCell className="text-muted-foreground">{item.category ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.category ?? "—"}
+                      </TableCell>
                       <TableCell className="text-right tabular-nums">{formatPrice(item)}</TableCell>
                       <TableCell>
                         <Badge variant={item.active ? "default" : "secondary"}>
@@ -177,7 +184,9 @@ export default function CatalogPage() {
                               variant="outline"
                               size="sm"
                               disabled={setActive.isPending}
-                              onClick={() => setActive.mutate({ id: item.id, active: !item.active })}
+                              onClick={() =>
+                                setActive.mutate({ id: item.id, active: !item.active })
+                              }
                             >
                               {item.active ? "Desativar" : "Ativar"}
                             </Button>
@@ -201,7 +210,9 @@ export default function CatalogPage() {
             ) : (
               <EmptyState
                 icon={<Package className="h-8 w-8" />}
-                title={q || type !== ALL || status !== ALL ? "Nenhum item encontrado" : "Catálogo vazio"}
+                title={
+                  q || type !== ALL || status !== ALL ? "Nenhum item encontrado" : "Catálogo vazio"
+                }
                 description={
                   q || type !== ALL || status !== ALL
                     ? "Ajuste a busca ou os filtros."
@@ -218,7 +229,12 @@ export default function CatalogPage() {
           <span className="text-muted-foreground">
             Página {page + 1} de {totalPages}
           </span>
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage(page - 1)}
+          >
             Anterior
           </Button>
           <Button

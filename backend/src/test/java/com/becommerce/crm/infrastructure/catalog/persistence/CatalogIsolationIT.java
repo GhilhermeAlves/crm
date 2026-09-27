@@ -15,6 +15,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -70,7 +71,12 @@ class CatalogIsolationIT {
             try (Statement st = conn.createStatement()) {
                 st.execute("INSERT INTO roles (name) VALUES ('ADMIN'), ('MANAGER'), ('AGENT'), ('VIEWER')");
             }
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V078__catalog_items.sql"));
+            // Arquivo inteiro num único execute (como o Flyway): o ScriptUtils divide em ';'
+            // e quebraria o bloco DO $$ ... $$ das permissões.
+            try (Statement st = conn.createStatement()) {
+                st.execute(new ClassPathResource("db/migration/V078__catalog_items.sql")
+                        .getContentAsString(StandardCharsets.UTF_8));
+            }
             try (Statement st = conn.createStatement()) {
                 st.execute("CREATE ROLE " + APP_USER + " LOGIN PASSWORD '" + APP_PASSWORD
                         + "' NOSUPERUSER NOBYPASSRLS");
