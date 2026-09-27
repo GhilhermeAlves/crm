@@ -618,7 +618,53 @@ git commit -m "feat(ai): add repository interfaces and JPA implementations for t
 
 ---
 
-## Task 4: Create Tool Provider Abstraction
+## ⚠️ Revisão 2026-09-27 — Tasks 4 a 11 SUBSTITUÍDAS (ler antes de executar)
+
+Tasks 1–3 estão prontas (`f742d4a`, `e439249`, `d21e05d`). Ao iniciar a Task 4 descobriu-se que o
+plano original foi escrito sem conhecer o que já existe no backend (sprint AI-03):
+
+| Plano original | Já existe no código |
+|---|---|
+| Task 4 `ToolProvider` (parse de tool call em texto) | `AiProvider.chatWithTools` com `ToolDefinition`/`ToolCall`/`ChatResult.toolCalls` estruturados (OpenAI) |
+| Task 5 classe `Tool` + 5 tools | `AiTool` + 11 read tools (`application/ai/tool/tools`) e 3 write tools |
+| Task 6 `ToolRegistry`/`ToolExecutor` | `AiToolRegistry` (checa permissão antes de executar) |
+| Loop de tools | `AiAssistantService.runToolLoop` (MAX_TOOL_ITERATIONS, auditoria) |
+
+Além disso: **não há catálogo de produtos/serviços** no domínio → `getProductInfo`/`getServiceInfo`
+ficam fora da Fase 1 (exigem um domínio novo).
+
+### 🔒 Decisão de segurança (a mais importante)
+
+As tools existentes buscam no **tenant inteiro** e foram feitas para o assistente interno (usuário do
+CRM com permissões). No WhatsApp quem fala com o agente é o **cliente externo**: reutilizá-las
+deixaria um cliente pedir dados de outros clientes (prompt injection → vazamento de dados pessoais / LGPD).
+
+**Regra:** tools do agente WhatsApp são **escopadas à conversa** — o contato da conversa é resolvido
+pelo backend (nunca vem dos argumentos do modelo) e toda consulta filtra por ele. Nenhuma tool de
+escrita na Fase 1.
+
+### Tasks revisadas
+
+- **R4 — `ConversationScopedTool`** (`application/ai/agent/`): interface própria (não `AiTool`),
+  `execute(ConversationToolContext ctx, Map args)` onde `ctx` = companyId + conversationId +
+  contactId resolvidos pelo backend. Testes: argumentos com outro `contactId` são ignorados.
+- **R5 — 3 tools read-only escopadas**: `getMyContactInfo` (dados do próprio contato),
+  `getMyOpportunities` (oportunidades abertas do contato), `getMyRecentActivities` (últimas N
+  atividades do contato). Reusam os repositórios existentes filtrando por `contactId`. Sem PII de
+  terceiros; campos internos (notas, responsável, score) omitidos.
+- **R6 — `AgentToolService`**: lista as tools habilitadas para a empresa (`agent_tool.enabled`,
+  opt-in; default nenhuma) e gera as `ToolDefinition`. Nome em `agent_tool.tool_name` deve casar
+  com uma tool registrada (valida no cadastro).
+- **R7 — Loop no `WhatsAppInboundAutoReplyProcessor`**: extrair o loop de `AiAssistantService` para
+  um componente reutilizável (limite de iterações), usado pelo auto-reply só quando houver tools
+  habilitadas. Cada chamada gravada em `agent_action_audit` (input, result, outcome).
+- **R8 — Endpoints admin** (`/companies/{id}/agent/tools`): listar, habilitar/desabilitar, ver
+  auditoria paginada. Permissão `ai:agent-config` (V072).
+- **R9 — Testes**: unitários por tool (escopo), IT do loop com provider fake, E2E opcional.
+
+---
+
+## Task 4 (ORIGINAL — substituída pela revisão acima): Create Tool Provider Abstraction
 
 **Files:**
 - Create: `backend/src/main/java/com/becommerce/crm/application/ai/port/output/ToolProvider.java`
