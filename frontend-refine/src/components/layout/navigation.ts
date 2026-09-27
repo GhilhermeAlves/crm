@@ -8,6 +8,7 @@ import {
   BarChart3,
   Building2,
   ClipboardList,
+  Package,
   HardDrive,
   Workflow as WorkflowIcon,
   Bell,
@@ -66,6 +67,12 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.TASKS,
         icon: ClipboardList,
         permission: "task:page:view",
+      },
+      {
+        label: "Catálogo",
+        href: ROUTES.CATALOG,
+        icon: Package,
+        permission: "catalog:read",
       },
       {
         label: "Timeline",
