@@ -33,6 +33,8 @@ import com.becommerce.crm.domain.lead.exception.DuplicateLeadException;
 import com.becommerce.crm.domain.lead.exception.LeadNotFoundException;
 import com.becommerce.crm.domain.campaign.exception.CampaignNotFoundException;
 import com.becommerce.crm.domain.template.exception.TemplateNotFoundException;
+import com.becommerce.crm.domain.catalog.exception.CatalogItemNotFoundException;
+import com.becommerce.crm.domain.catalog.exception.CatalogSkuConflictException;
 import com.becommerce.crm.domain.membership.exception.MembershipNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.PipelineNotFoundException;
@@ -167,6 +169,17 @@ public class GlobalExceptionHandler {
             ));
     }
 
+    @ExceptionHandler(CatalogSkuConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleCatalogSkuConflict(CatalogSkuConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(CompanyDeletionForbiddenException.class)
     public ResponseEntity<Map<String, Object>> handleCompanyDeletionForbiddenException(
         CompanyDeletionForbiddenException ex) {
@@ -289,7 +302,8 @@ public class GlobalExceptionHandler {
             ));
     }
 
-    @ExceptionHandler({CampaignNotFoundException.class, TemplateNotFoundException.class})
+    @ExceptionHandler({CampaignNotFoundException.class, TemplateNotFoundException.class,
+        CatalogItemNotFoundException.class})
     public ResponseEntity<Map<String, Object>> handleCampaignOrTemplateNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(

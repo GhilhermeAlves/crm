@@ -25,5 +25,6 @@ public enum AuditModule {
     CAMPAIGNS,
     TEMPLATES,
     OMNICHANNEL,
-    FOLLOWUPS
+    FOLLOWUPS,
+    CATALOG
 }

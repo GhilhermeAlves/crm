@@ -662,6 +662,22 @@ escrita na Fase 1.
   auditoria paginada. Permissão `ai:agent-config` (V072).
 - **R9 — Testes**: unitários por tool (escopo), IT do loop com provider fake, E2E opcional.
 
+### Catálogo de produtos/serviços (decidido pelo usuário em 2026-09-27)
+
+"Cliente só vê os próprios dados **e o catálogo de produtos**." O catálogo não existia; entra antes de R5:
+
+- **C1 — Migration V078 `catalog_items`**: company_id, `item_type` (`PRODUCT`/`SERVICE`), name,
+  description, category, `price` NUMERIC(12,2) + currency (default BRL), sku (único por empresa
+  quando presente), `active`, timestamps. RLS FORCE `tenant_isolation_policy`, grants `crm_app`.
+  Permissões `catalog:read` (todos os papéis) e `catalog:manage` (ADMIN/MANAGER).
+- **C2 — Backend**: domínio `CatalogItem`, port/JPA/impl, service com `@CurrentCompanyId`, REST
+  `/api/v1/companies/{id}/catalog` (listar com busca/filtro por tipo/ativo, criar, editar, ativar/desativar).
+- **C3 — Frontend**: página `/catalog` (tabela + dialog de criar/editar), item "Catálogo" na sidebar,
+  gated por `catalog:read`; ações por `catalog:manage`.
+- **R5 (acréscimo)**: tool `searchCatalog(query?, type?)` — só itens **ativos** da empresa da
+  conversa; campos expostos: name, type, category, description, price, currency. Não é escopada ao
+  contato (o catálogo é público para o cliente), mas é escopada ao tenant pelo backend.
+
 ---
 
 ## Task 4 (ORIGINAL — substituída pela revisão acima): Create Tool Provider Abstraction
