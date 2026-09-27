@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { LoginBrand } from "@/components/brand/LoginBrand";
-import { LoginForm } from "@/features/auth/components/LoginForm";
+import { LoginFormCredentials } from "@/features/auth/components/LoginFormCredentials";
 import { ProviderList } from "@/features/auth/components/ProviderList";
 
 /**
@@ -33,7 +33,7 @@ export default function LoginPage() {
             </span>
           </div>
         </div>
-        <LoginForm />
+        <LoginFormCredentials />
         <p className="text-center text-sm text-crm-text-secondary">
           <Link
             href="/register"
