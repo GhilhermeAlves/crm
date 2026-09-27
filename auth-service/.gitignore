@@ -3,3 +3,5 @@ target/
 .vscode/
 *.iml
 .env
+.superpowers
+
