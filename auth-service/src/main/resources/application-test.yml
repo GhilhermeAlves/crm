@@ -1,0 +1,28 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/crm
+          jwk-set-uri: http://localhost:8080/realms/crm/protocol/openid-connect/certs
+
+auth:
+  gateway:
+    issuer-uri: http://localhost:8080/realms/crm
+    authorization-endpoint: http://localhost:8080/realms/crm/protocol/openid-connect/auth
+    token-endpoint: http://localhost:8080/realms/crm/protocol/openid-connect/token
+    jwks-uri: http://localhost:8080/realms/crm/protocol/openid-connect/certs
+    client-id: crm-gateway
+    client-secret: test-secret
+    api-backend-url: http://localhost:8081
+  keycloak:
+    realm: crm
+    client-id: crm-client
+    client-secret: test-secret
+    admin:
+      base-url: http://localhost:8080
+      realm: CRM
+      client-id: crm-keycloak-admin
+      client-secret: test-secret
+  internal:
+    api-token: test-token
