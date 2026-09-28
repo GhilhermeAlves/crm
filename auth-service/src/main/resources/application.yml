@@ -50,8 +50,8 @@ spring:
       resourceserver:
         jwt:
           # JWKS sempre do Keycloak — o auth-service não possui JWKS próprio.
-          issuer-uri: ${AUTH_KEYCLOAK_ISSUER_URI:}
-          jwk-set-uri: ${AUTH_KEYCLOAK_JWKS_URI:}
+          issuer-uri: ${AUTH_KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/crm}
+          jwk-set-uri: ${AUTH_KEYCLOAK_JWKS_URI:http://localhost:8080/realms/crm/protocol/openid-connect/certs}
 
   # Redis — usado pelo RedisGatewaySessionStore (auth.gateway.session-store=redis).
   # A conexão é lazy (Lettuce); o store em memória não a utiliza. Atenção: o
