@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Profile;
 
 @Component
+@Profile("!test")
 public class KeycloakAdminClientImpl implements KeycloakAuthPort {
 
     private final String serverUrl;
