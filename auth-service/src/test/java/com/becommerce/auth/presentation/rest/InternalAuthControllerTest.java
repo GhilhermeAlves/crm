@@ -27,6 +27,7 @@ import org.springframework.core.Ordered;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -49,6 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({SecurityConfig.class, KeycloakIdentityConverter.class, JwtAuthenticationEntryPoint.class,
         GlobalExceptionHandler.class, InternalAuthControllerTest.TestInternalApiTokenFilterConfig.class})
 @org.springframework.test.context.TestPropertySource(properties = "auth.internal.api-token=valid-token")
+@ActiveProfiles("test")
 class InternalAuthControllerTest {
 
     private static final UUID USER_ID = UUID.fromString("974bbedb-298d-4ec6-a037-514b24c248e4");

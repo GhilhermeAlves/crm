@@ -20,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -43,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(OidcGatewayController.class)
 @Import({SecurityConfig.class, KeycloakIdentityConverter.class, JwtAuthenticationEntryPoint.class,
         GlobalExceptionHandler.class})
+@ActiveProfiles("test")
 class OidcGatewayControllerTest {
 
     private static final String AUTH_URI = "https://srv1348261.hstgr.cloud/realms/CRM/protocol/openid-connect/auth?response_type=code";
