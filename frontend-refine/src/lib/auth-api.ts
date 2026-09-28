@@ -10,7 +10,7 @@ export interface LoginResponse {
  */
 export async function loginWithCredentials(
   email: string,
-  password: string
+  password: string,
 ): Promise<LoginResponse> {
   const response = await fetch("/auth/login", {
     method: "POST",
