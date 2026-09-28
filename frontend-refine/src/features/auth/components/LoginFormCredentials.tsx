@@ -17,11 +17,7 @@ export function LoginFormCredentials() {
 
   return (
     <div className="space-y-4">
-      <Button
-        onClick={handleClick}
-        variant="crm"
-        className="w-full"
-      >
+      <Button onClick={handleClick} variant="crm" className="w-full">
         <LogIn className="h-4 w-4" />
         Entrar com e-mail e senha
       </Button>
