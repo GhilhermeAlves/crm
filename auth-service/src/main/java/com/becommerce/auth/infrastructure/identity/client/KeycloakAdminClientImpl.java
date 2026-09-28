@@ -7,10 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.http.MediaType;
-import org.springframework.context.annotation.Profile;
 
 @Component
-@Profile("!test")
 public class KeycloakAdminClientImpl implements KeycloakAuthPort {
 
     private final String serverUrl;
@@ -20,12 +18,12 @@ public class KeycloakAdminClientImpl implements KeycloakAuthPort {
     private final RestClient restClient;
 
     public KeycloakAdminClientImpl(
-            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri,
+            @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:http://localhost:8080}") String issuerUri,
             @Value("${app.keycloak.realm:master}") String realm,
             @Value("${app.keycloak.client-id:}") String clientId,
             @Value("${app.keycloak.client-secret:}") String clientSecret,
             RestClient.Builder restClientBuilder) {
-        this.serverUrl = issuerUri.replaceAll("/realms/.*$", "");
+        this.serverUrl = (issuerUri != null && !issuerUri.isBlank()) ? issuerUri.replaceAll("/realms/.*$", "") : "http://localhost:8080";
         this.realm = realm;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
