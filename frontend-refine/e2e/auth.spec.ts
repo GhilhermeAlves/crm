@@ -38,22 +38,17 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     page,
   }) => {
     await page.goto("/login");
+
+    // Preenche formulário direto com credenciais inválidas
+    await page.locator('input[type="email"]').fill("nao-existe@crm.local");
+    await page.locator('input[type="password"]').fill("senha-incorreta");
     await page.getByRole("button", { name: "Entrar com e-mail e senha" }).click();
 
-    // Redirecionamento para Keycloak
-    await expect(page).toHaveURL(/realms\/CRM\//);
-    await expect(page.locator("#username")).toBeVisible();
-
-    // Preenche com credenciais inválidas
-    await page.locator("#username").fill("nao-existe@crm.local");
-    await page.locator("#password").fill("senha-incorreta");
-    await page.locator("#kc-login").click();
-
-    // Keycloak exibe erro e permanece na página de login
+    // Formulário exibe erro e permanece na página de login
     await expect(
-      page.getByText(/Invalid username or password/i),
+      page.getByText(/erro|falha|invalid/i),
     ).toBeVisible({ timeout: 15_000 });
-    await expect(page).toHaveURL(/realms\/CRM\/login-actions/);
+    await expect(page).toHaveURL(/\/login/);
 
     // crm_session NÃO foi criado
     const cookies = await page.context().cookies();
