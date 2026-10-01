@@ -5,7 +5,7 @@ import com.becommerce.crm.application.ai.port.output.AiActionRepository;
 import com.becommerce.crm.application.ai.port.output.AiChatRepository;
 import com.becommerce.crm.application.ai.tool.AiTool;
 import com.becommerce.crm.application.ai.tool.AiToolRegistry;
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.domain.ai.AiAction;
 import com.becommerce.crm.domain.ai.AiActionInvalidStateException;
 import com.becommerce.crm.domain.ai.AiActionNotFoundException;

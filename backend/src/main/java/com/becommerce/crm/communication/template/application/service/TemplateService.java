@@ -1,14 +1,14 @@
 package com.becommerce.crm.communication.template.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.communication.template.application.dto.CreateTemplateRequest;
 import com.becommerce.crm.communication.template.application.dto.TemplateResponse;
 import com.becommerce.crm.communication.template.application.dto.UpdateTemplateRequest;
 import com.becommerce.crm.communication.template.application.port.input.TemplateUseCase;
 import com.becommerce.crm.communication.template.application.port.output.TemplateRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.communication.template.domain.MessageTemplate;
 import com.becommerce.crm.communication.template.domain.exception.TemplateNotFoundException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;

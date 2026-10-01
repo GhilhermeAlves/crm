@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import com.becommerce.crm.application.audit.service.AuditLogNotFoundException;
+import com.becommerce.crm.analytics.audit.application.service.AuditLogNotFoundException;
 import com.becommerce.crm.masterdata.company.domain.CompanyAlreadyExistsException;
 import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
 import com.becommerce.crm.masterdata.company.domain.CompanyDeletionForbiddenException;

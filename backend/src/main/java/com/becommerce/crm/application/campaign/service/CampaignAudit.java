@@ -1,8 +1,8 @@
 package com.becommerce.crm.application.campaign.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 
 import java.util.Map;
 import java.util.UUID;

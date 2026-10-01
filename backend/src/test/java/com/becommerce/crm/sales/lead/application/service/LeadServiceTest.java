@@ -1,6 +1,6 @@
 package com.becommerce.crm.sales.lead.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.sales.lead.application.dto.CreateLeadRequest;

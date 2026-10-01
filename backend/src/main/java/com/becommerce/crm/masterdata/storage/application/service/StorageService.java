@@ -1,13 +1,13 @@
 package com.becommerce.crm.masterdata.storage.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.company.application.service.CompanyQuotaService;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageDownload;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
 import com.becommerce.crm.masterdata.storage.application.port.output.StorageRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.masterdata.storage.domain.StorageObject;
 import com.becommerce.crm.masterdata.storage.domain.exception.StorageObjectNotFoundException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;

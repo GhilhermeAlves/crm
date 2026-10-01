@@ -1,6 +1,6 @@
 package com.becommerce.crm.sales.followup.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.sales.followup.application.event.FollowUpExecutionEvent;
 import com.becommerce.crm.sales.followup.application.port.out.FollowUpRepository;
 import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;

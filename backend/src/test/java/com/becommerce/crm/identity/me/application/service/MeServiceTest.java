@@ -2,7 +2,7 @@ package com.becommerce.crm.identity.me.application.service;
 
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.identity.me.application.dto.CompanyOptionResponse;
 import com.becommerce.crm.identity.me.application.port.output.MyCompanyProjection;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;

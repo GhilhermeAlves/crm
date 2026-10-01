@@ -1,6 +1,6 @@
 package com.becommerce.crm.masterdata.contact.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.company.application.service.CompanyQuotaService;
 import com.becommerce.crm.masterdata.contact.application.dto.response.ContactResponse;
 import com.becommerce.crm.masterdata.contact.application.dto.request.CreateContactRequest;

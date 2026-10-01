@@ -1,14 +1,14 @@
 package com.becommerce.crm.identity.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.identity.application.dto.UserPermissionsResponse;
 import com.becommerce.crm.identity.application.port.input.UserPermissionOverrideUseCase;
 import com.becommerce.crm.identity.application.port.output.PermissionRepository;
 import com.becommerce.crm.identity.application.port.output.UserPermissionOverrideRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;

@@ -11,7 +11,7 @@ import com.becommerce.crm.application.ai.port.output.AiChatRepository;
 import com.becommerce.crm.application.ai.port.output.AiProvider;
 import com.becommerce.crm.application.ai.tool.AiToolRegistry;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.domain.ai.AiConversation;
 import com.becommerce.crm.domain.ai.AiConversationNotFoundException;
 import com.becommerce.crm.domain.ai.AiMessage;

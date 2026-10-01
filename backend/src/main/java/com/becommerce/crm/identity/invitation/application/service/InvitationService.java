@@ -1,6 +1,6 @@
 package com.becommerce.crm.identity.invitation.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
@@ -14,8 +14,8 @@ import com.becommerce.crm.communication.notification.application.EmailSender;
 import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
 import com.becommerce.crm.masterdata.company.domain.CompanyStatus;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.UserRole;

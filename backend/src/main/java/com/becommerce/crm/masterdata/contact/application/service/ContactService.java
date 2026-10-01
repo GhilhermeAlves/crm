@@ -1,14 +1,14 @@
 package com.becommerce.crm.masterdata.contact.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.company.application.service.CompanyQuotaService;
 import com.becommerce.crm.masterdata.contact.application.dto.response.ContactResponse;
 import com.becommerce.crm.masterdata.contact.application.dto.request.CreateContactRequest;
 import com.becommerce.crm.masterdata.contact.application.dto.request.UpdateContactRequest;
 import com.becommerce.crm.masterdata.contact.application.port.in.ContactUseCase;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;

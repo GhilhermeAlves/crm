@@ -2,7 +2,7 @@ package com.becommerce.crm.identity.membership.application.service;
 
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.identity.membership.application.dto.MemberResponse;
 import com.becommerce.crm.identity.membership.application.dto.MembershipResponse;
 import com.becommerce.crm.identity.membership.application.port.output.MemberProjection;

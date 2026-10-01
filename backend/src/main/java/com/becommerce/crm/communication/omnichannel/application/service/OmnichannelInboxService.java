@@ -1,7 +1,7 @@
 package com.becommerce.crm.communication.omnichannel.application.service;
 
 import com.becommerce.crm.shared.application.dto.PageResponse;
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.communication.omnichannel.application.dto.ConversationDetailResponse;
 import com.becommerce.crm.communication.omnichannel.application.dto.ConversationResponse;
 import com.becommerce.crm.communication.omnichannel.application.dto.MessageResponse;
@@ -10,8 +10,8 @@ import com.becommerce.crm.communication.omnichannel.application.port.output.Omni
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppProvider;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.Message;

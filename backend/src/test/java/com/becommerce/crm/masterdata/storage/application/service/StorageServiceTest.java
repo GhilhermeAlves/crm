@@ -1,6 +1,6 @@
 package com.becommerce.crm.masterdata.storage.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.company.application.service.CompanyQuotaService;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageDownload;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;

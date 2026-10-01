@@ -1,6 +1,6 @@
 package com.becommerce.crm.masterdata.catalog.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.catalog.application.dto.CatalogItemRequest;
 import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;

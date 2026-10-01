@@ -1,11 +1,11 @@
 package com.becommerce.crm.application.ai.context;
 
-import com.becommerce.crm.application.customer360.dto.ContactSummaryResponse;
-import com.becommerce.crm.application.customer360.dto.Customer360Response;
-import com.becommerce.crm.application.customer360.dto.NextActionResponse;
-import com.becommerce.crm.application.customer360.dto.OpportunityItemResponse;
-import com.becommerce.crm.application.customer360.dto.TaskItemResponse;
-import com.becommerce.crm.application.customer360.service.Customer360Service;
+import com.becommerce.crm.analytics.customer360.application.dto.ContactSummaryResponse;
+import com.becommerce.crm.analytics.customer360.application.dto.Customer360Response;
+import com.becommerce.crm.analytics.customer360.application.dto.NextActionResponse;
+import com.becommerce.crm.analytics.customer360.application.dto.OpportunityItemResponse;
+import com.becommerce.crm.analytics.customer360.application.dto.TaskItemResponse;
+import com.becommerce.crm.analytics.customer360.application.service.Customer360Service;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

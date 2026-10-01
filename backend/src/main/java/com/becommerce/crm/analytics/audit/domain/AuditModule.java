@@ -1,0 +1,30 @@
+package com.becommerce.crm.analytics.audit.domain;
+
+public enum AuditModule {
+    AUTH,
+    TENANTS,
+    USERS,
+    ROLES,
+    PERMISSIONS,
+    CUSTOMERS,
+    CONTACTS,
+    LEADS,
+    PIPELINE,
+    ACTIVITIES,
+    TASKS,
+    CALENDAR,
+    FINANCE,
+    REPORTS,
+    SETTINGS,
+    AUDIT,
+    MEMBERSHIPS,
+    INVITATIONS,
+    NOTIFICATIONS,
+    SYSTEM,
+    AI,
+    CAMPAIGNS,
+    TEMPLATES,
+    OMNICHANNEL,
+    FOLLOWUPS,
+    CATALOG
+}

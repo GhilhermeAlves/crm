@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.campaign.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.application.campaign.dto.CreateCampaignRequest;
 import com.becommerce.crm.application.campaign.dto.CampaignResponse;
 import com.becommerce.crm.application.campaign.dto.ScheduleCampaignRequest;
@@ -10,7 +10,7 @@ import com.becommerce.crm.application.campaign.port.output.AudienceResolver;
 import com.becommerce.crm.application.campaign.port.output.CampaignEventRepository;
 import com.becommerce.crm.application.campaign.port.output.CampaignRepository;
 import com.becommerce.crm.shared.application.dto.PageResponse;
-import com.becommerce.crm.domain.audit.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.domain.campaign.AudienceType;
 import com.becommerce.crm.domain.campaign.Campaign;
 import com.becommerce.crm.domain.campaign.CampaignStatus;

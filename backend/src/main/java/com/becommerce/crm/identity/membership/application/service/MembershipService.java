@@ -1,6 +1,6 @@
 package com.becommerce.crm.identity.membership.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.membership.application.dto.MemberResponse;
@@ -13,8 +13,8 @@ import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.UserRole;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.identity.domain.exception.RoleNotFoundException;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.identity.membership.domain.Membership;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
 import org.slf4j.Logger;

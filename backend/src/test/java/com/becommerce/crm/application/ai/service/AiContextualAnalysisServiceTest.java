@@ -6,10 +6,10 @@ import com.becommerce.crm.application.ai.dto.AiAnalysisResponse;
 import com.becommerce.crm.application.ai.dto.AiContextPayload;
 import com.becommerce.crm.application.ai.dto.AiFact;
 import com.becommerce.crm.application.ai.port.output.AiProvider;
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.application.customer360.service.Customer360Service;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.customer360.application.service.Customer360Service;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -170,14 +170,14 @@ class AiContextualAnalysisServiceTest {
                 eq("AiAnalysis"), eq(recordId.toString()), any(), eq(userId), any());
     }
 
-    private com.becommerce.crm.application.customer360.dto.Customer360Response customer360() {
-        var contact = new com.becommerce.crm.application.customer360.dto.ContactSummaryResponse(
+    private com.becommerce.crm.analytics.customer360.application.dto.Customer360Response customer360() {
+        var contact = new com.becommerce.crm.analytics.customer360.application.dto.ContactSummaryResponse(
                 recordId, "Ana Souza", "ana@e.com", "11-99999", "nota", "AS",
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now(), false, null);
-        return new com.becommerce.crm.application.customer360.dto.Customer360Response(
+        return new com.becommerce.crm.analytics.customer360.application.dto.Customer360Response(
                 companyId, contact, 1, new java.math.BigDecimal("5000"),
                 List.of(), List.of(), List.of(),
-                new com.becommerce.crm.application.customer360.dto.NextActionResponse(
+                new com.becommerce.crm.analytics.customer360.application.dto.NextActionResponse(
                         "FOLLOW_UP", "Agendar follow-up", "Retomar contato.", 80));
     }
 }

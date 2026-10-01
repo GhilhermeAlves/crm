@@ -3,7 +3,7 @@ package com.becommerce.crm.sales.activity.application.service;
 import com.becommerce.crm.sales.activity.application.dto.CreateActivityRequest;
 import com.becommerce.crm.sales.activity.application.dto.UpdateActivityRequest;
 import com.becommerce.crm.sales.activity.application.port.out.ActivityRepository;
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
 import com.becommerce.crm.sales.activity.domain.Activity;

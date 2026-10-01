@@ -1,6 +1,6 @@
 package com.becommerce.crm.sales.pipeline.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.sales.pipeline.application.dto.CreatePipelineRequest;
 import com.becommerce.crm.sales.pipeline.application.dto.PipelineMetricsResponse;
 import com.becommerce.crm.sales.pipeline.application.dto.PipelineResponse;

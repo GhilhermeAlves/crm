@@ -1,6 +1,6 @@
 package com.becommerce.crm.sales.pipeline.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.sales.pipeline.application.dto.CreateOpportunityRequest;
 import com.becommerce.crm.sales.pipeline.application.dto.MarkLostRequest;

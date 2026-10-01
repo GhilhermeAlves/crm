@@ -1,0 +1,171 @@
+package com.becommerce.crm.analytics.audit.infrastructure.listener;
+
+import com.becommerce.crm.analytics.audit.application.service.AuditService;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditLog;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
+import com.becommerce.crm.masterdata.company.domain.event.CompanyCreatedEvent;
+import com.becommerce.crm.masterdata.company.domain.event.CompanyDeletedEvent;
+import com.becommerce.crm.masterdata.company.domain.event.CompanyUpdatedEvent;
+import com.becommerce.crm.identity.domain.event.*;
+import com.becommerce.crm.analytics.audit.infrastructure.context.AuditContext;
+import com.becommerce.crm.analytics.audit.infrastructure.context.AuditContext.AuditContextData;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+import java.util.UUID;
+
+@Component
+public class AuditEventListener {
+
+    private final AuditService auditService;
+
+    public AuditEventListener(AuditService auditService) {
+        this.auditService = auditService;
+    }
+
+    @Async
+    @EventListener
+    public void handleUserCreated(UserCreatedEvent event) {
+        AuditContextData context = AuditContext.get();
+        UUID companyId = context != null ? context.companyId() : event.companyId();
+
+        // Usuário criado via self-service (Sprint 8.3) ainda não tem empresa
+        // (company_id NULL até concluir o onboarding). Sem tenant não há o que
+        // auditar em uma empresa e o INSERT em audit_logs violaria a RLS
+        // (tenant_isolation_policy) — pula o registro de auditoria.
+        if (companyId == null) {
+            return;
+        }
+
+        AuditLog auditLog = AuditLog.create(companyId, AuditAction.CREATE, AuditModule.USERS);
+        auditLog.setUserId(event.userId());
+        auditLog.setEntityName("User");
+        auditLog.setEntityId(event.userId().toString());
+        auditLog.setDescription("Usuário criado: " + event.email());
+        auditLog.setNewValues(Map.of("email", event.email()));
+
+        if (context != null) {
+            auditLog.setIpAddress(context.ipAddress());
+            auditLog.setUserAgent(context.userAgent());
+        }
+
+        recordWithTenantContext(companyId, auditLog);
+    }
+
+    @Async
+    @EventListener
+    public void handlePasswordChanged(PasswordChangedEvent event) {
+        AuditLog auditLog = AuditLog.create(event.companyId(), AuditAction.CHANGE_PASSWORD, AuditModule.AUTH);
+        auditLog.setUserId(event.userId());
+        auditLog.setEntityName("User");
+        auditLog.setEntityId(event.userId().toString());
+        auditLog.setDescription("Senha alterada com sucesso");
+
+        AuditContextData context = AuditContext.get();
+        if (context != null) {
+            auditLog.setIpAddress(context.ipAddress());
+            auditLog.setUserAgent(context.userAgent());
+        }
+
+        recordWithTenantContext(event.companyId(), auditLog);
+    }
+
+    @Async
+    @EventListener
+    public void handlePasswordResetRequested(PasswordResetRequestedEvent event) {
+        AuditLog auditLog = AuditLog.create(event.companyId(), AuditAction.RESET_PASSWORD, AuditModule.AUTH);
+        auditLog.setUserId(event.userId());
+        auditLog.setEntityName("User");
+        auditLog.setEntityId(event.userId().toString());
+        auditLog.setDescription("Solicitação de redefinição de senha");
+
+        recordWithTenantContext(event.companyId(), auditLog);
+    }
+
+    @Async
+    @EventListener
+    public void handleCompanyCreated(CompanyCreatedEvent event) {
+        AuditContextData context = AuditContext.get();
+        UUID companyId = context != null ? context.companyId() : event.companyId();
+
+        AuditLog auditLog = AuditLog.create(companyId, AuditAction.CREATE, AuditModule.TENANTS);
+        auditLog.setEntityName("Company");
+        auditLog.setEntityId(event.companyId().toString());
+        auditLog.setDescription("Empresa criada: " + event.companyName());
+        auditLog.setNewValues(Map.of(
+            "companyName", event.companyName(),
+            "cnpj", event.cnpj(),
+            "email", event.email()
+        ));
+
+        if (context != null) {
+            auditLog.setUserId(context.userId());
+            auditLog.setUserName(context.userName());
+            auditLog.setUserEmail(context.userEmail());
+            auditLog.setIpAddress(context.ipAddress());
+            auditLog.setUserAgent(context.userAgent());
+        }
+
+        recordWithTenantContext(companyId, auditLog);
+    }
+
+    @Async
+    @EventListener
+    public void handleCompanyUpdated(CompanyUpdatedEvent event) {
+        AuditContextData context = AuditContext.get();
+        UUID companyId = context != null ? context.companyId() : event.companyId();
+
+        AuditLog auditLog = AuditLog.create(companyId, AuditAction.UPDATE, AuditModule.TENANTS);
+        auditLog.setEntityName("Company");
+        auditLog.setEntityId(event.companyId().toString());
+        auditLog.setDescription("Empresa atualizada: " + event.companyName());
+        auditLog.setNewValues(Map.of("companyName", event.companyName()));
+
+        if (context != null) {
+            auditLog.setUserId(context.userId());
+            auditLog.setUserName(context.userName());
+            auditLog.setUserEmail(context.userEmail());
+            auditLog.setIpAddress(context.ipAddress());
+            auditLog.setUserAgent(context.userAgent());
+        }
+
+        recordWithTenantContext(companyId, auditLog);
+    }
+
+    @Async
+    @EventListener
+    public void handleCompanyDeleted(CompanyDeletedEvent event) {
+        AuditContextData context = AuditContext.get();
+        UUID companyId = context != null ? context.companyId() : event.companyId();
+
+        AuditLog auditLog = AuditLog.create(companyId, AuditAction.DELETE, AuditModule.TENANTS);
+        auditLog.setEntityName("Company");
+        auditLog.setEntityId(event.companyId().toString());
+        auditLog.setDescription("Empresa excluída: " + event.companyName());
+
+        if (context != null) {
+            auditLog.setUserId(context.userId());
+            auditLog.setUserName(context.userName());
+            auditLog.setUserEmail(context.userEmail());
+            auditLog.setIpAddress(context.ipAddress());
+            auditLog.setUserAgent(context.userAgent());
+        }
+
+        recordWithTenantContext(companyId, auditLog);
+    }
+
+    private void recordWithTenantContext(UUID companyId, AuditLog auditLog) {
+        try {
+            if (companyId != null) {
+                TenantContext.setCompanyId(companyId);
+            }
+            auditService.recordAudit(auditLog);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+}

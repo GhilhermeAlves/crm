@@ -1,13 +1,13 @@
 package com.becommerce.crm.sales.followup.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.sales.followup.application.dto.FollowUpSequenceRequest;
 import com.becommerce.crm.sales.followup.application.dto.FollowUpSequenceResponse;
 import com.becommerce.crm.sales.followup.application.port.in.FollowUpSequenceUseCase;
 import com.becommerce.crm.sales.followup.application.port.out.FollowUpSequenceRepository;
 import com.becommerce.crm.shared.application.dto.PageResponse;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.sales.followup.domain.FollowUpSequence;
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpSequenceNotFoundException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;

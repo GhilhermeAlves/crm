@@ -1,12 +1,12 @@
 package com.becommerce.crm.masterdata.catalog.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.catalog.application.dto.CatalogItemRequest;
 import com.becommerce.crm.masterdata.catalog.application.dto.CatalogItemResponse;
 import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
 import com.becommerce.crm.shared.application.dto.PageResponse;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogItemNotFoundException;

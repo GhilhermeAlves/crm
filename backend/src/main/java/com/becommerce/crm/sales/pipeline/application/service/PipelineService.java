@@ -1,6 +1,6 @@
 package com.becommerce.crm.sales.pipeline.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.sales.pipeline.application.dto.CreatePipelineRequest;
 import com.becommerce.crm.sales.pipeline.application.dto.CreateStageRequest;
 import com.becommerce.crm.sales.pipeline.application.dto.PipelineMetricsResponse;
@@ -13,8 +13,8 @@ import com.becommerce.crm.sales.pipeline.application.port.in.PipelineUseCase;
 import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
 import com.becommerce.crm.sales.pipeline.application.port.out.PipelineRepository;
 import com.becommerce.crm.sales.pipeline.application.port.out.StageRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.sales.pipeline.domain.Opportunity;
 import com.becommerce.crm.sales.pipeline.domain.Pipeline;
 import com.becommerce.crm.sales.pipeline.domain.Stage;

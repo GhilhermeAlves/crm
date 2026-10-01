@@ -1,14 +1,14 @@
 package com.becommerce.crm.sales.followup.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.sales.followup.application.dto.FollowUpRequest;
 import com.becommerce.crm.sales.followup.application.dto.FollowUpResponse;
 import com.becommerce.crm.sales.followup.application.port.in.FollowUpUseCase;
 import com.becommerce.crm.sales.followup.application.port.out.FollowUpRepository;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.sales.followup.domain.FollowUp;
 import com.becommerce.crm.sales.followup.domain.FollowUpAction;
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpNotFoundException;

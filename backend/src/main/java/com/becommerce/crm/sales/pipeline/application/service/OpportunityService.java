@@ -1,6 +1,6 @@
 package com.becommerce.crm.sales.pipeline.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.sales.pipeline.application.dto.CreateOpportunityRequest;
@@ -14,8 +14,8 @@ import com.becommerce.crm.sales.pipeline.application.port.in.OpportunityUseCase;
 import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
 import com.becommerce.crm.sales.pipeline.application.port.out.PipelineRepository;
 import com.becommerce.crm.sales.pipeline.application.port.out.StageRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.sales.pipeline.domain.Opportunity;

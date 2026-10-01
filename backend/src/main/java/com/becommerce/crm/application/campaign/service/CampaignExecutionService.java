@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.campaign.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.application.campaign.dto.ExecutionResponse;
 import com.becommerce.crm.application.campaign.port.output.AudienceResolver;
 import com.becommerce.crm.application.campaign.port.output.CampaignChannelDispatcher;
@@ -8,7 +8,7 @@ import com.becommerce.crm.application.campaign.port.output.CampaignEventReposito
 import com.becommerce.crm.application.campaign.port.output.CampaignExecutionRepository;
 import com.becommerce.crm.application.campaign.port.output.CampaignRepository;
 import com.becommerce.crm.communication.template.application.port.output.TemplateRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.domain.campaign.Campaign;
 import com.becommerce.crm.domain.campaign.CampaignChannel;
 import com.becommerce.crm.domain.campaign.CampaignExecution;
@@ -130,7 +130,7 @@ public class CampaignExecutionService {
                     .toList();
             eventRepository.insertAllIgnoringConflicts(events);
 
-            auditor.record(companyId, AuditAction.CUSTOM, com.becommerce.crm.domain.audit.AuditModule.CAMPAIGNS,
+            auditor.record(companyId, AuditAction.CUSTOM, com.becommerce.crm.analytics.audit.domain.AuditModule.CAMPAIGNS,
                     "Campaign", campaignId.toString(),
                     "Execução iniciada (" + recipients.size() + " destinatários)", actorUserId,
                     Map.of("executionId", savedExecution.getId().toString()));
@@ -262,7 +262,7 @@ public class CampaignExecutionService {
             campaignRepository.completeIfRunning(execution.getCampaignId());
 
             auditor.record(companyId, AuditAction.CUSTOM,
-                    com.becommerce.crm.domain.audit.AuditModule.CAMPAIGNS, "Campaign",
+                    com.becommerce.crm.analytics.audit.domain.AuditModule.CAMPAIGNS, "Campaign",
                     execution.getCampaignId().toString(),
                     "Campanha concluída (falhas: " + execution.getFailedCount() + ")",
                     null, Map.of("executionId", execution.getId().toString()));

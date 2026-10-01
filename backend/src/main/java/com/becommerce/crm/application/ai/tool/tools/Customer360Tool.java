@@ -3,7 +3,7 @@ package com.becommerce.crm.application.ai.tool.tools;
 import com.becommerce.crm.application.ai.tool.AbstractAiReadTool;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
-import com.becommerce.crm.application.customer360.service.Customer360Service;
+import com.becommerce.crm.analytics.customer360.application.service.Customer360Service;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

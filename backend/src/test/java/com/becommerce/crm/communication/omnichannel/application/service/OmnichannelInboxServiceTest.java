@@ -1,9 +1,9 @@
 package com.becommerce.crm.communication.omnichannel.application.service;
 
 import com.becommerce.crm.shared.application.dto.PageResponse;
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.communication.omnichannel.application.dto.ConversationResponse;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;

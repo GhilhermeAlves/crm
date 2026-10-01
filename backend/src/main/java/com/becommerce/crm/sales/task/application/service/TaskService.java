@@ -1,6 +1,6 @@
 package com.becommerce.crm.sales.task.application.service;
 
-import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
@@ -9,8 +9,8 @@ import com.becommerce.crm.sales.task.application.dto.TaskResponse;
 import com.becommerce.crm.sales.task.application.dto.UpdateTaskRequest;
 import com.becommerce.crm.sales.task.application.port.in.TaskUseCase;
 import com.becommerce.crm.sales.task.application.port.out.TaskRepository;
-import com.becommerce.crm.domain.audit.AuditAction;
-import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundException;
 import com.becommerce.crm.sales.task.domain.Task;
