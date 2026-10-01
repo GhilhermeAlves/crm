@@ -20,7 +20,7 @@ import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.exception.IdentityServiceUnavailableException;
 import com.becommerce.crm.domain.activity.exception.ActivityNotFoundException;
 import com.becommerce.crm.domain.activity.exception.ActivityValidationException;
-import com.becommerce.crm.domain.contact.exception.ContactNotFoundException;
+import com.becommerce.crm.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.domain.identity.exception.DuplicateRoleException;
 import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.InvalidTokenException;

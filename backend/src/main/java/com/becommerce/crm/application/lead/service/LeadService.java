@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.lead.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.application.contact.port.output.ContactRepository;
+import com.becommerce.crm.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.lead.dto.CreateLeadRequest;
 import com.becommerce.crm.application.lead.dto.LeadResponse;
@@ -10,8 +10,8 @@ import com.becommerce.crm.application.lead.port.input.LeadUseCase;
 import com.becommerce.crm.application.lead.port.output.LeadRepository;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
-import com.becommerce.crm.domain.contact.Contact;
-import com.becommerce.crm.domain.contact.exception.ContactNotFoundException;
+import com.becommerce.crm.contact.domain.Contact;
+import com.becommerce.crm.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.domain.lead.Lead;
 import com.becommerce.crm.domain.lead.LeadClassification;
 import com.becommerce.crm.domain.lead.LeadSource;

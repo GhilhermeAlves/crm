@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.pipeline.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.application.contact.port.output.ContactRepository;
+import com.becommerce.crm.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.application.pipeline.dto.CreateOpportunityRequest;
 import com.becommerce.crm.application.pipeline.dto.MarkLostRequest;
 import com.becommerce.crm.application.pipeline.dto.MoveDirection;
@@ -9,8 +9,8 @@ import com.becommerce.crm.application.pipeline.dto.MoveOpportunityRequest;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.application.pipeline.port.output.PipelineRepository;
 import com.becommerce.crm.application.pipeline.port.output.StageRepository;
-import com.becommerce.crm.domain.contact.Contact;
-import com.becommerce.crm.domain.contact.exception.ContactNotFoundException;
+import com.becommerce.crm.contact.domain.Contact;
+import com.becommerce.crm.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.domain.pipeline.Opportunity;
 import com.becommerce.crm.domain.pipeline.OpportunityHistory;
 import com.becommerce.crm.domain.pipeline.OpportunityStatus;
