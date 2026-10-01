@@ -1,17 +1,17 @@
 package com.becommerce.crm.communication.omnichannel.application.service;
 
-import com.becommerce.crm.application.ai.port.output.AgentAutoReplyRepository;
-import com.becommerce.crm.application.ai.port.output.AgentConfigRepository;
-import com.becommerce.crm.application.ai.port.output.AiProvider;
-import com.becommerce.crm.application.ai.service.AiChatFailover;
+import com.becommerce.crm.automation.ai.application.port.output.AgentAutoReplyRepository;
+import com.becommerce.crm.automation.ai.application.port.output.AgentConfigRepository;
+import com.becommerce.crm.automation.ai.application.port.output.AiProvider;
+import com.becommerce.crm.automation.ai.application.service.AiChatFailover;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppEventPublisher;
-import com.becommerce.crm.domain.ai.AgentConfig;
-import com.becommerce.crm.domain.ai.AiProviderException;
+import com.becommerce.crm.automation.ai.domain.AgentConfig;
+import com.becommerce.crm.automation.ai.domain.AiProviderException;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.Message;

@@ -53,7 +53,7 @@ class OnboardingServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private RoleSeedService roleSeedService;
     @Mock private CompanyUseCase companyUseCase;
-    @Mock private com.becommerce.crm.application.workflow.service.WorkflowTemplateSeeder workflowTemplateSeeder;
+    @Mock private com.becommerce.crm.automation.workflow.application.service.WorkflowTemplateSeeder workflowTemplateSeeder;
 
     private OnboardingService service;
 

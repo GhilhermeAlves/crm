@@ -112,7 +112,7 @@ public class LeadService implements LeadUseCase {
             // Sprint 18: dispara automações quando o status do lead muda
             if (request.status() != null && previousStatus != saved.getStatus()) {
                 eventPublisher.publish(
-                        com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent.leadStatusChanged(
+                        com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent.leadStatusChanged(
                                 companyId, saved.getId(), saved.getContactId(),
                                 previousStatus.name(), saved.getStatus().name()));
             }

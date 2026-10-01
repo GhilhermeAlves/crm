@@ -27,7 +27,7 @@ import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundExc
 import com.becommerce.crm.sales.pipeline.domain.exception.PipelineNotFoundException;
 import com.becommerce.crm.sales.pipeline.domain.exception.PipelineValidationException;
 import com.becommerce.crm.sales.pipeline.domain.exception.StageNotFoundException;
-import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
+import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

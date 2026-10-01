@@ -15,7 +15,7 @@ import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundException;
-import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
+import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

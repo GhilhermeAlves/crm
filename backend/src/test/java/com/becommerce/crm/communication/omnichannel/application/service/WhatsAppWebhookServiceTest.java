@@ -16,7 +16,7 @@ import com.becommerce.crm.communication.omnichannel.domain.ChannelType;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
 import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
-import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
+import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 

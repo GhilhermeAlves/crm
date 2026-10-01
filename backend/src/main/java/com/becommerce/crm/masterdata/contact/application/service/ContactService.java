@@ -62,7 +62,7 @@ public class ContactService implements ContactUseCase {
                     createdBy, Map.of("email", String.valueOf(contact.getEmail())));
 
             // Sprint 18: dispara automações (workflows) de contato criado
-            eventPublisher.publish(com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent
+            eventPublisher.publish(com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent
                     .contactCreated(companyId, saved.getId(), saved.getEmail(), saved.getPhone()));
             return toResponse(saved);
         } finally {

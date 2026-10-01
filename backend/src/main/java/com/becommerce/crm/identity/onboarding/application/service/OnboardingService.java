@@ -7,7 +7,7 @@ import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.identity.onboarding.application.port.input.OnboardingUseCase;
-import com.becommerce.crm.application.workflow.service.WorkflowTemplateSeeder;
+import com.becommerce.crm.automation.workflow.application.service.WorkflowTemplateSeeder;
 import com.becommerce.crm.identity.infrastructure.persistence.RoleSeedService;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.becommerce.crm.masterdata.company.domain.Company;

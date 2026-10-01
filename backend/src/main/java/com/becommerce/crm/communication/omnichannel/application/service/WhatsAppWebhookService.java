@@ -14,7 +14,7 @@ import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
-import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
+import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
