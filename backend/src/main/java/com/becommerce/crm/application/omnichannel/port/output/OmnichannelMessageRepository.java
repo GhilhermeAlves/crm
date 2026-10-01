@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.omnichannel.port.output;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
 

@@ -1,7 +1,7 @@
 package com.becommerce.crm.infrastructure.followup.scheduler;
 
 import com.becommerce.crm.application.followup.service.FollowUpProcessingService;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;

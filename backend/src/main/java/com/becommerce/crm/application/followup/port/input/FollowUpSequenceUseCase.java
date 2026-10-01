@@ -2,7 +2,7 @@ package com.becommerce.crm.application.followup.port.input;
 
 import com.becommerce.crm.application.followup.dto.FollowUpSequenceRequest;
 import com.becommerce.crm.application.followup.dto.FollowUpSequenceResponse;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 
 import java.util.UUID;
 

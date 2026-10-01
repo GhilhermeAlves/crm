@@ -3,7 +3,7 @@ package com.becommerce.crm.presentation.rest.me;
 import com.becommerce.crm.application.me.dto.CompanyOptionResponse;
 import com.becommerce.crm.application.me.dto.SwitchCompanyRequest;
 import com.becommerce.crm.application.me.port.input.MeUseCase;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -6,7 +6,7 @@ import com.becommerce.crm.application.notification.port.output.NotificationRepos
 import com.becommerce.crm.domain.notification.Notification;
 import com.becommerce.crm.domain.notification.NotificationType;
 import com.becommerce.crm.domain.notification.exception.NotificationNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

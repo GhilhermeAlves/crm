@@ -16,7 +16,7 @@ import com.becommerce.crm.domain.ai.AiProviderException;
 import com.becommerce.crm.domain.ai.AiRecordType;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

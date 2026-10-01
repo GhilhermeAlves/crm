@@ -15,7 +15,7 @@ import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.domain.ai.AiConversation;
 import com.becommerce.crm.domain.ai.AiConversationNotFoundException;
 import com.becommerce.crm.domain.ai.AiMessage;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

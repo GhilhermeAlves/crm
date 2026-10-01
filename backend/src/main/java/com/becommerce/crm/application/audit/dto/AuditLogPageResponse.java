@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.audit.dto;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 
 import java.util.List;
 

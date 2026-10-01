@@ -4,7 +4,7 @@ import com.becommerce.crm.application.membership.dto.MemberResponse;
 import com.becommerce.crm.application.membership.dto.MembershipResponse;
 import com.becommerce.crm.application.membership.dto.UpdateMemberRoleRequest;
 import com.becommerce.crm.application.membership.port.input.MembershipUseCase;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

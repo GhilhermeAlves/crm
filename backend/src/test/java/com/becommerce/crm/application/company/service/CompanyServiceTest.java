@@ -16,7 +16,7 @@ import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.infrastructure.identity.persistence.RoleSeedService;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

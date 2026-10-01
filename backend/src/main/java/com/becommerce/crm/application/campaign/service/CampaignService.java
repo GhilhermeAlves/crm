@@ -9,13 +9,13 @@ import com.becommerce.crm.application.campaign.port.input.CampaignUseCase;
 import com.becommerce.crm.application.campaign.port.output.AudienceResolver;
 import com.becommerce.crm.application.campaign.port.output.CampaignEventRepository;
 import com.becommerce.crm.application.campaign.port.output.CampaignRepository;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.campaign.AudienceType;
 import com.becommerce.crm.domain.campaign.Campaign;
 import com.becommerce.crm.domain.campaign.CampaignStatus;
 import com.becommerce.crm.domain.campaign.exception.CampaignNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -2,8 +2,8 @@ package com.becommerce.crm.application.analytics.service;
 
 import com.becommerce.crm.application.analytics.AnalyticsPeriod;
 import com.becommerce.crm.application.analytics.dto.AnalyticsSummaryResponse;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
-import com.becommerce.crm.infrastructure.tenant.datasource.TenantAwareDataSource;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.datasource.TenantAwareDataSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.AfterAll;

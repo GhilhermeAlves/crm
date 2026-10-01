@@ -21,7 +21,7 @@ import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.infrastructure.identity.persistence.RoleSeedService;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

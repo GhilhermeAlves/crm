@@ -2,7 +2,7 @@ package com.becommerce.crm.presentation.rest.dashboard;
 
 import com.becommerce.crm.application.dashboard.dto.OperationalDashboard;
 import com.becommerce.crm.application.dashboard.service.DashboardService;
-import com.becommerce.crm.infrastructure.security.config.CurrentCompanyId;
+import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

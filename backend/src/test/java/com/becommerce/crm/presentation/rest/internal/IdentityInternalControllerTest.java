@@ -4,7 +4,7 @@ import com.becommerce.crm.application.identity.service.AuthService;
 import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
 import com.becommerce.crm.domain.identity.exception.LinkingRequiredException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

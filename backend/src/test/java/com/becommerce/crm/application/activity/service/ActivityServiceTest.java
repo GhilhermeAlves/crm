@@ -14,7 +14,7 @@ import com.becommerce.crm.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.domain.pipeline.Opportunity;
 import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

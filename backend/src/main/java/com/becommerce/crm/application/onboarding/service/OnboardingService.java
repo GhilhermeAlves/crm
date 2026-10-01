@@ -9,7 +9,7 @@ import com.becommerce.crm.application.membership.port.output.MembershipRepositor
 import com.becommerce.crm.application.onboarding.port.input.OnboardingUseCase;
 import com.becommerce.crm.application.workflow.service.WorkflowTemplateSeeder;
 import com.becommerce.crm.infrastructure.identity.persistence.RoleSeedService;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.company.CompanyPlan;
 import com.becommerce.crm.domain.identity.User;

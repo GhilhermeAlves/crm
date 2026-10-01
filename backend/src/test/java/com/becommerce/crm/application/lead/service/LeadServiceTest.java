@@ -2,7 +2,7 @@ package com.becommerce.crm.application.lead.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.lead.dto.CreateLeadRequest;
 import com.becommerce.crm.application.lead.dto.LeadResponse;
 import com.becommerce.crm.application.lead.port.output.LeadRepository;

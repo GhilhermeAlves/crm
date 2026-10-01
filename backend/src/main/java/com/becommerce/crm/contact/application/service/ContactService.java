@@ -11,7 +11,7 @@ import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.contact.domain.Contact;
 import com.becommerce.crm.contact.domain.exception.ContactNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,13 +30,13 @@ public class ContactService implements ContactUseCase {
     private final CompanyQuotaService quotaService;
     private final TenantAuditRecorder auditor;
     private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
-    private final com.becommerce.crm.infrastructure.security.authorization.CurrentUserAuthorities authorities;
+    private final com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities authorities;
 
     public ContactService(ContactRepository contactRepository,
                           CompanyQuotaService quotaService,
                           TenantAuditRecorder auditor,
                           com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher,
-                          com.becommerce.crm.infrastructure.security.authorization.CurrentUserAuthorities authorities) {
+                          com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities authorities) {
         this.contactRepository = contactRepository;
         this.quotaService = quotaService;
         this.auditor = auditor;

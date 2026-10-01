@@ -6,7 +6,7 @@ import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.onboarding.port.input.OnboardingUseCase;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.exception.UserNotFoundException;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

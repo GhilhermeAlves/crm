@@ -4,7 +4,7 @@ import com.becommerce.crm.application.audit.dto.AuditLogResponse;
 import com.becommerce.crm.application.audit.dto.AuditLogSearchRequest;
 import com.becommerce.crm.application.audit.port.input.AuditUseCase;
 import com.becommerce.crm.application.audit.port.output.AuditLogRepository;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.domain.audit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

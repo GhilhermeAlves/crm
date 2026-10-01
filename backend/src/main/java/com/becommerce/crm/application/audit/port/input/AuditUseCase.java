@@ -2,7 +2,7 @@ package com.becommerce.crm.application.audit.port.input;
 
 import com.becommerce.crm.application.audit.dto.AuditLogResponse;
 import com.becommerce.crm.application.audit.dto.AuditLogSearchRequest;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 
 import java.util.UUID;
 

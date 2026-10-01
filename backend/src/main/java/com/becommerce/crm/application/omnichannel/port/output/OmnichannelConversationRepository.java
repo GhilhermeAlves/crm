@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.omnichannel.port.output;
 
 import com.becommerce.crm.domain.omnichannel.Conversation;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 
 import java.util.Optional;
 import java.util.UUID;

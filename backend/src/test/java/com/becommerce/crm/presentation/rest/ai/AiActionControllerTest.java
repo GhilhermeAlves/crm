@@ -2,8 +2,8 @@ package com.becommerce.crm.presentation.rest.ai;
 
 import com.becommerce.crm.application.ai.dto.AiActionResponse;
 import com.becommerce.crm.application.ai.port.input.AiActionUseCase;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
-import com.becommerce.crm.presentation.rest.handler.GlobalExceptionHandler;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
+import com.becommerce.crm.shared.web.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

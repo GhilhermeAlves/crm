@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.template.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.template.dto.CreateTemplateRequest;
 import com.becommerce.crm.application.template.dto.TemplateResponse;
 import com.becommerce.crm.application.template.dto.UpdateTemplateRequest;
@@ -11,7 +11,7 @@ import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.template.MessageTemplate;
 import com.becommerce.crm.domain.template.exception.TemplateNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

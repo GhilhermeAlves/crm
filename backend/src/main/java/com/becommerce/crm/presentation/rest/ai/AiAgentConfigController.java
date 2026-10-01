@@ -4,7 +4,7 @@ import com.becommerce.crm.application.ai.dto.AgentConfigRequest;
 import com.becommerce.crm.application.ai.dto.AgentConfigResponse;
 import com.becommerce.crm.application.ai.port.input.AgentConfigUseCase;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -3,7 +3,7 @@ package com.becommerce.crm.application.followup.service;
 import com.becommerce.crm.application.followup.event.FollowUpExecutionEvent;
 import com.becommerce.crm.application.followup.port.output.FollowUpEventPublisher;
 import com.becommerce.crm.application.followup.port.output.FollowUpRepository;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

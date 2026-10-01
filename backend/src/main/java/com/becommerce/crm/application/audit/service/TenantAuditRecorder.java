@@ -5,7 +5,7 @@ import com.becommerce.crm.domain.audit.AuditLog;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.infrastructure.audit.context.AuditContext;
 import com.becommerce.crm.infrastructure.audit.context.AuditContext.AuditContextData;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

@@ -10,7 +10,7 @@ import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

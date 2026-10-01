@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.ai.service;
 
 import com.becommerce.crm.application.ai.port.output.AiSuggestionProvider;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.domain.omnichannel.Conversation;
@@ -11,7 +11,7 @@ import com.becommerce.crm.domain.omnichannel.MessageDirection;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
 import com.becommerce.crm.domain.omnichannel.MessageType;
 import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

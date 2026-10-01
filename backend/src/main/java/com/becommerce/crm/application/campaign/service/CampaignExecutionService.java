@@ -16,7 +16,7 @@ import com.becommerce.crm.domain.campaign.CampaignMessageEvent;
 import com.becommerce.crm.domain.campaign.MessageEventStatus;
 import com.becommerce.crm.domain.campaign.exception.CampaignNotFoundException;
 import com.becommerce.crm.domain.template.MessageTemplate;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

@@ -10,7 +10,7 @@ import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import com.becommerce.crm.domain.membership.Membership;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;

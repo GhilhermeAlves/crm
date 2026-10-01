@@ -2,7 +2,7 @@ package com.becommerce.crm.presentation.rest.customer360;
 
 import com.becommerce.crm.application.customer360.dto.Customer360Response;
 import com.becommerce.crm.application.customer360.service.Customer360Service;
-import com.becommerce.crm.infrastructure.security.config.CurrentCompanyId;
+import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

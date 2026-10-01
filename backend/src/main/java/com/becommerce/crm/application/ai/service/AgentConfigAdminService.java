@@ -8,7 +8,7 @@ import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.domain.ai.AgentConfig;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

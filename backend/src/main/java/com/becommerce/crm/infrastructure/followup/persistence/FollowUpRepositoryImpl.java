@@ -1,7 +1,7 @@
 package com.becommerce.crm.infrastructure.followup.persistence;
 
 import com.becommerce.crm.application.followup.port.output.FollowUpRepository;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.domain.followup.FollowUp;
 import com.becommerce.crm.domain.followup.FollowUpAction;
 import com.becommerce.crm.domain.followup.FollowUpCancellationReason;

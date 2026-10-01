@@ -1,7 +1,7 @@
 package com.becommerce.crm.infrastructure.audit.interceptor;
 
 import com.becommerce.crm.infrastructure.audit.context.AuditContext;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;

@@ -9,7 +9,7 @@ import com.becommerce.crm.application.storage.port.output.StorageRepository;
 import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.company.CompanyNotFoundException;
 import com.becommerce.crm.domain.invitation.InvitationStatus;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

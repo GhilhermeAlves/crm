@@ -17,7 +17,7 @@ import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 import com.becommerce.crm.domain.pipeline.Pipeline;
 import com.becommerce.crm.domain.pipeline.Stage;
 import com.becommerce.crm.domain.pipeline.exception.PipelineValidationException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

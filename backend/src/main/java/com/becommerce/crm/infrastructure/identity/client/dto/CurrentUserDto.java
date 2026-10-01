@@ -1,6 +1,6 @@
 package com.becommerce.crm.infrastructure.identity.client.dto;
 
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 
 import java.util.List;
 import java.util.UUID;

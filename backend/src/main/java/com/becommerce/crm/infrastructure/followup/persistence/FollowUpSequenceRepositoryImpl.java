@@ -1,7 +1,7 @@
 package com.becommerce.crm.infrastructure.followup.persistence;
 
 import com.becommerce.crm.application.followup.port.output.FollowUpSequenceRepository;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.domain.followup.FollowUpSequence;
 import com.becommerce.crm.domain.followup.FollowUpSequenceStatus;
 import org.springframework.data.domain.Page;

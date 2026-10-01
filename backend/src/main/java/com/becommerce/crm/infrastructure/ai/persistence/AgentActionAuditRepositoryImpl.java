@@ -1,7 +1,7 @@
 package com.becommerce.crm.infrastructure.ai.persistence;
 
 import com.becommerce.crm.application.ai.port.output.AgentActionAuditRepository;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.domain.ai.AgentActionAudit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

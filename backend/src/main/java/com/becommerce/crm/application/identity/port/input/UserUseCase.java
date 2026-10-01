@@ -1,5 +1,6 @@
 package com.becommerce.crm.application.identity.port.input;
 
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.identity.dto.*;
 
 import java.util.UUID;

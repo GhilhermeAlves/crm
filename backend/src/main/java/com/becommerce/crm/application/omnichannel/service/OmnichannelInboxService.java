@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.omnichannel.service;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.omnichannel.dto.ConversationDetailResponse;
 import com.becommerce.crm.application.omnichannel.dto.ConversationResponse;
@@ -17,7 +17,7 @@ import com.becommerce.crm.domain.omnichannel.Conversation;
 import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
 import com.becommerce.crm.domain.omnichannel.OmnichannelProviderException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

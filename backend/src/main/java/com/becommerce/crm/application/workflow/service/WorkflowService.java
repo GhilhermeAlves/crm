@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.workflow.service;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.workflow.dto.CreateWorkflowRequest;
 import com.becommerce.crm.application.workflow.dto.ConditionEvaluation;
 import com.becommerce.crm.application.workflow.dto.DryRunAction;
@@ -27,7 +27,7 @@ import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
 import com.becommerce.crm.domain.workflow.WorkflowRun;
 import com.becommerce.crm.domain.workflow.WorkflowRunStatus;
 import com.becommerce.crm.domain.workflow.WorkflowValidationException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;

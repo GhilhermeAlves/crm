@@ -3,7 +3,7 @@ package com.becommerce.crm.application.analytics.service;
 import com.becommerce.crm.application.analytics.AnalyticsPeriod;
 import com.becommerce.crm.application.analytics.dto.AnalyticsSummaryResponse;
 import com.becommerce.crm.application.analytics.port.input.AnalyticsUseCase;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;

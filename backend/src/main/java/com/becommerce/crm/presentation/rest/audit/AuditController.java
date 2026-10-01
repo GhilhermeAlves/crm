@@ -4,7 +4,7 @@ import com.becommerce.crm.application.audit.dto.AuditLogPageResponse;
 import com.becommerce.crm.application.audit.dto.AuditLogResponse;
 import com.becommerce.crm.application.audit.dto.AuditLogSearchRequest;
 import com.becommerce.crm.application.audit.port.input.AuditUseCase;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.lead.port.input;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.lead.dto.CreateLeadRequest;
 import com.becommerce.crm.application.lead.dto.LeadResponse;
 import com.becommerce.crm.application.lead.dto.UpdateLeadRequest;

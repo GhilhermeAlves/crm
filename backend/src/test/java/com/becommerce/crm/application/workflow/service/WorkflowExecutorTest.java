@@ -10,7 +10,7 @@ import com.becommerce.crm.domain.workflow.WorkflowAction;
 import com.becommerce.crm.domain.workflow.WorkflowCondition;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import com.becommerce.crm.domain.workflow.WorkflowRunStatus;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

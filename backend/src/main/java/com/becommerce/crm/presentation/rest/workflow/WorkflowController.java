@@ -1,6 +1,6 @@
 package com.becommerce.crm.presentation.rest.workflow;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.workflow.dto.CreateWorkflowRequest;
 import com.becommerce.crm.application.workflow.dto.DryRunRequest;
 import com.becommerce.crm.application.workflow.dto.DryRunResponse;
@@ -11,7 +11,7 @@ import com.becommerce.crm.application.workflow.dto.WorkflowRunDetailResponse;
 import com.becommerce.crm.application.workflow.dto.WorkflowRunResponse;
 import com.becommerce.crm.application.workflow.dto.WorkflowRunSummary;
 import com.becommerce.crm.application.workflow.port.input.WorkflowUseCase;
-import com.becommerce.crm.infrastructure.security.config.CurrentCompanyId;
+import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;

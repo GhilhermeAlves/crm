@@ -9,7 +9,7 @@ import com.becommerce.crm.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.contact.domain.Contact;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
-import com.becommerce.crm.infrastructure.security.authorization.CurrentUserAuthorities;
+import com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

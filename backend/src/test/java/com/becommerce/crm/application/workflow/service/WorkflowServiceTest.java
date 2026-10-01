@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.workflow.service;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.workflow.dto.CreateWorkflowRequest;
 import com.becommerce.crm.application.workflow.dto.DryRunRequest;
 import com.becommerce.crm.application.workflow.dto.UpdateWorkflowRequest;
@@ -19,7 +19,7 @@ import com.becommerce.crm.domain.workflow.WorkflowExecution;
 import com.becommerce.crm.domain.workflow.WorkflowNotFoundException;
 import com.becommerce.crm.domain.workflow.WorkflowRun;
 import com.becommerce.crm.domain.workflow.WorkflowRunStatus;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

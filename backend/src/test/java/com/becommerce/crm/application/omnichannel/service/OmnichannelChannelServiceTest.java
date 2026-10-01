@@ -8,7 +8,7 @@ import com.becommerce.crm.domain.omnichannel.ChannelProvider;
 import com.becommerce.crm.domain.omnichannel.ChannelStatus;
 import com.becommerce.crm.domain.omnichannel.ChannelType;
 import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

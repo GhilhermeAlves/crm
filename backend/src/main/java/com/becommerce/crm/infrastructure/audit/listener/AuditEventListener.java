@@ -10,7 +10,7 @@ import com.becommerce.crm.domain.company.event.CompanyUpdatedEvent;
 import com.becommerce.crm.domain.identity.event.*;
 import com.becommerce.crm.infrastructure.audit.context.AuditContext;
 import com.becommerce.crm.infrastructure.audit.context.AuditContext.AuditContextData;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;

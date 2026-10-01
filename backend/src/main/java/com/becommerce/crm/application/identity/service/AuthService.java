@@ -30,7 +30,7 @@ import com.becommerce.crm.domain.identity.valueobject.Password;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;

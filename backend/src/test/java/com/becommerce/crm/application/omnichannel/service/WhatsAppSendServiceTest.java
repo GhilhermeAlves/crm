@@ -18,7 +18,7 @@ import com.becommerce.crm.domain.omnichannel.MessageDirection;
 import com.becommerce.crm.domain.omnichannel.MessageStatus;
 import com.becommerce.crm.domain.omnichannel.MessageType;
 import com.becommerce.crm.domain.omnichannel.OmnichannelProviderException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

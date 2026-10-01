@@ -21,7 +21,7 @@ import com.becommerce.crm.domain.pipeline.Stage;
 import com.becommerce.crm.domain.pipeline.exception.PipelineNotFoundException;
 import com.becommerce.crm.domain.pipeline.exception.PipelineValidationException;
 import com.becommerce.crm.domain.pipeline.exception.StageNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

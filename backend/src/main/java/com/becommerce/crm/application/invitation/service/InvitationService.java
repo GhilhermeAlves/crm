@@ -26,7 +26,7 @@ import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 import com.becommerce.crm.infrastructure.invitation.persistence.InvitationTokenContextHolder;
 import com.becommerce.crm.infrastructure.invitation.rate.InvitationRateLimiter;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

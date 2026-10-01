@@ -1,12 +1,12 @@
 package com.becommerce.crm.presentation.rest.lead;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.lead.dto.CreateLeadRequest;
 import com.becommerce.crm.application.lead.dto.LeadResponse;
 import com.becommerce.crm.application.lead.dto.UpdateLeadRequest;
 import com.becommerce.crm.application.lead.port.input.LeadUseCase;
-import com.becommerce.crm.infrastructure.security.config.CurrentCompanyId;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.config.CurrentCompanyId;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

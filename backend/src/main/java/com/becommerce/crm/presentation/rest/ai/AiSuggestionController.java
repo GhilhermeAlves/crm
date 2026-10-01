@@ -3,7 +3,7 @@ package com.becommerce.crm.presentation.rest.ai;
 import com.becommerce.crm.application.ai.dto.AiSuggestionResponse;
 import com.becommerce.crm.application.ai.port.input.AiSuggestionUseCase;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

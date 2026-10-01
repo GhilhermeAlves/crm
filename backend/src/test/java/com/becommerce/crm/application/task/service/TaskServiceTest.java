@@ -12,7 +12,7 @@ import com.becommerce.crm.domain.task.Task;
 import com.becommerce.crm.domain.task.TaskPriority;
 import com.becommerce.crm.domain.task.TaskStatus;
 import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

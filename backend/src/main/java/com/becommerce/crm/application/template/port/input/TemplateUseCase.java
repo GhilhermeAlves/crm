@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.template.port.input;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.template.dto.CreateTemplateRequest;
 import com.becommerce.crm.application.template.dto.TemplateResponse;
 import com.becommerce.crm.application.template.dto.UpdateTemplateRequest;

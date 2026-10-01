@@ -1,11 +1,11 @@
 package com.becommerce.crm.presentation.rest.template;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.template.dto.CreateTemplateRequest;
 import com.becommerce.crm.application.template.dto.TemplateResponse;
 import com.becommerce.crm.application.template.dto.UpdateTemplateRequest;
 import com.becommerce.crm.application.template.port.input.TemplateUseCase;
-import com.becommerce.crm.infrastructure.security.config.CurrentCompanyId;
+import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

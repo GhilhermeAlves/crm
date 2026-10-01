@@ -1,13 +1,13 @@
 package com.becommerce.crm.presentation.rest.omnichannel;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.omnichannel.dto.ConversationDetailResponse;
 import com.becommerce.crm.application.omnichannel.dto.ConversationResponse;
 import com.becommerce.crm.application.omnichannel.port.input.OmnichannelInboxUseCase;
 import com.becommerce.crm.domain.omnichannel.ConversationMode;
 import com.becommerce.crm.domain.omnichannel.ConversationStatus;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
-import com.becommerce.crm.presentation.rest.handler.GlobalExceptionHandler;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
+import com.becommerce.crm.shared.web.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

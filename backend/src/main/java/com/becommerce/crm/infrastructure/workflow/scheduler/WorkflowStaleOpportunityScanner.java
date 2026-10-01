@@ -6,7 +6,7 @@ import com.becommerce.crm.application.identity.port.output.EventPublisher;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.application.pipeline.port.output.StageRepository;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

@@ -4,7 +4,7 @@ import com.becommerce.crm.application.identity.port.input.PhoneAuthUseCase;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.valueobject.PhoneNumber;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

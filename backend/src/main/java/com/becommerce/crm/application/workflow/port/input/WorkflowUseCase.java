@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.workflow.port.input;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.workflow.dto.CreateWorkflowRequest;
 import com.becommerce.crm.application.workflow.dto.DryRunRequest;
 import com.becommerce.crm.application.workflow.dto.DryRunResponse;

@@ -3,7 +3,7 @@ package com.becommerce.crm.application.campaign.port.input;
 import com.becommerce.crm.application.campaign.dto.CampaignResponse;
 import com.becommerce.crm.application.campaign.dto.CreateCampaignRequest;
 import com.becommerce.crm.application.campaign.dto.ExecutionResponse;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.application.campaign.dto.ScheduleCampaignRequest;
 import com.becommerce.crm.application.campaign.dto.UpdateCampaignRequest;
 

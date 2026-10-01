@@ -7,7 +7,7 @@ import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannel
 import com.becommerce.crm.domain.omnichannel.Channel;
 import com.becommerce.crm.domain.omnichannel.ChannelStatus;
 import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

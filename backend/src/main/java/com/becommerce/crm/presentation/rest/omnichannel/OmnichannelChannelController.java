@@ -4,7 +4,7 @@ import com.becommerce.crm.application.omnichannel.dto.ChannelRequest;
 import com.becommerce.crm.application.omnichannel.dto.ChannelResponse;
 import com.becommerce.crm.application.omnichannel.port.input.OmnichannelChannelUseCase;
 import com.becommerce.crm.domain.omnichannel.ChannelStatus;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;

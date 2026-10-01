@@ -3,7 +3,7 @@ package com.becommerce.crm.presentation.rest.identity;
 import com.becommerce.crm.application.identity.dto.*;
 import com.becommerce.crm.application.identity.port.input.RoleUseCase;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

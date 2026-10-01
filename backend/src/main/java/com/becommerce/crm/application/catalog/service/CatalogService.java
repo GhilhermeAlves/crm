@@ -4,14 +4,14 @@ import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.application.catalog.dto.CatalogItemRequest;
 import com.becommerce.crm.application.catalog.dto.CatalogItemResponse;
 import com.becommerce.crm.application.catalog.port.output.CatalogItemRepository;
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.catalog.CatalogItem;
 import com.becommerce.crm.domain.catalog.CatalogItemType;
 import com.becommerce.crm.domain.catalog.exception.CatalogItemNotFoundException;
 import com.becommerce.crm.domain.catalog.exception.CatalogSkuConflictException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

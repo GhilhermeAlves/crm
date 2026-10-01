@@ -7,7 +7,7 @@ import com.becommerce.crm.application.notification.port.output.NotificationPushe
 import com.becommerce.crm.application.notification.port.output.NotificationRepository;
 import com.becommerce.crm.domain.notification.Notification;
 import com.becommerce.crm.domain.notification.exception.NotificationNotFoundException;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

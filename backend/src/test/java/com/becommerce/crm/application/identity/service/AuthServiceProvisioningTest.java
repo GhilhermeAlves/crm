@@ -22,7 +22,7 @@ import com.becommerce.crm.domain.identity.valueobject.Password;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import com.becommerce.crm.domain.membership.Membership;
 import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -7,7 +7,7 @@ import com.becommerce.crm.domain.workflow.Workflow;
 import com.becommerce.crm.domain.workflow.WorkflowAction;
 import com.becommerce.crm.domain.workflow.WorkflowRunStatus;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

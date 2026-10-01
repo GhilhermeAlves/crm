@@ -3,7 +3,7 @@ package com.becommerce.crm.presentation.rest.analytics;
 import com.becommerce.crm.application.analytics.AnalyticsPeriod;
 import com.becommerce.crm.application.analytics.dto.AnalyticsSummaryResponse;
 import com.becommerce.crm.application.analytics.port.input.AnalyticsUseCase;
-import com.becommerce.crm.infrastructure.security.config.CurrentCompanyId;
+import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

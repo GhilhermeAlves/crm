@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.followup.port.output;
 
-import com.becommerce.crm.application.identity.dto.PageResponse;
+import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.domain.followup.FollowUp;
 import com.becommerce.crm.domain.followup.FollowUpCancellationReason;
 
