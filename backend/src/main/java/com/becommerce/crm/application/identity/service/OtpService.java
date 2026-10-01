@@ -27,7 +27,6 @@ import java.util.UUID;
 @Service
 public class OtpService {
 
-    private static final int OTP_LENGTH = 6;
     private static final int DEFAULT_TTL_MINUTES = 5;
     private static final int DEFAULT_MAX_ATTEMPTS = 3;
     private static final int RESEND_COOLDOWN_SECONDS = 60;

@@ -103,12 +103,9 @@ class OtpServiceTest {
     }
 
     private final class RecordingSender implements OtpSender {
-        private int sent;
-
         @Override
         public void send(String phoneE164, String otpCode) {
             deliveredCodes.add(otpCode);
-            sent++;
         }
     }
 }

@@ -53,10 +53,6 @@ class TaskServiceTest {
         TenantContext.clear();
     }
 
-    private Contact ownedContact() {
-        return Contact.reconstitute(UUID.randomUUID(), companyId, "Ana", "Souza", "ana@e.com",
-                null, null, LocalDateTime.now(), LocalDateTime.now(), null);
-    }
 
     private Task task(TaskStatus status) {
         return Task.reconstitute(UUID.randomUUID(), companyId, null, null, "Follow-up",

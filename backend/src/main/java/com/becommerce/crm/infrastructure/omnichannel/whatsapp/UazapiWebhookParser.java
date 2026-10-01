@@ -249,7 +249,6 @@ public class UazapiWebhookParser implements WhatsAppWebhookParser {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     private static String extractSender(Map<?, ?> message) {
         // Fallback chain: sender -> sender_pn -> sender_lid -> chatid
         String sender = stringField(message, "sender");
@@ -302,12 +301,6 @@ public class UazapiWebhookParser implements WhatsAppWebhookParser {
         return atIndex > 0 ? jid.substring(0, atIndex) : jid;
     }
 
-    @SuppressWarnings("unchecked")
-    private static Optional<Object> map(Map<String, Object> map, String key) {
-        return Optional.ofNullable(map.get(key));
-    }
-
-    @SuppressWarnings("unchecked")
     private static String stringField(Map<?, ?> map, String key) {
         Object value = map.get(key);
         return value instanceof String s ? s : null;

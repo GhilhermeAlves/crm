@@ -7,7 +7,6 @@ import com.becommerce.crm.application.campaign.port.output.CampaignChannelDispat
 import com.becommerce.crm.application.campaign.port.output.CampaignEventRepository;
 import com.becommerce.crm.application.campaign.port.output.CampaignExecutionRepository;
 import com.becommerce.crm.application.campaign.port.output.CampaignRepository;
-import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.application.template.port.output.TemplateRepository;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.campaign.Campaign;
@@ -53,7 +52,6 @@ public class CampaignExecutionService {
     private final CampaignEventRepository eventRepository;
     private final AudienceResolver audienceResolver;
     private final TemplateRepository templateRepository;
-    private final OmnichannelChannelRepository channelRepository;
     private final List<CampaignChannelDispatcher> dispatchers;
     private final TenantAuditRecorder auditor;
     private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
@@ -65,7 +63,6 @@ public class CampaignExecutionService {
                                     CampaignEventRepository eventRepository,
                                     AudienceResolver audienceResolver,
                                     TemplateRepository templateRepository,
-                                    OmnichannelChannelRepository channelRepository,
                                     List<CampaignChannelDispatcher> dispatchers,
                                     TenantAuditRecorder auditor,
                                     com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher,
@@ -75,7 +72,6 @@ public class CampaignExecutionService {
         this.eventRepository = eventRepository;
         this.audienceResolver = audienceResolver;
         this.templateRepository = templateRepository;
-        this.channelRepository = channelRepository;
         this.dispatchers = dispatchers;
         this.auditor = auditor;
         this.eventPublisher = eventPublisher;
@@ -173,7 +169,7 @@ public class CampaignExecutionService {
                 if (channel == null) {
                     break;
                 }
-                var dispatcher = dispatchers.stream()
+                dispatchers.stream()
                         .filter(d -> d.supports(channel.getChannelType()))
                         .findFirst()
                         .orElseThrow(() -> new CampaignChannelDispatcher.DispatchException(

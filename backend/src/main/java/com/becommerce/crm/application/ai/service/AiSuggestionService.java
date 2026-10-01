@@ -9,8 +9,6 @@ import com.becommerce.crm.domain.omnichannel.Conversation;
 import com.becommerce.crm.domain.omnichannel.MessageDirection;
 import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +22,6 @@ import java.util.UUID;
  */
 @Service
 public class AiSuggestionService implements AiSuggestionUseCase {
-
-    private static final Logger log = LoggerFactory.getLogger(AiSuggestionService.class);
 
     /** Número máximo de mensagens recentes enviadas ao prompt. */
     private static final int HISTORY_LIMIT = 20;
@@ -47,7 +43,7 @@ public class AiSuggestionService implements AiSuggestionUseCase {
     public AiSuggestionResponse suggest(UUID companyId, UUID conversationId) {
         try {
             TenantContext.setCompanyId(companyId);
-            Conversation conversation = requireOwned(companyId, conversationId);
+            requireOwned(companyId, conversationId);
 
             List<AiSuggestionProvider.MessageLine> history = buildHistory(conversationId);
 

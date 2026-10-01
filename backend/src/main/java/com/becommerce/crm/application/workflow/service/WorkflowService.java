@@ -365,7 +365,6 @@ public class WorkflowService implements WorkflowUseCase {
                 r.getStatus(), r.getResultText(), r.getCreatedAt(), r.getUpdatedAt());
     }
 
-    @SuppressWarnings("unchecked")
     private List<ConditionEvaluation> readConditions(String json) {
         if (json == null || json.isBlank()) {
             return List.of();

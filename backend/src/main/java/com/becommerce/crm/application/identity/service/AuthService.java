@@ -11,7 +11,6 @@ import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
-import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.identity.PasswordResetToken;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
@@ -548,16 +547,6 @@ public class AuthService implements AuthUseCase {
         } catch (DataIntegrityViolationException e) {
             // Atribuição concorrente já realizada por outra requisição do mesmo usuário.
         }
-    }
-
-    private UUID resolveCompanyForRegistration(UUID requestedCompanyId) {
-        if (requestedCompanyId != null) {
-            return companyRepository.findById(requestedCompanyId)
-                    .map(Company::getId)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Empresa informada não existe: " + requestedCompanyId));
-        }
-        return resolveDefaultCompanyId();
     }
 
     /**

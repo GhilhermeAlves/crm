@@ -8,15 +8,11 @@ import com.becommerce.crm.domain.audit.AuditLog;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
 public class AuditLogAspect {
-
-    private static final Logger log = LoggerFactory.getLogger(AuditLogAspect.class);
 
     private final AuditService auditService;
 

@@ -80,7 +80,7 @@ public class CompanyService implements CompanyUseCase {
     @Override
     @Transactional(readOnly = true)
     public CompanyUsageResponse getCompanyUsage(UUID id, UUID requesterCompanyId, boolean isSuperAdmin) {
-        Company company = companyRepository.findById(id)
+        companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
         assertCompanyAccess(id, requesterCompanyId, isSuperAdmin);
         return quotaService.usage(id);

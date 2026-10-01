@@ -36,7 +36,6 @@ class CompanyQuotaServiceTest {
     private CompanyQuotaService quotaService;
 
     private final UUID companyA = UUID.fromString("11111111-2222-3333-4444-555555555555");
-    private final UUID companyB = UUID.fromString("bbbbbbbb-1111-2222-3333-444444444444");
 
     @BeforeEach
     void setUp() {

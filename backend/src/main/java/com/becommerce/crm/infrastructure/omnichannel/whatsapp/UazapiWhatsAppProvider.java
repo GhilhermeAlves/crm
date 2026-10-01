@@ -2,8 +2,6 @@ package com.becommerce.crm.infrastructure.omnichannel.whatsapp;
 
 import com.becommerce.crm.application.omnichannel.port.output.WhatsAppProvider;
 import com.becommerce.crm.domain.omnichannel.OmnichannelProviderException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,8 +30,6 @@ import java.util.function.Function;
 @Service
 @ConditionalOnProperty(name = "omnichannel.whatsapp.provider", havingValue = "uazapi")
 public class UazapiWhatsAppProvider implements WhatsAppProvider {
-
-    private static final Logger log = LoggerFactory.getLogger(UazapiWhatsAppProvider.class);
 
     private final RestClient restClient;
     private final String baseUrl;
@@ -115,7 +111,6 @@ public class UazapiWhatsAppProvider implements WhatsAppProvider {
      * Formatos conhecidos: {@code data.key.id}, {@code data.id}, top-level {@code id},
      * ou um prefixo único quando o provider não retorna id estruturado.
      */
-    @SuppressWarnings("unchecked")
     private static String extractExternalId(Map<?, ?> response) {
         if (response == null) {
             return null;

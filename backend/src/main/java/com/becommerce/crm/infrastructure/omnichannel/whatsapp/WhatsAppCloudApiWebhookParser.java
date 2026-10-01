@@ -152,7 +152,6 @@ public class WhatsAppCloudApiWebhookParser implements WhatsAppWebhookParser {
         return Optional.ofNullable(map.get(key));
     }
 
-    @SuppressWarnings("unchecked")
     private static String stringField(Map<?, ?> map, String key) {
         Object value = map.get(key);
         return value instanceof String s ? s : null;
@@ -167,7 +166,6 @@ public class WhatsAppCloudApiWebhookParser implements WhatsAppWebhookParser {
         return "";
     }
 
-    @SuppressWarnings("unchecked")
     private static String errorsMessage(Map<?, ?> status) {
         Object errors = status.get("errors");
         if (errors instanceof List<?> list && !list.isEmpty()) {

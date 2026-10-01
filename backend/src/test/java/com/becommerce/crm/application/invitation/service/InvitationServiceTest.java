@@ -126,7 +126,6 @@ class InvitationServiceTest {
 
     @Test
     void shouldRejectInactiveCompany() {
-        Company company = activeCompany();
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
         assertThrows(com.becommerce.crm.domain.company.CompanyNotFoundException.class,
                 () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "AGENT"), invitedBy));

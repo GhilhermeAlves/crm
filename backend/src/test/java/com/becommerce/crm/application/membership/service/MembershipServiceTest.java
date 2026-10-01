@@ -107,7 +107,6 @@ class MembershipServiceTest {
 
     @Test
     void shouldUpdateMemberRoleAndSyncUserRoles() {
-        Role adminRole = role(RoleName.ADMIN);
         Role agentRole = role(RoleName.AGENT);
         Membership membership = Membership.activate(USER_ID, COMPANY_ID, "ADMIN");
         when(membershipRepository.findActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID))

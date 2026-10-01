@@ -2,7 +2,6 @@ package com.becommerce.crm.infrastructure.security.config;
 
 import com.becommerce.crm.application.identity.port.input.AuthUseCase;
 import com.becommerce.crm.application.identity.port.output.PermissionRepository;
-import com.becommerce.crm.application.identity.port.output.RolePermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
@@ -31,11 +30,10 @@ public class CurrentUserResolverConfiguration {
             AuthUseCase authUseCase,
             UserRoleRepository userRoleRepository,
             RoleRepository roleRepository,
-            RolePermissionRepository rolePermissionRepository,
             PermissionRepository permissionRepository,
             MembershipRepository membershipRepository) {
         LocalCurrentUserResolver localResolver = new LocalCurrentUserResolver(
-                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository, membershipRepository);
+                authUseCase, userRoleRepository, roleRepository, permissionRepository, membershipRepository);
         return new AuthServiceCurrentUserResolver(authServiceClient, localResolver);
     }
 
@@ -45,10 +43,9 @@ public class CurrentUserResolverConfiguration {
             AuthUseCase authUseCase,
             UserRoleRepository userRoleRepository,
             RoleRepository roleRepository,
-            RolePermissionRepository rolePermissionRepository,
             PermissionRepository permissionRepository,
             MembershipRepository membershipRepository) {
         return new LocalCurrentUserResolver(
-                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository, membershipRepository);
+                authUseCase, userRoleRepository, roleRepository, permissionRepository, membershipRepository);
     }
 }

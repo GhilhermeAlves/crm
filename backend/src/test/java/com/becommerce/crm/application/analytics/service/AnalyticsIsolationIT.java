@@ -154,9 +154,6 @@ class AnalyticsIsolationIT {
                     INSERT INTO omnichannel_messages (company_id, direction)
                     VALUES (:c, 'OUTBOUND')
                     """, java.util.Map.of("c", companyId));
-            Long seeded = jdbc.queryForObject(
-                    "SELECT COUNT(*) FROM contacts WHERE company_id = :c",
-                    java.util.Map.of("c", companyId), Long.class);
         }));
     }
 

@@ -6,7 +6,6 @@ import com.becommerce.crm.application.identity.port.output.RolePermissionReposit
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
-import com.becommerce.crm.domain.identity.Permission;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.UserRole;
@@ -55,7 +54,7 @@ class LocalCurrentUserResolverTest {
     @BeforeEach
     void setUp() {
         resolver = new LocalCurrentUserResolver(
-                authUseCase, userRoleRepository, roleRepository, rolePermissionRepository, permissionRepository, membershipRepository);
+                authUseCase, userRoleRepository, roleRepository, permissionRepository, membershipRepository);
     }
 
     @Test
@@ -65,7 +64,6 @@ class LocalCurrentUserResolverTest {
         user.linkKeycloak(SUB);
 
         Role agentRole = Role.createSystem(RoleName.AGENT.name());
-        Permission dashboardView = Permission.create("dashboard:view", "Visualizar dashboard", "dashboard", "dashboard", "view");
 
         when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
         when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), companyId))
@@ -173,8 +171,6 @@ class LocalCurrentUserResolverTest {
 
         Role adminRole = Role.createSystem(RoleName.ADMIN.name());
         Role viewerRole = Role.createSystem(RoleName.VIEWER.name());
-        Permission usersRead = Permission.create("user:read", "Ler usuários", "identity", "user", "read");
-        Permission usersCreate = Permission.create("user:create", "Criar usuários", "identity", "user", "create");
 
         when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
         when(membershipRepository.existsActiveByUserIdAndCompanyId(any(UUID.class), any(UUID.class))).thenReturn(true);

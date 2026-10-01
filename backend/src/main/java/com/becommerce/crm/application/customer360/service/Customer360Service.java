@@ -207,7 +207,6 @@ public class Customer360Service {
 
         // Atividades diretamente vinculadas ao contato.
         for (var a : activityRepository.findByContactId(contactIdOf(opportunities, tasks))) {
-            String typeLabel = a.getType() != null ? a.getType().name() : "ATIVIDADE";
             String subject = a.getSubject() != null ? a.getSubject() : a.getType() != null ? a.getType().name() : "Atividade";
             events.add(new TimelineEventResponse(
                     a.getId(), "ACTIVITY", "Atividade registrada: " + subject,

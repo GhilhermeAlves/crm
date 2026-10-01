@@ -2,7 +2,6 @@ package com.becommerce.crm.infrastructure.security.config;
 
 import com.becommerce.crm.application.identity.port.input.AuthUseCase;
 import com.becommerce.crm.application.identity.port.output.PermissionRepository;
-import com.becommerce.crm.application.identity.port.output.RolePermissionRepository;
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
@@ -32,7 +31,6 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
     private final AuthUseCase authUseCase;
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
-    private final RolePermissionRepository rolePermissionRepository;
     private final PermissionRepository permissionRepository;
     private final MembershipRepository membershipRepository;
 
@@ -40,13 +38,11 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
             AuthUseCase authUseCase,
             UserRoleRepository userRoleRepository,
             RoleRepository roleRepository,
-            RolePermissionRepository rolePermissionRepository,
             PermissionRepository permissionRepository,
             MembershipRepository membershipRepository) {
         this.authUseCase = authUseCase;
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
-        this.rolePermissionRepository = rolePermissionRepository;
         this.permissionRepository = permissionRepository;
         this.membershipRepository = membershipRepository;
     }
