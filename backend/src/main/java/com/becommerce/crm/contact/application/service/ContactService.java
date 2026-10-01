@@ -29,13 +29,13 @@ public class ContactService implements ContactUseCase {
     private final ContactRepository contactRepository;
     private final CompanyQuotaService quotaService;
     private final TenantAuditRecorder auditor;
-    private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
+    private final com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher;
     private final com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities authorities;
 
     public ContactService(ContactRepository contactRepository,
                           CompanyQuotaService quotaService,
                           TenantAuditRecorder auditor,
-                          com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher,
+                          com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher,
                           com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities authorities) {
         this.contactRepository = contactRepository;
         this.quotaService = quotaService;
@@ -117,7 +117,7 @@ public class ContactService implements ContactUseCase {
             return;
         }
         if (!authorities.has(permission)) {
-            throw new com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException(
+            throw new com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException(
                     "Você não tem permissão para alterar o campo " + fieldLabel + " do contato.");
         }
     }

@@ -1,14 +1,14 @@
 package com.becommerce.crm.shared.security.config;
 
-import com.becommerce.crm.application.identity.port.input.AuthUseCase;
-import com.becommerce.crm.application.identity.port.output.PermissionRepository;
-import com.becommerce.crm.application.identity.port.output.RoleRepository;
-import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
-import com.becommerce.crm.application.membership.port.output.MembershipRepository;
-import com.becommerce.crm.domain.identity.User;
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
-import com.becommerce.crm.domain.identity.exception.LinkingRequiredException;
-import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
+import com.becommerce.crm.identity.application.port.input.AuthUseCase;
+import com.becommerce.crm.identity.application.port.output.PermissionRepository;
+import com.becommerce.crm.identity.application.port.output.RoleRepository;
+import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
+import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
+import com.becommerce.crm.identity.domain.User;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
+import com.becommerce.crm.identity.domain.exception.LinkingRequiredException;
+import com.becommerce.crm.identity.domain.exception.UserProvisioningException;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.security.authentication.AuthenticationServiceException;

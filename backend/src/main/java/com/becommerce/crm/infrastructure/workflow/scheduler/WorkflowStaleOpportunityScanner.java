@@ -2,7 +2,7 @@ package com.becommerce.crm.infrastructure.workflow.scheduler;
 
 import com.becommerce.crm.application.activity.port.output.ActivityRepository;
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
-import com.becommerce.crm.application.identity.port.output.EventPublisher;
+import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.application.pipeline.port.output.StageRepository;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;

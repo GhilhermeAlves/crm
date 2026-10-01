@@ -1,6 +1,6 @@
 package com.becommerce.crm.shared.messaging;
 
-import com.becommerce.crm.application.identity.port.output.EventPublisher;
+import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 

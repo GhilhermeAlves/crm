@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.omnichannel.service;
 
 import com.becommerce.crm.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.application.identity.port.output.EventPublisher;
+import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.application.omnichannel.port.input.WhatsAppWebhookUseCase;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelCompanyResolver;

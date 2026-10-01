@@ -2,7 +2,7 @@ package com.becommerce.crm.infrastructure.audit.listener;
 
 import com.becommerce.crm.application.audit.service.AuditService;
 import com.becommerce.crm.domain.audit.AuditLog;
-import com.becommerce.crm.domain.identity.event.UserCreatedEvent;
+import com.becommerce.crm.identity.domain.event.UserCreatedEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

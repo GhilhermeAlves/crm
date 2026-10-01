@@ -37,7 +37,7 @@ class TaskServiceTest {
     @Mock ContactRepository contactRepository;
     @Mock OpportunityRepository opportunityRepository;
     @Mock TenantAuditRecorder auditor;
-    @Mock com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
+    @Mock com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher;
 
     @InjectMocks TaskService taskService;
 

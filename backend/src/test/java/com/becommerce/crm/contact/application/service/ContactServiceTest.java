@@ -7,7 +7,7 @@ import com.becommerce.crm.contact.application.dto.request.CreateContactRequest;
 import com.becommerce.crm.contact.application.dto.request.UpdateContactRequest;
 import com.becommerce.crm.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.contact.domain.Contact;
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 import com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ class ContactServiceTest {
     @Mock ContactRepository contactRepository;
     @Mock CompanyQuotaService quotaService;
     @Mock TenantAuditRecorder auditor;
-    @Mock com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
+    @Mock com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher;
     @Mock CurrentUserAuthorities authorities;
 
     @InjectMocks ContactService contactService;

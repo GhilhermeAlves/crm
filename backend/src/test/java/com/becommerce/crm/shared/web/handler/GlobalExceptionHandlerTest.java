@@ -1,8 +1,8 @@
 package com.becommerce.crm.shared.web.handler;
 
-import com.becommerce.crm.domain.identity.exception.IdentityServiceUnavailableException;
-import com.becommerce.crm.domain.identity.exception.InvalidCredentialsException;
-import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
+import com.becommerce.crm.identity.domain.exception.IdentityServiceUnavailableException;
+import com.becommerce.crm.identity.domain.exception.InvalidCredentialsException;
+import com.becommerce.crm.identity.domain.exception.UserProvisioningException;
 import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +29,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldMapAccessDeniedTo403() {
         var response = handler.handleCrmAccessDenied(
-                new com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException("Sem acesso."));
+                new com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException("Sem acesso."));
         assertEquals(403, response.getStatusCode().value());
         assertEquals("CRM_ACCESS_DENIED", response.getBody().get("code"));
     }

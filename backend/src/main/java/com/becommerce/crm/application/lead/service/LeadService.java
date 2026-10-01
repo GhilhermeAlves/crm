@@ -37,11 +37,11 @@ public class LeadService implements LeadUseCase {
     private final LeadRepository leadRepository;
     private final ContactRepository contactRepository;
     private final TenantAuditRecorder auditor;
-    private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
+    private final com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher;
 
     public LeadService(LeadRepository leadRepository, ContactRepository contactRepository,
                        TenantAuditRecorder auditor,
-                       com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher) {
+                       com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher) {
         this.leadRepository = leadRepository;
         this.contactRepository = contactRepository;
         this.auditor = auditor;

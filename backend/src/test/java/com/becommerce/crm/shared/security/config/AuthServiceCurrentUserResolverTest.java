@@ -1,8 +1,8 @@
 package com.becommerce.crm.shared.security.config;
 
-import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
-import com.becommerce.crm.infrastructure.identity.client.dto.CurrentUserDto;
-import com.becommerce.crm.infrastructure.identity.client.dto.ResolutionResponse;
+import com.becommerce.crm.identity.infrastructure.client.AuthServiceClient;
+import com.becommerce.crm.identity.infrastructure.client.dto.CurrentUserDto;
+import com.becommerce.crm.identity.infrastructure.client.dto.ResolutionResponse;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

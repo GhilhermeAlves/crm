@@ -7,7 +7,7 @@ import com.becommerce.crm.application.activity.port.input.ActivityUseCase;
 import com.becommerce.crm.application.activity.port.output.ActivityRepository;
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.application.identity.port.output.EventPublisher;
+import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.domain.activity.Activity;
 import com.becommerce.crm.domain.activity.exception.ActivityNotFoundException;

@@ -3,12 +3,12 @@ package com.becommerce.crm.application.company.service;
 import com.becommerce.crm.application.company.dto.CompanyUsageResponse;
 import com.becommerce.crm.application.company.port.output.CompanyRepository;
 import com.becommerce.crm.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.application.invitation.port.output.InvitationRepository;
-import com.becommerce.crm.application.membership.port.output.MembershipRepository;
+import com.becommerce.crm.identity.invitation.application.port.output.InvitationRepository;
+import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.application.storage.port.output.StorageRepository;
 import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.company.CompanyNotFoundException;
-import com.becommerce.crm.domain.invitation.InvitationStatus;
+import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 

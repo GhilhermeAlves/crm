@@ -4,7 +4,7 @@ import com.becommerce.crm.application.company.dto.*;
 import com.becommerce.crm.application.company.port.input.CompanyUseCase;
 import com.becommerce.crm.domain.company.CompanyAlreadyExistsException;
 import com.becommerce.crm.domain.company.CompanyNotFoundException;
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import com.becommerce.crm.shared.web.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;

@@ -7,7 +7,7 @@ import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.company.event.CompanyCreatedEvent;
 import com.becommerce.crm.domain.company.event.CompanyDeletedEvent;
 import com.becommerce.crm.domain.company.event.CompanyUpdatedEvent;
-import com.becommerce.crm.domain.identity.event.*;
+import com.becommerce.crm.identity.domain.event.*;
 import com.becommerce.crm.infrastructure.audit.context.AuditContext;
 import com.becommerce.crm.infrastructure.audit.context.AuditContext.AuditContextData;
 import com.becommerce.crm.shared.tenant.context.TenantContext;

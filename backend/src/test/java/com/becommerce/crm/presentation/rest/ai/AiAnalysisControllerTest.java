@@ -3,7 +3,7 @@ package com.becommerce.crm.presentation.rest.ai;
 import com.becommerce.crm.application.ai.dto.AiAnalysisRequest;
 import com.becommerce.crm.application.ai.dto.AiAnalysisResponse;
 import com.becommerce.crm.application.ai.port.input.AiContextualAnalysisUseCase;
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import org.junit.jupiter.api.Test;
 

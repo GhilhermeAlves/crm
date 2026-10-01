@@ -2,7 +2,7 @@ package com.becommerce.crm.application.pipeline.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.application.identity.port.output.EventPublisher;
+import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.application.pipeline.dto.CreateOpportunityRequest;
 import com.becommerce.crm.application.pipeline.dto.MarkLostRequest;
 import com.becommerce.crm.application.pipeline.dto.MoveDirection;

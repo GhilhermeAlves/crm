@@ -1,11 +1,11 @@
 package com.becommerce.crm.shared.security.config;
 
-import com.becommerce.crm.application.identity.port.input.AuthUseCase;
-import com.becommerce.crm.application.identity.port.output.PermissionRepository;
-import com.becommerce.crm.application.identity.port.output.RoleRepository;
-import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
-import com.becommerce.crm.application.membership.port.output.MembershipRepository;
-import com.becommerce.crm.infrastructure.identity.client.AuthServiceClient;
+import com.becommerce.crm.identity.application.port.input.AuthUseCase;
+import com.becommerce.crm.identity.application.port.output.PermissionRepository;
+import com.becommerce.crm.identity.application.port.output.RoleRepository;
+import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
+import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
+import com.becommerce.crm.identity.infrastructure.client.AuthServiceClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

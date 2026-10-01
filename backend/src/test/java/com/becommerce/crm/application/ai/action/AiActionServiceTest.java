@@ -11,7 +11,7 @@ import com.becommerce.crm.domain.ai.AiActionInvalidStateException;
 import com.becommerce.crm.domain.ai.AiActionNotFoundException;
 import com.becommerce.crm.domain.ai.AiActionStatus;
 import com.becommerce.crm.domain.ai.AiConversation;
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

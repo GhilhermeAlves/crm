@@ -54,7 +54,7 @@ public class CampaignExecutionService {
     private final TemplateRepository templateRepository;
     private final List<CampaignChannelDispatcher> dispatchers;
     private final TenantAuditRecorder auditor;
-    private final com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher;
+    private final com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher;
     private final long throttleMs;
     private final ExecutorService dispatchExecutor;
 
@@ -65,7 +65,7 @@ public class CampaignExecutionService {
                                     TemplateRepository templateRepository,
                                     List<CampaignChannelDispatcher> dispatchers,
                                     TenantAuditRecorder auditor,
-                                    com.becommerce.crm.application.identity.port.output.EventPublisher eventPublisher,
+                                    com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher,
                                     @Value("${campaign.dispatch.throttle-ms:200}") long throttleMs) {
         this.campaignRepository = campaignRepository;
         this.executionRepository = executionRepository;

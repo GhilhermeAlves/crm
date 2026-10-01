@@ -1,6 +1,6 @@
 package com.becommerce.crm.shared.security.config;
 
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import java.util.Map;
 import java.util.UUID;
