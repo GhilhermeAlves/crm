@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 
 /**
  * Dispatcher de campanhas para WhatsApp (Sprint 17). Reutiliza o provider da

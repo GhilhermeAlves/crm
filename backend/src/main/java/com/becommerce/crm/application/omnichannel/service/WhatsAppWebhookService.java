@@ -14,7 +14,6 @@ import com.becommerce.crm.domain.contact.Contact;
 import com.becommerce.crm.domain.omnichannel.Channel;
 import com.becommerce.crm.domain.omnichannel.Conversation;
 import com.becommerce.crm.domain.omnichannel.Message;
-import com.becommerce.crm.domain.omnichannel.MessageStatus;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.slf4j.Logger;

@@ -2,7 +2,6 @@ package com.becommerce.crm.infrastructure.identity.persistence;
 
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.domain.identity.Role;
-import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

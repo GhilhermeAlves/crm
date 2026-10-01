@@ -1,6 +1,5 @@
 package com.becommerce.crm.application.ai.service;
 
-import com.becommerce.crm.application.ai.context.AiRecordContext;
 import com.becommerce.crm.application.ai.context.AiRecordContextResolver;
 import com.becommerce.crm.application.ai.context.ContactContextResolver;
 import com.becommerce.crm.application.ai.context.CustomerContextResolver;

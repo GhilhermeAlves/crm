@@ -11,7 +11,6 @@ import com.becommerce.crm.application.omnichannel.service.OmnichannelMessagePers
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.followup.FollowUp;
-import com.becommerce.crm.domain.followup.FollowUpAction;
 import com.becommerce.crm.domain.followup.FollowUpCancellationReason;
 import com.becommerce.crm.domain.omnichannel.Channel;
 import com.becommerce.crm.domain.omnichannel.Conversation;

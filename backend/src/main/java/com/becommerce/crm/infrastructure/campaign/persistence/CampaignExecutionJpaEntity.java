@@ -1,6 +1,5 @@
 package com.becommerce.crm.infrastructure.campaign.persistence;
 
-import com.becommerce.crm.domain.campaign.CampaignExecution;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

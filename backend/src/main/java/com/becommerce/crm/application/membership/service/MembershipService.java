@@ -13,7 +13,6 @@ import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.exception.RoleNotFoundException;
-import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.domain.membership.Membership;

@@ -3,7 +3,6 @@ package com.becommerce.crm.presentation.rest.omnichannel;
 import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.omnichannel.dto.ConversationDetailResponse;
 import com.becommerce.crm.application.omnichannel.dto.ConversationResponse;
-import com.becommerce.crm.application.omnichannel.dto.MessageResponse;
 import com.becommerce.crm.application.omnichannel.port.input.OmnichannelInboxUseCase;
 import com.becommerce.crm.domain.omnichannel.ConversationMode;
 import com.becommerce.crm.domain.omnichannel.ConversationStatus;

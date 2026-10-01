@@ -1,7 +1,6 @@
 package com.becommerce.crm.application.campaign.port.output;
 
 import com.becommerce.crm.domain.campaign.Campaign;
-import com.becommerce.crm.domain.campaign.MessageEventStatus;
 
 import java.util.List;
 import java.util.Optional;

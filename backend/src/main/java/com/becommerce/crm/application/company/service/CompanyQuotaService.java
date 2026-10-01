@@ -11,7 +11,6 @@ import com.becommerce.crm.domain.company.CompanyNotFoundException;
 import com.becommerce.crm.domain.invitation.InvitationStatus;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.function.LongSupplier;

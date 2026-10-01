@@ -12,11 +12,9 @@ import com.becommerce.crm.application.membership.port.output.MembershipRepositor
 import com.becommerce.crm.application.notification.EmailSender;
 import com.becommerce.crm.domain.company.Company;
 import com.becommerce.crm.domain.company.CompanyPlan;
-import com.becommerce.crm.domain.company.CompanyStatus;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.valueobject.Email;
-import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import com.becommerce.crm.domain.invitation.Invitation;
 import com.becommerce.crm.domain.invitation.InvitationStatus;
 import com.becommerce.crm.domain.invitation.exception.InvitationNotFoundException;

@@ -14,7 +14,6 @@ import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.campaign.AudienceType;
 import com.becommerce.crm.domain.campaign.Campaign;
 import com.becommerce.crm.domain.campaign.CampaignStatus;
-import com.becommerce.crm.domain.campaign.MessageEventStatus;
 import com.becommerce.crm.domain.campaign.exception.CampaignNotFoundException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;

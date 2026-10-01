@@ -4,7 +4,6 @@ import com.becommerce.crm.application.ai.action.AiActionService;
 import com.becommerce.crm.application.ai.context.AiPermissionContext;
 import com.becommerce.crm.application.ai.dto.AiActionResponse;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
-import com.becommerce.crm.application.ai.tool.AiToolResult;
 import com.becommerce.crm.application.contact.port.output.ContactRepository;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.domain.contact.Contact;
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -16,8 +16,6 @@ import com.becommerce.crm.domain.omnichannel.ChannelProvider;
 import com.becommerce.crm.domain.omnichannel.Conversation;
 import com.becommerce.crm.domain.omnichannel.ConversationMode;
 import com.becommerce.crm.domain.omnichannel.Message;
-import com.becommerce.crm.domain.omnichannel.MessageDirection;
-import com.becommerce.crm.domain.omnichannel.MessageStatus;
 import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
 import com.becommerce.crm.domain.omnichannel.OmnichannelProviderException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;

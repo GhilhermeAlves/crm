@@ -1,6 +1,5 @@
 package com.becommerce.crm.infrastructure.template.persistence;
 
-import com.becommerce.crm.domain.template.MessageTemplate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

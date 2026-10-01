@@ -4,7 +4,6 @@ import com.becommerce.crm.application.omnichannel.port.output.WhatsAppProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**

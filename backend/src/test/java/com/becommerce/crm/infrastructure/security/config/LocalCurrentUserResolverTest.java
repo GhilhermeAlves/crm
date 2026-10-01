@@ -8,7 +8,6 @@ import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
 import com.becommerce.crm.domain.identity.Permission;
 import com.becommerce.crm.domain.identity.Role;
-import com.becommerce.crm.domain.identity.RolePermission;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;

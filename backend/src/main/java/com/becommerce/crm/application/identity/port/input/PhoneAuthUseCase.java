@@ -1,6 +1,5 @@
 package com.becommerce.crm.application.identity.port.input;
 
-import com.becommerce.crm.application.identity.service.OtpService;
 
 /**
  * Caso de uso para autenticação por telefone/OTP (Sprint 7.3).

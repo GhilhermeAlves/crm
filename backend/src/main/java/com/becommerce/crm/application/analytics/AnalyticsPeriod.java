@@ -3,7 +3,6 @@ package com.becommerce.crm.application.analytics;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.UUID;
 
 /**
  * Período de análise (Sprint 19). Datas interpretadas no timezone informado

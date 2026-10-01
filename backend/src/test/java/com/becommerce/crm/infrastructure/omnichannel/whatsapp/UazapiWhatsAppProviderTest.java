@@ -10,7 +10,6 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import java.util.Map;
-import java.util.function.Function;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;

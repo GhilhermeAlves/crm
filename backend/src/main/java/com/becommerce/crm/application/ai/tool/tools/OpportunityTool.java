@@ -4,7 +4,6 @@ import com.becommerce.crm.application.ai.tool.AbstractAiReadTool;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
 import com.becommerce.crm.application.pipeline.port.input.OpportunityUseCase;
-import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

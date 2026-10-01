@@ -4,9 +4,6 @@ import com.becommerce.crm.application.identity.dto.PageResponse;
 import com.becommerce.crm.application.lead.dto.CreateLeadRequest;
 import com.becommerce.crm.application.lead.dto.LeadResponse;
 import com.becommerce.crm.application.lead.dto.UpdateLeadRequest;
-import com.becommerce.crm.domain.lead.LeadClassification;
-import com.becommerce.crm.domain.lead.LeadSource;
-import com.becommerce.crm.domain.lead.LeadStatus;
 
 import java.util.UUID;
 

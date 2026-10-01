@@ -6,13 +6,10 @@ import com.becommerce.crm.application.identity.port.output.RolePermissionReposit
 import com.becommerce.crm.application.identity.port.output.RoleRepository;
 import com.becommerce.crm.application.identity.port.output.UserRoleRepository;
 import com.becommerce.crm.application.membership.port.output.MembershipRepository;
-import com.becommerce.crm.domain.identity.Permission;
-import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.domain.identity.exception.LinkingRequiredException;
 import com.becommerce.crm.domain.identity.exception.UserProvisioningException;
-import com.becommerce.crm.domain.identity.valueobject.RoleName;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -23,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Resolução local do {@link CurrentUser} a partir do banco CRM: provisiona o

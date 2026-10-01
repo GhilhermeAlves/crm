@@ -1,6 +1,5 @@
 package com.becommerce.crm.application.pipeline.dto;
 
-import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

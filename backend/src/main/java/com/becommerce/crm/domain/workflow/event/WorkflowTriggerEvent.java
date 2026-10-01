@@ -4,7 +4,6 @@ import com.becommerce.crm.domain.workflow.TriggerEvent;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;

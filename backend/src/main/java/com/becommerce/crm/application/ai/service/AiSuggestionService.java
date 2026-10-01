@@ -6,7 +6,6 @@ import com.becommerce.crm.application.ai.port.output.AiSuggestionProvider;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.domain.omnichannel.Conversation;
-import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.MessageDirection;
 import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;

@@ -3,7 +3,6 @@ package com.becommerce.crm.infrastructure.identity.persistence;
 import com.becommerce.crm.domain.identity.OtpCode;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 
 @Component
 public class OtpCodeMapper {

@@ -14,7 +14,6 @@ import com.becommerce.crm.domain.company.event.CompanyDeletedEvent;
 import com.becommerce.crm.domain.company.event.CompanyUpdatedEvent;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.User;
-import com.becommerce.crm.domain.identity.UserRole;
 import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.infrastructure.identity.persistence.RoleSeedService;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;

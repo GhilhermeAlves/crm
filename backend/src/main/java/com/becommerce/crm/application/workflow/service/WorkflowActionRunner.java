@@ -7,7 +7,6 @@ import com.becommerce.crm.application.task.port.input.TaskUseCase;
 import com.becommerce.crm.application.workflow.port.output.WorkflowExecutionRepository;
 import com.becommerce.crm.domain.activity.ActivityType;
 import com.becommerce.crm.domain.task.TaskPriority;
-import com.becommerce.crm.domain.workflow.ActionType;
 import com.becommerce.crm.domain.workflow.ExecutionStatus;
 import com.becommerce.crm.domain.workflow.Workflow;
 import com.becommerce.crm.domain.workflow.WorkflowAction;

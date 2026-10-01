@@ -1,6 +1,5 @@
 package com.becommerce.crm.application.ai.context;
 
-import java.util.List;
 
 /**
  * Resultado do Context Engine (AI-02): contexto completo e composto que o

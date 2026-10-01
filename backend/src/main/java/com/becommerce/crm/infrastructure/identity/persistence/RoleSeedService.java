@@ -7,7 +7,6 @@ import com.becommerce.crm.domain.identity.Permission;
 import com.becommerce.crm.domain.identity.Role;
 import com.becommerce.crm.domain.identity.RolePermission;
 import com.becommerce.crm.domain.identity.valueobject.RoleName;
-import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

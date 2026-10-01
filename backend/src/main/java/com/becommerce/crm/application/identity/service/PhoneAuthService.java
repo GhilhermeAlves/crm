@@ -2,14 +2,12 @@ package com.becommerce.crm.application.identity.service;
 
 import com.becommerce.crm.application.identity.port.input.PhoneAuthUseCase;
 import com.becommerce.crm.application.identity.port.output.UserRepository;
-import com.becommerce.crm.domain.identity.OtpCode;
 import com.becommerce.crm.domain.identity.User;
 import com.becommerce.crm.domain.identity.valueobject.PhoneNumber;
 import com.becommerce.crm.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Implementação do caso de uso de autenticação por telefone (Sprint 7.3).

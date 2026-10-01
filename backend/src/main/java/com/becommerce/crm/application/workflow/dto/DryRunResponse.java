@@ -1,7 +1,6 @@
 package com.becommerce.crm.application.workflow.dto;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Resultado do dry-run de um workflow (Sprint 15): elegibilidade da regra para

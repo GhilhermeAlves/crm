@@ -3,7 +3,6 @@ package com.becommerce.crm.presentation.rest.ai;
 import com.becommerce.crm.application.ai.dto.AiConversationResponse;
 import com.becommerce.crm.application.ai.dto.AiMessageResponse;
 import com.becommerce.crm.application.ai.port.input.AiAssistantUseCase;
-import com.becommerce.crm.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import com.becommerce.crm.presentation.rest.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;

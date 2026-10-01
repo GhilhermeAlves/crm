@@ -16,7 +16,6 @@ import com.becommerce.crm.domain.omnichannel.ChannelProvider;
 import com.becommerce.crm.domain.omnichannel.ChannelStatus;
 import com.becommerce.crm.domain.omnichannel.ChannelType;
 import com.becommerce.crm.domain.omnichannel.Conversation;
-import com.becommerce.crm.domain.omnichannel.ConversationMode;
 import com.becommerce.crm.domain.omnichannel.ConversationStatus;
 import com.becommerce.crm.domain.omnichannel.Message;
 import com.becommerce.crm.domain.omnichannel.MessageDirection;

@@ -2,9 +2,7 @@ package com.becommerce.crm.infrastructure.notification.websocket;
 
 import com.becommerce.crm.application.notification.dto.NotificationResponse;
 import com.becommerce.crm.application.notification.port.output.NotificationPusher;
-import com.becommerce.crm.infrastructure.security.filter.CurrentUser;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
