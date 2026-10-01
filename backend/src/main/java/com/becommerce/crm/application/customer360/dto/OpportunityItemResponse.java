@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.customer360.dto;
 
-import com.becommerce.crm.domain.pipeline.OpportunityStatus;
+import com.becommerce.crm.sales.pipeline.domain.OpportunityStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

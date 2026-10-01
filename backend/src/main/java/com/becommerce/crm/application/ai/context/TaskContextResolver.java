@@ -1,12 +1,12 @@
 package com.becommerce.crm.application.ai.context;
 
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.application.task.port.output.TaskRepository;
+import com.becommerce.crm.sales.task.application.port.out.TaskRepository;
 import com.becommerce.crm.domain.ai.AiRecordType;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
-import com.becommerce.crm.domain.task.Task;
-import com.becommerce.crm.domain.task.TaskPriority;
-import com.becommerce.crm.domain.task.TaskStatus;
+import com.becommerce.crm.sales.task.domain.Task;
+import com.becommerce.crm.sales.task.domain.TaskPriority;
+import com.becommerce.crm.sales.task.domain.TaskStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

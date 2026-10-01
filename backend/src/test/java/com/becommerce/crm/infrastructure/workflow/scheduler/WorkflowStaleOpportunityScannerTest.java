@@ -1,13 +1,13 @@
 package com.becommerce.crm.infrastructure.workflow.scheduler;
 
-import com.becommerce.crm.application.activity.port.output.ActivityRepository;
+import com.becommerce.crm.sales.activity.application.port.out.ActivityRepository;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.EventPublisher;
-import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
-import com.becommerce.crm.application.pipeline.port.output.StageRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.StageRepository;
 import com.becommerce.crm.masterdata.company.domain.Company;
-import com.becommerce.crm.domain.pipeline.Opportunity;
-import com.becommerce.crm.domain.pipeline.OpportunityStatus;
+import com.becommerce.crm.sales.pipeline.domain.Opportunity;
+import com.becommerce.crm.sales.pipeline.domain.OpportunityStatus;
 import com.becommerce.crm.domain.workflow.TriggerEvent;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import org.junit.jupiter.api.Test;

@@ -1,12 +1,12 @@
 package com.becommerce.crm.application.workflow.service;
 
-import com.becommerce.crm.application.activity.dto.CreateActivityRequest;
-import com.becommerce.crm.application.activity.port.input.ActivityUseCase;
-import com.becommerce.crm.application.task.dto.CreateTaskRequest;
-import com.becommerce.crm.application.task.port.input.TaskUseCase;
+import com.becommerce.crm.sales.activity.application.dto.CreateActivityRequest;
+import com.becommerce.crm.sales.activity.application.port.in.ActivityUseCase;
+import com.becommerce.crm.sales.task.application.dto.CreateTaskRequest;
+import com.becommerce.crm.sales.task.application.port.in.TaskUseCase;
 import com.becommerce.crm.application.workflow.port.output.WorkflowExecutionRepository;
-import com.becommerce.crm.domain.activity.ActivityType;
-import com.becommerce.crm.domain.task.TaskPriority;
+import com.becommerce.crm.sales.activity.domain.ActivityType;
+import com.becommerce.crm.sales.task.domain.TaskPriority;
 import com.becommerce.crm.domain.workflow.ExecutionStatus;
 import com.becommerce.crm.domain.workflow.Workflow;
 import com.becommerce.crm.domain.workflow.WorkflowAction;

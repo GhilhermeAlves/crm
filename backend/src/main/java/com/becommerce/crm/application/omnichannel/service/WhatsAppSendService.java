@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.omnichannel.service;
 
-import com.becommerce.crm.application.followup.service.FollowUpSendOutcomeHandler;
+import com.becommerce.crm.sales.followup.application.service.FollowUpSendOutcomeHandler;
 import com.becommerce.crm.application.omnichannel.event.WhatsAppSendEvent;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;

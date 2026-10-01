@@ -1,10 +1,10 @@
 package com.becommerce.crm.infrastructure.workflow.scheduler;
 
-import com.becommerce.crm.application.activity.port.output.ActivityRepository;
+import com.becommerce.crm.sales.activity.application.port.out.ActivityRepository;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.EventPublisher;
-import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
-import com.becommerce.crm.application.pipeline.port.output.StageRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.StageRepository;
 import com.becommerce.crm.domain.workflow.event.WorkflowTriggerEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
@@ -74,7 +74,7 @@ public class WorkflowStaleOpportunityScanner {
             Map<UUID, String> stageNameById = stageRepository.findByCompanyId(companyId).stream()
                     .collect(Collectors.toMap(s -> s.getId(), s -> s.getName(), (a, b) -> a));
             opportunityRepository.findByCompanyId(companyId).stream()
-                    .filter(o -> o.getStatus() == com.becommerce.crm.domain.pipeline.OpportunityStatus.OPEN)
+                    .filter(o -> o.getStatus() == com.becommerce.crm.sales.pipeline.domain.OpportunityStatus.OPEN)
                     .forEach(o -> {
                         long daysWithoutActivity = daysWithoutActivity(o.getId(), o.getCreatedAt(), now);
                         if (daysWithoutActivity >= STALE_DAYS) {

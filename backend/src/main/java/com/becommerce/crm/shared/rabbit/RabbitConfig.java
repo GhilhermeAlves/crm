@@ -29,7 +29,7 @@ public class RabbitConfig {
      *  p/ novos eventos). Pacote pai ou sufixo {@code .*} NÃO funcionam. */
     private static final String[] TRUSTED_PACKAGES = {
             "com.becommerce.crm.application.omnichannel.event",
-            "com.becommerce.crm.application.followup.event"
+            "com.becommerce.crm.sales.followup.application.event"
     };
 
     @Bean

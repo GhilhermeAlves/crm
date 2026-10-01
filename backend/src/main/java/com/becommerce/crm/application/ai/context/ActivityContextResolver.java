@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.ai.context;
 
-import com.becommerce.crm.application.activity.port.output.ActivityRepository;
-import com.becommerce.crm.domain.activity.Activity;
+import com.becommerce.crm.sales.activity.application.port.out.ActivityRepository;
+import com.becommerce.crm.sales.activity.domain.Activity;
 import com.becommerce.crm.domain.ai.AiRecordType;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.dashboard.dto;
 
-import com.becommerce.crm.application.activity.dto.ActivityResponse;
-import com.becommerce.crm.application.task.dto.TaskResponse;
+import com.becommerce.crm.sales.activity.application.dto.ActivityResponse;
+import com.becommerce.crm.sales.task.application.dto.TaskResponse;
 
 import java.math.BigDecimal;
 import java.util.List;

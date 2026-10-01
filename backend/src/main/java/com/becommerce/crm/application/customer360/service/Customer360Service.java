@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.customer360.service;
 
-import com.becommerce.crm.application.activity.port.output.ActivityRepository;
+import com.becommerce.crm.sales.activity.application.port.out.ActivityRepository;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.application.customer360.dto.ContactSummaryResponse;
 import com.becommerce.crm.application.customer360.dto.Customer360Response;
@@ -8,19 +8,19 @@ import com.becommerce.crm.application.customer360.dto.NextActionResponse;
 import com.becommerce.crm.application.customer360.dto.OpportunityItemResponse;
 import com.becommerce.crm.application.customer360.dto.TaskItemResponse;
 import com.becommerce.crm.application.customer360.dto.TimelineEventResponse;
-import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
-import com.becommerce.crm.application.pipeline.port.output.PipelineRepository;
-import com.becommerce.crm.application.pipeline.port.output.StageRepository;
-import com.becommerce.crm.application.task.port.output.TaskRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.PipelineRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.StageRepository;
+import com.becommerce.crm.sales.task.application.port.out.TaskRepository;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
-import com.becommerce.crm.domain.pipeline.Opportunity;
-import com.becommerce.crm.domain.pipeline.OpportunityHistory;
-import com.becommerce.crm.domain.pipeline.OpportunityStatus;
-import com.becommerce.crm.domain.pipeline.Pipeline;
-import com.becommerce.crm.domain.pipeline.Stage;
-import com.becommerce.crm.domain.task.Task;
-import com.becommerce.crm.domain.task.TaskStatus;
+import com.becommerce.crm.sales.pipeline.domain.Opportunity;
+import com.becommerce.crm.sales.pipeline.domain.OpportunityHistory;
+import com.becommerce.crm.sales.pipeline.domain.OpportunityStatus;
+import com.becommerce.crm.sales.pipeline.domain.Pipeline;
+import com.becommerce.crm.sales.pipeline.domain.Stage;
+import com.becommerce.crm.sales.task.domain.Task;
+import com.becommerce.crm.sales.task.domain.TaskStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

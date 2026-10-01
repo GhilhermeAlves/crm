@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.ai.tool.tools;
 
-import com.becommerce.crm.application.activity.port.input.ActivityUseCase;
+import com.becommerce.crm.sales.activity.application.port.in.ActivityUseCase;
 import com.becommerce.crm.application.ai.tool.AbstractAiReadTool;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;

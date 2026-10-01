@@ -5,11 +5,11 @@ import com.becommerce.crm.application.ai.context.AiPermissionContext;
 import com.becommerce.crm.application.ai.dto.AiActionResponse;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
-import com.becommerce.crm.domain.pipeline.Opportunity;
-import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
+import com.becommerce.crm.sales.pipeline.domain.Opportunity;
+import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

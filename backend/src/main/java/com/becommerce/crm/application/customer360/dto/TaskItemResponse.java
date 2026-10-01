@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.customer360.dto;
 
-import com.becommerce.crm.domain.task.TaskPriority;
-import com.becommerce.crm.domain.task.TaskStatus;
+import com.becommerce.crm.sales.task.domain.TaskPriority;
+import com.becommerce.crm.sales.task.domain.TaskStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

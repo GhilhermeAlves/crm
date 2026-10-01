@@ -1,20 +1,20 @@
 package com.becommerce.crm.application.dashboard.service;
 
-import com.becommerce.crm.application.activity.dto.ActivityResponse;
-import com.becommerce.crm.application.activity.port.output.ActivityRepository;
+import com.becommerce.crm.sales.activity.application.dto.ActivityResponse;
+import com.becommerce.crm.sales.activity.application.port.out.ActivityRepository;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.application.dashboard.dto.AttentionOpportunity;
 import com.becommerce.crm.application.dashboard.dto.OperationalDashboard;
-import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
-import com.becommerce.crm.application.pipeline.port.output.PipelineRepository;
-import com.becommerce.crm.application.pipeline.port.output.StageRepository;
-import com.becommerce.crm.application.task.dto.TaskResponse;
-import com.becommerce.crm.application.task.port.output.TaskRepository;
-import com.becommerce.crm.domain.pipeline.Opportunity;
-import com.becommerce.crm.domain.pipeline.OpportunityStatus;
-import com.becommerce.crm.domain.pipeline.Pipeline;
-import com.becommerce.crm.domain.pipeline.Stage;
-import com.becommerce.crm.domain.task.Task;
+import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.PipelineRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.StageRepository;
+import com.becommerce.crm.sales.task.application.dto.TaskResponse;
+import com.becommerce.crm.sales.task.application.port.out.TaskRepository;
+import com.becommerce.crm.sales.pipeline.domain.Opportunity;
+import com.becommerce.crm.sales.pipeline.domain.OpportunityStatus;
+import com.becommerce.crm.sales.pipeline.domain.Pipeline;
+import com.becommerce.crm.sales.pipeline.domain.Stage;
+import com.becommerce.crm.sales.task.domain.Task;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,7 +97,7 @@ public class DashboardService {
         var dueToday = taskRepository.findDueToday(companyId, LocalDate.now().atStartOfDay(),
                         LocalDate.now().atTime(LocalTime.MAX))
                 .stream()
-                .filter(t -> t.getStatus() != com.becommerce.crm.domain.task.TaskStatus.COMPLETED)
+                .filter(t -> t.getStatus() != com.becommerce.crm.sales.task.domain.TaskStatus.COMPLETED)
                 .map(this::toTaskResponse)
                 .toList();
 
@@ -197,7 +197,7 @@ public class DashboardService {
         );
     }
 
-    private ActivityResponse toActivityResponse(com.becommerce.crm.domain.activity.Activity a) {
+    private ActivityResponse toActivityResponse(com.becommerce.crm.sales.activity.domain.Activity a) {
         return new ActivityResponse(
                 a.getId(),
                 a.getCompanyId(),

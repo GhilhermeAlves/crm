@@ -1,13 +1,13 @@
 package com.becommerce.crm.application.workflow.service;
 
-import com.becommerce.crm.application.activity.dto.ActivityResponse;
-import com.becommerce.crm.application.activity.port.input.ActivityUseCase;
-import com.becommerce.crm.application.task.dto.TaskResponse;
-import com.becommerce.crm.application.task.port.input.TaskUseCase;
+import com.becommerce.crm.sales.activity.application.dto.ActivityResponse;
+import com.becommerce.crm.sales.activity.application.port.in.ActivityUseCase;
+import com.becommerce.crm.sales.task.application.dto.TaskResponse;
+import com.becommerce.crm.sales.task.application.port.in.TaskUseCase;
 import com.becommerce.crm.application.workflow.port.output.WorkflowExecutionRepository;
-import com.becommerce.crm.domain.activity.ActivityType;
-import com.becommerce.crm.domain.task.TaskPriority;
-import com.becommerce.crm.domain.task.TaskStatus;
+import com.becommerce.crm.sales.activity.domain.ActivityType;
+import com.becommerce.crm.sales.task.domain.TaskPriority;
+import com.becommerce.crm.sales.task.domain.TaskStatus;
 import com.becommerce.crm.domain.workflow.ActionType;
 import com.becommerce.crm.domain.workflow.ExecutionStatus;
 import com.becommerce.crm.domain.workflow.TriggerEvent;
@@ -100,8 +100,8 @@ class WorkflowActionRunnerTest {
 
         runner.run(workflow(), action, stageChangedEvent());
 
-        ArgumentCaptor<com.becommerce.crm.application.task.dto.CreateTaskRequest> req =
-                ArgumentCaptor.forClass(com.becommerce.crm.application.task.dto.CreateTaskRequest.class);
+        ArgumentCaptor<com.becommerce.crm.sales.task.application.dto.CreateTaskRequest> req =
+                ArgumentCaptor.forClass(com.becommerce.crm.sales.task.application.dto.CreateTaskRequest.class);
         verify(taskUseCase).create(any(), req.capture(), any());
         assertNotNull(req.getValue().description());
         assertTrue(req.getValue().description().contains("Criada automaticamente pelo workflow"),

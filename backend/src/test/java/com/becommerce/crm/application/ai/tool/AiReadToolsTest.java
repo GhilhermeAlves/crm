@@ -1,6 +1,6 @@
 package com.becommerce.crm.application.ai.tool;
 
-import com.becommerce.crm.application.activity.port.input.ActivityUseCase;
+import com.becommerce.crm.sales.activity.application.port.in.ActivityUseCase;
 import com.becommerce.crm.application.ai.context.AiPermissionContext;
 import com.becommerce.crm.application.ai.tool.tools.ActivityTool;
 import com.becommerce.crm.application.ai.tool.tools.ContactTool;
@@ -19,19 +19,19 @@ import com.becommerce.crm.application.customer360.dto.ContactSummaryResponse;
 import com.becommerce.crm.application.customer360.dto.Customer360Response;
 import com.becommerce.crm.application.customer360.dto.NextActionResponse;
 import com.becommerce.crm.application.customer360.service.Customer360Service;
-import com.becommerce.crm.application.pipeline.dto.OpportunityResponse;
-import com.becommerce.crm.application.pipeline.dto.PipelineResponse;
-import com.becommerce.crm.application.pipeline.port.input.OpportunityUseCase;
-import com.becommerce.crm.application.pipeline.port.input.PipelineUseCase;
-import com.becommerce.crm.application.task.dto.TaskResponse;
-import com.becommerce.crm.application.task.port.input.TaskUseCase;
-import com.becommerce.crm.domain.activity.ActivityType;
+import com.becommerce.crm.sales.pipeline.application.dto.OpportunityResponse;
+import com.becommerce.crm.sales.pipeline.application.dto.PipelineResponse;
+import com.becommerce.crm.sales.pipeline.application.port.in.OpportunityUseCase;
+import com.becommerce.crm.sales.pipeline.application.port.in.PipelineUseCase;
+import com.becommerce.crm.sales.task.application.dto.TaskResponse;
+import com.becommerce.crm.sales.task.application.port.in.TaskUseCase;
+import com.becommerce.crm.sales.activity.domain.ActivityType;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
-import com.becommerce.crm.domain.pipeline.OpportunityStatus;
-import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
-import com.becommerce.crm.domain.pipeline.exception.PipelineNotFoundException;
-import com.becommerce.crm.domain.task.TaskStatus;
-import com.becommerce.crm.domain.task.exception.TaskNotFoundException;
+import com.becommerce.crm.sales.pipeline.domain.OpportunityStatus;
+import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundException;
+import com.becommerce.crm.sales.pipeline.domain.exception.PipelineNotFoundException;
+import com.becommerce.crm.sales.task.domain.TaskStatus;
+import com.becommerce.crm.sales.task.domain.exception.TaskNotFoundException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -138,7 +138,7 @@ class AiReadToolsTest {
 
     @Test
     void shouldGetActivity() {
-        var a = new com.becommerce.crm.application.activity.dto.ActivityResponse(
+        var a = new com.becommerce.crm.sales.activity.application.dto.ActivityResponse(
                 UUID.randomUUID(), companyId, null, null, ActivityType.CALL, "Ligar",
                 null, LocalDateTime.now(), userId, LocalDateTime.now(), LocalDateTime.now());
         when(activityUseCase.getById(companyId, a.id())).thenReturn(a);
@@ -150,7 +150,7 @@ class AiReadToolsTest {
 
     @Test
     void shouldSearchActivitiesByContact() {
-        var a = new com.becommerce.crm.application.activity.dto.ActivityResponse(
+        var a = new com.becommerce.crm.sales.activity.application.dto.ActivityResponse(
                 UUID.randomUUID(), companyId, null, null, ActivityType.NOTE, "Anotação",
                 null, LocalDateTime.now(), userId, LocalDateTime.now(), LocalDateTime.now());
         when(activityUseCase.listByContact(companyId, a.id())).thenReturn(List.of(a));

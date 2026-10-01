@@ -3,8 +3,8 @@ package com.becommerce.crm.application.ai.tool.tools;
 import com.becommerce.crm.application.ai.tool.AbstractAiReadTool;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
-import com.becommerce.crm.application.task.port.input.TaskUseCase;
-import com.becommerce.crm.domain.task.TaskStatus;
+import com.becommerce.crm.sales.task.application.port.in.TaskUseCase;
+import com.becommerce.crm.sales.task.domain.TaskStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

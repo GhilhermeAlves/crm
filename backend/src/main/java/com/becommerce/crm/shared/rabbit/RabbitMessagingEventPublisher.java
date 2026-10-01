@@ -1,7 +1,7 @@
 package com.becommerce.crm.shared.rabbit;
 
-import com.becommerce.crm.application.followup.event.FollowUpExecutionEvent;
-import com.becommerce.crm.application.followup.port.output.FollowUpEventPublisher;
+import com.becommerce.crm.sales.followup.application.event.FollowUpExecutionEvent;
+import com.becommerce.crm.sales.followup.application.port.out.FollowUpEventPublisher;
 import com.becommerce.crm.application.omnichannel.event.WhatsAppAutoAiEvent;
 import com.becommerce.crm.application.omnichannel.event.WhatsAppInboundEvent;
 import com.becommerce.crm.application.omnichannel.event.WhatsAppSendEvent;

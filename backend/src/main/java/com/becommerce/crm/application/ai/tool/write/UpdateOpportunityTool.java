@@ -6,8 +6,8 @@ import com.becommerce.crm.application.ai.port.output.AiProvider;
 import com.becommerce.crm.application.ai.tool.AiTool;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
-import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
-import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
+import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
+import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 

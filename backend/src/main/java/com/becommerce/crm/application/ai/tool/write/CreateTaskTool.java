@@ -7,9 +7,9 @@ import com.becommerce.crm.application.ai.tool.AiTool;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
-import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
+import com.becommerce.crm.sales.pipeline.application.port.out.OpportunityRepository;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
-import com.becommerce.crm.domain.pipeline.exception.OpportunityNotFoundException;
+import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -113,7 +113,7 @@ public class CreateTaskTool implements AiTool {
         put(parameters, "assigneeId", uuid(args, "assigneeId"));
         put(parameters, "dueAt", dateTime(args, "dueAt"));
         put(parameters, "priority", enumValue(args, "priority",
-                com.becommerce.crm.domain.task.TaskPriority.class));
+                com.becommerce.crm.sales.task.domain.TaskPriority.class));
 
         String description = buildDescription(title, contactId, opportunityId);
         AiActionResponse proposal = actionService.propose(
