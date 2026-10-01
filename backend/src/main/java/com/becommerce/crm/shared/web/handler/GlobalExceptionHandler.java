@@ -32,7 +32,7 @@ import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoun
 import com.becommerce.crm.sales.lead.domain.exception.DuplicateLeadException;
 import com.becommerce.crm.sales.lead.domain.exception.LeadNotFoundException;
 import com.becommerce.crm.domain.campaign.exception.CampaignNotFoundException;
-import com.becommerce.crm.domain.template.exception.TemplateNotFoundException;
+import com.becommerce.crm.communication.template.domain.exception.TemplateNotFoundException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogItemNotFoundException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogSkuConflictException;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
@@ -44,9 +44,9 @@ import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededExcepti
 import com.becommerce.crm.masterdata.storage.domain.exception.StorageObjectNotFoundException;
 import com.becommerce.crm.sales.task.domain.exception.TaskNotFoundException;
 import com.becommerce.crm.sales.task.domain.exception.TaskValidationException;
-import com.becommerce.crm.domain.notification.exception.NotificationNotFoundException;
-import com.becommerce.crm.domain.notification.exception.NotificationValidationException;
-import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
+import com.becommerce.crm.communication.notification.domain.exception.NotificationNotFoundException;
+import com.becommerce.crm.communication.notification.domain.exception.NotificationValidationException;
+import com.becommerce.crm.communication.omnichannel.domain.OmnichannelNotFoundException;
 import com.becommerce.crm.domain.ai.AiProviderException;
 import com.becommerce.crm.domain.ai.AiConversationNotFoundException;
 import com.becommerce.crm.domain.ai.AiActionNotFoundException;

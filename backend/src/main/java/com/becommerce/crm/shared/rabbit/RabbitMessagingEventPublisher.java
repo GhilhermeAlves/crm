@@ -2,10 +2,10 @@ package com.becommerce.crm.shared.rabbit;
 
 import com.becommerce.crm.sales.followup.application.event.FollowUpExecutionEvent;
 import com.becommerce.crm.sales.followup.application.port.out.FollowUpEventPublisher;
-import com.becommerce.crm.application.omnichannel.event.WhatsAppAutoAiEvent;
-import com.becommerce.crm.application.omnichannel.event.WhatsAppInboundEvent;
-import com.becommerce.crm.application.omnichannel.event.WhatsAppSendEvent;
-import com.becommerce.crm.application.omnichannel.port.output.WhatsAppEventPublisher;
+import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppAutoAiEvent;
+import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppInboundEvent;
+import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
+import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

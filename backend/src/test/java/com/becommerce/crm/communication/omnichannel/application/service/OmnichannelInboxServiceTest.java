@@ -1,0 +1,203 @@
+package com.becommerce.crm.communication.omnichannel.application.service;
+
+import com.becommerce.crm.shared.application.dto.PageResponse;
+import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
+import com.becommerce.crm.domain.audit.AuditAction;
+import com.becommerce.crm.domain.audit.AuditModule;
+import com.becommerce.crm.communication.omnichannel.application.dto.ConversationResponse;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppProvider;
+import com.becommerce.crm.communication.omnichannel.domain.Channel;
+import com.becommerce.crm.communication.omnichannel.domain.ChannelStatus;
+import com.becommerce.crm.communication.omnichannel.domain.ChannelType;
+import com.becommerce.crm.communication.omnichannel.domain.ChannelProvider;
+import com.becommerce.crm.communication.omnichannel.domain.Conversation;
+import com.becommerce.crm.communication.omnichannel.domain.ConversationMode;
+import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.OmnichannelNotFoundException;
+import com.becommerce.crm.communication.omnichannel.domain.OmnichannelProviderException;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class OmnichannelInboxServiceTest {
+
+    private final UUID companyId = UUID.randomUUID();
+    private final UUID channelId = UUID.randomUUID();
+    private final UUID contactId = UUID.randomUUID();
+
+    @Mock OmnichannelConversationRepository conversationRepository;
+    @Mock OmnichannelMessageRepository messageRepository;
+    @Mock OmnichannelChannelRepository channelRepository;
+    @Mock WhatsAppProvider whatsAppProvider;
+    @Mock OmnichannelMessagePersister messagePersister;
+    @Mock TenantAuditRecorder auditor;
+
+    @InjectMocks OmnichannelInboxService service;
+
+    @BeforeEach
+    @AfterEach
+    void cleanTenant() {
+        TenantContext.clear();
+    }
+
+    private Conversation conversation() {
+        return Conversation.reconstitute(UUID.randomUUID(), companyId, channelId, contactId,
+                "+5511999998888", com.becommerce.crm.communication.omnichannel.domain.ConversationStatus.OPEN,
+                null, 0, java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+    }
+
+    private Channel channel() {
+        return Channel.reconstitute(channelId, companyId, ChannelType.WHATSAPP, ChannelProvider.FAKE,
+                "Comercial", ChannelStatus.ACTIVE, "espaco-a", null, null,
+                java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+    }
+
+    private Message outbound() {
+        return Message.createOutbound(companyId, UUID.randomUUID(), channelId,
+                "espaco-a", "+5511999998888", "Bom dia!", UUID.randomUUID());
+    }
+
+    @Test
+    void send_shouldPersistPendingThenMarkSent() {
+        Conversation c = conversation();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel()));
+        when(whatsAppProvider.send(any(WhatsAppProvider.SendRequest.class)))
+                .thenReturn(new WhatsAppProvider.SendResult("wamid-1"));
+        Message pending = outbound();
+        when(messagePersister.persistPending(any(Message.class))).thenReturn(pending);
+
+        service.send(companyId, c.getId(), "Bom dia!");
+
+        verify(whatsAppProvider).send(any(WhatsAppProvider.SendRequest.class));
+        verify(messagePersister).persistPending(any(Message.class));
+        verify(messagePersister).markSent(eq(pending.getId()), eq(c.getId()), eq("wamid-1"));
+        verify(messagePersister, never()).markFailed(any(), any(), any());
+    }
+
+    @Test
+    void send_whenProviderFails_shouldPersistFailedInNewTransactionAndThrow() {
+        Conversation c = conversation();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel()));
+        when(whatsAppProvider.send(any(WhatsAppProvider.SendRequest.class)))
+                .thenThrow(new OmnichannelProviderException("131026: n invalid"));
+        Message pending = outbound();
+        when(messagePersister.persistPending(any(Message.class))).thenReturn(pending);
+
+        assertThrows(OmnichannelProviderException.class, () -> service.send(companyId, c.getId(), "oi"));
+        verify(messagePersister).persistPending(any(Message.class));
+        verify(messagePersister).markFailed(eq(pending.getId()), eq(c.getId()), eq("131026: n invalid"));
+        verify(messagePersister, never()).markSent(any(), any(), any());
+    }
+
+    @Test
+    void send_whenConversationFromOtherCompany_shouldThrowNotFound() {
+        Conversation other = Conversation.reconstitute(UUID.randomUUID(), UUID.randomUUID(), channelId, null,
+                "+5511999998888", com.becommerce.crm.communication.omnichannel.domain.ConversationStatus.OPEN,
+                null, 0, java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+        when(conversationRepository.findById(other.getId())).thenReturn(Optional.of(other));
+
+        assertThrows(OmnichannelNotFoundException.class,
+                () -> service.send(companyId, other.getId(), "oi"));
+        verify(whatsAppProvider, never()).send(any());
+    }
+
+    @Test
+    void listConversations_shouldReturnPagedWithLastBodyAndUnread() {
+        Conversation c = conversation();
+        PageResponse<Conversation> page = PageResponse.of(List.of(c), 0, 20, 1);
+        when(conversationRepository.findByCompany(companyId, 0, 20)).thenReturn(page);
+        when(messageRepository.findLastBodyByConversation(c.getId())).thenReturn(Optional.of("Bom dia!"));
+
+        PageResponse<ConversationResponse> result = service.listConversations(companyId, 0, 20);
+
+        assertEquals(1, result.totalElements());
+        assertEquals("Bom dia!", result.content().get(0).lastMessage());
+        assertEquals(c.getExternalPhone(), result.content().get(0).externalPhone());
+    }
+
+    @Test
+    void markRead_shouldClearUnread() {
+        Conversation c = conversation();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(conversationRepository.save(any(Conversation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.markRead(companyId, c.getId());
+        assertEquals(0, c.getUnreadCount());
+    }
+
+    @Test
+    void takeover_shouldSwitchConversationToHumanMode() {
+        Conversation c = conversation();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(conversationRepository.save(any(Conversation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ConversationResponse response = service.takeover(companyId, c.getId());
+
+        assertEquals(ConversationMode.HUMAN, c.getMode());
+        assertEquals(ConversationMode.HUMAN, response.mode());
+        verify(conversationRepository).save(c);
+        verify(auditor).record(eq(companyId), eq(AuditAction.UPDATE), eq(AuditModule.OMNICHANNEL),
+                eq("Conversation"), eq(c.getId().toString()), any(), isNull(), isNull());
+    }
+
+    @Test
+    void takeover_whenConversationFromOtherCompany_shouldThrow() {
+        Conversation other = Conversation.reconstitute(UUID.randomUUID(), UUID.randomUUID(), channelId, null,
+                "+5511999998888", com.becommerce.crm.communication.omnichannel.domain.ConversationStatus.OPEN,
+                null, 0, java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+        when(conversationRepository.findById(other.getId())).thenReturn(Optional.of(other));
+
+        assertThrows(OmnichannelNotFoundException.class,
+                () -> service.takeover(companyId, other.getId()));
+        verify(conversationRepository, never()).save(any());
+        verify(auditor, never()).record(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void release_shouldRestoreAutomaticMode() {
+        Conversation c = conversation();
+        c.takeover();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(conversationRepository.save(any(Conversation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ConversationResponse response = service.release(companyId, c.getId());
+
+        assertEquals(ConversationMode.AUTOMATIC, c.getMode());
+        assertEquals(ConversationMode.AUTOMATIC, response.mode());
+        verify(conversationRepository).save(c);
+        verify(auditor).record(eq(companyId), eq(AuditAction.UPDATE), eq(AuditModule.OMNICHANNEL),
+                eq("Conversation"), eq(c.getId().toString()), any(), isNull(), isNull());
+    }
+
+    @Test
+    void takeover_whenAuditFails_shouldNotFailOperation() {
+        Conversation c = conversation();
+        when(conversationRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(conversationRepository.save(any(Conversation.class))).thenAnswer(inv -> inv.getArgument(0));
+        doThrow(new RuntimeException("audit down")).when(auditor).record(any(), any(), any(), any(), any(), any(), any(), any());
+
+        ConversationResponse response = service.takeover(companyId, c.getId());
+
+        assertEquals(ConversationMode.HUMAN, response.mode());
+        verify(conversationRepository).save(c);
+    }
+}

@@ -1,9 +1,9 @@
 package com.becommerce.crm.infrastructure.campaign.dispatcher;
 
 import com.becommerce.crm.application.campaign.port.output.CampaignChannelDispatcher;
-import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
-import com.becommerce.crm.application.omnichannel.port.output.WhatsAppProvider;
-import com.becommerce.crm.domain.omnichannel.Channel;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppProvider;
+import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

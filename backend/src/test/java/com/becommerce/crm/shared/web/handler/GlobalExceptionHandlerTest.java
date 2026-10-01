@@ -37,7 +37,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldMapOmnichannelNotFoundTo404() {
         var response = handler.handleOmnichannelNotFoundException(
-                new com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException(
+                new com.becommerce.crm.communication.omnichannel.domain.OmnichannelNotFoundException(
                         java.util.UUID.randomUUID(), "Conversa"));
 
         assertEquals(404, response.getStatusCode().value());

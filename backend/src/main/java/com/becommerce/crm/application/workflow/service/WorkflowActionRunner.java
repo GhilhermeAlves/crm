@@ -44,14 +44,14 @@ public class WorkflowActionRunner {
     private final WorkflowExecutionRepository executionRepository;
     private final TaskUseCase taskUseCase;
     private final ActivityUseCase activityUseCase;
-    private final com.becommerce.crm.application.notification.port.input.NotificationUseCase notificationUseCase;
+    private final com.becommerce.crm.communication.notification.application.port.input.NotificationUseCase notificationUseCase;
     private final com.becommerce.crm.application.campaign.port.input.CampaignUseCase campaignUseCase;
     private final ObjectMapper objectMapper;
 
     public WorkflowActionRunner(WorkflowExecutionRepository executionRepository,
                                 TaskUseCase taskUseCase,
                                 ActivityUseCase activityUseCase,
-                                com.becommerce.crm.application.notification.port.input.NotificationUseCase notificationUseCase,
+                                com.becommerce.crm.communication.notification.application.port.input.NotificationUseCase notificationUseCase,
                                 com.becommerce.crm.application.campaign.port.input.CampaignUseCase campaignUseCase,
                                 ObjectMapper objectMapper) {
         this.executionRepository = executionRepository;
@@ -128,8 +128,8 @@ public class WorkflowActionRunner {
             body = "Evento " + event.trigger() + " processado pela automação.";
         }
         var response = notificationUseCase.create(event.companyId(),
-                new com.becommerce.crm.application.notification.dto.CreateNotificationRequest(userId,
-                        com.becommerce.crm.domain.notification.NotificationType.WORKFLOW,
+                new com.becommerce.crm.communication.notification.application.dto.CreateNotificationRequest(userId,
+                        com.becommerce.crm.communication.notification.domain.NotificationType.WORKFLOW,
                         title, body, null),
                 SYSTEM_ACTOR);
         return "Notification criada: " + response.id();

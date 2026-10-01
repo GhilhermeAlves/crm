@@ -3,25 +3,25 @@ package com.becommerce.crm.sales.followup.application.service;
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.sales.followup.application.event.FollowUpExecutionEvent;
 import com.becommerce.crm.sales.followup.application.port.out.FollowUpRepository;
-import com.becommerce.crm.application.omnichannel.event.WhatsAppSendEvent;
-import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
-import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
-import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
-import com.becommerce.crm.application.omnichannel.port.output.WhatsAppEventPublisher;
-import com.becommerce.crm.application.omnichannel.service.OmnichannelMessagePersister;
+import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppEventPublisher;
+import com.becommerce.crm.communication.omnichannel.application.service.OmnichannelMessagePersister;
 import com.becommerce.crm.sales.followup.domain.FollowUp;
 import com.becommerce.crm.sales.followup.domain.FollowUpAction;
 import com.becommerce.crm.sales.followup.domain.FollowUpCancellationReason;
 import com.becommerce.crm.sales.followup.domain.FollowUpStatus;
-import com.becommerce.crm.domain.omnichannel.Channel;
-import com.becommerce.crm.domain.omnichannel.ChannelProvider;
-import com.becommerce.crm.domain.omnichannel.ChannelStatus;
-import com.becommerce.crm.domain.omnichannel.ChannelType;
-import com.becommerce.crm.domain.omnichannel.Conversation;
-import com.becommerce.crm.domain.omnichannel.ConversationMode;
-import com.becommerce.crm.domain.omnichannel.ConversationStatus;
-import com.becommerce.crm.domain.omnichannel.Message;
-import com.becommerce.crm.domain.omnichannel.MessageStatus;
+import com.becommerce.crm.communication.omnichannel.domain.Channel;
+import com.becommerce.crm.communication.omnichannel.domain.ChannelProvider;
+import com.becommerce.crm.communication.omnichannel.domain.ChannelStatus;
+import com.becommerce.crm.communication.omnichannel.domain.ChannelType;
+import com.becommerce.crm.communication.omnichannel.domain.Conversation;
+import com.becommerce.crm.communication.omnichannel.domain.ConversationMode;
+import com.becommerce.crm.communication.omnichannel.domain.ConversationStatus;
+import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -207,8 +207,8 @@ class FollowUpExecutionServiceTest {
     void execute_reexecutionWithHandledMessage_shouldSkip() {
         when(followUpRepository.findById(followUpId)).thenReturn(Optional.of(targeted()));
         Message done = Message.reconstitute(UUID.randomUUID(), companyId, conversationId, channelId,
-                com.becommerce.crm.domain.omnichannel.MessageDirection.OUTBOUND, "espaco-a",
-                "+5511999998888", com.becommerce.crm.domain.omnichannel.MessageType.TEXT, "x",
+                com.becommerce.crm.communication.omnichannel.domain.MessageDirection.OUTBOUND, "espaco-a",
+                "+5511999998888", com.becommerce.crm.communication.omnichannel.domain.MessageType.TEXT, "x",
                 MessageStatus.SENT, "wamid-1", followUpId, null, null, null,
                 LocalDateTime.now(), LocalDateTime.now());
         when(messageRepository.findByClientMessageId(followUpId)).thenReturn(Optional.of(done));

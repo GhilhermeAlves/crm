@@ -28,7 +28,7 @@ public class RabbitConfig {
      *  pacotes onde vivem os eventos do barramento (e manter isso é requisito
      *  p/ novos eventos). Pacote pai ou sufixo {@code .*} NÃO funcionam. */
     private static final String[] TRUSTED_PACKAGES = {
-            "com.becommerce.crm.application.omnichannel.event",
+            "com.becommerce.crm.communication.omnichannel.application.event",
             "com.becommerce.crm.sales.followup.application.event"
     };
 

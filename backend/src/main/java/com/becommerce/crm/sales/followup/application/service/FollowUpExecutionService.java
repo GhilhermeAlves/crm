@@ -3,20 +3,20 @@ package com.becommerce.crm.sales.followup.application.service;
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
 import com.becommerce.crm.sales.followup.application.event.FollowUpExecutionEvent;
 import com.becommerce.crm.sales.followup.application.port.out.FollowUpRepository;
-import com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository;
-import com.becommerce.crm.application.omnichannel.port.output.OmnichannelConversationRepository;
-import com.becommerce.crm.application.omnichannel.port.output.OmnichannelMessageRepository;
-import com.becommerce.crm.application.omnichannel.port.output.WhatsAppEventPublisher;
-import com.becommerce.crm.application.omnichannel.service.OmnichannelMessagePersister;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppEventPublisher;
+import com.becommerce.crm.communication.omnichannel.application.service.OmnichannelMessagePersister;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.sales.followup.domain.FollowUp;
 import com.becommerce.crm.sales.followup.domain.FollowUpCancellationReason;
-import com.becommerce.crm.domain.omnichannel.Channel;
-import com.becommerce.crm.domain.omnichannel.Conversation;
-import com.becommerce.crm.domain.omnichannel.Message;
-import com.becommerce.crm.domain.omnichannel.MessageStatus;
-import com.becommerce.crm.domain.omnichannel.OmnichannelNotFoundException;
+import com.becommerce.crm.communication.omnichannel.domain.Channel;
+import com.becommerce.crm.communication.omnichannel.domain.Conversation;
+import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
+import com.becommerce.crm.communication.omnichannel.domain.OmnichannelNotFoundException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,7 +160,7 @@ public class FollowUpExecutionService {
     private void publishSend(UUID companyId, FollowUp followUp, Conversation conversation,
                              Channel channel, Message message) {
         try {
-            eventPublisher.publishSend(com.becommerce.crm.application.omnichannel.event.WhatsAppSendEvent
+            eventPublisher.publishSend(com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent
                     .ofFollowUp(companyId, conversation.getId(), message.getId(), channel.getId(),
                             conversation.getExternalPhone(), followUp.getActionContent(), followUp.getId()));
         } catch (Exception e) {

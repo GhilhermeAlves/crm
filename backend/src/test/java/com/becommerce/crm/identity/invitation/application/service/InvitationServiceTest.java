@@ -9,7 +9,7 @@ import com.becommerce.crm.identity.invitation.application.dto.CreateInvitationRe
 import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse;
 import com.becommerce.crm.identity.invitation.application.port.output.InvitationRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
-import com.becommerce.crm.application.notification.EmailSender;
+import com.becommerce.crm.communication.notification.application.EmailSender;
 import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
 import com.becommerce.crm.identity.domain.Role;

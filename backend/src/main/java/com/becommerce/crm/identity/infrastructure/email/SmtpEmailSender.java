@@ -1,7 +1,7 @@
 package com.becommerce.crm.identity.infrastructure.email;
 
 import com.becommerce.crm.identity.application.port.output.EmailService;
-import com.becommerce.crm.application.notification.EmailSender;
+import com.becommerce.crm.communication.notification.application.EmailSender;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;

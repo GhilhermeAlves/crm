@@ -37,7 +37,7 @@ class WorkflowActionRunnerTest {
     @Mock WorkflowExecutionRepository executionRepository;
     @Mock TaskUseCase taskUseCase;
     @Mock ActivityUseCase activityUseCase;
-    @Mock com.becommerce.crm.application.notification.port.input.NotificationUseCase notificationUseCase;
+    @Mock com.becommerce.crm.communication.notification.application.port.input.NotificationUseCase notificationUseCase;
     @Mock com.becommerce.crm.application.campaign.port.input.CampaignUseCase campaignUseCase;
 
     WorkflowActionRunner runner;

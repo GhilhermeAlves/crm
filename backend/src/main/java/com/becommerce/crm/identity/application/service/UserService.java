@@ -8,7 +8,7 @@ import com.becommerce.crm.identity.application.port.output.PasswordEncoder;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
-import com.becommerce.crm.application.notification.EmailSender;
+import com.becommerce.crm.communication.notification.application.EmailSender;
 import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.UserStatus;

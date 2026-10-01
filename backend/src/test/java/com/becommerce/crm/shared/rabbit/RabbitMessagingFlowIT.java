@@ -1,6 +1,6 @@
 package com.becommerce.crm.shared.rabbit;
 
-import com.becommerce.crm.application.omnichannel.event.WhatsAppSendEvent;
+import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

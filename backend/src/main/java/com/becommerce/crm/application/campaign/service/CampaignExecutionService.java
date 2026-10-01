@@ -7,7 +7,7 @@ import com.becommerce.crm.application.campaign.port.output.CampaignChannelDispat
 import com.becommerce.crm.application.campaign.port.output.CampaignEventRepository;
 import com.becommerce.crm.application.campaign.port.output.CampaignExecutionRepository;
 import com.becommerce.crm.application.campaign.port.output.CampaignRepository;
-import com.becommerce.crm.application.template.port.output.TemplateRepository;
+import com.becommerce.crm.communication.template.application.port.output.TemplateRepository;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.campaign.Campaign;
 import com.becommerce.crm.domain.campaign.CampaignChannel;
@@ -15,7 +15,7 @@ import com.becommerce.crm.domain.campaign.CampaignExecution;
 import com.becommerce.crm.domain.campaign.CampaignMessageEvent;
 import com.becommerce.crm.domain.campaign.MessageEventStatus;
 import com.becommerce.crm.domain.campaign.exception.CampaignNotFoundException;
-import com.becommerce.crm.domain.template.MessageTemplate;
+import com.becommerce.crm.communication.template.domain.MessageTemplate;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

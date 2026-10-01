@@ -37,16 +37,16 @@ public class CampaignService implements CampaignUseCase {
     private final AudienceResolver audienceResolver;
     private final CampaignExecutionService executionService;
     private final TenantAuditRecorder auditor;
-    private final com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository omnichannelChannelRepository;
-    private final com.becommerce.crm.application.template.port.output.TemplateRepository templateRepository;
+    private final com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository omnichannelChannelRepository;
+    private final com.becommerce.crm.communication.template.application.port.output.TemplateRepository templateRepository;
 
     public CampaignService(CampaignRepository campaignRepository,
                            CampaignEventRepository eventRepository,
                            AudienceResolver audienceResolver,
                            CampaignExecutionService executionService,
                            TenantAuditRecorder auditor,
-                           com.becommerce.crm.application.omnichannel.port.output.OmnichannelChannelRepository omnichannelChannelRepository,
-                           com.becommerce.crm.application.template.port.output.TemplateRepository templateRepository) {
+                           com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository omnichannelChannelRepository,
+                           com.becommerce.crm.communication.template.application.port.output.TemplateRepository templateRepository) {
         this.campaignRepository = campaignRepository;
         this.eventRepository = eventRepository;
         this.audienceResolver = audienceResolver;
@@ -162,12 +162,12 @@ public class CampaignService implements CampaignUseCase {
             if (!"ACTIVE".equals(omniChannel.getStatus())) {
                 throw new IllegalStateException("Canal precisa estar ACTIVE.");
             }
-            com.becommerce.crm.domain.template.MessageTemplate template =
+            com.becommerce.crm.communication.template.domain.MessageTemplate template =
                     templateRepository.findById(request.templateId())
-                            .orElseThrow(() -> new com.becommerce.crm.domain.template.exception.TemplateNotFoundException(
+                            .orElseThrow(() -> new com.becommerce.crm.communication.template.domain.exception.TemplateNotFoundException(
                                     request.templateId()));
             if (!template.getCompanyId().equals(companyId)) {
-                throw new com.becommerce.crm.domain.template.exception.TemplateNotFoundException(
+                throw new com.becommerce.crm.communication.template.domain.exception.TemplateNotFoundException(
                         request.templateId());
             }
 
