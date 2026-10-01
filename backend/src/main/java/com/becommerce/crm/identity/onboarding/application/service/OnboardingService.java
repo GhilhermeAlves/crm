@@ -1,7 +1,7 @@
 package com.becommerce.crm.identity.onboarding.application.service;
 
-import com.becommerce.crm.application.company.dto.CompanyResponse;
-import com.becommerce.crm.application.company.port.input.CompanyUseCase;
+import com.becommerce.crm.masterdata.company.application.dto.CompanyResponse;
+import com.becommerce.crm.masterdata.company.application.port.input.CompanyUseCase;
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
@@ -10,16 +10,16 @@ import com.becommerce.crm.identity.onboarding.application.port.input.OnboardingU
 import com.becommerce.crm.application.workflow.service.WorkflowTemplateSeeder;
 import com.becommerce.crm.identity.infrastructure.persistence.RoleSeedService;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
-import com.becommerce.crm.domain.company.Company;
-import com.becommerce.crm.domain.company.CompanyPlan;
+import com.becommerce.crm.masterdata.company.domain.Company;
+import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.UserRole;
 import com.becommerce.crm.identity.domain.valueobject.RoleName;
 import com.becommerce.crm.identity.membership.domain.Membership;
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
-import com.becommerce.crm.application.company.dto.CreateCompanyRequest;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.dto.CreateCompanyRequest;
 import com.becommerce.crm.identity.domain.Role;
-import com.becommerce.crm.application.company.service.CompanyService;
+import com.becommerce.crm.masterdata.company.application.service.CompanyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

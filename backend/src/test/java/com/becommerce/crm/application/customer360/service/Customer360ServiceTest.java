@@ -1,15 +1,15 @@
 package com.becommerce.crm.application.customer360.service;
 
 import com.becommerce.crm.application.activity.port.output.ActivityRepository;
-import com.becommerce.crm.contact.application.port.out.ContactRepository;
+import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.application.pipeline.port.output.PipelineRepository;
 import com.becommerce.crm.application.pipeline.port.output.StageRepository;
 import com.becommerce.crm.application.task.port.output.TaskRepository;
 import com.becommerce.crm.domain.activity.Activity;
 import com.becommerce.crm.domain.activity.ActivityType;
-import com.becommerce.crm.contact.domain.Contact;
-import com.becommerce.crm.contact.domain.exception.ContactNotFoundException;
+import com.becommerce.crm.masterdata.contact.domain.Contact;
+import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.domain.pipeline.Opportunity;
 import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 import com.becommerce.crm.domain.pipeline.Pipeline;

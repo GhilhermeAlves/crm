@@ -1,9 +1,9 @@
 package com.becommerce.crm.application.ai.context;
 
-import com.becommerce.crm.contact.application.port.out.ContactRepository;
+import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.application.task.port.output.TaskRepository;
 import com.becommerce.crm.domain.ai.AiRecordType;
-import com.becommerce.crm.contact.domain.Contact;
+import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.domain.task.Task;
 import com.becommerce.crm.domain.task.TaskPriority;
 import com.becommerce.crm.domain.task.TaskStatus;

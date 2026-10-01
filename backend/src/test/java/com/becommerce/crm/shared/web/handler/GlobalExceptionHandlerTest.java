@@ -3,7 +3,7 @@ package com.becommerce.crm.shared.web.handler;
 import com.becommerce.crm.identity.domain.exception.IdentityServiceUnavailableException;
 import com.becommerce.crm.identity.domain.exception.InvalidCredentialsException;
 import com.becommerce.crm.identity.domain.exception.UserProvisioningException;
-import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
+import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;

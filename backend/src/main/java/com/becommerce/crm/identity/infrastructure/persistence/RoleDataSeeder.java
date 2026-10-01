@@ -1,7 +1,7 @@
 package com.becommerce.crm.identity.infrastructure.persistence;
 
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
-import com.becommerce.crm.domain.company.Company;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

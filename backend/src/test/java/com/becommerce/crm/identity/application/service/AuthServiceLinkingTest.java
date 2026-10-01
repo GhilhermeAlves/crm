@@ -1,6 +1,6 @@
 package com.becommerce.crm.identity.application.service;
 
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.EmailService;
 import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.identity.application.port.output.PasswordEncoder;
@@ -8,8 +8,8 @@ import com.becommerce.crm.identity.application.port.output.PasswordResetTokenRep
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
-import com.becommerce.crm.domain.company.Company;
-import com.becommerce.crm.domain.company.CompanyPlan;
+import com.becommerce.crm.masterdata.company.domain.Company;
+import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.exception.InvalidCredentialsException;
 import com.becommerce.crm.identity.domain.exception.LinkingRequiredException;

@@ -2,7 +2,7 @@ package com.becommerce.crm.application.dashboard.service;
 
 import com.becommerce.crm.application.activity.dto.ActivityResponse;
 import com.becommerce.crm.application.activity.port.output.ActivityRepository;
-import com.becommerce.crm.contact.application.port.out.ContactRepository;
+import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.application.dashboard.dto.AttentionOpportunity;
 import com.becommerce.crm.application.dashboard.dto.OperationalDashboard;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;

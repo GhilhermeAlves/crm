@@ -1,6 +1,6 @@
 package com.becommerce.crm.identity.onboarding.web;
 
-import com.becommerce.crm.application.company.dto.CompanyResponse;
+import com.becommerce.crm.masterdata.company.application.dto.CompanyResponse;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.onboarding.application.port.input.OnboardingUseCase;
 import com.becommerce.crm.identity.domain.User;

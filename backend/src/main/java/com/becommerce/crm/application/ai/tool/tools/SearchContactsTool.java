@@ -3,7 +3,7 @@ package com.becommerce.crm.application.ai.tool.tools;
 import com.becommerce.crm.application.ai.tool.AbstractAiReadTool;
 import com.becommerce.crm.application.ai.tool.AiToolContext;
 import com.becommerce.crm.application.ai.tool.AiToolResult;
-import com.becommerce.crm.contact.application.port.in.ContactUseCase;
+import com.becommerce.crm.masterdata.contact.application.port.in.ContactUseCase;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

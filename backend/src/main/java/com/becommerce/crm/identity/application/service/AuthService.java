@@ -1,6 +1,6 @@
 package com.becommerce.crm.identity.application.service;
 
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.dto.RegisterRequest;
 import com.becommerce.crm.identity.application.port.input.AuthUseCase;
 import com.becommerce.crm.identity.application.port.output.EmailService;

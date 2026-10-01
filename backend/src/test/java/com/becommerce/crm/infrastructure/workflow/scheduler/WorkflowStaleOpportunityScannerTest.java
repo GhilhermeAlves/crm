@@ -1,11 +1,11 @@
 package com.becommerce.crm.infrastructure.workflow.scheduler;
 
 import com.becommerce.crm.application.activity.port.output.ActivityRepository;
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.application.pipeline.port.output.OpportunityRepository;
 import com.becommerce.crm.application.pipeline.port.output.StageRepository;
-import com.becommerce.crm.domain.company.Company;
+import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.domain.pipeline.Opportunity;
 import com.becommerce.crm.domain.pipeline.OpportunityStatus;
 import com.becommerce.crm.domain.workflow.TriggerEvent;
@@ -99,8 +99,8 @@ class WorkflowStaleOpportunityScannerTest {
                 companyId, "Empresa Ltda", "Empresa", "00.000.000/0000-00",
                 "1", "1", "empresa@teste.com", "11999999999", "www.empresa.com",
                 null, null, null, null, null, null, "SP", "BR",
-                com.becommerce.crm.domain.company.CompanyPlan.STARTER,
-                com.becommerce.crm.domain.company.CompanyStatus.ACTIVE,
+                com.becommerce.crm.masterdata.company.domain.CompanyPlan.STARTER,
+                com.becommerce.crm.masterdata.company.domain.CompanyStatus.ACTIVE,
                 5, 1024, 100, null, null, LocalDateTime.now(), null);
     }
 }

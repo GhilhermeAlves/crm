@@ -1,6 +1,6 @@
 package com.becommerce.crm.identity.application.service;
 
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.EmailService;
 import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.identity.application.port.output.PasswordEncoder;

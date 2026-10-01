@@ -1,7 +1,7 @@
 package com.becommerce.crm.application.ai.tool;
 
 import com.becommerce.crm.application.ai.context.AiPermissionContext;
-import com.becommerce.crm.contact.application.port.in.ContactUseCase;
+import com.becommerce.crm.masterdata.contact.application.port.in.ContactUseCase;
 import com.becommerce.crm.application.ai.tool.tools.ContactTool;
 import com.becommerce.crm.application.ai.tool.tools.CustomerTool;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ class AiToolRegistryTest {
 
     @Test
     void shouldAllowWhenPermissionPresent() {
-        var c = mock(com.becommerce.crm.contact.application.dto.response.ContactResponse.class);
+        var c = mock(com.becommerce.crm.masterdata.contact.application.dto.response.ContactResponse.class);
         when(contactUseCase.getById(any(), any())).thenReturn(c);
         var result = registry().execute("get_contact", ctx(List.of("contact:read")),
                 Map.of("contactId", UUID.randomUUID().toString()));

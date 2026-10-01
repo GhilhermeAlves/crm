@@ -1,14 +1,14 @@
 package com.becommerce.crm.identity.onboarding.application.service;
 
-import com.becommerce.crm.application.company.dto.CompanyResponse;
-import com.becommerce.crm.application.company.dto.CreateCompanyRequest;
-import com.becommerce.crm.application.company.port.input.CompanyUseCase;
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.dto.CompanyResponse;
+import com.becommerce.crm.masterdata.company.application.dto.CreateCompanyRequest;
+import com.becommerce.crm.masterdata.company.application.port.input.CompanyUseCase;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
-import com.becommerce.crm.domain.company.Company;
+import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.UserRole;

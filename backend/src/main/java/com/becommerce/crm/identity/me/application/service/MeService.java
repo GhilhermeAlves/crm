@@ -1,14 +1,14 @@
 package com.becommerce.crm.identity.me.application.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.me.application.dto.CompanyOptionResponse;
 import com.becommerce.crm.identity.me.application.port.input.MeUseCase;
 import com.becommerce.crm.identity.me.application.port.output.MyCompanyProjection;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
-import com.becommerce.crm.domain.company.Company;
-import com.becommerce.crm.domain.company.CompanyNotFoundException;
+import com.becommerce.crm.masterdata.company.domain.Company;
+import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
 import com.becommerce.crm.domain.audit.AuditAction;

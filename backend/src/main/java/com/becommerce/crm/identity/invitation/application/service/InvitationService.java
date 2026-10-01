@@ -1,7 +1,7 @@
 package com.becommerce.crm.identity.invitation.application.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
@@ -11,9 +11,9 @@ import com.becommerce.crm.identity.invitation.application.port.input.InvitationU
 import com.becommerce.crm.identity.invitation.application.port.output.InvitationRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.application.notification.EmailSender;
-import com.becommerce.crm.domain.company.Company;
-import com.becommerce.crm.domain.company.CompanyNotFoundException;
-import com.becommerce.crm.domain.company.CompanyStatus;
+import com.becommerce.crm.masterdata.company.domain.Company;
+import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
+import com.becommerce.crm.masterdata.company.domain.CompanyStatus;
 import com.becommerce.crm.domain.audit.AuditAction;
 import com.becommerce.crm.domain.audit.AuditModule;
 import com.becommerce.crm.identity.domain.Role;
@@ -23,7 +23,7 @@ import com.becommerce.crm.identity.invitation.domain.Invitation;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoundException;
 import com.becommerce.crm.identity.membership.domain.Membership;
-import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
+import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import com.becommerce.crm.identity.invitation.infrastructure.persistence.InvitationTokenContextHolder;
 import com.becommerce.crm.identity.invitation.infrastructure.rate.InvitationRateLimiter;
 import com.becommerce.crm.shared.tenant.context.TenantContext;

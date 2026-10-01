@@ -1,9 +1,9 @@
 package com.becommerce.crm.identity.application.service;
 
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
-import com.becommerce.crm.domain.company.Company;
-import com.becommerce.crm.domain.company.CompanyPlan;
-import com.becommerce.crm.domain.company.CompanyStatus;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.domain.Company;
+import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
+import com.becommerce.crm.masterdata.company.domain.CompanyStatus;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.identity.domain.valueobject.Email;

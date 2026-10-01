@@ -8,7 +8,7 @@ import com.becommerce.crm.identity.application.port.output.PasswordResetTokenRep
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.event.UserCreatedEvent;

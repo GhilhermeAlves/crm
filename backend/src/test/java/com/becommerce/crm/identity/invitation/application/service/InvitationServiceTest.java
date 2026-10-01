@@ -1,7 +1,7 @@
 package com.becommerce.crm.identity.invitation.application.service;
 
 import com.becommerce.crm.application.audit.service.TenantAuditRecorder;
-import com.becommerce.crm.application.company.port.output.CompanyRepository;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
@@ -10,8 +10,8 @@ import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse
 import com.becommerce.crm.identity.invitation.application.port.output.InvitationRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.application.notification.EmailSender;
-import com.becommerce.crm.domain.company.Company;
-import com.becommerce.crm.domain.company.CompanyPlan;
+import com.becommerce.crm.masterdata.company.domain.Company;
+import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
 import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.valueobject.Email;
@@ -19,7 +19,7 @@ import com.becommerce.crm.identity.invitation.domain.Invitation;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoundException;
 import com.becommerce.crm.identity.membership.domain.Membership;
-import com.becommerce.crm.domain.quota.exception.QuotaExceededException;
+import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import com.becommerce.crm.identity.invitation.infrastructure.persistence.InvitationTokenContextHolder;
 import com.becommerce.crm.identity.invitation.infrastructure.rate.InvitationRateLimiter;
 import org.junit.jupiter.api.BeforeEach;
@@ -127,7 +127,7 @@ class InvitationServiceTest {
     @Test
     void shouldRejectInactiveCompany() {
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
-        assertThrows(com.becommerce.crm.domain.company.CompanyNotFoundException.class,
+        assertThrows(com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException.class,
                 () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "AGENT"), invitedBy));
     }
 
