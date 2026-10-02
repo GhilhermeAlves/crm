@@ -1,7 +1,6 @@
 package com.becommerce.auth.application.gateway.service;
 
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
-import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
 import com.becommerce.auth.application.gateway.port.output.OidcTokenClient;
 import com.becommerce.auth.application.identity.port.input.CurrentUserResolutionUseCase;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
