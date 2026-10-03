@@ -53,6 +53,9 @@ import com.becommerce.crm.automation.ai.domain.AiActionNotFoundException;
 import com.becommerce.crm.automation.ai.domain.AiActionInvalidStateException;
 import com.becommerce.crm.automation.workflow.domain.WorkflowNotFoundException;
 import com.becommerce.crm.automation.workflow.domain.WorkflowValidationException;
+import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingNotFoundException;
+import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingValidationException;
+import com.becommerce.crm.sales.scheduling.domain.exception.SlotUnavailableException;
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpNotFoundException;
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpSequenceNotFoundException;
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpSequenceValidationException;
@@ -618,6 +621,39 @@ public class GlobalExceptionHandler {
                 "status", 400,
                 "error", "Bad Request",
                 "message", "Operação não pode ser concluída.",
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(SchedulingNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleSchedulingNotFoundException(SchedulingNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(SchedulingValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleSchedulingValidationException(SchedulingValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(SlotUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handleSlotUnavailableException(SlotUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));
     }
