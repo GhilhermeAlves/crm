@@ -18,8 +18,6 @@ import {
   ChevronRight,
   Plus,
   Settings,
-  ZoomIn,
-  ZoomOut,
   CalendarPlus,
   UserPlus,
   Lock,
@@ -66,8 +64,10 @@ import type {
   AppointmentStatus,
 } from "@/features/sales/scheduling/types/scheduling.types";
 import type { CreateAppointmentFormValues } from "@/features/sales/scheduling/schemas/scheduling.schema";
+import { cn } from "@/lib/utils";
 
 type CalendarView = "day" | "week";
+type AgendaTab = "agenda" | "retornos";
 
 const MIN_HOUR_HEIGHT = 30;
 const MAX_HOUR_HEIGHT = 120;
@@ -87,10 +87,14 @@ export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [miniMonth, setMiniMonth] = useState(new Date());
   const [view, setView] = useState<CalendarView>("week");
+  const [activeTab, setActiveTab] = useState<AgendaTab>("agenda");
   const [createOpen, setCreateOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [defaultSlot, setDefaultSlot] = useState<{ start: string; end: string } | null>(null);
+  const [defaultSlot, setDefaultSlot] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string> | null>(null);
   const [hourHeight, setHourHeight] = useState(DEFAULT_HOUR_HEIGHT);
 
@@ -145,7 +149,6 @@ export default function AgendaPage() {
   const changeStatus = useChangeAppointmentStatus(companyId);
   const deleteAppointment = useDeleteAppointment(companyId);
 
-  // Keyboard zoom (Ctrl +/-)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
@@ -261,75 +264,24 @@ export default function AgendaPage() {
     return `${format(ws, "dd MMM", { locale: ptBR })} – ${format(we, "dd MMM yyyy", { locale: ptBR })}`;
   }, [currentDate, view]);
 
-  const zoomPercent = Math.round((hourHeight / DEFAULT_HOUR_HEIGHT) * 100);
-
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
-      {/* ── Toolbar ── */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b px-3 py-2">
-        {/* Left: action buttons */}
-        {perms.canCreate && (
-          <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Ações
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => setCreateOpen(true)}>
-                  <CalendarPlus className="mr-2 h-4 w-4" />
-                  Novo agendamento
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/contacts/new")}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Novo contato
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm">
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Criar
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => setCreateOpen(true)}>
-                  <CalendarPlus className="mr-2 h-4 w-4" />
-                  Agendamento
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setBlockOpen(true)}>
-                  <Lock className="mr-2 h-4 w-4" />
-                  Bloqueio de agenda
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>
-                  <Link2 className="mr-2 h-4 w-4" />
-                  Link de agendamento
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
-
-        <div className="mx-auto" />
-
-        {/* Center: navigation */}
+      {/* ── Toolbar (Capim style) ── */}
+      <div className="flex shrink-0 items-center gap-2 border-b px-3 py-2">
+        {/* Left: Hoje + nav */}
         <Button variant="outline" size="sm" onClick={goToday}>
           Hoje
         </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="min-w-[160px] text-center text-sm font-medium tabular-nums">
-          {periodLabel}
-        </span>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext}>
           <ChevronRight className="h-4 w-4" />
         </Button>
+
+        <span className="min-w-[160px] text-center text-sm font-medium tabular-nums">
+          {periodLabel}
+        </span>
 
         {/* View selector */}
         <Select value={view} onValueChange={(v) => setView(v as CalendarView)}>
@@ -344,48 +296,33 @@ export default function AgendaPage() {
 
         <div className="mx-auto" />
 
-        {/* Right: zoom + settings */}
+        {/* Right: Agenda/Retornos toggle + settings */}
+        <div className="flex items-center rounded-md border">
+          <button
+            className={cn(
+              "px-3 py-1 text-sm font-medium transition-colors",
+              activeTab === "agenda"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            onClick={() => setActiveTab("agenda")}
+          >
+            Agenda
+          </button>
+          <button
+            className={cn(
+              "px-3 py-1 text-sm font-medium transition-colors",
+              activeTab === "retornos"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            onClick={() => setActiveTab("retornos")}
+          >
+            Retornos
+          </button>
+        </div>
+
         <TooltipProvider delayDuration={300}>
-          <div className="flex items-center gap-1 rounded-md border px-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setHourHeight((h) => clampZoom(h - ZOOM_STEP))}
-                  disabled={hourHeight <= MIN_HOUR_HEIGHT}
-                >
-                  <ZoomOut className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Diminuir zoom (Ctrl -)</TooltipContent>
-            </Tooltip>
-
-            <button
-              className="min-w-[38px] text-center text-[11px] tabular-nums text-muted-foreground hover:text-foreground"
-              onClick={() => setHourHeight(DEFAULT_HOUR_HEIGHT)}
-              title="Resetar zoom (Ctrl 0)"
-            >
-              {zoomPercent}%
-            </button>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setHourHeight((h) => clampZoom(h + ZOOM_STEP))}
-                  disabled={hourHeight >= MAX_HOUR_HEIGHT}
-                >
-                  <ZoomIn className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Aumentar zoom (Ctrl +)</TooltipContent>
-            </Tooltip>
-          </div>
-
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -404,14 +341,63 @@ export default function AgendaPage() {
 
       {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="hidden w-52 shrink-0 flex-col gap-4 overflow-y-auto border-r p-3 lg:flex">
+        {/* Sidebar (Capim style: Ações + Criar + mini cal + members) */}
+        <aside className="hidden w-52 shrink-0 flex-col gap-3 overflow-y-auto border-r p-3 lg:flex">
+          {/* Action buttons */}
+          {perms.canCreate && (
+            <div className="flex flex-col gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    Ações
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => setCreateOpen(true)}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Novo agendamento
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/contacts/new")}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Novo contato
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="w-full justify-start">
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    Criar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => setCreateOpen(true)}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Agendamento
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setBlockOpen(true)}>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Bloqueio de agenda
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled>
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Link de agendamento
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+
           <MiniCalendar
             selected={currentDate}
             onSelect={handleMiniSelect}
             month={miniMonth}
             onMonthChange={setMiniMonth}
           />
+
           <div className="border-t pt-3">
             <MemberFilter
               members={memberOptions}
@@ -423,21 +409,27 @@ export default function AgendaPage() {
         </aside>
 
         {/* Calendar grid */}
-        <WeeklyCalendar
-          currentDate={currentDate}
-          view={view}
-          appointments={filteredAppointments}
-          blocks={filteredBlocks}
-          onSlotClick={handleSlotClick}
-          onAppointmentClick={handleAppointmentClick}
-          selectedAppointmentId={selectedAppointment?.id}
-          memberColorMap={memberColorMap}
-          hourHeight={hourHeight}
-          onZoom={handleCalendarZoom}
-        />
+        {activeTab === "agenda" ? (
+          <WeeklyCalendar
+            currentDate={currentDate}
+            view={view}
+            appointments={filteredAppointments}
+            blocks={filteredBlocks}
+            onSlotClick={handleSlotClick}
+            onAppointmentClick={handleAppointmentClick}
+            selectedAppointmentId={selectedAppointment?.id}
+            memberColorMap={memberColorMap}
+            hourHeight={hourHeight}
+            onZoom={handleCalendarZoom}
+          />
+        ) : (
+          <div className="flex flex-1 items-center justify-center text-muted-foreground">
+            <p className="text-sm">Retornos — em breve</p>
+          </div>
+        )}
 
         {/* Detail panel */}
-        {selectedAppointment && (
+        {selectedAppointment && activeTab === "agenda" && (
           <AppointmentDetailPanel
             appointment={selectedAppointment}
             contact={selectedContact}

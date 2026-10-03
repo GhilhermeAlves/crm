@@ -74,20 +74,53 @@ function NowLine({ hourHeight }: { hourHeight: number }) {
   );
 }
 
-function HalfHourLines({ hourHeight }: { hourHeight: number }) {
+function FiveMinuteLines({ hourHeight }: { hourHeight: number }) {
   const lines = [];
+  const slotHeight = hourHeight / 12;
   for (let h = START_HOUR; h < END_HOUR; h++) {
+    const slots = [];
+    for (let s = 0; s < 12; s++) {
+      const isHourEnd = s === 11;
+      const isHalf = s === 5;
+      slots.push(
+        <div
+          key={s}
+          className={cn(
+            "absolute inset-x-0 border-b",
+            isHourEnd
+              ? "border-border/40"
+              : isHalf
+                ? "border-dashed border-border/25"
+                : "border-border/10",
+          )}
+          style={{ top: (s + 1) * slotHeight }}
+        />,
+      );
+    }
     lines.push(
       <div key={h} className="relative" style={{ height: hourHeight }}>
-        <div className="absolute inset-x-0 bottom-0 border-b border-border/40" />
-        <div
-          className="absolute inset-x-0 border-b border-dashed border-border/20"
-          style={{ top: hourHeight / 2 }}
-        />
+        {slots}
       </div>,
     );
   }
   return <>{lines}</>;
+}
+
+function AllDayRow({ days }: { days: Date[] }) {
+  return (
+    <div className="flex border-b bg-muted/10">
+      <div className="flex w-12 shrink-0 items-center justify-end border-r pr-1">
+        <span className="text-[10px] text-muted-foreground">Dia Inteiro</span>
+      </div>
+      {days.map((d) => (
+        <div
+          key={d.toISOString()}
+          className="flex-1 border-r p-0.5 last:border-r-0"
+          style={{ minHeight: 24 }}
+        />
+      ))}
+    </div>
+  );
 }
 
 function DayColumn({
@@ -118,7 +151,7 @@ function DayColumn({
     if (!onSlotClick || !colRef.current) return;
     const rect = colRef.current.getBoundingClientRect();
     const y = e.clientY - rect.top + colRef.current.scrollTop;
-    const slotMinutes = hourHeight >= 80 ? 5 : hourHeight >= 40 ? 15 : 30;
+    const slotMinutes = 5;
     const minutes =
       Math.round(((y / hourHeight) * 60) / slotMinutes) * slotMinutes + START_HOUR * 60;
     const start = addMinutes(startOfDay(date), minutes);
@@ -133,7 +166,7 @@ function DayColumn({
       style={{ height: TOTAL_HOURS * hourHeight }}
       onClick={handleClick}
     >
-      <HalfHourLines hourHeight={hourHeight} />
+      <FiveMinuteLines hourHeight={hourHeight} />
 
       {isToday(date) && <NowLine hourHeight={hourHeight} />}
 
@@ -231,31 +264,38 @@ export function WeeklyCalendar({
         className="flex-1 overflow-y-auto overflow-x-hidden"
         onWheel={handleWheel}
       >
-        {/* Sticky header inside scroll container so it aligns with columns */}
-        <div className="sticky top-0 z-30 flex border-b bg-muted/30">
-          <div className="w-12 shrink-0 border-r bg-muted/30" />
-          {days.map((d) => {
-            const today = isToday(d);
-            return (
-              <div
-                key={d.toISOString()}
-                className={cn(
-                  "flex-1 border-r py-1.5 text-center text-xs last:border-r-0",
-                  today ? "bg-primary/10" : "bg-muted/30",
-                )}
-              >
-                <span className="text-muted-foreground">{format(d, "EEE", { locale: ptBR })} </span>
-                <span
+        {/* Sticky header */}
+        <div className="sticky top-0 z-30">
+          {/* Day names */}
+          <div className="flex border-b bg-muted/30">
+            <div className="w-12 shrink-0 border-r bg-muted/30" />
+            {days.map((d) => {
+              const today = isToday(d);
+              return (
+                <div
+                  key={d.toISOString()}
                   className={cn(
-                    "inline-flex h-6 w-6 items-center justify-center rounded-full font-medium tabular-nums",
-                    today && "bg-primary text-primary-foreground",
+                    "flex-1 border-r py-1.5 text-center text-xs last:border-r-0",
+                    today ? "bg-primary/10" : "bg-muted/30",
                   )}
                 >
-                  {format(d, "d")}
-                </span>
-              </div>
-            );
-          })}
+                  <span className="text-muted-foreground">
+                    {format(d, "EEE.", { locale: ptBR })}{" "}
+                  </span>
+                  <span
+                    className={cn(
+                      "inline-flex h-6 w-6 items-center justify-center rounded-full font-medium tabular-nums",
+                      today && "bg-primary text-primary-foreground",
+                    )}
+                  >
+                    {format(d, "d")}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {/* All-day row */}
+          <AllDayRow days={days} />
         </div>
 
         {/* Grid body */}
