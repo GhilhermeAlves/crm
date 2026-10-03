@@ -202,7 +202,7 @@ export const NAVIGATION: NavGroup[] = [
         permission: "security:page:view",
       },
       {
-        label: "Agenda",
+        label: "Config. Agenda",
         href: ROUTES.SETTINGS_AGENDA,
         icon: CalendarDays,
         permission: "scheduling:configure",
