@@ -45,7 +45,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WeeklyCalendar } from "@/features/sales/scheduling/components/WeeklyCalendar";
 import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/CreateAppointmentDialog";
-import { CreateBlockDialog } from "@/features/sales/scheduling/components/CreateBlockDialog";
+import type { CreateBlockFormValues } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import { AppointmentDetailPanel } from "@/features/sales/scheduling/components/AppointmentDetailPanel";
 import { MiniCalendar } from "@/features/sales/scheduling/components/MiniCalendar";
 import { MemberFilter, getMemberColor } from "@/features/sales/scheduling/components/MemberFilter";
@@ -89,7 +89,6 @@ export default function AgendaPage() {
   const [view, setView] = useState<CalendarView>("week");
   const [activeTab, setActiveTab] = useState<AgendaTab>("agenda");
   const [createOpen, setCreateOpen] = useState(false);
-  const [blockOpen, setBlockOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [defaultSlot, setDefaultSlot] = useState<{
     start: string;
@@ -377,7 +376,7 @@ export default function AgendaPage() {
                     <CalendarPlus className="mr-2 h-4 w-4" />
                     Agendamento
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setBlockOpen(true)}>
+                  <DropdownMenuItem onClick={() => setCreateOpen(true)}>
                     <Lock className="mr-2 h-4 w-4" />
                     Bloqueio de agenda
                   </DropdownMenuItem>
@@ -449,29 +448,23 @@ export default function AgendaPage() {
         onOpenChange={setCreateOpen}
         isLoading={createAppointment.isPending}
         onSubmit={handleCreateAppointment}
-        appointmentTypes={appointmentTypes}
-        members={memberOptions}
-        contacts={contacts}
-        defaultStart={defaultSlot?.start}
-        defaultEnd={defaultSlot?.end}
-        defaultHostId={user?.id}
-      />
-
-      <CreateBlockDialog
-        open={blockOpen}
-        onOpenChange={setBlockOpen}
-        isLoading={createBlock.isPending}
-        onSubmit={(values) =>
+        onSubmitBlock={(values) =>
           createBlock.mutate(
             {
               ...values,
               startAt: new Date(values.startAt).toISOString(),
               endAt: new Date(values.endAt).toISOString(),
             },
-            { onSuccess: () => setBlockOpen(false) },
+            { onSuccess: () => setCreateOpen(false) },
           )
         }
+        isLoadingBlock={createBlock.isPending}
+        appointmentTypes={appointmentTypes}
         members={memberOptions}
+        contacts={contacts}
+        defaultStart={defaultSlot?.start}
+        defaultEnd={defaultSlot?.end}
+        defaultHostId={user?.id}
       />
     </div>
   );

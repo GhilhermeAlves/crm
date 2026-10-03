@@ -27,6 +27,9 @@ export const createAppointmentTypeSchema = z.object({
 
 export type CreateAppointmentTypeFormValues = z.infer<typeof createAppointmentTypeSchema>;
 
+export const INITIAL_STATUSES = ["CONFIRMED", "SCHEDULED", "CANCELED"] as const;
+export const RECURRENCE_OPTIONS = ["none", "daily", "weekly", "monthly", "yearly"] as const;
+
 export const createAppointmentSchema = z.object({
   appointmentTypeId: z.string().uuid().optional(),
   hostId: z.string().uuid("Responsável é obrigatório"),
@@ -38,9 +41,11 @@ export const createAppointmentSchema = z.object({
     .max(200, "Título deve ter no máximo 200 caracteres"),
   startAt: z.string().min(1, "Data/hora de início é obrigatória"),
   endAt: z.string().min(1, "Data/hora de fim é obrigatória"),
+  status: z.enum(INITIAL_STATUSES).optional(),
   locationKind: z.enum(LOCATION_KINDS).optional(),
   locationDetail: z.string().max(200).optional(),
   notes: z.string().max(2000, "Observações muito longas").optional(),
+  recurrence: z.enum(RECURRENCE_OPTIONS).optional(),
   force: z.boolean().optional(),
 });
 
