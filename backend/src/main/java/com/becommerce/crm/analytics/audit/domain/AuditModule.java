@@ -12,6 +12,7 @@ public enum AuditModule {
     PIPELINE,
     ACTIVITIES,
     TASKS,
+    SCHEDULING,
     CALENDAR,
     FINANCE,
     REPORTS,

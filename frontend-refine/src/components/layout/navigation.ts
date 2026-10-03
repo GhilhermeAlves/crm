@@ -19,6 +19,7 @@ import {
   Shield,
   MailPlus,
   KeyRound,
+  CalendarDays,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 
@@ -61,6 +62,12 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.PIPELINE,
         icon: GitBranch,
         permission: "pipeline:page:view",
+      },
+      {
+        label: "Agenda",
+        href: ROUTES.AGENDA,
+        icon: CalendarDays,
+        permission: "appointment:read",
       },
       {
         label: "Tarefas",
@@ -193,6 +200,12 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.SETTINGS_ROLES,
         icon: Shield,
         permission: "security:page:view",
+      },
+      {
+        label: "Config. Agenda",
+        href: ROUTES.SETTINGS_AGENDA,
+        icon: CalendarDays,
+        permission: "scheduling:configure",
       },
       {
         label: "Agente de IA",

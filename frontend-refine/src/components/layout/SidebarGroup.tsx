@@ -16,7 +16,7 @@ type SidebarGroupProps = {
 
 export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps) {
   const { permissions } = useAuth();
-  const [collapsedGroup, setCollapsedGroup] = useState(false);
+  const [collapsedGroup, setCollapsedGroup] = useState(true);
   const isExpanded = !collapsedGroup;
 
   const toggleGroup = () => {
