@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Save, Loader2 } from "lucide-react";
-import { useAgentConfig, useUpdateAgentConfig, useAiPermissions } from "@/features/ai/hooks/useAi";
-import type { AgentConfigRequest } from "@/features/ai/types/ai.types";
+import { useAgentConfig, useUpdateAgentConfig, useAiPermissions } from "@/features/automation/ai/hooks/useAi";
+import type { AgentConfigRequest } from "@/features/automation/ai/types/ai.types";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

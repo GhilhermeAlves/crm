@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { RoleDetails } from "@/features/rbac/components/RoleDetails";
-import { useRole } from "@/features/rbac/hooks/useRoles";
+import { RoleDetails } from "@/features/identity/rbac/components/RoleDetails";
+import { useRole } from "@/features/identity/rbac/hooks/useRoles";
 
 export default function RoleDetailPage() {
   const { id } = useParams<{ id: string }>();

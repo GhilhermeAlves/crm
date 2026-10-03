@@ -1,8 +1,8 @@
 "use client";
 
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useInvitations, useRevokeInvitation } from "@/features/invitations/hooks/useInvitations";
-import { CreateInvitationDialog } from "@/features/invitations/components/CreateInvitationDialog";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useInvitations, useRevokeInvitation } from "@/features/identity/invitations/hooks/useInvitations";
+import { CreateInvitationDialog } from "@/features/identity/invitations/components/CreateInvitationDialog";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

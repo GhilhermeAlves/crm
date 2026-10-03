@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useUser } from "@/features/users/hooks/useUsers";
-import { UserDetails } from "@/features/users/components/UserDetails";
+import { useUser } from "@/features/identity/users/hooks/useUsers";
+import { UserDetails } from "@/features/identity/users/components/UserDetails";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,11 +11,11 @@ import {
   useWorkflows,
   useToggleWorkflow,
   useDeleteWorkflow,
-} from "@/features/workflows/hooks/useWorkflows";
-import { WorkflowTable } from "@/features/workflows/components/WorkflowTable";
-import { DeleteWorkflowDialog } from "@/features/workflows/components/DeleteWorkflowDialog";
-import { useWorkflowPermissions } from "@/features/workflows/schemas/workflow.schema";
-import type { Workflow } from "@/features/workflows/types/workflow.types";
+} from "@/features/automation/workflows/hooks/useWorkflows";
+import { WorkflowTable } from "@/features/automation/workflows/components/WorkflowTable";
+import { DeleteWorkflowDialog } from "@/features/automation/workflows/components/DeleteWorkflowDialog";
+import { useWorkflowPermissions } from "@/features/automation/workflows/schemas/workflow.schema";
+import type { Workflow } from "@/features/automation/workflows/types/workflow.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function WorkflowsPage() {

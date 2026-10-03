@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardList } from "lucide-react";
-import { AuditTable } from "@/features/audit/components/AuditTable";
-import { AuditFilters } from "@/features/audit/components/AuditFilters";
-import { useAuditLogs } from "@/features/audit/hooks/useAudit";
-import type { AuditLog, AuditLogSearchParams } from "@/features/audit/types/audit.types";
+import { AuditTable } from "@/features/analytics/audit/components/AuditTable";
+import { AuditFilters } from "@/features/analytics/audit/components/AuditFilters";
+import { useAuditLogs } from "@/features/analytics/audit/hooks/useAudit";
+import type { AuditLog, AuditLogSearchParams } from "@/features/analytics/audit/types/audit.types";
 
 export default function AuditPage() {
   const router = useRouter();

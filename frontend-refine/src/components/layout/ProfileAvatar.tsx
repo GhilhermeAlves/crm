@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function ProfileAvatar() {

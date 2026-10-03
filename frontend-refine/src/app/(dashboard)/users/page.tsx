@@ -7,14 +7,14 @@ import {
   useDeleteUser,
   useActivateUser,
   useDeactivateUser,
-} from "@/features/users/hooks/useUsers";
-import { UserTable } from "@/features/users/components/UserTable";
-import { UserFilters } from "@/features/users/components/UserFilters";
-import { DeleteUserDialog } from "@/features/users/components/DeleteUserDialog";
+} from "@/features/identity/users/hooks/useUsers";
+import { UserTable } from "@/features/identity/users/components/UserTable";
+import { UserFilters } from "@/features/identity/users/components/UserFilters";
+import { DeleteUserDialog } from "@/features/identity/users/components/DeleteUserDialog";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import type { User, UserStatus } from "@/features/users/types/user.types";
+import type { User, UserStatus } from "@/features/identity/users/types/user.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function UsersPage() {

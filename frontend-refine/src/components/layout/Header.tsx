@@ -6,8 +6,8 @@ import { UserMenu } from "@/components/layout/UserMenu";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { useSidebar } from "@/store/sidebar";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { NotificationBell } from "@/features/communication/notifications/components/NotificationBell";
 
 export function Header() {
   const { collapsed, toggle, setMobileOpen } = useSidebar();

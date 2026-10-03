@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import {
   useCampaigns,
   useDeleteCampaign,
@@ -11,12 +11,12 @@ import {
   useResumeCampaign,
   useCancelCampaign,
   useExecuteCampaign,
-} from "@/features/campaigns/hooks/useCampaigns";
-import { CampaignTable } from "@/features/campaigns/components/CampaignTable";
+} from "@/features/automation/campaigns/hooks/useCampaigns";
+import { CampaignTable } from "@/features/automation/campaigns/components/CampaignTable";
 import {
   DeleteCampaignDialog,
   CancelCampaignDialog,
-} from "@/features/campaigns/components/CampaignDialogs";
+} from "@/features/automation/campaigns/components/CampaignDialogs";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import type {
   AudienceType,
   Campaign,
   CampaignStatus,
-} from "@/features/campaigns/types/campaign.types";
+} from "@/features/automation/campaigns/types/campaign.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function CampaignsPage() {

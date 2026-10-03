@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,12 +12,12 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
   useNotificationPermissions,
-} from "@/features/notifications/hooks/useNotifications";
-import { formatRelativeTime } from "@/features/notifications/lib/format";
+} from "@/features/communication/notifications/hooks/useNotifications";
+import { formatRelativeTime } from "@/features/communication/notifications/lib/format";
 import type {
   Notification,
   NotificationType,
-} from "@/features/notifications/types/notification.types";
+} from "@/features/communication/notifications/types/notification.types";
 
 const TYPE_STYLE: Record<NotificationType, string> = {
   TASK: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",

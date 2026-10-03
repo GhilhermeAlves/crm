@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useCreateLead } from "@/features/leads/hooks/useLeads";
-import { LeadForm } from "@/features/leads/components/LeadForm";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useCreateLead } from "@/features/sales/leads/hooks/useLeads";
+import { LeadForm } from "@/features/sales/leads/components/LeadForm";
 import { PageTitle } from "@/components/common/PageTitle";
-import type { LeadFormValues } from "@/features/leads/schemas/lead.schema";
+import type { LeadFormValues } from "@/features/sales/leads/schemas/lead.schema";
 import { ROUTES } from "@/lib/constants";
 
 export default function NewLeadPage() {

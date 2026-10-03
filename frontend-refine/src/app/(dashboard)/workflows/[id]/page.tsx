@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Power } from "lucide-react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,14 +11,14 @@ import {
   useWorkflow,
   useWorkflowExecutions,
   useToggleWorkflow,
-} from "@/features/workflows/hooks/useWorkflows";
-import { WorkflowExecutionsPanel } from "@/features/workflows/components/WorkflowExecutionsPanel";
-import { useWorkflowPermissions } from "@/features/workflows/schemas/workflow.schema";
+} from "@/features/automation/workflows/hooks/useWorkflows";
+import { WorkflowExecutionsPanel } from "@/features/automation/workflows/components/WorkflowExecutionsPanel";
+import { useWorkflowPermissions } from "@/features/automation/workflows/schemas/workflow.schema";
 import {
   WORKFLOW_TRIGGER_LABELS,
   WORKFLOW_ACTION_LABELS,
   CONDITION_OPERATOR_LABELS,
-} from "@/features/workflows/types/workflow.types";
+} from "@/features/automation/workflows/types/workflow.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function WorkflowDetailPage() {

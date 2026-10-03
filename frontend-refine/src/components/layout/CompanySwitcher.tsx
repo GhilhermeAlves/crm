@@ -1,8 +1,8 @@
 "use client";
 
 import { Building2, Check, Loader2 } from "lucide-react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useMyCompanies, useSwitchCompany } from "@/features/auth/hooks/useAuthMutations";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useMyCompanies, useSwitchCompany } from "@/features/identity/auth/hooks/useAuthMutations";
 import { DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 

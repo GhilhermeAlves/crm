@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import {
   useCampaign,
   useCampaignExecution,
@@ -11,9 +11,9 @@ import {
   useResumeCampaign,
   useCancelCampaign,
   useExecuteCampaign,
-} from "@/features/campaigns/hooks/useCampaigns";
-import { CampaignStatusBadge } from "@/features/campaigns/components/CampaignStatusBadge";
-import { CancelCampaignDialog } from "@/features/campaigns/components/CampaignDialogs";
+} from "@/features/automation/campaigns/hooks/useCampaigns";
+import { CampaignStatusBadge } from "@/features/automation/campaigns/components/CampaignStatusBadge";
+import { CancelCampaignDialog } from "@/features/automation/campaigns/components/CampaignDialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

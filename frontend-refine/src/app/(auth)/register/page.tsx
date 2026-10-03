@@ -2,8 +2,8 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
-import { ProviderList } from "@/features/auth/components/ProviderList";
-import { RegisterForm } from "@/features/auth/components/RegisterForm";
+import { ProviderList } from "@/features/identity/auth/components/ProviderList";
+import { RegisterForm } from "@/features/identity/auth/components/RegisterForm";
 
 export default function RegisterPage() {
   return (

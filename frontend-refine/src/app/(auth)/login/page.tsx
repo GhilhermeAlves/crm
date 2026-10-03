@@ -3,8 +3,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { LoginBrand } from "@/components/brand/LoginBrand";
-import { LoginFormCredentials } from "@/features/auth/components/LoginFormCredentials";
-import { ProviderList } from "@/features/auth/components/ProviderList";
+import { LoginFormCredentials } from "@/features/identity/auth/components/LoginFormCredentials";
+import { ProviderList } from "@/features/identity/auth/components/ProviderList";
 
 /**
  * Tela de login (Sprint 7.0). Apresenta o catálogo de provedores de identidade

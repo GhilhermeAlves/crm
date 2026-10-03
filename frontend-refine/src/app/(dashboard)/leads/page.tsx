@@ -2,17 +2,17 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
-import { useLeads, useDeleteLead, useUpdateLead } from "@/features/leads/hooks/useLeads";
-import { useContacts } from "@/features/contacts/hooks/useContacts";
-import { useMembers } from "@/features/members/hooks/useMembers";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { useLeads, useDeleteLead, useUpdateLead } from "@/features/sales/leads/hooks/useLeads";
+import { useContacts } from "@/features/masterdata/contacts/hooks/useContacts";
+import { useMembers } from "@/features/identity/members/hooks/useMembers";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { LeadTable } from "@/features/leads/components/LeadTable";
-import { LeadFilters } from "@/features/leads/components/LeadFilters";
-import { DeleteLeadDialog } from "@/features/leads/components/DeleteLeadDialog";
-import { ConvertLeadDialog } from "@/features/leads/components/ConvertLeadDialog";
-import { leadStatuses, leadStatusLabels } from "@/features/leads/schemas/lead.schema";
+import { LeadTable } from "@/features/sales/leads/components/LeadTable";
+import { LeadFilters } from "@/features/sales/leads/components/LeadFilters";
+import { DeleteLeadDialog } from "@/features/sales/leads/components/DeleteLeadDialog";
+import { ConvertLeadDialog } from "@/features/sales/leads/components/ConvertLeadDialog";
+import { leadStatuses, leadStatusLabels } from "@/features/sales/leads/schemas/lead.schema";
 import { PageTitle } from "@/components/common/PageTitle";
 import { SearchInput } from "@/components/common/SearchInput";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import type {
   LeadSource,
   LeadStatus,
   LeadClassification,
-} from "@/features/leads/types/lead.types";
+} from "@/features/sales/leads/types/lead.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function LeadsPage() {

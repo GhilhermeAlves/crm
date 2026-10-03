@@ -2,8 +2,8 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { InvitationService } from "@/features/invitations/services/invitation.service";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { InvitationService } from "@/features/identity/invitations/services/invitation.service";
 import { toast } from "sonner";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 import { Button } from "@/components/ui/button";

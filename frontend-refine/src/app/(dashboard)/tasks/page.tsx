@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +11,11 @@ import {
   useTasksDueToday,
   useCreateTask,
   useChangeTaskStatus,
-} from "@/features/tasks/hooks/useTasks";
-import { TaskList } from "@/features/tasks/components/TaskList";
-import { CreateTaskDialog } from "@/features/tasks/components/CreateTaskDialog";
-import { useTaskPermissions } from "@/features/tasks/schemas/task.schema";
-import type { TaskStatus } from "@/features/tasks/types/task.types";
+} from "@/features/sales/tasks/hooks/useTasks";
+import { TaskList } from "@/features/sales/tasks/components/TaskList";
+import { CreateTaskDialog } from "@/features/sales/tasks/components/CreateTaskDialog";
+import { useTaskPermissions } from "@/features/sales/tasks/schemas/task.schema";
+import type { TaskStatus } from "@/features/sales/tasks/types/task.types";
 
 export default function TasksPage() {
   const { user } = useAuth();

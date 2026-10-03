@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { useActivities, useCreateActivity } from "@/features/activities/hooks/useActivities";
-import { ActivityTimeline } from "@/features/activities/components/ActivityTimeline";
-import { CreateActivityDialog } from "@/features/activities/components/CreateActivityDialog";
-import { useActivityPermissions } from "@/features/activities/schemas/activity.schema";
+import { useActivities, useCreateActivity } from "@/features/sales/activities/hooks/useActivities";
+import { ActivityTimeline } from "@/features/sales/activities/components/ActivityTimeline";
+import { CreateActivityDialog } from "@/features/sales/activities/components/CreateActivityDialog";
+import { useActivityPermissions } from "@/features/sales/activities/schemas/activity.schema";
 
 export default function ActivitiesPage() {
   const { user } = useAuth();

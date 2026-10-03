@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Plus, ShieldOff, Target } from "lucide-react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
-import { usePipelines } from "@/features/pipeline/hooks/usePipelines";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { usePipelines } from "@/features/sales/pipeline/hooks/usePipelines";
 import {
   useCreateOpportunity,
   useDeleteOpportunity,
@@ -12,12 +12,12 @@ import {
   useMarkWonOpportunity,
   useMoveOpportunity,
   useOpportunities,
-} from "@/features/pipeline/hooks/useOpportunities";
-import { useOpportunityPermissions } from "@/features/pipeline/schemas/pipeline.schema";
-import type { Opportunity } from "@/features/pipeline/types/pipeline.types";
-import { PipelineBoard } from "@/features/pipeline/components/PipelineBoard";
-import { CreateOpportunityDialog } from "@/features/pipeline/components/CreateOpportunityDialog";
-import { LostReasonDialog } from "@/features/pipeline/components/LostReasonDialog";
+} from "@/features/sales/pipeline/hooks/useOpportunities";
+import { useOpportunityPermissions } from "@/features/sales/pipeline/schemas/pipeline.schema";
+import type { Opportunity } from "@/features/sales/pipeline/types/pipeline.types";
+import { PipelineBoard } from "@/features/sales/pipeline/components/PipelineBoard";
+import { CreateOpportunityDialog } from "@/features/sales/pipeline/components/CreateOpportunityDialog";
+import { LostReasonDialog } from "@/features/sales/pipeline/components/LostReasonDialog";
 import { PageTitle } from "@/components/common/PageTitle";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";

@@ -16,14 +16,14 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonTable } from "@/components/feedback/SkeletonTable";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import {
   useStorageObjects,
   useUploadFile,
   useDownloadFile,
   useDeleteFile,
-} from "@/features/storage/hooks/useStorage";
-import { formatBytes, type StorageObject } from "@/features/storage/types/storage.types";
+} from "@/features/masterdata/storage/hooks/useStorage";
+import { formatBytes, type StorageObject } from "@/features/masterdata/storage/types/storage.types";
 
 export default function StoragePage() {
   const { user } = useAuth();

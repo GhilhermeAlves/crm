@@ -2,7 +2,7 @@
 
 import { LogOut, User } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { CompanySwitcher } from "./CompanySwitcher";
 import {

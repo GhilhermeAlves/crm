@@ -4,17 +4,17 @@ import { useState, useCallback, useMemo } from "react";
 import { Plus, SearchX, ChevronDown, ChevronUp, Users, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
-import { ContactTable } from "@/features/contacts/components/ContactTable";
-import { CreateContactDialog } from "@/features/contacts/components/CreateContactDialog";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { ContactTable } from "@/features/masterdata/contacts/components/ContactTable";
+import { CreateContactDialog } from "@/features/masterdata/contacts/components/CreateContactDialog";
 import {
   useContacts,
   useCreateContact,
   useUpdateContact,
   useDeleteContact,
   useContactPermissions,
-} from "@/features/contacts/hooks/useContacts";
+} from "@/features/masterdata/contacts/hooks/useContacts";
 import { PageHeader } from "@/components/common/PageHeader";
 import { SearchInput } from "@/components/common/SearchInput";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -22,7 +22,7 @@ import { ErrorCard } from "@/components/common/ErrorCard";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { FilterBar } from "@/components/common/FilterBar";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Contact } from "@/features/contacts/types/contact.types";
+import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
 export default function ContactsPage() {
   const { user } = useAuth();

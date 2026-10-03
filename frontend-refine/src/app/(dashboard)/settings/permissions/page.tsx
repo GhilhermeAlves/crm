@@ -1,8 +1,8 @@
 "use client";
 
 import { KeyRound } from "lucide-react";
-import { PermissionList } from "@/features/rbac/components/PermissionList";
-import { usePermissions } from "@/features/rbac/hooks/useRoles";
+import { PermissionList } from "@/features/identity/rbac/components/PermissionList";
+import { usePermissions } from "@/features/identity/rbac/hooks/useRoles";
 
 export default function PermissionsPage() {
   const { data: permissions, isLoading } = usePermissions();

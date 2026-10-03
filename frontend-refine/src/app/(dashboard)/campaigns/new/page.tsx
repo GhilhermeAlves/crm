@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import {
   useCreateCampaign,
   useAttachChannel,
   useTemplates,
-} from "@/features/campaigns/hooks/useCampaigns";
-import { useChannels } from "@/features/omnichannel/hooks/useOmnichannel";
+} from "@/features/automation/campaigns/hooks/useCampaigns";
+import { useChannels } from "@/features/communication/omnichannel/hooks/useOmnichannel";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROUTES } from "@/lib/constants";
-import type { AudienceType, Campaign } from "@/features/campaigns/types/campaign.types";
+import type { AudienceType, Campaign } from "@/features/automation/campaigns/types/campaign.types";
 
 const STEPS = ["Informações", "Público", "Canal", "Mensagem", "Agendamento", "Revisão"];
 
@@ -120,7 +120,7 @@ export default function NewCampaignPage() {
 
       let templateId = state.templateId;
       if (templateId === "__new__") {
-        const template = await import("@/features/campaigns/services/campaign.service").then((m) =>
+        const template = await import("@/features/automation/campaigns/services/campaign.service").then((m) =>
           m.TemplateService.create(companyId as string, {
             name: state.newTemplateName,
             channelType: "WHATSAPP",
@@ -140,12 +140,12 @@ export default function NewCampaignPage() {
       });
 
       if (state.mode === "scheduled") {
-        const { CampaignService } = await import("@/features/campaigns/services/campaign.service");
+        const { CampaignService } = await import("@/features/automation/campaigns/services/campaign.service");
         await CampaignService.schedule(companyId as string, campaign.id, {
           scheduledAt: new Date(state.scheduledAt).toISOString(),
         });
       } else {
-        const { CampaignService } = await import("@/features/campaigns/services/campaign.service");
+        const { CampaignService } = await import("@/features/automation/campaigns/services/campaign.service");
         await CampaignService.executeNow(companyId as string, campaign.id);
       }
 
