@@ -120,13 +120,14 @@ export default function NewCampaignPage() {
 
       let templateId = state.templateId;
       if (templateId === "__new__") {
-        const template = await import("@/features/automation/campaigns/services/campaign.service").then((m) =>
-          m.TemplateService.create(companyId as string, {
-            name: state.newTemplateName,
-            channelType: "WHATSAPP",
-            body: state.newTemplateBody,
-          }),
-        );
+        const template =
+          await import("@/features/automation/campaigns/services/campaign.service").then((m) =>
+            m.TemplateService.create(companyId as string, {
+              name: state.newTemplateName,
+              channelType: "WHATSAPP",
+              body: state.newTemplateBody,
+            }),
+          );
         templateId = template.id;
       }
 
@@ -140,12 +141,14 @@ export default function NewCampaignPage() {
       });
 
       if (state.mode === "scheduled") {
-        const { CampaignService } = await import("@/features/automation/campaigns/services/campaign.service");
+        const { CampaignService } =
+          await import("@/features/automation/campaigns/services/campaign.service");
         await CampaignService.schedule(companyId as string, campaign.id, {
           scheduledAt: new Date(state.scheduledAt).toISOString(),
         });
       } else {
-        const { CampaignService } = await import("@/features/automation/campaigns/services/campaign.service");
+        const { CampaignService } =
+          await import("@/features/automation/campaigns/services/campaign.service");
         await CampaignService.executeNow(companyId as string, campaign.id);
       }
 

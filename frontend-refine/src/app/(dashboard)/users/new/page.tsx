@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 import { useCreateUser } from "@/features/identity/users/hooks/useUsers";
 import { UserForm } from "@/features/identity/users/components/UserForm";
 import { PageTitle } from "@/components/common/PageTitle";
-import type { CreateUserRequest, UpdateUserRequest } from "@/features/identity/users/types/user.types";
+import type {
+  CreateUserRequest,
+  UpdateUserRequest,
+} from "@/features/identity/users/types/user.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function NewUserPage() {
