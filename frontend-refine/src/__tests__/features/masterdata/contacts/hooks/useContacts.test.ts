@@ -2,7 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
-import { useContacts, useCustomer360, useCreateContact } from "@/features/masterdata/contacts/hooks/useContacts";
+import {
+  useContacts,
+  useCustomer360,
+  useCreateContact,
+} from "@/features/masterdata/contacts/hooks/useContacts";
 
 const { listMock, c360Mock, createMock } = vi.hoisted(() => ({
   listMock: vi.fn(),

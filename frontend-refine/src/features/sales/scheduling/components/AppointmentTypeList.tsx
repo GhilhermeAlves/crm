@@ -51,9 +51,7 @@ export function AppointmentTypeList({
       </CardHeader>
       <CardContent>
         {types.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nenhum tipo de agendamento cadastrado.
-          </p>
+          <p className="text-sm text-muted-foreground">Nenhum tipo de agendamento cadastrado.</p>
         ) : (
           <div className="space-y-3">
             {types.map((t) => (
@@ -61,15 +59,15 @@ export function AppointmentTypeList({
                 key={t.id}
                 className="flex items-center justify-between gap-3 rounded-lg border p-3"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex min-w-0 items-center gap-3">
                   {t.color && (
                     <div
-                      className="h-3 w-3 rounded-full shrink-0"
+                      className="h-3 w-3 shrink-0 rounded-full"
                       style={{ backgroundColor: t.color }}
                     />
                   )}
                   <div className="min-w-0">
-                    <p className="font-medium truncate">{t.name}</p>
+                    <p className="truncate font-medium">{t.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {t.durationMinutes}min
                       {t.locationKind ? ` · ${LOCATION_KIND_LABELS[t.locationKind]}` : ""}
@@ -78,7 +76,7 @@ export function AppointmentTypeList({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex shrink-0 items-center gap-2">
                   {!t.active && <Badge variant="secondary">Inativo</Badge>}
                   {t.publicBookingEnabled && <Badge variant="outline">Público</Badge>}
                   {canConfigure && (

@@ -55,9 +55,9 @@ export function AppointmentDetailPanel({
   const transitions = STATUS_TRANSITIONS[appointment.status];
 
   return (
-    <div className="border-l bg-card p-4 w-80 flex flex-col gap-4">
+    <div className="flex w-80 flex-col gap-4 border-l bg-card p-4">
       <div className="flex items-start justify-between">
-        <h3 className="font-semibold text-lg leading-tight">{appointment.title}</h3>
+        <h3 className="text-lg font-semibold leading-tight">{appointment.title}</h3>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -88,7 +88,7 @@ export function AppointmentDetailPanel({
           href={appointment.meetingUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline truncate"
+          className="truncate text-sm text-primary hover:underline"
         >
           Link da reunião
         </a>
@@ -96,7 +96,7 @@ export function AppointmentDetailPanel({
 
       {appointment.notes && (
         <div className="flex items-start gap-2 text-sm text-muted-foreground">
-          <FileText className="h-4 w-4 shrink-0 mt-0.5" />
+          <FileText className="mt-0.5 h-4 w-4 shrink-0" />
           <p className="whitespace-pre-wrap">{appointment.notes}</p>
         </div>
       )}

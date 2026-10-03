@@ -5,10 +5,7 @@ export const LOCATION_KINDS = ["GOOGLE_MEET", "PHONE", "IN_PERSON"] as const;
 export const ASSIGNMENT_MODES = ["ROUND_ROBIN", "CHOOSE_HOST"] as const;
 
 export const createAppointmentTypeSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Nome é obrigatório")
-    .max(100, "Nome deve ter no máximo 100 caracteres"),
+  name: z.string().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   slug: z.string().max(100).optional(),
   description: z.string().max(500, "Descrição muito longa").optional(),
   durationMinutes: z.coerce

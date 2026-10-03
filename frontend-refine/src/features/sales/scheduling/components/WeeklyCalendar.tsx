@@ -16,10 +16,7 @@ import {
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { Appointment, ScheduleBlock } from "../types/scheduling.types";
-import {
-  APPOINTMENT_STATUS_COLORS,
-  APPOINTMENT_STATUS_LABELS,
-} from "../types/scheduling.types";
+import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_LABELS } from "../types/scheduling.types";
 
 const HOUR_HEIGHT = 60;
 const START_HOUR = 6;
@@ -52,7 +49,7 @@ function HourLabels() {
   for (let h = START_HOUR; h < END_HOUR; h++) {
     hours.push(
       <div key={h} className="relative" style={{ height: HOUR_HEIGHT }}>
-        <span className="absolute -top-2.5 right-2 text-xs text-muted-foreground tabular-nums">
+        <span className="absolute -top-2.5 right-2 text-xs tabular-nums text-muted-foreground">
           {String(h).padStart(2, "0")}:00
         </span>
       </div>,
@@ -67,12 +64,9 @@ function NowLine() {
   if (minutes < 0 || minutes > TOTAL_HOURS * 60) return null;
   const top = (minutes / 60) * HOUR_HEIGHT;
   return (
-    <div
-      className="absolute left-0 right-0 z-20 pointer-events-none"
-      style={{ top }}
-    >
+    <div className="pointer-events-none absolute left-0 right-0 z-20" style={{ top }}>
       <div className="flex items-center">
-        <div className="h-2.5 w-2.5 rounded-full bg-destructive -ml-1" />
+        <div className="-ml-1 h-2.5 w-2.5 rounded-full bg-destructive" />
         <div className="flex-1 border-t-2 border-destructive" />
       </div>
     </div>
@@ -103,7 +97,7 @@ function DayColumn({
     if (!onSlotClick || !colRef.current) return;
     const rect = colRef.current.getBoundingClientRect();
     const y = e.clientY - rect.top;
-    const minutes = Math.round((y / HOUR_HEIGHT) * 60 / 15) * 15 + START_HOUR * 60;
+    const minutes = Math.round(((y / HOUR_HEIGHT) * 60) / 15) * 15 + START_HOUR * 60;
     const start = addMinutes(startOfDay(date), minutes);
     const end = addMinutes(start, 30);
     onSlotClick(start, end);
@@ -112,16 +106,12 @@ function DayColumn({
   return (
     <div
       ref={colRef}
-      className="relative flex-1 border-r last:border-r-0 cursor-pointer"
+      className="relative flex-1 cursor-pointer border-r last:border-r-0"
       style={{ height: TOTAL_HOURS * HOUR_HEIGHT }}
       onClick={handleClick}
     >
       {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
-        <div
-          key={i}
-          className="border-b border-dashed"
-          style={{ height: HOUR_HEIGHT }}
-        />
+        <div key={i} className="border-b border-dashed" style={{ height: HOUR_HEIGHT }} />
       ))}
 
       {isToday(date) && <NowLine />}
@@ -131,11 +121,11 @@ function DayColumn({
         return (
           <div
             key={block.id}
-            className="absolute left-1 right-1 z-10 rounded bg-muted/60 border border-dashed border-muted-foreground/30 px-1.5 py-0.5 text-xs text-muted-foreground overflow-hidden"
+            className="absolute left-1 right-1 z-10 overflow-hidden rounded border border-dashed border-muted-foreground/30 bg-muted/60 px-1.5 py-0.5 text-xs text-muted-foreground"
             style={{ top: pos.top, height: pos.height }}
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="truncate block">
+            <span className="block truncate">
               {block.source === "GOOGLE" ? "🔗 " : ""}
               {block.reason || "Bloqueio"}
             </span>
@@ -150,7 +140,7 @@ function DayColumn({
           <button
             key={appt.id}
             className={cn(
-              "absolute left-1 right-1 z-10 rounded px-1.5 py-0.5 text-xs font-medium overflow-hidden text-left transition-shadow",
+              "absolute left-1 right-1 z-10 overflow-hidden rounded px-1.5 py-0.5 text-left text-xs font-medium transition-shadow",
               "bg-primary/90 text-primary-foreground hover:bg-primary",
               isSelected && "ring-2 ring-ring ring-offset-1",
             )}
@@ -160,11 +150,10 @@ function DayColumn({
               onAppointmentClick?.(appt);
             }}
           >
-            <span className="truncate block">{appt.title}</span>
+            <span className="block truncate">{appt.title}</span>
             {pos.height > 30 && (
-              <span className="truncate block opacity-80">
-                {format(parseISO(appt.startAt), "HH:mm")} –{" "}
-                {format(parseISO(appt.endAt), "HH:mm")}
+              <span className="block truncate opacity-80">
+                {format(parseISO(appt.startAt), "HH:mm")} – {format(parseISO(appt.endAt), "HH:mm")}
               </span>
             )}
           </button>
@@ -190,21 +179,19 @@ export function WeeklyCalendar({
   }, [currentDate, view]);
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden rounded-lg border bg-card">
+    <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
       <div className="flex border-b">
         <div className="w-14 shrink-0" />
         {days.map((d) => (
           <div
             key={d.toISOString()}
             className={cn(
-              "flex-1 text-center py-2 text-sm font-medium border-r last:border-r-0",
+              "flex-1 border-r py-2 text-center text-sm font-medium last:border-r-0",
               isToday(d) && "bg-primary/10 text-primary",
             )}
           >
             <span className="hidden sm:inline">{format(d, "EEE", { locale: ptBR })} </span>
-            <span className={cn("tabular-nums", isToday(d) && "font-bold")}>
-              {format(d, "dd")}
-            </span>
+            <span className={cn("tabular-nums", isToday(d) && "font-bold")}>{format(d, "dd")}</span>
           </div>
         ))}
       </div>

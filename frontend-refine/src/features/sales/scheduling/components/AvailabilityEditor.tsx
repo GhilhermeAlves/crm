@@ -15,15 +15,7 @@ import {
 import { Plus, Trash2, Save } from "lucide-react";
 import type { Availability, AvailabilityRule } from "../types/scheduling.types";
 
-const WEEKDAY_LABELS = [
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-  "Domingo",
-];
+const WEEKDAY_LABELS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
 const TIMEZONES = [
   "America/Sao_Paulo",
@@ -65,9 +57,7 @@ export function AvailabilityEditor({ availability, isLoading, isSaving, onSave }
   };
 
   const updateRule = (index: number, field: keyof AvailabilityRule, value: string | number) => {
-    setRules((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)),
-    );
+    setRules((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
   };
 
   const handleSave = () => {
@@ -129,39 +119,35 @@ export function AvailabilityEditor({ availability, isLoading, isSaving, onSave }
           {rulesByDay.map((day) => (
             <div key={day.weekday} className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium w-20">{day.label}</span>
+                <span className="w-20 text-sm font-medium">{day.label}</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => addRule(day.weekday)}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
+                  <Plus className="mr-1 h-3 w-3" />
                   Janela
                 </Button>
               </div>
 
               {day.rules.length === 0 && (
-                <p className="text-xs text-muted-foreground ml-20">Indisponível</p>
+                <p className="ml-20 text-xs text-muted-foreground">Indisponível</p>
               )}
 
               {day.rules.map((rule) => (
-                <div key={rule.originalIndex} className="flex items-center gap-2 ml-20">
+                <div key={rule.originalIndex} className="ml-20 flex items-center gap-2">
                   <Input
                     type="time"
                     value={rule.startTime}
-                    onChange={(e) =>
-                      updateRule(rule.originalIndex, "startTime", e.target.value)
-                    }
+                    onChange={(e) => updateRule(rule.originalIndex, "startTime", e.target.value)}
                     className="w-28"
                   />
                   <span className="text-sm text-muted-foreground">–</span>
                   <Input
                     type="time"
                     value={rule.endTime}
-                    onChange={(e) =>
-                      updateRule(rule.originalIndex, "endTime", e.target.value)
-                    }
+                    onChange={(e) => updateRule(rule.originalIndex, "endTime", e.target.value)}
                     className="w-28"
                   />
                   <Button

@@ -57,16 +57,10 @@ export function CreateBlockDialog({
           <DialogTitle>Bloquear horário</DialogTitle>
         </DialogHeader>
 
-        <form
-          onSubmit={form.handleSubmit((v) => onSubmit(v))}
-          className="space-y-4"
-        >
+        <form onSubmit={form.handleSubmit((v) => onSubmit(v))} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="block-hostId">Responsável *</Label>
-            <Select
-              value={form.watch("hostId")}
-              onValueChange={(v) => form.setValue("hostId", v)}
-            >
+            <Select value={form.watch("hostId")} onValueChange={(v) => form.setValue("hostId", v)}>
               <SelectTrigger id="block-hostId">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>

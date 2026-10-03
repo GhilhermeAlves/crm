@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { opportunityFormSchema, formatCurrency, formatPercent } from "@/features/sales/pipeline/schemas/pipeline.schema";
+import {
+  opportunityFormSchema,
+  formatCurrency,
+  formatPercent,
+} from "@/features/sales/pipeline/schemas/pipeline.schema";
 
 const VALID_CONTACT = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
 

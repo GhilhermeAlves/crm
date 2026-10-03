@@ -142,7 +142,7 @@ export default function AgendaPage() {
   }, [currentDate, view]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] gap-4">
+    <div className="flex h-[calc(100vh-4rem)] flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <PageTitle>Agenda</PageTitle>
 
@@ -153,7 +153,7 @@ export default function AgendaPage() {
           <Button variant="ghost" size="icon" onClick={goPrev}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium min-w-[180px] text-center">{periodLabel}</span>
+          <span className="min-w-[180px] text-center text-sm font-medium">{periodLabel}</span>
           <Button variant="ghost" size="icon" onClick={goNext}>
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -186,12 +186,8 @@ export default function AgendaPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setCreateOpen(true)}>
-                  Agendamento
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setBlockOpen(true)}>
-                  Bloqueio
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCreateOpen(true)}>Agendamento</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setBlockOpen(true)}>Bloqueio</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

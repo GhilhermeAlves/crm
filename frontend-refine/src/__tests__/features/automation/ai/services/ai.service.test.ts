@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AxiosError, AxiosHeaders, type AxiosResponse } from "axios";
-import { AiService, aiAnalysisErrorMessage, aiErrorMessage } from "@/features/automation/ai/services/ai.service";
+import {
+  AiService,
+  aiAnalysisErrorMessage,
+  aiErrorMessage,
+} from "@/features/automation/ai/services/ai.service";
 
 const { getMock, postMock, putMock } = vi.hoisted(() => ({
   getMock: vi.fn(),

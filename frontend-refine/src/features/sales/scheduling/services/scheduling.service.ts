@@ -139,9 +139,7 @@ export const BlockService = {
 
 export const AvailabilityService = {
   async get(companyId: string, userId: string): Promise<Availability> {
-    const r = await api.get<Availability>(
-      `${BASE}/${companyId}/users/${userId}/availability`,
-    );
+    const r = await api.get<Availability>(`${BASE}/${companyId}/users/${userId}/availability`);
     return r.data;
   },
 

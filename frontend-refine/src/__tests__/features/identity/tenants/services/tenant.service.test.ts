@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { mapCreateTenantRequest, mapUpdateTenantRequest } from "@/features/identity/tenants/services/tenant.service";
-import type { CreateTenantRequest, UpdateTenantRequest } from "@/features/identity/tenants/types/tenant.types";
+import {
+  mapCreateTenantRequest,
+  mapUpdateTenantRequest,
+} from "@/features/identity/tenants/services/tenant.service";
+import type {
+  CreateTenantRequest,
+  UpdateTenantRequest,
+} from "@/features/identity/tenants/types/tenant.types";
 
 function makeCreateData(overrides: Partial<CreateTenantRequest> = {}): CreateTenantRequest {
   return {

@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { LeadStatusBadge, LeadSourceBadge, LeadClassificationBadge } from "@/features/sales/leads/components/LeadBadges";
+import {
+  LeadStatusBadge,
+  LeadSourceBadge,
+  LeadClassificationBadge,
+} from "@/features/sales/leads/components/LeadBadges";
 
 describe("LeadBadges (Sprint 10)", () => {
   it("renders the pt-BR label for each lead status", () => {
