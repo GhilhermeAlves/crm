@@ -1,16 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, startOfDay, endOfDay } from "date-fns";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +63,18 @@ export function CreateAppointmentDialog({
     },
   });
 
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        title: "",
+        hostId: defaultHostId ?? "",
+        startAt: defaultStart ?? "",
+        endAt: defaultEnd ?? "",
+      });
+      setAllDay(false);
+    }
+  }, [open, defaultStart, defaultEnd, defaultHostId, form]);
+
   const handleSubmit = form.handleSubmit((values) => {
     if (allDay && values.startAt) {
       const day = new Date(values.startAt);
@@ -79,16 +85,15 @@ export function CreateAppointmentDialog({
   });
 
   const selectedTypeId = form.watch("appointmentTypeId");
-  const selectedType = appointmentTypes.find((t) => t.id === selectedTypeId);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Novo Agendamento</DialogTitle>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="flex flex-col overflow-y-auto sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Novo Agendamento</SheetTitle>
+        </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 pt-4">
           <div className="space-y-2">
             <Label htmlFor="appointmentTypeId">Tipo de agendamento</Label>
             <Select
@@ -211,16 +216,16 @@ export function CreateAppointmentDialog({
             <Textarea id="notes" {...form.register("notes")} rows={3} />
           </div>
 
-          <DialogFooter>
+          <SheetFooter className="mt-auto border-t pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Criando…" : "Criar agendamento"}
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -1,14 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,14 +45,28 @@ export function CreateBlockDialog({
     },
   });
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Bloquear horário</DialogTitle>
-        </DialogHeader>
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        hostId: "",
+        startAt: defaultStart ?? "",
+        endAt: defaultEnd ?? "",
+        reason: "",
+      });
+    }
+  }, [open, defaultStart, defaultEnd, form]);
 
-        <form onSubmit={form.handleSubmit((v) => onSubmit(v))} className="space-y-4">
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="flex flex-col overflow-y-auto sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Bloquear horário</SheetTitle>
+        </SheetHeader>
+
+        <form
+          onSubmit={form.handleSubmit((v) => onSubmit(v))}
+          className="flex flex-1 flex-col gap-4 pt-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="block-hostId">Responsável *</Label>
             <Select value={form.watch("hostId")} onValueChange={(v) => form.setValue("hostId", v)}>
@@ -93,16 +102,16 @@ export function CreateBlockDialog({
             <Input id="block-reason" {...form.register("reason")} placeholder="Ex.: Almoço" />
           </div>
 
-          <DialogFooter>
+          <SheetFooter className="mt-auto border-t pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Salvando…" : "Bloquear"}
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
