@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
-import { useAnalyticsSummary } from "@/features/analytics/hooks/useAnalytics";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { useAnalyticsSummary } from "@/features/analytics/reporting/hooks/useAnalytics";
 import {
   PERIOD_OPTIONS,
   delta,
   type PeriodOption,
-} from "@/features/analytics/types/analytics.types";
+} from "@/features/analytics/reporting/types/analytics.types";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

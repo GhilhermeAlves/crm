@@ -3,8 +3,8 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
 import { CompanySwitcher } from "./CompanySwitcher";
-import { AuthProvider } from "@/features/auth/hooks/useAuth";
-import type { CompanyOption } from "@/features/auth/types/auth.types";
+import { AuthProvider } from "@/features/identity/auth/hooks/useAuth";
+import type { CompanyOption } from "@/features/identity/auth/types/auth.types";
 
 const { pathnameState } = vi.hoisted(() => ({
   pathnameState: { value: "/dashboard" },
@@ -19,7 +19,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
   usePathname: () => pathnameState.value,
 }));
-vi.mock("@/features/auth/services/auth.service", () => ({
+vi.mock("@/features/identity/auth/services/auth.service", () => ({
   AuthService: {
     me: meMock,
     myCompanies: myCompaniesMock,

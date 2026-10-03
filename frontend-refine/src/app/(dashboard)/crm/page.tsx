@@ -21,12 +21,12 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/common/PageTitle";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
-import { useOperationalDashboard } from "@/features/dashboard/hooks/useOperationalDashboard";
-import { useOpportunityPermissions } from "@/features/pipeline/schemas/pipeline.schema";
-import { CrmModuleCard, type CrmModule } from "@/features/crm/components/CrmModuleCard";
-import { CrmRecentItems } from "@/features/crm/components/CrmRecentItems";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { useOperationalDashboard } from "@/features/analytics/dashboard/hooks/useOperationalDashboard";
+import { useOpportunityPermissions } from "@/features/sales/pipeline/schemas/pipeline.schema";
+import { CrmModuleCard, type CrmModule } from "@/features/analytics/crm/components/CrmModuleCard";
+import { CrmRecentItems } from "@/features/analytics/crm/components/CrmRecentItems";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 

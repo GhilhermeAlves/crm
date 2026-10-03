@@ -16,19 +16,19 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonTable } from "@/components/feedback/SkeletonTable";
-import { ChannelFormDialog } from "@/features/omnichannel/components/ChannelFormDialog";
-import { ChannelStatusBadge } from "@/features/omnichannel/components/ChannelStatusBadge";
+import { ChannelFormDialog } from "@/features/communication/omnichannel/components/ChannelFormDialog";
+import { ChannelStatusBadge } from "@/features/communication/omnichannel/components/ChannelStatusBadge";
 import {
   useChannels,
   useCreateChannel,
   useDeleteChannel,
   useOmnichannelPermissions,
   useUpdateChannel,
-} from "@/features/omnichannel/hooks/useOmnichannel";
+} from "@/features/communication/omnichannel/hooks/useOmnichannel";
 import {
   CHANNEL_PROVIDER_LABELS,
   type Channel,
-} from "@/features/omnichannel/types/omnichannel.types";
+} from "@/features/communication/omnichannel/types/omnichannel.types";
 
 export default function ChannelsPage() {
   const { data: channels, isLoading, error, refetch } = useChannels();

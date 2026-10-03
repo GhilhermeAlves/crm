@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { LoginBrand } from "@/components/brand/LoginBrand";
-import { LinkAccountForm } from "@/features/auth/components/LinkAccountForm";
+import { LinkAccountForm } from "@/features/identity/auth/components/LinkAccountForm";
 
 /**
  * Vínculo de conta local (Sprint 7.2, Caso B): exibida quando o login Google

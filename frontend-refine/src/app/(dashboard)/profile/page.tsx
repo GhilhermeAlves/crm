@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useProfile, useUpdateProfile } from "@/features/users/hooks/useUsers";
-import type { UpdateProfileRequest } from "@/features/users/types/user.types";
-import { UserAvatar } from "@/features/users/components/UserAvatar";
+import { useProfile, useUpdateProfile } from "@/features/identity/users/hooks/useUsers";
+import type { UpdateProfileRequest } from "@/features/identity/users/types/user.types";
+import { UserAvatar } from "@/features/identity/users/components/UserAvatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

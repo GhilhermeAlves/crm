@@ -5,9 +5,9 @@ import { PageTitle } from "@/components/common/PageTitle";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonForm } from "@/components/feedback/SkeletonForm";
 import { ROUTES } from "@/lib/constants";
-import { useTenant, useUpdateTenant } from "@/features/tenants/hooks/useTenants";
-import { TenantForm } from "@/features/tenants/components/TenantForm";
-import type { CreateTenantRequest } from "@/features/tenants/types/tenant.types";
+import { useTenant, useUpdateTenant } from "@/features/identity/tenants/hooks/useTenants";
+import { TenantForm } from "@/features/identity/tenants/components/TenantForm";
+import type { CreateTenantRequest } from "@/features/identity/tenants/types/tenant.types";
 
 export default function EditTenantPage() {
   const { id } = useParams<{ id: string }>();

@@ -1,10 +1,10 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useUser, useUpdateUser } from "@/features/users/hooks/useUsers";
-import { UserForm } from "@/features/users/components/UserForm";
+import { useUser, useUpdateUser } from "@/features/identity/users/hooks/useUsers";
+import { UserForm } from "@/features/identity/users/components/UserForm";
 import { PageTitle } from "@/components/common/PageTitle";
-import type { UpdateUserRequest } from "@/features/users/types/user.types";
+import type { UpdateUserRequest } from "@/features/identity/users/types/user.types";
 import { ROUTES } from "@/lib/constants";
 import { SkeletonForm } from "@/components/feedback/SkeletonForm";
 

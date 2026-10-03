@@ -1,1 +1,1 @@
-export type { User, ApiErrorResponse } from "@/features/auth/types/auth.types";
+export type { User, ApiErrorResponse } from "@/features/identity/auth/types/auth.types";

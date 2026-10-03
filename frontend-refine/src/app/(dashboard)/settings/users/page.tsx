@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import {
   useMembers,
   useUpdateMemberRole,
   useRemoveMember,
-} from "@/features/members/hooks/useMembers";
-import { useRoles } from "@/features/rbac/hooks/useRoles";
-import { InviteMemberDialog } from "@/features/members/components/InviteMemberDialog";
-import { UserPermissionsDialog } from "@/features/rbac/components/UserPermissionsDialog";
-import type { Member } from "@/features/members/types/member.types";
+} from "@/features/identity/members/hooks/useMembers";
+import { useRoles } from "@/features/identity/rbac/hooks/useRoles";
+import { InviteMemberDialog } from "@/features/identity/members/components/InviteMemberDialog";
+import { UserPermissionsDialog } from "@/features/identity/rbac/components/UserPermissionsDialog";
+import type { Member } from "@/features/identity/members/types/member.types";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

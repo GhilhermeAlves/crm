@@ -1,0 +1,26 @@
+package com.becommerce.crm.communication.omnichannel.application.port.input;
+
+import com.becommerce.crm.shared.application.dto.PageResponse;
+import com.becommerce.crm.communication.omnichannel.application.dto.ConversationDetailResponse;
+import com.becommerce.crm.communication.omnichannel.application.dto.ConversationResponse;
+import com.becommerce.crm.communication.omnichannel.application.dto.MessageResponse;
+
+import java.util.UUID;
+
+/** Inbox omnichannel: conversas, mensagens e envio (FASE 7/8/9/11). */
+public interface OmnichannelInboxUseCase {
+
+    PageResponse<ConversationResponse> listConversations(UUID companyId, int page, int pageSize);
+
+    ConversationDetailResponse getConversation(UUID companyId, UUID conversationId, int page, int pageSize);
+
+    MessageResponse send(UUID companyId, UUID conversationId, String body);
+
+    void markRead(UUID companyId, UUID conversationId);
+
+    /** Um humano assume a conversa: a IA autônoma fica suspensa (Sprint 3). */
+    ConversationResponse takeover(UUID companyId, UUID conversationId);
+
+    /** Restabelece o atendimento automático (Sprint 3). */
+    ConversationResponse release(UUID companyId, UUID conversationId);
+}

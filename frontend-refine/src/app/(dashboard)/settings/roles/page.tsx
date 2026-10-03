@@ -1,16 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import {
   useRoles,
   usePermissions,
   useAssignPermission,
   useRemovePermission,
   useCreateRole,
-} from "@/features/rbac/hooks/useRoles";
-import { RoleBadge } from "@/features/rbac/components/RoleBadge";
-import { PermissionMatrix } from "@/features/rbac/components/PermissionMatrix";
+} from "@/features/identity/rbac/hooks/useRoles";
+import { RoleBadge } from "@/features/identity/rbac/components/RoleBadge";
+import { PermissionMatrix } from "@/features/identity/rbac/components/PermissionMatrix";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

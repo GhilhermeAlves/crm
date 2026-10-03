@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { ConversationList } from "@/features/omnichannel/components/ConversationList";
-import { ChatThread } from "@/features/omnichannel/components/ChatThread";
+import { ConversationList } from "@/features/communication/omnichannel/components/ConversationList";
+import { ChatThread } from "@/features/communication/omnichannel/components/ChatThread";
 import {
   useConversation,
   useConversations,
   useMarkRead,
   useOmnichannelPermissions,
   useSendMessage,
-} from "@/features/omnichannel/hooks/useOmnichannel";
-import type { Conversation } from "@/features/omnichannel/types/omnichannel.types";
+} from "@/features/communication/omnichannel/hooks/useOmnichannel";
+import type { Conversation } from "@/features/communication/omnichannel/types/omnichannel.types";
 
 export default function InboxPage() {
   const { data: page } = useConversations();

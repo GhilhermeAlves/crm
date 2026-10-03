@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useCreateCompany } from "@/features/onboarding/hooks/useOnboarding";
-import { OnboardingCompanyForm } from "@/features/onboarding/components/OnboardingCompanyForm";
-import type { OnboardingCompanyRequest } from "@/features/onboarding/types/onboarding.types";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useCreateCompany } from "@/features/identity/onboarding/hooks/useOnboarding";
+import { OnboardingCompanyForm } from "@/features/identity/onboarding/components/OnboardingCompanyForm";
+import type { OnboardingCompanyRequest } from "@/features/identity/onboarding/types/onboarding.types";
 import { ROUTES } from "@/lib/constants";
 
 export default function OnboardingPage() {

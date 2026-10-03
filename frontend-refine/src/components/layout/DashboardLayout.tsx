@@ -3,7 +3,7 @@
 import { type ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { AiAssistantLauncher } from "@/features/ai/components/AiAssistantLauncher";
+import { AiAssistantLauncher } from "@/features/automation/ai/components/AiAssistantLauncher";
 
 type DashboardLayoutProps = {
   children: ReactNode;

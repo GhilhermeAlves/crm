@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { AuthProvider } from "@/features/auth/hooks/useAuth";
+import { AuthProvider } from "@/features/identity/auth/hooks/useAuth";
 
 const { pathnameState } = vi.hoisted(() => ({
   pathnameState: { value: "/dashboard" },
@@ -17,7 +17,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => pathnameState.value,
 }));
 
-vi.mock("@/features/auth/services/auth.service", () => ({
+vi.mock("@/features/identity/auth/services/auth.service", () => ({
   AuthService: { me: meMock },
 }));
 

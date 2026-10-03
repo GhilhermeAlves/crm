@@ -1,13 +1,13 @@
 "use client";
 
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import {
   useMembers,
   useUpdateMemberRole,
   useRemoveMember,
-} from "@/features/members/hooks/useMembers";
-import { useRoles } from "@/features/rbac/hooks/useRoles";
-import { InviteMemberDialog } from "@/features/members/components/InviteMemberDialog";
+} from "@/features/identity/members/hooks/useMembers";
+import { useRoles } from "@/features/identity/rbac/hooks/useRoles";
+import { InviteMemberDialog } from "@/features/identity/members/components/InviteMemberDialog";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

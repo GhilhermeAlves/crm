@@ -17,7 +17,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonTable } from "@/components/feedback/SkeletonTable";
-import { FollowUpSequenceDialog } from "@/features/omnichannel/components/FollowUpSequenceDialog";
+import { FollowUpSequenceDialog } from "@/features/communication/omnichannel/components/FollowUpSequenceDialog";
 import {
   useActivateFollowUpSequence,
   useCreateFollowUpSequence,
@@ -25,11 +25,11 @@ import {
   useDeleteFollowUpSequence,
   useFollowUpSequences,
   useUpdateFollowUpSequence,
-} from "@/features/omnichannel/hooks/useFollowUpSequences";
+} from "@/features/communication/omnichannel/hooks/useFollowUpSequences";
 import {
   FOLLOW_UP_SEQUENCE_STATUS_LABELS,
   type FollowUpSequence,
-} from "@/features/omnichannel/types/followup-sequence.types";
+} from "@/features/communication/omnichannel/types/followup-sequence.types";
 
 export default function FollowUpSequencesPage() {
   const { data: page, isLoading, error, refetch } = useFollowUpSequences();

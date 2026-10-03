@@ -1,19 +1,19 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
-import { useLead, useUpdateLead } from "@/features/leads/hooks/useLeads";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { useLead, useUpdateLead } from "@/features/sales/leads/hooks/useLeads";
 import {
   LeadStatusBadge,
   LeadSourceBadge,
   LeadClassificationBadge,
-} from "@/features/leads/components/LeadBadges";
-import { ConvertLeadDialog } from "@/features/leads/components/ConvertLeadDialog";
-import { useContact, useCustomer360 } from "@/features/contacts/hooks/useContacts";
-import { useMembers } from "@/features/members/hooks/useMembers";
-import { ContactSummaryCard } from "@/features/contacts/components/ContactSummaryCard";
-import { TimelinePanel } from "@/features/contacts/components/TimelinePanel";
+} from "@/features/sales/leads/components/LeadBadges";
+import { ConvertLeadDialog } from "@/features/sales/leads/components/ConvertLeadDialog";
+import { useContact, useCustomer360 } from "@/features/masterdata/contacts/hooks/useContacts";
+import { useMembers } from "@/features/identity/members/hooks/useMembers";
+import { ContactSummaryCard } from "@/features/masterdata/contacts/components/ContactSummaryCard";
+import { TimelinePanel } from "@/features/masterdata/contacts/components/TimelinePanel";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import { ROUTES } from "@/lib/constants";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, type ReactNode } from "react";
-import type { Lead } from "@/features/leads/types/lead.types";
+import type { Lead } from "@/features/sales/leads/types/lead.types";
 
 type FieldRow = { label: string; value: ReactNode };
 

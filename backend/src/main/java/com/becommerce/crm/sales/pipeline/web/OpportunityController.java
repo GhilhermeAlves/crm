@@ -1,0 +1,117 @@
+package com.becommerce.crm.sales.pipeline.web;
+
+import com.becommerce.crm.sales.pipeline.application.dto.CreateOpportunityRequest;
+import com.becommerce.crm.sales.pipeline.application.dto.MarkLostRequest;
+import com.becommerce.crm.sales.pipeline.application.dto.MoveOpportunityRequest;
+import com.becommerce.crm.sales.pipeline.application.dto.OpportunityHistoryResponse;
+import com.becommerce.crm.sales.pipeline.application.dto.OpportunityResponse;
+import com.becommerce.crm.sales.pipeline.application.dto.UpdateOpportunityRequest;
+import com.becommerce.crm.sales.pipeline.application.port.in.OpportunityUseCase;
+import com.becommerce.crm.shared.security.config.CurrentCompanyId;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Oportunidades (Sprint 11). Criação e listagem são scoped ao pipeline;
+ * demais operações referenciam diretamente uma oportunidade da própria empresa.
+ */
+@RestController
+public class OpportunityController {
+
+    private final OpportunityUseCase opportunityUseCase;
+
+    public OpportunityController(OpportunityUseCase opportunityUseCase) {
+        this.opportunityUseCase = opportunityUseCase;
+    }
+
+    @PostMapping("/api/v1/companies/{companyId}/pipelines/{pipelineId}/opportunities")
+    @PreAuthorize("hasAuthority('opportunity:create')")
+    public ResponseEntity<OpportunityResponse> create(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID pipelineId,
+            @Valid @RequestBody CreateOpportunityRequest request,
+            @AuthenticationPrincipal CurrentUser principal) {
+        OpportunityResponse response = opportunityUseCase.create(companyId, pipelineId, request, principal.userId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/api/v1/companies/{companyId}/pipelines/{pipelineId}/opportunities")
+    @PreAuthorize("hasAuthority('opportunity:read')")
+    public ResponseEntity<List<OpportunityResponse>> listByPipeline(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID pipelineId) {
+        return ResponseEntity.ok(opportunityUseCase.listByPipeline(companyId, pipelineId));
+    }
+
+    @GetMapping("/api/v1/companies/{companyId}/opportunities/{opportunityId}")
+    @PreAuthorize("hasAuthority('opportunity:read')")
+    public ResponseEntity<OpportunityResponse> getById(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID opportunityId) {
+        return ResponseEntity.ok(opportunityUseCase.getById(companyId, opportunityId));
+    }
+
+    @PutMapping("/api/v1/companies/{companyId}/opportunities/{opportunityId}")
+    @PreAuthorize("hasAuthority('opportunity:update')")
+    public ResponseEntity<OpportunityResponse> update(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID opportunityId,
+            @Valid @RequestBody UpdateOpportunityRequest request,
+            @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(opportunityUseCase.update(companyId, opportunityId, request, principal.userId()));
+    }
+
+    @PostMapping("/api/v1/companies/{companyId}/opportunities/{opportunityId}/move")
+    @PreAuthorize("hasAuthority('opportunity:move')")
+    public ResponseEntity<OpportunityResponse> move(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID opportunityId,
+            @Valid @RequestBody MoveOpportunityRequest request,
+            @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(opportunityUseCase.move(companyId, opportunityId, request, principal.userId()));
+    }
+
+    @PostMapping("/api/v1/companies/{companyId}/opportunities/{opportunityId}/won")
+    @PreAuthorize("hasAuthority('opportunity:win')")
+    public ResponseEntity<OpportunityResponse> markWon(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID opportunityId,
+            @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(opportunityUseCase.markWon(companyId, opportunityId, principal.userId()));
+    }
+
+    @PostMapping("/api/v1/companies/{companyId}/opportunities/{opportunityId}/lost")
+    @PreAuthorize("hasAuthority('opportunity:lose')")
+    public ResponseEntity<OpportunityResponse> markLost(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID opportunityId,
+            @Valid @RequestBody MarkLostRequest request,
+            @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(opportunityUseCase.markLost(companyId, opportunityId, request, principal.userId()));
+    }
+
+    @DeleteMapping("/api/v1/companies/{companyId}/opportunities/{opportunityId}")
+    @PreAuthorize("hasAuthority('opportunity:delete')")
+    public ResponseEntity<Void> delete(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID opportunityId) {
+        opportunityUseCase.delete(companyId, opportunityId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/v1/companies/{companyId}/opportunities/{opportunityId}/history")
+    @PreAuthorize("hasAuthority('opportunity:read')")
+    public ResponseEntity<List<OpportunityHistoryResponse>> history(
+            @CurrentCompanyId("Você só pode acessar oportunidades da sua própria empresa.") UUID companyId,
+            @PathVariable UUID opportunityId) {
+        return ResponseEntity.ok(opportunityUseCase.history(companyId, opportunityId));
+    }
+}

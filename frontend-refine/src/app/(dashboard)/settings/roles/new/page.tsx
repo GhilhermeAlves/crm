@@ -1,7 +1,7 @@
 "use client";
 
-import { RoleForm } from "@/features/rbac/components/RoleForm";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
+import { RoleForm } from "@/features/identity/rbac/components/RoleForm";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 
 export default function NewRolePage() {
   const { can } = useAuthorization();

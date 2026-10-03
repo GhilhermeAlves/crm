@@ -1,7 +1,6 @@
 package com.becommerce.auth.application.gateway.service;
 
 import com.becommerce.auth.application.gateway.port.input.GatewayOidcUseCase;
-import com.becommerce.auth.application.gateway.port.input.IdentityProviderCatalog;
 import com.becommerce.auth.application.gateway.port.output.OidcTokenClient;
 import com.becommerce.auth.application.identity.port.input.CurrentUserResolutionUseCase;
 import com.becommerce.auth.domain.gateway.GatewaySession;
@@ -46,7 +45,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

@@ -9,7 +9,7 @@ import { login, E2E_ADMIN } from "./fixtures/auth";
  *
  * Fluxo novo (Sprint 7.0): sem navegação para Keycloak no browser. Login via
  * formulário de email/senha → POST /auth/login (gateway) → redirecionamento
- * para `/dashboard` com cookie `crm_session`.
+ * para `/crm` com cookie `crm_session`.
  *
  * Roda SEMPRE com `workers: 1` (Playwright config) e sem storageState: cada
  * spec autentica via UI e encerra a própria sessão.
@@ -26,7 +26,7 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
   }) => {
     await login(page);
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+    await expect(page).toHaveURL(/\/crm/, { timeout: 30_000 });
     // Greeting da dashboard: "Bom dia/Boa tarde/Boa noite, Admin!"
     await expect(page.getByText(/Admin!/)).toBeVisible();
     // Crm_session existe
@@ -38,17 +38,22 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     page,
   }) => {
     await page.goto("/login");
-
-    // Preenche formulário direto com credenciais inválidas
-    await page.locator('input[type="email"]').fill("nao-existe@crm.local");
-    await page.locator('input[type="password"]').fill("senha-incorreta");
     await page.getByRole("button", { name: "Entrar com e-mail e senha" }).click();
 
-    // Formulário exibe erro e permanece na página de login
+    // Redirecionamento para Keycloak
+    await expect(page).toHaveURL(/realms\/CRM\//);
+    await expect(page.locator("#username")).toBeVisible();
+
+    // Preenche com credenciais inválidas
+    await page.locator("#username").fill("nao-existe@crm.local");
+    await page.locator("#password").fill("senha-incorreta");
+    await page.locator("#kc-login").click();
+
+    // Keycloak exibe erro e permanece na página de login
     await expect(
-      page.getByText(/erro|falha|invalid/i),
+      page.getByText(/Invalid username or password/i),
     ).toBeVisible({ timeout: 15_000 });
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/realms\/CRM\/login-actions/);
 
     // crm_session NÃO foi criado
     const cookies = await page.context().cookies();
@@ -59,7 +64,7 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     page,
   }) => {
     await login(page);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/crm/);
 
     // Abre o UserMenu (botão com o nome do usuário no header) → clica "Sair"
     await page.getByRole("button", { name: /Admin E2E/ }).click();
@@ -72,7 +77,7 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     await expect(page.getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
 
     // Rota protegida agora redireciona para /login (middleware, sem sessão).
-    await page.goto("/dashboard");
+    await page.goto("/crm");
     await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
 
     // cookie limpo

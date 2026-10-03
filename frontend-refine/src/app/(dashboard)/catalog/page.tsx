@@ -24,22 +24,22 @@ import { SearchInput } from "@/components/common/SearchInput";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonTable } from "@/components/feedback/SkeletonTable";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { CatalogItemDialog } from "@/features/catalog/components/CatalogItemDialog";
+import { CatalogItemDialog } from "@/features/masterdata/catalog/components/CatalogItemDialog";
 import {
   useCatalog,
   useCreateCatalogItem,
   useSetCatalogItemActive,
   useUpdateCatalogItem,
-} from "@/features/catalog/hooks/useCatalog";
+} from "@/features/masterdata/catalog/hooks/useCatalog";
 import {
   CATALOG_TYPE_LABELS,
   formatPrice,
   type CatalogItem,
   type CatalogItemType,
-} from "@/features/catalog/types/catalog.types";
+} from "@/features/masterdata/catalog/types/catalog.types";
 
 const ALL = "ALL";
 const PAGE_SIZE = 20;

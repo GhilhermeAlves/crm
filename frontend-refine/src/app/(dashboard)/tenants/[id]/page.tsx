@@ -4,8 +4,8 @@ import { useParams } from "next/navigation";
 import { PageTitle } from "@/components/common/PageTitle";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonCard } from "@/components/feedback/SkeletonCard";
-import { useTenant } from "@/features/tenants/hooks/useTenants";
-import { TenantDetails } from "@/features/tenants/components/TenantDetails";
+import { useTenant } from "@/features/identity/tenants/hooks/useTenants";
+import { TenantDetails } from "@/features/identity/tenants/components/TenantDetails";
 
 export default function TenantDetailPage() {
   const { id } = useParams<{ id: string }>();

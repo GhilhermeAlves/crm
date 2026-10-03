@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useAuditLog } from "@/features/audit/hooks/useAudit";
-import { AuditDetailCard } from "@/features/audit/components/AuditDetailCard";
+import { useAuditLog } from "@/features/analytics/audit/hooks/useAudit";
+import { AuditDetailCard } from "@/features/analytics/audit/components/AuditDetailCard";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

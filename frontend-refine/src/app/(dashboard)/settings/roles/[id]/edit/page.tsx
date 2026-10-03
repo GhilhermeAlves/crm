@@ -10,11 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { useRole, useUpdateRole } from "@/features/rbac/hooks/useRoles";
-import { usePermissions } from "@/features/rbac/hooks/useRoles";
-import { PermissionMatrix } from "@/features/rbac/components/PermissionMatrix";
-import { RoleBadge } from "@/features/rbac/components/RoleBadge";
-import { useAuthorization } from "@/features/auth/hooks/useAuthorization";
+import { useRole, useUpdateRole } from "@/features/identity/rbac/hooks/useRoles";
+import { usePermissions } from "@/features/identity/rbac/hooks/useRoles";
+import { PermissionMatrix } from "@/features/identity/rbac/components/PermissionMatrix";
+import { RoleBadge } from "@/features/identity/rbac/components/RoleBadge";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 
 export default function EditRolePage() {
   const { id } = useParams<{ id: string }>();

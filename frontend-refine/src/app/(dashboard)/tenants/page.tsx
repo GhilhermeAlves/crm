@@ -9,11 +9,11 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonTable } from "@/components/feedback/SkeletonTable";
 import { ROUTES } from "@/lib/constants";
-import { useTenants } from "@/features/tenants/hooks/useTenants";
-import type { Tenant } from "@/features/tenants/types/tenant.types";
-import { TenantTable } from "@/features/tenants/components/TenantTable";
-import { TenantFilters } from "@/features/tenants/components/TenantFilters";
-import { DeleteTenantDialog } from "@/features/tenants/components/DeleteTenantDialog";
+import { useTenants } from "@/features/identity/tenants/hooks/useTenants";
+import type { Tenant } from "@/features/identity/tenants/types/tenant.types";
+import { TenantTable } from "@/features/identity/tenants/components/TenantTable";
+import { TenantFilters } from "@/features/identity/tenants/components/TenantFilters";
+import { DeleteTenantDialog } from "@/features/identity/tenants/components/DeleteTenantDialog";
 
 export default function TenantsPage() {
   const [search, setSearch] = useState("");

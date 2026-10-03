@@ -2,13 +2,13 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useWorkflow, useUpdateWorkflow } from "@/features/workflows/hooks/useWorkflows";
-import { WorkflowForm } from "@/features/workflows/components/WorkflowForm";
-import { useWorkflowPermissions } from "@/features/workflows/schemas/workflow.schema";
+import { useWorkflow, useUpdateWorkflow } from "@/features/automation/workflows/hooks/useWorkflows";
+import { WorkflowForm } from "@/features/automation/workflows/components/WorkflowForm";
+import { useWorkflowPermissions } from "@/features/automation/workflows/schemas/workflow.schema";
 import { ROUTES } from "@/lib/constants";
 
 export default function EditWorkflowPage() {
