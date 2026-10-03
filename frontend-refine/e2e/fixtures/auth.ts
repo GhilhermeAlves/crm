@@ -19,12 +19,12 @@ export const E2E_ADMIN = {
 /**
  * Login via UI (Sprint 7.0): /login → clique em "Entrar com e-mail e senha" →
  * redirecionamento para gateway (/auth/authorize) → Keycloak (formulário de
- * login padrão) → callback do gateway → cookies `crm_session` + `/dashboard`.
+ * login padrão) → callback do gateway → cookies `crm_session` + `/crm`.
  *
  * O fluxo OIDC mantém os tokens no servidor (auth-service); browser tem apenas
  * cookie HttpOnly de sessão.
  *
- * Encerra com a página autenticada em `http://localhost:3000/dashboard`.
+ * Encerra com a página autenticada em `http://localhost:3000/crm`.
  */
 export async function login(
   page: Page,
@@ -48,5 +48,5 @@ export async function login(
 
   // Aguarda callback do gateway e redirecionamento para dashboard
   // Timeout maior cobre JWKS lazy + resolução de identidade
-  await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
+  await page.waitForURL(/\/crm/, { timeout: 30_000 });
 }

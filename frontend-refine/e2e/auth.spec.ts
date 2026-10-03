@@ -9,7 +9,7 @@ import { login, E2E_ADMIN } from "./fixtures/auth";
  *
  * Fluxo novo (Sprint 7.0): sem navegação para Keycloak no browser. Login via
  * formulário de email/senha → POST /auth/login (gateway) → redirecionamento
- * para `/dashboard` com cookie `crm_session`.
+ * para `/crm` com cookie `crm_session`.
  *
  * Roda SEMPRE com `workers: 1` (Playwright config) e sem storageState: cada
  * spec autentica via UI e encerra a própria sessão.
@@ -26,7 +26,7 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
   }) => {
     await login(page);
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+    await expect(page).toHaveURL(/\/crm/, { timeout: 30_000 });
     // Greeting da dashboard: "Bom dia/Boa tarde/Boa noite, Admin!"
     await expect(page.getByText(/Admin!/)).toBeVisible();
     // Crm_session existe
@@ -64,7 +64,7 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     page,
   }) => {
     await login(page);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/crm/);
 
     // Abre o UserMenu (botão com o nome do usuário no header) → clica "Sair"
     await page.getByRole("button", { name: /Admin E2E/ }).click();
@@ -77,7 +77,7 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     await expect(page.getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
 
     // Rota protegida agora redireciona para /login (middleware, sem sessão).
-    await page.goto("/dashboard");
+    await page.goto("/crm");
     await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
 
     // cookie limpo
