@@ -226,51 +226,55 @@ export function WeeklyCalendar({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-      <div className="flex shrink-0 border-b bg-muted/30">
-        <div className="w-12 shrink-0" />
-        {days.map((d) => {
-          const today = isToday(d);
-          return (
-            <div
-              key={d.toISOString()}
-              className={cn(
-                "flex-1 border-r py-1.5 text-center text-xs last:border-r-0",
-                today && "bg-primary/10",
-              )}
-            >
-              <span className="text-muted-foreground">{format(d, "EEE", { locale: ptBR })} </span>
-              <span
-                className={cn(
-                  "inline-flex h-6 w-6 items-center justify-center rounded-full font-medium tabular-nums",
-                  today && "bg-primary text-primary-foreground",
-                )}
-              >
-                {format(d, "d")}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
       <div
         ref={scrollRef}
-        className="flex flex-1 overflow-y-auto overflow-x-hidden"
+        className="flex-1 overflow-y-auto overflow-x-hidden"
         onWheel={handleWheel}
       >
-        <HourLabels hourHeight={hourHeight} />
-        {days.map((d) => (
-          <DayColumn
-            key={d.toISOString()}
-            date={d}
-            appointments={appointments}
-            blocks={blocks}
-            onSlotClick={onSlotClick}
-            onAppointmentClick={onAppointmentClick}
-            selectedAppointmentId={selectedAppointmentId}
-            memberColorMap={memberColorMap}
-            hourHeight={hourHeight}
-          />
-        ))}
+        {/* Sticky header inside scroll container so it aligns with columns */}
+        <div className="sticky top-0 z-30 flex border-b bg-muted/30">
+          <div className="w-12 shrink-0 border-r bg-muted/30" />
+          {days.map((d) => {
+            const today = isToday(d);
+            return (
+              <div
+                key={d.toISOString()}
+                className={cn(
+                  "flex-1 border-r py-1.5 text-center text-xs last:border-r-0",
+                  today ? "bg-primary/10" : "bg-muted/30",
+                )}
+              >
+                <span className="text-muted-foreground">{format(d, "EEE", { locale: ptBR })} </span>
+                <span
+                  className={cn(
+                    "inline-flex h-6 w-6 items-center justify-center rounded-full font-medium tabular-nums",
+                    today && "bg-primary text-primary-foreground",
+                  )}
+                >
+                  {format(d, "d")}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Grid body */}
+        <div className="flex">
+          <HourLabels hourHeight={hourHeight} />
+          {days.map((d) => (
+            <DayColumn
+              key={d.toISOString()}
+              date={d}
+              appointments={appointments}
+              blocks={blocks}
+              onSlotClick={onSlotClick}
+              onAppointmentClick={onAppointmentClick}
+              selectedAppointmentId={selectedAppointmentId}
+              memberColorMap={memberColorMap}
+              hourHeight={hourHeight}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
