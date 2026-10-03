@@ -17,12 +17,12 @@ export const E2E_ADMIN = {
 };
 
 /**
- * Login via UI (formulário direto de email/senha): /login → preenchimento de
- * credenciais → POST /auth/login (via gateway) → cookies `crm_session` →
- * redirecionamento automático para `/dashboard`.
+ * Login via UI (Sprint 7.0): /login → clique em "Entrar com e-mail e senha" →
+ * redirecionamento para gateway (/auth/authorize) → Keycloak (formulário de
+ * login padrão) → callback do gateway → cookies `crm_session` + `/dashboard`.
  *
- * Novo fluxo (Sprint 7.0): sem navegação para Keycloak no browser; login
- * seguro feito server-side via gateway/auth-service.
+ * O fluxo OIDC mantém os tokens no servidor (auth-service); browser tem apenas
+ * cookie HttpOnly de sessão.
  *
  * Encerra com a página autenticada em `http://localhost:3000/dashboard`.
  */
@@ -33,12 +33,20 @@ export async function login(
   await page.goto("/login");
   await expect(page).toHaveURL(/\/login/);
 
-  // Preenche formulário direto de email/senha (novo design Sprint 7.0)
-  await page.locator('input[type="email"]').fill(credentials.email);
-  await page.locator('input[type="password"]').fill(credentials.password);
+  // Clica em "Entrar com e-mail e senha" → redireciona para gateway
   await page.getByRole("button", { name: "Entrar com e-mail e senha" }).click();
 
-  // Aguarda redirecionamento automático após login bem-sucedido
-  // Timeout maior cobre a primeira chamada do JWKS + resolução de identidade
+  // Aguarda redirecionamento para Keycloak (formulário de login padrão 26.x)
+  // Keycloak renderiza o form em /openid-connect/auth (tema padrão)
+  await expect(page).toHaveURL(/realms\/CRM\//);
+  await expect(page.locator("#username")).toBeVisible();
+
+  // Preenche formulário do Keycloak
+  await page.locator("#username").fill(credentials.email);
+  await page.locator("#password").fill(credentials.password);
+  await page.locator("#kc-login").click();
+
+  // Aguarda callback do gateway e redirecionamento para dashboard
+  // Timeout maior cobre JWKS lazy + resolução de identidade
   await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
 }
