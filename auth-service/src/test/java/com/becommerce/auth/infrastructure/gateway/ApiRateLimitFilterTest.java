@@ -4,7 +4,6 @@ import com.becommerce.auth.domain.gateway.GatewaySession;
 import com.becommerce.auth.domain.gateway.OidcGatewayException;
 import com.becommerce.auth.domain.gateway.RateLimitExceededException;
 import com.becommerce.auth.domain.gateway.SessionLookup;
-import com.becommerce.auth.domain.gateway.SessionStatus;
 import com.becommerce.auth.infrastructure.observability.CorrelationIdContext;
 import com.becommerce.auth.infrastructure.observability.CorrelationIdFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;

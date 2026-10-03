@@ -1,7 +1,6 @@
 package com.becommerce.auth.domain.identity;
 
 import java.time.Instant;
-import java.util.Optional;
 
 /**
  * Comportamento imut�vel de uma identidade de provedor externo autenticada (Google) do Keycloak.

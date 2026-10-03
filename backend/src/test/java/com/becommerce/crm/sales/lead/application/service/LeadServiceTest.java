@@ -1,0 +1,109 @@
+package com.becommerce.crm.sales.lead.application.service;
+
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
+import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
+import com.becommerce.crm.shared.application.dto.PageResponse;
+import com.becommerce.crm.sales.lead.application.dto.CreateLeadRequest;
+import com.becommerce.crm.sales.lead.application.dto.LeadResponse;
+import com.becommerce.crm.sales.lead.application.port.out.LeadRepository;
+import com.becommerce.crm.masterdata.contact.domain.Contact;
+import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
+import com.becommerce.crm.sales.lead.domain.Lead;
+import com.becommerce.crm.sales.lead.domain.LeadSource;
+import com.becommerce.crm.sales.lead.domain.LeadStatus;
+import com.becommerce.crm.sales.lead.domain.exception.DuplicateLeadException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class LeadServiceTest {
+
+    @Mock LeadRepository leadRepository;
+    @Mock ContactRepository contactRepository;
+    @Mock TenantAuditRecorder auditor;
+
+    @InjectMocks LeadService leadService;
+
+    private final UUID companyId = UUID.randomUUID();
+
+    private Contact ownedContact() {
+        return Contact.reconstitute(UUID.randomUUID(), companyId, "Ana", "Souza", "ana@e.com",
+                null, null, LocalDateTime.now(), LocalDateTime.now(), null);
+    }
+
+    @Test
+    void shouldCreateLeadWhenContactOwnedAndUnique() {
+        Contact contact = ownedContact();
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+        when(leadRepository.existsByContactIdAndCompanyId(contact.getId(), companyId)).thenReturn(false);
+        when(leadRepository.save(any(Lead.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        LeadResponse response = leadService.create(companyId,
+                new CreateLeadRequest(contact.getId(), LeadStatus.NEW, 60, null, LeadSource.WHATSAPP,
+                        null, null, "nota"), UUID.randomUUID());
+
+        assertNotNull(response.id());
+        assertEquals(contact.getId(), response.contactId());
+        assertEquals(LeadStatus.NEW, response.status());
+        assertEquals(60, response.score());
+        verify(leadRepository).save(any(Lead.class));
+    }
+
+    @Test
+    void shouldRejectCreateWhenContactBelongsToAnotherCompany() {
+        Contact foreign = Contact.reconstitute(UUID.randomUUID(), UUID.randomUUID(), "Ana", "Souza",
+                "ana@e.com", null, null, LocalDateTime.now(), LocalDateTime.now(), null);
+        when(contactRepository.findById(foreign.getId())).thenReturn(java.util.Optional.of(foreign));
+
+        assertThrows(ContactNotFoundException.class, () -> leadService.create(companyId,
+                new CreateLeadRequest(foreign.getId(), null, null, null, LeadSource.MANUAL, null, null, null),
+                UUID.randomUUID()));
+        verify(leadRepository, never()).save(any(Lead.class));
+    }
+
+    @Test
+    void shouldRejectDuplicateLeadForSameContact() {
+        Contact contact = ownedContact();
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+        when(leadRepository.existsByContactIdAndCompanyId(contact.getId(), companyId)).thenReturn(true);
+
+        assertThrows(DuplicateLeadException.class, () -> leadService.create(companyId,
+                new CreateLeadRequest(contact.getId(), null, null, null, LeadSource.API, null, null, null),
+                UUID.randomUUID()));
+        verify(leadRepository, never()).save(any(Lead.class));
+    }
+
+    @Test
+    void shouldThrowWhenLeadNotFoundOnGet() {
+        when(leadRepository.findById(any(UUID.class))).thenReturn(java.util.Optional.empty());
+        assertThrows(com.becommerce.crm.sales.lead.domain.exception.LeadNotFoundException.class,
+                () -> leadService.getById(companyId, UUID.randomUUID()));
+    }
+
+    @Test
+    void shouldForwardSearchTermWhenListing() {
+        when(leadRepository.findByCompanyWithFilters(eq(companyId), any(), any(), any(), eq("joao"),
+                eq(0), eq(10), any(), any()))
+                .thenReturn(new LeadRepository.PageResult(List.of(), 0));
+
+        PageResponse<LeadResponse> page = leadService.list(
+                companyId, null, null, null, "joao", 0, 10, "createdAt", "desc");
+
+        assertNotNull(page);
+        assertEquals(0, page.totalElements());
+        verify(leadRepository).findByCompanyWithFilters(eq(companyId), any(), any(), any(), eq("joao"),
+                eq(0), eq(10), any(), any());
+    }
+}
