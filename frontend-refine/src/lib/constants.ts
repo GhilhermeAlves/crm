@@ -30,6 +30,7 @@ export const ROUTES = {
   SETTINGS_ROLES: "/settings/roles",
   SETTINGS_AGENT_CONFIG: "/settings/agent-config",
   AUDIT: "/audit",
+  AGENDA: "/agenda",
   TASKS: "/tasks",
   CATALOG: "/catalog",
   ACTIVITIES: "/activities",
