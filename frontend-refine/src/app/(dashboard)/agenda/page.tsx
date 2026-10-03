@@ -14,8 +14,10 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
+import { useContacts } from "@/features/masterdata/contacts/hooks/useContacts";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +26,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WeeklyCalendar } from "@/features/sales/scheduling/components/WeeklyCalendar";
 import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/CreateAppointmentDialog";
 import { CreateBlockDialog } from "@/features/sales/scheduling/components/CreateBlockDialog";
 import { AppointmentDetailPanel } from "@/features/sales/scheduling/components/AppointmentDetailPanel";
+import { MiniCalendar } from "@/features/sales/scheduling/components/MiniCalendar";
+import { MemberFilter, getMemberColor } from "@/features/sales/scheduling/components/MemberFilter";
 import {
   useAppointments,
   useAppointmentTypes,
@@ -48,15 +53,18 @@ type CalendarView = "day" | "week";
 
 export default function AgendaPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const companyId = user?.companyId ?? null;
   const perms = useSchedulingPermissions();
 
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [miniMonth, setMiniMonth] = useState(new Date());
   const [view, setView] = useState<CalendarView>("week");
   const [createOpen, setCreateOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [defaultSlot, setDefaultSlot] = useState<{ start: string; end: string } | null>(null);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string> | null>(null);
 
   const range = useMemo(() => {
     if (view === "day") {
@@ -76,10 +84,32 @@ export default function AgendaPage() {
   const { data: blocks = [] } = useBlocks(companyId, range.from, range.to);
   const { data: appointmentTypes = [] } = useAppointmentTypes(companyId);
   const { data: members = [] } = useMembers(companyId);
+  const { data: contacts = [] } = useContacts(companyId);
 
   const memberOptions = useMemo(
     () => members.map((m) => ({ id: m.userId, name: m.name })),
     [members],
+  );
+
+  const effectiveSelectedIds = useMemo(() => {
+    if (selectedMemberIds !== null) return selectedMemberIds;
+    return new Set(memberOptions.map((m) => m.id));
+  }, [selectedMemberIds, memberOptions]);
+
+  const memberColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    memberOptions.forEach((m, i) => map.set(m.id, getMemberColor(i)));
+    return map;
+  }, [memberOptions]);
+
+  const filteredAppointments = useMemo(
+    () => appointments.filter((a) => effectiveSelectedIds.has(a.hostId)),
+    [appointments, effectiveSelectedIds],
+  );
+
+  const filteredBlocks = useMemo(
+    () => blocks.filter((b) => effectiveSelectedIds.has(b.hostId)),
+    [blocks, effectiveSelectedIds],
   );
 
   const createAppointment = useCreateAppointment(companyId);
@@ -87,7 +117,11 @@ export default function AgendaPage() {
   const changeStatus = useChangeAppointmentStatus(companyId);
   const deleteAppointment = useDeleteAppointment(companyId);
 
-  const goToday = () => setCurrentDate(new Date());
+  const goToday = () => {
+    const now = new Date();
+    setCurrentDate(now);
+    setMiniMonth(now);
+  };
 
   const goPrev = () => {
     setCurrentDate((d) => (view === "week" ? subWeeks(d, 1) : subDays(d, 1)));
@@ -96,6 +130,31 @@ export default function AgendaPage() {
   const goNext = () => {
     setCurrentDate((d) => (view === "week" ? addWeeks(d, 1) : addDays(d, 1)));
   };
+
+  const handleMiniSelect = useCallback((date: Date) => {
+    setCurrentDate(date);
+  }, []);
+
+  const handleToggleMember = useCallback(
+    (id: string) => {
+      setSelectedMemberIds((prev) => {
+        const current = prev ?? new Set(memberOptions.map((m) => m.id));
+        const next = new Set(current);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    },
+    [memberOptions],
+  );
+
+  const handleToggleAllMembers = useCallback(() => {
+    setSelectedMemberIds((prev) => {
+      const allIds = new Set(memberOptions.map((m) => m.id));
+      if (prev !== null && prev.size === allIds.size) return new Set<string>();
+      return allIds;
+    });
+  }, [memberOptions]);
 
   const handleSlotClick = useCallback(
     (start: Date, end: Date) => {
@@ -133,6 +192,16 @@ export default function AgendaPage() {
       { onSuccess: () => setCreateOpen(false) },
     );
   };
+
+  const selectedContact = useMemo(() => {
+    if (!selectedAppointment?.contactId) return null;
+    return contacts.find((c) => c.id === selectedAppointment.contactId) ?? null;
+  }, [selectedAppointment, contacts]);
+
+  const selectedHostName = useMemo(() => {
+    if (!selectedAppointment) return undefined;
+    return memberOptions.find((m) => m.id === selectedAppointment.hostId)?.name;
+  }, [selectedAppointment, memberOptions]);
 
   const periodLabel = useMemo(() => {
     if (view === "day") return format(currentDate, "dd 'de' MMMM yyyy", { locale: ptBR });
@@ -177,6 +246,17 @@ export default function AgendaPage() {
             </Button>
           </div>
 
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => router.push("/settings/agenda")}>
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Configurações da agenda</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {perms.canCreate && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -195,19 +275,39 @@ export default function AgendaPage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
+        <aside className="hidden w-52 shrink-0 flex-col gap-4 overflow-y-auto border-r pr-3 lg:flex">
+          <MiniCalendar
+            selected={currentDate}
+            onSelect={handleMiniSelect}
+            month={miniMonth}
+            onMonthChange={setMiniMonth}
+          />
+          <div className="border-t pt-3">
+            <MemberFilter
+              members={memberOptions}
+              selectedIds={effectiveSelectedIds}
+              onToggle={handleToggleMember}
+              onToggleAll={handleToggleAllMembers}
+            />
+          </div>
+        </aside>
+
         <WeeklyCalendar
           currentDate={currentDate}
           view={view}
-          appointments={appointments}
-          blocks={blocks}
+          appointments={filteredAppointments}
+          blocks={filteredBlocks}
           onSlotClick={handleSlotClick}
           onAppointmentClick={handleAppointmentClick}
           selectedAppointmentId={selectedAppointment?.id}
+          memberColorMap={memberColorMap}
         />
 
         {selectedAppointment && (
           <AppointmentDetailPanel
             appointment={selectedAppointment}
+            contact={selectedContact}
+            hostName={selectedHostName}
             onClose={() => setSelectedAppointment(null)}
             onChangeStatus={handleChangeStatus}
             onDelete={handleDelete}
@@ -224,6 +324,7 @@ export default function AgendaPage() {
         onSubmit={handleCreateAppointment}
         appointmentTypes={appointmentTypes}
         members={memberOptions}
+        contacts={contacts}
         defaultStart={defaultSlot?.start}
         defaultEnd={defaultSlot?.end}
         defaultHostId={user?.id}

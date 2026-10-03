@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format, startOfDay, endOfDay } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -26,6 +29,8 @@ import {
   LOCATION_KINDS,
 } from "../schemas/scheduling.schema";
 import { LOCATION_KIND_LABELS, type AppointmentType } from "../types/scheduling.types";
+import { ContactCombobox } from "./ContactCombobox";
+import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
 interface Props {
   open: boolean;
@@ -34,6 +39,7 @@ interface Props {
   onSubmit: (values: CreateAppointmentFormValues) => void;
   appointmentTypes: AppointmentType[];
   members: { id: string; name: string }[];
+  contacts: Contact[];
   defaultStart?: string;
   defaultEnd?: string;
   defaultHostId?: string;
@@ -46,10 +52,13 @@ export function CreateAppointmentDialog({
   onSubmit,
   appointmentTypes,
   members,
+  contacts,
   defaultStart,
   defaultEnd,
   defaultHostId,
 }: Props) {
+  const [allDay, setAllDay] = useState(false);
+
   const form = useForm<CreateAppointmentFormValues>({
     resolver: zodResolver(createAppointmentSchema),
     defaultValues: {
@@ -61,6 +70,11 @@ export function CreateAppointmentDialog({
   });
 
   const handleSubmit = form.handleSubmit((values) => {
+    if (allDay && values.startAt) {
+      const day = new Date(values.startAt);
+      values.startAt = format(startOfDay(day), "yyyy-MM-dd'T'HH:mm");
+      values.endAt = format(endOfDay(day), "yyyy-MM-dd'T'HH:mm");
+    }
     onSubmit(values);
   });
 
@@ -102,6 +116,16 @@ export function CreateAppointmentDialog({
           </div>
 
           <div className="space-y-2">
+            <Label>Contato</Label>
+            <ContactCombobox
+              contacts={contacts}
+              value={form.watch("contactId")}
+              onChange={(id) => form.setValue("contactId", id)}
+              placeholder="Selecione ou busque um contato"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="title">Título *</Label>
             <Input id="title" {...form.register("title")} />
             {form.formState.errors.title && (
@@ -128,21 +152,37 @@ export function CreateAppointmentDialog({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startAt">Início *</Label>
-              <Input id="startAt" type="datetime-local" {...form.register("startAt")} />
-              {form.formState.errors.startAt && (
-                <p className="text-sm text-destructive">{form.formState.errors.startAt.message}</p>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startAt">{allDay ? "Data *" : "Início *"}</Label>
+                <Input
+                  id="startAt"
+                  type={allDay ? "date" : "datetime-local"}
+                  {...form.register("startAt")}
+                />
+                {form.formState.errors.startAt && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.startAt.message}
+                  </p>
+                )}
+              </div>
+              {!allDay && (
+                <div className="space-y-2">
+                  <Label htmlFor="endAt">Fim *</Label>
+                  <Input id="endAt" type="datetime-local" {...form.register("endAt")} />
+                  {form.formState.errors.endAt && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.endAt.message}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endAt">Fim *</Label>
-              <Input id="endAt" type="datetime-local" {...form.register("endAt")} />
-              {form.formState.errors.endAt && (
-                <p className="text-sm text-destructive">{form.formState.errors.endAt.message}</p>
-              )}
-            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={allDay} onCheckedChange={(v) => setAllDay(!!v)} />
+              Dia inteiro
+            </label>
           </div>
 
           <div className="space-y-2">

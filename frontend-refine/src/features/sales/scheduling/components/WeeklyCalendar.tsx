@@ -31,6 +31,7 @@ interface Props {
   onSlotClick?: (start: Date, end: Date) => void;
   onAppointmentClick?: (appointment: Appointment) => void;
   selectedAppointmentId?: string | null;
+  memberColorMap?: Map<string, string>;
 }
 
 function getEventPosition(startAt: string, endAt: string) {
@@ -80,6 +81,7 @@ function DayColumn({
   onSlotClick,
   onAppointmentClick,
   selectedAppointmentId,
+  memberColorMap,
 }: {
   date: Date;
   appointments: Appointment[];
@@ -87,6 +89,7 @@ function DayColumn({
   onSlotClick?: (start: Date, end: Date) => void;
   onAppointmentClick?: (appointment: Appointment) => void;
   selectedAppointmentId?: string | null;
+  memberColorMap?: Map<string, string>;
 }) {
   const colRef = useRef<HTMLDivElement>(null);
 
@@ -136,15 +139,20 @@ function DayColumn({
       {dayAppointments.map((appt) => {
         const pos = getEventPosition(appt.startAt, appt.endAt);
         const isSelected = selectedAppointmentId === appt.id;
+        const memberColor = memberColorMap?.get(appt.hostId);
         return (
           <button
             key={appt.id}
             className={cn(
               "absolute left-1 right-1 z-10 overflow-hidden rounded px-1.5 py-0.5 text-left text-xs font-medium transition-shadow",
-              "bg-primary/90 text-primary-foreground hover:bg-primary",
+              !memberColor && "bg-primary/90 text-primary-foreground hover:bg-primary",
               isSelected && "ring-2 ring-ring ring-offset-1",
             )}
-            style={{ top: pos.top, height: pos.height }}
+            style={{
+              top: pos.top,
+              height: pos.height,
+              ...(memberColor ? { backgroundColor: memberColor, color: "#fff" } : {}),
+            }}
             onClick={(e) => {
               e.stopPropagation();
               onAppointmentClick?.(appt);
@@ -171,6 +179,7 @@ export function WeeklyCalendar({
   onSlotClick,
   onAppointmentClick,
   selectedAppointmentId,
+  memberColorMap,
 }: Props) {
   const days = useMemo(() => {
     if (view === "day") return [currentDate];
@@ -207,6 +216,7 @@ export function WeeklyCalendar({
             onSlotClick={onSlotClick}
             onAppointmentClick={onAppointmentClick}
             selectedAppointmentId={selectedAppointmentId}
+            memberColorMap={memberColorMap}
           />
         ))}
       </div>

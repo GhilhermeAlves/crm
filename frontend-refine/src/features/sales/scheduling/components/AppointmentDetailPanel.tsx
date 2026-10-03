@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { X, Clock, User, MapPin, FileText } from "lucide-react";
+import { X, Clock, User, MapPin, FileText, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,9 +16,12 @@ import {
   type Appointment,
   type AppointmentStatus,
 } from "../types/scheduling.types";
+import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
 interface Props {
   appointment: Appointment;
+  contact?: Contact | null;
+  hostName?: string;
   onClose: () => void;
   onChangeStatus: (id: string, status: AppointmentStatus) => void;
   onDelete: (id: string) => void;
@@ -44,6 +47,8 @@ const STATUS_ACTION_LABELS: Record<AppointmentStatus, string> = {
 
 export function AppointmentDetailPanel({
   appointment,
+  contact,
+  hostName,
   onClose,
   onChangeStatus,
   onDelete,
@@ -64,6 +69,34 @@ export function AppointmentDetailPanel({
       </div>
 
       <AppointmentStatusBadge status={appointment.status} />
+
+      {contact && (
+        <div className="space-y-1 rounded-md border bg-muted/30 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <User className="h-4 w-4 shrink-0" />
+            {contact.firstName} {contact.lastName}
+          </div>
+          {contact.phone && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Phone className="h-3 w-3 shrink-0" />
+              {contact.phone}
+            </div>
+          )}
+          {contact.email && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Mail className="h-3 w-3 shrink-0" />
+              {contact.email}
+            </div>
+          )}
+        </div>
+      )}
+
+      {hostName && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <User className="h-4 w-4 shrink-0" />
+          <span>{hostName}</span>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Clock className="h-4 w-4 shrink-0" />
