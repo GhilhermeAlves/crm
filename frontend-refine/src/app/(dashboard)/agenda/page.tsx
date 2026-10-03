@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   format,
   startOfWeek,
@@ -13,19 +13,37 @@ import {
   subDays,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, Settings } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Settings,
+  ZoomIn,
+  ZoomOut,
+  CalendarPlus,
+  UserPlus,
+  Lock,
+  Link2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
 import { useContacts } from "@/features/masterdata/contacts/hooks/useContacts";
-import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WeeklyCalendar } from "@/features/sales/scheduling/components/WeeklyCalendar";
 import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/CreateAppointmentDialog";
@@ -51,6 +69,15 @@ import type { CreateAppointmentFormValues } from "@/features/sales/scheduling/sc
 
 type CalendarView = "day" | "week";
 
+const MIN_HOUR_HEIGHT = 30;
+const MAX_HOUR_HEIGHT = 120;
+const DEFAULT_HOUR_HEIGHT = 60;
+const ZOOM_STEP = 10;
+
+function clampZoom(v: number) {
+  return Math.max(MIN_HOUR_HEIGHT, Math.min(MAX_HOUR_HEIGHT, v));
+}
+
 export default function AgendaPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -65,6 +92,7 @@ export default function AgendaPage() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [defaultSlot, setDefaultSlot] = useState<{ start: string; end: string } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string> | null>(null);
+  const [hourHeight, setHourHeight] = useState(DEFAULT_HOUR_HEIGHT);
 
   const range = useMemo(() => {
     if (view === "day") {
@@ -116,6 +144,29 @@ export default function AgendaPage() {
   const createBlock = useCreateBlock(companyId);
   const changeStatus = useChangeAppointmentStatus(companyId);
   const deleteAppointment = useDeleteAppointment(companyId);
+
+  // Keyboard zoom (Ctrl +/-)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      if (e.key === "=" || e.key === "+") {
+        e.preventDefault();
+        setHourHeight((h) => clampZoom(h + ZOOM_STEP));
+      } else if (e.key === "-") {
+        e.preventDefault();
+        setHourHeight((h) => clampZoom(h - ZOOM_STEP));
+      } else if (e.key === "0") {
+        e.preventDefault();
+        setHourHeight(DEFAULT_HOUR_HEIGHT);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const handleCalendarZoom = useCallback((delta: number) => {
+    setHourHeight((h) => clampZoom(h + delta * ZOOM_STEP));
+  }, []);
 
   const goToday = () => {
     const now = new Date();
@@ -210,72 +261,151 @@ export default function AgendaPage() {
     return `${format(ws, "dd MMM", { locale: ptBR })} – ${format(we, "dd MMM yyyy", { locale: ptBR })}`;
   }, [currentDate, view]);
 
+  const zoomPercent = Math.round((hourHeight / DEFAULT_HOUR_HEIGHT) * 100);
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <PageTitle>Agenda</PageTitle>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goToday}>
-            Hoje
-          </Button>
-          <Button variant="ghost" size="icon" onClick={goPrev}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="min-w-[180px] text-center text-sm font-medium">{periodLabel}</span>
-          <Button variant="ghost" size="icon" onClick={goNext}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
-          <div className="flex rounded-md border">
-            <Button
-              variant={view === "day" ? "default" : "ghost"}
-              size="sm"
-              className="rounded-r-none"
-              onClick={() => setView("day")}
-            >
-              Dia
-            </Button>
-            <Button
-              variant={view === "week" ? "default" : "ghost"}
-              size="sm"
-              className="rounded-l-none"
-              onClick={() => setView("week")}
-            >
-              Semana
-            </Button>
-          </div>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={() => router.push("/settings/agenda")}>
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Configurações da agenda</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          {perms.canCreate && (
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      {/* ── Toolbar ── */}
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b px-3 py-2">
+        {/* Left: action buttons */}
+        {perms.canCreate && (
+          <>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo
+                <Button variant="outline" size="sm">
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Ações
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setCreateOpen(true)}>Agendamento</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setBlockOpen(true)}>Bloqueio</DropdownMenuItem>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => setCreateOpen(true)}>
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Novo agendamento
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/contacts/new")}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Novo contato
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-        </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm">
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Criar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => setCreateOpen(true)}>
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Agendamento
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setBlockOpen(true)}>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Bloqueio de agenda
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled>
+                  <Link2 className="mr-2 h-4 w-4" />
+                  Link de agendamento
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        )}
+
+        <div className="mx-auto" />
+
+        {/* Center: navigation */}
+        <Button variant="outline" size="sm" onClick={goToday}>
+          Hoje
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="min-w-[160px] text-center text-sm font-medium tabular-nums">
+          {periodLabel}
+        </span>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+
+        {/* View selector */}
+        <Select value={view} onValueChange={(v) => setView(v as CalendarView)}>
+          <SelectTrigger className="h-8 w-[110px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="day">Dia</SelectItem>
+            <SelectItem value="week">Semana</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="mx-auto" />
+
+        {/* Right: zoom + settings */}
+        <TooltipProvider delayDuration={300}>
+          <div className="flex items-center gap-1 rounded-md border px-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setHourHeight((h) => clampZoom(h - ZOOM_STEP))}
+                  disabled={hourHeight <= MIN_HOUR_HEIGHT}
+                >
+                  <ZoomOut className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Diminuir zoom (Ctrl -)</TooltipContent>
+            </Tooltip>
+
+            <button
+              className="min-w-[38px] text-center text-[11px] tabular-nums text-muted-foreground hover:text-foreground"
+              onClick={() => setHourHeight(DEFAULT_HOUR_HEIGHT)}
+              title="Resetar zoom (Ctrl 0)"
+            >
+              {zoomPercent}%
+            </button>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setHourHeight((h) => clampZoom(h + ZOOM_STEP))}
+                  disabled={hourHeight >= MAX_HOUR_HEIGHT}
+                >
+                  <ZoomIn className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Aumentar zoom (Ctrl +)</TooltipContent>
+            </Tooltip>
+          </div>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => router.push("/settings/agenda")}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Configurações da agenda</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
+      {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden">
-        <aside className="hidden w-52 shrink-0 flex-col gap-4 overflow-y-auto border-r pr-3 lg:flex">
+        {/* Sidebar */}
+        <aside className="hidden w-52 shrink-0 flex-col gap-4 overflow-y-auto border-r p-3 lg:flex">
           <MiniCalendar
             selected={currentDate}
             onSelect={handleMiniSelect}
@@ -292,6 +422,7 @@ export default function AgendaPage() {
           </div>
         </aside>
 
+        {/* Calendar grid */}
         <WeeklyCalendar
           currentDate={currentDate}
           view={view}
@@ -301,8 +432,11 @@ export default function AgendaPage() {
           onAppointmentClick={handleAppointmentClick}
           selectedAppointmentId={selectedAppointment?.id}
           memberColorMap={memberColorMap}
+          hourHeight={hourHeight}
+          onZoom={handleCalendarZoom}
         />
 
+        {/* Detail panel */}
         {selectedAppointment && (
           <AppointmentDetailPanel
             appointment={selectedAppointment}
@@ -317,6 +451,7 @@ export default function AgendaPage() {
         )}
       </div>
 
+      {/* ── Dialogs ── */}
       <CreateAppointmentDialog
         open={createOpen}
         onOpenChange={setCreateOpen}

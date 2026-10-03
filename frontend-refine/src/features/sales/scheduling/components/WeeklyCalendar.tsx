@@ -1,27 +1,25 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useEffect, useCallback } from "react";
 import {
   format,
   startOfWeek,
-  endOfWeek,
-  startOfDay,
   addDays,
   addMinutes,
   isSameDay,
   differenceInMinutes,
   isToday,
   parseISO,
+  startOfDay,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { Appointment, ScheduleBlock } from "../types/scheduling.types";
-import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_LABELS } from "../types/scheduling.types";
 
-const HOUR_HEIGHT = 60;
-const START_HOUR = 6;
-const END_HOUR = 22;
+const START_HOUR = 0;
+const END_HOUR = 24;
 const TOTAL_HOURS = END_HOUR - START_HOUR;
+const SCROLL_TO_HOUR = 7;
 
 interface Props {
   currentDate: Date;
@@ -32,38 +30,40 @@ interface Props {
   onAppointmentClick?: (appointment: Appointment) => void;
   selectedAppointmentId?: string | null;
   memberColorMap?: Map<string, string>;
+  hourHeight: number;
+  onZoom?: (delta: number) => void;
 }
 
-function getEventPosition(startAt: string, endAt: string) {
+function getEventPosition(startAt: string, endAt: string, hourHeight: number) {
   const start = parseISO(startAt);
   const end = parseISO(endAt);
   const startMinutes = start.getHours() * 60 + start.getMinutes() - START_HOUR * 60;
   const duration = differenceInMinutes(end, start);
   return {
-    top: Math.max(0, (startMinutes / 60) * HOUR_HEIGHT),
-    height: Math.max(20, (duration / 60) * HOUR_HEIGHT),
+    top: Math.max(0, (startMinutes / 60) * hourHeight),
+    height: Math.max(16, (duration / 60) * hourHeight),
   };
 }
 
-function HourLabels() {
+function HourLabels({ hourHeight }: { hourHeight: number }) {
   const hours = [];
   for (let h = START_HOUR; h < END_HOUR; h++) {
     hours.push(
-      <div key={h} className="relative" style={{ height: HOUR_HEIGHT }}>
-        <span className="absolute -top-2.5 right-2 text-xs tabular-nums text-muted-foreground">
+      <div key={h} className="relative" style={{ height: hourHeight }}>
+        <span className="absolute -top-2 right-2 text-[10px] tabular-nums text-muted-foreground">
           {String(h).padStart(2, "0")}:00
         </span>
       </div>,
     );
   }
-  return <div className="w-14 shrink-0 border-r">{hours}</div>;
+  return <div className="w-12 shrink-0 border-r bg-card">{hours}</div>;
 }
 
-function NowLine() {
+function NowLine({ hourHeight }: { hourHeight: number }) {
   const now = new Date();
   const minutes = now.getHours() * 60 + now.getMinutes() - START_HOUR * 60;
   if (minutes < 0 || minutes > TOTAL_HOURS * 60) return null;
-  const top = (minutes / 60) * HOUR_HEIGHT;
+  const top = (minutes / 60) * hourHeight;
   return (
     <div className="pointer-events-none absolute left-0 right-0 z-20" style={{ top }}>
       <div className="flex items-center">
@@ -74,6 +74,22 @@ function NowLine() {
   );
 }
 
+function HalfHourLines({ hourHeight }: { hourHeight: number }) {
+  const lines = [];
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    lines.push(
+      <div key={h} className="relative" style={{ height: hourHeight }}>
+        <div className="absolute inset-x-0 bottom-0 border-b border-border/40" />
+        <div
+          className="absolute inset-x-0 border-b border-dashed border-border/20"
+          style={{ top: hourHeight / 2 }}
+        />
+      </div>,
+    );
+  }
+  return <>{lines}</>;
+}
+
 function DayColumn({
   date,
   appointments,
@@ -82,6 +98,7 @@ function DayColumn({
   onAppointmentClick,
   selectedAppointmentId,
   memberColorMap,
+  hourHeight,
 }: {
   date: Date;
   appointments: Appointment[];
@@ -90,6 +107,7 @@ function DayColumn({
   onAppointmentClick?: (appointment: Appointment) => void;
   selectedAppointmentId?: string | null;
   memberColorMap?: Map<string, string>;
+  hourHeight: number;
 }) {
   const colRef = useRef<HTMLDivElement>(null);
 
@@ -99,8 +117,10 @@ function DayColumn({
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!onSlotClick || !colRef.current) return;
     const rect = colRef.current.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const minutes = Math.round(((y / HOUR_HEIGHT) * 60) / 15) * 15 + START_HOUR * 60;
+    const y = e.clientY - rect.top + colRef.current.scrollTop;
+    const slotMinutes = hourHeight >= 80 ? 5 : hourHeight >= 40 ? 15 : 30;
+    const minutes =
+      Math.round(((y / hourHeight) * 60) / slotMinutes) * slotMinutes + START_HOUR * 60;
     const start = addMinutes(startOfDay(date), minutes);
     const end = addMinutes(start, 30);
     onSlotClick(start, end);
@@ -110,41 +130,36 @@ function DayColumn({
     <div
       ref={colRef}
       className="relative flex-1 cursor-pointer border-r last:border-r-0"
-      style={{ height: TOTAL_HOURS * HOUR_HEIGHT }}
+      style={{ height: TOTAL_HOURS * hourHeight }}
       onClick={handleClick}
     >
-      {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
-        <div key={i} className="border-b border-dashed" style={{ height: HOUR_HEIGHT }} />
-      ))}
+      <HalfHourLines hourHeight={hourHeight} />
 
-      {isToday(date) && <NowLine />}
+      {isToday(date) && <NowLine hourHeight={hourHeight} />}
 
       {dayBlocks.map((block) => {
-        const pos = getEventPosition(block.startAt, block.endAt);
+        const pos = getEventPosition(block.startAt, block.endAt, hourHeight);
         return (
           <div
             key={block.id}
-            className="absolute left-1 right-1 z-10 overflow-hidden rounded border border-dashed border-muted-foreground/30 bg-muted/60 px-1.5 py-0.5 text-xs text-muted-foreground"
+            className="absolute left-0.5 right-0.5 z-10 overflow-hidden rounded border border-dashed border-muted-foreground/30 bg-muted/60 px-1 py-0.5 text-[10px] text-muted-foreground"
             style={{ top: pos.top, height: pos.height }}
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="block truncate">
-              {block.source === "GOOGLE" ? "🔗 " : ""}
-              {block.reason || "Bloqueio"}
-            </span>
+            <span className="block truncate">{block.reason || "Bloqueio"}</span>
           </div>
         );
       })}
 
       {dayAppointments.map((appt) => {
-        const pos = getEventPosition(appt.startAt, appt.endAt);
+        const pos = getEventPosition(appt.startAt, appt.endAt, hourHeight);
         const isSelected = selectedAppointmentId === appt.id;
         const memberColor = memberColorMap?.get(appt.hostId);
         return (
           <button
             key={appt.id}
             className={cn(
-              "absolute left-1 right-1 z-10 overflow-hidden rounded px-1.5 py-0.5 text-left text-xs font-medium transition-shadow",
+              "absolute left-0.5 right-0.5 z-10 overflow-hidden rounded px-1 py-0.5 text-left text-[11px] font-medium shadow-sm transition-shadow",
               !memberColor && "bg-primary/90 text-primary-foreground hover:bg-primary",
               isSelected && "ring-2 ring-ring ring-offset-1",
             )}
@@ -158,9 +173,9 @@ function DayColumn({
               onAppointmentClick?.(appt);
             }}
           >
-            <span className="block truncate">{appt.title}</span>
-            {pos.height > 30 && (
-              <span className="block truncate opacity-80">
+            <span className="block truncate leading-tight">{appt.title}</span>
+            {pos.height > 28 && (
+              <span className="block truncate text-[10px] opacity-80">
                 {format(parseISO(appt.startAt), "HH:mm")} – {format(parseISO(appt.endAt), "HH:mm")}
               </span>
             )}
@@ -180,33 +195,69 @@ export function WeeklyCalendar({
   onAppointmentClick,
   selectedAppointmentId,
   memberColorMap,
+  hourHeight,
+  onZoom,
 }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const didScroll = useRef(false);
+
   const days = useMemo(() => {
     if (view === "day") return [currentDate];
     const start = startOfWeek(currentDate, { weekStartsOn: 1 });
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   }, [currentDate, view]);
 
+  useEffect(() => {
+    if (scrollRef.current && !didScroll.current) {
+      scrollRef.current.scrollTop = SCROLL_TO_HOUR * hourHeight;
+      didScroll.current = true;
+    }
+  }, [hourHeight]);
+
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (e.ctrlKey && onZoom) {
+        e.preventDefault();
+        onZoom(e.deltaY > 0 ? -1 : 1);
+      }
+    },
+    [onZoom],
+  );
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-      <div className="flex border-b">
-        <div className="w-14 shrink-0" />
-        {days.map((d) => (
-          <div
-            key={d.toISOString()}
-            className={cn(
-              "flex-1 border-r py-2 text-center text-sm font-medium last:border-r-0",
-              isToday(d) && "bg-primary/10 text-primary",
-            )}
-          >
-            <span className="hidden sm:inline">{format(d, "EEE", { locale: ptBR })} </span>
-            <span className={cn("tabular-nums", isToday(d) && "font-bold")}>{format(d, "dd")}</span>
-          </div>
-        ))}
+      <div className="flex shrink-0 border-b bg-muted/30">
+        <div className="w-12 shrink-0" />
+        {days.map((d) => {
+          const today = isToday(d);
+          return (
+            <div
+              key={d.toISOString()}
+              className={cn(
+                "flex-1 border-r py-1.5 text-center text-xs last:border-r-0",
+                today && "bg-primary/10",
+              )}
+            >
+              <span className="text-muted-foreground">{format(d, "EEE", { locale: ptBR })} </span>
+              <span
+                className={cn(
+                  "inline-flex h-6 w-6 items-center justify-center rounded-full font-medium tabular-nums",
+                  today && "bg-primary text-primary-foreground",
+                )}
+              >
+                {format(d, "d")}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="flex flex-1 overflow-y-auto">
-        <HourLabels />
+      <div
+        ref={scrollRef}
+        className="flex flex-1 overflow-y-auto overflow-x-hidden"
+        onWheel={handleWheel}
+      >
+        <HourLabels hourHeight={hourHeight} />
         {days.map((d) => (
           <DayColumn
             key={d.toISOString()}
@@ -217,6 +268,7 @@ export function WeeklyCalendar({
             onAppointmentClick={onAppointmentClick}
             selectedAppointmentId={selectedAppointmentId}
             memberColorMap={memberColorMap}
+            hourHeight={hourHeight}
           />
         ))}
       </div>
