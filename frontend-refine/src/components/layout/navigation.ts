@@ -202,6 +202,12 @@ export const NAVIGATION: NavGroup[] = [
         permission: "security:page:view",
       },
       {
+        label: "Agenda",
+        href: ROUTES.SETTINGS_AGENDA,
+        icon: CalendarDays,
+        permission: "scheduling:configure",
+      },
+      {
         label: "Agente de IA",
         href: ROUTES.SETTINGS_AGENT_CONFIG,
         icon: Bot,
