@@ -15,18 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Users } from "lucide-react";
 
@@ -133,16 +123,11 @@ export function ContactTable({ contacts, isLoading, onEdit, onDelete }: Props) {
                   />
                 </TableCell>
                 <TableCell>
-                  <Link
-                    href={`${ROUTES.CONTACTS}/${c.id}`}
-                    className="font-medium hover:underline"
-                  >
+                  <Link href={`${ROUTES.CONTACTS}/${c.id}`} className="font-medium hover:underline">
                     {fullName(c)}
                   </Link>
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {c.email ?? "—"}
-                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">{c.email ?? "—"}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {c.phone ?? c.mobile ?? "—"}
                 </TableCell>
@@ -221,7 +206,7 @@ export function ContactTable({ contacts, isLoading, onEdit, onDelete }: Props) {
                 <span className="text-muted-foreground">Empresa</span>
                 <span className="font-mono text-xs">{auditContact.companyId}</span>
               </div>
-              <p className="text-xs text-muted-foreground pt-2">
+              <p className="pt-2 text-xs text-muted-foreground">
                 Para mais detalhes de auditoria, consulte o painel de auditoria do sistema.
               </p>
             </div>

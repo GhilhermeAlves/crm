@@ -26,12 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import {
@@ -40,13 +35,7 @@ import {
 } from "@/features/masterdata/contacts/hooks/useContacts";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 import { ROUTES } from "@/lib/constants";
-import {
-  formatCpf,
-  validateCpf,
-  formatPhone,
-  formatCep,
-  fetchCep,
-} from "@/lib/format";
+import { formatCpf, validateCpf, formatPhone, formatCep, fetchCep } from "@/lib/format";
 
 const MAX_PHOTO_SIZE = 4 * 1024 * 1024;
 
@@ -72,8 +61,33 @@ const PROFESSIONAL_STATUS_OPTIONS = [
 ] as const;
 
 const UF_OPTIONS = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
-  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
 ] as const;
 
 const createContactSchema = z
@@ -92,11 +106,7 @@ const createContactSchema = z
     professionalStatus: z.string().max(20).optional(),
     mobile: z.string().min(1, "Celular é obrigatório").max(20),
     phone: z.string().max(20).optional(),
-    email: z
-      .string()
-      .min(1, "E-mail é obrigatório")
-      .max(255)
-      .email("E-mail inválido"),
+    email: z.string().min(1, "E-mail é obrigatório").max(255).email("E-mail inválido"),
     cep: z.string().min(1, "CEP é obrigatório").max(10),
     street: z.string().min(1, "Logradouro é obrigatório").max(255),
     addressNumber: z.string().min(1, "Número é obrigatório").max(20),
@@ -203,7 +213,8 @@ function ContactSearchDialog({
                   {c.firstName} {c.lastName}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {c.cpf ? formatCpf(c.cpf) : ""}{c.email ? ` · ${c.email}` : ""}
+                  {c.cpf ? formatCpf(c.cpf) : ""}
+                  {c.email ? ` · ${c.email}` : ""}
                 </p>
               </div>
             </button>
@@ -363,7 +374,7 @@ export default function NewContactPage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 bg-muted/50 overflow-hidden hover:border-primary/50 transition-colors"
+              className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-muted-foreground/30 bg-muted/50 transition-colors hover:border-primary/50"
             >
               {avatarPreview ? (
                 <img
@@ -385,9 +396,7 @@ export default function NewContactPage() {
             <div className="text-sm text-muted-foreground">
               <p className="font-medium text-foreground">Foto do contato</p>
               <p>Clique para adicionar uma foto (máx. 4MB)</p>
-              {photoError && (
-                <p className="text-sm text-destructive">{photoError}</p>
-              )}
+              {photoError && <p className="text-sm text-destructive">{photoError}</p>}
             </div>
           </section>
 
@@ -767,7 +776,7 @@ export default function NewContactPage() {
               render={({ field }) => (
                 <FormItem className="flex items-center gap-3">
                   <FormControl>
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex cursor-pointer items-center gap-2">
                       <Checkbox
                         checked={field.value === true}
                         onCheckedChange={(checked) => field.onChange(checked === true)}
@@ -861,12 +870,8 @@ export default function NewContactPage() {
           </section>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 border-t pt-6 pb-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push(ROUTES.CONTACTS)}
-            >
+          <div className="flex justify-end gap-3 border-t pb-4 pt-6">
+            <Button type="button" variant="outline" onClick={() => router.push(ROUTES.CONTACTS)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={createContact.isPending}>

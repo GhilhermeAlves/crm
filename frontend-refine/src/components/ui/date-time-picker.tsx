@@ -91,7 +91,13 @@ export function DateTimePicker({
           }}
           onFocusOutside={(e) => e.preventDefault()}
         >
-          <Calendar mode="single" captionLayout="dropdown" selected={dateValue} onSelect={handleDateSelect} autoFocus />
+          <Calendar
+            mode="single"
+            captionLayout="dropdown"
+            selected={dateValue}
+            onSelect={handleDateSelect}
+            autoFocus
+          />
         </PopoverContent>
       </Popover>
 

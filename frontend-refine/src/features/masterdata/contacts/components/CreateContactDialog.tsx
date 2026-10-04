@@ -106,24 +106,25 @@ const emptyValues: FormValues = {
 export function CreateContactDialog({ open, onOpenChange, isLoading, contact, onSubmit }: Props) {
   const isEdit = !!contact;
 
-  const formValues = useMemo<FormValues>(() =>
-    contact
-      ? {
-          firstName: contact.firstName ?? "",
-          lastName: contact.lastName ?? "",
-          email: contact.email ?? "",
-          phone: contact.phone ? formatPhone(contact.phone) : "",
-          mobile: contact.mobile ? formatPhone(contact.mobile) : "",
-          notes: contact.notes ?? "",
-          birthDate: contact.birthDate ?? "",
-          cpf: contact.cpf ? formatCpf(contact.cpf) : "",
-          rg: contact.rg ?? "",
-          rgIssuer: contact.rgIssuer ?? "",
-          gender: contact.gender ?? "",
-          maritalStatus: contact.maritalStatus ?? "",
-          professionalStatus: contact.professionalStatus ?? "",
-        }
-      : emptyValues,
+  const formValues = useMemo<FormValues>(
+    () =>
+      contact
+        ? {
+            firstName: contact.firstName ?? "",
+            lastName: contact.lastName ?? "",
+            email: contact.email ?? "",
+            phone: contact.phone ? formatPhone(contact.phone) : "",
+            mobile: contact.mobile ? formatPhone(contact.mobile) : "",
+            notes: contact.notes ?? "",
+            birthDate: contact.birthDate ?? "",
+            cpf: contact.cpf ? formatCpf(contact.cpf) : "",
+            rg: contact.rg ?? "",
+            rgIssuer: contact.rgIssuer ?? "",
+            gender: contact.gender ?? "",
+            maritalStatus: contact.maritalStatus ?? "",
+            professionalStatus: contact.professionalStatus ?? "",
+          }
+        : emptyValues,
     [contact],
   );
 
@@ -157,7 +158,10 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, contact, on
           <SheetTitle>{isEdit ? "Editar contato" : "Novo contato"}</SheetTitle>
         </SheetHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-1 flex-col gap-4 pt-2">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="flex flex-1 flex-col gap-4 pt-2"
+          >
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}

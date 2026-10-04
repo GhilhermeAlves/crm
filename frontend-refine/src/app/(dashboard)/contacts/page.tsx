@@ -80,13 +80,11 @@ export default function ContactsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">
-        Lista de Contatos ({totalCount})
-      </h1>
+      <h1 className="text-2xl font-semibold">Lista de Contatos ({totalCount})</h1>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center gap-2">
-          <div className="relative flex-1 max-w-lg">
+          <div className="relative max-w-lg flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
@@ -95,9 +93,7 @@ export default function ContactsPage() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline">
-            Buscar
-          </Button>
+          <Button variant="outline">Buscar</Button>
         </div>
         {canCreate && (
           <Button onClick={() => router.push("/contacts/new")}>
@@ -110,10 +106,7 @@ export default function ContactsPage() {
         {isLoading ? (
           <ContactTable contacts={[]} isLoading />
         ) : isError ? (
-          <ErrorCard
-            message="Não foi possível carregar os contatos."
-            onRetry={() => refetch()}
-          />
+          <ErrorCard message="Não foi possível carregar os contatos." onRetry={() => refetch()} />
         ) : search.trim() && filteredContacts.length === 0 ? (
           <EmptyState
             icon={<SearchX className="h-8 w-8" />}
