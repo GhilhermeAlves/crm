@@ -105,7 +105,7 @@ function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={value} onSelect={(d) => d && onChange(d)} initialFocus />
+        <Calendar mode="single" selected={value} onSelect={(d) => d && onChange(d)} autoFocus />
       </PopoverContent>
     </Popover>
   );
