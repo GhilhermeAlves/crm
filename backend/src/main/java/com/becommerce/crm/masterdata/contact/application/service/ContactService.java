@@ -115,7 +115,9 @@ public class ContactService implements ContactUseCase {
 
     private void requireFieldPermission(String currentValue, String newValue,
                                         String permission, String fieldLabel) {
-        if (newValue == null || newValue.equals(currentValue)) {
+        String normalizedNew = blankToNull(newValue);
+        String normalizedCurrent = blankToNull(currentValue);
+        if (normalizedNew == null || java.util.Objects.equals(normalizedNew, normalizedCurrent)) {
             return;
         }
         if (!authorities.has(permission)) {
@@ -146,18 +148,18 @@ public class ContactService implements ContactUseCase {
                     "contact:field:phone:update", "telefone");
 
             if (request.firstName() != null) contact.setFirstName(request.firstName());
-            if (request.lastName() != null) contact.setLastName(request.lastName());
-            if (request.email() != null) contact.setEmail(request.email());
-            if (request.phone() != null) contact.setPhone(request.phone());
-            if (request.mobile() != null) contact.setMobile(request.mobile());
-            if (request.notes() != null) contact.setNotes(request.notes());
+            if (request.lastName() != null) contact.setLastName(blankToNull(request.lastName()));
+            if (request.email() != null) contact.setEmail(blankToNull(request.email()));
+            if (request.phone() != null) contact.setPhone(blankToNull(request.phone()));
+            if (request.mobile() != null) contact.setMobile(blankToNull(request.mobile()));
+            if (request.notes() != null) contact.setNotes(blankToNull(request.notes()));
             if (request.birthDate() != null) contact.setBirthDate(request.birthDate());
-            if (request.cpf() != null) contact.setCpf(request.cpf());
-            if (request.rg() != null) contact.setRg(request.rg());
-            if (request.rgIssuer() != null) contact.setRgIssuer(request.rgIssuer());
-            if (request.gender() != null) contact.setGender(request.gender());
-            if (request.maritalStatus() != null) contact.setMaritalStatus(request.maritalStatus());
-            if (request.professionalStatus() != null) contact.setProfessionalStatus(request.professionalStatus());
+            if (request.cpf() != null) contact.setCpf(blankToNull(request.cpf()));
+            if (request.rg() != null) contact.setRg(blankToNull(request.rg()));
+            if (request.rgIssuer() != null) contact.setRgIssuer(blankToNull(request.rgIssuer()));
+            if (request.gender() != null) contact.setGender(blankToNull(request.gender()));
+            if (request.maritalStatus() != null) contact.setMaritalStatus(blankToNull(request.maritalStatus()));
+            if (request.professionalStatus() != null) contact.setProfessionalStatus(blankToNull(request.professionalStatus()));
             contact.touch();
             Contact saved = contactRepository.save(contact);
 
@@ -213,5 +215,9 @@ public class ContactService implements ContactUseCase {
     private String trim(String value) {
         String v = value == null ? "" : value.trim();
         return v.length() > 60 ? v.substring(0, 60) : v;
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 }

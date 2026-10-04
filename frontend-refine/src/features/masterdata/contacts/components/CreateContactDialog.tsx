@@ -136,18 +136,18 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, contact, on
   const handleSubmit = (values: FormValues) => {
     onSubmit({
       firstName: values.firstName,
-      lastName: values.lastName || undefined,
-      email: values.email || undefined,
-      phone: values.phone ? values.phone.replace(/\D/g, "") : undefined,
-      mobile: values.mobile ? values.mobile.replace(/\D/g, "") : undefined,
-      notes: values.notes || undefined,
+      lastName: values.lastName ?? "",
+      email: values.email ?? "",
+      phone: values.phone ? values.phone.replace(/\D/g, "") : "",
+      mobile: values.mobile ? values.mobile.replace(/\D/g, "") : "",
+      notes: values.notes ?? "",
       birthDate: values.birthDate || undefined,
-      cpf: values.cpf ? values.cpf.replace(/\D/g, "") : undefined,
-      rg: values.rg || undefined,
-      rgIssuer: values.rgIssuer || undefined,
-      gender: values.gender || undefined,
-      maritalStatus: values.maritalStatus || undefined,
-      professionalStatus: values.professionalStatus || undefined,
+      cpf: values.cpf ? values.cpf.replace(/\D/g, "") : "",
+      rg: values.rg ?? "",
+      rgIssuer: values.rgIssuer ?? "",
+      gender: values.gender ?? "",
+      maritalStatus: values.maritalStatus ?? "",
+      professionalStatus: values.professionalStatus ?? "",
     });
   };
 
