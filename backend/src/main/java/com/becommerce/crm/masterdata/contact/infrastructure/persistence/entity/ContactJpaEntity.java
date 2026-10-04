@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -30,8 +31,32 @@ public class ContactJpaEntity {
     @Column(name = "phone")
     private String phone;
 
+    @Column(name = "mobile")
+    private String mobile;
+
     @Column(name = "notes")
     private String notes;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    @Column(name = "cpf")
+    private String cpf;
+
+    @Column(name = "rg")
+    private String rg;
+
+    @Column(name = "rg_issuer")
+    private String rgIssuer;
+
+    @Column(name = "gender")
+    private String gender;
+
+    @Column(name = "marital_status")
+    private String maritalStatus;
+
+    @Column(name = "professional_status")
+    private String professionalStatus;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -54,8 +79,24 @@ public class ContactJpaEntity {
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getMobile() { return mobile; }
+    public void setMobile(String mobile) { this.mobile = mobile; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
+    public String getCpf() { return cpf; }
+    public void setCpf(String cpf) { this.cpf = cpf; }
+    public String getRg() { return rg; }
+    public void setRg(String rg) { this.rg = rg; }
+    public String getRgIssuer() { return rgIssuer; }
+    public void setRgIssuer(String rgIssuer) { this.rgIssuer = rgIssuer; }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+    public String getMaritalStatus() { return maritalStatus; }
+    public void setMaritalStatus(String maritalStatus) { this.maritalStatus = maritalStatus; }
+    public String getProfessionalStatus() { return professionalStatus; }
+    public void setProfessionalStatus(String professionalStatus) { this.professionalStatus = professionalStatus; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

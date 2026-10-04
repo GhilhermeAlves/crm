@@ -5,7 +5,15 @@ export type Contact = {
   lastName: string;
   email: string | null;
   phone: string | null;
+  mobile: string | null;
   notes: string | null;
+  birthDate: string | null;
+  cpf: string | null;
+  rg: string | null;
+  rgIssuer: string | null;
+  gender: string | null;
+  maritalStatus: string | null;
+  professionalStatus: string | null;
   createdAt: string;
 };
 
@@ -14,7 +22,15 @@ export type CreateContactRequest = {
   lastName?: string;
   email?: string;
   phone?: string;
+  mobile?: string;
   notes?: string;
+  birthDate?: string;
+  cpf?: string;
+  rg?: string;
+  rgIssuer?: string;
+  gender?: string;
+  maritalStatus?: string;
+  professionalStatus?: string;
 };
 
 export type UpdateContactRequest = {
@@ -22,7 +38,15 @@ export type UpdateContactRequest = {
   lastName?: string;
   email?: string;
   phone?: string;
+  mobile?: string;
   notes?: string;
+  birthDate?: string;
+  cpf?: string;
+  rg?: string;
+  rgIssuer?: string;
+  gender?: string;
+  maritalStatus?: string;
+  professionalStatus?: string;
 };
 
 // ---------------------------------------------------------------------------

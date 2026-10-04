@@ -58,7 +58,9 @@ class DashboardServiceTest {
         Pipeline pipeline = Pipeline.reconstitute(pipelineId, companyId, "Vendas", null, true,
                 LocalDateTime.now(), LocalDateTime.now());
         Contact contact = Contact.reconstitute(UUID.randomUUID(), companyId, "Ana", "Souza",
-                "ana@e.com", null, null, LocalDateTime.now(), LocalDateTime.now(), null);
+                "ana@e.com", null, null, null,
+                null, null, null, null, null, null, null,
+                LocalDateTime.now(), LocalDateTime.now(), null);
         Opportunity opp = Opportunity.reconstitute(UUID.randomUUID(), companyId, "Negócio A",
                 new BigDecimal("20000.00"), contact.getId(), pipelineId, s1.getId(), null, null,
                 OpportunityStatus.OPEN, null, null, null, null,

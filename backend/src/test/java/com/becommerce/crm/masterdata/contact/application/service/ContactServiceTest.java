@@ -42,7 +42,8 @@ class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ContactResponse response = contactService.create(
-                companyId, new CreateContactRequest("Ana", "Souza", "ana@empresa.com", "119", "nota"), UUID.randomUUID());
+                companyId, new CreateContactRequest("Ana", "Souza", "ana@empresa.com", "119",
+                        null, "nota", null, null, null, null, null, null, null), UUID.randomUUID());
 
         assertNotNull(response.id());
         assertEquals("Ana", response.firstName());
@@ -56,7 +57,8 @@ class ContactServiceTest {
                 .when(quotaService).assertCanAddContact(companyId);
 
         assertThrows(QuotaExceededException.class,
-                () -> contactService.create(companyId, new CreateContactRequest("Ana", "Souza", "ana@empresa.com", null, null), UUID.randomUUID()));
+                () -> contactService.create(companyId, new CreateContactRequest("Ana", "Souza", "ana@empresa.com",
+                        null, null, null, null, null, null, null, null, null, null), UUID.randomUUID()));
         verify(contactRepository, never()).save(any(Contact.class));
     }
 
@@ -64,7 +66,9 @@ class ContactServiceTest {
 
     private Contact existingContact() {
         return Contact.reconstitute(UUID.randomUUID(), companyId, "Ana", "Souza",
-                "ana@empresa.com", "11999990000", null, null, null, null);
+                "ana@empresa.com", "11999990000", null, null,
+                null, null, null, null, null, null, null,
+                null, null, null);
     }
 
     @Test
@@ -75,7 +79,8 @@ class ContactServiceTest {
 
         assertThrows(CrmAccessDeniedException.class, () -> contactService.update(
                 companyId, contact.getId(),
-                new UpdateContactRequest(null, null, "novo@empresa.com", null, null)));
+                new UpdateContactRequest(null, null, "novo@empresa.com", null,
+                        null, null, null, null, null, null, null, null, null)));
 
         verify(contactRepository, never()).save(any(Contact.class));
     }
@@ -88,7 +93,8 @@ class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var response = contactService.update(companyId, contact.getId(),
-                new UpdateContactRequest(null, null, "novo@empresa.com", null, null));
+                new UpdateContactRequest(null, null, "novo@empresa.com", null,
+                        null, null, null, null, null, null, null, null, null));
 
         assertEquals("novo@empresa.com", response.email());
         verify(contactRepository).save(any(Contact.class));
@@ -102,7 +108,8 @@ class ContactServiceTest {
 
         assertThrows(CrmAccessDeniedException.class, () -> contactService.update(
                 companyId, contact.getId(),
-                new UpdateContactRequest(null, null, null, "11888887777", null)));
+                new UpdateContactRequest(null, null, null, "11888887777",
+                        null, null, null, null, null, null, null, null, null)));
     }
 
     @Test
@@ -111,12 +118,11 @@ class ContactServiceTest {
         when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // mesmo valor: não é alteração → permissão de campo não é exigida
         var response = contactService.update(companyId, contact.getId(),
-                new UpdateContactRequest(null, null, "ana@empresa.com", null, null));
+                new UpdateContactRequest(null, null, "ana@empresa.com", null,
+                        null, null, null, null, null, null, null, null, null));
 
         assertEquals("ana@empresa.com", response.email());
-        // guarda nem consulta permissões quando não há mudança de valor
         verify(authorities, never()).has(anyString());
         verify(authorities, never()).has("contact:field:email:update");
     }
@@ -128,7 +134,8 @@ class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var response = contactService.update(companyId, contact.getId(),
-                new UpdateContactRequest("Ana Maria", null, null, null, "obs"));
+                new UpdateContactRequest("Ana Maria", null, null, null,
+                        null, "obs", null, null, null, null, null, null, null));
 
         assertEquals("Ana Maria", response.firstName());
         verify(contactRepository).save(any(Contact.class));

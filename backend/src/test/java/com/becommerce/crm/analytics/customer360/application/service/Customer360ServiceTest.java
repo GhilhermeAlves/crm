@@ -50,7 +50,9 @@ class Customer360ServiceTest {
 
     private Contact contact(LocalDateTime createdAt) {
         return Contact.reconstitute(UUID.randomUUID(), companyId, "Ana", "Souza",
-                "ana@e.com", "11-99999", "leads quentes", createdAt, createdAt, null);
+                "ana@e.com", "11-99999", null, "leads quentes",
+                null, null, null, null, null, null, null,
+                createdAt, createdAt, null);
     }
 
     private Stage stage(UUID pipelineId, String name, int order, int prob) {
@@ -200,7 +202,9 @@ class Customer360ServiceTest {
     void shouldThrowWhenContactBelongsToAnotherCompany() {
         UUID otherCompany = UUID.randomUUID();
         Contact c = Contact.reconstitute(UUID.randomUUID(), otherCompany, "Ana", "Souza",
-                "ana@e.com", null, null, LocalDateTime.now(), LocalDateTime.now(), null);
+                "ana@e.com", null, null, null,
+                null, null, null, null, null, null, null,
+                LocalDateTime.now(), LocalDateTime.now(), null);
 
         when(contactRepository.findById(c.getId())).thenReturn(Optional.of(c));
 

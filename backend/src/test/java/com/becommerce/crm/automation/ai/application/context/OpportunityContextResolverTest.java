@@ -54,7 +54,9 @@ class OpportunityContextResolverTest {
         Stage stage = Stage.reconstitute(stageId, UUID.randomUUID(), companyId, "Proposta",
                 null, 3, 60, LocalDateTime.now(), LocalDateTime.now());
         Contact contact = Contact.reconstitute(contactId, companyId, "Ana", "Souza",
-                "ana@e.com", null, null, LocalDateTime.now(), LocalDateTime.now(), null);
+                "ana@e.com", null, null, null,
+                null, null, null, null, null, null, null,
+                LocalDateTime.now(), LocalDateTime.now(), null);
         User assignee = new User();
         assignee.setId(assigneeId);
         assignee.setName("Maria Lima");

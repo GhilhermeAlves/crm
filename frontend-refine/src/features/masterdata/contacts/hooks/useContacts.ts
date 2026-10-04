@@ -4,6 +4,14 @@ import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorizatio
 import { ContactService } from "../services/contact.service";
 import type { CreateContactRequest, UpdateContactRequest } from "../types/contact.types";
 
+export function useSearchContacts(companyId: string | null, query: string) {
+  return useQuery({
+    queryKey: ["contacts-search", companyId, query],
+    queryFn: () => ContactService.search(companyId as string, query),
+    enabled: !!companyId && query.length >= 2,
+  });
+}
+
 export function useContacts(companyId: string | null) {
   return useQuery({
     queryKey: ["contacts", companyId],

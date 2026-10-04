@@ -33,7 +33,13 @@ export const ContactService = {
     await api.delete(`${BASE}/${companyId}/contacts/${id}`);
   },
 
-  /** Customer 360 (Sprint 13): visão consolidada do contato. */
+  async search(companyId: string, query: string, limit = 10): Promise<Contact[]> {
+    const response = await api.get<Contact[]>(`${BASE}/${companyId}/contacts/search`, {
+      params: { q: query, limit },
+    });
+    return response.data;
+  },
+
   async customer360(companyId: string, id: string): Promise<Customer360> {
     const response = await api.get<Customer360>(`${BASE}/${companyId}/contacts/${id}/360`);
     return response.data;

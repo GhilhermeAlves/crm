@@ -92,7 +92,8 @@ class AiWriteToolsTest {
     @Test
     void shouldRejectTaskWithInactiveContact() {
         UUID inactive = UUID.randomUUID();
-        Contact contact = Contact.reconstitute(inactive, companyId, "A", "B", "a@x.com", null, null,
+        Contact contact = Contact.reconstitute(inactive, companyId, "A", "B", "a@x.com", null, null, null,
+                null, null, null, null, null, null, null,
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
         when(contactRepository.findById(inactive)).thenReturn(java.util.Optional.of(contact));
         assertThrows(ContactNotFoundException.class, () ->
@@ -102,7 +103,8 @@ class AiWriteToolsTest {
     @Test
     void shouldAcceptTaskWithOwnedActiveContact() {
         UUID owned = UUID.randomUUID();
-        Contact contact = Contact.reconstitute(owned, companyId, "A", "B", "a@x.com", null, null,
+        Contact contact = Contact.reconstitute(owned, companyId, "A", "B", "a@x.com", null, null, null,
+                null, null, null, null, null, null, null,
                 java.time.LocalDateTime.now(), java.time.LocalDateTime.now(), null);
         when(contactRepository.findById(owned)).thenReturn(java.util.Optional.of(contact));
         var result = taskTool.execute(ctx, Map.of("title", "T", "contactId", owned.toString()));

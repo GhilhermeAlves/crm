@@ -53,7 +53,9 @@ public class ContactService implements ContactUseCase {
 
             Contact contact = Contact.create(
                     companyId, request.firstName(), request.lastName(),
-                    request.email(), request.phone(), request.notes());
+                    request.email(), request.phone(), request.mobile(), request.notes(),
+                    request.birthDate(), request.cpf(), request.rg(), request.rgIssuer(),
+                    request.gender(), request.maritalStatus(), request.professionalStatus());
             Contact saved = contactRepository.save(contact);
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, "Contact",
@@ -147,7 +149,15 @@ public class ContactService implements ContactUseCase {
             if (request.lastName() != null) contact.setLastName(request.lastName());
             if (request.email() != null) contact.setEmail(request.email());
             if (request.phone() != null) contact.setPhone(request.phone());
+            if (request.mobile() != null) contact.setMobile(request.mobile());
             if (request.notes() != null) contact.setNotes(request.notes());
+            if (request.birthDate() != null) contact.setBirthDate(request.birthDate());
+            if (request.cpf() != null) contact.setCpf(request.cpf());
+            if (request.rg() != null) contact.setRg(request.rg());
+            if (request.rgIssuer() != null) contact.setRgIssuer(request.rgIssuer());
+            if (request.gender() != null) contact.setGender(request.gender());
+            if (request.maritalStatus() != null) contact.setMaritalStatus(request.maritalStatus());
+            if (request.professionalStatus() != null) contact.setProfessionalStatus(request.professionalStatus());
             contact.touch();
             Contact saved = contactRepository.save(contact);
 
@@ -189,7 +199,10 @@ public class ContactService implements ContactUseCase {
     private static ContactResponse toResponse(Contact c) {
         return new ContactResponse(
                 c.getId(), c.getCompanyId(), c.getFirstName(), c.getLastName(),
-                c.getEmail(), c.getPhone(), c.getNotes(), c.getCreatedAt());
+                c.getEmail(), c.getPhone(), c.getMobile(), c.getNotes(),
+                c.getBirthDate(), c.getCpf(), c.getRg(), c.getRgIssuer(),
+                c.getGender(), c.getMaritalStatus(), c.getProfessionalStatus(),
+                c.getCreatedAt());
     }
 
     private String firstName(Contact c) {

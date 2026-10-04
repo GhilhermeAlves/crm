@@ -55,6 +55,15 @@ public class ContactController {
         return ResponseEntity.ok(contactUseCase.listByCompany(companyId));
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('contact:read')")
+    public ResponseEntity<List<ContactResponse>> search(
+            @CurrentCompanyId("Você só pode acessar contatos da sua própria empresa.") UUID companyId,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(contactUseCase.search(companyId, q, Math.min(limit, 50)));
+    }
+
     @PutMapping("/{contactId}")
     @PreAuthorize("hasAuthority('contact:update')")
     public ResponseEntity<ContactResponse> update(

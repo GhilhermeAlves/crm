@@ -65,7 +65,7 @@ export function DateTimePicker({
 
   return (
     <div className="flex gap-2">
-      <Popover>
+      <Popover modal={false}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -80,7 +80,17 @@ export function DateTimePicker({
               : placeholder}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+          onPointerDownOutside={(e) => {
+            const target = e.target as HTMLElement | null;
+            if (target?.tagName === "OPTION" || target?.tagName === "SELECT") {
+              e.preventDefault();
+            }
+          }}
+          onFocusOutside={(e) => e.preventDefault()}
+        >
           <Calendar mode="single" selected={dateValue} onSelect={handleDateSelect} initialFocus />
         </PopoverContent>
       </Popover>

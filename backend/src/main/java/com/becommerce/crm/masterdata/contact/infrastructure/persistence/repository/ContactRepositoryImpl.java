@@ -55,7 +55,15 @@ public class ContactRepositoryImpl implements ContactRepository {
         e.setLastName(c.getLastName());
         e.setEmail(c.getEmail());
         e.setPhone(c.getPhone());
+        e.setMobile(c.getMobile());
         e.setNotes(c.getNotes());
+        e.setBirthDate(c.getBirthDate());
+        e.setCpf(c.getCpf());
+        e.setRg(c.getRg());
+        e.setRgIssuer(c.getRgIssuer());
+        e.setGender(c.getGender());
+        e.setMaritalStatus(c.getMaritalStatus());
+        e.setProfessionalStatus(c.getProfessionalStatus());
         e.setCreatedAt(c.getCreatedAt());
         e.setUpdatedAt(c.getUpdatedAt());
         e.setDeletedAt(c.getDeletedAt());
@@ -65,7 +73,9 @@ public class ContactRepositoryImpl implements ContactRepository {
     private static Contact toDomain(ContactJpaEntity e) {
         return Contact.reconstitute(
                 e.getId(), e.getCompanyId(), e.getFirstName(), e.getLastName(),
-                e.getEmail(), e.getPhone(), e.getNotes(),
+                e.getEmail(), e.getPhone(), e.getMobile(), e.getNotes(),
+                e.getBirthDate(), e.getCpf(), e.getRg(), e.getRgIssuer(),
+                e.getGender(), e.getMaritalStatus(), e.getProfessionalStatus(),
                 e.getCreatedAt(), e.getUpdatedAt(), e.getDeletedAt());
     }
 }

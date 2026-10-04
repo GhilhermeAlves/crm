@@ -64,7 +64,9 @@ class OpportunityServiceTest {
 
     private Contact ownedContact() {
         return Contact.reconstitute(UUID.randomUUID(), companyId, "Ana", "Souza", "ana@e.com",
-                null, null, LocalDateTime.now(), LocalDateTime.now(), null);
+                null, null, null,
+                null, null, null, null, null, null, null,
+                LocalDateTime.now(), LocalDateTime.now(), null);
     }
 
     private Stage stage(UUID pipelineId, String name, int order) {
@@ -109,7 +111,9 @@ class OpportunityServiceTest {
     void shouldRejectCreateWhenContactBelongsToAnotherCompany() {
         UUID pipelineId = UUID.randomUUID();
         Contact foreign = Contact.reconstitute(UUID.randomUUID(), UUID.randomUUID(), "Ana", "Souza",
-                "ana@e.com", null, null, LocalDateTime.now(), LocalDateTime.now(), null);
+                "ana@e.com", null, null, null,
+                null, null, null, null, null, null, null,
+                LocalDateTime.now(), LocalDateTime.now(), null);
 
         stubPipelineOwned(pipelineId);
         when(contactRepository.findById(foreign.getId())).thenReturn(Optional.of(foreign));

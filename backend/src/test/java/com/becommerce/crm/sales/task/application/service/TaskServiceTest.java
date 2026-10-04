@@ -75,7 +75,9 @@ class TaskServiceTest {
     @Test
     void shouldRejectForeignContact() {
         Contact foreign = Contact.reconstitute(UUID.randomUUID(), UUID.randomUUID(), "Ana", "Souza",
-                "ana@e.com", null, null, LocalDateTime.now(), LocalDateTime.now(), null);
+                "ana@e.com", null, null, null,
+                null, null, null, null, null, null, null,
+                LocalDateTime.now(), LocalDateTime.now(), null);
         when(contactRepository.findById(foreign.getId())).thenReturn(Optional.of(foreign));
 
         assertThrows(ContactNotFoundException.class, () -> taskService.create(companyId,

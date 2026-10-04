@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
+import { QuickActionMenu } from "@/components/layout/QuickActionMenu";
 import { useSidebar } from "@/store/sidebar";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { NotificationBell } from "@/features/communication/notifications/components/NotificationBell";
@@ -40,6 +41,9 @@ export function Header() {
       >
         {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
       </Button>
+
+      {/* Quick Action */}
+      <QuickActionMenu />
 
       {/* Breadcrumb */}
       <div className="hidden lg:block">

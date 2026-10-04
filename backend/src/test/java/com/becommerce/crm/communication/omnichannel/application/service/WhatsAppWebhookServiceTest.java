@@ -136,7 +136,9 @@ class WhatsAppWebhookServiceTest {
     @Test
     void handleEvent_inbound_contactFound_shouldLinkContactId() {
         Contact contact = Contact.reconstitute(UUID.randomUUID(), companyId, "Joao", "Silva", "j@x.com",
-                "+5511999998888", null, java.time.LocalDateTime.now(), java.time.LocalDateTime.now(), null);
+                "+5511999998888", null, null,
+                null, null, null, null, null, null, null,
+                java.time.LocalDateTime.now(), java.time.LocalDateTime.now(), null);
 
         when(parser.providerChannelReference(any())).thenReturn("espaco-a");
         when(companyResolver.resolveCompanyByChannelReference("espaco-a")).thenReturn(Optional.of(companyId));
