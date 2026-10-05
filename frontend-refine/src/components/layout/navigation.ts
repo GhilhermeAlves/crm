@@ -11,7 +11,6 @@ import {
   Package,
   HardDrive,
   Workflow as WorkflowIcon,
-  Bell,
   Sparkles,
   Home,
   Bot,
@@ -20,6 +19,7 @@ import {
   MailPlus,
   KeyRound,
   CalendarDays,
+  FileText,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 
@@ -29,6 +29,7 @@ export interface NavItem {
   icon: LucideIcon;
   badge?: string;
   permission?: string;
+  children?: { label: string; href: string }[];
 }
 
 export interface NavGroup {
@@ -94,12 +95,6 @@ export const NAVIGATION: NavGroup[] = [
         permission: "workflow:page:view",
       },
       {
-        label: "Notificações",
-        href: ROUTES.NOTIFICATIONS,
-        icon: Bell,
-        permission: "notification:page:view",
-      },
-      {
         label: "Léo · Assistente IA",
         href: ROUTES.ASSISTANT,
         icon: Sparkles,
@@ -163,12 +158,14 @@ export const NAVIGATION: NavGroup[] = [
         icon: KeyRound,
         permission: "role:read",
       },
-      { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
     ],
   },
   {
     title: "Análise",
-    items: [{ label: "Relatórios", href: ROUTES.REPORTS, icon: BarChart3 }],
+    items: [
+      { label: "Relatórios", href: ROUTES.REPORTS, icon: BarChart3 },
+      { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
+    ],
   },
   {
     title: "Sistema",
@@ -187,8 +184,21 @@ export const NAVIGATION: NavGroup[] = [
     ],
   },
   {
-    title: "Segurança",
+    title: "Configurações",
     items: [
+      {
+        label: "Minha Empresa",
+        href: ROUTES.SETTINGS_COMPANY,
+        icon: Building2,
+        children: [
+          { label: "Dados da empresa", href: ROUTES.SETTINGS_COMPANY },
+          { label: "Preferências", href: `${ROUTES.SETTINGS_COMPANY}/preferences` },
+          { label: "Criar novo usuário", href: `${ROUTES.SETTINGS_COMPANY}/users/new` },
+          { label: "Gerenciar usuários", href: `${ROUTES.SETTINGS_COMPANY}/users` },
+          { label: "Migração de dados", href: `${ROUTES.SETTINGS_COMPANY}/migration` },
+          { label: "Lista de serviços", href: `${ROUTES.SETTINGS_COMPANY}/services` },
+        ],
+      },
       {
         label: "Usuários",
         href: ROUTES.SETTINGS_USERS,
@@ -206,12 +216,34 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.SETTINGS_AGENDA,
         icon: CalendarDays,
         permission: "scheduling:configure",
+        children: [
+          { label: "Ajustes gerais", href: ROUTES.SETTINGS_AGENDA },
+          {
+            label: "Configurar disponibilidade",
+            href: `${ROUTES.SETTINGS_AGENDA}/availability`,
+          },
+          {
+            label: "Central de notificações",
+            href: `${ROUTES.SETTINGS_AGENDA}/notifications`,
+          },
+          { label: "Mensagem de aniversário", href: `${ROUTES.SETTINGS_AGENDA}/birthday` },
+        ],
       },
       {
         label: "Agente de IA",
         href: ROUTES.SETTINGS_AGENT_CONFIG,
         icon: Bot,
         permission: "ai:agent-config",
+      },
+      {
+        label: "Documentos",
+        href: ROUTES.SETTINGS_DOCUMENTS,
+        icon: FileText,
+        children: [
+          { label: "Modelos de documentos", href: ROUTES.SETTINGS_DOCUMENTS },
+          { label: "Modelos de anamnese", href: `${ROUTES.SETTINGS_DOCUMENTS}/anamnesis` },
+          { label: "Receituários", href: `${ROUTES.SETTINGS_DOCUMENTS}/prescriptions` },
+        ],
       },
     ],
   },

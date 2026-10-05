@@ -5,6 +5,8 @@ import {
   AppointmentService,
   BlockService,
   AvailabilityService,
+  BirthdayMessageService,
+  type BirthdayMessageSettings,
 } from "../services/scheduling.service";
 import type {
   CreateAppointmentTypeRequest,
@@ -232,5 +234,28 @@ export function useSlots(
         to as string,
       ),
     enabled: !!companyId && !!typeId && !!from && !!to,
+  });
+}
+
+// --- Birthday message ---
+
+export function useBirthdayMessage(companyId: string | null) {
+  return useQuery({
+    queryKey: ["birthday-message", companyId],
+    queryFn: () => BirthdayMessageService.get(companyId as string),
+    enabled: !!companyId,
+  });
+}
+
+export function useSaveBirthdayMessage(companyId: string | null) {
+  const { onSuccess, onError } = useMutationDefaults();
+  return useMutation({
+    mutationFn: (data: BirthdayMessageSettings) =>
+      BirthdayMessageService.save(companyId as string, data),
+    onSuccess: onSuccess({
+      successMessage: "Mensagem de aniversário salva",
+      invalidateKeys: [["birthday-message", companyId]],
+    }),
+    onError: onError({ errorMessage: "Erro ao salvar mensagem de aniversário" }),
   });
 }

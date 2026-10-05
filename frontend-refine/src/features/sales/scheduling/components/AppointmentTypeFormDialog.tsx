@@ -4,12 +4,12 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,10 @@ import {
   LOCATION_KINDS,
   ASSIGNMENT_MODES,
 } from "../schemas/scheduling.schema";
-import { LOCATION_KIND_LABELS, type AppointmentType } from "../types/scheduling.types";
+import {
+  LOCATION_KIND_LABELS,
+  type AppointmentType,
+} from "../types/scheduling.types";
 
 interface Props {
   open: boolean;
@@ -107,32 +110,52 @@ export function AppointmentTypeFormDialog({
     const current = form.getValues("hostIds") ?? [];
     form.setValue(
       "hostIds",
-      current.includes(id) ? current.filter((h) => h !== id) : [...current, id],
+      current.includes(id)
+        ? current.filter((h) => h !== id)
+        : [...current, id],
       { shouldValidate: true },
     );
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {editingType ? "Editar tipo de agendamento" : "Novo tipo de agendamento"}
-          </DialogTitle>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="flex flex-col overflow-y-auto sm:max-w-lg"
+      >
+        <SheetHeader>
+          <SheetTitle>
+            {editingType
+              ? "Editar tipo de agendamento"
+              : "Novo tipo de agendamento"}
+          </SheetTitle>
+        </SheetHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-1 flex-col gap-4 pt-2"
+        >
           <div className="space-y-2">
             <Label htmlFor="type-name">Nome *</Label>
-            <Input id="type-name" {...form.register("name")} placeholder="Ex.: Reunião 30 min" />
+            <Input
+              id="type-name"
+              {...form.register("name")}
+              placeholder="Ex.: Reunião 30 min"
+            />
             {form.formState.errors.name && (
-              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+              <p className="text-sm text-destructive">
+                {form.formState.errors.name.message}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="type-description">Descrição</Label>
-            <Textarea id="type-description" {...form.register("description")} rows={2} />
+            <Textarea
+              id="type-description"
+              {...form.register("description")}
+              rows={2}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -209,7 +232,10 @@ export function AppointmentTypeFormDialog({
             <Select
               value={form.watch("locationKind") ?? ""}
               onValueChange={(v) =>
-                form.setValue("locationKind", v as CreateAppointmentTypeFormValues["locationKind"])
+                form.setValue(
+                  "locationKind",
+                  v as CreateAppointmentTypeFormValues["locationKind"],
+                )
               }
             >
               <SelectTrigger id="type-location">
@@ -251,7 +277,12 @@ export function AppointmentTypeFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="type-color">Cor</Label>
-            <Input id="type-color" type="color" {...form.register("color")} className="h-9 w-16" />
+            <Input
+              id="type-color"
+              type="color"
+              {...form.register("color")}
+              className="h-9 w-16"
+            />
           </div>
 
           <div className="space-y-2">
@@ -261,7 +292,9 @@ export function AppointmentTypeFormDialog({
                 <Button
                   key={m.id}
                   type="button"
-                  variant={selectedHostIds.includes(m.id) ? "default" : "outline"}
+                  variant={
+                    selectedHostIds.includes(m.id) ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => toggleHost(m.id)}
                 >
@@ -270,7 +303,9 @@ export function AppointmentTypeFormDialog({
               ))}
             </div>
             {form.formState.errors.hostIds && (
-              <p className="text-sm text-destructive">{form.formState.errors.hostIds.message}</p>
+              <p className="text-sm text-destructive">
+                {form.formState.errors.hostIds.message}
+              </p>
             )}
           </div>
 
@@ -280,19 +315,25 @@ export function AppointmentTypeFormDialog({
               checked={form.watch("publicBookingEnabled") ?? false}
               onCheckedChange={(v) => form.setValue("publicBookingEnabled", v)}
             />
-            <Label htmlFor="type-public">Agendamento público (link externo)</Label>
+            <Label htmlFor="type-public">
+              Agendamento público (link externo)
+            </Label>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <SheetFooter className="mt-auto border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Salvando…" : editingType ? "Salvar" : "Criar"}
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

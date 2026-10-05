@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound } from "lucide-react";
+
 import { PermissionList } from "@/features/identity/rbac/components/PermissionList";
 import { usePermissions } from "@/features/identity/rbac/hooks/useRoles";
 
@@ -10,10 +10,7 @@ export default function PermissionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <KeyRound className="h-6 w-6" />
-          Permissões
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Permissões</h1>
         <p className="text-muted-foreground">
           Visualize todas as permissões disponíveis no sistema
         </p>

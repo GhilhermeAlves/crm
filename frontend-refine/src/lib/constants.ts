@@ -30,6 +30,10 @@ export const ROUTES = {
   SETTINGS_ROLES: "/settings/roles",
   SETTINGS_AGENDA: "/settings/agenda",
   SETTINGS_AGENT_CONFIG: "/settings/agent-config",
+  SETTINGS_COMPANY: "/settings/company",
+  SETTINGS_COMPANY_PREFERENCES: "/settings/company/preferences",
+  SETTINGS_COMPANY_USERS_NEW: "/settings/company/users/new",
+  SETTINGS_COMPANY_USERS: "/settings/company/users",
   AUDIT: "/audit",
   AGENDA: "/agenda",
   TASKS: "/tasks",
@@ -43,6 +47,9 @@ export const ROUTES = {
   NOTIFICATIONS: "/notifications",
   ASSISTANT: "/assistant",
   DESIGN_SYSTEM: "/design-system",
+  SETTINGS_DOCUMENTS: "/settings/documents",
+  SETTINGS_DOCUMENTS_ANAMNESIS: "/settings/documents/anamnesis",
+  SETTINGS_DOCUMENTS_PRESCRIPTIONS: "/settings/documents/prescriptions",
 } as const;
 
 export const PUBLIC_ROUTES = [

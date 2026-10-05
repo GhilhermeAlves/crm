@@ -347,7 +347,7 @@ export default function NewContactPage() {
       </nav>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Novo cadastro</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Novo Contato</h1>
         <Button
           type="button"
           variant="outline"

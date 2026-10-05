@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useEffect, useCallback } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import {
   format,
   startOfWeek,
@@ -9,6 +9,7 @@ import {
   isSameDay,
   differenceInMinutes,
   isToday,
+  isWeekend,
   parseISO,
   startOfDay,
 } from "date-fns";
@@ -16,10 +17,8 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { Appointment, ScheduleBlock } from "../types/scheduling.types";
 
-const START_HOUR = 0;
-const END_HOUR = 24;
-const TOTAL_HOURS = END_HOUR - START_HOUR;
-const SCROLL_TO_HOUR = 7;
+const DEFAULT_START_HOUR = 0;
+const DEFAULT_END_HOUR = 24;
 
 interface Props {
   currentDate: Date;
@@ -30,14 +29,15 @@ interface Props {
   onAppointmentClick?: (appointment: Appointment) => void;
   selectedAppointmentId?: string | null;
   memberColorMap?: Map<string, string>;
-  hourHeight: number;
-  onZoom?: (delta: number) => void;
+  startHour?: number;
+  endHour?: number;
+  showWeekends?: boolean;
 }
 
-function getEventPosition(startAt: string, endAt: string, hourHeight: number) {
+function getEventPosition(startAt: string, endAt: string, hourHeight: number, rangeStart: number) {
   const start = parseISO(startAt);
   const end = parseISO(endAt);
-  const startMinutes = start.getHours() * 60 + start.getMinutes() - START_HOUR * 60;
+  const startMinutes = start.getHours() * 60 + start.getMinutes() - rangeStart * 60;
   const duration = differenceInMinutes(end, start);
   return {
     top: Math.max(0, (startMinutes / 60) * hourHeight),
@@ -45,9 +45,9 @@ function getEventPosition(startAt: string, endAt: string, hourHeight: number) {
   };
 }
 
-function HourLabels({ hourHeight }: { hourHeight: number }) {
+function HourLabels({ hourHeight, rangeStart, rangeEnd }: { hourHeight: number; rangeStart: number; rangeEnd: number }) {
   const hours = [];
-  for (let h = START_HOUR; h < END_HOUR; h++) {
+  for (let h = rangeStart; h < rangeEnd; h++) {
     hours.push(
       <div key={h} className="relative" style={{ height: hourHeight }}>
         <span className="absolute -top-2 right-2 text-[10px] tabular-nums text-muted-foreground">
@@ -56,13 +56,22 @@ function HourLabels({ hourHeight }: { hourHeight: number }) {
       </div>,
     );
   }
+  if (rangeEnd <= 24) {
+    hours.push(
+      <div key={rangeEnd} className="relative" style={{ height: 0 }}>
+        <span className="absolute -top-2 right-2 text-[10px] tabular-nums text-muted-foreground">
+          {String(rangeEnd === 24 ? 0 : rangeEnd).padStart(2, "0")}:00
+        </span>
+      </div>,
+    );
+  }
   return <div className="w-12 shrink-0 border-r bg-card">{hours}</div>;
 }
 
-function NowLine({ hourHeight }: { hourHeight: number }) {
+function NowLine({ hourHeight, rangeStart, totalHours }: { hourHeight: number; rangeStart: number; totalHours: number }) {
   const now = new Date();
-  const minutes = now.getHours() * 60 + now.getMinutes() - START_HOUR * 60;
-  if (minutes < 0 || minutes > TOTAL_HOURS * 60) return null;
+  const minutes = now.getHours() * 60 + now.getMinutes() - rangeStart * 60;
+  if (minutes < 0 || minutes > totalHours * 60) return null;
   const top = (minutes / 60) * hourHeight;
   return (
     <div className="pointer-events-none absolute left-0 right-0 z-20" style={{ top }}>
@@ -74,10 +83,10 @@ function NowLine({ hourHeight }: { hourHeight: number }) {
   );
 }
 
-function FiveMinuteLines({ hourHeight }: { hourHeight: number }) {
+function FiveMinuteLines({ hourHeight, rangeStart, rangeEnd }: { hourHeight: number; rangeStart: number; rangeEnd: number }) {
   const lines = [];
   const slotHeight = hourHeight / 12;
-  for (let h = START_HOUR; h < END_HOUR; h++) {
+  for (let h = rangeStart; h < rangeEnd; h++) {
     const slots = [];
     for (let s = 0; s < 12; s++) {
       const isHourEnd = s === 11;
@@ -106,22 +115,6 @@ function FiveMinuteLines({ hourHeight }: { hourHeight: number }) {
   return <>{lines}</>;
 }
 
-function AllDayRow({ days }: { days: Date[] }) {
-  return (
-    <div className="flex border-b bg-muted/10">
-      <div className="flex w-12 shrink-0 items-center justify-end border-r pr-1">
-        <span className="text-[10px] text-muted-foreground">Dia Inteiro</span>
-      </div>
-      {days.map((d) => (
-        <div
-          key={d.toISOString()}
-          className="flex-1 border-r p-0.5 last:border-r-0"
-          style={{ minHeight: 24 }}
-        />
-      ))}
-    </div>
-  );
-}
 
 function DayColumn({
   date,
@@ -132,6 +125,9 @@ function DayColumn({
   selectedAppointmentId,
   memberColorMap,
   hourHeight,
+  rangeStart,
+  rangeEnd,
+  totalHours,
 }: {
   date: Date;
   appointments: Appointment[];
@@ -141,6 +137,9 @@ function DayColumn({
   selectedAppointmentId?: string | null;
   memberColorMap?: Map<string, string>;
   hourHeight: number;
+  rangeStart: number;
+  rangeEnd: number;
+  totalHours: number;
 }) {
   const colRef = useRef<HTMLDivElement>(null);
 
@@ -150,10 +149,10 @@ function DayColumn({
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!onSlotClick || !colRef.current) return;
     const rect = colRef.current.getBoundingClientRect();
-    const y = e.clientY - rect.top + colRef.current.scrollTop;
+    const y = e.clientY - rect.top;
     const slotMinutes = 5;
     const minutes =
-      Math.round(((y / hourHeight) * 60) / slotMinutes) * slotMinutes + START_HOUR * 60;
+      Math.round(((y / hourHeight) * 60) / slotMinutes) * slotMinutes + rangeStart * 60;
     const start = addMinutes(startOfDay(date), minutes);
     const end = addMinutes(start, 30);
     onSlotClick(start, end);
@@ -163,15 +162,15 @@ function DayColumn({
     <div
       ref={colRef}
       className="relative flex-1 cursor-pointer border-r last:border-r-0"
-      style={{ height: TOTAL_HOURS * hourHeight }}
+      style={{ height: totalHours * hourHeight }}
       onClick={handleClick}
     >
-      <FiveMinuteLines hourHeight={hourHeight} />
+      <FiveMinuteLines hourHeight={hourHeight} rangeStart={rangeStart} rangeEnd={rangeEnd} />
 
-      {isToday(date) && <NowLine hourHeight={hourHeight} />}
+      {isToday(date) && <NowLine hourHeight={hourHeight} rangeStart={rangeStart} totalHours={totalHours} />}
 
       {dayBlocks.map((block) => {
-        const pos = getEventPosition(block.startAt, block.endAt, hourHeight);
+        const pos = getEventPosition(block.startAt, block.endAt, hourHeight, rangeStart);
         return (
           <div
             key={block.id}
@@ -185,7 +184,7 @@ function DayColumn({
       })}
 
       {dayAppointments.map((appt) => {
-        const pos = getEventPosition(appt.startAt, appt.endAt, hourHeight);
+        const pos = getEventPosition(appt.startAt, appt.endAt, hourHeight, rangeStart);
         const isSelected = selectedAppointmentId === appt.id;
         const memberColor = memberColorMap?.get(appt.hostId);
         return (
@@ -228,93 +227,88 @@ export function WeeklyCalendar({
   onAppointmentClick,
   selectedAppointmentId,
   memberColorMap,
-  hourHeight,
-  onZoom,
+  startHour = DEFAULT_START_HOUR,
+  endHour = DEFAULT_END_HOUR,
+  showWeekends = true,
 }: Props) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const didScroll = useRef(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  const rangeStart = Math.max(0, Math.min(23, startHour));
+  const rangeEnd = Math.max(rangeStart + 1, Math.min(24, endHour));
+  const totalHours = rangeEnd - rangeStart;
 
   const days = useMemo(() => {
     if (view === "day") return [currentDate];
     const start = startOfWeek(currentDate, { weekStartsOn: 1 });
-    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  }, [currentDate, view]);
+    const allDays = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+    return showWeekends ? allDays : allDays.filter((d) => !isWeekend(d));
+  }, [currentDate, view, showWeekends]);
 
   useEffect(() => {
-    if (scrollRef.current && !didScroll.current) {
-      scrollRef.current.scrollTop = SCROLL_TO_HOUR * hourHeight;
-      didScroll.current = true;
-    }
-  }, [hourHeight]);
+    const el = gridRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerHeight(entry.contentRect.height);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      if (e.ctrlKey && onZoom) {
-        e.preventDefault();
-        onZoom(e.deltaY > 0 ? -1 : 1);
-      }
-    },
-    [onZoom],
-  );
+  const MIN_HOUR_HEIGHT = 48;
+  const fitsInView = containerHeight > 0 && containerHeight / totalHours >= MIN_HOUR_HEIGHT;
+  const hourHeight = fitsInView ? containerHeight / totalHours : MIN_HOUR_HEIGHT;
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden"
-        onWheel={handleWheel}
-      >
-        {/* Sticky header */}
-        <div className="sticky top-0 z-30">
-          {/* Day names */}
-          <div className="flex border-b bg-muted/30">
-            <div className="w-12 shrink-0 border-r bg-muted/30" />
-            {days.map((d) => {
-              const today = isToday(d);
-              return (
-                <div
-                  key={d.toISOString()}
-                  className={cn(
-                    "flex-1 border-r py-1.5 text-center text-xs last:border-r-0",
-                    today ? "bg-primary/10" : "bg-muted/30",
-                  )}
-                >
-                  <span className="text-muted-foreground">
-                    {format(d, "EEE.", { locale: ptBR })}{" "}
-                  </span>
-                  <span
-                    className={cn(
-                      "inline-flex h-6 w-6 items-center justify-center rounded-full font-medium tabular-nums",
-                      today && "bg-primary text-primary-foreground",
-                    )}
-                  >
-                    {format(d, "d")}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          {/* All-day row */}
-          <AllDayRow days={days} />
-        </div>
-
-        {/* Grid body */}
-        <div className="flex">
-          <HourLabels hourHeight={hourHeight} />
-          {days.map((d) => (
-            <DayColumn
+    <div ref={gridRef} className="flex flex-1 flex-col overflow-y-auto rounded-lg border bg-card">
+      {/* Header — sticky so it stays visible while scrolling */}
+      <div className="sticky top-0 z-10 flex border-b bg-muted/30">
+        <div className="w-12 shrink-0 border-r bg-muted/30" />
+        {days.map((d) => {
+          const today = isToday(d);
+          return (
+            <div
               key={d.toISOString()}
-              date={d}
-              appointments={appointments}
-              blocks={blocks}
-              onSlotClick={onSlotClick}
-              onAppointmentClick={onAppointmentClick}
-              selectedAppointmentId={selectedAppointmentId}
-              memberColorMap={memberColorMap}
-              hourHeight={hourHeight}
-            />
-          ))}
-        </div>
+              className={cn(
+                "flex-1 border-r py-1.5 text-center text-xs last:border-r-0",
+                today ? "bg-primary/10" : "bg-muted/30",
+              )}
+            >
+              <span className="text-muted-foreground">
+                {format(d, "EEE.", { locale: ptBR })}{" "}
+              </span>
+              <span
+                className={cn(
+                  "inline-flex h-6 w-6 items-center justify-center rounded-full font-medium tabular-nums",
+                  today && "bg-primary text-primary-foreground",
+                )}
+              >
+                {format(d, "d")}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Grid body */}
+      <div className="flex flex-1">
+        <HourLabels hourHeight={hourHeight} rangeStart={rangeStart} rangeEnd={rangeEnd} />
+        {days.map((d) => (
+          <DayColumn
+            key={d.toISOString()}
+            date={d}
+            appointments={appointments}
+            blocks={blocks}
+            onSlotClick={onSlotClick}
+            onAppointmentClick={onAppointmentClick}
+            selectedAppointmentId={selectedAppointmentId}
+            memberColorMap={memberColorMap}
+            hourHeight={hourHeight}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            totalHours={totalHours}
+          />
+        ))}
       </div>
     </div>
   );

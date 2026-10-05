@@ -80,7 +80,7 @@ export default function ContactsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Lista de Contatos ({totalCount})</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Contatos</h1>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center gap-2">

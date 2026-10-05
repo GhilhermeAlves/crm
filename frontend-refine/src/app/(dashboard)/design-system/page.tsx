@@ -24,9 +24,7 @@ export default function DesignSystemPage() {
               <Sparkles className="h-3.5 w-3.5" />
               <span>Design System v1.0 • Live Foundations</span>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
-              Sistema de Design do CRM
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">Sistema de Design do CRM</h1>
             <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
               Catálogo visual vivo de tokens semânticos, componentes atômicos, tipografia e padrões
               de tela. Use como bancada de trabalho para testar novos componentes antes de plugá-los

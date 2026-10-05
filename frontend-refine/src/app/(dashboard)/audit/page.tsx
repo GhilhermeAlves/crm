@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardList } from "lucide-react";
+
 import { AuditTable } from "@/features/analytics/audit/components/AuditTable";
 import { AuditFilters } from "@/features/analytics/audit/components/AuditFilters";
 import { useAuditLogs } from "@/features/analytics/audit/hooks/useAudit";
@@ -24,10 +24,7 @@ export default function AuditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <ClipboardList className="h-6 w-6" />
-          Auditoria
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Auditoria</h1>
         <p className="text-muted-foreground">Histórico de ações e eventos do sistema</p>
       </div>
 

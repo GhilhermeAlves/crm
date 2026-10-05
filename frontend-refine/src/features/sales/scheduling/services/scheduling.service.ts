@@ -151,3 +151,20 @@ export const AvailabilityService = {
     return r.data;
   },
 };
+
+export interface BirthdayMessageSettings {
+  enabled: boolean;
+  template: string;
+}
+
+export const BirthdayMessageService = {
+  async get(companyId: string): Promise<BirthdayMessageSettings | null> {
+    const r = await api.get<BirthdayMessageSettings>(`${BASE}/${companyId}/birthday-message`);
+    return r.status === 204 ? null : r.data;
+  },
+
+  async save(companyId: string, data: BirthdayMessageSettings): Promise<BirthdayMessageSettings> {
+    const r = await api.put<BirthdayMessageSettings>(`${BASE}/${companyId}/birthday-message`, data);
+    return r.data;
+  },
+};

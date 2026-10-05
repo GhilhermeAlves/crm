@@ -13,7 +13,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthProvider>
           <SidebarProvider>
             {children}
-            <Toaster richColors position="top-right" />
+            <Toaster
+              richColors
+              position="top-right"
+              closeButton
+              duration={5000}
+              toastOptions={{
+                className: "sonner-toast-with-progress",
+              }}
+            />
           </SidebarProvider>
         </AuthProvider>
       </QueryProvider>
