@@ -17,6 +17,7 @@ public class CompanySettings {
     private String currency;
     private String businessHours;
     private String notificationPreferences;
+    private boolean requireContactCpf;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -88,6 +89,16 @@ public class CompanySettings {
         );
     }
 
+    /** Reidratação a partir da persistência, sem tocar em updatedAt. */
+    public void restoreRequireContactCpf(boolean requireContactCpf) {
+        this.requireContactCpf = requireContactCpf;
+    }
+
+    public void setRequireContactCpf(boolean requireContactCpf) {
+        this.requireContactCpf = requireContactCpf;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void update(
             String timezone,
             String locale,
@@ -110,6 +121,7 @@ public class CompanySettings {
     public String getCurrency() { return currency; }
     public String getBusinessHours() { return businessHours; }
     public String getNotificationPreferences() { return notificationPreferences; }
+    public boolean isRequireContactCpf() { return requireContactCpf; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 

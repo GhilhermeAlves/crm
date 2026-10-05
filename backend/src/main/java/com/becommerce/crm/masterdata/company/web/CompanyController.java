@@ -72,6 +72,15 @@ public class CompanyController {
         return ResponseEntity.ok(companyUseCase.updateCompanySettings(id, request, principal.companyId()));
     }
 
+    /** Regras de cadastro de contato, legíveis por qualquer usuário da empresa (formulários de contato). */
+    @GetMapping("/{id}/settings/contact-rules")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<java.util.Map<String, Boolean>> getContactRules(@PathVariable UUID id,
+                                                                        @AuthenticationPrincipal CurrentUser principal) {
+        CompanySettingsResponse settings = companyUseCase.getCompanySettings(id, principal.companyId());
+        return ResponseEntity.ok(java.util.Map.of("requireContactCpf", settings.requireContactCpf()));
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('company:create')")
     public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CreateCompanyRequest request,

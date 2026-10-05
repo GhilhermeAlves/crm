@@ -261,6 +261,7 @@ public class CompanyService implements CompanyUseCase {
                         CompanySettings.DEFAULT_CURRENCY,
                         null,
                         null,
+                        false,
                         null));
     }
 
@@ -287,6 +288,9 @@ public class CompanyService implements CompanyUseCase {
                 : settings.getNotificationPreferences();
 
         settings.update(timezone, locale, currency, businessHours, notificationPreferences);
+        if (request.requireContactCpf() != null) {
+            settings.setRequireContactCpf(request.requireContactCpf());
+        }
 
         CompanySettings saved = companySettingsRepository.save(settings);
         return mapToSettingsResponse(saved);
@@ -364,6 +368,7 @@ public class CompanyService implements CompanyUseCase {
                 settings.getCurrency(),
                 settings.getBusinessHours(),
                 settings.getNotificationPreferences(),
+                settings.isRequireContactCpf(),
                 settings.getUpdatedAt()
         );
     }

@@ -10,6 +10,15 @@ describe("resolveAuthRedirect (middleware, flag-only)", () => {
     expect(d.redirectTo).toBe("/login?redirect=%2Fdashboard");
   });
 
+  it("keeps the query string (e.g. invitation token) in the login redirect", () => {
+    const d = resolveAuthRedirect({
+      pathname: "/invitations/accept",
+      search: "?token=abc123",
+      hasSession: false,
+    });
+    expect(d.redirectTo).toBe("/login?redirect=%2Finvitations%2Faccept%3Ftoken%3Dabc123");
+  });
+
   it("allows public paths without a session flag", () => {
     expect(
       resolveAuthRedirect({ pathname: "/login", hasSession: false }).redirectTo,

@@ -41,6 +41,9 @@ public class CompanySettingsJpaEntity implements Persistable<UUID> {
     @Column(name = "notification_preferences", columnDefinition = "TEXT")
     private String notificationPreferences;
 
+    @Column(name = "require_contact_cpf", nullable = false)
+    private boolean requireContactCpf;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -74,6 +77,9 @@ public class CompanySettingsJpaEntity implements Persistable<UUID> {
 
     public String getNotificationPreferences() { return notificationPreferences; }
     public void setNotificationPreferences(String notificationPreferences) { this.notificationPreferences = notificationPreferences; }
+
+    public boolean isRequireContactCpf() { return requireContactCpf; }
+    public void setRequireContactCpf(boolean requireContactCpf) { this.requireContactCpf = requireContactCpf; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

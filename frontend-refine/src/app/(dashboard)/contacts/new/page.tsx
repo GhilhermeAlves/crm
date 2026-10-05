@@ -35,6 +35,7 @@ import {
 } from "@/features/masterdata/contacts/hooks/useContacts";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 import { ROUTES } from "@/lib/constants";
+import { useContactRules } from "@/features/identity/tenants/hooks/useTenants";
 import { formatCpf, validateCpf, formatPhone, formatCep, fetchCep } from "@/lib/format";
 
 const MAX_PHOTO_SIZE = 4 * 1024 * 1024;
@@ -90,56 +91,64 @@ const UF_OPTIONS = [
   "TO",
 ] as const;
 
-const createContactSchema = z
-  .object({
-    firstName: z.string().min(1, "Nome é obrigatório").max(100),
-    lastName: z.string().max(100).optional(),
-    birthDate: z.string().optional(),
-    cpf: z
-      .string()
-      .min(1, "CPF é obrigatório")
-      .refine((val) => validateCpf(val), "CPF inválido"),
-    rg: z.string().max(20).optional(),
-    rgIssuer: z.string().max(20).optional(),
-    gender: z.string().max(20).optional(),
-    maritalStatus: z.string().max(30).optional(),
-    professionalStatus: z.string().max(20).optional(),
-    mobile: z.string().min(1, "Celular é obrigatório").max(20),
-    phone: z.string().max(20).optional(),
-    email: z.string().min(1, "E-mail é obrigatório").max(255).email("E-mail inválido"),
-    cep: z.string().min(1, "CEP é obrigatório").max(10),
-    street: z.string().min(1, "Logradouro é obrigatório").max(255),
-    addressNumber: z.string().min(1, "Número é obrigatório").max(20),
-    complement: z.string().max(100).optional(),
-    neighborhood: z.string().min(1, "Bairro é obrigatório").max(100),
-    city: z.string().min(1, "Cidade é obrigatória").max(100),
-    state: z.string().min(1, "Estado é obrigatório").max(2),
-    hasGuardian: z.boolean().optional(),
-    guardianName: z.string().max(200).optional(),
-    guardianCpf: z.string().optional(),
-    guardianPhone: z.string().max(20).optional(),
-    notes: z.string().max(500).optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.hasGuardian) {
-      if (!data.guardianName || data.guardianName.trim().length === 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Nome do responsável é obrigatório",
-          path: ["guardianName"],
-        });
+const createContactSchema = (requireCpf: boolean) =>
+  z
+    .object({
+      firstName: z.string().min(1, "Nome é obrigatório").max(100),
+      lastName: z.string().max(100).optional(),
+      birthDate: z.string().optional(),
+      cpf: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || val.replace(/\D/g, "").length === 0 || validateCpf(val),
+          "CPF inválido",
+        ),
+      rg: z.string().max(20).optional(),
+      rgIssuer: z.string().max(20).optional(),
+      gender: z.string().max(20).optional(),
+      maritalStatus: z.string().max(30).optional(),
+      professionalStatus: z.string().max(20).optional(),
+      mobile: z.string().min(1, "Celular é obrigatório").max(20),
+      phone: z.string().max(20).optional(),
+      email: z.string().min(1, "E-mail é obrigatório").max(255).email("E-mail inválido"),
+      cep: z.string().min(1, "CEP é obrigatório").max(10),
+      street: z.string().min(1, "Logradouro é obrigatório").max(255),
+      addressNumber: z.string().min(1, "Número é obrigatório").max(20),
+      complement: z.string().max(100).optional(),
+      neighborhood: z.string().min(1, "Bairro é obrigatório").max(100),
+      city: z.string().min(1, "Cidade é obrigatória").max(100),
+      state: z.string().min(1, "Estado é obrigatório").max(2),
+      hasGuardian: z.boolean().optional(),
+      guardianName: z.string().max(200).optional(),
+      guardianCpf: z.string().optional(),
+      guardianPhone: z.string().max(20).optional(),
+      notes: z.string().max(500).optional(),
+    })
+    .superRefine((data, ctx) => {
+      // Preferência da empresa (Minha Empresa → Preferências)
+      if (requireCpf && (!data.cpf || data.cpf.replace(/\D/g, "").length === 0)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CPF é obrigatório", path: ["cpf"] });
       }
-      if (!data.guardianPhone || data.guardianPhone.replace(/\D/g, "").length < 10) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Telefone do responsável é obrigatório",
-          path: ["guardianPhone"],
-        });
+      if (data.hasGuardian) {
+        if (!data.guardianName || data.guardianName.trim().length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Nome do responsável é obrigatório",
+            path: ["guardianName"],
+          });
+        }
+        if (!data.guardianPhone || data.guardianPhone.replace(/\D/g, "").length < 10) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Telefone do responsável é obrigatório",
+            path: ["guardianPhone"],
+          });
+        }
       }
-    }
-  });
+    });
 
-type FormValues = z.infer<typeof createContactSchema>;
+type FormValues = z.infer<ReturnType<typeof createContactSchema>>;
 
 function OptionalLabel({ label }: { label: string }) {
   return (
@@ -230,6 +239,8 @@ export default function NewContactPage() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
   const createContact = useCreateContact(companyId);
+  const { data: contactRules } = useContactRules(companyId);
+  const requireCpf = contactRules?.requireContactCpf ?? false;
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -237,7 +248,7 @@ export default function NewContactPage() {
   const [searchOpen, setSearchOpen] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(createContactSchema),
+    resolver: zodResolver(createContactSchema(requireCpf)),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -456,7 +467,7 @@ export default function NewContactPage() {
                 name="cpf"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CPF</FormLabel>
+                    {requireCpf ? <FormLabel>CPF</FormLabel> : <OptionalLabel label="CPF" />}
                     <FormControl>
                       <Input
                         placeholder="000.000.000-00"

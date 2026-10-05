@@ -11,6 +11,9 @@ import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanySettingsRepository;
+import com.becommerce.crm.masterdata.company.domain.CompanySettings;
+import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,17 +34,20 @@ public class ContactService implements ContactUseCase {
     private final TenantAuditRecorder auditor;
     private final com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher;
     private final com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities authorities;
+    private final CompanySettingsRepository companySettingsRepository;
 
     public ContactService(ContactRepository contactRepository,
                           CompanyQuotaService quotaService,
                           TenantAuditRecorder auditor,
                           com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher,
-                          com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities authorities) {
+                          com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities authorities,
+                          CompanySettingsRepository companySettingsRepository) {
         this.contactRepository = contactRepository;
         this.quotaService = quotaService;
         this.auditor = auditor;
         this.eventPublisher = eventPublisher;
         this.authorities = authorities;
+        this.companySettingsRepository = companySettingsRepository;
     }
 
     @Override
@@ -50,6 +56,7 @@ public class ContactService implements ContactUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             quotaService.assertCanAddContact(companyId);
+            requireCpfIfConfigured(companyId, request.cpf());
 
             Contact contact = Contact.create(
                     companyId, request.firstName(), request.lastName(),
@@ -160,6 +167,7 @@ public class ContactService implements ContactUseCase {
             if (request.gender() != null) contact.setGender(blankToNull(request.gender()));
             if (request.maritalStatus() != null) contact.setMaritalStatus(blankToNull(request.maritalStatus()));
             if (request.professionalStatus() != null) contact.setProfessionalStatus(blankToNull(request.professionalStatus()));
+            requireCpfIfConfigured(companyId, contact.getCpf());
             contact.touch();
             Contact saved = contactRepository.save(contact);
 
@@ -219,5 +227,15 @@ public class ContactService implements ContactUseCase {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    /** Preferência da empresa (Minha Empresa → Preferências): CPF obrigatório em contatos. */
+    private void requireCpfIfConfigured(UUID companyId, String cpf) {
+        boolean required = companySettingsRepository.findByCompanyId(companyId)
+                .map(CompanySettings::isRequireContactCpf)
+                .orElse(false);
+        if (required && (cpf == null || cpf.isBlank())) {
+            throw new ContactValidationException("CPF é obrigatório para contatos desta empresa.");
+        }
     }
 }

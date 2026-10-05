@@ -15,13 +15,14 @@ public class CompanySettingsMapper {
         entity.setCurrency(settings.getCurrency());
         entity.setBusinessHours(settings.getBusinessHours());
         entity.setNotificationPreferences(settings.getNotificationPreferences());
+        entity.setRequireContactCpf(settings.isRequireContactCpf());
         entity.setCreatedAt(settings.getCreatedAt());
         entity.setUpdatedAt(settings.getUpdatedAt());
         return entity;
     }
 
     public CompanySettings toDomainEntity(CompanySettingsJpaEntity entity) {
-        return CompanySettings.reconstitute(
+        CompanySettings settings = CompanySettings.reconstitute(
                 entity.getId(),
                 entity.getCompanyId(),
                 entity.getTimezone(),
@@ -32,5 +33,7 @@ public class CompanySettingsMapper {
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
+        settings.restoreRequireContactCpf(entity.isRequireContactCpf());
+        return settings;
     }
 }

@@ -5,6 +5,7 @@ public record UpdateCompanySettingsRequest(
         String locale,
         String currency,
         String businessHours,
-        String notificationPreferences
+        String notificationPreferences,
+        Boolean requireContactCpf
 ) {
 }

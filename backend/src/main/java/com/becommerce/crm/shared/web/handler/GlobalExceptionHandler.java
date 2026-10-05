@@ -636,6 +636,18 @@ public class GlobalExceptionHandler {
             ));
     }
 
+    @ExceptionHandler(com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleContactValidationException(
+            com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(SchedulingValidationException.class)
     public ResponseEntity<Map<String, Object>> handleSchedulingValidationException(SchedulingValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

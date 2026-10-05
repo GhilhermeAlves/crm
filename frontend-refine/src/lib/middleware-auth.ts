@@ -31,13 +31,15 @@ export function isPublicPathname(pathname: string): boolean {
 export function resolveAuthRedirect(input: {
   pathname: string;
   hasSession: boolean;
+  /** Query string original (ex.: "?token=abc"), preservada no redirect p/ login. */
+  search?: string;
 }): AuthDecision {
-  const { pathname, hasSession } = input;
+  const { pathname, hasSession, search = "" } = input;
 
   const isPublicPath = isPublicPathname(pathname);
 
   if (!hasSession && !isPublicPath) {
-    return { redirectTo: `/login?redirect=${encodeURIComponent(pathname)}` };
+    return { redirectTo: `/login?redirect=${encodeURIComponent(pathname + search)}` };
   }
 
   return {};

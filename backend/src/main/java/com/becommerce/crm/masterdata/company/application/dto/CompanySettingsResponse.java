@@ -9,6 +9,7 @@ public record CompanySettingsResponse(
         String currency,
         String businessHours,
         String notificationPreferences,
+        boolean requireContactCpf,
         LocalDateTime updatedAt
 ) {
 }

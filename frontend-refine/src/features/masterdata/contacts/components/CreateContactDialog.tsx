@@ -3,6 +3,8 @@
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useContactRules } from "@/features/identity/tenants/hooks/useTenants";
 import { z } from "zod";
 import type { Contact, UpdateContactRequest } from "../types/contact.types";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
@@ -48,36 +50,44 @@ const PROFESSIONAL_STATUS_OPTIONS = [
   { value: "BLOQUEADO", label: "Bloqueado" },
 ] as const;
 
-const editContactSchema = z.object({
-  firstName: z.string().min(1, "Nome é obrigatório").max(100),
-  lastName: z.string().max(100).optional(),
-  email: z
-    .string()
-    .max(255)
-    .optional()
-    .refine(
-      (val) => !val || val === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
-      "E-mail inválido",
-    ),
-  phone: z.string().max(20).optional(),
-  mobile: z.string().max(20).optional(),
-  notes: z.string().max(500).optional(),
-  birthDate: z.string().optional(),
-  cpf: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || val.replace(/\D/g, "").length === 0 || validateCpf(val),
-      "CPF inválido",
-    ),
-  rg: z.string().max(20).optional(),
-  rgIssuer: z.string().max(20).optional(),
-  gender: z.string().max(20).optional(),
-  maritalStatus: z.string().max(30).optional(),
-  professionalStatus: z.string().max(20).optional(),
-});
+const editContactSchema = (requireCpf: boolean) =>
+  z
+    .object({
+      firstName: z.string().min(1, "Nome é obrigatório").max(100),
+      lastName: z.string().max(100).optional(),
+      email: z
+        .string()
+        .max(255)
+        .optional()
+        .refine(
+          (val) => !val || val === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+          "E-mail inválido",
+        ),
+      phone: z.string().max(20).optional(),
+      mobile: z.string().max(20).optional(),
+      notes: z.string().max(500).optional(),
+      birthDate: z.string().optional(),
+      cpf: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || val.replace(/\D/g, "").length === 0 || validateCpf(val),
+          "CPF inválido",
+        ),
+      rg: z.string().max(20).optional(),
+      rgIssuer: z.string().max(20).optional(),
+      gender: z.string().max(20).optional(),
+      maritalStatus: z.string().max(30).optional(),
+      professionalStatus: z.string().max(20).optional(),
+    })
+    .superRefine((data, ctx) => {
+      // Preferência da empresa (Minha Empresa → Preferências)
+      if (requireCpf && (!data.cpf || data.cpf.replace(/\D/g, "").length === 0)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CPF é obrigatório", path: ["cpf"] });
+      }
+    });
 
-type FormValues = z.infer<typeof editContactSchema>;
+type FormValues = z.infer<ReturnType<typeof editContactSchema>>;
 
 type Props = {
   open: boolean;
@@ -104,6 +114,9 @@ const emptyValues: FormValues = {
 };
 
 export function CreateContactDialog({ open, onOpenChange, isLoading, contact, onSubmit }: Props) {
+  const { user } = useAuth();
+  const { data: contactRules } = useContactRules(user?.companyId);
+  const requireCpf = contactRules?.requireContactCpf ?? false;
   const isEdit = !!contact;
 
   const formValues = useMemo<FormValues>(
@@ -129,7 +142,7 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, contact, on
   );
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(editContactSchema),
+    resolver: zodResolver(editContactSchema(requireCpf)),
     values: formValues,
   });
 
@@ -215,7 +228,7 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, contact, on
                 name="cpf"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CPF</FormLabel>
+                    <FormLabel>CPF{requireCpf ? " *" : ""}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="000.000.000-00"

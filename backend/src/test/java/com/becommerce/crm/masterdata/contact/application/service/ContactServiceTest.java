@@ -32,6 +32,7 @@ class ContactServiceTest {
     @Mock com.becommerce.crm.identity.application.port.output.EventPublisher eventPublisher;
     @Mock CurrentUserAuthorities authorities;
 
+    @Mock com.becommerce.crm.masterdata.company.application.port.output.CompanySettingsRepository companySettingsRepository;
     @InjectMocks ContactService contactService;
 
     private final UUID companyId = UUID.randomUUID();

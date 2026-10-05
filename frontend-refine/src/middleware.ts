@@ -3,11 +3,11 @@ import type { NextRequest } from "next/server";
 import { resolveAuthRedirect, SESSION_COOKIE } from "@/lib/middleware-auth";
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
   const hasSession = !!request.cookies.get(SESSION_COOKIE)?.value;
 
-  const decision = resolveAuthRedirect({ pathname, hasSession });
+  const decision = resolveAuthRedirect({ pathname, hasSession, search });
 
   return decision.redirectTo
     ? NextResponse.redirect(new URL(decision.redirectTo, request.url))

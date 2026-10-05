@@ -306,7 +306,7 @@ class CompanyControllerTest {
     void shouldGetSettings() throws Exception {
         login(false);
         CompanySettingsResponse settings = new CompanySettingsResponse(
-                companyId.toString(), "America/Sao_Paulo", "pt-BR", "BRL", null, null, LocalDateTime.now());
+                companyId.toString(), "America/Sao_Paulo", "pt-BR", "BRL", null, null, false, LocalDateTime.now());
         when(companyUseCase.getCompanySettings(eq(companyId), eq(companyId))).thenReturn(settings);
 
         mockMvc.perform(get("/api/v1/companies/" + companyId + "/settings"))
@@ -319,7 +319,7 @@ class CompanyControllerTest {
     void shouldUpdateSettings() throws Exception {
         login(false);
         CompanySettingsResponse settings = new CompanySettingsResponse(
-                companyId.toString(), "Europe/Lisbon", "pt-BR", "BRL", null, null, LocalDateTime.now());
+                companyId.toString(), "Europe/Lisbon", "pt-BR", "BRL", null, null, false, LocalDateTime.now());
         when(companyUseCase.updateCompanySettings(eq(companyId), any(UpdateCompanySettingsRequest.class), eq(companyId)))
                 .thenReturn(settings);
 

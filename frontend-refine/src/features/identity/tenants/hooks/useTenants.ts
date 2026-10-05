@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMutationDefaults } from "@/lib/query/mutation-utils";
-import { TenantService } from "../services/tenant.service";
+import { TenantService, CompanyPreferencesService } from "../services/tenant.service";
 import type {
   CreateTenantRequest,
   UpdateTenantRequest,
@@ -65,5 +65,30 @@ export function useDeleteTenant() {
       invalidateKeys: [[QUERY_KEY]],
     }),
     onError: onError({ errorMessage: "Erro ao excluir empresa" }),
+  });
+}
+
+// --- Preferências: regras de cadastro de contato ---
+
+export function useContactRules(companyId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["contact-rules", companyId],
+    queryFn: () => CompanyPreferencesService.getContactRules(companyId as string),
+    enabled: !!companyId,
+    staleTime: 60_000,
+  });
+}
+
+export function useSetRequireContactCpf(companyId: string | null | undefined) {
+  const { onSuccess, onError } = useMutationDefaults();
+
+  return useMutation({
+    mutationFn: (requireContactCpf: boolean) =>
+      CompanyPreferencesService.setRequireContactCpf(companyId as string, requireContactCpf),
+    onSuccess: onSuccess({
+      successMessage: "Preferência salva",
+      invalidateKeys: [["contact-rules", companyId]],
+    }),
+    onError: onError({ errorMessage: "Erro ao salvar preferência" }),
   });
 }

@@ -351,7 +351,7 @@ class CompanyServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         UpdateCompanySettingsRequest request = new UpdateCompanySettingsRequest(
-                "America/Sao_Paulo", "pt-BR", "BRL", "{\"seg\":\"09-18\"}", null);
+                "America/Sao_Paulo", "pt-BR", "BRL", "{\"seg\":\"09-18\"}", null, null);
 
         CompanySettingsResponse response = companyService.updateCompanySettings(companyId, request, companyId);
 
@@ -370,7 +370,7 @@ class CompanyServiceTest {
         when(companySettingsRepository.findByCompanyId(companyId)).thenReturn(Optional.of(existing));
         when(companySettingsRepository.save(any(CompanySettings.class))).thenReturn(existing);
 
-        UpdateCompanySettingsRequest request = new UpdateCompanySettingsRequest("Europe/Lisbon", null, null, null, null);
+        UpdateCompanySettingsRequest request = new UpdateCompanySettingsRequest("Europe/Lisbon", null, null, null, null, null);
 
         CompanySettingsResponse response = companyService.updateCompanySettings(companyId, request, companyId);
 

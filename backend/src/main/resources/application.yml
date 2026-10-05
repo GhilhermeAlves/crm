@@ -119,7 +119,7 @@ app:
     frontend-base-url: ${MAIL_FRONTEND_BASE_URL:http://localhost:3000}
     log-token: ${MAIL_LOG_TOKEN:false}
   invitations:
-    base-url: ${INVITATION_BASE_URL:}
+    base-url: ${INVITATION_BASE_URL:${MAIL_FRONTEND_BASE_URL:}}
   ai:
     provider: ${AI_PROVIDER:openai}
     api-key: ${OPENAI_API_KEY:}
