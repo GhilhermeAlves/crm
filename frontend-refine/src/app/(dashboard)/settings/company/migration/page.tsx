@@ -178,12 +178,10 @@ export default function MigrationPage() {
           💡
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium">
-            Precisa de ajuda para importar seus arquivos?
-          </p>
+          <p className="text-sm font-medium">Precisa de ajuda para importar seus arquivos?</p>
           <p className="text-xs text-muted-foreground">
-            Siga nosso guia simples para baixar seus dados da plataforma
-            anterior e começar a usar o CRM ao máximo!
+            Siga nosso guia simples para baixar seus dados da plataforma anterior e começar a usar o
+            CRM ao máximo!
           </p>
         </div>
         <Button variant="ghost" size="icon" className="shrink-0">

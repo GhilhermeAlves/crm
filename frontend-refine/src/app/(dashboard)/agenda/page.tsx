@@ -79,7 +79,6 @@ import { isWeekend } from "date-fns";
 type CalendarView = "day" | "week" | "month" | "list" | "professionals";
 type AgendaTab = "agenda" | "retornos";
 
-
 export default function AgendaPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -321,9 +320,7 @@ export default function AgendaPage() {
                   key={value}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-                    view === value
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted",
+                    view === value ? "bg-primary text-primary-foreground" : "hover:bg-muted",
                   )}
                   onClick={() => setView(value)}
                 >
@@ -623,14 +620,21 @@ function MonthView({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
-      <div className={cn("grid border-b bg-muted/30", showWeekends ? "grid-cols-7" : "grid-cols-5")}>
+      <div
+        className={cn("grid border-b bg-muted/30", showWeekends ? "grid-cols-7" : "grid-cols-5")}
+      >
         {weekDayLabels.map((wd) => (
-          <div key={wd} className="border-r py-2 text-center text-xs font-medium text-muted-foreground last:border-r-0">
+          <div
+            key={wd}
+            className="border-r py-2 text-center text-xs font-medium text-muted-foreground last:border-r-0"
+          >
             {wd}
           </div>
         ))}
       </div>
-      <div className={cn("grid flex-1 overflow-hidden", showWeekends ? "grid-cols-7" : "grid-cols-5")}>
+      <div
+        className={cn("grid flex-1 overflow-hidden", showWeekends ? "grid-cols-7" : "grid-cols-5")}
+      >
         {days.map((day) => {
           const isCurrentMonth = isSameMonth(day, currentDate);
           const today = isSameDay(day, new Date());
@@ -641,7 +645,7 @@ function MonthView({
             <div
               key={day.toISOString()}
               className={cn(
-                "min-h-[80px] cursor-pointer border-b border-r p-1 transition-colors hover:bg-muted/20 last:border-r-0",
+                "min-h-[80px] cursor-pointer border-b border-r p-1 transition-colors last:border-r-0 hover:bg-muted/20",
                 !isCurrentMonth && "bg-muted/10 text-muted-foreground/50",
                 holiday && "bg-red-50 dark:bg-red-950/20",
               )}
@@ -743,7 +747,7 @@ function ListView({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto rounded-lg border bg-card p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="flex-1 overflow-y-auto rounded-lg border bg-card p-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="space-y-4">
         {Array.from(grouped.entries()).map(([dateKey, appts]) => (
           <div key={dateKey}>
@@ -764,7 +768,8 @@ function ListView({
                       style={{ backgroundColor: color ?? "hsl(var(--primary))" }}
                     />
                     <span className="w-24 shrink-0 tabular-nums text-muted-foreground">
-                      {format(parseISO(appt.startAt), "HH:mm")} – {format(parseISO(appt.endAt), "HH:mm")}
+                      {format(parseISO(appt.startAt), "HH:mm")} –{" "}
+                      {format(parseISO(appt.endAt), "HH:mm")}
                     </span>
                     <span className="flex-1 truncate font-medium">{appt.title}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">

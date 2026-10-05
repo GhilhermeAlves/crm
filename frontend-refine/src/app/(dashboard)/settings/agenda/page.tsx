@@ -96,7 +96,12 @@ export default function AgendaGeneralPage() {
     if (editingType) {
       updateType.mutate(
         { id: editingType.id, data: values },
-        { onSuccess: () => { setTypeFormOpen(false); setEditingType(null); } },
+        {
+          onSuccess: () => {
+            setTypeFormOpen(false);
+            setEditingType(null);
+          },
+        },
       );
     } else {
       createType.mutate(values, { onSuccess: () => setTypeFormOpen(false) });
@@ -136,8 +141,7 @@ export default function AgendaGeneralPage() {
           <div>
             <h3 className="text-sm font-semibold">Marcadores</h3>
             <p className="text-xs text-muted-foreground">
-              Gerencie os marcadores que poderão ser exibidos nos eventos da
-              agenda.
+              Gerencie os marcadores que poderão ser exibidos nos eventos da agenda.
             </p>
           </div>
         </div>
@@ -196,8 +200,7 @@ export default function AgendaGeneralPage() {
             </TableHeader>
             <TableBody>
               {markers.map((m) => {
-                const colorLabel =
-                  PRESET_COLORS.find((c) => c.value === m.color)?.label ?? m.color;
+                const colorLabel = PRESET_COLORS.find((c) => c.value === m.color)?.label ?? m.color;
                 return (
                   <TableRow key={m.id}>
                     <TableCell className="text-sm">{m.name}</TableCell>
@@ -211,11 +214,7 @@ export default function AgendaGeneralPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeMarker(m.id)}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => removeMarker(m.id)}>
                         <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                         Excluir
                       </Button>

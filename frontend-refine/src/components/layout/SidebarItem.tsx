@@ -30,7 +30,7 @@ export function SidebarItem({ item, collapsed, onNavClick }: SidebarItemProps) {
     ?.filter((c) => pathname === c.href || pathname.startsWith(c.href + "/"))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
-  const handleClick =(e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent) => {
     if (hasChildren && isActive) {
       // Já está na seção: o clique só abre/fecha o submenu
       e.preventDefault();

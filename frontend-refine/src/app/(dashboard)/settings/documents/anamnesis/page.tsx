@@ -21,17 +21,13 @@ type AnamnesisModel = {
   active: boolean;
 };
 
-const INITIAL_MODELS: AnamnesisModel[] = [
-  { id: "1", name: "Padrão", active: true },
-];
+const INITIAL_MODELS: AnamnesisModel[] = [{ id: "1", name: "Padrão", active: true }];
 
 export default function AnamnesisListPage() {
   const [models, setModels] = useState<AnamnesisModel[]>(INITIAL_MODELS);
 
   const toggleActive = (id: string) => {
-    setModels((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, active: !m.active } : m)),
-    );
+    setModels((prev) => prev.map((m) => (m.id === id ? { ...m, active: !m.active } : m)));
   };
 
   const handleDelete = (id: string) => {
@@ -53,9 +49,7 @@ export default function AnamnesisListPage() {
 
       <section className="space-y-4 rounded-lg border bg-card p-5">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Gestão de modelos de anamneses
-          </p>
+          <p className="text-sm text-muted-foreground">Gestão de modelos de anamneses</p>
           <Button size="sm" onClick={handleCreate}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             Novo modelo
@@ -73,10 +67,7 @@ export default function AnamnesisListPage() {
           <TableBody>
             {models.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={3}
-                  className="py-8 text-center text-sm text-muted-foreground"
-                >
+                <TableCell colSpan={3} className="py-8 text-center text-sm text-muted-foreground">
                   Nenhum modelo cadastrado.
                 </TableCell>
               </TableRow>
@@ -85,10 +76,7 @@ export default function AnamnesisListPage() {
                 <TableRow key={m.id}>
                   <TableCell className="text-sm">{m.name}</TableCell>
                   <TableCell>
-                    <Switch
-                      checked={m.active}
-                      onCheckedChange={() => toggleActive(m.id)}
-                    />
+                    <Switch checked={m.active} onCheckedChange={() => toggleActive(m.id)} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1">

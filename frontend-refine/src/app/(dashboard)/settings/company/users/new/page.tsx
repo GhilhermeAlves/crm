@@ -52,8 +52,7 @@ const PERMISSION_GROUPS = [
       {
         id: "appointment:read",
         label: "Visualização da agenda",
-        description:
-          "Permite a visualização das agendas de todos os profissionais",
+        description: "Permite a visualização das agendas de todos os profissionais",
       },
     ],
   },
@@ -69,8 +68,7 @@ const PERMISSION_GROUPS = [
       {
         id: "finance:own-only",
         label: "Acesso apenas aos lançamentos do usuário",
-        description:
-          "Criar, editar e excluir apenas os lançamentos criados pelo próprio usuário",
+        description: "Criar, editar e excluir apenas os lançamentos criados pelo próprio usuário",
       },
       {
         id: "finance:full",
@@ -131,9 +129,7 @@ export default function CreateUserPage() {
   const router = useRouter();
   const inviteMember = useInviteMember();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [enabledPermissions, setEnabledPermissions] = useState<Set<string>>(
-    new Set(),
-  );
+  const [enabledPermissions, setEnabledPermissions] = useState<Set<string>>(new Set());
 
   const {
     control,
@@ -186,8 +182,8 @@ export default function CreateUserPage() {
       <div>
         <h2 className="text-xl font-semibold">Criar novo usuário</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ao preencher os dados abaixo, será criado um novo usuário e um e-mail
-          convite será enviado à pessoa cadastrada.
+          Ao preencher os dados abaixo, será criado um novo usuário e um e-mail convite será enviado
+          à pessoa cadastrada.
         </p>
       </div>
 
@@ -204,9 +200,7 @@ export default function CreateUserPage() {
                 )}
               />
               {errors.fullName && (
-                <p className="text-xs text-destructive">
-                  {errors.fullName.message}
-                </p>
+                <p className="text-xs text-destructive">{errors.fullName.message}</p>
               )}
             </div>
           </div>
@@ -234,18 +228,10 @@ export default function CreateUserPage() {
                 name="email"
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    type="email"
-                    placeholder="maria.freitas@clinica.com"
-                    {...field}
-                  />
+                  <Input type="email" placeholder="maria.freitas@clinica.com" {...field} />
                 )}
               />
-              {errors.email && (
-                <p className="text-xs text-destructive">
-                  {errors.email.message}
-                </p>
-              )}
+              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
             </div>
           </div>
 
@@ -269,11 +255,7 @@ export default function CreateUserPage() {
                 </Select>
               )}
             />
-            {errors.cargo && (
-              <p className="text-xs text-destructive">
-                {errors.cargo.message}
-              </p>
-            )}
+            {errors.cargo && <p className="text-xs text-destructive">{errors.cargo.message}</p>}
           </div>
         </section>
 
@@ -291,16 +273,14 @@ export default function CreateUserPage() {
             </Label>
           </div>
           <p className="text-xs text-muted-foreground">
-            Perfis administradores possuem acesso completo a todos os módulos do
-            sistema, inclusive a gestão de usuários.
+            Perfis administradores possuem acesso completo a todos os módulos do sistema, inclusive
+            a gestão de usuários.
           </p>
 
           {!isAdmin &&
             PERMISSION_GROUPS.map((group) => (
               <div key={group.module} className="space-y-2">
-                <h4 className="text-sm font-semibold text-primary">
-                  {group.module}
-                </h4>
+                <h4 className="text-sm font-semibold text-primary">{group.module}</h4>
                 {group.permissions.map((perm) => (
                   <div
                     key={perm.id}
@@ -312,12 +292,8 @@ export default function CreateUserPage() {
                       className="mt-0.5"
                     />
                     <div className="space-y-0.5">
-                      <p className="text-sm font-medium leading-tight">
-                        {perm.label}:
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {perm.description}
-                      </p>
+                      <p className="text-sm font-medium leading-tight">{perm.label}:</p>
+                      <p className="text-xs text-muted-foreground">{perm.description}</p>
                     </div>
                   </div>
                 ))}

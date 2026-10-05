@@ -1,6 +1,5 @@
 "use client";
 
-
 import { PermissionList } from "@/features/identity/rbac/components/PermissionList";
 import { usePermissions } from "@/features/identity/rbac/hooks/useRoles";
 

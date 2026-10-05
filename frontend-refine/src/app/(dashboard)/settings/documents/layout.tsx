@@ -1,7 +1,3 @@
-export default function DocumentsSettingsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DocumentsSettingsLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

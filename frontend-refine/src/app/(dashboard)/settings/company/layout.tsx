@@ -1,7 +1,3 @@
-export default function CompanySettingsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function CompanySettingsLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

@@ -69,15 +69,10 @@ export default function DocumentTemplatesPage() {
     if (!title.trim()) return;
     if (editingTemplate) {
       setTemplates((prev) =>
-        prev.map((t) =>
-          t.id === editingTemplate.id ? { ...t, title: title.trim(), content } : t,
-        ),
+        prev.map((t) => (t.id === editingTemplate.id ? { ...t, title: title.trim(), content } : t)),
       );
     } else {
-      setTemplates((prev) => [
-        ...prev,
-        { id: crypto.randomUUID(), title: title.trim(), content },
-      ]);
+      setTemplates((prev) => [...prev, { id: crypto.randomUUID(), title: title.trim(), content }]);
     }
     setDialogOpen(false);
   };
@@ -92,9 +87,7 @@ export default function DocumentTemplatesPage() {
 
       <section className="space-y-4 rounded-lg border bg-card p-5">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Gestão de modelos de documentos
-          </p>
+          <p className="text-sm text-muted-foreground">Gestão de modelos de documentos</p>
           <Button size="sm" onClick={openCreate}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             Novo modelo
@@ -111,10 +104,7 @@ export default function DocumentTemplatesPage() {
           <TableBody>
             {templates.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="py-8 text-center text-sm text-muted-foreground"
-                >
+                <TableCell colSpan={2} className="py-8 text-center text-sm text-muted-foreground">
                   Nenhum modelo cadastrado.
                 </TableCell>
               </TableRow>

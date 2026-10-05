@@ -91,9 +91,7 @@ export default function BirthdayMessagePage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section className="space-y-4">
-          <Label className="text-sm font-medium text-muted-foreground">
-            Modelo de mensagem
-          </Label>
+          <Label className="text-sm font-medium text-muted-foreground">Modelo de mensagem</Label>
 
           <Textarea
             value={template}
@@ -104,9 +102,7 @@ export default function BirthdayMessagePage() {
           />
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              Adicione personalização ao texto:
-            </span>
+            <span className="text-xs text-muted-foreground">Adicione personalização ao texto:</span>
             {VARIABLES.map((v) => (
               <Button
                 key={v.key}
@@ -123,9 +119,7 @@ export default function BirthdayMessagePage() {
         </section>
 
         <section className="space-y-2">
-          <Label className="text-sm font-medium text-muted-foreground">
-            Pré-visualização
-          </Label>
+          <Label className="text-sm font-medium text-muted-foreground">Pré-visualização</Label>
 
           <div className="overflow-hidden rounded-2xl border bg-gradient-to-b from-[#e5ddd5] to-[#d1c7b7] p-4 dark:from-[#1a1a1a] dark:to-[#0d0d0d]">
             <div className="ml-auto max-w-[220px] rounded-lg bg-[#dcf8c6] p-3 text-xs leading-relaxed text-gray-800 shadow-sm dark:bg-[#005c4b] dark:text-gray-100">

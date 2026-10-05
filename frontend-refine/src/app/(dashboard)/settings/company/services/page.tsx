@@ -104,9 +104,7 @@ export default function ServicesPage() {
 
       <section className="rounded-lg border bg-card">
         {isLoading ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            Carregando...
-          </p>
+          <p className="py-8 text-center text-sm text-muted-foreground">Carregando...</p>
         ) : filtered.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             Nenhum serviço encontrado.
@@ -115,9 +113,7 @@ export default function ServicesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs font-semibold text-primary">
-                  Serviço
-                </TableHead>
+                <TableHead className="text-xs font-semibold text-primary">Serviço</TableHead>
                 <TableHead className="text-xs">Categoria</TableHead>
                 <TableHead className="text-right text-xs">Preço</TableHead>
                 <TableHead className="text-right text-xs">Ações</TableHead>
@@ -126,15 +122,11 @@ export default function ServicesPage() {
             <TableBody>
               {filtered.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="text-sm text-primary">
-                    {item.name}
-                  </TableCell>
+                  <TableCell className="text-sm text-primary">{item.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {item.category || "—"}
                   </TableCell>
-                  <TableCell className="text-right text-sm">
-                    {formatPrice(item)}
-                  </TableCell>
+                  <TableCell className="text-right text-sm">{formatPrice(item)}</TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1">
                       <Button

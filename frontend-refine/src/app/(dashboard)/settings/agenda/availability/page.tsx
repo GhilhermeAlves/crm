@@ -26,28 +26,18 @@ export default function AvailabilityPage() {
   const companyId = user?.companyId ?? null;
   const userId = user?.id ?? null;
   const { data: members = [], isLoading } = useMembers(companyId);
-  const { data: availability, isLoading: availLoading } = useAvailability(
-    companyId,
-    userId,
-  );
+  const { data: availability, isLoading: availLoading } = useAvailability(companyId, userId);
   const setAvailability = useSetAvailability(companyId);
 
-  const memberList = useMemo(
-    () => members.map((m) => ({ ...m, enabled: false })),
-    [members],
-  );
+  const memberList = useMemo(() => members.map((m) => ({ ...m, enabled: false })), [members]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h2 className="text-xl font-semibold">
-        Disponibilidade do link de agendamento
-      </h2>
+      <h2 className="text-xl font-semibold">Disponibilidade do link de agendamento</h2>
 
       <section className="rounded-lg border bg-card">
         {isLoading ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            Carregando...
-          </p>
+          <p className="py-8 text-center text-sm text-muted-foreground">Carregando...</p>
         ) : memberList.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             Nenhum profissional encontrado.

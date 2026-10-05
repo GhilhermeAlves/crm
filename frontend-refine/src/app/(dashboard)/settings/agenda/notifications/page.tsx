@@ -63,8 +63,8 @@ export default function NotificationsPage() {
       <h2 className="text-xl font-semibold">Central de notificações</h2>
 
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
-        Controle e confira as notificações enviadas para seus contatos em cada um
-        dos eventos abaixo.
+        Controle e confira as notificações enviadas para seus contatos em cada um dos eventos
+        abaixo.
       </div>
 
       <section className="space-y-4 rounded-lg border bg-card p-5">
@@ -84,14 +84,10 @@ export default function NotificationsPage() {
                     <Mail className="h-4 w-4 text-muted-foreground" />
                   )}
                 </div>
-                <Label className="cursor-pointer text-sm font-medium">
-                  {event.label}
-                </Label>
+                <Label className="cursor-pointer text-sm font-medium">{event.label}</Label>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  Notificação ativa?
-                </span>
+                <span className="text-xs text-muted-foreground">Notificação ativa?</span>
                 <Switch
                   checked={settings[event.id] ?? false}
                   onCheckedChange={() => toggle(event.id)}
@@ -105,18 +101,16 @@ export default function NotificationsPage() {
       <section className="space-y-4 rounded-lg border bg-card p-5">
         <h3 className="text-sm font-semibold">Erro no envio de notificações</h3>
         <p className="text-xs text-muted-foreground">
-          Gerencie aqui as notificações que não foram enviadas aos clientes
-          devido a imprevistos do provedor.
+          Gerencie aqui as notificações que não foram enviadas aos clientes devido a imprevistos do
+          provedor.
         </p>
 
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-8 text-center">
           <Mail className="h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm font-medium text-muted-foreground">
-            Sem notificações por aqui
-          </p>
+          <p className="text-sm font-medium text-muted-foreground">Sem notificações por aqui</p>
           <p className="text-xs text-muted-foreground">
-            Que ótimo! Isso significa que todas as notificações foram enviadas
-            corretamente aos seus clientes.
+            Que ótimo! Isso significa que todas as notificações foram enviadas corretamente aos seus
+            clientes.
           </p>
         </div>
       </section>

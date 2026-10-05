@@ -64,14 +64,10 @@ export default function ManageUsersPage() {
       </div>
 
       <section className="rounded-lg border bg-card p-5">
-        <h3 className="mb-4 text-sm font-semibold text-primary">
-          Gestão de usuários
-        </h3>
+        <h3 className="mb-4 text-sm font-semibold text-primary">Gestão de usuários</h3>
 
         {isLoading ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            Carregando...
-          </p>
+          <p className="py-8 text-center text-sm text-muted-foreground">Carregando...</p>
         ) : sorted.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             Nenhum usuário encontrado.
@@ -115,15 +111,9 @@ export default function ManageUsersPage() {
                         })
                       : "—"}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    —
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {m.email}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {m.role || "—"}
-                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">—</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{m.email}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{m.role || "—"}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" className="h-7 w-7">
                       <Pencil className="h-3.5 w-3.5" />

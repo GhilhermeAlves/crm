@@ -18,10 +18,7 @@ export default function PrescriptionsPage() {
           <Label className="text-sm text-muted-foreground">
             Incluir medicamentos padrão na listagem?
           </Label>
-          <Switch
-            checked={includeDefault}
-            onCheckedChange={setIncludeDefault}
-          />
+          <Switch checked={includeDefault} onCheckedChange={setIncludeDefault} />
         </div>
       </section>
     </div>

@@ -119,9 +119,7 @@ export default function AnamnesisEditorPage() {
   };
 
   const updateSectionTitle = (sectionId: string, title: string) => {
-    setSections((prev) =>
-      prev.map((s) => (s.id === sectionId ? { ...s, title } : s)),
-    );
+    setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, title } : s)));
   };
 
   const deleteSection = (sectionId: string) => {
@@ -149,19 +147,13 @@ export default function AnamnesisEditorPage() {
     );
   };
 
-  const updateQuestion = (
-    sectionId: string,
-    questionId: string,
-    updates: Partial<Question>,
-  ) => {
+  const updateQuestion = (sectionId: string, questionId: string, updates: Partial<Question>) => {
     setSections((prev) =>
       prev.map((s) =>
         s.id === sectionId
           ? {
               ...s,
-              questions: s.questions.map((q) =>
-                q.id === questionId ? { ...q, ...updates } : q,
-              ),
+              questions: s.questions.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
             }
           : s,
       ),
@@ -233,11 +225,7 @@ export default function AnamnesisEditorPage() {
       <section className="space-y-4 rounded-lg border bg-card p-5">
         <div className="space-y-1.5">
           <Label>Nome do modelo</Label>
-          <Input
-            value={modelName}
-            onChange={(e) => setModelName(e.target.value)}
-            maxLength={100}
-          />
+          <Input value={modelName} onChange={(e) => setModelName(e.target.value)} maxLength={100} />
           <p className="text-xs text-primary">
             É o nome que aparece na lista de modelos e na ficha do paciente.
           </p>
@@ -315,9 +303,7 @@ export default function AnamnesisEditorPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => toggleSubQuestion(section.id, question.id)}
-                    >
+                    <DropdownMenuItem onClick={() => toggleSubQuestion(section.id, question.id)}>
                       {question.subQuestion
                         ? "Remover pergunta auxiliar"
                         : "Adicionar pergunta auxiliar"}
@@ -335,9 +321,7 @@ export default function AnamnesisEditorPage() {
 
               {question.subQuestion && (
                 <div className="ml-8 space-y-2 rounded-md border-l-2 border-primary/20 bg-muted/30 p-3">
-                  <p className="text-xs font-semibold text-primary">
-                    Pergunta auxiliar
-                  </p>
+                  <p className="text-xs font-semibold text-primary">Pergunta auxiliar</p>
                   <Input
                     value={question.subQuestion.text}
                     onChange={(e) =>
@@ -385,9 +369,7 @@ export default function AnamnesisEditorPage() {
 
       {sections.length === 0 && (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Nenhuma seção criada ainda.
-          </p>
+          <p className="text-sm text-muted-foreground">Nenhuma seção criada ainda.</p>
           <Button size="sm" variant="outline" onClick={addSection}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             Nova seção

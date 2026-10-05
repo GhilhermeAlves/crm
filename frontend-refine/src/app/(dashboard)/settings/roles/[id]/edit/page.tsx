@@ -90,7 +90,9 @@ export default function EditRolePage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Editar Role: {role!.name.replace(/_/g, " ")}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Editar Role: {role!.name.replace(/_/g, " ")}
+            </h1>
             <p className="text-muted-foreground">
               <RoleBadge name={role!.name} isSystem={role!.isSystem} />
             </p>

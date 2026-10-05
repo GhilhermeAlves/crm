@@ -143,35 +143,27 @@ export default function CompanyDataPage() {
       <h2 className="text-xl font-semibold">Dados da empresa</h2>
 
       <section className="space-y-4 rounded-lg border bg-card p-5">
-        <h3 className="text-sm font-semibold text-primary">
-          Informações de cadastro
-        </h3>
+        <h3 className="text-sm font-semibold text-primary">Informações de cadastro</h3>
 
         <div className="grid gap-1 text-sm">
           <div>
-            <span className="font-medium">CNPJ/CPF:</span>{" "}
-            {tenant?.cnpj || "—"}
+            <span className="font-medium">CNPJ/CPF:</span> {tenant?.cnpj || "—"}
           </div>
           <div>
-            <span className="font-medium">Razão social:</span>{" "}
-            {tenant?.legalName || "—"}
+            <span className="font-medium">Razão social:</span> {tenant?.legalName || "—"}
           </div>
         </div>
 
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            O logo da empresa deverá ter um tamanho máximo de 10MB, nos formatos
-            JPG ou PNG.
+            O logo da empresa deverá ter um tamanho máximo de 10MB, nos formatos JPG ou PNG.
           </p>
           <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed bg-muted/20">
             <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
               <Upload className="h-5 w-5" />
               <span>
                 Arraste ou{" "}
-                <button
-                  type="button"
-                  className="font-medium text-primary underline"
-                >
+                <button type="button" className="font-medium text-primary underline">
                   escolha o arquivo
                 </button>{" "}
                 para enviar
@@ -189,43 +181,32 @@ export default function CompanyDataPage() {
                 {tenant?.tradingName || tenant?.legalName || "—"}
               </div>
               <div>
-                <span className="font-medium">Telefone:</span>{" "}
-                {tenant?.phone || "—"}
+                <span className="font-medium">Telefone:</span> {tenant?.phone || "—"}
               </div>
               <div>
-                <span className="font-medium">CEP:</span>{" "}
-                {tenant?.address?.zipCode || "—"}
+                <span className="font-medium">CEP:</span> {tenant?.address?.zipCode || "—"}
               </div>
               <div>
-                <span className="font-medium">Rua:</span>{" "}
-                {tenant?.address?.street || "—"}
+                <span className="font-medium">Rua:</span> {tenant?.address?.street || "—"}
               </div>
               <div>
-                <span className="font-medium">Número:</span>{" "}
-                {tenant?.address?.number || "—"}
+                <span className="font-medium">Número:</span> {tenant?.address?.number || "—"}
               </div>
               <div>
                 <span className="font-medium">Complemento:</span>{" "}
                 {tenant?.address?.complement || "—"}
               </div>
               <div>
-                <span className="font-medium">Bairro:</span>{" "}
-                {tenant?.address?.neighborhood || "—"}
+                <span className="font-medium">Bairro:</span> {tenant?.address?.neighborhood || "—"}
               </div>
               <div>
-                <span className="font-medium">Cidade:</span>{" "}
-                {tenant?.address?.city || "—"}
+                <span className="font-medium">Cidade:</span> {tenant?.address?.city || "—"}
               </div>
               <div>
-                <span className="font-medium">Estado:</span>{" "}
-                {tenant?.address?.state || "—"}
+                <span className="font-medium">Estado:</span> {tenant?.address?.state || "—"}
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditing(true)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
               Editar
             </Button>
           </>
@@ -246,11 +227,7 @@ export default function CompanyDataPage() {
                     />
                   )}
                 />
-                {errors.cnpj && (
-                  <p className="text-xs text-destructive">
-                    {errors.cnpj.message}
-                  </p>
-                )}
+                {errors.cnpj && <p className="text-xs text-destructive">{errors.cnpj.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label>Razão Social</Label>
@@ -278,11 +255,7 @@ export default function CompanyDataPage() {
                     />
                   )}
                 />
-                {errors.phone && (
-                  <p className="text-xs text-destructive">
-                    {errors.phone.message}
-                  </p>
-                )}
+                {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label>CEP</Label>
@@ -302,14 +275,10 @@ export default function CompanyDataPage() {
                   )}
                 />
                 {fetchingCep && (
-                  <p className="text-xs text-muted-foreground">
-                    Buscando endereço...
-                  </p>
+                  <p className="text-xs text-muted-foreground">Buscando endereço...</p>
                 )}
                 {errors.zipCode && (
-                  <p className="text-xs text-destructive">
-                    {errors.zipCode.message}
-                  </p>
+                  <p className="text-xs text-destructive">{errors.zipCode.message}</p>
                 )}
               </div>
             </div>
@@ -323,9 +292,7 @@ export default function CompanyDataPage() {
                   render={({ field }) => <Input {...field} />}
                 />
                 {errors.street && (
-                  <p className="text-xs text-destructive">
-                    {errors.street.message}
-                  </p>
+                  <p className="text-xs text-destructive">{errors.street.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -336,9 +303,7 @@ export default function CompanyDataPage() {
                   render={({ field }) => <Input {...field} />}
                 />
                 {errors.number && (
-                  <p className="text-xs text-destructive">
-                    {errors.number.message}
-                  </p>
+                  <p className="text-xs text-destructive">{errors.number.message}</p>
                 )}
               </div>
             </div>
@@ -360,9 +325,7 @@ export default function CompanyDataPage() {
                   render={({ field }) => <Input {...field} />}
                 />
                 {errors.neighborhood && (
-                  <p className="text-xs text-destructive">
-                    {errors.neighborhood.message}
-                  </p>
+                  <p className="text-xs text-destructive">{errors.neighborhood.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -372,26 +335,16 @@ export default function CompanyDataPage() {
                   control={control}
                   render={({ field }) => <Input {...field} />}
                 />
-                {errors.city && (
-                  <p className="text-xs text-destructive">
-                    {errors.city.message}
-                  </p>
-                )}
+                {errors.city && <p className="text-xs text-destructive">{errors.city.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label>Estado</Label>
                 <Controller
                   name="state"
                   control={control}
-                  render={({ field }) => (
-                    <Input placeholder="MG" maxLength={2} {...field} />
-                  )}
+                  render={({ field }) => <Input placeholder="MG" maxLength={2} {...field} />}
                 />
-                {errors.state && (
-                  <p className="text-xs text-destructive">
-                    {errors.state.message}
-                  </p>
-                )}
+                {errors.state && <p className="text-xs text-destructive">{errors.state.message}</p>}
               </div>
             </div>
 

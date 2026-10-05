@@ -45,7 +45,15 @@ function getEventPosition(startAt: string, endAt: string, hourHeight: number, ra
   };
 }
 
-function HourLabels({ hourHeight, rangeStart, rangeEnd }: { hourHeight: number; rangeStart: number; rangeEnd: number }) {
+function HourLabels({
+  hourHeight,
+  rangeStart,
+  rangeEnd,
+}: {
+  hourHeight: number;
+  rangeStart: number;
+  rangeEnd: number;
+}) {
   const hours = [];
   for (let h = rangeStart; h < rangeEnd; h++) {
     hours.push(
@@ -68,7 +76,15 @@ function HourLabels({ hourHeight, rangeStart, rangeEnd }: { hourHeight: number; 
   return <div className="w-12 shrink-0 border-r bg-card">{hours}</div>;
 }
 
-function NowLine({ hourHeight, rangeStart, totalHours }: { hourHeight: number; rangeStart: number; totalHours: number }) {
+function NowLine({
+  hourHeight,
+  rangeStart,
+  totalHours,
+}: {
+  hourHeight: number;
+  rangeStart: number;
+  totalHours: number;
+}) {
   const now = new Date();
   const minutes = now.getHours() * 60 + now.getMinutes() - rangeStart * 60;
   if (minutes < 0 || minutes > totalHours * 60) return null;
@@ -83,7 +99,15 @@ function NowLine({ hourHeight, rangeStart, totalHours }: { hourHeight: number; r
   );
 }
 
-function FiveMinuteLines({ hourHeight, rangeStart, rangeEnd }: { hourHeight: number; rangeStart: number; rangeEnd: number }) {
+function FiveMinuteLines({
+  hourHeight,
+  rangeStart,
+  rangeEnd,
+}: {
+  hourHeight: number;
+  rangeStart: number;
+  rangeEnd: number;
+}) {
   const lines = [];
   const slotHeight = hourHeight / 12;
   for (let h = rangeStart; h < rangeEnd; h++) {
@@ -114,7 +138,6 @@ function FiveMinuteLines({ hourHeight, rangeStart, rangeEnd }: { hourHeight: num
   }
   return <>{lines}</>;
 }
-
 
 function DayColumn({
   date,
@@ -167,7 +190,9 @@ function DayColumn({
     >
       <FiveMinuteLines hourHeight={hourHeight} rangeStart={rangeStart} rangeEnd={rangeEnd} />
 
-      {isToday(date) && <NowLine hourHeight={hourHeight} rangeStart={rangeStart} totalHours={totalHours} />}
+      {isToday(date) && (
+        <NowLine hourHeight={hourHeight} rangeStart={rangeStart} totalHours={totalHours} />
+      )}
 
       {dayBlocks.map((block) => {
         const pos = getEventPosition(block.startAt, block.endAt, hourHeight, rangeStart);
@@ -274,9 +299,7 @@ export function WeeklyCalendar({
                 today ? "bg-primary/10" : "bg-muted/30",
               )}
             >
-              <span className="text-muted-foreground">
-                {format(d, "EEE.", { locale: ptBR })}{" "}
-              </span>
+              <span className="text-muted-foreground">{format(d, "EEE.", { locale: ptBR })} </span>
               <span
                 className={cn(
                   "inline-flex h-6 w-6 items-center justify-center rounded-full font-medium tabular-nums",
