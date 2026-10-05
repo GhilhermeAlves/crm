@@ -34,6 +34,11 @@ public class InvitationRepositoryImpl implements InvitationRepository {
     }
 
     @Override
+    public Optional<Invitation> findByTokenHashForUpdate(String tokenHash) {
+        return jpaRepository.findByTokenHashForUpdate(tokenHash).map(InvitationRepositoryImpl::toDomain);
+    }
+
+    @Override
     public List<Invitation> findByCompanyId(UUID companyId, InvitationStatus status) {
         List<JpaInvitation> entities = (status == null
                 ? jpaRepository.findByCompanyId(companyId)
@@ -46,6 +51,7 @@ public class InvitationRepositoryImpl implements InvitationRepository {
         e.setId(i.getId());
         e.setCompanyId(i.getCompanyId());
         e.setEmail(i.getEmail());
+        e.setInviteeName(i.getInviteeName());
         e.setRole(i.getRole());
         e.setTokenHash(i.getTokenHash());
         e.setInvitedBy(i.getInvitedBy());
@@ -57,7 +63,7 @@ public class InvitationRepositoryImpl implements InvitationRepository {
     }
 
     private static Invitation toDomain(JpaInvitation e) {
-        return new Invitation(e.getId(), e.getCompanyId(), e.getEmail(), e.getRole(),
+        return new Invitation(e.getId(), e.getCompanyId(), e.getEmail(), e.getInviteeName(), e.getRole(),
                 e.getTokenHash(), e.getInvitedBy(), e.getStatus(), e.getExpiresAt(),
                 e.getCreatedAt(), e.getUpdatedAt());
     }

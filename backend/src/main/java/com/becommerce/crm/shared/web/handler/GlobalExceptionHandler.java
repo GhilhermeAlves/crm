@@ -29,6 +29,7 @@ import com.becommerce.crm.identity.domain.exception.RoleNotFoundException;
 import com.becommerce.crm.identity.domain.exception.UserNotFoundException;
 import com.becommerce.crm.identity.domain.exception.UserProvisioningException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoundException;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
 import com.becommerce.crm.sales.lead.domain.exception.DuplicateLeadException;
 import com.becommerce.crm.sales.lead.domain.exception.LeadNotFoundException;
 import com.becommerce.crm.automation.campaign.domain.exception.CampaignNotFoundException;
@@ -224,6 +225,19 @@ public class GlobalExceptionHandler {
                 "status", 404,
                 "error", "Not Found",
                 "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(InvitationNoLongerValidException.class)
+    public ResponseEntity<Map<String, Object>> handleInvitationNoLongerValidException(
+            InvitationNoLongerValidException ex) {
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of(
+                "status", 410,
+                "error", "Gone",
+                "message", ex.getMessage(),
+                "invitationStatus", ex.getStatus().name(),
                 "timestamp", LocalDateTime.now().toString()
             ));
     }

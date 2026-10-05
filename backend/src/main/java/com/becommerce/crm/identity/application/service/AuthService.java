@@ -19,7 +19,6 @@ import com.becommerce.crm.identity.domain.event.PasswordChangedEvent;
 import com.becommerce.crm.identity.domain.event.PasswordResetRequestedEvent;
 import com.becommerce.crm.identity.domain.event.UserCreatedEvent;
 import com.becommerce.crm.identity.domain.exception.DuplicateEmailException;
-import com.becommerce.crm.identity.domain.exception.IdentityServiceUnavailableException;
 import com.becommerce.crm.identity.domain.exception.InvalidCredentialsException;
 import com.becommerce.crm.identity.domain.exception.InvalidTokenException;
 import com.becommerce.crm.identity.domain.exception.LinkingRequiredException;
@@ -61,6 +60,7 @@ public class AuthService implements AuthUseCase {
     private final EventPublisher eventPublisher;
     private final EmailService emailService;
     private final AuthServiceClient authServiceClient;
+    private final KeycloakSignupSaga signupSaga;
 
     private static final int RESET_TOKEN_EXPIRY_MINUTES = 60;
 
@@ -84,7 +84,8 @@ public class AuthService implements AuthUseCase {
                        MembershipRepository membershipRepository,
                        CrmAccessService crmAccessService,
                        PasswordEncoder passwordEncoder, EventPublisher eventPublisher,
-                       EmailService emailService, AuthServiceClient authServiceClient) {
+                       EmailService emailService, AuthServiceClient authServiceClient,
+                       KeycloakSignupSaga signupSaga) {
         this.userRepository = userRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.roleRepository = roleRepository;
@@ -96,10 +97,10 @@ public class AuthService implements AuthUseCase {
         this.eventPublisher = eventPublisher;
         this.emailService = emailService;
         this.authServiceClient = authServiceClient;
+        this.signupSaga = signupSaga;
     }
 
     @Override
-    @Transactional
     public void register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateEmailException("Este e-mail já está registrado.");
@@ -115,40 +116,29 @@ public class AuthService implements AuthUseCase {
         // resolveDefaultCompanyId() — se houver AUTH_DEFAULT_COMPANY_ID configurada,
         // ainda provisionam na empresa padrão. O register de cadastro nunca
         // provisiona tenant automaticamente.
-        UUID companyId = null;
-
-        // 1. Criar usuário no Keycloak (fora da transação)
-        String keycloakUserId;
-        try {
-            keycloakUserId = authServiceClient.createKeycloakUser(
-                    request.email(), request.password(), request.name());
-        } catch (DuplicateEmailException | IdentityServiceUnavailableException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new UserProvisioningException(
-                    "Falha ao criar usuário no Keycloak: " + e.getMessage());
+        //
+        // Keycloak primeiro, depois a transação do CRM (commit dentro da saga);
+        // qualquer falha, inclusive no commit, passa pela compensação verificada.
+        String[] nameParts = splitName(request.name());
+        User saved = signupSaga.execute(request.email(), request.password(), request.name(),
+                keycloakUserId -> createAndSaveCrmUser(
+                        keycloakUserId, email, encodedPassword, nameParts[0], nameParts[1], null),
+                () -> null);
+        if (saved != null) {
+            eventPublisher.publish(UserCreatedEvent.create(saved.getId(), request.email(), null));
         }
+    }
 
-        // 2. Criar usuário CRM (transação)
-        try {
-            String[] nameParts = splitName(request.name());
-            User saved = createAndSaveCrmUser(
-                    keycloakUserId, email, encodedPassword,
-                    nameParts[0], nameParts[1], companyId);
-            eventPublisher.publish(
-                    UserCreatedEvent.create(saved.getId(), request.email(), companyId));
-        } catch (DuplicateEmailException e) {
-            throw e;
-        } catch (Exception e) {
-            // Compensação: excluir usuário do Keycloak
-            try {
-                authServiceClient.deleteKeycloakUser(keycloakUserId);
-            } catch (Exception ex) {
-                log.warn("Falha ao excluir usuário Keycloak como compensação (keycloakUserId={}): {}",
-                        keycloakUserId, ex.getMessage());
-            }
-            throw e;
-        }
+    /**
+     * Cria a linha do CRM, sem empresa, para um usuário que acabou de ser criado
+     * no Keycloak pelo cadastro por convite. Roda dentro da transação do
+     * chamador; o vínculo com a empresa é feito pelo aceite do convite.
+     */
+    public User provisionInvitedUser(String keycloakUserId, String email,
+                                     String encodedPassword, String fullName) {
+        String[] nameParts = splitName(fullName);
+        return createAndSaveCrmUser(keycloakUserId, new Email(email), encodedPassword,
+                nameParts[0], nameParts[1], null);
     }
 
     private User createAndSaveCrmUser(String keycloakUserId, Email email,

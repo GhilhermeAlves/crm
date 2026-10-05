@@ -25,6 +25,9 @@ public class JpaInvitation {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "invitee_name")
+    private String inviteeName;
+
     @Column(name = "role")
     private String role;
 
@@ -52,6 +55,8 @@ public class JpaInvitation {
     public UUID getCompanyId() { return companyId; }
     public void setCompanyId(UUID companyId) { this.companyId = companyId; }
     public String getEmail() { return email; }
+    public String getInviteeName() { return inviteeName; }
+    public void setInviteeName(String inviteeName) { this.inviteeName = inviteeName; }
     public void setEmail(String email) { this.email = email; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }

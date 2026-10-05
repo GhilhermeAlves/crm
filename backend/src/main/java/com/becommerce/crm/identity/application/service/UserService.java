@@ -202,7 +202,7 @@ public class UserService implements UserUseCase {
         membershipRepository.save(Membership.invite(
                 saved.getId(), companyId, "AGENT", invitedBy));
 
-        log.info("Convite enviado para: {} (token: {})", saved.getEmail().value(), saved.getInviteToken());
+        log.info("Convite (legado) enviado para: {}", saved.getEmail().value());
 
         String companyName = companyRepository.findById(companyId)
                 .map(Company::getTradingName)

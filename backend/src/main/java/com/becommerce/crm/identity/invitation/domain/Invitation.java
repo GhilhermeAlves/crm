@@ -1,5 +1,7 @@
 package com.becommerce.crm.identity.invitation.domain;
 
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,6 +19,7 @@ public class Invitation {
     private UUID id;
     private UUID companyId;
     private String email;
+    private String inviteeName;
     private String role;
     private String tokenHash;
     private UUID invitedBy;
@@ -28,12 +31,13 @@ public class Invitation {
     public Invitation() {
     }
 
-    public Invitation(UUID id, UUID companyId, String email, String role, String tokenHash,
+    public Invitation(UUID id, UUID companyId, String email, String inviteeName, String role, String tokenHash,
                       UUID invitedBy, InvitationStatus status, LocalDateTime expiresAt,
                       LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.companyId = companyId;
         this.email = email;
+        this.inviteeName = inviteeName;
         this.role = role;
         this.tokenHash = tokenHash;
         this.invitedBy = invitedBy;
@@ -45,10 +49,35 @@ public class Invitation {
 
     public static Invitation create(UUID companyId, String email, String role,
                                     String tokenHash, UUID invitedBy) {
+        return create(companyId, email, null, role, tokenHash, invitedBy);
+    }
+
+    public static Invitation create(UUID companyId, String email, String inviteeName, String role,
+                                    String tokenHash, UUID invitedBy) {
         LocalDateTime now = LocalDateTime.now();
-        return new Invitation(UUID.randomUUID(), companyId, email, role, tokenHash,
+        return new Invitation(UUID.randomUUID(), companyId, email, inviteeName, role, tokenHash,
                 invitedBy, InvitationStatus.PENDING, now.plusDays(DEFAULT_TTL_DAYS),
                 now, now);
+    }
+
+    /** Status efetivo: um PENDING com validade vencida conta como EXPIRED. */
+    public InvitationStatus effectiveStatus() {
+        return status == InvitationStatus.PENDING && isExpired() ? InvitationStatus.EXPIRED : status;
+    }
+
+    /**
+     * Troca o token (o anterior deixa de funcionar) e renova a validade. Só para
+     * convites ainda não usados: PENDING ou EXPIRED.
+     */
+    public void renew(String newTokenHash) {
+        if (status != InvitationStatus.PENDING && status != InvitationStatus.EXPIRED) {
+            throw new InvitationNoLongerValidException(status);
+        }
+        LocalDateTime now = LocalDateTime.now();
+        tokenHash = newTokenHash;
+        status = InvitationStatus.PENDING;
+        expiresAt = now.plusDays(DEFAULT_TTL_DAYS);
+        updatedAt = now;
     }
 
     public boolean isPending() {
@@ -91,6 +120,8 @@ public class Invitation {
     public UUID getCompanyId() { return companyId; }
     public void setCompanyId(UUID companyId) { this.companyId = companyId; }
     public String getEmail() { return email; }
+    public String getInviteeName() { return inviteeName; }
+    public void setInviteeName(String inviteeName) { this.inviteeName = inviteeName; }
     public void setEmail(String email) { this.email = email; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
