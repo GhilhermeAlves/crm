@@ -13,6 +13,7 @@ import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.identity.domain.exception.RoleNotFoundException;
 import com.becommerce.crm.identity.domain.valueobject.RoleName;
 import com.becommerce.crm.identity.membership.domain.Membership;
+import com.becommerce.crm.identity.membership.domain.MembershipStatus;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,10 +55,11 @@ class MembershipServiceTest {
         return Role.create(name.name(), COMPANY_ID);
     }
 
-    private MemberProjection memberProjection(String role) {
+    private MemberProjection memberProjection(String role, String status) {
         return new MemberProjection() {
             @Override public UUID getUserId() { return USER_ID; }
             @Override public String getRole() { return role; }
+            @Override public String getStatus() { return status; }
             @Override public java.time.LocalDateTime getJoinedAt() { return java.time.LocalDateTime.now(); }
             @Override public String getName() { return "Ghilherme Santos"; }
             @Override public String getEmail() { return "ghilherme007@gmail.com"; }
@@ -67,10 +70,10 @@ class MembershipServiceTest {
 
     @Test
     void shouldListMembersOfOwnCompany() {
-        when(membershipRepository.findActiveMembersByCompanyId(COMPANY_ID))
-                .thenReturn(List.of(memberProjection("AGENT")));
+        when(membershipRepository.findMembersByCompanyIdAndStatus(COMPANY_ID, "ACTIVE"))
+                .thenReturn(List.of(memberProjection("AGENT", "ACTIVE")));
 
-        List<MemberResponse> members = service.listMembers(COMPANY_ID, COMPANY_ID);
+        List<MemberResponse> members = service.listMembers(COMPANY_ID, COMPANY_ID, null);
 
         assertEquals(1, members.size());
         assertEquals(USER_ID, members.get(0).userId());
@@ -79,10 +82,23 @@ class MembershipServiceTest {
     }
 
     @Test
+    void shouldListRemovedMembersWhenAsked() {
+        when(membershipRepository.findMembersByCompanyIdAndStatus(COMPANY_ID, "REMOVED"))
+                .thenReturn(List.of(memberProjection("AGENT", "REMOVED")));
+
+        List<MemberResponse> members =
+                service.listMembers(COMPANY_ID, COMPANY_ID, MembershipStatus.REMOVED);
+
+        assertEquals(1, members.size());
+        assertEquals("REMOVED", members.get(0).status());
+        verify(membershipRepository, never()).findMembersByCompanyIdAndStatus(eq(COMPANY_ID), eq("ACTIVE"));
+    }
+
+    @Test
     void shouldDenyListMembersOfAnotherCompany() {
         assertThrows(CrmAccessDeniedException.class,
-                () -> service.listMembers(UUID.randomUUID(), COMPANY_ID));
-        verify(membershipRepository, never()).findActiveMembersByCompanyId(any());
+                () -> service.listMembers(UUID.randomUUID(), COMPANY_ID, null));
+        verify(membershipRepository, never()).findMembersByCompanyIdAndStatus(any(), any());
     }
 
     @Test

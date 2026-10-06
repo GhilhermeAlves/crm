@@ -62,8 +62,8 @@ public class MembershipRepositoryImpl implements MembershipRepository {
     }
 
     @Override
-    public List<MemberProjection> findActiveMembersByCompanyId(UUID companyId) {
-        return repository.findActiveMembersByCompanyId(companyId);
+    public List<MemberProjection> findMembersByCompanyIdAndStatus(UUID companyId, String status) {
+        return repository.findMembersByCompanyIdAndStatus(companyId, status);
     }
 
     @Override

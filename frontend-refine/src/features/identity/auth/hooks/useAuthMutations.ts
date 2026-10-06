@@ -86,8 +86,9 @@ export function useMyCompanies(enabled = true) {
 /**
  * Alterna a empresa ativa (Sprint 8.4). Sem logout/login: ao concluir, invalida
  * a identidade corrente /me (fonte de `user.companyId`) e as queries escopadas
- * por empresa (tenants/users/roles/permissions/audit), de modo que o novo
- * CurrentUser e o contexto da aplicação reflitam a empresa trocada.
+ * por empresa (tenants/users/members/invitations/roles/permissions/audit), de
+ * modo que o novo CurrentUser e o contexto da aplicação reflitam a empresa
+ * trocada.
  */
 export function useSwitchCompany() {
   const queryClient = useQueryClient();
@@ -100,6 +101,8 @@ export function useSwitchCompany() {
         queryClient.invalidateQueries({ queryKey: ["me", "companies"] }),
         queryClient.invalidateQueries({ queryKey: ["tenants"] }),
         queryClient.invalidateQueries({ queryKey: ["users"] }),
+        queryClient.invalidateQueries({ queryKey: ["members"] }),
+        queryClient.invalidateQueries({ queryKey: ["invitations"] }),
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
         queryClient.invalidateQueries({ queryKey: ["permissions"] }),
         queryClient.invalidateQueries({ queryKey: ["audit"] }),

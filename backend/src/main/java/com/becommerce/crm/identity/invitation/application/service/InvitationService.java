@@ -475,8 +475,13 @@ public class InvitationService implements InvitationUseCase {
         return "/convite/" + token;
     }
 
+    /**
+     * Serialização de convite. O status publicado é o EFETIVO: um PENDING cuja
+     * validade venceu aparece como EXPIRED em toda resposta da API (mesma regra
+     * já usada pelo preview), sem precisar de job de expiração.
+     */
     private static InvitationResponse toResponse(Invitation i) {
         return new InvitationResponse(i.getId(), i.getCompanyId(), i.getEmail(), i.getInviteeName(), i.getRole(),
-                i.getStatus(), i.getInvitedBy(), i.getExpiresAt(), i.getCreatedAt());
+                i.effectiveStatus(), i.getInvitedBy(), i.getExpiresAt(), i.getCreatedAt());
     }
 }

@@ -25,7 +25,11 @@ public interface MembershipRepository {
 
     Optional<String> findMembershipRoleByUserIdAndCompanyId(UUID userId, UUID companyId);
 
-    List<MemberProjection> findActiveMembersByCompanyId(UUID companyId);
+    /**
+     * Membros de uma empresa filtrados por status de membership.
+     * {@code status} é o nome de {@code MembershipStatus} (ACTIVE, REMOVED, PENDING).
+     */
+    List<MemberProjection> findMembersByCompanyIdAndStatus(UUID companyId, String status);
 
     List<MembershipProjection> findMembershipsByUserId(UUID userId);
 

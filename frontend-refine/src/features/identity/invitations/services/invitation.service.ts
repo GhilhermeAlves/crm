@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import type {
   CreateInvitationRequest,
   Invitation,
+  InvitationLink,
   InvitationPreview,
   InvitationRegisterRequest,
 } from "../types/invitation.types";
@@ -21,6 +22,24 @@ export const InvitationService = {
   },
   async revoke(companyId: string, invitationId: string): Promise<void> {
     await api.delete(`${BASE}/${companyId}/invitations/${invitationId}`);
+  },
+  /**
+   * POST /companies/{id}/invitations/{invId}/regenerate?send=
+   * `send=true` → Reenviar (novo token + novo e-mail);
+   * `send=false` → Copiar link (só devolve a URL).
+   * Em ambos os casos o link anterior deixa de funcionar.
+   */
+  async regenerate(
+    companyId: string,
+    invitationId: string,
+    send: boolean,
+  ): Promise<InvitationLink> {
+    const response = await api.post<InvitationLink>(
+      `${BASE}/${companyId}/invitations/${invitationId}/regenerate`,
+      null,
+      { params: { send } },
+    );
+    return response.data;
   },
   async preview(token: string): Promise<InvitationPreview> {
     const response = await api.get<InvitationPreview>("/invitations/preview", {

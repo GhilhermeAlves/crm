@@ -106,6 +106,21 @@ class InvitationServiceTest {
     }
 
     @Test
+    void shouldExposePendingPastExpiryAsExpiredInList() {
+        Invitation stale = Invitation.create(
+                companyId, "velho@empresa.com", "AGENT", "y".repeat(64), invitedBy);
+        setExpired(stale);
+        assertEquals(InvitationStatus.PENDING, stale.getStatus());
+
+        when(invitationRepository.findByCompanyId(companyId, null)).thenReturn(List.of(stale));
+
+        List<InvitationResponse> list = invitationService.listByCompany(companyId, null);
+
+        assertEquals(1, list.size());
+        assertEquals(InvitationStatus.EXPIRED, list.get(0).status());
+    }
+
+    @Test
     void shouldRejectInvalidRole() {
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
         assertThrows(IllegalArgumentException.class,

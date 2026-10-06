@@ -15,6 +15,18 @@ export type Invitation = {
 export type CreateInvitationRequest = {
   email: string;
   role: string;
+  /** Opcional: aparece na lista de pendentes e pré-preenche o cadastro. */
+  name?: string;
+};
+
+/**
+ * POST /companies/{id}/invitations/{id}/regenerate → InvitationLinkResponse.
+ * `url` é montada no backend; o token nunca é exposto em campo próprio.
+ * Regenerar invalida o link anterior (inclusive em "copiar link").
+ */
+export type InvitationLink = {
+  invitation: Invitation;
+  url: string;
 };
 
 /** GET /invitations/preview (público) — espelha InvitationPreviewResponse do backend. */
