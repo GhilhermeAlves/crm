@@ -1,3 +1,5 @@
+import { invitationPath } from "@/lib/constants";
+
 /**
  * Decisão de roteamento de autenticação para o middleware do Next.js.
  * O middleware NÃO interpreta/decodifica JWT: apenas verifica a existência do
@@ -15,7 +17,12 @@ export const PUBLIC_PATHS = [
   "/auth/callback",
   // Sprint 7.2: vínculo de conta local após login Google sem keycloak_sub.
   "/link-account",
+  // Convite: prévia e cadastro sem sessão; quem já tem conta entra a partir dela.
+  "/convite",
 ] as const;
+
+/** Link legado de convite, redirecionado para /convite/{token}. */
+export const LEGACY_INVITATION_PATH = "/invitations/accept";
 
 export type AuthDecision = {
   /** Path para redirecionar, se houver. */
@@ -35,6 +42,15 @@ export function resolveAuthRedirect(input: {
   search?: string;
 }): AuthDecision {
   const { pathname, hasSession, search = "" } = input;
+
+  // Links antigos dos e-mails: /invitations/accept?token=X -> /convite/X,
+  // com ou sem sessão (a página nova decide o resto).
+  if (pathname === LEGACY_INVITATION_PATH) {
+    const token = new URLSearchParams(search).get("token");
+    if (token) {
+      return { redirectTo: invitationPath(token) };
+    }
+  }
 
   const isPublicPath = isPublicPathname(pathname);
 

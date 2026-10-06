@@ -16,5 +16,8 @@ public interface InvitationRepository {
 
     Optional<Invitation> findByTokenHash(String tokenHash);
 
+    /** Busca com lock de escrita na linha; usar dentro de transação. */
+    Optional<Invitation> findByTokenHashForUpdate(String tokenHash);
+
     List<Invitation> findByCompanyId(UUID companyId, InvitationStatus status);
 }

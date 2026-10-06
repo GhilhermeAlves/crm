@@ -36,6 +36,7 @@ public class InvitationRateLimiter {
 
     private static final int MAX_CREATES_PER_WINDOW = 20;
     private static final int MAX_ACCEPTS_PER_WINDOW = 10;
+    private static final int MAX_PUBLIC_PER_WINDOW = 30;
     private static final Duration WINDOW = Duration.ofMinutes(60);
 
     private static final String KEY_PREFIX = "crm:ratelimit:invitations:";
@@ -60,6 +61,11 @@ public class InvitationRateLimiter {
 
     public boolean tryAccept(String key) {
         return permit("accept", key, MAX_ACCEPTS_PER_WINDOW);
+    }
+
+    /** Prévia e cadastro públicos (sem login), por IP de origem. */
+    public boolean tryPublic(String clientKey) {
+        return permit("public", clientKey, MAX_PUBLIC_PER_WINDOW);
     }
 
     private boolean permit(String bucket, String key, int max) {

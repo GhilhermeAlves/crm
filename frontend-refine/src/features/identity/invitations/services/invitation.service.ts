@@ -1,5 +1,10 @@
 import api from "@/lib/api";
-import type { CreateInvitationRequest, Invitation } from "../types/invitation.types";
+import type {
+  CreateInvitationRequest,
+  Invitation,
+  InvitationPreview,
+  InvitationRegisterRequest,
+} from "../types/invitation.types";
 
 const BASE = "/companies";
 
@@ -16,6 +21,22 @@ export const InvitationService = {
   },
   async revoke(companyId: string, invitationId: string): Promise<void> {
     await api.delete(`${BASE}/${companyId}/invitations/${invitationId}`);
+  },
+  async preview(token: string): Promise<InvitationPreview> {
+    const response = await api.get<InvitationPreview>("/invitations/preview", {
+      params: { token },
+    });
+    return response.data;
+  },
+  async register(data: InvitationRegisterRequest): Promise<Invitation> {
+    // Monta o corpo explicitamente: nunca repassar campos extras (e-mail etc.).
+    const body: InvitationRegisterRequest = {
+      token: data.token,
+      name: data.name,
+      password: data.password,
+    };
+    const response = await api.post<Invitation>("/invitations/register", body);
+    return response.data;
   },
   async accept(token: string): Promise<Invitation> {
     const response = await api.post<Invitation>("/invitations/accept", null, {

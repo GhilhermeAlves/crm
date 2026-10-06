@@ -22,6 +22,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionSystemException;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -33,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +58,7 @@ class AuthServiceRegisterTest {
     @Mock private EventPublisher eventPublisher;
     @Mock private EmailService emailService;
     @Mock private AuthServiceClient authServiceClient;
+    @Mock private PlatformTransactionManager txManager;
 
     @InjectMocks
     private AuthService authService;
@@ -63,6 +69,28 @@ class AuthServiceRegisterTest {
         ReflectionTestUtils.setField(authService, "provisioningEnabled", true);
         ReflectionTestUtils.setField(authService, "defaultRoleName", "AGENT");
         ReflectionTestUtils.setField(authService, "defaultCompanyId", DEFAULT_COMPANY_ID.toString());
+        lenient().when(txManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+        ReflectionTestUtils.setField(authService, "signupSaga",
+                new KeycloakSignupSaga(authServiceClient, userRepository, txManager));
+    }
+
+    @Test
+    void shouldCompensateKeycloakWhenCommitFails() {
+        // Antes da correção o @Transactional envolvia o método inteiro e o commit
+        // acontecia DEPOIS do catch de compensação — o usuário Keycloak ficava órfão.
+        when(userRepository.existsByEmail("commit@crm.local")).thenReturn(false);
+        when(authServiceClient.createKeycloakUser(eq("commit@crm.local"), anyString(), anyString()))
+                .thenReturn(MOCK_KEYCLOAK_USER_ID);
+        when(passwordEncoder.encode("Kc!Valid1Aa1")).thenReturn("$2a$12$encodedpassword");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        doThrow(new TransactionSystemException("commit failed")).doNothing().when(txManager).commit(any());
+        when(userRepository.findByKeycloakSub(MOCK_KEYCLOAK_USER_ID)).thenReturn(Optional.empty());
+
+        RegisterRequest request = new RegisterRequest("commit@crm.local", "Kc!Valid1Aa1", "Registro Teste", null);
+
+        assertThrows(TransactionSystemException.class, () -> authService.register(request));
+        verify(authServiceClient).deleteKeycloakUser(MOCK_KEYCLOAK_USER_ID);
+        verify(eventPublisher, never()).publish(any());
     }
 
     @Test

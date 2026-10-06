@@ -9,6 +9,7 @@ public record InvitationResponse(
         UUID id,
         UUID companyId,
         String email,
+        String inviteeName,
         String role,
         InvitationStatus status,
         UUID invitedBy,

@@ -141,7 +141,7 @@ class InvitationServiceTest {
         when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
 
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pending));
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
         when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(0L);
@@ -168,7 +168,7 @@ class InvitationServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pending));
 
         assertThrows(IllegalArgumentException.class, () -> invitationService.accept("tok-abc", userId));
     }
@@ -178,7 +178,7 @@ class InvitationServiceTest {
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
         // força expiração
         setExpired(pending);
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pending));
 
         assertThrows(IllegalStateException.class, () -> invitationService.accept("tok-abc", UUID.randomUUID()));
         assertEquals(InvitationStatus.EXPIRED, pending.getStatus());
@@ -186,14 +186,14 @@ class InvitationServiceTest {
 
     @Test
     void shouldRejectAcceptForInvalidToken() {
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.empty());
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.empty());
         assertThrows(InvitationNotFoundException.class, () -> invitationService.accept("unknown", UUID.randomUUID()));
     }
 
     @Test
     void shouldDeclineByRevoking() {
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pending));
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
 
         InvitationResponse response = invitationService.decline("tok-abc", UUID.randomUUID());
@@ -214,7 +214,7 @@ class InvitationServiceTest {
     void shouldRejectAcceptWhenAlreadyUsed() {
         Invitation used = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
         used.accept();
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(used));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(used));
 
         assertThrows(IllegalStateException.class, () -> invitationService.accept("tok-abc", UUID.randomUUID()));
     }
@@ -223,7 +223,7 @@ class InvitationServiceTest {
     void shouldRejectAcceptWhenRevoked() {
         Invitation revoked = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
         revoked.revoke();
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(revoked));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(revoked));
 
         assertThrows(IllegalStateException.class, () -> invitationService.accept("tok-abc", UUID.randomUUID()));
     }
@@ -236,7 +236,7 @@ class InvitationServiceTest {
         when(user.getEmail()).thenReturn(new Email("convite@empresa.com"));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pending));
         when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(true);
 
         assertThrows(IllegalStateException.class, () -> invitationService.accept("tok-abc", userId));
@@ -253,7 +253,7 @@ class InvitationServiceTest {
         when(user.getCompanyId()).thenReturn(otherCompany); // ativa em OUTRA empresa
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pending));
         // membro ativo de outra empresa, mas NÃO da empresa-alvo
         when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -277,7 +277,7 @@ class InvitationServiceTest {
         when(user.getCompanyId()).thenReturn(null); // sem empresa ativa (onboarding pendente)
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pending));
         when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
@@ -332,7 +332,7 @@ class InvitationServiceTest {
         when(user.getEmail()).thenReturn(new Email("convite@empresa.com"));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         pending = Invitation.create(companyId, "convite@empresa.com", "AGENT", InvitationTokenService.hash("tok-abc"), invitedBy);
-        when(invitationRepository.findByTokenHash(anyString())).thenReturn(Optional.of(pending));
+        when(invitationRepository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pending));
         when(membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)).thenReturn(false);
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
         when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(5L);

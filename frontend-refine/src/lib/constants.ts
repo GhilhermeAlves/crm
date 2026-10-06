@@ -65,3 +65,8 @@ export const AUTH_ROUTES = [
   ROUTES.FORGOT_PASSWORD,
   ROUTES.RESET_PASSWORD,
 ] as const;
+
+/** Página oficial do convite. O token vai só no caminho da URL (nunca em storage). */
+export function invitationPath(token: string): string {
+  return `/convite/${encodeURIComponent(token)}`;
+}

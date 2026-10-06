@@ -10,13 +10,39 @@ describe("resolveAuthRedirect (middleware, flag-only)", () => {
     expect(d.redirectTo).toBe("/login?redirect=%2Fdashboard");
   });
 
-  it("keeps the query string (e.g. invitation token) in the login redirect", () => {
+  it("keeps the query string in the login redirect", () => {
     const d = resolveAuthRedirect({
-      pathname: "/invitations/accept",
-      search: "?token=abc123",
+      pathname: "/settings/company/users",
+      search: "?tab=pending",
       hasSession: false,
     });
-    expect(d.redirectTo).toBe("/login?redirect=%2Finvitations%2Faccept%3Ftoken%3Dabc123");
+    expect(d.redirectTo).toBe("/login?redirect=%2Fsettings%2Fcompany%2Fusers%3Ftab%3Dpending");
+  });
+
+  it("redirects legacy /invitations/accept?token=X to /convite/X, with or without session", () => {
+    for (const hasSession of [false, true]) {
+      const d = resolveAuthRedirect({
+        pathname: "/invitations/accept",
+        search: "?token=abc123",
+        hasSession,
+      });
+      expect(d.redirectTo).toBe("/convite/abc123");
+    }
+  });
+
+  it("encodes the legacy token when building /convite/{token}", () => {
+    const d = resolveAuthRedirect({
+      pathname: "/invitations/accept",
+      search: "?token=a%2Fb",
+      hasSession: false,
+    });
+    expect(d.redirectTo).toBe("/convite/a%2Fb");
+  });
+
+  it("treats /convite/{token} as public (signup without a session)", () => {
+    expect(
+      resolveAuthRedirect({ pathname: "/convite/abc123", hasSession: false }).redirectTo,
+    ).toBeUndefined();
   });
 
   it("allows public paths without a session flag", () => {
