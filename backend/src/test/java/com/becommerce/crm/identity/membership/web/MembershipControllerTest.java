@@ -5,6 +5,7 @@ import com.becommerce.crm.identity.membership.application.dto.MembershipResponse
 import com.becommerce.crm.identity.membership.application.port.input.MembershipUseCase;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
+import com.becommerce.crm.identity.membership.domain.MembershipStatus;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import com.becommerce.crm.shared.web.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -73,7 +75,7 @@ class MembershipControllerTest {
     @Test
     void shouldListMembers() throws Exception {
         login(List.of("membership:view"));
-        when(membershipUseCase.listMembers(eq(COMPANY_ID), eq(COMPANY_ID)))
+        when(membershipUseCase.listMembers(eq(COMPANY_ID), eq(COMPANY_ID), isNull()))
                 .thenReturn(List.of(new MemberResponse(
                         USER_ID, "Ghilherme Santos", "ghilherme007@gmail.com", "AGENT", "ACTIVE", LocalDateTime.now())));
 
@@ -85,9 +87,33 @@ class MembershipControllerTest {
     }
 
     @Test
+    void shouldListRemovedMembersWhenStatusIsInformed() throws Exception {
+        login(List.of("membership:view"));
+        when(membershipUseCase.listMembers(eq(COMPANY_ID), eq(COMPANY_ID),
+                eq(MembershipStatus.REMOVED)))
+                .thenReturn(List.of(new MemberResponse(
+                        USER_ID, "Ghilherme Santos", "ghilherme007@gmail.com",
+                        "AGENT", "REMOVED", LocalDateTime.now())));
+
+        mockMvc.perform(get("/api/v1/companies/{id}/members", COMPANY_ID)
+                        .param("status", "removed"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].status").value("REMOVED"));
+    }
+
+    @Test
+    void shouldRejectUnknownMemberStatus() throws Exception {
+        login(List.of("membership:view"));
+
+        mockMvc.perform(get("/api/v1/companies/{id}/members", COMPANY_ID)
+                        .param("status", "INATIVO"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void shouldDenyListMembersOfAnotherCompany() throws Exception {
         login(List.of("membership:view"));
-        when(membershipUseCase.listMembers(any(UUID.class), eq(COMPANY_ID)))
+        when(membershipUseCase.listMembers(any(UUID.class), eq(COMPANY_ID), isNull()))
                 .thenThrow(new CrmAccessDeniedException("Acesso a membros desta empresa não permitido."));
 
         mockMvc.perform(get("/api/v1/companies/{id}/members", UUID.randomUUID()))

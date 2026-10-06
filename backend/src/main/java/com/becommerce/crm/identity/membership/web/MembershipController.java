@@ -4,6 +4,7 @@ import com.becommerce.crm.identity.membership.application.dto.MemberResponse;
 import com.becommerce.crm.identity.membership.application.dto.MembershipResponse;
 import com.becommerce.crm.identity.membership.application.dto.UpdateMemberRoleRequest;
 import com.becommerce.crm.identity.membership.application.port.input.MembershipUseCase;
+import com.becommerce.crm.identity.membership.domain.MembershipStatus;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @RestController
@@ -28,8 +30,10 @@ public class MembershipController {
     @PreAuthorize("hasAuthority('membership:view')")
     public ResponseEntity<List<MemberResponse>> listMembers(
             @PathVariable UUID id,
+            @RequestParam(required = false) String status,
             @AuthenticationPrincipal CurrentUser principal) {
-        return ResponseEntity.ok(membershipUseCase.listMembers(id, principal.companyId()));
+        return ResponseEntity.ok(
+                membershipUseCase.listMembers(id, principal.companyId(), parseStatus(status)));
     }
 
     @PutMapping("/companies/{id}/members/{userId}")
@@ -63,5 +67,22 @@ public class MembershipController {
 
     private boolean isSuperAdmin(CurrentUser principal) {
         return principal.roles().contains("SUPER_ADMIN");
+    }
+
+    /**
+     * Filtro opcional de status da membership. Vazio/ausente = histórico
+     * ({@code ACTIVE}); valor desconhecido = 400 (o GlobalExceptionHandler
+     * responde 400 para IllegalStateException, com mensagem genérica — lacuna
+     * já documentada).
+     */
+    private static MembershipStatus parseStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return MembershipStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException("Status de membro inválido: " + status);
+        }
     }
 }

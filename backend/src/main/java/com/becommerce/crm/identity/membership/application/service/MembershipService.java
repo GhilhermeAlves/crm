@@ -16,6 +16,7 @@ import com.becommerce.crm.identity.domain.exception.RoleNotFoundException;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.identity.membership.domain.Membership;
+import com.becommerce.crm.identity.membership.domain.MembershipStatus;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +63,11 @@ public class MembershipService implements MembershipUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MemberResponse> listMembers(UUID companyId, UUID requesterCompanyId) {
+    public List<MemberResponse> listMembers(UUID companyId, UUID requesterCompanyId,
+                                            MembershipStatus status) {
         assertOwnCompany(companyId, requesterCompanyId);
-        return membershipRepository.findActiveMembersByCompanyId(companyId).stream()
+        MembershipStatus filter = status == null ? MembershipStatus.ACTIVE : status;
+        return membershipRepository.findMembersByCompanyIdAndStatus(companyId, filter.name()).stream()
                 .map(this::mapToMemberResponse)
                 .toList();
     }
@@ -183,7 +186,7 @@ public class MembershipService implements MembershipUseCase {
                 projection.getName(),
                 projection.getEmail(),
                 projection.getRole(),
-                "ACTIVE",
+                projection.getStatus(),
                 projection.getJoinedAt());
     }
 

@@ -48,16 +48,18 @@ public interface SpringDataMembershipRepository extends JpaRepository<Membership
     @Query(value = """
             SELECT m.user_id AS userId,
                    m.role    AS role,
+                   m.status  AS status,
                    m.joined_at AS joinedAt,
                    u.name    AS name,
                    u.email   AS email
             FROM memberships m
             JOIN users u ON u.id = m.user_id
             WHERE m.company_id = :companyId
-              AND m.status = 'ACTIVE'
+              AND m.status = :status
             ORDER BY u.name
             """, nativeQuery = true)
-    List<MemberProjection> findActiveMembersByCompanyId(@Param("companyId") UUID companyId);
+    List<MemberProjection> findMembersByCompanyIdAndStatus(@Param("companyId") UUID companyId,
+                                                           @Param("status") String status);
 
     @Query(value = """
             SELECT m.company_id AS companyId,

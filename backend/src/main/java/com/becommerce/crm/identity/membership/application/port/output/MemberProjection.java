@@ -4,13 +4,16 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Projeção de membro ativo de uma empresa (membership + user).
+ * Projeção de membro de uma empresa (membership + user). {@code status} é o da
+ * própria membership — ACTIVE na listagem padrão, REMOVED na lista de inativos.
  */
 public interface MemberProjection {
 
     UUID getUserId();
 
     String getRole();
+
+    String getStatus();
 
     LocalDateTime getJoinedAt();
 
