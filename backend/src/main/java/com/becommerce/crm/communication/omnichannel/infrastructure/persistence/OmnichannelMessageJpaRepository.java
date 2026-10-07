@@ -19,6 +19,8 @@ public interface OmnichannelMessageJpaRepository extends JpaRepository<Omnichann
 
     Page<OmnichannelMessageJpaEntity> findByConversationIdOrderByCreatedAtAsc(UUID conversationId, Pageable pageable);
 
+    Page<OmnichannelMessageJpaEntity> findByConversationIdOrderByCreatedAtDesc(UUID conversationId, Pageable pageable);
+
     Optional<OmnichannelMessageJpaEntity> findFirstByConversationIdOrderByCreatedAtDesc(UUID conversationId);
 
     /** True se existe mensagem INBOUND criada depois de {@code after} na conversa (staleness de FollowUp). */

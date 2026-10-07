@@ -23,6 +23,9 @@ public interface OmnichannelMessageRepository {
 
     PageResponse<Message> findByConversation(UUID conversationId, int page, int pageSize);
 
+    /** As {@code limit} mensagens MAIS RECENTES da conversa, em ordem cronológica (contexto da IA). */
+    java.util.List<Message> findRecentByConversation(UUID conversationId, int limit);
+
     /** Corpo da última mensagem da conversa (para a lista do Inbox). */
     Optional<String> findLastBodyByConversation(UUID conversationId);
 

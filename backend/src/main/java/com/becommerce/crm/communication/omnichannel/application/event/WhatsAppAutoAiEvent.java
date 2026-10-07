@@ -19,12 +19,19 @@ public record WhatsAppAutoAiEvent(
         UUID inboundMessageId,
         String from,
         String body,
-        LocalDateTime occurredAt
+        LocalDateTime occurredAt,
+        /** Nome do perfil do WhatsApp (pushName); pode ser nulo. */
+        String senderName
 ) {
 
     public static WhatsAppAutoAiEvent of(UUID companyId, UUID conversationId, UUID inboundMessageId,
                                          String from, String body) {
+        return of(companyId, conversationId, inboundMessageId, from, body, null);
+    }
+
+    public static WhatsAppAutoAiEvent of(UUID companyId, UUID conversationId, UUID inboundMessageId,
+                                         String from, String body, String senderName) {
         return new WhatsAppAutoAiEvent(UUID.randomUUID(), companyId, conversationId,
-                inboundMessageId, from, body, LocalDateTime.now());
+                inboundMessageId, from, body, LocalDateTime.now(), senderName);
     }
 }

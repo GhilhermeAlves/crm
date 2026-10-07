@@ -46,6 +46,7 @@ class EvolutionWebhookParserTest {
         assertEquals("5511999998888", d.from());
         assertEquals("comercial", d.to());
         assertEquals("Oi, tudo bem?", d.body());
+        assertEquals("Joao", d.senderName());
     }
 
     @Test

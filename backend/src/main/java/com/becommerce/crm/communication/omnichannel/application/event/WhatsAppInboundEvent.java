@@ -20,13 +20,28 @@ public record WhatsAppInboundEvent(
         String externalMessageId,
         String from,
         String body,
-        LocalDateTime occurredAt
+        LocalDateTime occurredAt,
+        /** Nome do perfil do WhatsApp (pushName); pode ser nulo. */
+        String senderName
 ) {
+
+    public WhatsAppInboundEvent(UUID eventId, UUID companyId, UUID conversationId, UUID messageId,
+                                UUID channelId, String externalMessageId, String from, String body,
+                                LocalDateTime occurredAt) {
+        this(eventId, companyId, conversationId, messageId, channelId, externalMessageId, from, body,
+                occurredAt, null);
+    }
 
     public static WhatsAppInboundEvent of(UUID companyId, UUID conversationId, UUID messageId,
                                           UUID channelId, String externalMessageId,
                                           String from, String body) {
+        return of(companyId, conversationId, messageId, channelId, externalMessageId, from, body, null);
+    }
+
+    public static WhatsAppInboundEvent of(UUID companyId, UUID conversationId, UUID messageId,
+                                          UUID channelId, String externalMessageId,
+                                          String from, String body, String senderName) {
         return new WhatsAppInboundEvent(UUID.randomUUID(), companyId, conversationId, messageId,
-                channelId, externalMessageId, from, body, LocalDateTime.now());
+                channelId, externalMessageId, from, body, LocalDateTime.now(), senderName);
     }
 }

@@ -4,7 +4,6 @@ import com.becommerce.crm.automation.ai.application.port.output.AgentAutoReplyRe
 import com.becommerce.crm.automation.ai.application.port.output.AgentConfigRepository;
 import com.becommerce.crm.automation.ai.application.port.output.AiProvider;
 import com.becommerce.crm.automation.ai.application.service.AiChatFailover;
-import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
@@ -19,11 +18,18 @@ import com.becommerce.crm.communication.omnichannel.domain.MessageDirection;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -65,6 +71,8 @@ public class WhatsAppInboundAutoReplyProcessor {
     private static final Logger log = LoggerFactory.getLogger(WhatsAppInboundAutoReplyProcessor.class);
 
     private static final int HISTORY_LIMIT = 20;
+    private static final ZoneId CLINIC_ZONE = ZoneId.of("America/Sao_Paulo");
+    private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
     private static final int DEFAULT_MAX_TOKENS = 600;
     /**
      * Sem tokenizer (o projeto não possui utilitário de contagem; decisão do
@@ -83,6 +91,12 @@ public class WhatsAppInboundAutoReplyProcessor {
     private final AiChatFailover aiChatFailover;
     private final OmnichannelMessagePersister messagePersister;
     private final WhatsAppEventPublisher eventPublisher;
+    /**
+     * Janela de agrupamento: espera o paciente terminar de digitar. Se chegar
+     * outra mensagem nesse intervalo, esta é descartada e a mais recente
+     * responde a todas (as anteriores já estão no histórico).
+     */
+    private final long replyDebounceMillis;
 
     public WhatsAppInboundAutoReplyProcessor(AgentConfigRepository agentConfigRepository,
                                              AgentAutoReplyRepository autoReplyRepository,
@@ -92,6 +106,22 @@ public class WhatsAppInboundAutoReplyProcessor {
                                              AiChatFailover aiChatFailover,
                                              OmnichannelMessagePersister messagePersister,
                                              WhatsAppEventPublisher eventPublisher) {
+        this(agentConfigRepository, autoReplyRepository, conversationRepository, channelRepository,
+                messageRepository, aiChatFailover, messagePersister, eventPublisher, 0L);
+    }
+
+    @Autowired
+    public WhatsAppInboundAutoReplyProcessor(AgentConfigRepository agentConfigRepository,
+                                             AgentAutoReplyRepository autoReplyRepository,
+                                             OmnichannelConversationRepository conversationRepository,
+                                             OmnichannelChannelRepository channelRepository,
+                                             OmnichannelMessageRepository messageRepository,
+                                             AiChatFailover aiChatFailover,
+                                             OmnichannelMessagePersister messagePersister,
+                                             WhatsAppEventPublisher eventPublisher,
+                                             @Value("${omnichannel.whatsapp.reply-debounce-seconds:8}")
+                                             long replyDebounceSeconds) {
+        this.replyDebounceMillis = Math.max(0L, replyDebounceSeconds) * 1000L;
         this.agentConfigRepository = agentConfigRepository;
         this.autoReplyRepository = autoReplyRepository;
         this.conversationRepository = conversationRepository;
@@ -110,6 +140,11 @@ public class WhatsAppInboundAutoReplyProcessor {
      */
     public void processInbound(UUID companyId, UUID conversationId, UUID inboundMessageId,
                                String from, String body) {
+        processInbound(companyId, conversationId, inboundMessageId, from, body, null);
+    }
+
+    public void processInbound(UUID companyId, UUID conversationId, UUID inboundMessageId,
+                               String from, String body, String senderName) {
         try {
             TenantContext.setCompanyId(companyId);
 
@@ -144,13 +179,19 @@ public class WhatsAppInboundAutoReplyProcessor {
                 return;
             }
 
+            if (supersededByNewerInbound(conversationId, inboundMessageId)) {
+                log.info("Auto-resposta agrupada: mensagem mais nova na conversa (company={}, conversation={}, inbound={})",
+                        companyId, conversationId, inboundMessageId);
+                return;
+            }
+
             // Reserva idempotente: no máximo 1 resposta por mensagem entrante.
             if (!autoReplyRepository.reserve(companyId, conversationId, inboundMessageId)) {
                 log.debug("Mensagem já respondida (company={}, inbound={}); ignorando", companyId, inboundMessageId);
                 return;
             }
 
-            String reply = generateReply(agentConfig, conversationId, inboundMessageId, body);
+            String reply = generateReply(agentConfig, conversationId, inboundMessageId, body, senderName);
             if (reply == null) {
                 return;
             }
@@ -173,12 +214,31 @@ public class WhatsAppInboundAutoReplyProcessor {
         }
     }
 
+    /**
+     * Espera a janela de agrupamento e verifica se o paciente mandou outra
+     * mensagem depois desta. Sem janela configurada, nunca agrupa.
+     */
+    private boolean supersededByNewerInbound(UUID conversationId, UUID inboundMessageId) {
+        if (replyDebounceMillis <= 0 || inboundMessageId == null) {
+            return false;
+        }
+        try {
+            Thread.sleep(replyDebounceMillis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+        return messageRepository.findById(inboundMessageId)
+                .map(inbound -> messageRepository.existsInboundAfter(conversationId, inbound.getCreatedAt()))
+                .orElse(false);
+    }
+
     private String generateReply(AgentConfig agentConfig, UUID conversationId,
-                                 UUID inboundMessageId, String body) {
+                                 UUID inboundMessageId, String body, String senderName) {
         long generationStart = System.nanoTime();
         try {
             List<AiProvider.ChatMessage> messages =
-                    buildContext(agentConfig, conversationId, inboundMessageId, body);
+                    buildContext(agentConfig, conversationId, inboundMessageId, body, senderName);
 
             AiProvider.GenerationParams params = new AiProvider.GenerationParams(
                     agentConfig.getModel(), agentConfig.getTemperature(), agentConfig.getMaxTokens(), null);
@@ -213,18 +273,19 @@ public class WhatsAppInboundAutoReplyProcessor {
      * system → mais recentes → atual.
      */
     private List<AiProvider.ChatMessage> buildContext(AgentConfig agentConfig, UUID conversationId,
-                                                      UUID inboundMessageId, String body) {
+                                                      UUID inboundMessageId, String body, String senderName) {
         List<AiProvider.ChatMessage> messages = new ArrayList<>();
         messages.add(new AiProvider.ChatMessage("system", agentConfig.getSystemPrompt()));
+        messages.add(new AiProvider.ChatMessage("system", conversationFacts(senderName, ZonedDateTime.now(CLINIC_ZONE))));
 
         int outputBudget = agentConfig.getMaxTokens() != null && agentConfig.getMaxTokens() > 0
                 ? agentConfig.getMaxTokens() : DEFAULT_MAX_TOKENS;
         int historyCharBudget = outputBudget * HISTORY_TOKEN_MULTIPLIER * CHARS_PER_TOKEN;
 
-        PageResponse<Message> history = messageRepository.findByConversation(conversationId, 0, HISTORY_LIMIT);
+        // As mensagens MAIS RECENTES (antes vinham as 20 mais antigas da conversa).
         List<AiProvider.ChatMessage> kept = new ArrayList<>();
         int usedChars = 0;
-        List<Message> content = history.content();
+        List<Message> content = messageRepository.findRecentByConversation(conversationId, HISTORY_LIMIT);
         // Histórico vem em ordem cronológica; percorre dos mais recentes aos mais antigos.
         for (int i = content.size() - 1; i >= 0; i--) {
             Message m = content.get(i);
@@ -248,6 +309,26 @@ public class WhatsAppInboundAutoReplyProcessor {
         messages.addAll(kept);
         messages.add(new AiProvider.ChatMessage("user", body));
         return messages;
+    }
+
+    /**
+     * Fatos do momento que o prompt não tem como saber: data/hora local e o
+     * nome do perfil do paciente. Só informativo — o tom vem do prompt da empresa.
+     */
+    static String conversationFacts(String senderName, ZonedDateTime now) {
+        String weekday = now.getDayOfWeek().getDisplayName(TextStyle.FULL, PT_BR);
+        StringBuilder facts = new StringBuilder("Contexto desta conversa (não repita literalmente):\n")
+                .append("- Agora: ").append(weekday).append(", ")
+                .append(now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm", PT_BR)))
+                .append(" (horário de Brasília).\n");
+        if (senderName != null && !senderName.isBlank()) {
+            facts.append("- Nome do perfil do paciente no WhatsApp: \"").append(senderName.trim())
+                    .append("\". Se parecer um nome de pessoa, trate-o pelo primeiro nome de forma natural, ")
+                    .append("sem repetir o nome em toda mensagem.\n");
+        }
+        facts.append("- Escreva como uma pessoa no WhatsApp: frases curtas e naturais, sem formatação de lista longa, ")
+                .append("e não repita a saudação ou o menu se a conversa já começou.");
+        return facts.toString();
     }
 
     private boolean isWithinCooldown(AgentConfig agentConfig, UUID companyId, UUID conversationId) {

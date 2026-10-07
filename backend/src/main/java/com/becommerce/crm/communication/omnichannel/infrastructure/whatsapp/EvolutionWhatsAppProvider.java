@@ -21,6 +21,7 @@ import java.util.function.Function;
  * <p>Contrato (doc.evolution-api.com, v2):
  * <ul>
  *   <li>POST {@code /message/sendText/{instance}} com body {@code {"number":"…","text":"…"}}</li>
+ *   <li>{@code delay} (ms) opcional: a Evolution exibe "digitando…" antes de enviar</li>
  *   <li>Header {@code apikey: <key>}</li>
  *   <li>Resposta contém {@code key.id} (id da mensagem no WhatsApp)</li>
  * </ul>
@@ -68,7 +69,8 @@ public class EvolutionWhatsAppProvider implements WhatsAppProvider {
                     .uri(baseUrl + "/message/sendText/{instance}", instance)
                     .header("apikey", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("number", request.to(), "text", request.body()))
+                    .body(Map.of("number", request.to(), "text", request.body(),
+                            "delay", typingDelayMillis(request.body())))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
                         throw new OmnichannelProviderException(
@@ -91,6 +93,16 @@ public class EvolutionWhatsAppProvider implements WhatsAppProvider {
     @Override
     public String providerName() {
         return "EVOLUTION";
+    }
+
+    /**
+     * Tempo de "digitando…" antes da mensagem (a Evolution mostra a presença
+     * {@code composing} durante o {@code delay}): proporcional ao tamanho do
+     * texto, como uma pessoa digitando, entre 1,5 s e 7 s.
+     */
+    static int typingDelayMillis(String text) {
+        int length = text == null ? 0 : text.length();
+        return Math.max(1_500, Math.min(7_000, 1_000 + length * 35));
     }
 
     private String resolveApiKey(String secretsRef) {

@@ -4,7 +4,6 @@ import com.becommerce.crm.automation.ai.application.port.output.AgentAutoReplyRe
 import com.becommerce.crm.automation.ai.application.port.output.AgentConfigRepository;
 import com.becommerce.crm.automation.ai.application.port.output.AiProvider;
 import com.becommerce.crm.automation.ai.application.service.AiChatFailover;
-import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
@@ -99,8 +98,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 "{}", "wh-secret-ref", LocalDateTime.now(), LocalDateTime.now());
         when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel));
 
-        when(messageRepository.findByConversation(any(), anyInt(), anyInt()))
-                .thenReturn(PageResponse.of(List.of(), 0, 20, 0));
+        when(messageRepository.findRecentByConversation(any(), anyInt())).thenReturn(List.of());
         when(autoReplyRepository.lastAutoReplyAt(any(), any())).thenReturn(Optional.empty());
         when(autoReplyRepository.reserve(eq(companyId), eq(conversationId), eq(inboundMessageId)))
                 .thenReturn(true);
@@ -456,8 +454,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 MessageDirection.OUTBOUND, "120000000", from, MessageType.TEXT, "resposta anterior",
                 MessageStatus.SENT, "wamid-01", UUID.randomUUID(), null, LocalDateTime.now(), null,
                 LocalDateTime.now(), LocalDateTime.now());
-        when(messageRepository.findByConversation(conversationId, 0, 20))
-                .thenReturn(PageResponse.of(List.of(inbound, outbound), 0, 20, 2));
+        when(messageRepository.findRecentByConversation(conversationId, 20)).thenReturn(List.of(inbound, outbound));
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
@@ -484,8 +481,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 MessageDirection.INBOUND, from, "120000000", MessageType.TEXT, body,
                 MessageStatus.SENT, "wamid-current", UUID.randomUUID(), null, null, null,
                 LocalDateTime.now(), LocalDateTime.now());
-        when(messageRepository.findByConversation(conversationId, 0, 20))
-                .thenReturn(PageResponse.of(List.of(current), 0, 20, 1));
+        when(messageRepository.findRecentByConversation(conversationId, 20)).thenReturn(List.of(current));
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
@@ -501,8 +497,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 message(MessageDirection.OUTBOUND, "x".repeat(120), "wamid-1"),
                 message(MessageDirection.INBOUND, "mensagem recente", "wamid-2"),
                 message(MessageDirection.INBOUND, "mais recente ainda", "wamid-3"));
-        when(messageRepository.findByConversation(conversationId, 0, 20))
-                .thenReturn(PageResponse.of(history, 0, 20, history.size()));
+        when(messageRepository.findRecentByConversation(conversationId, 20)).thenReturn(history);
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
@@ -525,16 +520,72 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 MessageDirection.INBOUND, from, "120000000", MessageType.TEXT, "   ",
                 MessageStatus.SENT, "wamid-blank", UUID.randomUUID(), null, null, null,
                 LocalDateTime.now(), LocalDateTime.now());
-        when(messageRepository.findByConversation(conversationId, 0, 20))
-                .thenReturn(PageResponse.of(List.of(blank), 0, 20, 1));
+        when(messageRepository.findRecentByConversation(conversationId, 20)).thenReturn(List.of(blank));
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
         verify(aiProvider).chatWithTools(argThat(req -> {
             List<AiProvider.ChatMessage> messages = req.messages();
-            assertEquals(2, messages.size(), "system + mensagem atual; histórico em branco ignorado");
+            assertEquals(3, messages.size(), "prompt + contexto + mensagem atual; histórico em branco ignorado");
             return true;
         }));
+    }
+
+    // ------------------------------------------------------------ humanização
+
+    @Test
+    void shouldSendSenderNameAndCurrentDateAsContext() {
+        config(true, true);
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body, "Maria Souza");
+
+        verify(aiProvider).chatWithTools(argThat(req -> {
+            AiProvider.ChatMessage facts = req.messages().get(1);
+            assertEquals("system", facts.role());
+            assertTrue(facts.content().contains("\"Maria Souza\""), facts.content());
+            assertTrue(facts.content().contains("horário de Brasília"), facts.content());
+            return true;
+        }));
+    }
+
+    @Test
+    void conversationFacts_formatsWeekdayAndOmitsBlankName() {
+        String facts = WhatsAppInboundAutoReplyProcessor.conversationFacts(" ",
+                java.time.ZonedDateTime.of(2026, 10, 7, 9, 5, 0, 0, java.time.ZoneId.of("America/Sao_Paulo")));
+
+        assertTrue(facts.contains("quarta-feira, 07/10/2026 às 09:05"), facts);
+        assertFalse(facts.contains("Nome do perfil"), facts);
+    }
+
+    @Test
+    void shouldSkipWhenNewerInboundArrivesDuringDebounce() {
+        config(true, true);
+        WhatsAppInboundAutoReplyProcessor debounced = new WhatsAppInboundAutoReplyProcessor(agentConfigRepository,
+                autoReplyRepository, conversationRepository, channelRepository, messageRepository,
+                aiChatFailover, messagePersister, eventPublisher, 1L);
+        Message current = message(MessageDirection.INBOUND, "primeira", "wamid-a");
+        when(messageRepository.findById(inboundMessageId)).thenReturn(Optional.of(current));
+        when(messageRepository.existsInboundAfter(eq(conversationId), any())).thenReturn(true);
+
+        debounced.processInbound(companyId, conversationId, inboundMessageId, from, "primeira");
+
+        verify(autoReplyRepository, never()).reserve(any(), any(), any());
+        verify(aiProvider, never()).chatWithTools(any());
+    }
+
+    @Test
+    void shouldReplyAfterDebounceWhenNoNewerInbound() {
+        config(true, true);
+        WhatsAppInboundAutoReplyProcessor debounced = new WhatsAppInboundAutoReplyProcessor(agentConfigRepository,
+                autoReplyRepository, conversationRepository, channelRepository, messageRepository,
+                aiChatFailover, messagePersister, eventPublisher, 1L);
+        Message current = message(MessageDirection.INBOUND, "última", "wamid-b");
+        when(messageRepository.findById(inboundMessageId)).thenReturn(Optional.of(current));
+        when(messageRepository.existsInboundAfter(eq(conversationId), any())).thenReturn(false);
+
+        debounced.processInbound(companyId, conversationId, inboundMessageId, from, "última");
+
+        verify(aiProvider).chatWithTools(any());
     }
 
     // ------------------------------------------------------------ tenant context

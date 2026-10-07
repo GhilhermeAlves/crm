@@ -26,10 +26,10 @@ public class WhatsAppAutoAiConsumer {
         this.processor = processor;
     }
 
-    @RabbitListener(queues = "crm.whatsapp.auto-ai")
+    @RabbitListener(queues = "crm.whatsapp.auto-ai", concurrency = "${omnichannel.whatsapp.auto-ai-concurrency:2-8}")
     public void onAutoAi(WhatsAppAutoAiEvent event) {
         log.info("[WHATSAPP][AUTO-AI] consome evento {}", event.eventId());
         processor.processInbound(event.companyId(), event.conversationId(),
-                event.inboundMessageId(), event.from(), event.body());
+                event.inboundMessageId(), event.from(), event.body(), event.senderName());
     }
 }

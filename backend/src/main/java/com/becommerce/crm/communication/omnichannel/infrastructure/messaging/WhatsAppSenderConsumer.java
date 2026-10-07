@@ -26,7 +26,7 @@ public class WhatsAppSenderConsumer {
         this.sendService = sendService;
     }
 
-    @RabbitListener(queues = "crm.whatsapp.sender")
+    @RabbitListener(queues = "crm.whatsapp.sender", concurrency = "${omnichannel.whatsapp.sender-concurrency:2-8}")
     public void onSend(WhatsAppSendEvent event) {
         log.info("[WHATSAPP][SENDER] consome evento {}", event.eventId());
         sendService.send(event);
