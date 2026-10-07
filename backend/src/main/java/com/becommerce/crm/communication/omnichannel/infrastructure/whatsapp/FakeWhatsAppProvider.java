@@ -10,9 +10,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * Provider fake de WhatsApp para desenvolvimento/simulação (Sprint 16, FASE 4/24).
  * NÃO faz chamadas externas: apenas gera um identificador externo sintético.
  * Ativo somente quando {@code omnichannel.whatsapp.provider=fake} (default).
- * Em produção, o adapter da WhatsApp Cloud API (WhatsAppCloudApiProvider)
+ * Em produção, o adapter da Evolution API (EvolutionWhatsAppProvider)
  * implementa a mesma porta {@link WhatsAppProvider}, selecionado por config
- * ({@code omnichannel.whatsapp.provider=cloud-api}) — sem ambiguidade de beans.
+ * ({@code omnichannel.whatsapp.provider=evolution}) — sem ambiguidade de beans.
  */
 @Service
 @ConditionalOnProperty(name = "omnichannel.whatsapp.provider", havingValue = "fake", matchIfMissing = true)

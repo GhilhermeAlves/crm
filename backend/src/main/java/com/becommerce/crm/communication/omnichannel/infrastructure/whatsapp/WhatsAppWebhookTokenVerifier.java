@@ -9,8 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 /**
- * Autenticação de webhook para providers que NÃO usam o HMAC da Meta
- * (ex.: UAZAPI). Segue a mesma política fail-safe do verifier HMAC:
+ * Autenticação do webhook da Evolution API por token compartilhado (fail-safe):
  * <ul>
  *   <li>token configurado ({@code omnichannel.whatsapp.webhook-token}):
  *       o payload SÓ é aceito com o token correto (query param ou header);</li>
@@ -33,22 +32,18 @@ public class WhatsAppWebhookTokenVerifier {
         this.webhookToken = webhookToken == null ? "" : webhookToken.trim();
     }
 
-    /**
-     * @param rawPayload     body bruto (para futuro HMAC, mantido por assinatura)
-     * @param signatureHeader header X-Hub-Signature-256 (Meta; hoje ignorado quando há token)
-     * @param tokenParam      token recebido (query param {@code token} ou header X-Uazapi-Token)
-     */
-    public boolean isAuthenticated(String rawPayload, String signatureHeader, String tokenParam) {
+    /** @param token token recebido (query param {@code token} ou header {@code X-Webhook-Token}) */
+    public boolean isAuthenticated(String token) {
         if (!webhookToken.isEmpty()) {
-            if (tokenParam == null) {
-                log.warn("Webhook {} sem token; rejeitando", "uazapi");
+            if (token == null) {
+                log.warn("Webhook WhatsApp sem token; rejeitando");
                 return false;
             }
             boolean ok = MessageDigest.isEqual(
                     webhookToken.getBytes(StandardCharsets.UTF_8),
-                    tokenParam.trim().getBytes(StandardCharsets.UTF_8));
+                    token.trim().getBytes(StandardCharsets.UTF_8));
             if (!ok) {
-                log.warn("Webhook {} com token inválido; rejeitando", "uazapi");
+                log.warn("Webhook WhatsApp com token inválido; rejeitando");
             }
             return ok;
         }

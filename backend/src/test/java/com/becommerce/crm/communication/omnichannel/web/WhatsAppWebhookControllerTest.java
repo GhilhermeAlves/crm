@@ -10,9 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,8 +22,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class WhatsAppWebhookControllerTest {
 
-    private static final String SECRET = "app-secret-123";
-    private static final String PAYLOAD = "{\"object\":\"whatsapp_business_account\"}";
+    private static final String URL = "/api/v1/omnichannel/whatsapp/webhook";
+    private static final String TOKEN = "segredo-token";
+    private static final String PAYLOAD = "{\"event\":\"messages.upsert\",\"instance\":\"comercial\"}";
 
     private final WhatsAppWebhookUseCase useCase = mock(WhatsAppWebhookUseCase.class);
     private MockMvc mockMvc;
@@ -34,88 +32,50 @@ class WhatsAppWebhookControllerTest {
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(new WhatsAppWebhookController(
-                        useCase,
-                        new WhatsAppWebhookSignatureVerifier(SECRET, false),
-                        new WhatsAppWebhookTokenVerifier(false, "segredo-token"),
-                        new ObjectMapper()))
+                        useCase, new WhatsAppWebhookTokenVerifier(false, TOKEN), new ObjectMapper()))
                 .build();
     }
 
-    private String signature(String payload) {
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            byte[] d = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : d) {
-                hex.append(String.format("%02x", b));
-            }
-            return "sha256=" + hex;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
     @Test
-    void validSignature_shouldProcessAndReturn200() throws Exception {
-        mockMvc.perform(post("/api/v1/omnichannel/whatsapp/webhook")
-                        .header("X-Hub-Signature-256", signature(PAYLOAD))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(PAYLOAD))
+    void tokenNaQuery_deveProcessar() throws Exception {
+        mockMvc.perform(post(URL).param("token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON).content(PAYLOAD))
                 .andExpect(status().isOk());
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(useCase).handleEvent(captor.capture());
-        assertEquals("whatsapp_business_account", captor.getValue().get("object"));
+        assertEquals("comercial", captor.getValue().get("instance"));
     }
 
     @Test
-    void invalidSignature_shouldReturn401() throws Exception {
-        mockMvc.perform(post("/api/v1/omnichannel/whatsapp/webhook")
-                        .header("X-Hub-Signature-256", signature("wrong-secret"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(PAYLOAD))
-                .andExpect(status().isUnauthorized());
-        verify(useCase, never()).handleEvent(any());
-    }
-
-    @Test
-    void missingSignature_shouldReturn401WhenEnforced() throws Exception {
-        mockMvc.perform(post("/api/v1/omnichannel/whatsapp/webhook")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(PAYLOAD))
-                .andExpect(status().isUnauthorized());
-        verify(useCase, never()).handleEvent(any());
-    }
-
-    @Test
-    void tamperedPayload_shouldReturn401() throws Exception {
-        String tampered = PAYLOAD.replace("whatsapp", "whatsvil");
-        mockMvc.perform(post("/api/v1/omnichannel/whatsapp/webhook")
-                        .header("X-Hub-Signature-256", signature(PAYLOAD))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(tampered))
-                .andExpect(status().isUnauthorized());
-        verify(useCase, never()).handleEvent(any());
-    }
-
-    @Test
-    void uazapiSemToken_shouldReturn401() throws Exception {
-        mockMvc.perform(post("/api/v1/omnichannel/whatsapp/webhook")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"event\":\"messages\"}"))
-                .andExpect(status().isUnauthorized());
-        verify(useCase, never()).handleEvent(any());
-    }
-
-    @Test
-    void uazapiComTokenCorreto_shouldReturn200() throws Exception {
-        mockMvc.perform(post("/api/v1/omnichannel/whatsapp/webhook")
-                        .param("token", "segredo-token")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"event\":\"messages\"}"))
+    void tokenNoHeader_deveProcessar() throws Exception {
+        mockMvc.perform(post(URL).header("X-Webhook-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON).content(PAYLOAD))
                 .andExpect(status().isOk());
         verify(useCase).handleEvent(any());
+    }
+
+    @Test
+    void semToken_deveRetornar401() throws Exception {
+        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(PAYLOAD))
+                .andExpect(status().isUnauthorized());
+        verify(useCase, never()).handleEvent(any());
+    }
+
+    @Test
+    void tokenErrado_deveRetornar401() throws Exception {
+        mockMvc.perform(post(URL).param("token", "outro")
+                        .contentType(MediaType.APPLICATION_JSON).content(PAYLOAD))
+                .andExpect(status().isUnauthorized());
+        verify(useCase, never()).handleEvent(any());
+    }
+
+    @Test
+    void payloadInvalido_deveRetornar400() throws Exception {
+        mockMvc.perform(post(URL).param("token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON).content("nao-e-json"))
+                .andExpect(status().isBadRequest());
+        verify(useCase, never()).handleEvent(any());
     }
 }

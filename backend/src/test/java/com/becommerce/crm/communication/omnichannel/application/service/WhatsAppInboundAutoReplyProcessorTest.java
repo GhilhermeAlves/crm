@@ -95,7 +95,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
         when(conversationRepository.findById(conversationId)).thenReturn(Optional.of(conversation));
 
         Channel channel = Channel.reconstitute(channelId, companyId, ChannelType.WHATSAPP,
-                ChannelProvider.WHATSAPP_CLOUD_API, "Principal", ChannelStatus.ACTIVE, "120000000",
+                ChannelProvider.EVOLUTION, "Principal", ChannelStatus.ACTIVE, "120000000",
                 "{}", "wh-secret-ref", LocalDateTime.now(), LocalDateTime.now());
         when(channelRepository.findById(channelId)).thenReturn(Optional.of(channel));
 

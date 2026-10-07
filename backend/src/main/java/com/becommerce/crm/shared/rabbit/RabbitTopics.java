@@ -3,7 +3,7 @@ package com.becommerce.crm.shared.rabbit;
 /** Constantes de roteamento do barramento RabbitMQ (Sprint 23). */
 public final class RabbitTopics {
 
-    /** Exchange tópico único do fluxo WhatsApp/UAZAPI. */
+    /** Exchange tópico único do fluxo WhatsApp. */
     public static final String WHATSAPP_EXCHANGE = "crm.whatsapp";
 
     /** Exchange DIRECT de dead-letter (DLQs de todas as filas do fluxo). */

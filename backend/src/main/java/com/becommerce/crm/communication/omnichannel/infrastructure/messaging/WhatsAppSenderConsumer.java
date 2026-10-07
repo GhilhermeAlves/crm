@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /**
  * Infraestrutura: consumer da fila {@code crm.whatsapp.sender} (Sprint 23).
  * Camada fina — delega para o {@link WhatsAppSendService} (application layer).
- * Este é o ÚNICO ponto onde o provider (UAZAPI/MessageMedia atrás de
+ * Este é o ÚNICO ponto onde o provider (Evolution atrás de
  * {@code WhatsAppProvider}) é chamado, fora do request HTTP.
  */
 @Component
