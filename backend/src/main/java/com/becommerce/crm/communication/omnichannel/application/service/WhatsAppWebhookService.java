@@ -6,6 +6,7 @@ import com.becommerce.crm.communication.omnichannel.application.port.input.Whats
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelCompanyResolver;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelInboxNotifier;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppEventPublisher;
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppWebhookParser;
@@ -48,6 +49,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
     private final EventPublisher eventPublisher;
     private final WhatsAppEventPublisher whatsAppEventPublisher;
     private final JdbcTemplate jdbcTemplate;
+    private final OmnichannelInboxNotifier inboxNotifier;
 
     public WhatsAppWebhookService(WhatsAppWebhookParser parser,
                                   OmnichannelCompanyResolver companyResolver,
@@ -57,7 +59,8 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
                                   ContactRepository contactRepository,
                                   EventPublisher eventPublisher,
                                   WhatsAppEventPublisher whatsAppEventPublisher,
-                                  JdbcTemplate jdbcTemplate) {
+                                  JdbcTemplate jdbcTemplate,
+                                  OmnichannelInboxNotifier inboxNotifier) {
         this.parser = parser;
         this.companyResolver = companyResolver;
         this.channelRepository = channelRepository;
@@ -67,6 +70,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         this.eventPublisher = eventPublisher;
         this.whatsAppEventPublisher = whatsAppEventPublisher;
         this.jdbcTemplate = jdbcTemplate;
+        this.inboxNotifier = inboxNotifier;
     }
 
     @Override
@@ -138,6 +142,17 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
 
         conversation.touch(LocalDateTime.now(), true);
         conversationRepository.save(conversation);
+
+        // Notifica a equipe só na primeira mensagem não lida da conversa —
+        // evita uma notificação por mensagem enquanto ninguém abre a Inbox.
+        if (conversation.getUnreadCount() == 1) {
+            try {
+                inboxNotifier.notifyNewInbound(companyId, conversation.getId(), data.from(), data.body());
+            } catch (RuntimeException e) {
+                log.warn("Falha ao notificar mensagem nova (company={}, conversation={}): {}",
+                        companyId, conversation.getId(), e.getMessage());
+            }
+        }
 
         eventPublisher.publish(WorkflowTriggerEvent.whatsAppMessageReceived(
                 companyId, conversation.getContactId(), conversation.getId(), persisted.getId(),
