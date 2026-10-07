@@ -2,6 +2,7 @@
 
 import { Bell, CheckCheck, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import {
   useNotifications,
@@ -36,6 +37,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 export function NotificationBell() {
   const { user } = useAuth();
+  const router = useRouter();
   const companyId = user?.companyId ?? null;
   const perms = useNotificationPermissions();
 
@@ -87,6 +89,7 @@ export function NotificationBell() {
                 className="flex cursor-pointer flex-col items-start gap-1 py-3"
                 onClick={() => {
                   if (!n.read && perms.canUpdate) markRead.mutate(n.id);
+                  if (n.type === "MESSAGE") router.push(ROUTES.INBOX);
                 }}
               >
                 <div className="flex w-full items-center justify-between gap-2">

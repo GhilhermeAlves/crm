@@ -73,10 +73,15 @@ export function useDeleteChannel() {
 
 // Inbox ---------------------------------------------------------------------
 
+// Mensagens chegam pelo webhook do WhatsApp sem ação do usuário: a Inbox
+// re-busca periodicamente (só com a aba visível) para refletir a conversa.
+const INBOX_POLL_INTERVAL_MS = 5_000;
+
 export function useConversations() {
   return useQuery({
     queryKey: ["omnichannel", "conversations"],
     queryFn: () => OmnichannelService.listConversations(0, 50),
+    refetchInterval: INBOX_POLL_INTERVAL_MS,
   });
 }
 
@@ -85,6 +90,7 @@ export function useConversation(conversationId: string | null) {
     queryKey: ["omnichannel", "conversation", conversationId],
     queryFn: () => OmnichannelService.getConversation(conversationId as string),
     enabled: !!conversationId,
+    refetchInterval: INBOX_POLL_INTERVAL_MS,
   });
 }
 
