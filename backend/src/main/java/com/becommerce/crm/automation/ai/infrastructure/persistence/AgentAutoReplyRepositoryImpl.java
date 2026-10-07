@@ -2,6 +2,8 @@ package com.becommerce.crm.automation.ai.infrastructure.persistence;
 
 import com.becommerce.crm.automation.ai.application.port.output.AgentAutoReplyRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -16,7 +18,9 @@ public class AgentAutoReplyRepositoryImpl implements AgentAutoReplyRepository {
         this.jpaRepository = jpaRepository;
     }
 
+    /** INSERT nativo (@Modifying) exige transação; o consumer Rabbit não abre uma. */
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean reserve(UUID companyId, UUID conversationId, UUID inboundMessageId) {
         LocalDateTime now = LocalDateTime.now();
         int inserted = jpaRepository.reserve(UUID.randomUUID(), companyId, conversationId,
