@@ -88,7 +88,7 @@ export function InvitationSignupForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3" noValidate>
         <div className="space-y-2">
           <Label htmlFor="invitation-email">E-mail</Label>
           <Input

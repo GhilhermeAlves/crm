@@ -78,7 +78,7 @@ export function InvitationLanding({ token }: { token: string }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <InvitationSummary preview={data} />
       {data.hasAccount || accountExists ? (
         <ExistingAccount token={token} preview={data} onBlockingError={setBlocking} />
@@ -115,11 +115,11 @@ function toBlocking(error: InvitationError): BlockingError {
 
 function InvitationSummary({ preview }: { preview: InvitationPreview }) {
   return (
-    <div className="space-y-3 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-crm-surface-bg">
-        <Building2 className="h-6 w-6 text-crm-primary" />
+    <div className="space-y-2 text-center">
+      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-crm-surface-bg">
+        <Building2 className="h-5 w-5 text-crm-primary" />
       </div>
-      <h1 className="text-2xl font-semibold tracking-tight text-crm-text">
+      <h1 className="text-xl font-semibold tracking-tight text-crm-text">
         Convite para {preview.companyName}
       </h1>
       <dl className="space-y-1 text-sm text-crm-text-secondary">
