@@ -32,7 +32,7 @@ import java.util.UUID;
  * RabbitMQ): este component é o <b>consumer lógico da fila {@code crm.whatsapp.auto-ai}</b>,
  * executado fora do request HTTP do webhook. Gera a resposta (IA), persiste o
  * OUTBOUND como PENDING e publica {@link WhatsAppSendEvent} para a fila de
- * sender — o ENVIO em si (provider/UAZAPI) ocorre no consumer de sender.
+ * sender — o ENVIO em si (provider/Evolution) ocorre no consumer de sender.
  *
  * <p>Regras (safe defaults):
  * <ul>

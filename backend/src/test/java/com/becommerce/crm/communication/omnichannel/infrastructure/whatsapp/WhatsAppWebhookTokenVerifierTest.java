@@ -16,25 +16,25 @@ class WhatsAppWebhookTokenVerifierTest {
     @Test
     void semTokenConfigurado_eAllowUnsignedFalse_deveRejeitar() {
         WhatsAppWebhookTokenVerifier v = newVerifier(false, "");
-        assertFalse(v.isAuthenticated("{}", null, null));
+        assertFalse(v.isAuthenticated(null));
     }
 
     @Test
     void tokenConfigurado_aceitaQueryCorreta() {
         WhatsAppWebhookTokenVerifier v = newVerifier(false, TOKEN);
-        assertTrue(v.isAuthenticated("{}", null, TOKEN));
+        assertTrue(v.isAuthenticated(TOKEN));
     }
 
     @Test
     void tokenConfigurado_rejeitaAusenteOuErrado() {
         WhatsAppWebhookTokenVerifier v = newVerifier(false, TOKEN);
-        assertFalse(v.isAuthenticated("{}", null, null));
-        assertFalse(v.isAuthenticated("{}", null, "errado"));
+        assertFalse(v.isAuthenticated(null));
+        assertFalse(v.isAuthenticated("errado"));
     }
 
     @Test
     void modoDesenvolvimento_allowUnsignedTrue_aceita() {
         WhatsAppWebhookTokenVerifier v = newVerifier(true, "");
-        assertTrue(v.isAuthenticated("{}", null, null));
+        assertTrue(v.isAuthenticated(null));
     }
 }

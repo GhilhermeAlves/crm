@@ -20,7 +20,7 @@ import java.util.UUID;
 
 /**
  * Sender lógico da fila {@code crm.whatsapp.sender} (Sprint 23). Executa o
- * envio EFETIVO via {@link WhatsAppProvider} (UAZAPI continua sendo detalhe de
+ * envio EFETIVO via {@link WhatsAppProvider} (Evolution continua sendo detalhe de
  * infraestrutura atrás da porta — nenhuma chamada HTTP de provider aqui).
  *
  * <p>Idempotência: a mensagem OUTBOUND é persistida como PENDING pelo produtor

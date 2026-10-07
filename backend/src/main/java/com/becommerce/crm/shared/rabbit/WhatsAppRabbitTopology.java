@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Topologia do fluxo WhatsApp/UAZAPI (Sprint 23).
+ * Topologia do fluxo WhatsApp (Sprint 23).
  *
  * <p>Uma única exchange tópica {@code crm.whatsapp} roteia os eventos por tipo
  * (inbound / auto-ai / sender / followup.executor). Toda fila crítica possui DLQ

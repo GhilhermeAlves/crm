@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Sender lógico da fila {@code crm.whatsapp.sender} (Sprint 23): único ponto
- * de ENVIO efetivo via {@link WhatsAppProvider} (UAZAPI) fora do request HTTP.
+ * de ENVIO efetivo via {@link WhatsAppProvider} (Evolution) fora do request HTTP.
  * Cobre idempotência por estado (apenas PENDING), desfecho de mensagem e de
  * follow-up, e o retry/DLQ (regra de falha: provider → FAILED; runtime → propaga).
  */

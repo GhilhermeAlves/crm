@@ -14,7 +14,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Publicador RabbitMQ dos eventos do fluxo WhatsApp/UAZAPI (Sprint 23).
+ * Publicador RabbitMQ dos eventos do fluxo WhatsApp (Sprint 23).
  *
  * <p><b>Consistência DB-commit/Rabbit-publish:</b> quando chamado dentro de uma
  * transação ativa (ex.: webhook @Transactional), o publish é registrado em

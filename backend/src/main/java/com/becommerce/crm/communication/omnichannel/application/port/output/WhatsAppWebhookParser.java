@@ -7,7 +7,7 @@ import java.util.Optional;
 
 /**
  * Normaliza payloads de webhook de provider para eventos normalizados,
- * desacoplando o serviço da estrutura específica da Meta.
+ * desacoplando o serviço da estrutura específica do provider.
  */
 public interface WhatsAppWebhookParser {
 
@@ -19,10 +19,6 @@ public interface WhatsAppWebhookParser {
     record StatusData(String externalMessageId, MessageStatus status, String error) {
     }
 
-    /** Identificação de webhook (para verificação de assinatura GET). */
-    record Verification(String mode, String token, String challenge) {
-    }
-
     boolean isInboundMessage(Map<String, Object> raw);
 
     Optional<InboundMessageData> parseInboundMessage(Map<String, Object> raw);
@@ -31,9 +27,7 @@ public interface WhatsAppWebhookParser {
 
     Optional<StatusData> parseStatusUpdate(Map<String, Object> raw);
 
-    Verification parseVerification(Map<String, String> params);
-
-    /** Referência de canal (número/phone_number_id da empresa) elemento do evento, p/ resolver a empresa. */
+    /** Referência de canal (instância do provider = externalId do canal), p/ resolver a empresa. */
     String providerChannelReference(Map<String, Object> raw);
 
     /** Nome do provider (para logs, sem expor secrets). */

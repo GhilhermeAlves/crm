@@ -25,8 +25,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -42,10 +40,9 @@ class WhatsAppWebhookServiceTest {
     private final WhatsAppEventPublisher whatsAppEventPublisher = mock(WhatsAppEventPublisher.class);
     private final JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
 
-    private final String verificationToken = "token-x";
     private final WhatsAppWebhookService service =
             new WhatsAppWebhookService(parser, companyResolver, channelRepository, conversationRepository,
-                    messageRepository, contactRepository, eventPublisher, whatsAppEventPublisher, verificationToken, jdbcTemplate);
+                    messageRepository, contactRepository, eventPublisher, whatsAppEventPublisher, jdbcTemplate);
 
     private final UUID companyId = UUID.randomUUID();
     private final UUID channelId = UUID.randomUUID();
@@ -57,22 +54,7 @@ class WhatsAppWebhookServiceTest {
     }
 
     private Map<String, Object> inboundPayload() {
-        return Map.of("entry", List.of());
-    }
-
-    @Test
-    void verify_shouldReturnChallengeWhenTokenMatches() {
-        when(parser.parseVerification(any()))
-                .thenReturn(new WhatsAppWebhookParser.Verification("subscribe", "token-x", "challenge-1"));
-
-        assertEquals("challenge-1", service.verify(Map.of("hub.verify_token", "token-x")));
-    }
-
-    @Test
-    void verify_shouldReturnNullWhenTokenMismatch() {
-        when(parser.parseVerification(any()))
-                .thenReturn(new WhatsAppWebhookParser.Verification("subscribe", "other-token", "challenge-1"));
-        assertNull(service.verify(Map.of("hub.verify_token", "wrong")));
+        return Map.of("event", "messages.upsert");
     }
 
     @Test

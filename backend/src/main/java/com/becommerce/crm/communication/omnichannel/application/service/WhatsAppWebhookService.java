@@ -18,7 +18,6 @@ import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +47,6 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
     private final ContactRepository contactRepository;
     private final EventPublisher eventPublisher;
     private final WhatsAppEventPublisher whatsAppEventPublisher;
-    private final String verificationToken;
     private final JdbcTemplate jdbcTemplate;
 
     public WhatsAppWebhookService(WhatsAppWebhookParser parser,
@@ -59,7 +57,6 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
                                   ContactRepository contactRepository,
                                   EventPublisher eventPublisher,
                                   WhatsAppEventPublisher whatsAppEventPublisher,
-                                  @Value("${omnichannel.whatsapp.webhook-verify-token:}") String verificationToken,
                                   JdbcTemplate jdbcTemplate) {
         this.parser = parser;
         this.companyResolver = companyResolver;
@@ -69,17 +66,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         this.contactRepository = contactRepository;
         this.eventPublisher = eventPublisher;
         this.whatsAppEventPublisher = whatsAppEventPublisher;
-        this.verificationToken = verificationToken;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Override
-    public String verify(Map<String, String> params) {
-        WhatsAppWebhookParser.Verification v = parser.parseVerification(params);
-        if (v.token() == null || v.token().isBlank() || !v.token().equals(verificationToken)) {
-            return null;
-        }
-        return v.challenge();
     }
 
     @Override

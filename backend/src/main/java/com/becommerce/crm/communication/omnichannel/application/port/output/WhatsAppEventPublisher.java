@@ -5,7 +5,7 @@ import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppIn
 import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
 
 /**
- * Porta de publicação dos eventos do fluxo WhatsApp/UAZAPI (Sprint 23).
+ * Porta de publicação dos eventos do fluxo WhatsApp (Sprint 23).
  * Implementada por infraestrutura RabbitMQ — o domínio/aplicação nunca
  * dependem de RabbitTemplate/@RabbitListener.
  *

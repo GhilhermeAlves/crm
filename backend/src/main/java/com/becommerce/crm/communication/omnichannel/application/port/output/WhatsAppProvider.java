@@ -4,12 +4,12 @@ import java.util.UUID;
 
 /**
  * Abstração de provider de mensageria, desacoplada da API externa.
- * O domínio de CRM não conhece classes da Meta; o adapter concreto
- * (WhatsApp Cloud API, fake, etc.) implementa esta porta.
+ * O domínio de CRM não conhece classes do provider; o adapter concreto
+ * (Evolution API, fake) implementa esta porta.
  */
 public interface WhatsAppProvider {
 
-    /** Resultado de envio: identificador externo da mensagem (wamid). */
+    /** Resultado de envio: identificador externo da mensagem (key.id). */
     record SendResult(String externalMessageId) {
     }
 

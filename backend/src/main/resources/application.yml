@@ -129,14 +129,11 @@ app:
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}
 omnichannel:
   whatsapp:
-    provider: ${WHATSAPP_PROVIDER:fake}
-    app-secret: ${CRM_WHATSAPP_APP_SECRET:}
-    webhook-verify-token: ${CRM_WHATSAPP_WEBHOOK_VERIFY_TOKEN:}
+    provider: ${WHATSAPP_PROVIDER:fake}   # evolution | fake
     webhook-allow-unsigned: ${WHATSAPP_WEBHOOK_ALLOW_UNSIGNED:false}
     webhook-token: ${OMNICHANNEL_WHATSAPP_WEBHOOK_TOKEN:}
-    uazapi:
-      base-url: ${UAZAPI_BASE_URL:}         # base URL da instância UAZAPI (ex.: https://<subdomain>.uazapi.com)
-      token: ${UAZAPI_TOKEN:}               # token da instância (fallback global; por canal via UAZAPI_TOKEN_<ref>)
+    evolution:
+      base-url: ${EVOLUTION_BASE_URL:}      # ex.: http://evolution-api:8080 (apikey via EVOLUTION_API_KEY / secrets_ref do canal)
 
 springdoc:
   api-docs:

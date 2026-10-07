@@ -33,7 +33,7 @@ import {
 const channelSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(120),
   type: z.literal("WHATSAPP"),
-  provider: z.enum(["WHATSAPP_CLOUD_API", "UAZAPI", "FAKE"] as const),
+  provider: z.enum(["EVOLUTION", "FAKE"] as const),
   externalId: z.string().max(120).optional(),
   config: z.string().max(4000).optional(),
   secretsRef: z.string().max(200).optional(),
@@ -56,7 +56,7 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
     defaultValues: {
       name: channel?.name ?? "",
       type: "WHATSAPP",
-      provider: channel?.provider ?? "WHATSAPP_CLOUD_API",
+      provider: channel?.provider ?? "EVOLUTION",
       externalId: channel?.externalId ?? "",
       config: channel?.config ?? "",
       secretsRef: channel?.secretsRef ?? "",
@@ -117,9 +117,9 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
               name="externalId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>ID externo (phone_number_id)</FormLabel>
+                  <FormLabel>Instância Evolution</FormLabel>
                   <FormControl>
-                    <Input placeholder="Identificador do número no provedor" {...field} />
+                    <Input placeholder="Nome da instância (ex.: comercial)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -132,7 +132,7 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
                 <FormItem>
                   <FormLabel>Configuração (JSON)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder='{"wabaId": "..."}' {...field} />
+                    <Textarea placeholder="{}" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -145,7 +145,7 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
                 <FormItem>
                   <FormLabel>Referência de secret</FormLabel>
                   <FormControl>
-                    <Input placeholder="vault:token-whatsapp" {...field} />
+                    <Input placeholder="Opcional: variável com a apikey (padrão EVOLUTION_API_KEY)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

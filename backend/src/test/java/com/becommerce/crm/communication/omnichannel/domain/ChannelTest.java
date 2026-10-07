@@ -47,11 +47,11 @@ class ChannelTest {
     void reconstitute_shouldRestoreAllFields() {
         UUID id = UUID.randomUUID();
         LocalDateTime ts = LocalDateTime.of(2026, 1, 1, 10, 0);
-        Channel c = Channel.reconstitute(id, companyId, ChannelType.WHATSAPP, ChannelProvider.WHATSAPP_CLOUD_API,
+        Channel c = Channel.reconstitute(id, companyId, ChannelType.WHATSAPP, ChannelProvider.EVOLUTION,
                 "N", ChannelStatus.ERROR, "ext", "{}", "vault:t", ts, ts);
 
         assertEquals(id, c.getId());
-        assertEquals(ChannelProvider.WHATSAPP_CLOUD_API, c.getProvider());
+        assertEquals(ChannelProvider.EVOLUTION, c.getProvider());
         assertEquals(ChannelStatus.ERROR, c.getStatus());
         assertEquals(ts, c.getCreatedAt());
     }

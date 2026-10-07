@@ -9,12 +9,6 @@ import java.util.Map;
  */
 public interface WhatsAppWebhookUseCase {
 
-    /**
-     * Verificação de webhook (GET com mode/token/challenge). Retorna o challenge
-     * quando o token confere; {code null} caso contrário.
-     */
-    String verify(Map<String, String> params);
-
     /** Processa um evento de entrada (mensagem ou status) de forma idempotente. */
     void handleEvent(Map<String, Object> payload);
 }
