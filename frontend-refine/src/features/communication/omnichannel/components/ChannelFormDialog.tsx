@@ -145,7 +145,10 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
                 <FormItem>
                   <FormLabel>Referência de secret</FormLabel>
                   <FormControl>
-                    <Input placeholder="Opcional: variável com a apikey (padrão EVOLUTION_API_KEY)" {...field} />
+                    <Input
+                      placeholder="Opcional: variável com a apikey (padrão EVOLUTION_API_KEY)"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
