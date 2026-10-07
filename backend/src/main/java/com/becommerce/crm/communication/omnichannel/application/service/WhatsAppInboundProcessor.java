@@ -62,7 +62,7 @@ public class WhatsAppInboundProcessor {
                 return;
             }
             eventPublisher.publishAutoAi(WhatsAppAutoAiEvent.of(companyId, event.conversationId(),
-                    event.messageId(), event.from(), event.body()));
+                    event.messageId(), event.from(), event.body(), event.senderName()));
             log.info("[WHATSAPP][INBOUND] eventId={} companyId={} conversationId={} roteado para IA",
                     event.eventId(), companyId, event.conversationId());
         } finally {

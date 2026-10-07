@@ -163,7 +163,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         // a IA e o envio passam a ocorrer nos consumers assíncronos.
         whatsAppEventPublisher.publishInbound(WhatsAppInboundEvent.of(
                 companyId, conversation.getId(), persisted.getId(), channel.getId(),
-                data.externalMessageId(), data.from(), data.body()));
+                data.externalMessageId(), data.from(), data.body(), data.senderName()));
     }
 
     private void handleStatus(UUID companyId, Map<String, Object> payload) {

@@ -12,7 +12,11 @@ import java.util.Optional;
 public interface WhatsAppWebhookParser {
 
     /** Mensagem recebida normalizada. */
-    record InboundMessageData(String externalMessageId, String from, String to, String body) {
+    record InboundMessageData(String externalMessageId, String from, String to, String body,
+                              String senderName) {
+        public InboundMessageData(String externalMessageId, String from, String to, String body) {
+            this(externalMessageId, from, to, body, null);
+        }
     }
 
     /** Atualização de status (SENT/DELIVERED/READ/FAILED) normalizada. */

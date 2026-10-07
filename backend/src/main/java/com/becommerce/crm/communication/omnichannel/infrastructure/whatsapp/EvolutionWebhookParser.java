@@ -45,7 +45,7 @@ public class EvolutionWebhookParser implements WhatsAppWebhookParser {
         if (id == null || from == null) {
             return Optional.empty();
         }
-        return Optional.of(new InboundMessageData(id, from, instance(raw), text(data)));
+        return Optional.of(new InboundMessageData(id, from, instance(raw), text(data), str(data.get("pushName"))));
     }
 
     @Override

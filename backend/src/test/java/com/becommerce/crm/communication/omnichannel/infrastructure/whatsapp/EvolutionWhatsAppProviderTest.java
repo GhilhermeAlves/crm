@@ -49,7 +49,7 @@ class EvolutionWhatsAppProviderTest {
         server.expect(requestTo(BASE_URL + "/message/sendText/comercial"))
                 .andExpect(method(POST))
                 .andExpect(header("apikey", "global-key"))
-                .andExpect(content().json("{\"number\":\"5511999998888\",\"text\":\"Olá!\"}"))
+                .andExpect(content().json("{\"number\":\"5511999998888\",\"text\":\"Olá!\",\"delay\":1500}"))
                 .andRespond(withSuccess("{\"key\":{\"remoteJid\":\"5511999998888@s.whatsapp.net\",\"fromMe\":true,\"id\":\"3EB0ABC\"},\"status\":\"PENDING\"}",
                         MediaType.APPLICATION_JSON));
 
@@ -59,6 +59,13 @@ class EvolutionWhatsAppProviderTest {
         assertEquals("3EB0ABC", result.externalMessageId());
         assertEquals("EVOLUTION", provider(Map.of()).providerName());
         server.verify();
+    }
+
+    @Test
+    void typingDelay_proporcionalAoTexto_entre1500e7000ms() {
+        assertEquals(1_500, EvolutionWhatsAppProvider.typingDelayMillis("Oi"));
+        assertEquals(4_500, EvolutionWhatsAppProvider.typingDelayMillis("x".repeat(100)));
+        assertEquals(7_000, EvolutionWhatsAppProvider.typingDelayMillis("x".repeat(1000)));
     }
 
     @Test

@@ -65,6 +65,15 @@ public class OmnichannelMessageRepositoryImpl implements OmnichannelMessageRepos
     }
 
     @Override
+    public java.util.List<Message> findRecentByConversation(UUID conversationId, int limit) {
+        java.util.List<Message> recent = new java.util.ArrayList<>(jpaRepository
+                .findByConversationIdOrderByCreatedAtDesc(conversationId, PageRequest.of(0, limit))
+                .stream().map(OmnichannelMessageRepositoryImpl::toDomain).toList());
+        java.util.Collections.reverse(recent);
+        return recent;
+    }
+
+    @Override
     public Optional<String> findLastBodyByConversation(UUID conversationId) {
         return jpaRepository.findFirstByConversationIdOrderByCreatedAtDesc(conversationId)
                 .map(OmnichannelMessageJpaEntity::getBody);
