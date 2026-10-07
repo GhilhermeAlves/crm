@@ -1,4 +1,3 @@
-version: '3.8'
 
 # =============================================================================
 # CRM — Aplicação (backend, auth-service/gateway, frontend)
@@ -83,7 +82,7 @@ services:
       # Sonda bakeada na imagem usa wget, ausente da imagem em execução (bug
       # latente). Override com bash + /dev/tcp (presentes no runtime) fazendo
       # GET real em /actuator/health (200). start_period cobre boot+keycloak.
-      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; timeout 5 bash -c \"printf \\\"GET /actuator/health HTTP/1.0\\\\r\\\\n\\\\r\\\\n\\\" >&3; head -1 <&3\" | grep -q \"200\"; ec=$?; exec 3>&-; exit $ec'"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; timeout 5 bash -c \"printf \\\"GET /actuator/health HTTP/1.0\\\\r\\\\n\\\\r\\\\n\\\" >&3; head -1 <&3\" | grep -q \"200\"; ec=$$?; exec 3>&-; exit $$ec'"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -147,7 +146,7 @@ services:
     image: ghcr.io/ghilhermealves/crm/frontend:latest
     container_name: crm-frontend
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3001:3000"
     depends_on:
       - backend
     networks:
