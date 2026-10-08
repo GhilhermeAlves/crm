@@ -544,18 +544,66 @@ class WhatsAppInboundAutoReplyProcessorTest {
             AiProvider.ChatMessage facts = req.messages().get(1);
             assertEquals("system", facts.role());
             assertTrue(facts.content().contains("\"Maria Souza\""), facts.content());
-            assertTrue(facts.content().contains("horário de Brasília"), facts.content());
+            assertTrue(facts.content().contains("America/Sao_Paulo"), facts.content());
             return true;
         }));
     }
 
     @Test
-    void conversationFacts_formatsWeekdayAndOmitsBlankName() {
-        String facts = WhatsAppInboundAutoReplyProcessor.conversationFacts(" ",
-                java.time.ZonedDateTime.of(2026, 10, 7, 9, 5, 0, 0, java.time.ZoneId.of("America/Sao_Paulo")));
+    void legacyAgent_keepsPromptVerbatimAsFirstSystemMessage() {
+        config(true, true);
 
-        assertTrue(facts.contains("quarta-feira, 07/10/2026 às 09:05"), facts);
-        assertFalse(facts.contains("Nome do perfil"), facts);
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        verify(aiProvider).chatWithTools(argThat(req -> {
+            AiProvider.ChatMessage first = req.messages().get(0);
+            return "system".equals(first.role()) && "Você responde como Léo.".equals(first.content());
+        }));
+    }
+
+    @Test
+    void structuredAgent_sendsIdentityAndBehaviorInsteadOfLegacyPrompt() {
+        AgentConfig agent = AgentConfig.reconstitute(UUID.randomUUID(), companyId, true, true,
+                "Prompt antigo", null, null, null, 60, 1000, LocalDateTime.now(), LocalDateTime.now())
+                .withProfile(new com.becommerce.crm.automation.ai.domain.AgentIdentity("Ana Laura",
+                                "Assistente virtual", "Você é Ana Laura."),
+                        new com.becommerce.crm.automation.ai.domain.AgentBehavior("Agendar consultas",
+                                "Acolhedor", List.of("Não inventar informações."), List.of()),
+                        false, false);
+        when(agentConfigRepository.findByCompanyId(companyId)).thenReturn(Optional.of(agent));
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        verify(aiProvider).chatWithTools(argThat(req -> {
+            String first = req.messages().get(0).content();
+            return first.contains("Nome: Ana Laura") && first.contains("- Não inventar informações.")
+                    && !first.contains("Prompt antigo");
+        }));
+    }
+
+    @Test
+    void humanTransferTool_isOfferedOnlyWhenEnabled() {
+        AgentConfig agent = AgentConfig.reconstitute(UUID.randomUUID(), companyId, true, true,
+                "Prompt", null, null, null, 60, 1000, LocalDateTime.now(), LocalDateTime.now())
+                .withProfile(null, null, false, true);
+        when(agentConfigRepository.findByCompanyId(companyId)).thenReturn(Optional.of(agent));
+        com.becommerce.crm.automation.ai.application.agent.AgentContextBuilder builder =
+                com.becommerce.crm.automation.ai.application.agent.AgentContextBuilder.withoutCrmContext(
+                        new com.becommerce.crm.automation.ai.application.agent.tool.AgentToolbox(
+                                List.of(new HumanTransferToolProvider(conversationRepository))));
+        AiProvider.ToolCall call = new AiProvider.ToolCall("t1", "transferir_para_humano",
+                java.util.Map.of("motivo", "pediu atendente"));
+        when(aiProvider.chatWithTools(any()))
+                .thenReturn(AiProvider.ChatResult.withToolCalls(List.of(call)))
+                .thenReturn(AiProvider.ChatResult.content("Vou te passar para a equipe."));
+
+        new WhatsAppInboundAutoReplyProcessor(agentConfigRepository, autoReplyRepository, conversationRepository,
+                channelRepository, messageRepository, aiChatFailover, messagePersister, eventPublisher, 0L, null,
+                builder).processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        assertTrue(conversation.isInHumanMode(), "a ferramenta deve colocar a conversa em modo humano");
+        verify(conversationRepository).save(conversation);
+        verify(eventPublisher).publishSend(argThat(e -> e.body().startsWith("Vou te passar")));
     }
 
     @Test

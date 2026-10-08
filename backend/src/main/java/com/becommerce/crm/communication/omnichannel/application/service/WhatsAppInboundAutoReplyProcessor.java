@@ -1,5 +1,12 @@
 package com.becommerce.crm.communication.omnichannel.application.service;
 
+import com.becommerce.crm.automation.ai.application.agent.AgentContextBuilder;
+import com.becommerce.crm.automation.ai.application.agent.AgentContextRenderer;
+import com.becommerce.crm.automation.ai.application.agent.context.AgentContext;
+import com.becommerce.crm.automation.ai.application.agent.context.AgentRuntimeInput;
+import com.becommerce.crm.automation.ai.application.agent.context.ConversationHistory;
+import com.becommerce.crm.automation.ai.application.agent.tool.AgentToolSession;
+import com.becommerce.crm.automation.ai.application.agent.tool.AgentToolbox;
 import com.becommerce.crm.automation.ai.application.port.output.AgentAutoReplyRepository;
 import com.becommerce.crm.automation.ai.application.port.output.AgentConfigRepository;
 import com.becommerce.crm.automation.ai.application.port.output.AiProvider;
@@ -25,13 +32,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -73,8 +75,6 @@ public class WhatsAppInboundAutoReplyProcessor {
     private static final Logger log = LoggerFactory.getLogger(WhatsAppInboundAutoReplyProcessor.class);
 
     private static final int HISTORY_LIMIT = 20;
-    private static final ZoneId CLINIC_ZONE = ZoneId.of("America/Sao_Paulo");
-    private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
     private static final int DEFAULT_MAX_TOKENS = 600;
     /**
      * Sem tokenizer (o projeto não possui utilitário de contagem; decisão do
@@ -101,8 +101,8 @@ public class WhatsAppInboundAutoReplyProcessor {
     private final long replyDebounceMillis;
     /** Áudio/foto/PDF → texto. Nulo em testes antigos (mídia fica como placeholder). */
     private final WhatsAppMediaInterpreter mediaInterpreter;
-    /** Ferramentas de agenda (consultar/agendar). Nulo desliga a agenda para a IA. */
-    private final WhatsAppSchedulingTools schedulingTools;
+    /** Ponto único de montagem do contexto (configuração + CRM + memória + ferramentas). */
+    private final AgentContextBuilder contextBuilder;
 
     /** Rodadas máximas de ferramenta por resposta (evita laço infinito do modelo). */
     private static final int MAX_TOOL_ROUNDS = 4;
@@ -130,7 +130,28 @@ public class WhatsAppInboundAutoReplyProcessor {
                                              long replyDebounceSeconds) {
         this(agentConfigRepository, autoReplyRepository, conversationRepository, channelRepository,
                 messageRepository, aiChatFailover, messagePersister, eventPublisher, replyDebounceSeconds,
-                null, null);
+                null, (WhatsAppSchedulingTools) null);
+    }
+
+    /**
+     * Construtor legado (testes): contexto sem fontes do CRM e, se informada,
+     * apenas a agenda como ferramenta.
+     */
+    public WhatsAppInboundAutoReplyProcessor(AgentConfigRepository agentConfigRepository,
+                                             AgentAutoReplyRepository autoReplyRepository,
+                                             OmnichannelConversationRepository conversationRepository,
+                                             OmnichannelChannelRepository channelRepository,
+                                             OmnichannelMessageRepository messageRepository,
+                                             AiChatFailover aiChatFailover,
+                                             OmnichannelMessagePersister messagePersister,
+                                             WhatsAppEventPublisher eventPublisher,
+                                             long replyDebounceSeconds,
+                                             WhatsAppMediaInterpreter mediaInterpreter,
+                                             WhatsAppSchedulingTools schedulingTools) {
+        this(agentConfigRepository, autoReplyRepository, conversationRepository, channelRepository,
+                messageRepository, aiChatFailover, messagePersister, eventPublisher, replyDebounceSeconds,
+                mediaInterpreter, AgentContextBuilder.withoutCrmContext(new AgentToolbox(schedulingTools == null
+                        ? List.of() : List.of(new SchedulingToolProvider(schedulingTools)))));
     }
 
     @Autowired
@@ -145,10 +166,10 @@ public class WhatsAppInboundAutoReplyProcessor {
                                              @Value("${omnichannel.whatsapp.reply-debounce-seconds:8}")
                                              long replyDebounceSeconds,
                                              WhatsAppMediaInterpreter mediaInterpreter,
-                                             WhatsAppSchedulingTools schedulingTools) {
+                                             AgentContextBuilder contextBuilder) {
         this.replyDebounceMillis = Math.max(0L, replyDebounceSeconds) * 1000L;
         this.mediaInterpreter = mediaInterpreter;
-        this.schedulingTools = schedulingTools;
+        this.contextBuilder = contextBuilder;
         this.agentConfigRepository = agentConfigRepository;
         this.autoReplyRepository = autoReplyRepository;
         this.conversationRepository = conversationRepository;
@@ -230,10 +251,10 @@ public class WhatsAppInboundAutoReplyProcessor {
                 return;
             }
 
-            WhatsAppSchedulingTools.Context toolContext = new WhatsAppSchedulingTools.Context(
-                    companyId, conversationId, conversation.getExternalPhone(), senderName);
-            String reply = generateReply(agentConfig, conversationId, inboundMessageId, currentText, senderName,
-                    toolContext);
+            AgentRuntimeInput input = new AgentRuntimeInput(companyId, conversationId, conversation.getContactId(),
+                    conversation.getExternalPhone(), senderName, inboundMessageId, currentText,
+                    loadHistory(agentConfig, conversationId, inboundMessageId));
+            String reply = generateReply(agentConfig, input);
             if (reply == null) {
                 return;
             }
@@ -283,23 +304,15 @@ public class WhatsAppInboundAutoReplyProcessor {
         return mode == VoiceReplyMode.ALWAYS || (mode == VoiceReplyMode.MIRROR && inboundIsAudio);
     }
 
-    private String generateReply(AgentConfig agentConfig, UUID conversationId,
-                                 UUID inboundMessageId, String body, String senderName,
-                                 WhatsAppSchedulingTools.Context toolContext) {
+    private String generateReply(AgentConfig agentConfig, AgentRuntimeInput input) {
+        UUID conversationId = input.conversationId();
         long generationStart = System.nanoTime();
         try {
-            List<AiProvider.ChatMessage> messages =
-                    buildContext(agentConfig, conversationId, inboundMessageId, body, senderName);
-
-            // Agenda: só quando a empresa tem tipos de consulta com profissional.
-            List<AiProvider.ToolDefinition> tools = List.of();
-            if (schedulingTools != null) {
-                var types = schedulingTools.bookableTypes(agentConfig.getCompanyId());
-                if (!types.isEmpty()) {
-                    tools = schedulingTools.definitions();
-                    messages.add(2, new AiProvider.ChatMessage("system", schedulingTools.guidance(types)));
-                }
-            }
+            // Contexto montado em UM lugar (AgentContextBuilder) e renderizado em UM lugar.
+            AgentContext context = contextBuilder.build(agentConfig, input);
+            List<AiProvider.ChatMessage> messages = new ArrayList<>(AgentContextRenderer.render(context));
+            List<AiProvider.ToolDefinition> tools = context.tools().definitions();
+            AgentToolSession toolSession = contextBuilder.toolSession(agentConfig, input, context.patient());
 
             AiProvider.GenerationParams params = new AiProvider.GenerationParams(
                     agentConfig.getModel(), agentConfig.getTemperature(), agentConfig.getMaxTokens(), null);
@@ -314,7 +327,8 @@ public class WhatsAppInboundAutoReplyProcessor {
                 }
                 messages.add(new AiProvider.ChatMessage("assistant", result.content(), result.toolCalls(), null));
                 for (AiProvider.ToolCall call : result.toolCalls()) {
-                    String output = schedulingTools.execute(toolContext, call);
+                    String output = context.tools().execute(toolSession, call);
+                    TenantContext.setCompanyId(agentConfig.getCompanyId());
                     messages.add(new AiProvider.ChatMessage("tool", output, null, call.id()));
                 }
             }
@@ -338,26 +352,18 @@ public class WhatsAppInboundAutoReplyProcessor {
     }
 
     /**
-     * Monta o contexto da conversa REAL de WhatsApp (Conversation/Message — NUNCA
-     * AiConversation/AiMessage): system prompt exclusivamente do AgentConfig;
-     * histórico INBOUND→user / OUTBOUND→assistant; janela de 20 mensagens com
-     * poda consistente com o orçamento de tokens ({@code maxTokens}); mensagem
-     * atual sempre incluída (uma única vez — o inbound em curso é excluído do
-     * histórico e reaparece como a última mensagem {@code user}). Prioridade:
-     * system → mais recentes → atual.
+     * Histórico recente da conversa REAL de WhatsApp (Conversation/Message — NUNCA
+     * AiConversation/AiMessage): INBOUND→user / OUTBOUND→assistant; janela de 20
+     * mensagens com poda consistente com o orçamento de tokens ({@code maxTokens}),
+     * priorizando as mais recentes. A mensagem em processamento é excluída — ela
+     * entra uma única vez como mensagem atual. Histórico NÃO é memória.
      */
-    private List<AiProvider.ChatMessage> buildContext(AgentConfig agentConfig, UUID conversationId,
-                                                      UUID inboundMessageId, String body, String senderName) {
-        List<AiProvider.ChatMessage> messages = new ArrayList<>();
-        messages.add(new AiProvider.ChatMessage("system", agentConfig.getSystemPrompt()));
-        messages.add(new AiProvider.ChatMessage("system", conversationFacts(senderName, ZonedDateTime.now(CLINIC_ZONE))));
-
+    private ConversationHistory loadHistory(AgentConfig agentConfig, UUID conversationId, UUID inboundMessageId) {
         int outputBudget = agentConfig.getMaxTokens() != null && agentConfig.getMaxTokens() > 0
                 ? agentConfig.getMaxTokens() : DEFAULT_MAX_TOKENS;
         int historyCharBudget = outputBudget * HISTORY_TOKEN_MULTIPLIER * CHARS_PER_TOKEN;
 
-        // As mensagens MAIS RECENTES (antes vinham as 20 mais antigas da conversa).
-        List<AiProvider.ChatMessage> kept = new ArrayList<>();
+        List<ConversationHistory.Entry> kept = new ArrayList<>();
         int usedChars = 0;
         List<Message> content = messageRepository.findRecentByConversation(conversationId, HISTORY_LIMIT);
         // Histórico vem em ordem cronológica; percorre dos mais recentes aos mais antigos.
@@ -366,8 +372,6 @@ public class WhatsAppInboundAutoReplyProcessor {
             if (m.getBody() == null || m.getBody().isBlank()) {
                 continue;
             }
-            // A mensagem entrante em processamento é a "mensagem atual": entra uma
-            // única vez (como última mensagem user), evitando duplicação no prompt.
             if (inboundMessageId != null && inboundMessageId.equals(m.getId())) {
                 continue;
             }
@@ -377,32 +381,10 @@ public class WhatsAppInboundAutoReplyProcessor {
             if (usedChars + estimated > historyCharBudget && !kept.isEmpty()) {
                 break;
             }
-            kept.add(0, new AiProvider.ChatMessage(role, m.getBody()));
+            kept.add(0, new ConversationHistory.Entry(role, m.getBody()));
             usedChars += estimated;
         }
-        messages.addAll(kept);
-        messages.add(new AiProvider.ChatMessage("user", body));
-        return messages;
-    }
-
-    /**
-     * Fatos do momento que o prompt não tem como saber: data/hora local e o
-     * nome do perfil do paciente. Só informativo — o tom vem do prompt da empresa.
-     */
-    static String conversationFacts(String senderName, ZonedDateTime now) {
-        String weekday = now.getDayOfWeek().getDisplayName(TextStyle.FULL, PT_BR);
-        StringBuilder facts = new StringBuilder("Contexto desta conversa (não repita literalmente):\n")
-                .append("- Agora: ").append(weekday).append(", ")
-                .append(now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm", PT_BR)))
-                .append(" (horário de Brasília).\n");
-        if (senderName != null && !senderName.isBlank()) {
-            facts.append("- Nome do perfil do paciente no WhatsApp: \"").append(senderName.trim())
-                    .append("\". Se parecer um nome de pessoa, trate-o pelo primeiro nome de forma natural, ")
-                    .append("sem repetir o nome em toda mensagem.\n");
-        }
-        facts.append("- Escreva como uma pessoa no WhatsApp: frases curtas e naturais, sem formatação de lista longa, ")
-                .append("e não repita a saudação ou o menu se a conversa já começou.");
-        return facts.toString();
+        return new ConversationHistory(kept);
     }
 
     private boolean isWithinCooldown(AgentConfig agentConfig, UUID companyId, UUID conversationId) {

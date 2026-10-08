@@ -46,6 +46,13 @@ public class AppointmentRepositoryImpl implements AppointmentRepository {
     }
 
     @Override
+    public List<Appointment> findUpcomingByContact(UUID companyId, UUID contactId, Instant from, int limit) {
+        return jpa.findUpcomingByContact(companyId, contactId, from,
+                        org.springframework.data.domain.PageRequest.of(0, Math.max(1, limit)))
+                .stream().map(AppointmentRepositoryImpl::toDomain).toList();
+    }
+
+    @Override
     public long countByHostIdInWeek(UUID hostId, Instant weekStart, Instant weekEnd) {
         return jpa.countByHostIdInWeek(hostId, weekStart, weekEnd);
     }
