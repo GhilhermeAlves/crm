@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## [Unreleased] - 2026-10-08 - Arquitetura do agente de IA: camadas, memória e contexto dinâmico
+
+### Added
+- **Agente em camadas** (V088): Identidade (nome/descrição/persona) e Comportamento
+  (objetivo/tom/regras/instruções) separados do prompt; `system_prompt` vira prompt legado,
+  usado só enquanto o perfil estruturado estiver vazio (nenhum agente muda no deploy).
+- **Memória do agente** (`agent_memory`, RLS FORCE): por empresa + agente + contato, tipada,
+  com importância/expiração; `AgentMemoryService`, `MemoryRetriever`, `MemoryWritePolicy`;
+  ferramenta `registrar_memoria`; API `/api/v1/ai/agent-memories`. Opt-in (`memory_enabled`).
+- **Contexto dinâmico** (`AgentContextBuilder` + `AgentContextRenderer`): clínica, paciente
+  (contato + próximos agendamentos), histórico, memórias, conhecimento e ferramentas montados
+  em um único lugar a cada resposta.
+- **Ferramentas com contrato comum** (`AgentToolProvider`): agenda, `transferir_para_humano`
+  (opt-in, `human_transfer_enabled`) e memória.
+- Tela do agente reorganizada: Identidade · Comportamento · Ferramentas · Modelo · Conversação.
+- Documentação: `docs/AI_AGENT_ARCHITECTURE.md`.
+
 ## [6.2.0] - 2026-08-23 - Notificações, IA (Leo/OpenAI) e fechamento da Sprint 16 (WhatsApp/Omnichannel)
 
 ### Added

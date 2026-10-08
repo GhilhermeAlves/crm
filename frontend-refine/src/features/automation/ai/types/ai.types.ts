@@ -127,6 +127,32 @@ export type AgentConfig = {
   maxChars: number;
   updatedAt: string | null;
   voiceReplyMode: VoiceReplyMode;
+  /** V088 — Identidade (quem o agente é). */
+  identity?: AgentIdentity;
+  /** V088 — Comportamento (como o agente age). */
+  behavior?: AgentBehavior;
+  conversation?: {
+    cooldownMinutes: number;
+    maxChars: number;
+    voiceReplyMode: VoiceReplyMode;
+    memory: { enabled: boolean };
+  };
+  tools?: { humanTransferEnabled: boolean };
+  /** true enquanto o runtime ainda usa o prompt legado (sem identidade/comportamento). */
+  usesLegacyPrompt?: boolean;
+};
+
+export type AgentIdentity = {
+  name: string | null;
+  description: string | null;
+  persona: string | null;
+};
+
+export type AgentBehavior = {
+  objective: string | null;
+  tone: string | null;
+  rules: string[];
+  instructions: string[];
 };
 
 /** Quando o agente responde com nota de voz: nunca, só se o paciente mandou áudio, ou sempre. */
@@ -144,6 +170,11 @@ export type AgentConfigRequest = {
   maxChars: number;
   /** Opcional: ausente mantém o modo atual no backend. */
   voiceReplyMode?: VoiceReplyMode;
+  /** Opcionais (V088): ausentes mantêm o valor atual no backend. */
+  identity?: AgentIdentity;
+  behavior?: AgentBehavior;
+  memoryEnabled?: boolean;
+  humanTransferEnabled?: boolean;
 };
 
 /**
