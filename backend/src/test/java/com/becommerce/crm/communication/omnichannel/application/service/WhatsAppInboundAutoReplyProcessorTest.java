@@ -18,6 +18,7 @@ import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.ConversationStatus;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
 import com.becommerce.crm.communication.omnichannel.domain.MessageDirection;
+import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
 import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
 import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
@@ -624,6 +625,73 @@ class WhatsAppInboundAutoReplyProcessorTest {
     }
 
     // --------------------------------------------------------------- helpers
+
+    // ------------------------------------------------------- agenda, mídia e voz
+
+    private WhatsAppInboundAutoReplyProcessor fullProcessor(WhatsAppMediaInterpreter media,
+                                                           WhatsAppSchedulingTools tools) {
+        return new WhatsAppInboundAutoReplyProcessor(agentConfigRepository, autoReplyRepository,
+                conversationRepository, channelRepository, messageRepository, aiChatFailover, messagePersister,
+                eventPublisher, 0L, media, tools);
+    }
+
+    @Test
+    void shouldRunSchedulingToolsAndAnswerWithTheirResult() {
+        config(true, true);
+        WhatsAppSchedulingTools tools = mock(WhatsAppSchedulingTools.class);
+        when(tools.bookableTypes(companyId)).thenReturn(List.of(
+                mock(com.becommerce.crm.sales.scheduling.domain.AppointmentType.class)));
+        when(tools.definitions()).thenReturn(List.of(new AiProvider.ToolDefinition("consultar_horarios_livres",
+                "x", java.util.Map.of())));
+        when(tools.guidance(any())).thenReturn("Agenda online disponível.");
+        AiProvider.ToolCall call = new AiProvider.ToolCall("c1", "consultar_horarios_livres",
+                java.util.Map.of("tipo_consulta", "Avaliação"));
+        when(tools.execute(any(), eq(call))).thenReturn("Horários livres: qua 15/10 14:00");
+        when(aiProvider.chatWithTools(any()))
+                .thenReturn(AiProvider.ChatResult.withToolCalls(List.of(call)))
+                .thenReturn(AiProvider.ChatResult.content("Tenho quarta às 14h. Pode ser?"));
+
+        fullProcessor(null, tools).processInbound(companyId, conversationId, inboundMessageId, from, body, "Maria");
+
+        verify(tools).execute(argThat(c -> companyId.equals(c.companyId()) && "Maria".equals(c.senderName())),
+                eq(call));
+        verify(aiProvider, org.mockito.Mockito.atLeastOnce()).chatWithTools(argThat(req -> req.messages().stream().anyMatch(m ->
+                "tool".equals(m.role()) && "c1".equals(m.toolCallId())
+                        && m.content().contains("qua 15/10 14:00"))));
+        verify(eventPublisher).publishSend(argThat(e -> e.body().startsWith("Tenho quarta") && !e.voice()));
+    }
+
+    @Test
+    void audioRecebido_ehTranscritoERespondidoEmVozNoModoEspelho() {
+        config(true, true);
+        Message audio = Message.reconstitute(inboundMessageId, companyId, conversationId, channelId,
+                MessageDirection.INBOUND, from, "120000000", MessageType.AUDIO, "[audioMessage]",
+                MessageStatus.SENT, "wamid-audio", UUID.randomUUID(), null, null, null,
+                LocalDateTime.now(), LocalDateTime.now());
+        when(messageRepository.findById(inboundMessageId)).thenReturn(Optional.of(audio));
+        WhatsAppMediaInterpreter media = mock(WhatsAppMediaInterpreter.class);
+        when(media.interpret(any(), eq(audio))).thenReturn("🎤 Áudio: queria marcar uma limpeza");
+
+        fullProcessor(media, null).processInbound(companyId, conversationId, inboundMessageId, from, "[audioMessage]");
+
+        verify(aiProvider).chatWithTools(argThat(req -> {
+            AiProvider.ChatMessage last = req.messages().get(req.messages().size() - 1);
+            return "user".equals(last.role()) && last.content().contains("queria marcar uma limpeza");
+        }));
+        verify(eventPublisher).publishSend(argThat(WhatsAppSendEvent::voice));
+    }
+
+    @Test
+    void shouldReplyWithVoice_respeitaOModo() {
+        assertTrue(WhatsAppInboundAutoReplyProcessor.shouldReplyWithVoice(
+                com.becommerce.crm.automation.ai.domain.VoiceReplyMode.MIRROR, true));
+        assertFalse(WhatsAppInboundAutoReplyProcessor.shouldReplyWithVoice(
+                com.becommerce.crm.automation.ai.domain.VoiceReplyMode.MIRROR, false));
+        assertTrue(WhatsAppInboundAutoReplyProcessor.shouldReplyWithVoice(
+                com.becommerce.crm.automation.ai.domain.VoiceReplyMode.ALWAYS, false));
+        assertFalse(WhatsAppInboundAutoReplyProcessor.shouldReplyWithVoice(
+                com.becommerce.crm.automation.ai.domain.VoiceReplyMode.NEVER, true));
+    }
 
     private Message message(MessageDirection direction, String text, String externalId) {
         return Message.reconstitute(UUID.randomUUID(), companyId, conversationId, channelId,

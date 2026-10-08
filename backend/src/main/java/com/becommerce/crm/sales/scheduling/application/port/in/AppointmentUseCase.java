@@ -11,6 +11,10 @@ public interface AppointmentUseCase {
 
     AppointmentResponse create(UUID companyId, CreateAppointmentRequest request, UUID createdBy);
 
+    /** Como {@link #create}, registrando a origem (ex.: agendado pelo agente do WhatsApp). */
+    AppointmentResponse create(UUID companyId, CreateAppointmentRequest request, UUID createdBy,
+                               com.becommerce.crm.sales.scheduling.domain.AppointmentSource source);
+
     AppointmentResponse getById(UUID companyId, UUID appointmentId);
 
     AppointmentResponse update(UUID companyId, UUID appointmentId, UpdateAppointmentRequest request);

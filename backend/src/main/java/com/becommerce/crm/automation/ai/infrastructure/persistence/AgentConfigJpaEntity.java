@@ -39,6 +39,9 @@ public class AgentConfigJpaEntity {
     @Column(name = "cooldown_minutes")
     private int cooldownMinutes;
 
+    @Column(name = "voice_reply_mode")
+    private String voiceReplyMode = "MIRROR";
+
     @Column(name = "max_chars")
     private int maxChars;
 
@@ -66,6 +69,8 @@ public class AgentConfigJpaEntity {
     public void setMaxTokens(Integer maxTokens) { this.maxTokens = maxTokens; }
     public int getCooldownMinutes() { return cooldownMinutes; }
     public void setCooldownMinutes(int cooldownMinutes) { this.cooldownMinutes = cooldownMinutes; }
+    public String getVoiceReplyMode() { return voiceReplyMode; }
+    public void setVoiceReplyMode(String voiceReplyMode) { this.voiceReplyMode = voiceReplyMode; }
     public int getMaxChars() { return maxChars; }
     public void setMaxChars(int maxChars) { this.maxChars = maxChars; }
     public LocalDateTime getCreatedAt() { return createdAt; }

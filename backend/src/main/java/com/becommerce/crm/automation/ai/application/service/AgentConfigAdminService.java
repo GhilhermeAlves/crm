@@ -6,6 +6,7 @@ import com.becommerce.crm.automation.ai.application.port.input.AgentConfigUseCas
 import com.becommerce.crm.automation.ai.application.port.output.AgentConfigRepository;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.automation.ai.domain.AgentConfig;
+import com.becommerce.crm.automation.ai.domain.VoiceReplyMode;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
@@ -76,7 +77,9 @@ public class AgentConfigAdminService implements AgentConfigUseCase {
                         request.systemPrompt(), request.model(), request.temperature(),
                         request.maxTokens(), request.cooldownMinutes(), request.maxChars());
                 created = false;
+                updated.withVoiceReplyMode(existing.getVoiceReplyMode());
             }
+            updated.withVoiceReplyMode(VoiceReplyMode.parseOrDefault(request.voiceReplyMode(), null));
 
             AgentConfig saved = agentConfigRepository.save(updated);
             audit(companyId, created);
@@ -101,7 +104,7 @@ public class AgentConfigAdminService implements AgentConfigUseCase {
     private static AgentConfigResponse toResponse(AgentConfig c) {
         return new AgentConfigResponse(c.getId(), c.isAiEnabled(), c.isAllowAutoReply(),
                 c.getSystemPrompt(), c.getModel(), c.getTemperature(), c.getMaxTokens(),
-                c.getCooldownMinutes(), c.getMaxChars(), c.getUpdatedAt());
+                c.getCooldownMinutes(), c.getMaxChars(), c.getUpdatedAt(), c.getVoiceReplyMode().name());
     }
 
     private static AgentConfigResponse defaultResponse() {

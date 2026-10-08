@@ -36,6 +36,12 @@ public interface OmnichannelMessageRepository {
      */
     boolean existsInboundAfter(UUID conversationId, java.time.LocalDateTime after);
 
+    /** Houve qualquer OUTBOUND na conversa depois de {@code after}? */
+    boolean existsOutboundAfter(UUID conversationId, java.time.LocalDateTime after);
+
+    /** Substitui o corpo da mensagem (ex.: transcrição do áudio ou resumo da imagem/PDF). */
+    void updateBody(UUID messageId, String body);
+
     /** O CRM enviou (OUTBOUND) este mesmo texto na conversa depois de {@code after}? */
     boolean existsOutboundWithBodyAfter(UUID conversationId, String body, java.time.LocalDateTime after);
 

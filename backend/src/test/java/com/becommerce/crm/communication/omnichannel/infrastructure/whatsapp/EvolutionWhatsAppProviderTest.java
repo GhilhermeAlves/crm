@@ -62,6 +62,35 @@ class EvolutionWhatsAppProviderTest {
     }
 
     @Test
+    void sendVoice_enviaAudioEmBase64() {
+        server.expect(requestTo(BASE_URL + "/message/sendWhatsAppAudio/comercial"))
+                .andExpect(method(POST))
+                .andExpect(header("apikey", "k"))
+                .andExpect(content().json("{\"number\":\"5511999998888\",\"audio\":\"AQID\"}"))
+                .andRespond(withSuccess("{\"key\":{\"id\":\"VOZ1\"}}", MediaType.APPLICATION_JSON));
+
+        WhatsAppProvider.SendResult result = provider(Map.of("EVOLUTION_API_KEY", "k"))
+                .sendVoice(request("comercial", null), new byte[]{1, 2, 3});
+
+        assertEquals("VOZ1", result.externalMessageId());
+        server.verify();
+    }
+
+    @Test
+    void downloadMedia_decodificaBase64() {
+        server.expect(requestTo(BASE_URL + "/chat/getBase64FromMediaMessage/comercial"))
+                .andExpect(content().json("{\"message\":{\"key\":{\"id\":\"WAMID\"}},\"convertToMp4\":false}"))
+                .andRespond(withSuccess("{\"base64\":\"AQID\",\"mimetype\":\"audio/ogg; codecs=opus\"}",
+                        MediaType.APPLICATION_JSON));
+
+        WhatsAppProvider.MediaContent media = provider(Map.of("EVOLUTION_API_KEY", "k"))
+                .downloadMedia("comercial", "WAMID", null).orElseThrow();
+
+        assertEquals(3, media.data().length);
+        assertEquals("audio/ogg; codecs=opus", media.mimeType());
+    }
+
+    @Test
     void typingDelay_proporcionalAoTexto_entre1500e7000ms() {
         assertEquals(1_500, EvolutionWhatsAppProvider.typingDelayMillis("Oi"));
         assertEquals(4_500, EvolutionWhatsAppProvider.typingDelayMillis("x".repeat(100)));

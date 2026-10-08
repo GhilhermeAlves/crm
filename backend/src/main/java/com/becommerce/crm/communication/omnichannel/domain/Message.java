@@ -83,6 +83,11 @@ public class Message {
                 sentAt, receivedAt, createdAt, updatedAt);
     }
 
+    /** Define o tipo de conteúdo (mensagens de mídia recebidas). */
+    public void markType(MessageType type) {
+        this.type = type != null ? type : MessageType.TEXT;
+    }
+
     public void markSent(String externalMessageId) {
         this.externalMessageId = externalMessageId;
         this.status = MessageStatus.SENT;

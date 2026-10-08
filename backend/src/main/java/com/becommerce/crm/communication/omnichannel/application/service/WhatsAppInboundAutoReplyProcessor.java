@@ -11,10 +11,12 @@ import com.becommerce.crm.communication.omnichannel.application.port.output.Omni
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppEventPublisher;
 import com.becommerce.crm.automation.ai.domain.AgentConfig;
 import com.becommerce.crm.automation.ai.domain.AiProviderException;
+import com.becommerce.crm.automation.ai.domain.VoiceReplyMode;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
 import com.becommerce.crm.communication.omnichannel.domain.MessageDirection;
+import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +99,13 @@ public class WhatsAppInboundAutoReplyProcessor {
      * responde a todas (as anteriores já estão no histórico).
      */
     private final long replyDebounceMillis;
+    /** Áudio/foto/PDF → texto. Nulo em testes antigos (mídia fica como placeholder). */
+    private final WhatsAppMediaInterpreter mediaInterpreter;
+    /** Ferramentas de agenda (consultar/agendar). Nulo desliga a agenda para a IA. */
+    private final WhatsAppSchedulingTools schedulingTools;
+
+    /** Rodadas máximas de ferramenta por resposta (evita laço infinito do modelo). */
+    private static final int MAX_TOOL_ROUNDS = 4;
 
     public WhatsAppInboundAutoReplyProcessor(AgentConfigRepository agentConfigRepository,
                                              AgentAutoReplyRepository autoReplyRepository,
@@ -110,6 +119,20 @@ public class WhatsAppInboundAutoReplyProcessor {
                 messageRepository, aiChatFailover, messagePersister, eventPublisher, 0L);
     }
 
+    public WhatsAppInboundAutoReplyProcessor(AgentConfigRepository agentConfigRepository,
+                                             AgentAutoReplyRepository autoReplyRepository,
+                                             OmnichannelConversationRepository conversationRepository,
+                                             OmnichannelChannelRepository channelRepository,
+                                             OmnichannelMessageRepository messageRepository,
+                                             AiChatFailover aiChatFailover,
+                                             OmnichannelMessagePersister messagePersister,
+                                             WhatsAppEventPublisher eventPublisher,
+                                             long replyDebounceSeconds) {
+        this(agentConfigRepository, autoReplyRepository, conversationRepository, channelRepository,
+                messageRepository, aiChatFailover, messagePersister, eventPublisher, replyDebounceSeconds,
+                null, null);
+    }
+
     @Autowired
     public WhatsAppInboundAutoReplyProcessor(AgentConfigRepository agentConfigRepository,
                                              AgentAutoReplyRepository autoReplyRepository,
@@ -120,8 +143,12 @@ public class WhatsAppInboundAutoReplyProcessor {
                                              OmnichannelMessagePersister messagePersister,
                                              WhatsAppEventPublisher eventPublisher,
                                              @Value("${omnichannel.whatsapp.reply-debounce-seconds:8}")
-                                             long replyDebounceSeconds) {
+                                             long replyDebounceSeconds,
+                                             WhatsAppMediaInterpreter mediaInterpreter,
+                                             WhatsAppSchedulingTools schedulingTools) {
         this.replyDebounceMillis = Math.max(0L, replyDebounceSeconds) * 1000L;
+        this.mediaInterpreter = mediaInterpreter;
+        this.schedulingTools = schedulingTools;
         this.agentConfigRepository = agentConfigRepository;
         this.autoReplyRepository = autoReplyRepository;
         this.conversationRepository = conversationRepository;
@@ -179,6 +206,18 @@ public class WhatsAppInboundAutoReplyProcessor {
                 return;
             }
 
+            // Mídia é interpretada ANTES do agrupamento: mesmo um áudio "engolido" por
+            // uma mensagem seguinte entra transcrito no histórico.
+            Message inboundMessage = inboundMessageId == null ? null
+                    : messageRepository.findById(inboundMessageId).orElse(null);
+            boolean inboundIsAudio = inboundMessage != null && inboundMessage.getType() == MessageType.AUDIO;
+            String currentText = body;
+            if (mediaInterpreter != null && inboundMessage != null && inboundMessage.getType() != null
+                    && inboundMessage.getType() != MessageType.TEXT) {
+                currentText = mediaInterpreter.interpret(channel, inboundMessage);
+                TenantContext.setCompanyId(companyId);
+            }
+
             if (supersededByNewerInbound(conversationId, inboundMessageId)) {
                 log.info("Auto-resposta agrupada: mensagem mais nova na conversa (company={}, conversation={}, inbound={})",
                         companyId, conversationId, inboundMessageId);
@@ -191,7 +230,10 @@ public class WhatsAppInboundAutoReplyProcessor {
                 return;
             }
 
-            String reply = generateReply(agentConfig, conversationId, inboundMessageId, body, senderName);
+            WhatsAppSchedulingTools.Context toolContext = new WhatsAppSchedulingTools.Context(
+                    companyId, conversationId, conversation.getExternalPhone(), senderName);
+            String reply = generateReply(agentConfig, conversationId, inboundMessageId, currentText, senderName,
+                    toolContext);
             if (reply == null) {
                 return;
             }
@@ -201,9 +243,13 @@ public class WhatsAppInboundAutoReplyProcessor {
                     channel.getExternalId(), conversation.getExternalPhone(), capped, UUID.randomUUID());
             Message persisted = messagePersister.persistPending(outbound);
 
+            boolean voice = shouldReplyWithVoice(agentConfig.getVoiceReplyMode(), inboundIsAudio);
             try {
-                eventPublisher.publishSend(WhatsAppSendEvent.of(companyId, conversationId,
-                        persisted.getId(), channel.getId(), conversation.getExternalPhone(), capped));
+                eventPublisher.publishSend(voice
+                        ? WhatsAppSendEvent.voice(companyId, conversationId, persisted.getId(), channel.getId(),
+                                conversation.getExternalPhone(), capped)
+                        : WhatsAppSendEvent.of(companyId, conversationId, persisted.getId(), channel.getId(),
+                                conversation.getExternalPhone(), capped));
             } catch (Exception e) {
                 messagePersister.markFailed(persisted.getId(), conversationId, e.getMessage());
                 log.warn("Falha ao enfileirar envio de auto-resposta company={} conversation={}: {}",
@@ -233,17 +279,45 @@ public class WhatsAppInboundAutoReplyProcessor {
                 .orElse(false);
     }
 
+    static boolean shouldReplyWithVoice(VoiceReplyMode mode, boolean inboundIsAudio) {
+        return mode == VoiceReplyMode.ALWAYS || (mode == VoiceReplyMode.MIRROR && inboundIsAudio);
+    }
+
     private String generateReply(AgentConfig agentConfig, UUID conversationId,
-                                 UUID inboundMessageId, String body, String senderName) {
+                                 UUID inboundMessageId, String body, String senderName,
+                                 WhatsAppSchedulingTools.Context toolContext) {
         long generationStart = System.nanoTime();
         try {
             List<AiProvider.ChatMessage> messages =
                     buildContext(agentConfig, conversationId, inboundMessageId, body, senderName);
 
+            // Agenda: só quando a empresa tem tipos de consulta com profissional.
+            List<AiProvider.ToolDefinition> tools = List.of();
+            if (schedulingTools != null) {
+                var types = schedulingTools.bookableTypes(agentConfig.getCompanyId());
+                if (!types.isEmpty()) {
+                    tools = schedulingTools.definitions();
+                    messages.add(2, new AiProvider.ChatMessage("system", schedulingTools.guidance(types)));
+                }
+            }
+
             AiProvider.GenerationParams params = new AiProvider.GenerationParams(
                     agentConfig.getModel(), agentConfig.getTemperature(), agentConfig.getMaxTokens(), null);
-            AiProvider.ChatResult result = aiChatFailover.chat(new AiProvider.ChatRequest(
-                    agentConfig.getCompanyId(), null, messages).withParams(params));
+            AiProvider.ChatResult result = null;
+            for (int round = 0; round <= MAX_TOOL_ROUNDS; round++) {
+                // Na última rodada, sem ferramentas: o modelo é obrigado a responder em texto.
+                List<AiProvider.ToolDefinition> roundTools = round < MAX_TOOL_ROUNDS ? tools : List.of();
+                result = aiChatFailover.chat(new AiProvider.ChatRequest(
+                        agentConfig.getCompanyId(), null, messages, roundTools).withParams(params));
+                if (result == null || !result.hasToolCalls()) {
+                    break;
+                }
+                messages.add(new AiProvider.ChatMessage("assistant", result.content(), result.toolCalls(), null));
+                for (AiProvider.ToolCall call : result.toolCalls()) {
+                    String output = schedulingTools.execute(toolContext, call);
+                    messages.add(new AiProvider.ChatMessage("tool", output, null, call.id()));
+                }
+            }
 
             String reply = result != null ? result.content() : null;
             if (reply == null || reply.isBlank()) {

@@ -16,6 +16,7 @@ import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
@@ -159,6 +160,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
 
         Message message = Message.createInbound(companyId, conversation.getId(), channel.getId(),
                 data.from(), data.to(), data.body(), data.externalMessageId());
+        message.markType(data.type());
         // saveByExternalId: upsert ON CONFLICT(external_message_id) — idempotente no banco.
         Message persisted = messageRepository.saveByExternalId(message);
 
@@ -205,8 +207,13 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         }
         LocalDateTime now = LocalDateTime.now();
         // Eco de envio do CRM antes de o id externo ser gravado (corrida com o sender).
-        if (messageRepository.existsOutboundWithBodyAfter(conversation.getId(), data.body(),
-                now.minus(OWN_ECHO_WINDOW))) {
+        // Nota de voz enviada pelo CRM chega como áudio (sem o texto): qualquer
+        // OUTBOUND recente na conversa indica que o eco é nosso.
+        boolean echo = data.type() == MessageType.AUDIO
+                ? messageRepository.existsOutboundAfter(conversation.getId(), now.minus(OWN_ECHO_WINDOW))
+                : messageRepository.existsOutboundWithBodyAfter(conversation.getId(), data.body(),
+                        now.minus(OWN_ECHO_WINDOW));
+        if (echo) {
             log.debug("Eco de mensagem enviada pelo CRM (company={}, conversation={})",
                     companyId, conversation.getId());
             return;

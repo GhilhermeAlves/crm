@@ -31,6 +31,12 @@ public record AgentConfigRequest(
         @DecimalMin("0.0") @DecimalMax("2.0") Double temperature,
         @Positive Integer maxTokens,
         @NotNull @Min(0) @Max(1440) Integer cooldownMinutes,
-        @NotNull @Min(1) @Max(5000) Integer maxChars
+        @NotNull @Min(1) @Max(5000) Integer maxChars,
+        /** NEVER | MIRROR | ALWAYS — opcional (nulo mantém o atual). */
+        @jakarta.validation.constraints.Pattern(regexp = "NEVER|MIRROR|ALWAYS") String voiceReplyMode
 ) {
+    public AgentConfigRequest(Boolean aiEnabled, Boolean allowAutoReply, String systemPrompt, String model,
+                              Double temperature, Integer maxTokens, Integer cooldownMinutes, Integer maxChars) {
+        this(aiEnabled, allowAutoReply, systemPrompt, model, temperature, maxTokens, cooldownMinutes, maxChars, null);
+    }
 }

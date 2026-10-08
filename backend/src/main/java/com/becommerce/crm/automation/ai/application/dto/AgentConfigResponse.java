@@ -22,6 +22,13 @@ public record AgentConfigResponse(
         Integer maxTokens,
         int cooldownMinutes,
         int maxChars,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        String voiceReplyMode
 ) {
+    public AgentConfigResponse(UUID id, boolean aiEnabled, boolean allowAutoReply, String systemPrompt,
+                               String model, Double temperature, Integer maxTokens, int cooldownMinutes,
+                               int maxChars, LocalDateTime updatedAt) {
+        this(id, aiEnabled, allowAutoReply, systemPrompt, model, temperature, maxTokens, cooldownMinutes,
+                maxChars, updatedAt, "MIRROR");
+    }
 }

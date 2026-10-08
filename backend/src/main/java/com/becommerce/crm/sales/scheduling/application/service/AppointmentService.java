@@ -40,6 +40,13 @@ public class AppointmentService implements AppointmentUseCase {
     @Override
     @Transactional
     public AppointmentResponse create(UUID companyId, CreateAppointmentRequest request, UUID createdBy) {
+        return create(companyId, request, createdBy, AppointmentSource.INTERNAL);
+    }
+
+    @Override
+    @Transactional
+    public AppointmentResponse create(UUID companyId, CreateAppointmentRequest request, UUID createdBy,
+                                      AppointmentSource source) {
         try {
             TenantContext.setCompanyId(companyId);
             boolean force = request.force() != null && request.force();
@@ -52,7 +59,7 @@ public class AppointmentService implements AppointmentUseCase {
             Appointment appointment = Appointment.create(companyId, request.appointmentTypeId(),
                     request.hostId(), request.contactId(), request.opportunityId(),
                     request.title(), request.startAt(), request.endAt(),
-                    AppointmentSource.INTERNAL, request.locationKind(), request.locationDetail(),
+                    source, request.locationKind(), request.locationDetail(),
                     request.notes(), createdBy);
             appointmentRepository.save(appointment);
 
