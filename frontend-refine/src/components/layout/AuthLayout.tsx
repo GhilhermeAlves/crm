@@ -13,7 +13,7 @@ type AuthLayoutProps = {
  */
 export function AuthLayout({ title, description, children }: AuthLayoutProps) {
   return (
-    <div className="flex h-screen overflow-y-auto bg-crm-background p-4">
+    <div className="flex h-dvh overflow-y-auto bg-crm-background p-4">
       <Card className="m-auto w-full max-w-md border-crm-border bg-crm-surface">
         {title && (
           <CardHeader className="space-y-1 text-center">
