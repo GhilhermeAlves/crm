@@ -6,6 +6,8 @@ import type {
   ConversationDetail,
   FollowUp,
   FollowUpRequest,
+  IgnoredContact,
+  IgnoredContactRequest,
   Message,
   Page,
 } from "../types/omnichannel.types";
@@ -101,5 +103,20 @@ export const OmnichannelService = {
   async cancelFollowUp(followUpId: string): Promise<FollowUp> {
     const response = await api.post<FollowUp>(`${BASE}/follow-ups/${followUpId}/cancel`);
     return response.data;
+  },
+
+  // Contatos ignorados
+  async listIgnoredContacts(): Promise<IgnoredContact[]> {
+    const response = await api.get<IgnoredContact[]>(`${BASE}/ignored-contacts`);
+    return response.data;
+  },
+
+  async addIgnoredContact(data: IgnoredContactRequest): Promise<IgnoredContact> {
+    const response = await api.post<IgnoredContact>(`${BASE}/ignored-contacts`, data);
+    return response.data;
+  },
+
+  async removeIgnoredContact(id: string): Promise<void> {
+    await api.delete(`${BASE}/ignored-contacts/${id}`);
   },
 };

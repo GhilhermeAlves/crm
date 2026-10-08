@@ -2,7 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { OmnichannelService } from "../services/omnichannel.service";
-import type { ChannelRequest, FollowUpRequest } from "../types/omnichannel.types";
+import type {
+  ChannelRequest,
+  FollowUpRequest,
+  IgnoredContactRequest,
+} from "../types/omnichannel.types";
 
 // Canais --------------------------------------------------------------------
 
@@ -216,6 +220,43 @@ export function useCancelFollowUp(conversationId: string | null) {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erro ao cancelar follow-up");
+    },
+  });
+}
+
+// Contatos ignorados ----------------------------------------------------------
+
+export function useIgnoredContacts() {
+  return useQuery({
+    queryKey: ["omnichannel", "ignored-contacts"],
+    queryFn: () => OmnichannelService.listIgnoredContacts(),
+  });
+}
+
+export function useAddIgnoredContact() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: IgnoredContactRequest) => OmnichannelService.addIgnoredContact(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["omnichannel", "ignored-contacts"] });
+      toast.success("Contato adicionado à lista de ignorados");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao adicionar contato");
+    },
+  });
+}
+
+export function useRemoveIgnoredContact() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => OmnichannelService.removeIgnoredContact(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["omnichannel", "ignored-contacts"] });
+      toast.success("Contato removido da lista");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao remover contato");
     },
   });
 }

@@ -36,6 +36,9 @@ public interface OmnichannelMessageRepository {
      */
     boolean existsInboundAfter(UUID conversationId, java.time.LocalDateTime after);
 
+    /** O CRM enviou (OUTBOUND) este mesmo texto na conversa depois de {@code after}? */
+    boolean existsOutboundWithBodyAfter(UUID conversationId, String body, java.time.LocalDateTime after);
+
     /** Atualiza status e erro de uma mensagem identificada por id externo, escopada ao tenant. */
     void updateStatusByExternalId(UUID companyId, String externalId, MessageStatus status, String error);
 }

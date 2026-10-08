@@ -30,6 +30,42 @@ class ConversationTest {
     }
 
     @Test
+    void pauseAutomationUntil_ficaHumanoAteOPrazoEDepoisVoltaSozinho() {
+        Conversation c = Conversation.create(companyId, channelId, contactId, "5511999998888");
+
+        c.pauseAutomationUntil(LocalDateTime.now().plusHours(12));
+        assertTrue(c.isInHumanMode());
+        assertEquals(ConversationMode.HUMAN, c.getMode());
+
+        c.restoreHumanUntil(LocalDateTime.now().minusMinutes(1));
+        assertFalse(c.isInHumanMode());
+        assertEquals(ConversationMode.AUTOMATIC, c.getMode());
+        assertNull(c.getHumanUntil());
+    }
+
+    @Test
+    void takeoverManual_naoTemPrazo_eReleaseLimpaPausa() {
+        Conversation c = Conversation.create(companyId, channelId, contactId, "5511999998888");
+        c.pauseAutomationUntil(LocalDateTime.now().plusHours(12));
+
+        c.takeover();
+        assertTrue(c.isInHumanMode());
+        assertNull(c.getHumanUntil());
+
+        c.pauseAutomationUntil(LocalDateTime.now().plusHours(12));
+        c.releaseAutomation();
+        assertFalse(c.isInHumanMode());
+        assertNull(c.getHumanUntil());
+    }
+
+    @Test
+    void ignoredContact_normalizaTelefone() {
+        assertEquals("5534999998888", IgnoredContact.normalizePhone("(34) 99999-8888"));
+        assertEquals("5534999998888", IgnoredContact.normalizePhone("+55 34 99999-8888"));
+        assertEquals("", IgnoredContact.normalizePhone(null));
+    }
+
+    @Test
     void touch_inbound_shouldIncrementUnreadAndSetLastMessageAt() {
         Conversation c = Conversation.create(companyId, channelId, contactId, "+5511999998888");
         LocalDateTime at = LocalDateTime.now();

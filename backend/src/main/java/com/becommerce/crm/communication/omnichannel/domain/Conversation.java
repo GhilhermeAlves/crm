@@ -14,6 +14,7 @@ public class Conversation {
     private final String externalPhone;
     private ConversationStatus status;
     private ConversationMode mode;
+    private java.time.LocalDateTime humanUntil;
     private java.time.LocalDateTime lastMessageAt;
     private int unreadCount;
     private final java.time.LocalDateTime createdAt;
@@ -70,17 +71,38 @@ public class Conversation {
     /** Um humano assume a conversa: a IA autônoma fica suspensa até {@link #releaseAutomation()}. */
     public void takeover() {
         this.mode = ConversationMode.HUMAN;
+        this.humanUntil = null;
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
+    /**
+     * Humano respondeu fora do CRM (ex.: celular do dono do número): suspende a
+     * IA até {@code until}; depois disso a conversa volta sozinha ao automático.
+     */
+    public void pauseAutomationUntil(java.time.LocalDateTime until) {
+        this.mode = ConversationMode.HUMAN;
+        this.humanUntil = until;
         this.updatedAt = java.time.LocalDateTime.now();
     }
 
     /** Restabelece o atendimento automático (IA autônoma volta a poder responder). */
     public void releaseAutomation() {
         this.mode = ConversationMode.AUTOMATIC;
+        this.humanUntil = null;
         this.updatedAt = java.time.LocalDateTime.now();
     }
 
     public boolean isInHumanMode() {
-        return this.mode == ConversationMode.HUMAN;
+        return getMode() == ConversationMode.HUMAN;
+    }
+
+    /** Restaura o prazo persistido (usado só pelo repositório). */
+    public void restoreHumanUntil(java.time.LocalDateTime humanUntil) {
+        this.humanUntil = humanUntil;
+    }
+
+    private boolean pauseExpired() {
+        return humanUntil != null && !java.time.LocalDateTime.now().isBefore(humanUntil);
     }
 
     public void touch(java.time.LocalDateTime at, boolean inbound) {
@@ -117,7 +139,10 @@ public class Conversation {
     public java.util.UUID getContactId() { return contactId; }
     public String getExternalPhone() { return externalPhone; }
     public ConversationStatus getStatus() { return status; }
-    public ConversationMode getMode() { return mode; }
+    /** Modo efetivo: uma pausa com prazo vencido já conta como AUTOMATIC. */
+    public ConversationMode getMode() { return pauseExpired() ? ConversationMode.AUTOMATIC : mode; }
+    /** Prazo da pausa ativa; {@code null} sem prazo ou já vencida. */
+    public java.time.LocalDateTime getHumanUntil() { return pauseExpired() ? null : humanUntil; }
     public java.time.LocalDateTime getLastMessageAt() { return lastMessageAt; }
     public int getUnreadCount() { return unreadCount; }
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }

@@ -27,6 +27,9 @@ public interface OmnichannelMessageJpaRepository extends JpaRepository<Omnichann
     boolean existsByConversationIdAndDirectionAndCreatedAtAfter(
             UUID conversationId, String direction, LocalDateTime after);
 
+    boolean existsByConversationIdAndDirectionAndBodyAndCreatedAtAfter(
+            UUID conversationId, String direction, String body, LocalDateTime after);
+
     /** Insert idempotente por (company_id, external_message_id) — ON CONFLICT DO NOTHING. */
     @Modifying
     @Query(value = """

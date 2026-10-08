@@ -12,10 +12,20 @@ import java.util.Optional;
 public interface WhatsAppWebhookParser {
 
     /** Mensagem recebida normalizada. */
+    /**
+     * Mensagem normalizada. {@code from} é sempre o telefone do contato externo;
+     * {@code fromMe} indica que ela saiu do próprio número do canal (enviada
+     * pelo CRM ou digitada no celular do dono do número).
+     */
     record InboundMessageData(String externalMessageId, String from, String to, String body,
-                              String senderName) {
+                              String senderName, boolean fromMe) {
         public InboundMessageData(String externalMessageId, String from, String to, String body) {
-            this(externalMessageId, from, to, body, null);
+            this(externalMessageId, from, to, body, null, false);
+        }
+
+        public InboundMessageData(String externalMessageId, String from, String to, String body,
+                                  String senderName) {
+            this(externalMessageId, from, to, body, senderName, false);
         }
     }
 

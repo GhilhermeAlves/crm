@@ -17,7 +17,8 @@ import java.util.Optional;
  *   <li>{@code messages.update}: status em {@code data.keyId} / {@code data.status}.</li>
  * </ul>
  * A referência de canal é o nome da instância (= {@code externalId} do canal).
- * Mensagens próprias ({@code fromMe}), de grupo e de status/broadcast são ignoradas.
+ * Mensagens próprias ({@code fromMe}) são devolvidas marcadas, para o serviço
+ * distinguir envio do CRM de resposta manual; grupo e status/broadcast são ignorados.
  */
 @Component
 public class EvolutionWebhookParser implements WhatsAppWebhookParser {
@@ -37,15 +38,15 @@ public class EvolutionWebhookParser implements WhatsAppWebhookParser {
         }
         Map<?, ?> data = map(raw.get("data"));
         Map<?, ?> key = map(data.get("key"));
-        if (Boolean.TRUE.equals(key.get("fromMe"))) {
-            return Optional.empty();
-        }
+        boolean fromMe = Boolean.TRUE.equals(key.get("fromMe"));
         String id = str(key.get("id"));
         String from = senderPhone(key, data);
         if (id == null || from == null) {
             return Optional.empty();
         }
-        return Optional.of(new InboundMessageData(id, from, instance(raw), text(data), str(data.get("pushName"))));
+        // Em fromMe o pushName é o do próprio dono do número, não do contato.
+        String senderName = fromMe ? null : str(data.get("pushName"));
+        return Optional.of(new InboundMessageData(id, from, instance(raw), text(data), senderName, fromMe));
     }
 
     @Override

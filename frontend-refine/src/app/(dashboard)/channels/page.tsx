@@ -18,6 +18,7 @@ import { ErrorCard } from "@/components/common/ErrorCard";
 import { SkeletonTable } from "@/components/feedback/SkeletonTable";
 import { ChannelFormDialog } from "@/features/communication/omnichannel/components/ChannelFormDialog";
 import { ChannelStatusBadge } from "@/features/communication/omnichannel/components/ChannelStatusBadge";
+import { IgnoredContactsCard } from "@/features/communication/omnichannel/components/IgnoredContactsCard";
 import {
   useChannels,
   useCreateChannel,
@@ -129,6 +130,8 @@ export default function ChannelsPage() {
           </CardContent>
         </Card>
       )}
+
+      <IgnoredContactsCard canEdit={canUpdate} />
 
       <ChannelFormDialog
         open={dialogOpen}
