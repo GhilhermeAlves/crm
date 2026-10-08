@@ -115,7 +115,7 @@ export function Sidebar() {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden h-screen flex-col bg-gradient-to-b from-slate-800 to-slate-900 text-white transition-all duration-crm-default ease-in-out lg:flex",
+          "hidden h-dvh flex-col bg-gradient-to-b from-slate-800 to-slate-900 text-white transition-all duration-crm-default ease-in-out lg:flex",
           effectiveCollapsed ? "w-16" : "w-64",
         )}
       >

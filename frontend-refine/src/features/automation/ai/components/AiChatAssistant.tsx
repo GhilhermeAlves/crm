@@ -210,7 +210,7 @@ export function AiChatAssistant({ embedded = false }: { embedded?: boolean } = {
     <div
       className={cn(
         "flex flex-col",
-        embedded ? "h-full min-h-0" : "h-[calc(100vh-8rem)] gap-4 lg:flex-row",
+        embedded ? "h-full min-h-0" : "h-[calc(100dvh-8rem)] gap-4 lg:flex-row",
       )}
     >
       {/* Histórico - desktop */}

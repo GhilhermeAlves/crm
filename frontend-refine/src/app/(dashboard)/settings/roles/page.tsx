@@ -138,7 +138,7 @@ export default function SettingsRolesPage() {
             <CardTitle className="text-base">Papéis</CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[calc(100vh-16rem)]">
+            <ScrollArea className="h-[calc(100dvh-16rem)]">
               <div className="space-y-1">
                 {roles.map((role) => (
                   <button

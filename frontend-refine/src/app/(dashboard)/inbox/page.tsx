@@ -38,7 +38,7 @@ export default function InboxPage() {
         </p>
       </div>
 
-      <Card className="h-[calc(100vh-220px)] overflow-hidden">
+      <Card className="h-[calc(100dvh-220px)] overflow-hidden">
         <div className="grid h-full grid-cols-1 md:grid-cols-[300px_1fr]">
           <div className="border-r">
             <ConversationList
