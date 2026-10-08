@@ -15,6 +15,7 @@ import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppIn
 import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
+import com.becommerce.crm.communication.omnichannel.domain.IgnoredContact;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
 import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
@@ -141,7 +142,8 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
             return;
         }
         // Contato ignorado (família/amigos no número pessoal): nada é gravado nem respondido.
-        if (ignoredContactRepository.existsByCompanyAndPhone(companyId, data.from())) {
+        if (IgnoredContact.phoneVariants(data.from()).stream()
+                .anyMatch(p -> ignoredContactRepository.existsByCompanyAndPhone(companyId, p))) {
             log.info("Mensagem de contato ignorado (company={}); descartada sem gravar", companyId);
             return;
         }
