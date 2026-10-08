@@ -135,6 +135,7 @@ omnichannel:
     reply-debounce-seconds: ${WHATSAPP_REPLY_DEBOUNCE_SECONDS:8}   # agrupa mensagens seguidas antes da IA responder
     auto-ai-concurrency: 2-8               # conversas atendidas pela IA em paralelo
     sender-concurrency: 2-8
+    owner-reply-pause-hours: ${WHATSAPP_OWNER_REPLY_PAUSE_HOURS:12}   # IA pausa na conversa quando o dono do número responde pelo celular
     evolution:
       base-url: ${EVOLUTION_BASE_URL:}      # ex.: http://evolution-api:8080 (apikey via EVOLUTION_API_KEY / secrets_ref do canal)
 

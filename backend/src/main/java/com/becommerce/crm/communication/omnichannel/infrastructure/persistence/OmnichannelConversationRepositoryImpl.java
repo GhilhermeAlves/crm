@@ -60,6 +60,7 @@ public class OmnichannelConversationRepositoryImpl implements OmnichannelConvers
         e.setExternalPhone(c.getExternalPhone());
         e.setStatus(c.getStatus().name());
         e.setHandoffMode(c.getMode().name());
+        e.setHumanUntil(c.getHumanUntil());
         e.setLastMessageAt(c.getLastMessageAt());
         e.setUnreadCount(c.getUnreadCount());
         e.setCreatedAt(c.getCreatedAt());
@@ -68,9 +69,11 @@ public class OmnichannelConversationRepositoryImpl implements OmnichannelConvers
     }
 
     private static Conversation toDomain(OmnichannelConversationJpaEntity e) {
-        return Conversation.reconstitute(e.getId(), e.getCompanyId(), e.getChannelId(), e.getContactId(),
+        Conversation c = Conversation.reconstitute(e.getId(), e.getCompanyId(), e.getChannelId(), e.getContactId(),
                 e.getExternalPhone(), ConversationStatus.valueOf(e.getStatus()),
                 ConversationMode.valueOf(e.getHandoffMode()), e.getLastMessageAt(),
                 e.getUnreadCount(), e.getCreatedAt(), e.getUpdatedAt());
+        c.restoreHumanUntil(e.getHumanUntil());
+        return c;
     }
 }

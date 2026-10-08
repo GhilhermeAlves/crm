@@ -78,10 +78,18 @@ class EvolutionWebhookParserTest {
     }
 
     @Test
-    void upsert_ignoraFromMeGrupoEBroadcast() throws Exception {
-        assertTrue(parser.parseInboundMessage(json(upsert(
+    void upsert_fromMe_vemMarcadoESemNomeDoContato() throws Exception {
+        WhatsAppWebhookParser.InboundMessageData d = parser.parseInboundMessage(json(upsert(
                 "{\"remoteJid\":\"5511999998888@s.whatsapp.net\",\"fromMe\":true,\"id\":\"M\"}",
-                "{\"conversation\":\"eu\"}"))).isEmpty());
+                "{\"conversation\":\"eu\"}"))).orElseThrow();
+
+        assertTrue(d.fromMe());
+        assertEquals("5511999998888", d.from());
+        assertEquals(null, d.senderName());
+    }
+
+    @Test
+    void upsert_ignoraGrupoEBroadcast() throws Exception {
         assertTrue(parser.parseInboundMessage(json(upsert(
                 "{\"remoteJid\":\"120363000000@g.us\",\"fromMe\":false,\"id\":\"G\"}",
                 "{\"conversation\":\"grupo\"}"))).isEmpty());

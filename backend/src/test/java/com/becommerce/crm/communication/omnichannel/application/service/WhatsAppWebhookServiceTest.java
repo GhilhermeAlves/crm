@@ -5,6 +5,7 @@ import com.becommerce.crm.identity.application.port.output.EventPublisher;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelCompanyResolver;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelIgnoredContactRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelInboxNotifier;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppEventPublisher;
@@ -26,6 +27,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -41,10 +44,11 @@ class WhatsAppWebhookServiceTest {
     private final WhatsAppEventPublisher whatsAppEventPublisher = mock(WhatsAppEventPublisher.class);
     private final JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
     private final OmnichannelInboxNotifier inboxNotifier = mock(OmnichannelInboxNotifier.class);
+    private final OmnichannelIgnoredContactRepository ignoredContacts = mock(OmnichannelIgnoredContactRepository.class);
 
     private final WhatsAppWebhookService service =
             new WhatsAppWebhookService(parser, companyResolver, channelRepository, conversationRepository,
-                    messageRepository, contactRepository, eventPublisher, whatsAppEventPublisher, jdbcTemplate, inboxNotifier);
+                    messageRepository, contactRepository, eventPublisher, whatsAppEventPublisher, jdbcTemplate, inboxNotifier, ignoredContacts, 12);
 
     private final UUID companyId = UUID.randomUUID();
     private final UUID channelId = UUID.randomUUID();
@@ -83,6 +87,84 @@ class WhatsAppWebhookServiceTest {
         verify(eventPublisher).publish(any(WorkflowTriggerEvent.class));
         verify(whatsAppEventPublisher).publishInbound(any());
         verify(inboxNotifier).notifyNewInbound(eq(companyId), any(), eq("+5511999998888"), eq("Oi"));
+    }
+
+    private void stubChannelAndMessage(WhatsAppWebhookParser.InboundMessageData data) {
+        when(parser.providerChannelReference(any())).thenReturn("espaco-a");
+        when(companyResolver.resolveCompanyByChannelReference("espaco-a")).thenReturn(Optional.of(companyId));
+        when(parser.isInboundMessage(any())).thenReturn(true);
+        when(parser.parseInboundMessage(any())).thenReturn(Optional.of(data));
+        when(messageRepository.findByExternalMessageId(data.externalMessageId())).thenReturn(Optional.empty());
+        when(channelRepository.findByCompanyAndExternalId(companyId, "espaco-a"))
+                .thenReturn(Optional.of(channel()));
+    }
+
+    private Conversation existingConversation() {
+        return Conversation.reconstitute(UUID.randomUUID(), companyId, channelId, null, "5511999998888",
+                com.becommerce.crm.communication.omnichannel.domain.ConversationStatus.OPEN,
+                java.time.LocalDateTime.now(), 0, java.time.LocalDateTime.now(), java.time.LocalDateTime.now());
+    }
+
+    @Test
+    void handleEvent_contatoIgnorado_naoGravaNada() {
+        stubChannelAndMessage(new WhatsAppWebhookParser.InboundMessageData(
+                "wamid-ign", "5511999998888", "espaco-a", "oi mãe"));
+        when(ignoredContacts.existsByCompanyAndPhone(companyId, "5511999998888")).thenReturn(true);
+
+        service.handleEvent(inboundPayload());
+
+        verify(conversationRepository, never()).save(any());
+        verify(messageRepository, never()).saveByExternalId(any());
+        verify(whatsAppEventPublisher, never()).publishInbound(any());
+    }
+
+    @Test
+    void handleEvent_donoRespondePeloCelular_registraEPausaIa() {
+        stubChannelAndMessage(new WhatsAppWebhookParser.InboundMessageData(
+                "wamid-own", "5511999998888", "espaco-a", "Oi, aqui é a Raquel!", null, true));
+        Conversation conversation = existingConversation();
+        when(conversationRepository.findByCompanyAndChannelAndPhone(companyId, channelId, "5511999998888"))
+                .thenReturn(Optional.of(conversation));
+        when(messageRepository.existsOutboundWithBodyAfter(any(), any(), any())).thenReturn(false);
+
+        service.handleEvent(inboundPayload());
+
+        verify(messageRepository).saveByExternalId(argThat(m ->
+                m.getDirection() == com.becommerce.crm.communication.omnichannel.domain.MessageDirection.OUTBOUND
+                        && m.getStatus() == MessageStatus.SENT
+                        && "wamid-own".equals(m.getExternalMessageId())));
+        verify(conversationRepository).save(conversation);
+        assertTrue(conversation.isInHumanMode());
+        assertTrue(conversation.getHumanUntil().isAfter(java.time.LocalDateTime.now().plusHours(11)));
+        verify(whatsAppEventPublisher, never()).publishInbound(any());
+    }
+
+    @Test
+    void handleEvent_ecoDeEnvioDoCrm_naoPausa() {
+        stubChannelAndMessage(new WhatsAppWebhookParser.InboundMessageData(
+                "wamid-echo", "5511999998888", "espaco-a", "Resposta da IA", null, true));
+        Conversation conversation = existingConversation();
+        when(conversationRepository.findByCompanyAndChannelAndPhone(companyId, channelId, "5511999998888"))
+                .thenReturn(Optional.of(conversation));
+        when(messageRepository.existsOutboundWithBodyAfter(eq(conversation.getId()), eq("Resposta da IA"), any()))
+                .thenReturn(true);
+
+        service.handleEvent(inboundPayload());
+
+        verify(messageRepository, never()).saveByExternalId(any());
+        assertFalse(conversation.isInHumanMode());
+    }
+
+    @Test
+    void handleEvent_mensagemPropriaParaConversaForaDoCrm_ignorada() {
+        stubChannelAndMessage(new WhatsAppWebhookParser.InboundMessageData(
+                "wamid-pessoal", "5511888887777", "espaco-a", "bom dia", null, true));
+        when(conversationRepository.findByCompanyAndChannelAndPhone(any(), any(), any())).thenReturn(Optional.empty());
+
+        service.handleEvent(inboundPayload());
+
+        verify(conversationRepository, never()).save(any());
+        verify(messageRepository, never()).saveByExternalId(any());
     }
 
     @Test

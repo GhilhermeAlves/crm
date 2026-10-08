@@ -165,3 +165,18 @@ export const FOLLOW_UP_STATUS_LABELS: Record<FollowUpStatus, string> = {
   CANCELLED: "Cancelado",
   FAILED: "Falhou",
 };
+
+// Contatos ignorados pela IA (número pessoal compartilhado) ------------------
+
+export interface IgnoredContact {
+  id: string;
+  companyId: string;
+  phone: string;
+  label: string | null;
+  createdAt: string;
+}
+
+export interface IgnoredContactRequest {
+  phone: string;
+  label?: string;
+}

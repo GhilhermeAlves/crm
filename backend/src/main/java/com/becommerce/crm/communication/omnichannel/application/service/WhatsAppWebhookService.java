@@ -6,6 +6,7 @@ import com.becommerce.crm.communication.omnichannel.application.port.input.Whats
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelCompanyResolver;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelIgnoredContactRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelInboxNotifier;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppEventPublisher;
@@ -19,10 +20,12 @@ import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -50,6 +53,12 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
     private final WhatsAppEventPublisher whatsAppEventPublisher;
     private final JdbcTemplate jdbcTemplate;
     private final OmnichannelInboxNotifier inboxNotifier;
+    private final OmnichannelIgnoredContactRepository ignoredContactRepository;
+    /** Por quanto tempo a IA fica pausada após o dono do número responder pelo celular. */
+    private final Duration ownerReplyPause;
+
+    /** Janela para reconhecer o eco (fromMe) de uma mensagem que o próprio CRM enviou. */
+    private static final Duration OWN_ECHO_WINDOW = Duration.ofMinutes(2);
 
     public WhatsAppWebhookService(WhatsAppWebhookParser parser,
                                   OmnichannelCompanyResolver companyResolver,
@@ -60,7 +69,11 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
                                   EventPublisher eventPublisher,
                                   WhatsAppEventPublisher whatsAppEventPublisher,
                                   JdbcTemplate jdbcTemplate,
-                                  OmnichannelInboxNotifier inboxNotifier) {
+                                  OmnichannelInboxNotifier inboxNotifier,
+                                  OmnichannelIgnoredContactRepository ignoredContactRepository,
+                                  @Value("${omnichannel.whatsapp.owner-reply-pause-hours:12}") long ownerReplyPauseHours) {
+        this.ignoredContactRepository = ignoredContactRepository;
+        this.ownerReplyPause = Duration.ofHours(Math.max(1, ownerReplyPauseHours));
         this.parser = parser;
         this.companyResolver = companyResolver;
         this.channelRepository = channelRepository;
@@ -126,6 +139,15 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
             log.warn("Canal não encontrado para (company={}, ref={}); ignorando", companyId, data.to());
             return;
         }
+        // Contato ignorado (família/amigos no número pessoal): nada é gravado nem respondido.
+        if (ignoredContactRepository.existsByCompanyAndPhone(companyId, data.from())) {
+            log.info("Mensagem de contato ignorado (company={}); descartada sem gravar", companyId);
+            return;
+        }
+        if (data.fromMe()) {
+            handleOwnerMessage(companyId, channel, data);
+            return;
+        }
         Conversation conversation = conversationRepository
                 .findByCompanyAndChannelAndPhone(companyId, channel.getId(), data.from())
                 .orElseGet(() -> {
@@ -164,6 +186,41 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         whatsAppEventPublisher.publishInbound(WhatsAppInboundEvent.of(
                 companyId, conversation.getId(), persisted.getId(), channel.getId(),
                 data.externalMessageId(), data.from(), data.body(), data.senderName()));
+    }
+
+    /**
+     * Mensagem que saiu do próprio número. Se não foi o CRM que a enviou, o dono
+     * do número respondeu pelo celular: registra na conversa (aparece na Inbox)
+     * e pausa a IA por {@link #ownerReplyPause} para não haver resposta dupla.
+     * Conversas que não existem no CRM (contatos pessoais) não são criadas.
+     */
+    private void handleOwnerMessage(UUID companyId, Channel channel,
+                                    WhatsAppWebhookParser.InboundMessageData data) {
+        Conversation conversation = conversationRepository
+                .findByCompanyAndChannelAndPhone(companyId, channel.getId(), data.from())
+                .orElse(null);
+        if (conversation == null) {
+            log.debug("Mensagem própria para conversa fora do CRM (company={}); ignorada", companyId);
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        // Eco de envio do CRM antes de o id externo ser gravado (corrida com o sender).
+        if (messageRepository.existsOutboundWithBodyAfter(conversation.getId(), data.body(),
+                now.minus(OWN_ECHO_WINDOW))) {
+            log.debug("Eco de mensagem enviada pelo CRM (company={}, conversation={})",
+                    companyId, conversation.getId());
+            return;
+        }
+        Message manual = Message.createOutbound(companyId, conversation.getId(), channel.getId(),
+                channel.getExternalId(), data.from(), data.body(), UUID.randomUUID());
+        manual.markSent(data.externalMessageId());
+        messageRepository.saveByExternalId(manual);
+
+        conversation.pauseAutomationUntil(now.plus(ownerReplyPause));
+        conversation.touch(now, false);
+        conversationRepository.save(conversation);
+        log.info("[WHATSAPP][OWNER] company={} conversation={} resposta pelo celular; IA pausada até {}",
+                companyId, conversation.getId(), conversation.getHumanUntil());
     }
 
     private void handleStatus(UUID companyId, Map<String, Object> payload) {
