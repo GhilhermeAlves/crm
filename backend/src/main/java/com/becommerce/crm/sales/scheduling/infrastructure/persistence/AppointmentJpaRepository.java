@@ -28,6 +28,14 @@ public interface AppointmentJpaRepository extends JpaRepository<AppointmentJpaEn
 
     Optional<AppointmentJpaEntity> findByPublicToken(String publicToken);
 
+    @Query("SELECT a FROM AppointmentJpaEntity a WHERE a.companyId = :companyId " +
+           "AND a.contactId = :contactId AND a.status <> 'CANCELED' " +
+           "AND a.startAt >= :from ORDER BY a.startAt ASC")
+    List<AppointmentJpaEntity> findUpcomingByContact(@Param("companyId") UUID companyId,
+                                                     @Param("contactId") UUID contactId,
+                                                     @Param("from") Instant from,
+                                                     org.springframework.data.domain.Pageable pageable);
+
     @Query("SELECT COUNT(a) FROM AppointmentJpaEntity a WHERE a.hostId = :hostId " +
            "AND a.status <> 'CANCELED' " +
            "AND a.startAt >= :weekStart AND a.startAt < :weekEnd")

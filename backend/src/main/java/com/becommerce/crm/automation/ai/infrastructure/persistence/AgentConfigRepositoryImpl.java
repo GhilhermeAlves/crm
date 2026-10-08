@@ -1,10 +1,13 @@
 package com.becommerce.crm.automation.ai.infrastructure.persistence;
 
 import com.becommerce.crm.automation.ai.application.port.output.AgentConfigRepository;
+import com.becommerce.crm.automation.ai.domain.AgentBehavior;
 import com.becommerce.crm.automation.ai.domain.AgentConfig;
+import com.becommerce.crm.automation.ai.domain.AgentIdentity;
 import com.becommerce.crm.automation.ai.domain.VoiceReplyMode;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,6 +43,15 @@ public class AgentConfigRepositoryImpl implements AgentConfigRepository {
         e.setCooldownMinutes(c.getCooldownMinutes());
         e.setMaxChars(c.getMaxChars());
         e.setVoiceReplyMode(c.getVoiceReplyMode().name());
+        e.setAgentName(c.getIdentity().name());
+        e.setAgentDescription(c.getIdentity().description());
+        e.setPersona(c.getIdentity().persona());
+        e.setObjective(c.getBehavior().objective());
+        e.setTone(c.getBehavior().tone());
+        e.setRules(new ArrayList<>(c.getBehavior().rules()));
+        e.setInstructions(new ArrayList<>(c.getBehavior().instructions()));
+        e.setMemoryEnabled(c.isMemoryEnabled());
+        e.setHumanTransferEnabled(c.isHumanTransferEnabled());
         e.setCreatedAt(c.getCreatedAt());
         e.setUpdatedAt(c.getUpdatedAt());
         return e;
@@ -50,6 +62,9 @@ public class AgentConfigRepositoryImpl implements AgentConfigRepository {
                 e.isAllowAutoReply(), e.getSystemPrompt(), e.getModel(), e.getTemperature(),
                 e.getMaxTokens(), e.getCooldownMinutes(), e.getMaxChars(), e.getCreatedAt(),
                 e.getUpdatedAt())
-                .withVoiceReplyMode(VoiceReplyMode.parseOrDefault(e.getVoiceReplyMode(), VoiceReplyMode.MIRROR));
+                .withVoiceReplyMode(VoiceReplyMode.parseOrDefault(e.getVoiceReplyMode(), VoiceReplyMode.MIRROR))
+                .withProfile(new AgentIdentity(e.getAgentName(), e.getAgentDescription(), e.getPersona()),
+                        new AgentBehavior(e.getObjective(), e.getTone(), e.getRules(), e.getInstructions()),
+                        e.isMemoryEnabled(), e.isHumanTransferEnabled());
     }
 }

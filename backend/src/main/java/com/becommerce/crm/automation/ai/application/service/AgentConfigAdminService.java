@@ -5,7 +5,11 @@ import com.becommerce.crm.automation.ai.application.dto.AgentConfigResponse;
 import com.becommerce.crm.automation.ai.application.port.input.AgentConfigUseCase;
 import com.becommerce.crm.automation.ai.application.port.output.AgentConfigRepository;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
+import com.becommerce.crm.automation.ai.application.dto.AgentBehaviorDto;
+import com.becommerce.crm.automation.ai.application.dto.AgentIdentityDto;
+import com.becommerce.crm.automation.ai.domain.AgentBehavior;
 import com.becommerce.crm.automation.ai.domain.AgentConfig;
+import com.becommerce.crm.automation.ai.domain.AgentIdentity;
 import com.becommerce.crm.automation.ai.domain.VoiceReplyMode;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
@@ -80,6 +84,8 @@ public class AgentConfigAdminService implements AgentConfigUseCase {
                 updated.withVoiceReplyMode(existing.getVoiceReplyMode());
             }
             updated.withVoiceReplyMode(VoiceReplyMode.parseOrDefault(request.voiceReplyMode(), null));
+            updated.withProfile(toIdentity(request.identity()), toBehavior(request.behavior()),
+                    request.memoryEnabled(), request.humanTransferEnabled());
 
             AgentConfig saved = agentConfigRepository.save(updated);
             audit(companyId, created);
@@ -101,10 +107,28 @@ public class AgentConfigAdminService implements AgentConfigUseCase {
         }
     }
 
+    private static AgentIdentity toIdentity(AgentIdentityDto dto) {
+        return dto == null ? null : new AgentIdentity(dto.name(), dto.description(), dto.persona());
+    }
+
+    private static AgentBehavior toBehavior(AgentBehaviorDto dto) {
+        return dto == null ? null : new AgentBehavior(dto.objective(), dto.tone(), dto.rules(), dto.instructions());
+    }
+
     private static AgentConfigResponse toResponse(AgentConfig c) {
+        String voice = c.getVoiceReplyMode().name();
+        AgentIdentity identity = c.getIdentity();
+        AgentBehavior behavior = c.getBehavior();
         return new AgentConfigResponse(c.getId(), c.isAiEnabled(), c.isAllowAutoReply(),
                 c.getSystemPrompt(), c.getModel(), c.getTemperature(), c.getMaxTokens(),
-                c.getCooldownMinutes(), c.getMaxChars(), c.getUpdatedAt(), c.getVoiceReplyMode().name());
+                c.getCooldownMinutes(), c.getMaxChars(), c.getUpdatedAt(), voice,
+                new AgentIdentityDto(identity.name(), identity.description(), identity.persona()),
+                new AgentBehaviorDto(behavior.objective(), behavior.tone(), behavior.rules(), behavior.instructions()),
+                new AgentConfigResponse.ModelSection(c.getModel(), c.getTemperature(), c.getMaxTokens()),
+                new AgentConfigResponse.ConversationSection(c.getCooldownMinutes(), c.getMaxChars(), voice,
+                        new AgentConfigResponse.MemorySection(c.isMemoryEnabled())),
+                new AgentConfigResponse.ToolsSection(c.isHumanTransferEnabled()),
+                !c.hasStructuredProfile());
     }
 
     private static AgentConfigResponse defaultResponse() {

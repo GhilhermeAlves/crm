@@ -18,6 +18,13 @@ import java.util.UUID;
  * com a configuração de infraestrutura {@code app.ai.*}). Não existe "provider"
  * por empresa: o provider é selecionado em deploy via {@code app.ai.provider}
  * (arquitetura atual).</p>
+ *
+ * <p>V088 — camadas do agente: {@link AgentIdentity} (quem é),
+ * {@link AgentBehavior} (como age), modelo ({@code model/temperature/maxTokens})
+ * e conversação ({@code cooldown/maxChars/voz/memória/transferência humana}).
+ * {@code systemPrompt} passa a ser o PROMPT LEGADO: só é usado enquanto não houver
+ * perfil estruturado. Dados de clínica, paciente, memória e histórico NUNCA ficam
+ * aqui — são montados em tempo de execução pelo {@code AgentContextBuilder}.</p>
  */
 public class AgentConfig {
 
@@ -35,6 +42,11 @@ public class AgentConfig {
     private LocalDateTime updatedAt;
     /** Não entra nos construtores (compatibilidade); padrão MIRROR, como na V086. */
     private VoiceReplyMode voiceReplyMode = VoiceReplyMode.MIRROR;
+    /** V088 — fora dos construtores (compatibilidade), como {@code voiceReplyMode}. */
+    private AgentIdentity identity = AgentIdentity.EMPTY;
+    private AgentBehavior behavior = AgentBehavior.EMPTY;
+    private boolean memoryEnabled;
+    private boolean humanTransferEnabled;
 
     private AgentConfig(UUID id, UUID companyId, boolean aiEnabled, boolean allowAutoReply,
                         String systemPrompt, String model, Double temperature, Integer maxTokens,
@@ -80,7 +92,9 @@ public class AgentConfig {
                                     String model, Double temperature, Integer maxTokens,
                                     int cooldownMinutes, int maxChars) {
         return new AgentConfig(id, companyId, aiEnabled, allowAutoReply, systemPrompt, model,
-                temperature, maxTokens, cooldownMinutes, maxChars, createdAt, LocalDateTime.now());
+                temperature, maxTokens, cooldownMinutes, maxChars, createdAt, LocalDateTime.now())
+                .withVoiceReplyMode(voiceReplyMode)
+                .withProfile(identity, behavior, memoryEnabled, humanTransferEnabled);
     }
 
     /** Auto-resposta habilitada apenas se {@code aiEnabled} E {@code allowAutoReply}. */
@@ -96,13 +110,55 @@ public class AgentConfig {
         return this;
     }
 
+    /**
+     * Define identidade, comportamento e capacidades de conversação (V088).
+     * Nulos mantêm o valor atual. Retorna a própria instância.
+     */
+    public AgentConfig withProfile(AgentIdentity identity, AgentBehavior behavior,
+                                   Boolean memoryEnabled, Boolean humanTransferEnabled) {
+        if (identity != null) {
+            this.identity = identity;
+        }
+        if (behavior != null) {
+            this.behavior = behavior;
+        }
+        if (memoryEnabled != null) {
+            this.memoryEnabled = memoryEnabled;
+        }
+        if (humanTransferEnabled != null) {
+            this.humanTransferEnabled = humanTransferEnabled;
+        }
+        return this;
+    }
+
+    /**
+     * {@code true} quando a configuração estruturada (identidade/comportamento)
+     * está preenchida — nesse caso o prompt legado deixa de ser usado.
+     */
+    public boolean hasStructuredProfile() {
+        return !identity.isEmpty() || !behavior.isEmpty();
+    }
+
+    /** Prompt legado (coluna {@code system_prompt}) — usado só sem perfil estruturado. */
+    public String getLegacyPrompt() {
+        return systemPrompt;
+    }
+
+    public AgentIdentity getIdentity() { return identity; }
+    public AgentBehavior getBehavior() { return behavior; }
+    public boolean isMemoryEnabled() { return memoryEnabled; }
+    public boolean isHumanTransferEnabled() { return humanTransferEnabled; }
+
     public boolean canAutoReply() {
         return aiEnabled && allowAutoReply;
     }
 
-    /** Prompt utilizável (não-nulo e não-branco) — requisito de não hardcode. */
+    /**
+     * Há instruções utilizáveis — perfil estruturado OU prompt legado não-branco
+     * (requisito de não hardcode).
+     */
     public boolean hasUsablePrompt() {
-        return systemPrompt != null && !systemPrompt.isBlank();
+        return hasStructuredProfile() || (systemPrompt != null && !systemPrompt.isBlank());
     }
 
     public UUID getId() { return id; }
@@ -130,12 +186,16 @@ public class AgentConfig {
                 && Objects.equals(systemPrompt, other.systemPrompt)
                 && Objects.equals(model, other.model)
                 && Objects.equals(temperature, other.temperature)
-                && Objects.equals(maxTokens, other.maxTokens);
+                && Objects.equals(maxTokens, other.maxTokens)
+                && memoryEnabled == other.memoryEnabled
+                && humanTransferEnabled == other.humanTransferEnabled
+                && Objects.equals(identity, other.identity)
+                && Objects.equals(behavior, other.behavior);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(companyId, aiEnabled, allowAutoReply, systemPrompt, model,
-                temperature, maxTokens, cooldownMinutes, maxChars);
+                temperature, maxTokens, cooldownMinutes, maxChars, identity, behavior);
     }
 }

@@ -19,6 +19,9 @@ public interface AppointmentRepository {
 
     Optional<Appointment> findByPublicToken(String publicToken);
 
+    /** Próximos agendamentos não cancelados do contato (contexto do paciente para o agente de IA). */
+    List<Appointment> findUpcomingByContact(UUID companyId, UUID contactId, Instant from, int limit);
+
     long countByHostIdInWeek(UUID hostId, Instant weekStart, Instant weekEnd);
 
     void delete(Appointment appointment);
