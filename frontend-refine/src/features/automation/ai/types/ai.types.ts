@@ -142,7 +142,8 @@ export type AgentConfigRequest = {
   maxTokens: number | null;
   cooldownMinutes: number;
   maxChars: number;
-  voiceReplyMode: VoiceReplyMode;
+  /** Opcional: ausente mantém o modo atual no backend. */
+  voiceReplyMode?: VoiceReplyMode;
 };
 
 /**
