@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Plus, Trash2, UserX } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,9 @@ import {
   useAddIgnoredContact,
   useIgnoredContacts,
   useRemoveIgnoredContact,
+  useUpdateIgnoredContact,
 } from "../hooks/useOmnichannel";
+import type { IgnoredContact } from "../types/omnichannel.types";
 
 /** 5534999998888 → +55 (34) 99999-8888; outros formatos ficam como vieram. */
 function formatPhone(digits: string): string {
@@ -27,6 +29,25 @@ export function IgnoredContactsCard({ canEdit }: { canEdit: boolean }) {
   const removeContact = useRemoveIgnoredContact();
   const [phone, setPhone] = useState("");
   const [label, setLabel] = useState("");
+  const updateContact = useUpdateIgnoredContact();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editPhone, setEditPhone] = useState("");
+  const [editLabel, setEditLabel] = useState("");
+
+  const startEdit = (c: IgnoredContact) => {
+    setEditingId(c.id);
+    setEditPhone(formatPhone(c.phone));
+    setEditLabel(c.label ?? "");
+  };
+
+  const handleSaveEdit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!editingId || !editPhone.trim()) return;
+    updateContact.mutate(
+      { id: editingId, data: { phone: editPhone.trim(), label: editLabel.trim() || undefined } },
+      { onSuccess: () => setEditingId(null) },
+    );
+  };
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
@@ -83,25 +104,74 @@ export function IgnoredContactsCard({ canEdit }: { canEdit: boolean }) {
           <p className="text-sm text-muted-foreground">Nenhum contato ignorado.</p>
         ) : (
           <ul className="divide-y rounded-md border">
-            {contacts.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{formatPhone(c.phone)}</p>
-                  {c.label && <p className="truncate text-xs text-muted-foreground">{c.label}</p>}
-                </div>
-                {canEdit && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Remover ${formatPhone(c.phone)}`}
-                    disabled={removeContact.isPending}
-                    onClick={() => removeContact.mutate(c.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </li>
-            ))}
+            {contacts.map((c) =>
+              editingId === c.id ? (
+                <li key={c.id} className="px-3 py-2">
+                  <form onSubmit={handleSaveEdit} className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      aria-label="Telefone"
+                      inputMode="tel"
+                      autoFocus
+                    />
+                    <Input
+                      placeholder="Identificação (opcional)"
+                      value={editLabel}
+                      onChange={(e) => setEditLabel(e.target.value)}
+                      aria-label="Identificação"
+                    />
+                    <div className="flex gap-1">
+                      <Button
+                        type="submit"
+                        size="icon"
+                        aria-label="Salvar"
+                        disabled={updateContact.isPending || !editPhone.trim()}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Cancelar edição"
+                        onClick={() => setEditingId(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </form>
+                </li>
+              ) : (
+                <li key={c.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{formatPhone(c.phone)}</p>
+                    {c.label && <p className="truncate text-xs text-muted-foreground">{c.label}</p>}
+                  </div>
+                  {canEdit && (
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Editar ${formatPhone(c.phone)}`}
+                        onClick={() => startEdit(c)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Remover ${formatPhone(c.phone)}`}
+                        disabled={removeContact.isPending}
+                        onClick={() => removeContact.mutate(c.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              ),
+            )}
           </ul>
         )}
       </CardContent>

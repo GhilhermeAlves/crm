@@ -116,6 +116,11 @@ export const OmnichannelService = {
     return response.data;
   },
 
+  async updateIgnoredContact(id: string, data: IgnoredContactRequest): Promise<IgnoredContact> {
+    const response = await api.put<IgnoredContact>(`${BASE}/ignored-contacts/${id}`, data);
+    return response.data;
+  },
+
   async removeIgnoredContact(id: string): Promise<void> {
     await api.delete(`${BASE}/ignored-contacts/${id}`);
   },

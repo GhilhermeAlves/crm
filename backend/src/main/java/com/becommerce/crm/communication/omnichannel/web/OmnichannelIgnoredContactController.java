@@ -38,6 +38,13 @@ public class OmnichannelIgnoredContactController {
         return ResponseEntity.status(HttpStatus.CREATED).body(useCase.add(principal.companyId(), request));
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('omnichannel:update')")
+    public ResponseEntity<IgnoredContact> update(@PathVariable UUID id, @Valid @RequestBody IgnoredContactRequest request,
+                                                 @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(useCase.update(principal.companyId(), id, request));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('omnichannel:update')")
     public ResponseEntity<Void> remove(@PathVariable UUID id, @AuthenticationPrincipal CurrentUser principal) {

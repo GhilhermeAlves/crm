@@ -247,6 +247,21 @@ export function useAddIgnoredContact() {
   });
 }
 
+export function useUpdateIgnoredContact() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: IgnoredContactRequest }) =>
+      OmnichannelService.updateIgnoredContact(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["omnichannel", "ignored-contacts"] });
+      toast.success("Contato atualizado");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao atualizar contato");
+    },
+  });
+}
+
 export function useRemoveIgnoredContact() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -12,5 +12,8 @@ public interface OmnichannelIgnoredContactUseCase {
 
     IgnoredContact add(UUID companyId, IgnoredContactRequest request);
 
+    /** Corrige número e/ou identificação de um contato ignorado. */
+    IgnoredContact update(UUID companyId, UUID id, IgnoredContactRequest request);
+
     void remove(UUID companyId, UUID id);
 }
