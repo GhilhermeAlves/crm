@@ -2,6 +2,7 @@ package com.becommerce.crm.automation.ai.infrastructure.persistence;
 
 import com.becommerce.crm.automation.ai.application.port.output.AgentConfigRepository;
 import com.becommerce.crm.automation.ai.domain.AgentConfig;
+import com.becommerce.crm.automation.ai.domain.VoiceReplyMode;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -38,6 +39,7 @@ public class AgentConfigRepositoryImpl implements AgentConfigRepository {
         e.setMaxTokens(c.getMaxTokens());
         e.setCooldownMinutes(c.getCooldownMinutes());
         e.setMaxChars(c.getMaxChars());
+        e.setVoiceReplyMode(c.getVoiceReplyMode().name());
         e.setCreatedAt(c.getCreatedAt());
         e.setUpdatedAt(c.getUpdatedAt());
         return e;
@@ -47,6 +49,7 @@ public class AgentConfigRepositoryImpl implements AgentConfigRepository {
         return AgentConfig.reconstitute(e.getId(), e.getCompanyId(), e.isAiEnabled(),
                 e.isAllowAutoReply(), e.getSystemPrompt(), e.getModel(), e.getTemperature(),
                 e.getMaxTokens(), e.getCooldownMinutes(), e.getMaxChars(), e.getCreatedAt(),
-                e.getUpdatedAt());
+                e.getUpdatedAt())
+                .withVoiceReplyMode(VoiceReplyMode.parseOrDefault(e.getVoiceReplyMode(), VoiceReplyMode.MIRROR));
     }
 }

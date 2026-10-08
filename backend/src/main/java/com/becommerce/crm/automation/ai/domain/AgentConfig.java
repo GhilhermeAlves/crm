@@ -33,6 +33,8 @@ public class AgentConfig {
     private final int maxChars;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    /** Não entra nos construtores (compatibilidade); padrão MIRROR, como na V086. */
+    private VoiceReplyMode voiceReplyMode = VoiceReplyMode.MIRROR;
 
     private AgentConfig(UUID id, UUID companyId, boolean aiEnabled, boolean allowAutoReply,
                         String systemPrompt, String model, Double temperature, Integer maxTokens,
@@ -82,6 +84,18 @@ public class AgentConfig {
     }
 
     /** Auto-resposta habilitada apenas se {@code aiEnabled} E {@code allowAutoReply}. */
+    public VoiceReplyMode getVoiceReplyMode() {
+        return voiceReplyMode;
+    }
+
+    /** Define o modo de resposta em voz (nulo mantém o atual). Retorna a própria instância. */
+    public AgentConfig withVoiceReplyMode(VoiceReplyMode mode) {
+        if (mode != null) {
+            this.voiceReplyMode = mode;
+        }
+        return this;
+    }
+
     public boolean canAutoReply() {
         return aiEnabled && allowAutoReply;
     }

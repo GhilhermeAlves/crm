@@ -21,19 +21,33 @@ public record WhatsAppSendEvent(
         String to,
         String body,
         UUID followUpId,
-        LocalDateTime occurredAt
+        LocalDateTime occurredAt,
+        /** Enviar como mensagem de voz (texto vira fala); falha cai para texto. */
+        boolean voice
 ) {
+
+    public WhatsAppSendEvent(UUID eventId, UUID companyId, UUID conversationId, UUID outboundMessageId,
+                             UUID channelId, String to, String body, UUID followUpId, LocalDateTime occurredAt) {
+        this(eventId, companyId, conversationId, outboundMessageId, channelId, to, body, followUpId,
+                occurredAt, false);
+    }
 
     public static WhatsAppSendEvent of(UUID companyId, UUID conversationId, UUID outboundMessageId,
                                        UUID channelId, String to, String body) {
         return new WhatsAppSendEvent(UUID.randomUUID(), companyId, conversationId, outboundMessageId,
-                channelId, to, body, null, LocalDateTime.now());
+                channelId, to, body, null, LocalDateTime.now(), false);
+    }
+
+    public static WhatsAppSendEvent voice(UUID companyId, UUID conversationId, UUID outboundMessageId,
+                                          UUID channelId, String to, String body) {
+        return new WhatsAppSendEvent(UUID.randomUUID(), companyId, conversationId, outboundMessageId,
+                channelId, to, body, null, LocalDateTime.now(), true);
     }
 
     public static WhatsAppSendEvent ofFollowUp(UUID companyId, UUID conversationId,
                                                UUID outboundMessageId, UUID channelId,
                                                String to, String body, UUID followUpId) {
         return new WhatsAppSendEvent(UUID.randomUUID(), companyId, conversationId, outboundMessageId,
-                channelId, to, body, followUpId, LocalDateTime.now());
+                channelId, to, body, followUpId, LocalDateTime.now(), false);
     }
 }

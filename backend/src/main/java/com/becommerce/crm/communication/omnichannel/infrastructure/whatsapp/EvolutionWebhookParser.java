@@ -2,6 +2,7 @@ package com.becommerce.crm.communication.omnichannel.infrastructure.whatsapp;
 
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppWebhookParser;
 import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
+import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
@@ -46,7 +47,8 @@ public class EvolutionWebhookParser implements WhatsAppWebhookParser {
         }
         // Em fromMe o pushName é o do próprio dono do número, não do contato.
         String senderName = fromMe ? null : str(data.get("pushName"));
-        return Optional.of(new InboundMessageData(id, from, instance(raw), text(data), senderName, fromMe));
+        return Optional.of(new InboundMessageData(id, from, instance(raw), text(data), senderName, fromMe,
+                mediaType(data)));
     }
 
     @Override
@@ -122,6 +124,26 @@ public class EvolutionWebhookParser implements WhatsAppWebhookParser {
         }
         String type = str(data.get("messageType"));
         return "[" + (type != null ? type : "mensagem") + "]";
+    }
+
+    /** Áudio, foto e PDF são entendidos pelo agente; demais mídias ficam como texto/placeholder. */
+    private static MessageType mediaType(Map<?, ?> data) {
+        Map<?, ?> message = map(data.get("message"));
+        if (!map(message.get("audioMessage")).isEmpty()) {
+            return MessageType.AUDIO;
+        }
+        if (!map(message.get("imageMessage")).isEmpty()) {
+            return MessageType.IMAGE;
+        }
+        Map<?, ?> document = map(message.get("documentMessage"));
+        if (document.isEmpty()) {
+            document = map(map(map(message.get("documentWithCaptionMessage")).get("message")).get("documentMessage"));
+        }
+        String mime = str(document.get("mimetype"));
+        if (mime != null && mime.toLowerCase(Locale.ROOT).contains("pdf")) {
+            return MessageType.DOCUMENT;
+        }
+        return MessageType.TEXT;
     }
 
     private static MessageStatus mapStatus(String status) {

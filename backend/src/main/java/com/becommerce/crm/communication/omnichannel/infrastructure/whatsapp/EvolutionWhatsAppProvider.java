@@ -10,7 +10,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -56,21 +58,61 @@ public class EvolutionWhatsAppProvider implements WhatsAppProvider {
 
     @Override
     public SendResult send(SendRequest request) {
-        if (baseUrl.isBlank()) {
-            throw new OmnichannelProviderException("EVOLUTION_BASE_URL não configurada");
+        return sendMessage("/message/sendText/{instance}", request, Map.of("number", request.to(),
+                "text", request.body(), "delay", typingDelayMillis(request.body())));
+    }
+
+    /**
+     * Nota de voz: {@code POST /message/sendWhatsAppAudio/{instance}} com o áudio em
+     * base64; a Evolution converte para ogg/opus e mostra "gravando áudio…" no delay.
+     */
+    @Override
+    public SendResult sendVoice(SendRequest request, byte[] audio) {
+        return sendMessage("/message/sendWhatsAppAudio/{instance}", request, Map.of("number", request.to(),
+                "audio", Base64.getEncoder().encodeToString(audio), "delay", 1_500));
+    }
+
+    /** {@code POST /chat/getBase64FromMediaMessage/{instance}} → {@code {base64, mimetype, fileName?}}. */
+    @Override
+    public Optional<MediaContent> downloadMedia(String instance, String externalMessageId, String secretsRef) {
+        requireConfigured(instance);
+        try {
+            Map<?, ?> response = restClient.post()
+                    .uri(baseUrl + "/chat/getBase64FromMediaMessage/{instance}", instance)
+                    .header("apikey", resolveApiKey(secretsRef))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("message", Map.of("key", Map.of("id", externalMessageId)),
+                            "convertToMp4", false))
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        throw new OmnichannelProviderException("Evolution HTTP " + res.getStatusCode().value());
+                    })
+                    .body(Map.class);
+            Object base64 = response != null ? response.get("base64") : null;
+            if (base64 == null || String.valueOf(base64).isBlank()) {
+                return Optional.empty();
+            }
+            Object mime = response.get("mimetype");
+            Object fileName = response.get("fileName");
+            return Optional.of(new MediaContent(Base64.getMimeDecoder().decode(String.valueOf(base64)),
+                    mime != null ? String.valueOf(mime) : null, fileName != null ? String.valueOf(fileName) : null));
+        } catch (OmnichannelProviderException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new OmnichannelProviderException("Falha Evolution: " + e.getMessage(), e);
         }
+    }
+
+    private SendResult sendMessage(String path, SendRequest request, Map<String, Object> body) {
         String instance = request.phoneNumberId();
-        if (instance == null || instance.isBlank()) {
-            throw new OmnichannelProviderException("Canal sem instância Evolution (externalId)");
-        }
+        requireConfigured(instance);
         String apiKey = resolveApiKey(request.secretsRef());
         try {
             Map<?, ?> response = restClient.post()
-                    .uri(baseUrl + "/message/sendText/{instance}", instance)
+                    .uri(baseUrl + path, instance)
                     .header("apikey", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("number", request.to(), "text", request.body(),
-                            "delay", typingDelayMillis(request.body())))
+                    .body(body)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
                         throw new OmnichannelProviderException(
@@ -87,6 +129,15 @@ public class EvolutionWhatsAppProvider implements WhatsAppProvider {
             throw e;
         } catch (RuntimeException e) {
             throw new OmnichannelProviderException("Falha Evolution: " + e.getMessage(), e);
+        }
+    }
+
+    private void requireConfigured(String instance) {
+        if (baseUrl.isBlank()) {
+            throw new OmnichannelProviderException("EVOLUTION_BASE_URL não configurada");
+        }
+        if (instance == null || instance.isBlank()) {
+            throw new OmnichannelProviderException("Canal sem instância Evolution (externalId)");
         }
     }
 

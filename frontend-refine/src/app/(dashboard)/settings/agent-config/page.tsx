@@ -7,7 +7,7 @@ import {
   useUpdateAgentConfig,
   useAiPermissions,
 } from "@/features/automation/ai/hooks/useAi";
-import type { AgentConfigRequest } from "@/features/automation/ai/types/ai.types";
+import type { AgentConfigRequest, VoiceReplyMode } from "@/features/automation/ai/types/ai.types";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ export default function AgentConfigPage() {
         maxTokens: config.maxTokens,
         cooldownMinutes: config.cooldownMinutes,
         maxChars: config.maxChars,
+        voiceReplyMode: config.voiceReplyMode ?? "MIRROR",
       });
     }
   }, [config, draft]);
@@ -78,7 +79,8 @@ export default function AgentConfigPage() {
     draft.temperature !== config?.temperature ||
     draft.maxTokens !== config?.maxTokens ||
     draft.cooldownMinutes !== config?.cooldownMinutes ||
-    draft.maxChars !== config?.maxChars;
+    draft.maxChars !== config?.maxChars ||
+    draft.voiceReplyMode !== (config?.voiceReplyMode ?? "MIRROR");
 
   function handleSave() {
     if (draft) {
@@ -243,6 +245,28 @@ export default function AgentConfigPage() {
                 setDraft((d) => (d ? { ...d, maxChars: Number(event.target.value) } : d))
               }
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="voiceReplyMode">Responder em áudio</Label>
+            <select
+              id="voiceReplyMode"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={draft.voiceReplyMode}
+              onChange={(event) =>
+                setDraft((d) =>
+                  d ? { ...d, voiceReplyMode: event.target.value as VoiceReplyMode } : d,
+                )
+              }
+            >
+              <option value="MIRROR">Quando o paciente mandar áudio (recomendado)</option>
+              <option value="NEVER">Nunca — sempre texto</option>
+              <option value="ALWAYS">Sempre em áudio</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Respostas em áudio custam mais (cerca de R$ 0,04 cada). Datas, horários e valores
+              também seguem por escrito.
+            </p>
           </div>
         </CardContent>
       </Card>

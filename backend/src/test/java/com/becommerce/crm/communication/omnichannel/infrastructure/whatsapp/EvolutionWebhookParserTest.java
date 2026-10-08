@@ -2,6 +2,7 @@ package com.becommerce.crm.communication.omnichannel.infrastructure.whatsapp;
 
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppWebhookParser;
 import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
+import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -75,6 +76,21 @@ class EvolutionWebhookParserTest {
                 "{\"audioMessage\":{\"seconds\":3}}", "audioMessage"));
 
         assertEquals("[audioMessage]", parser.parseInboundMessage(raw).orElseThrow().body());
+        assertEquals(MessageType.AUDIO, parser.parseInboundMessage(raw).orElseThrow().type());
+    }
+
+    @Test
+    void upsert_tiposDeMidia_imagemPdfETexto() throws Exception {
+        String key = "{\"remoteJid\":\"5511999998888@s.whatsapp.net\",\"fromMe\":false,\"id\":\"T1\"}";
+        assertEquals(MessageType.IMAGE, parser.parseInboundMessage(json(upsert(key,
+                "{\"imageMessage\":{\"caption\":\"olha\"}}", "imageMessage"))).orElseThrow().type());
+        assertEquals(MessageType.DOCUMENT, parser.parseInboundMessage(json(upsert(key,
+                "{\"documentMessage\":{\"mimetype\":\"application/pdf\",\"fileName\":\"laudo.pdf\"}}",
+                "documentMessage"))).orElseThrow().type());
+        assertEquals(MessageType.TEXT, parser.parseInboundMessage(json(upsert(key,
+                "{\"documentMessage\":{\"mimetype\":\"application/zip\"}}", "documentMessage"))).orElseThrow().type());
+        assertEquals(MessageType.TEXT, parser.parseInboundMessage(json(upsert(key,
+                "{\"conversation\":\"oi\"}"))).orElseThrow().type());
     }
 
     @Test

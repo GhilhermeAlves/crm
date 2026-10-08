@@ -1,6 +1,8 @@
 package com.becommerce.crm.communication.omnichannel.application.service;
 
 import com.becommerce.crm.sales.followup.application.service.FollowUpSendOutcomeHandler;
+import com.becommerce.crm.automation.ai.application.port.output.AiMediaProvider;
+import com.becommerce.crm.automation.ai.domain.AiProviderException;
 import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelConversationRepository;
@@ -14,8 +16,10 @@ import com.becommerce.crm.communication.omnichannel.domain.OmnichannelProviderEx
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -47,6 +51,8 @@ public class WhatsAppSendService {
     private final WhatsAppProvider whatsAppProvider;
     private final OmnichannelMessagePersister messagePersister;
     private final FollowUpSendOutcomeHandler followUpOutcome;
+    /** Gera a fala das respostas em voz; nulo (testes) envia sempre texto. */
+    private final AiMediaProvider mediaProvider;
 
     public WhatsAppSendService(OmnichannelMessageRepository messageRepository,
                                OmnichannelConversationRepository conversationRepository,
@@ -54,6 +60,19 @@ public class WhatsAppSendService {
                                WhatsAppProvider whatsAppProvider,
                                OmnichannelMessagePersister messagePersister,
                                FollowUpSendOutcomeHandler followUpOutcome) {
+        this(messageRepository, conversationRepository, channelRepository, whatsAppProvider, messagePersister,
+                followUpOutcome, null);
+    }
+
+    @Autowired
+    public WhatsAppSendService(OmnichannelMessageRepository messageRepository,
+                               OmnichannelConversationRepository conversationRepository,
+                               OmnichannelChannelRepository channelRepository,
+                               WhatsAppProvider whatsAppProvider,
+                               OmnichannelMessagePersister messagePersister,
+                               FollowUpSendOutcomeHandler followUpOutcome,
+                               AiMediaProvider mediaProvider) {
+        this.mediaProvider = mediaProvider;
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.channelRepository = channelRepository;
@@ -98,10 +117,12 @@ public class WhatsAppSendService {
             }
 
             try {
-                WhatsAppProvider.SendResult result = whatsAppProvider.send(
-                        new WhatsAppProvider.SendRequest(companyId, channel.getId(),
-                                channel.getExternalId(), conversation.getExternalPhone(),
-                                message.getBody(), channel.getSecretsRef()));
+                WhatsAppProvider.SendRequest request = new WhatsAppProvider.SendRequest(companyId, channel.getId(),
+                        channel.getExternalId(), conversation.getExternalPhone(),
+                        message.getBody(), channel.getSecretsRef());
+                WhatsAppProvider.SendResult result = event.voice() && mediaProvider != null
+                        ? sendAsVoice(request, message, channel)
+                        : whatsAppProvider.send(request);
                 messagePersister.markSent(message.getId(), event.conversationId(), result.externalMessageId());
                 if (event.followUpId() != null) {
                     followUpOutcome.markSent(companyId, event.followUpId(), result.externalMessageId());
@@ -121,6 +142,55 @@ public class WhatsAppSendService {
         } finally {
             TenantContext.clear();
         }
+    }
+
+    /**
+     * Resposta em voz: gera a fala e envia como nota de voz. Datas, horários e
+     * valores também seguem por escrito (ninguém copia horário de áudio). Se a voz
+     * falhar, envia o texto — o paciente nunca fica sem resposta.
+     */
+    private WhatsAppProvider.SendResult sendAsVoice(WhatsAppProvider.SendRequest request, Message message,
+                                                    Channel channel) {
+        WhatsAppProvider.SendResult voiceResult;
+        try {
+            byte[] audio = mediaProvider.speech(request.body());
+            voiceResult = whatsAppProvider.sendVoice(request, audio);
+        } catch (AiProviderException | OmnichannelProviderException e) {
+            log.warn("[WHATSAPP][SENDER] voz indisponível (company={}, message={}): {}; enviando texto",
+                    request.companyId(), message.getId(), e.getMessage());
+            return whatsAppProvider.send(request);
+        }
+        String keyInfo = keyInfo(request.body());
+        if (keyInfo != null) {
+            try {
+                // Gravada como OUTBOUND própria: aparece na Inbox e o eco não é tomado por resposta manual.
+                Message written = Message.createOutbound(request.companyId(), message.getConversationId(),
+                        channel.getId(), channel.getExternalId(), request.to(), keyInfo, UUID.randomUUID());
+                Message saved = messageRepository.save(written);
+                WhatsAppProvider.SendResult textResult = whatsAppProvider.send(new WhatsAppProvider.SendRequest(
+                        request.companyId(), request.channelId(), request.phoneNumberId(), request.to(), keyInfo,
+                        request.secretsRef()));
+                messagePersister.markSent(saved.getId(), message.getConversationId(), textResult.externalMessageId());
+            } catch (RuntimeException e) {
+                log.warn("[WHATSAPP][SENDER] falha no complemento escrito da voz (message={}): {}",
+                        message.getId(), e.getMessage());
+            }
+        }
+        return voiceResult;
+    }
+
+    /** Frases com números (datas, horários, valores) para mandar também por escrito; nulo se não houver. */
+    static String keyInfo(String text) {
+        if (text == null || !text.matches("(?s).*\\d.*")) {
+            return null;
+        }
+        List<String> parts = new java.util.ArrayList<>();
+        for (String sentence : text.split("(?<=[.!?\\n])\\s+")) {
+            if (sentence.matches("(?s).*\\d.*")) {
+                parts.add(sentence.trim());
+            }
+        }
+        return parts.isEmpty() ? null : "📌 " + String.join(" ", parts);
     }
 
     /** Dados de referência ausentes/inconsistentes: falha permanente, sem retry. */

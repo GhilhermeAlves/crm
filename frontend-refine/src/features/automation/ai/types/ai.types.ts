@@ -126,7 +126,11 @@ export type AgentConfig = {
   cooldownMinutes: number;
   maxChars: number;
   updatedAt: string | null;
+  voiceReplyMode: VoiceReplyMode;
 };
+
+/** Quando o agente responde com nota de voz: nunca, só se o paciente mandou áudio, ou sempre. */
+export type VoiceReplyMode = "NEVER" | "MIRROR" | "ALWAYS";
 
 /** Payload de PUT /api/v1/ai/agent-config (Sprint 3-A). */
 export type AgentConfigRequest = {
@@ -138,6 +142,8 @@ export type AgentConfigRequest = {
   maxTokens: number | null;
   cooldownMinutes: number;
   maxChars: number;
+  /** Opcional: ausente mantém o modo atual no backend. */
+  voiceReplyMode?: VoiceReplyMode;
 };
 
 /**

@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -107,6 +108,49 @@ class WhatsAppSendServiceTest {
     private WhatsAppSendEvent event(UUID followUp) {
         return WhatsAppSendEvent.ofFollowUp(companyId, conversationId, messageId, channelId,
                 "+5511999998888", "Olá!", followUp);
+    }
+
+    private WhatsAppSendEvent voiceEvent(String body) {
+        return WhatsAppSendEvent.voice(companyId, conversationId, messageId, channelId, "+5511999998888", body);
+    }
+
+    @Test
+    void voz_geraFalaEEnviaNotaDeVoz_eHorarioTambemPorEscrito() {
+        com.becommerce.crm.automation.ai.application.port.output.AiMediaProvider media =
+                org.mockito.Mockito.mock(com.becommerce.crm.automation.ai.application.port.output.AiMediaProvider.class);
+        service = new WhatsAppSendService(messageRepository, conversationRepository, channelRepository,
+                whatsAppProvider, messagePersister, followUpOutcome, media);
+        when(messageRepository.findById(messageId)).thenReturn(Optional.of(pendingMessage()));
+        when(media.speech("Olá!")).thenReturn(new byte[]{1, 2, 3});
+        when(whatsAppProvider.sendVoice(any(), any())).thenReturn(new WhatsAppProvider.SendResult("wamid-voz"));
+
+        service.send(voiceEvent("Olá!"));
+
+        verify(whatsAppProvider).sendVoice(any(), org.mockito.ArgumentMatchers.eq(new byte[]{1, 2, 3}));
+        verify(whatsAppProvider, never()).send(any());
+        verify(messagePersister).markSent(messageId, conversationId, "wamid-voz");
+    }
+
+    @Test
+    void voz_falhou_enviaTexto() {
+        com.becommerce.crm.automation.ai.application.port.output.AiMediaProvider media =
+                org.mockito.Mockito.mock(com.becommerce.crm.automation.ai.application.port.output.AiMediaProvider.class);
+        service = new WhatsAppSendService(messageRepository, conversationRepository, channelRepository,
+                whatsAppProvider, messagePersister, followUpOutcome, media);
+        when(messageRepository.findById(messageId)).thenReturn(Optional.of(pendingMessage()));
+        when(media.speech(any())).thenThrow(new com.becommerce.crm.automation.ai.domain.AiProviderException("x", true));
+
+        service.send(voiceEvent("Olá!"));
+
+        verify(whatsAppProvider).send(any());
+        verify(messagePersister).markSent(messageId, conversationId, "wamid-1");
+    }
+
+    @Test
+    void keyInfo_extraiSoFrasesComNumeros() {
+        assertEquals("📌 Tenho quinta, 16/10, às 15h30.",
+                WhatsAppSendService.keyInfo("Claro, Maria! Tenho quinta, 16/10, às 15h30. Pode ser?"));
+        assertNull(WhatsAppSendService.keyInfo("Oi! Tudo bem?"));
     }
 
     @Test
