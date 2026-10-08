@@ -16,6 +16,17 @@ import { AppointmentTypeList } from "@/features/sales/scheduling/components/Appo
 import type { AppointmentType } from "@/features/sales/scheduling/types/scheduling.types";
 import type { CreateAppointmentTypeFormValues } from "@/features/sales/scheduling/schemas/scheduling.schema";
 
+/** "Procedimento Simples" → "procedimento-simples" (sem acentos, até 80 caracteres). */
+function slugify(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 export default function AgendaGeneralPage() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
@@ -30,7 +41,12 @@ export default function AgendaGeneralPage() {
   const [typeFormOpen, setTypeFormOpen] = useState(false);
   const [editingType, setEditingType] = useState<AppointmentType | null>(null);
 
-  const handleCreateOrUpdate = (values: CreateAppointmentTypeFormValues) => {
+  const handleCreateOrUpdate = (formValues: CreateAppointmentTypeFormValues) => {
+    // A API exige slug e o formulário não tem esse campo: gera a partir do nome.
+    const values = {
+      ...formValues,
+      slug: formValues.slug?.trim() || editingType?.slug || slugify(formValues.name),
+    };
     if (editingType) {
       updateType.mutate(
         { id: editingType.id, data: values },
