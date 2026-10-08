@@ -66,6 +66,16 @@ class ConversationTest {
     }
 
     @Test
+    void ignoredContact_variantesComESemNonoDigito() {
+        assertEquals(java.util.List.of("5534991546422", "553491546422"),
+                IgnoredContact.phoneVariants("5534991546422"));
+        assertEquals(java.util.List.of("553491546422", "5534991546422"),
+                IgnoredContact.phoneVariants("553491546422"));
+        // Fixo (começa com 3) não ganha o 9.
+        assertEquals(java.util.List.of("553432345678"), IgnoredContact.phoneVariants("553432345678"));
+    }
+
+    @Test
     void touch_inbound_shouldIncrementUnreadAndSetLastMessageAt() {
         Conversation c = Conversation.create(companyId, channelId, contactId, "+5511999998888");
         LocalDateTime at = LocalDateTime.now();

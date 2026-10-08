@@ -282,7 +282,12 @@ public class WhatsAppSchedulingTools {
         if (phone == null) {
             return null;
         }
-        for (String candidate : List.of(phone, "+" + phone)) {
+        List<String> candidates = new ArrayList<>();
+        for (String variant : com.becommerce.crm.communication.omnichannel.domain.IgnoredContact.phoneVariants(phone)) {
+            candidates.add(variant);
+            candidates.add("+" + variant);
+        }
+        for (String candidate : candidates) {
             Optional<Contact> contact = contactRepository.findByCompanyIdAndPhone(companyId, candidate);
             if (contact.isPresent()) {
                 return contact.get().getId();

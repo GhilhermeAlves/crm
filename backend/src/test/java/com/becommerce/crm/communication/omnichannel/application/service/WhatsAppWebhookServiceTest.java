@@ -119,6 +119,19 @@ class WhatsAppWebhookServiceTest {
     }
 
     @Test
+    void handleEvent_contatoIgnoradoCadastradoComNoveMasChegaSem_ignora() {
+        stubChannelAndMessage(new WhatsAppWebhookParser.InboundMessageData(
+                "wamid-9", "553491546422", "espaco-a", "oi"));
+        when(ignoredContacts.existsByCompanyAndPhone(companyId, "553491546422")).thenReturn(false);
+        when(ignoredContacts.existsByCompanyAndPhone(companyId, "5534991546422")).thenReturn(true);
+
+        service.handleEvent(inboundPayload());
+
+        verify(messageRepository, never()).saveByExternalId(any());
+        verify(whatsAppEventPublisher, never()).publishInbound(any());
+    }
+
+    @Test
     void handleEvent_donoRespondePeloCelular_registraEPausaIa() {
         stubChannelAndMessage(new WhatsAppWebhookParser.InboundMessageData(
                 "wamid-own", "5511999998888", "espaco-a", "Oi, aqui é a Raquel!", null, true));
