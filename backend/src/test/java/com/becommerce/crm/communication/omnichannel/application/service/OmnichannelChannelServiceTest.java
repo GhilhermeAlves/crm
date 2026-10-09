@@ -3,10 +3,12 @@ package com.becommerce.crm.communication.omnichannel.application.service;
 import com.becommerce.crm.communication.omnichannel.application.dto.ChannelRequest;
 import com.becommerce.crm.communication.omnichannel.application.dto.ChannelResponse;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelCompanyResolver;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.ChannelProvider;
 import com.becommerce.crm.communication.omnichannel.domain.ChannelStatus;
 import com.becommerce.crm.communication.omnichannel.domain.ChannelType;
+import com.becommerce.crm.communication.omnichannel.domain.OmnichannelChannelConflictException;
 import com.becommerce.crm.communication.omnichannel.domain.OmnichannelNotFoundException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
@@ -31,6 +33,7 @@ class OmnichannelChannelServiceTest {
     private final UUID companyId = UUID.randomUUID();
 
     @Mock OmnichannelChannelRepository channelRepository;
+    @Mock OmnichannelCompanyResolver companyResolver;
 
     @InjectMocks OmnichannelChannelService service;
 
@@ -58,6 +61,27 @@ class OmnichannelChannelServiceTest {
         ChannelResponse r = service.create(companyId, request(ChannelStatus.ACTIVE));
         assertEquals(c.getId(), r.id());
         assertEquals(ChannelStatus.ACTIVE, r.status());
+    }
+
+    @Test
+    void create_withExternalIdUsedByAnyCompany_shouldThrowConflictAndNotSave() {
+        when(companyResolver.resolveCompanyByChannelReference("espaco-123"))
+                .thenReturn(Optional.of(UUID.randomUUID()));
+        assertThrows(OmnichannelChannelConflictException.class,
+                () -> service.create(companyId, request(ChannelStatus.ACTIVE)));
+        verify(channelRepository, never()).save(any());
+    }
+
+    @Test
+    void update_changingToExternalIdInUse_shouldThrowConflictAndNotSave() {
+        Channel c = channel();
+        when(channelRepository.findById(c.getId())).thenReturn(Optional.of(c));
+        when(companyResolver.resolveCompanyByChannelReference("outra-instancia"))
+                .thenReturn(Optional.of(UUID.randomUUID()));
+        ChannelRequest req = new ChannelRequest("Comercial", ChannelType.WHATSAPP, ChannelProvider.FAKE,
+                "outra-instancia", null, "vault:token", ChannelStatus.ACTIVE);
+        assertThrows(OmnichannelChannelConflictException.class, () -> service.update(companyId, c.getId(), req));
+        verify(channelRepository, never()).save(any());
     }
 
     @Test

@@ -47,6 +47,7 @@ import com.becommerce.crm.sales.task.domain.exception.TaskNotFoundException;
 import com.becommerce.crm.sales.task.domain.exception.TaskValidationException;
 import com.becommerce.crm.communication.notification.domain.exception.NotificationNotFoundException;
 import com.becommerce.crm.communication.notification.domain.exception.NotificationValidationException;
+import com.becommerce.crm.communication.omnichannel.domain.OmnichannelChannelConflictException;
 import com.becommerce.crm.communication.omnichannel.domain.OmnichannelNotFoundException;
 import com.becommerce.crm.automation.ai.domain.AiProviderException;
 import com.becommerce.crm.automation.ai.domain.AiConversationNotFoundException;
@@ -164,6 +165,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CompanyAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleCompanyAlreadyExistsException(CompanyAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(OmnichannelChannelConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleOmnichannelChannelConflict(OmnichannelChannelConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(Map.of(
                 "status", 409,

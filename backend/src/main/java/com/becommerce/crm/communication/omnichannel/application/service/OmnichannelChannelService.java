@@ -4,14 +4,17 @@ import com.becommerce.crm.communication.omnichannel.application.dto.ChannelReque
 import com.becommerce.crm.communication.omnichannel.application.dto.ChannelResponse;
 import com.becommerce.crm.communication.omnichannel.application.port.input.OmnichannelChannelUseCase;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
+import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelCompanyResolver;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.ChannelStatus;
+import com.becommerce.crm.communication.omnichannel.domain.OmnichannelChannelConflictException;
 import com.becommerce.crm.communication.omnichannel.domain.OmnichannelNotFoundException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -23,9 +26,12 @@ import java.util.UUID;
 public class OmnichannelChannelService implements OmnichannelChannelUseCase {
 
     private final OmnichannelChannelRepository channelRepository;
+    private final OmnichannelCompanyResolver companyResolver;
 
-    public OmnichannelChannelService(OmnichannelChannelRepository channelRepository) {
+    public OmnichannelChannelService(OmnichannelChannelRepository channelRepository,
+                                     OmnichannelCompanyResolver companyResolver) {
         this.channelRepository = channelRepository;
+        this.companyResolver = companyResolver;
     }
 
     @Override
@@ -33,6 +39,7 @@ public class OmnichannelChannelService implements OmnichannelChannelUseCase {
     public ChannelResponse create(UUID companyId, ChannelRequest request) {
         try {
             TenantContext.setCompanyId(companyId);
+            requireExternalIdAvailable(request.externalId());
             Channel channel = Channel.create(companyId, request.type(), request.provider(),
                     request.name(), request.externalId(), request.config(), request.secretsRef());
             return toResponse(channelRepository.save(channel));
@@ -70,6 +77,9 @@ public class OmnichannelChannelService implements OmnichannelChannelUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             Channel channel = requireOwned(companyId, channelId);
+            if (!Objects.equals(channel.getExternalId(), request.externalId())) {
+                requireExternalIdAvailable(request.externalId());
+            }
             ChannelStatus status = request.status() != null ? request.status() : channel.getStatus();
             channel.update(request.name(), status, request.externalId(), request.config(), request.secretsRef());
             return toResponse(channelRepository.save(channel));
@@ -101,6 +111,18 @@ public class OmnichannelChannelService implements OmnichannelChannelUseCase {
             channelRepository.delete(channel);
         } finally {
             TenantContext.clear();
+        }
+    }
+
+    /**
+     * O webhook resolve a empresa só pelo external_id, então ele precisa ser
+     * único no sistema todo. A consulta usa o resolver (SECURITY DEFINER) porque
+     * o RLS esconde os canais das outras empresas.
+     */
+    private void requireExternalIdAvailable(String externalId) {
+        if (externalId != null && !externalId.isBlank()
+                && companyResolver.resolveCompanyByChannelReference(externalId).isPresent()) {
+            throw new OmnichannelChannelConflictException(externalId);
         }
     }
 
