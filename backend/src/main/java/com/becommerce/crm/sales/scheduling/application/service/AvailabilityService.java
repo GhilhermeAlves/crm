@@ -6,10 +6,12 @@ import com.becommerce.crm.sales.scheduling.application.port.out.AvailabilityRepo
 import com.becommerce.crm.sales.scheduling.domain.AvailabilityOverride;
 import com.becommerce.crm.sales.scheduling.domain.AvailabilityWindow;
 import com.becommerce.crm.sales.scheduling.domain.TimeRange;
+import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingValidationException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,7 +36,8 @@ public class AvailabilityService implements AvailabilityUseCase {
             List<AvailabilityOverride> overrides = repository.findOverridesByUserId(companyId, userId);
 
             return new AvailabilityResponse(tz,
-                    windows.stream().map(w -> new AvailabilityRuleDto(w.weekday(), w.start(), w.end())).toList(),
+                    windows.stream().map(w -> new AvailabilityRuleDto(w.weekday().getValue(), w.start(), w.end()))
+                            .toList(),
                     overrides.stream().map(o -> new AvailabilityOverrideDto(o.date(),
                             o.windows() != null ? o.windows().stream()
                                     .map(r -> new AvailabilityOverrideDto.TimeSlotDto(r.start(), r.end())).toList()
@@ -54,8 +57,9 @@ public class AvailabilityService implements AvailabilityUseCase {
 
             if (request.rules() != null) {
                 List<AvailabilityWindow> windows = request.rules().stream()
+                        .distinct()
                         .map(r -> new AvailabilityWindow(UUID.randomUUID(), companyId, userId,
-                                r.weekday(), r.startTime(), r.endTime()))
+                                toDayOfWeek(r), r.startTime(), r.endTime()))
                         .toList();
                 repository.replaceWindows(companyId, userId, windows);
             }
@@ -75,5 +79,15 @@ public class AvailabilityService implements AvailabilityUseCase {
         } finally {
             TenantContext.clear();
         }
+    }
+
+    private static DayOfWeek toDayOfWeek(AvailabilityRuleDto rule) {
+        if (rule.weekday() < 1 || rule.weekday() > 7) {
+            throw new SchedulingValidationException("Dia da semana inválido: " + rule.weekday());
+        }
+        if (rule.startTime() == null || rule.endTime() == null || !rule.endTime().isAfter(rule.startTime())) {
+            throw new SchedulingValidationException("O horário final deve ser depois do inicial.");
+        }
+        return DayOfWeek.of(rule.weekday());
     }
 }

@@ -101,6 +101,7 @@ export type CreateAppointmentTypeRequest = {
   locationDetail?: string;
   assignmentMode?: AssignmentMode;
   publicBookingEnabled?: boolean;
+  active?: boolean;
   hostIds: string[];
 };
 

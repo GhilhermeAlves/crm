@@ -22,6 +22,7 @@ export const createAppointmentTypeSchema = z.object({
   locationDetail: z.string().max(200).optional(),
   assignmentMode: z.enum(ASSIGNMENT_MODES).optional(),
   publicBookingEnabled: z.boolean().optional(),
+  active: z.boolean().optional(),
   hostIds: z.array(z.string().uuid()).min(1, "Selecione ao menos um responsável"),
 });
 

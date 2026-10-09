@@ -31,13 +31,20 @@ const TIMEZONES = [
 ];
 
 interface Props {
+  title?: string;
   availability: Availability | undefined;
   isLoading: boolean;
   isSaving: boolean;
   onSave: (data: Availability) => void;
 }
 
-export function AvailabilityEditor({ availability, isLoading, isSaving, onSave }: Props) {
+export function AvailabilityEditor({
+  title = "Minha disponibilidade",
+  availability,
+  isLoading,
+  isSaving,
+  onSave,
+}: Props) {
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [rules, setRules] = useState<AvailabilityRule[]>([]);
 
@@ -72,7 +79,7 @@ export function AvailabilityEditor({ availability, isLoading, isSaving, onSave }
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Minha disponibilidade</CardTitle>
+          <CardTitle className="text-base">{title}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">Carregando…</p>
@@ -92,7 +99,7 @@ export function AvailabilityEditor({ availability, isLoading, isSaving, onSave }
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Minha disponibilidade</CardTitle>
+        <CardTitle className="text-base">{title}</CardTitle>
         <Button size="sm" onClick={handleSave} disabled={isSaving}>
           <Save className="mr-2 h-4 w-4" />
           {isSaving ? "Salvando…" : "Salvar"}
