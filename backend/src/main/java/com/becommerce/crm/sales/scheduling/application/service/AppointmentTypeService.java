@@ -91,7 +91,8 @@ public class AppointmentTypeService implements AppointmentTypeUseCase {
                     request.maxDaysAhead() != null ? request.maxDaysAhead() : 60,
                     request.slotIntervalMinutes() != null ? request.slotIntervalMinutes() : 30,
                     request.color(), request.locationKind(), request.locationDetail(),
-                    request.assignmentMode(), request.publicBookingEnabled(), request.active(),
+                    request.assignmentMode(), request.publicBookingEnabled(),
+                    request.active() != null ? request.active() : type.isActive(),
                     request.hostIds());
             repository.save(type);
 

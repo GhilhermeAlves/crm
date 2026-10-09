@@ -78,6 +78,7 @@ export function AppointmentTypeFormDialog({
         locationDetail: editingType.locationDetail ?? undefined,
         assignmentMode: editingType.assignmentMode ?? undefined,
         publicBookingEnabled: editingType.publicBookingEnabled,
+        active: editingType.active,
         hostIds: editingType.hostIds,
       });
     } else {
@@ -90,6 +91,7 @@ export function AppointmentTypeFormDialog({
         maxDaysAhead: 60,
         slotIntervalMinutes: 30,
         publicBookingEnabled: false,
+        active: true,
         hostIds: [],
       });
     }
@@ -275,6 +277,15 @@ export function AppointmentTypeFormDialog({
               onCheckedChange={(v) => form.setValue("publicBookingEnabled", v)}
             />
             <Label htmlFor="type-public">Agendamento público (link externo)</Label>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Switch
+              id="type-active"
+              checked={form.watch("active") ?? true}
+              onCheckedChange={(v) => form.setValue("active", v)}
+            />
+            <Label htmlFor="type-active">Ativo (aceita agendamentos, inclusive pelo agente)</Label>
           </div>
 
           <SheetFooter className="mt-auto border-t pt-4">

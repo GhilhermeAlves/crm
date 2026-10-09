@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pencil } from "lucide-react";
 
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
 import {
+  useAppointmentTypes,
   useAvailability,
   useSetAvailability,
+  useSetProfessionalScheduling,
 } from "@/features/sales/scheduling/hooks/useScheduling";
 import { AvailabilityEditor } from "@/features/sales/scheduling/components/AvailabilityEditor";
 import { Button } from "@/components/ui/button";
@@ -24,21 +26,52 @@ import {
 export default function AvailabilityPage() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
-  const userId = user?.id ?? null;
   const { data: members = [], isLoading } = useMembers(companyId);
-  const { data: availability, isLoading: availLoading } = useAvailability(companyId, userId);
-  const setAvailability = useSetAvailability(companyId);
+  const { data: types = [], isLoading: typesLoading } = useAppointmentTypes(companyId);
+  const setProfessional = useSetProfessionalScheduling(companyId);
 
-  const memberList = useMemo(() => members.map((m) => ({ ...m, enabled: false })), [members]);
+  // Responsáveis em algum tipo de agendamento = profissionais que recebem agendamentos.
+  const hostIds = useMemo(() => new Set(types.flatMap((t) => t.hostIds)), [types]);
+
+  // O OWNER é quem criou a empresa (ex.: o dono da conta que a administra) e não
+  // atende — só aparece como profissional se já for responsável em algum tipo.
+  const professionals = useMemo(
+    () =>
+      members
+        .filter((m) => m.status === "ACTIVE")
+        .filter((m) => m.role !== "OWNER" || hostIds.has(m.userId))
+        .map((m) => ({ ...m, enabled: hostIds.has(m.userId) })),
+    [members, hostIds],
+  );
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected =
+    professionals.find((p) => p.userId === selectedId) ??
+    professionals.find((p) => p.userId === user?.id) ??
+    professionals[0] ??
+    null;
+  const selectedUserId = selected?.userId ?? null;
+
+  const { data: availability, isLoading: availLoading } = useAvailability(
+    companyId,
+    selectedUserId,
+  );
+  const setAvailability = useSetAvailability(companyId);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h2 className="text-xl font-semibold">Disponibilidade do link de agendamento</h2>
+      <div>
+        <h2 className="text-xl font-semibold">Disponibilidade do link de agendamento</h2>
+        <p className="text-sm text-muted-foreground">
+          Ative os profissionais que recebem agendamentos (inclusive os marcados pelo agente) e
+          defina os horários de atendimento de cada um.
+        </p>
+      </div>
 
       <section className="rounded-lg border bg-card">
-        {isLoading ? (
+        {isLoading || typesLoading ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Carregando...</p>
-        ) : memberList.length === 0 ? (
+        ) : professionals.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             Nenhum profissional encontrado.
           </p>
@@ -48,12 +81,15 @@ export default function AvailabilityPage() {
               <TableRow>
                 <TableHead className="text-xs">Profissional</TableHead>
                 <TableHead className="text-xs">Agenda</TableHead>
-                <TableHead className="text-right text-xs">Ação</TableHead>
+                <TableHead className="text-right text-xs">Horários</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {memberList.map((m) => (
-                <TableRow key={m.userId}>
+              {professionals.map((m) => (
+                <TableRow
+                  key={m.userId}
+                  data-state={m.userId === selectedUserId ? "selected" : undefined}
+                >
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
@@ -64,14 +100,27 @@ export default function AvailabilityPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Switch checked={m.enabled} />
+                      <Switch
+                        checked={m.enabled}
+                        disabled={types.length === 0 || setProfessional.isPending}
+                        aria-label={`Agenda de ${m.name}`}
+                        onCheckedChange={(enabled) =>
+                          setProfessional.mutate({ userId: m.userId, enabled, types })
+                        }
+                      />
                       <span className="text-sm text-muted-foreground">
                         {m.enabled ? "Ativada" : "Desativada"}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label={`Editar horários de ${m.name}`}
+                      onClick={() => setSelectedId(m.userId)}
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                   </TableCell>
@@ -80,19 +129,28 @@ export default function AvailabilityPage() {
             </TableBody>
           </Table>
         )}
+        {!typesLoading && types.length === 0 && (
+          <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+            Cadastre um tipo de consulta em Ajustes gerais para ativar profissionais.
+          </p>
+        )}
       </section>
 
-      <section className="space-y-4">
-        <h3 className="text-lg font-semibold">Minha disponibilidade</h3>
-        <AvailabilityEditor
-          availability={availability}
-          isLoading={availLoading}
-          isSaving={setAvailability.isPending}
-          onSave={(data) => {
-            if (userId) setAvailability.mutate({ userId, data });
-          }}
-        />
-      </section>
+      {selectedUserId && (
+        <section className="space-y-4">
+          <AvailabilityEditor
+            title={
+              selectedUserId === user?.id
+                ? "Minha disponibilidade"
+                : `Disponibilidade de ${selected?.name}`
+            }
+            availability={availability}
+            isLoading={availLoading}
+            isSaving={setAvailability.isPending}
+            onSave={(data) => setAvailability.mutate({ userId: selectedUserId, data })}
+          />
+        </section>
+      )}
     </div>
   );
 }

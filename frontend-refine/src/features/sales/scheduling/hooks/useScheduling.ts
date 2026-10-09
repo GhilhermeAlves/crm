@@ -9,6 +9,7 @@ import {
   type BirthdayMessageSettings,
 } from "../services/scheduling.service";
 import type {
+  AppointmentType,
   CreateAppointmentTypeRequest,
   UpdateAppointmentTypeRequest,
   CreateAppointmentRequest,
@@ -60,6 +61,59 @@ export function useUpdateAppointmentType(companyId: string | null) {
       invalidateKeys: [["appointment-types", companyId]],
     }),
     onError: onError({ errorMessage: "Erro ao atualizar tipo de agendamento" }),
+  });
+}
+
+/**
+ * Liga/desliga um profissional para receber agendamentos: inclui ou remove o
+ * usuário como responsável em todos os tipos de agendamento. É o que o cálculo
+ * de horários livres (inclusive o do agente) usa para saber quem atende.
+ */
+export function useSetProfessionalScheduling(companyId: string | null) {
+  const { onSuccess, onError } = useMutationDefaults<
+    unknown,
+    { userId: string; enabled: boolean; types: AppointmentType[] }
+  >();
+  return useMutation({
+    mutationFn: ({
+      userId,
+      enabled,
+      types,
+    }: {
+      userId: string;
+      enabled: boolean;
+      types: AppointmentType[];
+    }) =>
+      Promise.all(
+        types
+          .filter((t) => t.hostIds.includes(userId) !== enabled)
+          .map((t) =>
+            AppointmentTypeService.update(companyId as string, t.id, {
+              name: t.name,
+              slug: t.slug,
+              description: t.description ?? undefined,
+              durationMinutes: t.durationMinutes,
+              bufferBeforeMinutes: t.bufferBeforeMinutes,
+              bufferAfterMinutes: t.bufferAfterMinutes,
+              minNoticeHours: t.minNoticeHours,
+              maxDaysAhead: t.maxDaysAhead,
+              slotIntervalMinutes: t.slotIntervalMinutes,
+              color: t.color ?? undefined,
+              locationKind: t.locationKind ?? undefined,
+              locationDetail: t.locationDetail ?? undefined,
+              assignmentMode: t.assignmentMode ?? undefined,
+              publicBookingEnabled: t.publicBookingEnabled,
+              active: t.active,
+              hostIds: enabled ? [...t.hostIds, userId] : t.hostIds.filter((h) => h !== userId),
+            }),
+          ),
+      ),
+    onSuccess: onSuccess({
+      successMessage: (_, v) =>
+        v.enabled ? "Profissional ativado na agenda" : "Profissional desativado na agenda",
+      invalidateKeys: [["appointment-types", companyId]],
+    }),
+    onError: onError({ errorMessage: "Erro ao atualizar a agenda do profissional" }),
   });
 }
 

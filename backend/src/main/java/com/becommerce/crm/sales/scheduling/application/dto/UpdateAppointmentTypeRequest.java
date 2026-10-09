@@ -29,6 +29,6 @@ public record UpdateAppointmentTypeRequest(
         String locationDetail,
         AssignmentMode assignmentMode,
         boolean publicBookingEnabled,
-        boolean active,
+        Boolean active,          // nulo = mantém o atual (o formulário não envia este campo)
         List<UUID> hostIds
 ) {}
