@@ -543,7 +543,8 @@ class WhatsAppInboundAutoReplyProcessorTest {
         verify(aiProvider).chatWithTools(argThat(req -> {
             AiProvider.ChatMessage facts = req.messages().get(1);
             assertEquals("system", facts.role());
-            assertTrue(facts.content().contains("\"Maria Souza\""), facts.content());
+            assertTrue(facts.content().contains("Nome do perfil no WhatsApp: Maria Souza"), facts.content());
+            assertTrue(facts.content().contains("Como chamar o paciente: \"Maria\""), facts.content());
             assertTrue(facts.content().contains("America/Sao_Paulo"), facts.content());
             return true;
         }));

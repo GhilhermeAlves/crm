@@ -104,11 +104,13 @@ public final class AgentContextRenderer {
         PatientContext patient = ctx.patient();
         sb.append("\nPACIENTE\n");
         line(sb, "- Nome no cadastro", patient.name());
-        if (patient.profileName() != null && !patient.profileName().isBlank()) {
-            sb.append("- Nome do perfil no WhatsApp: \"").append(patient.profileName().trim())
-                    .append("\". Se parecer um nome de pessoa, trate-o pelo primeiro nome de forma natural, ")
-                    .append("sem repetir o nome em toda mensagem.\n");
-        }
+        line(sb, "- Nome do perfil no WhatsApp", patient.profileName());
+        patient.firstName().ifPresentOrElse(
+                first -> sb.append("- Como chamar o paciente: \"").append(first)
+                        .append("\". Cumprimente usando esse primeiro nome e volte a usá-lo de vez em quando ")
+                        .append("(ao confirmar um horário, na despedida), sem repetir em toda mensagem.\n"),
+                () -> sb.append("- Nome do paciente ainda desconhecido: não invente um nome; quando for agendar, ")
+                        .append("pergunte o nome de forma natural.\n"));
         if (!patient.isIdentified()) {
             sb.append("- Contato ainda não identificado no cadastro.\n");
         } else if (patient.upcomingAppointments().isEmpty()) {

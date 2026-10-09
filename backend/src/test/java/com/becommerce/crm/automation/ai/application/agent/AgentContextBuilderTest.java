@@ -160,6 +160,7 @@ class AgentContextBuilderTest {
         assertTrue(dynamic.indexOf("PACIENTE") < dynamic.indexOf("MEMÓRIAS RELEVANTES"), dynamic);
         assertTrue(dynamic.contains("Horário de funcionamento: Seg a sex, 08:00 às 18:00"), dynamic);
         assertTrue(dynamic.contains("Nome no cadastro: Carlos Silva"), dynamic);
+        assertTrue(dynamic.contains("Como chamar o paciente: \"Carlos\""), dynamic);
         assertTrue(dynamic.contains("Limpeza — Carlos — quinta-feira 15/10 às 10:00 (confirmado)"), dynamic);
         assertTrue(dynamic.contains("[Preferência] Prefere atendimento pela manhã."), dynamic);
         assertTrue(dynamic.contains("quinta-feira, 08/10/2026 às 09:00"), dynamic);
@@ -200,7 +201,30 @@ class AgentContextBuilderTest {
         assertFalse(ctx.patient().isIdentified());
         assertTrue(ctx.memory().memories().isEmpty());
         verify(memoryService, never()).retrieveRelevant(any());
-        assertTrue(AgentContextRenderer.render(ctx).get(1).content().contains("Contato ainda não identificado"));
+        String dynamic = AgentContextRenderer.render(ctx).get(1).content();
+        assertTrue(dynamic.contains("Contato ainda não identificado"), dynamic);
+        assertTrue(dynamic.contains("Como chamar o paciente: \"Carlos\""), "usa o nome do perfil sem cadastro");
+    }
+
+    @Test
+    void patientFirstName_prefersCrmNameAndIgnoresProfilesThatAreNotNames() {
+        assertEquals(Optional.of("Raquel"),
+                new PatientContext(contactId, "RAQUEL aguiar", "Loja da Raquel", List.of()).firstName());
+        assertEquals(Optional.of("João"), PatientContext.unknown("joão pedro").firstName());
+        assertEquals(Optional.empty(), PatientContext.unknown("🦷 Sorriso").firstName());
+        assertEquals(Optional.empty(), PatientContext.unknown("Loja2024").firstName());
+        assertEquals(Optional.empty(), PatientContext.unknown(null).firstName());
+    }
+
+    @Test
+    void unknownName_tellsAgentNotToInventOne() {
+        when(patientProvider.load(eq(companyId), eq(null), any(), any(), any()))
+                .thenReturn(PatientContext.unknown("🦷"));
+
+        String dynamic = AgentContextRenderer.render(builder.build(anaLaura, input(null))).get(1).content();
+
+        assertTrue(dynamic.contains("Nome do paciente ainda desconhecido"), dynamic);
+        assertFalse(dynamic.contains("Como chamar o paciente"), dynamic);
     }
 
     @Test
