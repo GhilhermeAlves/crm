@@ -1,5 +1,7 @@
 package com.becommerce.crm.sales.scheduling.domain;
 
+import com.becommerce.crm.shared.calendar.BrazilianHolidays;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -27,6 +29,10 @@ public class WeeklyAvailability {
             if (override.date().equals(date)) {
                 return override.isUnavailable() ? List.of() : override.windows();
             }
+        }
+        // Feriado nacional fecha a agenda; para atender, cadastre uma exceção na data.
+        if (BrazilianHolidays.isHoliday(date)) {
+            return List.of();
         }
         DayOfWeek dow = date.getDayOfWeek();
         return windows.stream()
