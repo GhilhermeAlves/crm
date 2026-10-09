@@ -11,6 +11,7 @@ import com.becommerce.crm.automation.ai.domain.AgentConfig;
 import com.becommerce.crm.automation.ai.domain.AgentIdentity;
 import com.becommerce.crm.automation.ai.domain.AgentMemory;
 import com.becommerce.crm.automation.ai.domain.MemoryType;
+import com.becommerce.crm.shared.calendar.BrazilianHolidays;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,6 +40,8 @@ public final class AgentContextRenderer {
     private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
     private static final DateTimeFormatter NOW_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm", PT_BR);
     private static final DateTimeFormatter APPOINTMENT_FORMAT = DateTimeFormatter.ofPattern("dd/MM 'às' HH:mm", PT_BR);
+    private static final DateTimeFormatter HOLIDAY_FORMAT = DateTimeFormatter.ofPattern("dd/MM", PT_BR);
+    static final int HOLIDAY_LOOKAHEAD_DAYS = 30;
 
     private AgentContextRenderer() {
     }
@@ -91,6 +94,13 @@ public final class AgentContextRenderer {
         StringBuilder sb = new StringBuilder("Contexto desta conversa (dados atuais do CRM; não repita literalmente):\n");
         ClinicContext clinic = ctx.clinic();
         sb.append("- Agora: ").append(now(clinic.now())).append(" (").append(clinic.zone().getId()).append(").\n");
+        List<BrazilianHolidays.Holiday> holidays = BrazilianHolidays.between(clinic.now().toLocalDate(),
+                clinic.now().toLocalDate().plusDays(HOLIDAY_LOOKAHEAD_DAYS));
+        if (!holidays.isEmpty()) {
+            sb.append("- Feriados nacionais próximos (sem atendimento): ").append(String.join(", ", holidays.stream()
+                    .map(h -> h.date().getDayOfWeek().getDisplayName(TextStyle.FULL, PT_BR) + " "
+                            + h.date().format(HOLIDAY_FORMAT) + " (" + h.name() + ")").toList())).append(".\n");
+        }
 
         if (clinic.name() != null || clinic.phone() != null || clinic.address() != null
                 || clinic.businessHours() != null) {

@@ -163,6 +163,7 @@ class AgentContextBuilderTest {
         assertTrue(dynamic.contains("Limpeza — Carlos — quinta-feira 15/10 às 10:00 (confirmado)"), dynamic);
         assertTrue(dynamic.contains("[Preferência] Prefere atendimento pela manhã."), dynamic);
         assertTrue(dynamic.contains("quinta-feira, 08/10/2026 às 09:00"), dynamic);
+        assertTrue(dynamic.contains("Feriados nacionais próximos (sem atendimento): segunda-feira 12/10 (Nossa Sra. Aparecida), segunda-feira 02/11 (Finados)"), dynamic);
 
         assertTrue(messages.get(2).content().contains("consultar_horarios_livres"));
         assertEquals("user", messages.get(3).role());

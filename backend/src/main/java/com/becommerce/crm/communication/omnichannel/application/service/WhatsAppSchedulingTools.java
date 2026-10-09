@@ -19,6 +19,7 @@ import com.becommerce.crm.sales.scheduling.domain.AppointmentType;
 import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingNotFoundException;
 import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingValidationException;
 import com.becommerce.crm.sales.scheduling.domain.exception.SlotUnavailableException;
+import com.becommerce.crm.shared.calendar.BrazilianHolidays;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,10 +169,11 @@ public class WhatsAppSchedulingTools {
                 .map(s -> LocalDateTime.ofInstant(s.start(), ZONE))
                 .filter(start -> inPeriod(start, period))
                 .toList();
+        String holidays = holidayNote(from, to);
         if (slots.isEmpty()) {
             return "Sem horários livres para " + type.get().getName() + " entre " + br(from) + " e " + br(to)
                     + (period.equals("qualquer") ? "" : " no período da " + period)
-                    + ". Sugira outro período ou outras datas.";
+                    + ". Sugira outro período ou outras datas." + holidays;
         }
         Map<LocalDate, List<String>> byDay = new LinkedHashMap<>();
         for (LocalDateTime start : slots.subList(0, Math.min(slots.size(), MAX_SLOTS_LISTED))) {
@@ -185,7 +187,17 @@ public class WhatsAppSchedulingTools {
         if (slots.size() > MAX_SLOTS_LISTED) {
             sb.append("(há mais horários; refine por dia ou período se preciso)");
         }
-        return sb.toString();
+        return sb.append(holidays).toString();
+    }
+
+    /** Feriados nacionais no período: o consultório não atende (sem horários nesses dias). */
+    static String holidayNote(LocalDate from, LocalDate to) {
+        List<BrazilianHolidays.Holiday> holidays = BrazilianHolidays.between(from, to);
+        if (holidays.isEmpty()) {
+            return "";
+        }
+        return "\nFeriados no período (sem atendimento): " + String.join(", ", holidays.stream()
+                .map(h -> weekday(h.date()) + " " + br(h.date()) + " (" + h.name() + ")").toList()) + ".";
     }
 
     private String book(Context ctx, Map<String, Object> args) {
