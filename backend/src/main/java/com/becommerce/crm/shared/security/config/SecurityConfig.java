@@ -73,7 +73,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/users/accept-invite").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/invitations/preview").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/invitations/register").permitAll()
-                .requestMatchers("/api/v1/auth/phone/**").permitAll()
                 .requestMatchers("/api/v1/omnichannel/whatsapp/webhook").permitAll()
                 .requestMatchers("/actuator/**", "/docs/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
