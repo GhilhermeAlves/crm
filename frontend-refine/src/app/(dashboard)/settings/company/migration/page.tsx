@@ -116,7 +116,7 @@ function MigrationCard({ category }: { category: MigrationCategory }) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border bg-card p-5 text-center transition-shadow hover:shadow-md">
+    <div className="flex h-full flex-col items-center gap-3 rounded-xl border bg-card p-3 text-center transition-shadow hover:shadow-md">
       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
         <Icon className="h-5 w-5 text-muted-foreground" />
       </div>
@@ -147,11 +147,11 @@ function MigrationCard({ category }: { category: MigrationCategory }) {
       <Button
         size="sm"
         variant={status === "done" ? "outline" : "default"}
-        className="w-full"
+        className="mt-auto flex w-full items-center justify-center gap-1.5 whitespace-nowrap text-xs"
         onClick={() => inputRef.current?.click()}
         disabled={status === "uploading"}
       >
-        <Upload className="mr-1.5 h-3.5 w-3.5" />
+        <Upload className="h-3.5 w-3.5 shrink-0" />
         {status === "done" ? "Reenviar" : "Enviar arquivos"}
       </Button>
     </div>
@@ -160,14 +160,14 @@ function MigrationCard({ category }: { category: MigrationCategory }) {
 
 export default function MigrationPage() {
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6">
       <h2 className="text-xl font-semibold">Migração de dados</h2>
 
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
         Comece enviando os arquivos de Contatos.
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {CATEGORIES.map((cat) => (
           <MigrationCard key={cat.id} category={cat} />
         ))}
