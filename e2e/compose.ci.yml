@@ -86,6 +86,8 @@ services:
       KC_HEALTH_ENABLED: "true"
     volumes:
       - ../infrastructure/keycloak/import:/opt/keycloak/data/import:ro
+      # Tema de login do CRM (mesmo da landing) — o realm dev usa loginTheme=crm-login.
+      - ../infrastructure/keycloak/themes/crm-login:/opt/keycloak/themes/crm-login:ro
     healthcheck:
       # Mesmo padrão do prod (docker-compose.yml → keycloak): `/health` do
       # Keycloak 26 retorna JSON MicroProfile com "status":"UP" — NÃO existe o

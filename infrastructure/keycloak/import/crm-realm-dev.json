@@ -2,6 +2,7 @@
   "realm": "CRM",
   "enabled": true,
   "displayName": "CRM - SaaS Omnichannel (dev/E2E)",
+  "loginTheme": "crm-login",
   "sslRequired": "none",
   "registrationAllowed": false,
   "registrationEmailAsUsername": true,
