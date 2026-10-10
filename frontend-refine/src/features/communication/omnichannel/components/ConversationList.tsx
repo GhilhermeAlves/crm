@@ -33,7 +33,7 @@ export function ConversationList({ conversations, isLoading, activeId, onSelect 
   }
 
   return (
-    <ScrollArea className="h-full">
+    <ScrollArea className="h-full" type="always">
       <div className="divide-y">
         {conversations.map((c) => (
           <Button
