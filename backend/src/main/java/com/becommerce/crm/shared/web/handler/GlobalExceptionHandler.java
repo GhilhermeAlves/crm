@@ -34,6 +34,8 @@ import com.becommerce.crm.sales.lead.domain.exception.DuplicateLeadException;
 import com.becommerce.crm.sales.lead.domain.exception.LeadNotFoundException;
 import com.becommerce.crm.automation.campaign.domain.exception.CampaignNotFoundException;
 import com.becommerce.crm.communication.template.domain.exception.TemplateNotFoundException;
+import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisModelNotFoundException;
+import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisValidationException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogItemNotFoundException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogSkuConflictException;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
@@ -332,12 +334,24 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({CampaignNotFoundException.class, TemplateNotFoundException.class,
-        CatalogItemNotFoundException.class})
+        CatalogItemNotFoundException.class, AnamnesisModelNotFoundException.class})
     public ResponseEntity<Map<String, Object>> handleCampaignOrTemplateNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
                 "status", 404,
                 "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(AnamnesisValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleAnamnesisValidationException(
+            AnamnesisValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));
