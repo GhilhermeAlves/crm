@@ -1,17 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { IDENTITY_PROVIDERS, loginWithGateway, type IdentityProviderId } from "@/lib/gateway-auth";
 import { useIdentityProviders } from "../hooks/useIdentityProviders";
 import { IdentityProviderButton } from "./IdentityProviderButton";
-import { PhoneLoginForm } from "./PhoneLoginForm";
 import type { IdentityProviderInfo } from "../types/identity-provider";
 
 /**
  * Lista de provedores de identidade da tela de login (Sprint 7.0).
  *
- * <p>O catálogo exibido é fixo (Google, Telefone) e a
+ * <p>O catálogo exibido é fixo (Google) e a
  * disponibilidade de cada um vem do servidor ({@code GET /auth/providers}):
  * <ul>
  *   <li>enquanto o catálogo não chega (ou falha), todos aparecem desabilitados
@@ -21,25 +20,20 @@ import type { IdentityProviderInfo } from "../types/identity-provider";
  *   <li>Meta/Facebook não existe nesta tela.</li>
  * </ul>
  * O clique em um provedor disponível navega para `/auth/authorize` com o
- * parâmetro `provider`, preservando o `redirect` original — EXCETO o Telefone
- * (Sprint 7.4): telefone NÃO é um IdP do Keycloak; o clique abre o fluxo local
- * de OTP ({@link PhoneLoginForm}) e, após confirmar a posse, segue para o
- * fluxo de senha do Keycloak.
+ * parâmetro `provider`, preservando o `redirect` original.
  */
-const KNOWN_ORDER: IdentityProviderId[] = [IDENTITY_PROVIDERS.GOOGLE, IDENTITY_PROVIDERS.PHONE];
+const KNOWN_ORDER: IdentityProviderId[] = [IDENTITY_PROVIDERS.GOOGLE];
 
 const FALLBACK_LABELS: Record<IdentityProviderId, string> = {
   google: "Google",
   microsoft: "Microsoft",
   apple: "Apple",
-  phone: "Telefone",
 };
 
 export function ProviderList() {
   const { data, isLoading, isError } = useIdentityProviders();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? undefined;
-  const [phoneMode, setPhoneMode] = useState(false);
 
   const byAlias = useMemo(() => {
     const map = new Map<string, IdentityProviderInfo>();
@@ -56,19 +50,10 @@ export function ProviderList() {
     };
   });
 
-  const phone = providers.find((provider) => provider.alias === IDENTITY_PROVIDERS.PHONE);
 
   function handleSelect(provider: IdentityProviderInfo) {
     if (!provider.available) return;
-    if (provider.alias === IDENTITY_PROVIDERS.PHONE) {
-      setPhoneMode(true);
-      return;
-    }
     loginWithGateway(redirect, provider.alias);
-  }
-
-  if (phoneMode && phone?.available) {
-    return <PhoneLoginForm redirect={redirect} onBack={() => setPhoneMode(false)} />;
   }
 
   return (
