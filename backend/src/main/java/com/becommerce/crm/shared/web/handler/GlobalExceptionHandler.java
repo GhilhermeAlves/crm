@@ -38,6 +38,8 @@ import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisModelNo
 import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisValidationException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogItemNotFoundException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogSkuConflictException;
+import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionNotFoundException;
+import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionValidationException;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
 import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundException;
 import com.becommerce.crm.sales.pipeline.domain.exception.PipelineNotFoundException;
@@ -334,7 +336,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({CampaignNotFoundException.class, TemplateNotFoundException.class,
-        CatalogItemNotFoundException.class, AnamnesisModelNotFoundException.class})
+        CatalogItemNotFoundException.class, AnamnesisModelNotFoundException.class,
+        FinancialTransactionNotFoundException.class})
     public ResponseEntity<Map<String, Object>> handleCampaignOrTemplateNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
@@ -348,6 +351,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AnamnesisValidationException.class)
     public ResponseEntity<Map<String, Object>> handleAnamnesisValidationException(
             AnamnesisValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(FinancialTransactionValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleFinancialTransactionValidationException(
+            FinancialTransactionValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,
