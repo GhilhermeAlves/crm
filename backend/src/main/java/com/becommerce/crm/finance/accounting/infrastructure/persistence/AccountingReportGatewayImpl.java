@@ -118,7 +118,7 @@ public class AccountingReportGatewayImpl implements AccountingReportGateway {
                 + "UNION "
                 + "SELECT to_char(ft.paid_at, 'YYYY-MM') AS month "
                 + "FROM financial_transactions ft "
-                + "WHERE ft.company_id = :companyId AND ft.status <> 'CANCELLED' "
+                + "WHERE ft.company_id = :companyId AND ft.status <> 'CANCELLED' AND ft.paid_at IS NOT NULL "
                 + ") months ORDER BY month DESC";
         return jdbc.query(sql, new MapSqlParameterSource("companyId", companyId), MONTH_ROW);
     }
