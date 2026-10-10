@@ -161,6 +161,7 @@ export default function DocumentTemplatesPage() {
               <Textarea
                 placeholder="Escreva o conteúdo do documento..."
                 rows={6}
+                maxLength={9000}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
               />
