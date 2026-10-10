@@ -31,7 +31,6 @@ vi.mock("@/lib/gateway-auth", () => ({
     GOOGLE: "google",
     MICROSOFT: "microsoft",
     APPLE: "apple",
-    PHONE: "phone",
   } as const,
 }));
 
@@ -44,9 +43,8 @@ vi.mock("@/lib/api", () => ({
 function serverCatalog(overrides: Partial<Record<string, boolean>> = {}) {
   const labels: Record<string, string> = {
     google: "Google",
-    phone: "Telefone",
   };
-  return (["google", "phone"] as const).map((alias) => ({
+  return (["google"] as const).map((alias) => ({
     alias,
     label: labels[alias],
     available: overrides[alias] ?? false,
@@ -61,19 +59,17 @@ describe("ProviderList (Sprint 7.0)", () => {
     providersState.isError = false;
   });
 
-  it("renders the configured providers in a fixed order (google, telefone)", () => {
+  it("renders the configured providers in a fixed order (google only, no phone)", () => {
     render(<ProviderList />);
     const buttons = screen.getAllByRole("button").map((b) => b.getAttribute("data-provider"));
-    expect(buttons).toEqual(["google", "phone"]);
+    expect(buttons).toEqual(["google"]);
   });
 
   it("enables providers the server marks as available", () => {
     providersState.data = serverCatalog({ google: true });
     render(<ProviderList />);
     const google = screen.getByRole("button", { name: "Entrar com Google" });
-    const phone = screen.getByRole("button", { name: "Entrar com Telefone" });
     expect((google as HTMLButtonElement).disabled).toBe(false);
-    expect((phone as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("navigates with the provider alias preserving the redirect", () => {
@@ -81,15 +77,6 @@ describe("ProviderList (Sprint 7.0)", () => {
     render(<ProviderList />);
     fireEvent.click(screen.getByRole("button", { name: "Entrar com Google" }));
     expect(loginWithGatewayMock).toHaveBeenCalledWith("/leads", "google");
-  });
-
-  it("opens the inline phone OTP flow instead of navigating when available", () => {
-    providersState.data = serverCatalog({ phone: true });
-    render(<ProviderList />);
-    fireEvent.click(screen.getByRole("button", { name: "Entrar com Telefone" }));
-    expect(loginWithGatewayMock).not.toHaveBeenCalled();
-    expect(screen.getByPlaceholderText("+55 11 99999-0000")).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Enviar código" })).not.toBeNull();
   });
 
   it("does not navigate when the provider is unavailable (defense in depth)", () => {

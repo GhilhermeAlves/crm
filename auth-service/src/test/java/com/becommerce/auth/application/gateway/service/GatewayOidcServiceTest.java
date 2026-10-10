@@ -225,28 +225,10 @@ class GatewayOidcServiceTest {
     }
 
     @Test
-    void shouldRejectDisabledProviderWith400() {
-        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
-                () -> service.beginAuthorization("/dashboard", "phone"));
-        assertEquals("PROVIDER_NOT_AVAILABLE", ex.getCode());
-        assertEquals(400, ex.getStatus());
-    }
-
-    @Test
     void shouldRejectGoogleWith400WhenGoogleIsNotEnabled() {
         OidcGatewayException ex = assertThrows(OidcGatewayException.class,
                 () -> service.beginAuthorization("/dashboard", "google"));
         assertEquals("PROVIDER_NOT_AVAILABLE", ex.getCode());
-        assertEquals(400, ex.getStatus());
-    }
-
-    @Test
-    void shouldRejectPhoneAsNonOidcProviderEvenWhenEnabled() {
-        properties.setPhoneEnabled(true);
-
-        OidcGatewayException ex = assertThrows(OidcGatewayException.class,
-                () -> service.beginAuthorization("/dashboard", "phone"));
-        assertEquals("PHONE_IS_LOCAL_FLOW", ex.getCode());
         assertEquals(400, ex.getStatus());
     }
 

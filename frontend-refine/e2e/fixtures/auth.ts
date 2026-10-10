@@ -17,9 +17,9 @@ export const E2E_ADMIN = {
 };
 
 /**
- * Login via UI (Sprint 7.0): /login → clique em "Entrar com e-mail e senha" →
- * redirecionamento para gateway (/auth/authorize) → Keycloak (formulário de
- * login padrão) → callback do gateway → cookies `crm_session` + `/crm`.
+ * Login via UI: /login (sem formulário, só redireciona) → gateway
+ * (/auth/authorize) → tela de login do Keycloak (tema crm-login) → callback do
+ * gateway → cookies `crm_session` + `/crm`.
  *
  * O fluxo OIDC mantém os tokens no servidor (auth-service); browser tem apenas
  * cookie HttpOnly de sessão.
@@ -30,14 +30,8 @@ export async function login(
   page: Page,
   credentials: { email: string; password: string } = E2E_ADMIN,
 ): Promise<void> {
+  // /login redireciona direto para a tela de login do Keycloak
   await page.goto("/login");
-  await expect(page).toHaveURL(/\/login/);
-
-  // Clica em "Entrar com e-mail e senha" → redireciona para gateway
-  await page.getByRole("button", { name: "Entrar com e-mail e senha" }).click();
-
-  // Aguarda redirecionamento para Keycloak (formulário de login padrão 26.x)
-  // Keycloak renderiza o form em /openid-connect/auth (tema padrão)
   await expect(page).toHaveURL(/realms\/CRM\//);
   await expect(page.locator("#username")).toBeVisible();
 

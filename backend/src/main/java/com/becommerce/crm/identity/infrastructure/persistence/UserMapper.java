@@ -35,9 +35,6 @@ public class UserMapper {
         entity.setInvitedAt(user.getInvitedAt());
         entity.setInvitedBy(user.getInvitedBy());
         entity.setKeycloakSub(user.getKeycloakSub());
-        // Sprint 7.3 — Telefone/OTP
-        entity.setPhoneVerified(user.isPhoneVerified());
-        entity.setPhoneVerifiedAt(user.getPhoneVerifiedAt());
         entity.setCreatedAt(user.getCreatedAt());
         entity.setUpdatedAt(user.getUpdatedAt());
         entity.setDeletedAt(user.getDeletedAt());
@@ -67,9 +64,6 @@ public class UserMapper {
         user.setInvitedAt(entity.getInvitedAt());
         user.setInvitedBy(entity.getInvitedBy());
         user.setKeycloakSub(entity.getKeycloakSub());
-        // Sprint 7.3 — Telefone/OTP
-        user.setPhoneVerified(entity.isPhoneVerified());
-        user.setPhoneVerifiedAt(entity.getPhoneVerifiedAt());
         user.setCreatedAt(entity.getCreatedAt());
         user.setUpdatedAt(entity.getUpdatedAt());
         user.setDeletedAt(entity.getDeletedAt());

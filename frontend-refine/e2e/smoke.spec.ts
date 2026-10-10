@@ -1,9 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Smoke de tooling (Task 4.1). Validar que o Playwright + webServer estão
- * funcionando. Usa apenas rotas públicas — não requer a stack de apoio
- * (backend/keycloak/pg/redis/rabbit), que entra em cena nas specs 4.2+.
+ * Smoke: landing pública e a passagem landing → tela de login do Keycloak
+ * (requer o Keycloak da stack E2E).
  */
 
 test("landing page pública renderiza e link de login existe", async ({ page }) => {
@@ -12,8 +11,10 @@ test("landing page pública renderiza e link de login existe", async ({ page }) 
   await expect(page.getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
 });
 
-test("página de login renderiza o título Entrar", async ({ page }) => {
-  await page.goto("/login");
-  await expect(page).toHaveURL(/\/login/);
+test("landing → Entrar leva direto à tela de login do Keycloak", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Entrar", exact: true }).click();
+  await expect(page).toHaveURL(/realms\/CRM\//, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
+  await expect(page.locator("#kc-login")).toBeVisible();
 });

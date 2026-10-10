@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConfiguredIdentityProviderCatalogTest {
@@ -26,7 +25,7 @@ class ConfiguredIdentityProviderCatalogTest {
     @Test
     void shouldListSupportedProvidersInDisplayOrderWithoutMeta() {
         List<IdentityProviderCatalog.IdentityProviderInfo> providers = catalog.list();
-        assertEquals(List.of("google", "phone"),
+        assertEquals(List.of("google"),
                 providers.stream().map(IdentityProviderCatalog.IdentityProviderInfo::alias).toList());
         assertTrue(providers.stream().noneMatch(p -> p.alias().equals("facebook")),
                 "Meta/Facebook is out of scope");
@@ -42,19 +41,7 @@ class ConfiguredIdentityProviderCatalogTest {
         properties.setEnabledProviders(Set.of("google"));
 
         IdentityProviderCatalog.IdentityProviderInfo google = catalog.find("google").orElseThrow();
-        IdentityProviderCatalog.IdentityProviderInfo phone = catalog.find("phone").orElseThrow();
         assertTrue(google.available());
-        assertFalse(phone.available());
-    }
-
-    @Test
-    void shouldMarkPhoneAvailableOnlyWhenPhoneEnabled() {
-        properties.setPhoneEnabled(true);
-
-        IdentityProviderCatalog.IdentityProviderInfo google = catalog.find("google").orElseThrow();
-        IdentityProviderCatalog.IdentityProviderInfo phone = catalog.find("phone").orElseThrow();
-        assertFalse(google.available(), "phone-enabled não habilita o Google");
-        assertTrue(phone.available());
     }
 
     @Test
@@ -62,9 +49,7 @@ class ConfiguredIdentityProviderCatalogTest {
         properties.setEnabledProviders(Set.of("google"));
 
         IdentityProviderCatalog.IdentityProviderInfo google = catalog.find("google").orElseThrow();
-        IdentityProviderCatalog.IdentityProviderInfo phone = catalog.find("phone").orElseThrow();
         assertTrue(google.available());
-        assertFalse(phone.available());
     }
 
     @Test
@@ -73,11 +58,11 @@ class ConfiguredIdentityProviderCatalogTest {
         assertTrue(catalog.find("linkedin").isEmpty());
         assertTrue(catalog.find("microsoft").isEmpty());
         assertTrue(catalog.find("apple").isEmpty());
+        assertTrue(catalog.find("phone").isEmpty());
     }
 
     @Test
     void shouldExposeHumanReadableLabels() {
         assertEquals("Google", catalog.find("google").orElseThrow().label());
-        assertEquals("Telefone", catalog.find("phone").orElseThrow().label());
     }
 }

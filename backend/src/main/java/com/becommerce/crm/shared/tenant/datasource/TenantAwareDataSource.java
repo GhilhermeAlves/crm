@@ -61,14 +61,12 @@ public class TenantAwareDataSource implements DataSource {
         final UUID companyId;
         final String keycloakSub;
         final String identityEmail;
-        final String identityPhone;
         final String resetToken;
 
         TenantSnapshot() {
             this.companyId = TenantContext.getCompanyId();
             this.keycloakSub = TenantContext.getKeycloakSub();
             this.identityEmail = TenantContext.getIdentityEmail();
-            this.identityPhone = TenantContext.getIdentityPhone();
             this.resetToken = TenantContext.getResetToken();
         }
 
@@ -77,7 +75,6 @@ public class TenantAwareDataSource implements DataSource {
                     && Objects.equals(this.companyId, other.companyId)
                     && Objects.equals(this.keycloakSub, other.keycloakSub)
                     && Objects.equals(this.identityEmail, other.identityEmail)
-                    && Objects.equals(this.identityPhone, other.identityPhone)
                     && Objects.equals(this.resetToken, other.resetToken);
         }
     }
@@ -152,12 +149,6 @@ public class TenantAwareDataSource implements DataSource {
                 stmt.execute("SET app.current_identity_email = '" + safeEmail + "'");
             } else if (reset) {
                 stmt.execute("RESET app.current_identity_email");
-            }
-            if (ctx.identityPhone != null && !ctx.identityPhone.isBlank()) {
-                String safePhone = ctx.identityPhone.replace("'", "''");
-                stmt.execute("SET app.current_identity_phone = '" + safePhone + "'");
-            } else if (reset) {
-                stmt.execute("RESET app.current_identity_phone");
             }
             if (ctx.resetToken != null && !ctx.resetToken.isBlank()) {
                 String safeToken = ctx.resetToken.replace("'", "''");

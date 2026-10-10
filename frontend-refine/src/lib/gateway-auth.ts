@@ -28,7 +28,6 @@ export const IDENTITY_PROVIDERS = {
   GOOGLE: "google",
   MICROSOFT: "microsoft",
   APPLE: "apple",
-  PHONE: "phone",
 } as const;
 
 export type IdentityProviderId = (typeof IDENTITY_PROVIDERS)[keyof typeof IDENTITY_PROVIDERS];

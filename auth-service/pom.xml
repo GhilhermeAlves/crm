@@ -78,13 +78,6 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <!-- Keycloak Admin Client -->
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-admin-client</artifactId>
-            <version>24.0.4</version>
-        </dependency>
     </dependencies>
 
     <build>

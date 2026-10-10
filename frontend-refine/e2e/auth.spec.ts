@@ -7,9 +7,8 @@ import { login, E2E_ADMIN } from "./fixtures/auth";
  * Requer a stack completa (postgres, keycloak, backend, auth-service, redis,
  * rabbitmq) — subida pelo job `e2e` do GitHub Actions via `e2e/compose.ci.yml`.
  *
- * Fluxo novo (Sprint 7.0): sem navegação para Keycloak no browser. Login via
- * formulário de email/senha → POST /auth/login (gateway) → redirecionamento
- * para `/crm` com cookie `crm_session`.
+ * Fluxo: /login redireciona direto para a tela de login do Keycloak (tema
+ * crm-login) → callback do gateway → `/crm` com cookie `crm_session`.
  *
  * Roda SEMPRE com `workers: 1` (Playwright config) e sem storageState: cada
  * spec autentica via UI e encerra a própria sessão.
@@ -38,7 +37,6 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     page,
   }) => {
     await page.goto("/login");
-    await page.getByRole("button", { name: "Entrar com e-mail e senha" }).click();
 
     // Redirecionamento para Keycloak
     await expect(page).toHaveURL(/realms\/CRM\//);
@@ -76,9 +74,10 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
     ).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
 
-    // Rota protegida agora redireciona para /login (middleware, sem sessão).
+    // Rota protegida redireciona para /login (middleware, sem sessão), que segue
+    // direto para a tela de login do Keycloak.
     await page.goto("/crm");
-    await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/realms\/CRM\//, { timeout: 15_000 });
 
     // cookie limpo
     const cookies = await page.context().cookies();

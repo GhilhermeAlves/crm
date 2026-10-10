@@ -122,9 +122,6 @@ auth:
     # kc_idp_hint (ex.: google,microsoft). Vazio = nenhum provedor externo
     # ativo; login local Keycloak inalterado. Meta/Facebook fora de escopo.
     # enabled-providers: ${AUTH_GATEWAY_ENABLED_PROVIDERS:}
-    # Sprint 7.4: login por telefone/OTP local — provedor "local" (não-OIDC),
-    # separado do catálogo de IdPs do Keycloak.
-    phone-enabled: ${AUTH_GATEWAY_PHONE_ENABLED:false}
   # Acesso ADMIN ao Keycloak (Sprint 7.4 — reset de credencial). Client
   # confidencial com service account (ex.: crm-keycloak-admin) e papel
   # realm-management:manage-users. Nunca loga o client_secret.
