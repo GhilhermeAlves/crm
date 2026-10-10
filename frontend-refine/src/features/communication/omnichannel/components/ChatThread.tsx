@@ -181,7 +181,7 @@ export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Prop
         </div>
       )}
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1" type="always">
         <div className="space-y-2 p-4">
           {detail.messages.content.length === 0 && (
             <p className="text-center text-sm text-muted-foreground">

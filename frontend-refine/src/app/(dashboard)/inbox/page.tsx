@@ -39,8 +39,8 @@ export default function InboxPage() {
       </div>
 
       <Card className="h-[calc(100dvh-220px)] overflow-hidden">
-        <div className="grid h-full grid-cols-1 md:grid-cols-[300px_1fr]">
-          <div className="border-r">
+        <div className="grid h-full grid-cols-1 grid-rows-2 md:grid-cols-[300px_1fr] md:grid-rows-1">
+          <div className="min-h-0 overflow-hidden border-r">
             <ConversationList
               conversations={page?.content ?? []}
               isLoading={!page}
@@ -48,7 +48,7 @@ export default function InboxPage() {
               onSelect={handleSelect}
             />
           </div>
-          <div>
+          <div className="min-h-0 overflow-hidden">
             <ChatThread
               detail={conversation.data}
               isLoading={conversation.isLoading}
