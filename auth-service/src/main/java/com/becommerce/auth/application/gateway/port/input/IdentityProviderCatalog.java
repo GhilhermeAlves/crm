@@ -19,7 +19,7 @@ public interface IdentityProviderCatalog {
     /** Todos os provedores suportados, na ordem de exibição da tela de login. */
     List<IdentityProviderInfo> list();
 
-    /** Busca por alias ({@code google}, {@code microsoft}, {@code apple}, {@code phone}). */
+    /** Busca por alias ({@code google}). */
     Optional<IdentityProviderInfo> find(String alias);
 
     record IdentityProviderInfo(String alias, String label, boolean available) {
