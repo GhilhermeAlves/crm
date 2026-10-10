@@ -1,5 +1,5 @@
-<#-- Cópia do template.ftl base do Keycloak 26.3 com layout dividido
-     (painel de apresentação à esquerda + formulário à direita).
+<#-- Cópia do template.ftl base do Keycloak 26.3 com o visual da landing do CRM
+     (fundo preto, vortex animado em canvas, moldura de linhas finas e header).
      Usado apenas por login.ftl; as demais páginas seguem o template base. -->
 <#import "footer.ftl" as loginFooter>
 <#macro registrationLayout bodyClass="" displayInfo=false displayMessage=true displayRequiredFields=false>
@@ -88,21 +88,12 @@
 </head>
 
 <body class="${properties.kcBodyClass!}" data-page-id="login-${pageId}">
-<div class="crm-split">
-  <#-- Painel de apresentação do CRM. Textos editáveis em messages_*.properties (crmHero*). -->
-  <aside class="crm-hero">
-    <div class="crm-hero-brand">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</div>
-    <div class="crm-hero-body">
-      <h2 class="crm-hero-title">${msg("crmHeroTitle")}</h2>
-      <p class="crm-hero-subtitle">${msg("crmHeroSubtitle")}</p>
-      <ul class="crm-hero-features">
-        <li>${msg("crmHeroFeature1")}</li>
-        <li>${msg("crmHeroFeature2")}</li>
-        <li>${msg("crmHeroFeature3")}</li>
-      </ul>
-    </div>
-    <p class="crm-hero-footer">${msg("crmHeroFooter")}</p>
-  </aside>
+<canvas id="crm-vortex" class="crm-vortex" aria-hidden="true"></canvas>
+<div class="crm-frame" aria-hidden="true"></div>
+<div class="crm-shell">
+  <header class="crm-topbar">
+    <span class="crm-topbar-brand">CRM OMNICHANNEL</span>
+  </header>
 <main class="${properties.kcLoginClass!}">
     <div id="kc-header" class="${properties.kcHeaderClass!}">
         <div id="kc-header-wrapper"
