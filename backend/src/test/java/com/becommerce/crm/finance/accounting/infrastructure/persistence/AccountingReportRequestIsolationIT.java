@@ -200,6 +200,7 @@ class AccountingReportRequestIsolationIT {
         TenantContext.clear();
 
         assertEquals(1, visibleRequests(TENANT_A));
+        TenantContext.setCompanyId(TENANT_A);
         int count = new NamedParameterJdbcTemplate(tenantAwareDataSource)
                 .queryForObject("SELECT generated_count FROM accounting_report_requests",
                         new MapSqlParameterSource(), Integer.class);

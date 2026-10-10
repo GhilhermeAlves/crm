@@ -274,6 +274,11 @@ class FinanceReportGatewayIT {
     }
 
     @BeforeEach
+    void enterTenantA() {
+        // Em produção o serviço seta o tenant; sem ele o RLS FORCE esconde todas as linhas.
+        TenantContext.setCompanyId(TENANT_A);
+    }
+
     @AfterEach
     void clearContext() {
         TenantContext.clear();

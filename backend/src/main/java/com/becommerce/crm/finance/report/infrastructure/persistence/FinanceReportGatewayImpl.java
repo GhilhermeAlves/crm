@@ -97,14 +97,14 @@ public class FinanceReportGatewayImpl implements FinanceReportGateway {
         String sql = "SELECT ft.type AS type, ft.status AS status, SUM(ft.amount_cents) AS total "
                 + "FROM financial_transactions ft "
                 + "WHERE ft.company_id = :companyId "
-                + "AND (:type IS NULL OR ft.type = :type) "
-                + "AND (:paymentMethod IS NULL OR ft.payment_method = :paymentMethod) "
-                + "AND (:category IS NULL OR ft.category = :category) "
-                + "AND (:professionalUserId IS NULL OR ft.professional_user_id = :professionalUserId) "
-                + "AND (:contactId IS NULL OR ft.contact_id = :contactId) "
-                + "AND (:pattern IS NULL OR LOWER(ft.description) LIKE :pattern) "
-                + "AND (:status IS NULL OR ft.status = :status) "
-                + "AND (:overdueBefore IS NULL OR ft.due_date < :overdueBefore) "
+                + "AND (CAST(:type AS VARCHAR) IS NULL OR ft.type = :type) "
+                + "AND (CAST(:paymentMethod AS VARCHAR) IS NULL OR ft.payment_method = :paymentMethod) "
+                + "AND (CAST(:category AS VARCHAR) IS NULL OR ft.category = :category) "
+                + "AND (CAST(:professionalUserId AS UUID) IS NULL OR ft.professional_user_id = :professionalUserId) "
+                + "AND (CAST(:contactId AS UUID) IS NULL OR ft.contact_id = :contactId) "
+                + "AND (CAST(:pattern AS VARCHAR) IS NULL OR LOWER(ft.description) LIKE :pattern) "
+                + "AND (CAST(:status AS VARCHAR) IS NULL OR ft.status = :status) "
+                + "AND (CAST(:overdueBefore AS DATE) IS NULL OR ft.due_date < :overdueBefore) "
                 + "AND ((ft.status = 'PAID' AND ft.paid_at::date BETWEEN :from AND :to) "
                 + "OR (ft.status = 'PENDING' AND ft.due_date BETWEEN :from AND :to)) "
                 + "GROUP BY ft.type, ft.status ORDER BY ft.type, ft.status";
@@ -312,7 +312,7 @@ public class FinanceReportGatewayImpl implements FinanceReportGateway {
                 + "WHERE a.company_id = :companyId "
                 + "AND (a.start_at AT TIME ZONE 'UTC')::date >= :from "
                 + "AND (a.start_at AT TIME ZONE 'UTC')::date <= :to "
-                + "AND (:appointmentType IS NULL OR a.appointment_type_id = :appointmentType) "
+                + "AND (CAST(:appointmentType AS UUID) IS NULL OR a.appointment_type_id = :appointmentType) "
                 + (hasStatuses ? "AND a.status IN (:statuses) " : "")
                 + (hasPros ? "AND a.host_id IN (:professionalUserIds) " : "")
                 + "GROUP BY a.status ORDER BY a.status";
