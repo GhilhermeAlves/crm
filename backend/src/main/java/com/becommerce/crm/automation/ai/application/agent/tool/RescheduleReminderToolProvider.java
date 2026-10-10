@@ -88,7 +88,8 @@ public class RescheduleReminderToolProvider implements AgentToolProvider {
         return Optional.of("""
                 Lembrete de remarcação (agendar_lembrete_remarcacao):
                 - Use só quando o paciente desmarcou ou não conseguiu marcar e, mesmo depois de você oferecer horários concretos duas vezes, preferiu deixar para depois.
-                - Agende uma única vez por conversa. O sistema escolhe a data (dia útil, às 10h) — avise o paciente de forma leve, sem citar dia exato. Ex.: "Combinado! Daqui a uns dias te chamo pra gente ver um horário, tá?".
+                - Agende uma única vez por conversa. O sistema escolhe a data (dia útil, às 10h) \
+                — avise o paciente de forma leve, sem citar dia exato. Ex.: "Combinado! Daqui a uns dias te chamo pra gente ver um horário, tá?".
                 - Não use para quem disse que não quer mais o atendimento.""");
     }
 
