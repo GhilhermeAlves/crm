@@ -106,8 +106,7 @@ export default function AnamnesisListPage() {
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {model.sectionCount} {model.sectionCount === 1 ? "seção" : "seções"} ·{" "}
-                        {model.questionCount}{" "}
-                        {model.questionCount === 1 ? "pergunta" : "perguntas"}
+                        {model.questionCount} {model.questionCount === 1 ? "pergunta" : "perguntas"}
                       </TableCell>
                       <TableCell>
                         <Switch
