@@ -20,6 +20,7 @@ import {
   KeyRound,
   CalendarDays,
   FileText,
+  CircleDollarSign,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 
@@ -157,6 +158,22 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.PERMISSIONS,
         icon: KeyRound,
         permission: "role:read",
+      },
+    ],
+  },
+  {
+    title: "Gestão",
+    items: [
+      {
+        label: "Gestão financeira",
+        href: ROUTES.FINANCE_CONTROL,
+        icon: CircleDollarSign,
+        permission: "finance:read",
+        children: [
+          { label: "Controle financeiro", href: ROUTES.FINANCE_CONTROL },
+          { label: "Conciliação", href: ROUTES.FINANCE_RECONCILIATION },
+          { label: "Comissões", href: ROUTES.FINANCE_COMMISSIONS },
+        ],
       },
     ],
   },
