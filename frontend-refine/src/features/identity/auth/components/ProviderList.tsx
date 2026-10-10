@@ -50,7 +50,6 @@ export function ProviderList() {
     };
   });
 
-
   function handleSelect(provider: IdentityProviderInfo) {
     if (!provider.available) return;
     loginWithGateway(redirect, provider.alias);
