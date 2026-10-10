@@ -46,8 +46,6 @@ export function NotificationBell() {
   const markRead = useMarkNotificationRead(companyId);
   const markAllRead = useMarkAllNotificationsRead(companyId);
 
-  const recent = notifications.slice(0, 5);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -77,13 +75,13 @@ export function NotificationBell() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {recent.length === 0 ? (
+        {notifications.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-muted-foreground">
             Nenhuma notificação
           </div>
         ) : (
-          <ScrollArea className="max-h-80">
-            {recent.map((n) => (
+          <ScrollArea className="max-h-80" type="always" scrollHideDelay={100}>
+            {notifications.map((n) => (
               <DropdownMenuItem
                 key={n.id}
                 className="flex cursor-pointer flex-col items-start gap-1 py-3"
