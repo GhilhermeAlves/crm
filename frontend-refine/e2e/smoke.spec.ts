@@ -8,7 +8,7 @@ import { test, expect } from "@playwright/test";
 
 test("landing page pública renderiza e link de login existe", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "CRM SaaS Omnichannel" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Atendimento, agenda e vendas/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
 });
 

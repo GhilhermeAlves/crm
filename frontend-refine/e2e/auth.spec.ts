@@ -72,7 +72,7 @@ test.describe("Login / Logout (Keycloak E2E)", () => {
 
     // Redirecionamento para landing pública após logout
     await expect(
-      page.getByRole("heading", { name: "CRM SaaS Omnichannel" }),
+      page.getByRole("heading", { name: /Atendimento, agenda e vendas/ }),
     ).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
 
