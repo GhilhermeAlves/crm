@@ -112,12 +112,11 @@ class FinanceReportGatewayIT {
         financeGateway = new FinanceReportGatewayImpl(jdbc);
         accountingGateway = new AccountingReportGatewayImpl(jdbc);
 
-        TenantContext.setCompanyId(TENANT_A);
-        try (Connection conn = tenantAwareDataSource.getConnection()) {
+        // Seed com o superusuário: o app só LÊ as tabelas de apoio, e a empresa B
+        // também precisa de dados (o RLS bloquearia o insert cruzado pelo app).
+        try (Connection conn = postgres.createConnection("")) {
             seedReferences(conn);
             seedFinancialData(conn);
-        } finally {
-            TenantContext.clear();
         }
     }
 

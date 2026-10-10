@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
@@ -102,6 +103,14 @@ class AccountingReportRequestIsolationIT {
     }
 
     @BeforeEach
+    void clearRequests() throws SQLException {
+        TenantContext.clear();
+        try (Connection conn = postgres.createConnection("");
+             Statement st = conn.createStatement()) {
+            st.execute("TRUNCATE accounting_report_requests");
+        }
+    }
+
     @AfterEach
     void clearContext() {
         TenantContext.clear();
@@ -174,9 +183,12 @@ class AccountingReportRequestIsolationIT {
     @Test
     void tenantB_cannotRegisterForTenantA() {
         TenantContext.setCompanyId(TENANT_B);
-        assertThrows(SQLException.class, () -> repository.register(TENANT_A,
+        assertThrows(DataAccessException.class, () -> repository.register(TENANT_A,
                 AccountingReportType.MONTHLY_ACCOUNTING, ReportFormat.CSV,
                 YearMonth.of(2026, 1), TENANT_A));
+        TenantContext.clear();
+
+        assertEquals(0, visibleRequests(TENANT_A));
     }
 
     @Test
