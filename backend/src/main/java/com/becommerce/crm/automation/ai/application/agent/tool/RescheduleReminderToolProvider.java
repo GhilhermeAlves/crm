@@ -8,6 +8,7 @@ import com.becommerce.crm.sales.followup.application.port.in.FollowUpUseCase;
 import com.becommerce.crm.shared.calendar.BrazilianHolidays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -48,6 +49,7 @@ public class RescheduleReminderToolProvider implements AgentToolProvider {
     private final FollowUpUseCase followUpUseCase;
     private final Clock clock;
 
+    @Autowired
     public RescheduleReminderToolProvider(FollowUpUseCase followUpUseCase) {
         this(followUpUseCase, Clock.systemDefaultZone());
     }
