@@ -44,7 +44,9 @@ export function loginWithGateway(redirectPath?: string, provider?: IdentityProvi
     redirect: redirectPath || ROUTES.DASHBOARD,
   });
   if (provider) params.set("provider", provider);
-  window.location.assign(`/auth/authorize?${params.toString()}`);
+  // replace (não assign): a página /login sai do histórico, então "voltar" no
+  // Keycloak retorna à apresentação em vez de cair de novo em /login.
+  window.location.replace(`/auth/authorize?${params.toString()}`);
 }
 
 export function logoutWithGateway(): void {

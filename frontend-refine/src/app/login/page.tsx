@@ -19,6 +19,16 @@ function RedirectToKeycloak() {
     loginWithGateway(redirect);
   }, [redirect]);
 
+  // Se o navegador restaurar esta página do bfcache (botão voltar), o effect
+  // acima não roda de novo e a tela travaria no spinner: volta à apresentação.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) window.location.replace("/");
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-black text-white">
       <Loader2 className="h-5 w-5 animate-spin text-white/70" aria-hidden="true" />
