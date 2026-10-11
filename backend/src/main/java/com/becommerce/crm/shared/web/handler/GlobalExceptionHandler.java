@@ -9,6 +9,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.becommerce.crm.analytics.audit.application.service.AuditLogNotFoundException;
@@ -38,6 +39,9 @@ import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisModelNo
 import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisValidationException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogItemNotFoundException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogSkuConflictException;
+import com.becommerce.crm.finance.report.domain.exception.ReportSuggestionValidationException;
+import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionNotFoundException;
+import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionValidationException;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
 import com.becommerce.crm.sales.pipeline.domain.exception.OpportunityNotFoundException;
 import com.becommerce.crm.sales.pipeline.domain.exception.PipelineNotFoundException;
@@ -106,6 +110,17 @@ public class GlobalExceptionHandler {
                 "status", 400,
                 "error", "Validation Error",
                 "errors", errors,
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", "O arquivo excede o limite de 5 MB permitido.",
                 "timestamp", LocalDateTime.now().toString()
             ));
     }
@@ -334,7 +349,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({CampaignNotFoundException.class, TemplateNotFoundException.class,
-        CatalogItemNotFoundException.class, AnamnesisModelNotFoundException.class})
+        CatalogItemNotFoundException.class, AnamnesisModelNotFoundException.class,
+        FinancialTransactionNotFoundException.class})
     public ResponseEntity<Map<String, Object>> handleCampaignOrTemplateNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
@@ -348,6 +364,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AnamnesisValidationException.class)
     public ResponseEntity<Map<String, Object>> handleAnamnesisValidationException(
             AnamnesisValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(FinancialTransactionValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleFinancialTransactionValidationException(
+            FinancialTransactionValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ReportSuggestionValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleReportSuggestionValidationException(
+            ReportSuggestionValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,

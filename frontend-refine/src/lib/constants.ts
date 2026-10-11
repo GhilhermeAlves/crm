@@ -50,6 +50,15 @@ export const ROUTES = {
   SETTINGS_DOCUMENTS: "/settings/documents",
   SETTINGS_DOCUMENTS_ANAMNESIS: "/settings/documents/anamnesis",
   SETTINGS_DOCUMENTS_PRESCRIPTIONS: "/settings/documents/prescriptions",
+  FINANCE: "/finance",
+  FINANCE_CONTROL: "/finance/control",
+  FINANCE_RECONCILIATION: "/finance/reconciliation",
+  FINANCE_COMMISSIONS: "/finance/commissions",
+  REPORTS_ANALYTICS: "/reports/analytics",
+  REPORTS_OVERVIEW: "/reports/overview",
+  REPORTS_AGENDA: "/reports/agenda",
+  REPORTS_CASH_FLOW: "/reports/cash-flow",
+  REPORTS_REVENUE: "/reports/revenue",
 } as const;
 
 export const PUBLIC_ROUTES = [
