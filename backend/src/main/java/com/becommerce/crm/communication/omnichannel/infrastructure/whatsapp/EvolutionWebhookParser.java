@@ -52,6 +52,40 @@ public class EvolutionWebhookParser implements WhatsAppWebhookParser {
     }
 
     @Override
+    public String inboundSkipReason(Map<String, Object> raw) {
+        if (!isInboundMessage(raw)) {
+            return "evento-" + event(raw);
+        }
+        Map<?, ?> data = map(raw.get("data"));
+        Map<?, ?> key = map(data.get("key"));
+        String jid = str(key.get("remoteJid"));
+        if (str(key.get("id")) == null) {
+            return "sem-id";
+        }
+        if (jid == null) {
+            return "sem-remetente";
+        }
+        if (jid.endsWith("@g.us")) {
+            return "grupo";
+        }
+        if (jid.endsWith("@broadcast")) {
+            return "status";
+        }
+        if (jid.endsWith("@newsletter")) {
+            return "canal";
+        }
+        if (jid.endsWith("@lid")) {
+            return "lid-sem-numero";
+        }
+        return "remetente-invalido";
+    }
+
+    @Override
+    public boolean isExpectedSkip(String reason) {
+        return "grupo".equals(reason) || "status".equals(reason) || "canal".equals(reason);
+    }
+
+    @Override
     public boolean isStatusUpdate(Map<String, Object> raw) {
         return UPDATE.equals(event(raw));
     }

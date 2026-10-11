@@ -8,16 +8,20 @@ import com.becommerce.crm.communication.omnichannel.application.port.output.Omni
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * {@code transferir_para_humano}: coloca a conversa em modo humano (mesmo
- * mecanismo do "assumir conversa" da caixa de entrada) — a IA autônoma para
- * de responder até alguém devolver ao automático. Opt-in por empresa
+ * {@code transferir_para_humano}: coloca a conversa em modo humano por um
+ * prazo — a IA autônoma para de responder até alguém devolver ao automático
+ * ou o prazo vencer. Opt-in por empresa
  * ({@code agent_config.human_transfer_enabled}).
  */
 @Component
@@ -27,10 +31,25 @@ public class HumanTransferToolProvider implements AgentToolProvider {
 
     static final String TRANSFER = "transferir_para_humano";
 
-    private final OmnichannelConversationRepository conversationRepository;
+    static final long DEFAULT_PAUSE_HOURS = 12;
 
-    public HumanTransferToolProvider(OmnichannelConversationRepository conversationRepository) {
+    private final OmnichannelConversationRepository conversationRepository;
+    private final Duration pause;
+
+    HumanTransferToolProvider(OmnichannelConversationRepository conversationRepository) {
+        this(conversationRepository, DEFAULT_PAUSE_HOURS);
+    }
+
+    /**
+     * A transferência pausa a IA por um prazo (como a resposta do dono pelo
+     * celular): se ninguém da equipe assumir, a conversa volta ao automático
+     * em vez de ficar sem resposta para sempre.
+     */
+    @Autowired
+    public HumanTransferToolProvider(OmnichannelConversationRepository conversationRepository,
+                                     @Value("${omnichannel.whatsapp.human-transfer-pause-hours:12}") long pauseHours) {
         this.conversationRepository = conversationRepository;
+        this.pause = Duration.ofHours(Math.max(1, pauseHours));
     }
 
     @Override
@@ -72,7 +91,7 @@ public class HumanTransferToolProvider implements AgentToolProvider {
                 return "Não foi possível transferir agora. Diga que a equipe vai retornar em breve.";
             }
             Conversation c = conversation.get();
-            c.takeover();
+            c.pauseAutomationUntil(LocalDateTime.now().plus(pause));
             conversationRepository.save(c);
             Object reason = call.arguments() == null ? null : call.arguments().get("motivo");
             log.info("[AGENT][HUMAN] conversa transferida (company={}, conversation={}, motivo={})",

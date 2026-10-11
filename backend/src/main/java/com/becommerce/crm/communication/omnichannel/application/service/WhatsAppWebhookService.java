@@ -128,7 +128,12 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         WhatsAppWebhookParser.InboundMessageData data = parser.parseInboundMessage(payload)
                 .orElse(null);
         if (data == null) {
-            log.warn("Webhook de mensagem sem dados válidos (company={})", companyId);
+            String reason = parser.inboundSkipReason(payload);
+            if (parser.isExpectedSkip(reason)) {
+                log.debug("Webhook de mensagem ignorado (company={}, motivo={})", companyId, reason);
+            } else {
+                log.warn("Webhook de mensagem sem dados válidos (company={}, motivo={})", companyId, reason);
+            }
             return;
         }
         // Idempotência: já registrada?
