@@ -54,6 +54,7 @@ export const ROUTES = {
   FINANCE_CONTROL: "/finance/control",
   FINANCE_RECONCILIATION: "/finance/reconciliation",
   FINANCE_COMMISSIONS: "/finance/commissions",
+  REPORTS_ANALYTICS: "/reports/analytics",
   REPORTS_OVERVIEW: "/reports/overview",
   REPORTS_AGENDA: "/reports/agenda",
   REPORTS_CASH_FLOW: "/reports/cash-flow",

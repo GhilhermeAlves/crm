@@ -39,6 +39,7 @@ import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisModelNo
 import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisValidationException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogItemNotFoundException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogSkuConflictException;
+import com.becommerce.crm.finance.report.domain.exception.ReportSuggestionValidationException;
 import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionNotFoundException;
 import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionValidationException;
 import com.becommerce.crm.identity.membership.domain.exception.MembershipNotFoundException;
@@ -375,6 +376,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FinancialTransactionValidationException.class)
     public ResponseEntity<Map<String, Object>> handleFinancialTransactionValidationException(
             FinancialTransactionValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ReportSuggestionValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleReportSuggestionValidationException(
+            ReportSuggestionValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,
