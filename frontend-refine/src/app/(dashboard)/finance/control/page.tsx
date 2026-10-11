@@ -10,13 +10,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FinanceActionsCard } from "@/features/finance/components/FinanceActionsCard";
+import { FinanceFiltersSheet } from "@/features/finance/components/FinanceFiltersSheet";
 import { FinancialHealthCard } from "@/features/finance/components/FinancialHealthCard";
 import { FinanceKpiCards } from "@/features/finance/components/FinanceKpiCards";
 import { FinanceTypeTabs, type FinanceTab } from "@/features/finance/components/FinanceTypeTabs";
+import { ImportTransactionsDialog } from "@/features/finance/components/ImportTransactionsDialog";
 import { PeriodPicker } from "@/features/finance/components/PeriodPicker";
+import { TransactionFormDialog } from "@/features/finance/components/TransactionFormDialog";
 import { TransactionsTable } from "@/features/finance/components/TransactionsTable";
 import { useFinanceSummary, useTransactions } from "@/features/finance/hooks/useFinance";
-import type { TransactionFilters } from "@/features/finance/types/finance.types";
+import type {
+  FinancialTransaction,
+  PaymentMethod,
+  TransactionCategory,
+  TransactionFilters,
+  TransactionStatusFilter,
+} from "@/features/finance/types/finance.types";
 import {
   PERIOD_KEYS,
   resolvePeriod,
@@ -57,11 +66,12 @@ function FinanceControlContent() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
 
-  // PONTOS DE ABERTURA — os diálogos (e o consumo destes estados) são das etapas 6 e 7.
-  const [, setNewOpen] = useState(false); // etapa 6: novo lançamento
-  const [, setImportOpen] = useState(false); // etapa 6: envio/importação de tabela
-  const [, setFiltersOpen] = useState(false); // etapa 6: filtros avançados
+  // PONTOS DE ABERTURA — o diálogo da etapa 7 ainda não existe.
+  const [newOpen, setNewOpen] = useState(false); // etapa 6: novo lançamento
+  const [importOpen, setImportOpen] = useState(false); // etapa 6: envio/importação de tabela
+  const [filtersOpen, setFiltersOpen] = useState(false); // etapa 6: filtros avançados
   const [, setAccountingReportOpen] = useState(false); // etapa 7: relatório contábil
+  const [editTransaction, setEditTransaction] = useState<FinancialTransaction | null>(null);
 
   const tabParam = searchParams.get("tab");
   const tab: FinanceTab = tabParam === "income" || tabParam === "expense" ? tabParam : "all";
@@ -81,7 +91,23 @@ function FinanceControlContent() {
   const page = Number.isFinite(pageParam) && pageParam >= 1 ? Math.floor(pageParam) : 1;
 
   const months = searchParams.get("months") === "12" ? 12 : 6;
-  const activeFilterCount = 0; // etapa 6: contagem de filtros avançados ativos
+
+  const advancedFilters = useMemo<TransactionFilters>(() => {
+    const filters: TransactionFilters = {};
+    const status = searchParams.get("status");
+    if (status) filters.status = status as TransactionStatusFilter;
+    const paymentMethod = searchParams.get("paymentMethod");
+    if (paymentMethod) filters.paymentMethod = paymentMethod as PaymentMethod;
+    const category = searchParams.get("category");
+    if (category) filters.category = category as TransactionCategory;
+    const professionalUserId = searchParams.get("professionalUserId");
+    if (professionalUserId) filters.professionalUserId = professionalUserId;
+    const contactId = searchParams.get("contactId");
+    if (contactId) filters.contactId = contactId;
+    return filters;
+  }, [searchParams]);
+
+  const activeFilterCount = Object.keys(advancedFilters).length;
 
   const q = searchParams.get("q") ?? "";
   const [search, setSearch] = useState(q);
@@ -125,8 +151,8 @@ function FinanceControlContent() {
   const type = tab === "income" ? "INCOME" : tab === "expense" ? "EXPENSE" : undefined;
 
   const summaryFilters = useMemo<TransactionFilters>(
-    () => ({ from: range.from, to: range.to, ...(type ? { type } : {}) }),
-    [range.from, range.to, type],
+    () => ({ from: range.from, to: range.to, ...(type ? { type } : {}), ...advancedFilters }),
+    [range.from, range.to, type, advancedFilters],
   );
 
   const listFilters = useMemo(
@@ -234,9 +260,51 @@ function FinanceControlContent() {
             onPageChange={(next) => setParams({ page: String(next) }, { resetPage: false })}
             onNew={() => setNewOpen(true)}
             onImport={() => setImportOpen(true)}
+            companyId={companyId}
+            onEditTransaction={setEditTransaction}
           />
         </CardContent>
       </Card>
+
+      <TransactionFormDialog open={newOpen} onOpenChange={setNewOpen} companyId={companyId} />
+      <TransactionFormDialog
+        open={!!editTransaction}
+        onOpenChange={(next) => {
+          if (!next) setEditTransaction(null);
+        }}
+        companyId={companyId}
+        transaction={editTransaction}
+      />
+      <ImportTransactionsDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        companyId={companyId}
+      />
+      <FinanceFiltersSheet
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        tab={tab}
+        companyId={companyId}
+        initial={advancedFilters}
+        onApply={(values) =>
+          setParams({
+            status: values.status ?? null,
+            paymentMethod: values.paymentMethod ?? null,
+            category: values.category ?? null,
+            professionalUserId: values.professionalUserId ?? null,
+            contactId: values.contactId ?? null,
+          })
+        }
+        onClear={() =>
+          setParams({
+            status: null,
+            paymentMethod: null,
+            category: null,
+            professionalUserId: null,
+            contactId: null,
+          })
+        }
+      />
     </div>
   );
 }

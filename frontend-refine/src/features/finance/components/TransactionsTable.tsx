@@ -1,21 +1,15 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { MoreHorizontal } from "lucide-react";
 
 import { ErrorCard } from "@/components/common/ErrorCard";
-import { Button } from "@/components/ui/button";
 import { DataTable, type ColumnDef } from "@/components/ui/data-table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/ui/status-badge";
 
 import type { FinancialTransaction } from "../types/finance.types";
 import { PAYMENT_METHOD_LABELS, TRANSACTION_CATEGORY_LABELS } from "../types/finance.types";
 import { centsToBRL } from "../utils/money";
+import { TransactionRowActions } from "./TransactionRowActions";
 import { TransactionsEmptyState } from "./TransactionsEmptyState";
 
 type TransactionsTableProps = {
@@ -30,6 +24,8 @@ type TransactionsTableProps = {
   onPageChange: (page: number) => void;
   onNew: () => void;
   onImport: () => void;
+  companyId?: string | null;
+  onEditTransaction?: (transaction: FinancialTransaction) => void;
 };
 
 const formatDueDate = (dueDate: string): string => {
@@ -78,6 +74,8 @@ export function TransactionsTable({
   onPageChange,
   onNew,
   onImport,
+  companyId = null,
+  onEditTransaction,
 }: TransactionsTableProps) {
   if (isError) {
     return (
@@ -159,22 +157,14 @@ export function TransactionsTable({
     {
       header: <span className="sr-only">Ações</span>,
       className: "w-[52px] text-right",
-      cell: (transaction) => (
-        // etapa 6: abre o menu de ações da linha (editar, marcar como pago, cancelar, excluir)
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              aria-label={`Ações do lançamento ${transaction.description}`}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" />
-        </DropdownMenu>
-      ),
+      cell: (transaction) =>
+        companyId ? (
+          <TransactionRowActions
+            companyId={companyId}
+            transaction={transaction}
+            onEdit={onEditTransaction ?? (() => {})}
+          />
+        ) : null,
     },
   ];
 
