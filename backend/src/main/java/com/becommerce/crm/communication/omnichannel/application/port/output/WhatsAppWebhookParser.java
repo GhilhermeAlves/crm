@@ -43,6 +43,19 @@ public interface WhatsAppWebhookParser {
 
     Optional<InboundMessageData> parseInboundMessage(Map<String, Object> raw);
 
+    /**
+     * Por que {@link #parseInboundMessage} descartou a mensagem (sem dados do
+     * contato): ex. {@code grupo}, {@code status}, {@code lid-sem-numero}.
+     */
+    default String inboundSkipReason(Map<String, Object> raw) {
+        return "desconhecido";
+    }
+
+    /** Descartes esperados (grupo, status) não precisam de aviso no log. */
+    default boolean isExpectedSkip(String reason) {
+        return false;
+    }
+
     boolean isStatusUpdate(Map<String, Object> raw);
 
     Optional<StatusData> parseStatusUpdate(Map<String, Object> raw);

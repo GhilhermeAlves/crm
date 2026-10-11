@@ -15,6 +15,7 @@ import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCas
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTypeRepository;
 import com.becommerce.crm.sales.scheduling.application.service.SlotService;
 import com.becommerce.crm.sales.scheduling.domain.AppointmentSource;
+import com.becommerce.crm.sales.scheduling.domain.AppointmentStatus;
 import com.becommerce.crm.sales.scheduling.domain.AppointmentType;
 import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingNotFoundException;
 import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingValidationException;
@@ -56,6 +57,9 @@ public class WhatsAppSchedulingTools {
 
     static final String CHECK_SLOTS = "consultar_horarios_livres";
     static final String BOOK = "agendar_consulta";
+    static final String LIST_MINE = "consultar_minhas_consultas";
+    static final String CANCEL = "cancelar_consulta";
+    private static final int PATIENT_LOOKAHEAD_DAYS = 60; // AppointmentService limita a 62 dias
 
     private static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
     private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
@@ -105,7 +109,15 @@ public class WhatsAppSchedulingTools {
                 - Ofereça no máximo 3 a 4 opções por vez, de forma natural.
                 - Antes de agendar, confirme com o paciente o tipo de consulta, o dia/horário escolhido e o nome completo.
                 - Para agendar, use agendar_consulta com o horário exatamente como veio da consulta.
-                - Depois de agendar, confirme dia, horário e profissional. Se falhar, ofereça outros horários.""");
+                - Depois de agendar, confirme dia, horário e profissional. Se falhar, ofereça outros horários.
+                Cancelamento e remarcação:
+                - Se o paciente pedir para cancelar, desmarcar ou remarcar, use consultar_minhas_consultas para ver as consultas dele.
+                - Confirme qual consulta (dia e horário) e use cancelar_consulta com o id exato. Só diga que cancelou depois
+                  que a ferramenta confirmar o cancelamento; nunca prometa cancelar sem usar a ferramenta.
+                - Logo depois de cancelar, ofereça remarcar UMA vez, já sugerindo horários de consultar_horarios_livres.
+                - Se ele aceitar, agende normalmente. Se não quiser remarcar agora, agradeça com cordialidade, não insista e
+                  use agendar_lembrete_remarcacao (se disponível) para retomar o contato em alguns dias.
+                - Se cancelar_consulta falhar, aí sim transfira para a equipe.""");
         return sb.toString();
     }
 
@@ -126,7 +138,20 @@ public class WhatsAppSchedulingTools {
                         "nome_paciente", Map.of("type", "string", "description", "Nome completo do paciente"),
                         "observacao", Map.of("type", "string", "description", "Motivo ou observação (opcional)")),
                 "required", List.of("tipo_consulta", "inicio", "nome_paciente"));
+        Map<String, Object> listMineSchema = Map.of("type", "object", "properties", Map.of());
+        Map<String, Object> cancelSchema = Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "consulta_id", Map.of("type", "string", "description", "id exato vindo de consultar_minhas_consultas"),
+                        "motivo", Map.of("type", "string", "description", "Motivo informado pelo paciente (opcional)")),
+                "required", List.of("consulta_id"));
         return List.of(
+                new AiProvider.ToolDefinition(LIST_MINE,
+                        "Lista as próximas consultas marcadas deste paciente (deste número de WhatsApp), com o id de cada uma.",
+                        listMineSchema),
+                new AiProvider.ToolDefinition(CANCEL,
+                        "Cancela uma consulta futura deste paciente. Use só depois de o paciente confirmar qual consulta.",
+                        cancelSchema),
                 new AiProvider.ToolDefinition(CHECK_SLOTS,
                         "Lista horários livres reais da agenda para um tipo de consulta em um intervalo de datas.", checkSchema),
                 new AiProvider.ToolDefinition(BOOK,
@@ -139,6 +164,8 @@ public class WhatsAppSchedulingTools {
             return switch (call.name()) {
                 case CHECK_SLOTS -> checkSlots(ctx, call.arguments());
                 case BOOK -> book(ctx, call.arguments());
+                case LIST_MINE -> listMine(ctx);
+                case CANCEL -> cancel(ctx, call.arguments());
                 default -> "Ferramenta desconhecida: " + call.name();
             };
         } catch (RuntimeException e) {
@@ -255,6 +282,93 @@ public class WhatsAppSchedulingTools {
             }
         }
         return "Esse horário acabou de ser ocupado. Consulte os horários livres novamente e ofereça outras opções.";
+    }
+
+    private String listMine(Context ctx) {
+        List<AppointmentResponse> mine = patientAppointments(ctx);
+        if (mine.isEmpty()) {
+            return "Não há consultas futuras marcadas para este número de WhatsApp.";
+        }
+        StringBuilder sb = new StringBuilder("Próximas consultas deste paciente:\n");
+        for (AppointmentResponse a : mine) {
+            LocalDateTime start = LocalDateTime.ofInstant(a.startAt(), ZONE);
+            String hostName = hostName(a.hostId());
+            sb.append("- ").append(a.title()).append(": ").append(weekday(start.toLocalDate())).append(" ")
+                    .append(br(start.toLocalDate())).append(" às ").append(start.format(DateTimeFormatter.ofPattern("HH:mm")))
+                    .append(hostName != null ? " com " + hostName : "")
+                    .append(" [consulta_id: ").append(a.id()).append("]\n");
+        }
+        return sb.toString();
+    }
+
+    private String cancel(Context ctx, Map<String, Object> args) {
+        UUID appointmentId;
+        try {
+            appointmentId = UUID.fromString(String.valueOf(str(args, "consulta_id")).trim());
+        } catch (IllegalArgumentException e) {
+            return "consulta_id inválido; use o id exato vindo de consultar_minhas_consultas.";
+        }
+        // Só cancela consulta futura deste próprio paciente (nunca de outra pessoa).
+        Optional<AppointmentResponse> target = patientAppointments(ctx).stream()
+                .filter(a -> a.id().equals(appointmentId))
+                .findFirst();
+        if (target.isEmpty()) {
+            return "Essa consulta não foi encontrada entre as próximas consultas deste paciente. "
+                    + "Use consultar_minhas_consultas e confirme com o paciente.";
+        }
+        AppointmentResponse canceled = appointmentUseCase.changeStatus(ctx.companyId(), appointmentId,
+                AppointmentStatus.CANCELED);
+        TenantContext.setCompanyId(ctx.companyId());
+        LocalDateTime start = LocalDateTime.ofInstant(canceled.startAt(), ZONE);
+        notifyHostCanceled(ctx.companyId(), canceled.hostId(), canceled.id(), canceled.title(), start, ctx.phone(),
+                str(args, "motivo"));
+        log.info("[WHATSAPP][AGENDA] company={} conversation={} agendamento {} cancelado pelo paciente",
+                ctx.companyId(), ctx.conversationId(), canceled.id());
+        return "Cancelado com sucesso: " + canceled.title() + " de " + weekday(start.toLocalDate()) + ", "
+                + br(start.toLocalDate()) + " às " + start.format(DateTimeFormatter.ofPattern("HH:mm"))
+                + ". Agora ofereça remarcar uma vez, sugerindo horários livres.";
+    }
+
+    /**
+     * Consultas futuras ativas do paciente da conversa: pelo contato vinculado ao
+     * telefone ou, sem contato, pelas agendadas pelo WhatsApp com este telefone nas notas.
+     */
+    private List<AppointmentResponse> patientAppointments(Context ctx) {
+        if (ctx.phone() == null) {
+            return List.of();
+        }
+        UUID contactId = findContactId(ctx.companyId(), ctx.phone());
+        List<String> phoneMarks = com.becommerce.crm.communication.omnichannel.domain.IgnoredContact
+                .phoneVariants(ctx.phone()).stream()
+                .map(v -> "Telefone: " + formatPhone(v))
+                .toList();
+        Instant now = Instant.now();
+        List<AppointmentResponse> all = appointmentUseCase.list(ctx.companyId(), now,
+                now.plus(java.time.Duration.ofDays(PATIENT_LOOKAHEAD_DAYS)), null);
+        TenantContext.setCompanyId(ctx.companyId());
+        return all.stream()
+                .filter(a -> a.status() == AppointmentStatus.SCHEDULED || a.status() == AppointmentStatus.CONFIRMED)
+                .filter(a -> (contactId != null && contactId.equals(a.contactId()))
+                        || (a.source() == AppointmentSource.WHATSAPP && a.notes() != null
+                        && phoneMarks.stream().anyMatch(a.notes()::contains)))
+                .sorted(java.util.Comparator.comparing(AppointmentResponse::startAt))
+                .toList();
+    }
+
+    private void notifyHostCanceled(UUID companyId, UUID hostId, UUID appointmentId, String title,
+                                    LocalDateTime start, String phone, String reason) {
+        try {
+            notificationUseCase.create(companyId, new CreateNotificationRequest(hostId, NotificationType.INFO,
+                    "Consulta cancelada pelo WhatsApp",
+                    title + " · " + weekday(start.toLocalDate()) + " " + br(start.toLocalDate()) + " às "
+                            + start.format(DateTimeFormatter.ofPattern("HH:mm")) + " · " + formatPhone(phone)
+                            + (reason != null ? " · Motivo: " + reason : ""),
+                    "{\"appointmentId\":\"" + appointmentId + "\"}"), new UUID(0L, 0L));
+        } catch (RuntimeException e) {
+            log.warn("[WHATSAPP][AGENDA] falha ao notificar cancelamento (company={}): {}", companyId, e.getMessage());
+        } finally {
+            TenantContext.setCompanyId(companyId);
+        }
     }
 
     private void notifyHost(UUID companyId, UUID hostId, UUID appointmentId, String typeName, String patient,
