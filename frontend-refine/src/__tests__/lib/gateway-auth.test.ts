@@ -16,7 +16,7 @@ describe("gateway-auth (BFF session)", () => {
   beforeEach(() => {
     Object.defineProperty(window, "location", {
       configurable: true,
-      value: { assign: vi.fn() },
+      value: { assign: vi.fn(), replace: vi.fn() },
     });
     document.cookie = `${CSRF_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
   });
@@ -31,31 +31,31 @@ describe("gateway-auth (BFF session)", () => {
 
   it("loginWithGateway navigates to /auth/authorize preserving the redirect", () => {
     loginWithGateway("/leads");
-    expect(window.location.assign).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fleads");
+    expect(window.location.replace).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fleads");
   });
 
   it("loginWithGateway defaults to crm home when no redirect is given", () => {
     loginWithGateway();
-    expect(window.location.assign).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fcrm");
+    expect(window.location.replace).toHaveBeenCalledWith("/auth/authorize?redirect=%2Fcrm");
   });
 
   it("loginWithGateway adds the provider hint preserving the redirect", () => {
     loginWithGateway("/leads", "google");
-    expect(window.location.assign).toHaveBeenCalledWith(
+    expect(window.location.replace).toHaveBeenCalledWith(
       "/auth/authorize?redirect=%2Fleads&provider=google",
     );
   });
 
   it("loginWithGateway without redirect keeps the provider hint", () => {
     loginWithGateway(undefined, "microsoft");
-    expect(window.location.assign).toHaveBeenCalledWith(
+    expect(window.location.replace).toHaveBeenCalledWith(
       "/auth/authorize?redirect=%2Fcrm&provider=microsoft",
     );
   });
 
   it("loginWithGateway encodes the provider alias safely", () => {
     loginWithGateway("/leads", "apple");
-    expect(window.location.assign).toHaveBeenCalledWith(
+    expect(window.location.replace).toHaveBeenCalledWith(
       "/auth/authorize?redirect=%2Fleads&provider=apple",
     );
   });
