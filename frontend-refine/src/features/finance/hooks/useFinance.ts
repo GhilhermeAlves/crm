@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FinanceService } from "../services/finance.service";
 import type {
+  AccountingReportRequest,
   CreateFinancialTransactionRequest,
   ListTransactionsFilters,
   ReportGranularity,
@@ -110,6 +111,13 @@ export function useAvailableMonths(companyId: string | null) {
     queryKey: ["finance", companyId, "available-months"],
     queryFn: () => FinanceService.getAvailableMonths(companyId as string),
     enabled: !!companyId,
+  });
+}
+
+export function useGenerateAccountingReport(companyId: string | null) {
+  return useMutation({
+    mutationFn: (body: AccountingReportRequest) =>
+      FinanceService.generateAccountingReport(companyId as string, body),
   });
 }
 

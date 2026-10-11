@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AccountingReportDialog } from "@/features/finance/components/AccountingReportDialog";
 import { FinanceActionsCard } from "@/features/finance/components/FinanceActionsCard";
 import { FinanceFiltersSheet } from "@/features/finance/components/FinanceFiltersSheet";
 import { FinancialHealthCard } from "@/features/finance/components/FinancialHealthCard";
@@ -66,11 +67,11 @@ function FinanceControlContent() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
 
-  // PONTOS DE ABERTURA — o diálogo da etapa 7 ainda não existe.
+  // PONTOS DE ABERTURA dos diálogos.
   const [newOpen, setNewOpen] = useState(false); // etapa 6: novo lançamento
   const [importOpen, setImportOpen] = useState(false); // etapa 6: envio/importação de tabela
   const [filtersOpen, setFiltersOpen] = useState(false); // etapa 6: filtros avançados
-  const [, setAccountingReportOpen] = useState(false); // etapa 7: relatório contábil
+  const [accountingReportOpen, setAccountingReportOpen] = useState(false); // etapa 7: relatório contábil
   const [editTransaction, setEditTransaction] = useState<FinancialTransaction | null>(null);
 
   const tabParam = searchParams.get("tab");
@@ -278,6 +279,11 @@ function FinanceControlContent() {
       <ImportTransactionsDialog
         open={importOpen}
         onOpenChange={setImportOpen}
+        companyId={companyId}
+      />
+      <AccountingReportDialog
+        open={accountingReportOpen}
+        onOpenChange={setAccountingReportOpen}
         companyId={companyId}
       />
       <FinanceFiltersSheet
