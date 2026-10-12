@@ -10,8 +10,11 @@ import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,14 +58,38 @@ public class FinancialTransactionRepositoryImpl implements FinancialTransactionR
         jpaRepository.deleteById(transaction.getId());
     }
 
+    /**
+     * Filtros dinâmicos: só entram os preenchidos. O antigo JPQL com
+     * {@code :x IS NULL OR ...} quebrava no PostgreSQL com parâmetro nulo sem tipo
+     * ("could not determine data type of parameter").
+     */
+    static Specification<FinancialTransactionJpaEntity> filter(UUID companyId, FinancialTransactionQuery query) {
+        return (root, cq, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("companyId"), companyId));
+            if (query.type() != null) predicates.add(cb.equal(root.get("type"), query.type().name()));
+            if (query.status() != null) predicates.add(cb.equal(root.get("status"), query.status()));
+            if (query.overdueBefore() != null) predicates.add(cb.lessThan(root.get("dueDate"), query.overdueBefore()));
+            if (query.from() != null) predicates.add(cb.greaterThanOrEqualTo(root.get("dueDate"), query.from()));
+            if (query.to() != null) predicates.add(cb.lessThanOrEqualTo(root.get("dueDate"), query.to()));
+            if (query.paymentMethod() != null) {
+                predicates.add(cb.equal(root.get("paymentMethod"), query.paymentMethod().name()));
+            }
+            if (query.category() != null) predicates.add(cb.equal(root.get("category"), query.category().name()));
+            if (query.professionalUserId() != null) {
+                predicates.add(cb.equal(root.get("professionalUserId"), query.professionalUserId()));
+            }
+            if (query.contactId() != null) predicates.add(cb.equal(root.get("contactId"), query.contactId()));
+            if (query.pattern() != null) {
+                predicates.add(cb.like(cb.lower(root.get("description")), query.pattern()));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+    }
+
     @Override
     public PageResult search(UUID companyId, FinancialTransactionQuery query, int page, int pageSize) {
-        Page<FinancialTransactionJpaEntity> result = jpaRepository.search(companyId,
-                query.type() == null ? null : query.type().name(),
-                query.status(), query.overdueBefore(), query.from(), query.to(),
-                query.paymentMethod() == null ? null : query.paymentMethod().name(),
-                query.category() == null ? null : query.category().name(),
-                query.professionalUserId(), query.contactId(), query.pattern(),
+        Page<FinancialTransactionJpaEntity> result = jpaRepository.findAll(filter(companyId, query),
                 PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "dueDate")));
         return new PageResult(result.getContent().stream().map(FinancialTransactionRepositoryImpl::toDomain).toList(),
                 result.getTotalElements());

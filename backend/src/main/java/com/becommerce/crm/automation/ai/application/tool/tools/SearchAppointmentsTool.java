@@ -55,7 +55,7 @@ public class SearchAppointmentsTool extends AbstractAiReadTool {
                         "days", integerProp("Quantidade de dias a partir da data (1 a 14, padrão 1)"),
                         "patient", stringProp("Nome ou telefone do paciente (opcional)"),
                         "includeCanceled", Map.of("type", "boolean",
-                                "description", "Incluir consultas canceladas (padrão: false)")));
+                                "description", "Incluir consultas canceladas (padrão: false). Use true para conferir se uma consulta foi desmarcada")));
         this.appointmentUseCase = appointmentUseCase;
         this.contactUseCase = contactUseCase;
         this.clock = clock;

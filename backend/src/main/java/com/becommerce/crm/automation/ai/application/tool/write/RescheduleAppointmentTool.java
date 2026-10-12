@@ -81,7 +81,8 @@ public class RescheduleAppointmentTool implements AiTool {
         Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
         schema.put("properties", Map.of(
-                "appointmentId", Map.of("type", "string", "format", "uuid"),
+                "appointmentId", Map.of("type", "string", "format", "uuid", "description",
+                        "id EXATO retornado por search_appointments; nunca invente nem use texto de exemplo"),
                 "newStart", Map.of("type", "string", "description",
                         "Novo inicio em horario de Brasilia, formato AAAA-MM-DDTHH:mm")));
         schema.put("required", List.of("appointmentId", "newStart"));
