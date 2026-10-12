@@ -53,3 +53,27 @@ export function useAiContext(): AiContextPayload | null {
   const pathname = usePathname();
   return resolveAiContext(pathname);
 }
+
+const PUBLIC_SEGMENTS = new Set(["login", "register", "forgot-password", "reset-password", "auth"]);
+
+/**
+ * Tela atual para o Léo saber onde o usuário está, mesmo sem registro em foco.
+ * Usa o contexto de registro quando houver; senão só {screen, route}.
+ */
+export function resolveAiScreenContext(pathname: string): AiContextPayload | null {
+  const record = resolveAiContext(pathname);
+  if (record) {
+    return record;
+  }
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length === 0 || PUBLIC_SEGMENTS.has(parts[0])) {
+    return null;
+  }
+  return { screen: parts[0], route: `/${parts.join("/")}` };
+}
+
+/** Tela atual do App Router para o chat (null em rotas públicas). */
+export function useAiScreenContext(): AiContextPayload | null {
+  const pathname = usePathname();
+  return resolveAiScreenContext(pathname);
+}

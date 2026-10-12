@@ -1,6 +1,8 @@
 package com.becommerce.crm.automation.ai.application.service;
 
+import com.becommerce.crm.automation.ai.application.context.AiApplicationContext;
 import com.becommerce.crm.automation.ai.application.context.AiPermissionContext;
+import com.becommerce.crm.automation.ai.application.context.AiScreenCatalog;
 import com.becommerce.crm.automation.ai.application.context.ResolvedAiContext;
 import com.becommerce.crm.automation.ai.application.dto.AiActionResponse;
 import com.becommerce.crm.automation.ai.application.dto.AiChatRequest;
@@ -30,6 +32,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.time.Clock;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -61,12 +68,16 @@ public class AiAssistantService implements AiAssistantUseCase {
     private static final String ROLE_USER = "user";
     private static final String ROLE_ASSISTANT = "assistant";
     private static final String ROLE_TOOL = "tool";
+    private static final ZoneId CLINIC_ZONE = ZoneId.of("America/Sao_Paulo");
+    private static final DateTimeFormatter NOW_FORMAT =
+            DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy HH:mm", Locale.forLanguageTag("pt-BR"));
 
     private final AiChatRepository chatRepository;
     private final AiProvider aiProvider;
     private final AiContextResolver contextResolver;
     private final AiToolRegistry toolRegistry;
     private final TenantAuditRecorder auditor;
+    private Clock clock = Clock.system(CLINIC_ZONE);
 
     public AiAssistantService(AiChatRepository chatRepository,
                               AiProvider aiProvider,
@@ -92,7 +103,8 @@ public class AiAssistantService implements AiAssistantUseCase {
 
             chatRepository.saveMessage(AiMessage.create(companyId, conversation.getId(), ROLE_USER, request.message()));
 
-List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, request.message());
+List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, request.message(),
+                    resolvedContext.application());
             ChatLoopResult loop = runToolLoop(companyId, userId, permissions, conversation.getId(), messages);
 
             // Tools chamam services que limpam o TenantContext em finally;
@@ -244,9 +256,9 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
     }
 
     private List<AiProvider.ChatMessage> buildPrompt(AiConversation conversation, String context,
-                                                     String userMessage) {
+                                                     String userMessage, AiApplicationContext application) {
         List<AiProvider.ChatMessage> messages = new ArrayList<>();
-        messages.add(new AiProvider.ChatMessage("system", systemPrompt()));
+        messages.add(new AiProvider.ChatMessage("system", systemPrompt(application)));
 
         if (context != null && !context.isBlank()) {
             messages.add(new AiProvider.ChatMessage("system", context));
@@ -266,13 +278,36 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
         return messages;
     }
 
-    private String systemPrompt() {
-        return "Você é o Léo, o assistente de inteligência comercial de um CRM (Customer 360). "
-                + "Quando alguém se dirigir a você ou pedir para se apresentar, use o nome Léo. "
-                + "Responda em português, de forma objetiva e profissional, com base APENAS nos "
-                + "dados fornecidos no contexto. Se a informação não estiver disponível no contexto, "
-                + "diga claramente que não tem os dados, sem inventar. Você tem acesso de LEITURA "
-                + "aos dados da empresa ativa. Nunca mencione que recebeu um bloco de contexto técnico.";
+    /** Relógio do prompt (data/hora atual); substituível em testes. */
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
+    String systemPrompt(AiApplicationContext application) {
+        StringBuilder sb = new StringBuilder()
+                .append("Você é o Léo, o assistente de inteligência comercial de um CRM (Customer 360). ")
+                .append("Quando alguém se dirigir a você ou pedir para se apresentar, use o nome Léo. ")
+                .append("Responda em português, de forma objetiva e profissional, com base APENAS nos ")
+                .append("dados fornecidos no contexto e nos resultados das ferramentas. Se a informação não ")
+                .append("estiver disponível, diga claramente que não tem os dados, sem inventar. ")
+                .append("Nunca mencione que recebeu um bloco de contexto técnico.\n\n")
+                .append("Ações: você consulta dados com as ferramentas. Para desmarcar ou remarcar consultas, ")
+                .append("criar tarefas/atividades ou alterar oportunidades, use a ferramenta correspondente: ")
+                .append("ela cria uma PROPOSTA que o usuário confirma no card exibido no chat. Nunca diga que ")
+                .append("já executou — diga que deixou pronto para confirmação. Antes de desmarcar ou ")
+                .append("remarcar, localize a consulta com search_appointments; se houver mais de uma ")
+                .append("possível, pergunte qual. Horários são sempre no fuso de Brasília.\n\n");
+
+        ZonedDateTime now = ZonedDateTime.now(clock.withZone(CLINIC_ZONE));
+        sb.append("Agora é ").append(now.format(NOW_FORMAT)).append(" (horário de Brasília).\n");
+        AiScreenCatalog.Screen current = application == null ? null : AiScreenCatalog.find(application.route());
+        if (current != null) {
+            sb.append("O usuário está na tela: ").append(current.name()).append(" (")
+                    .append(application.route()).append(").\n");
+        }
+        sb.append('\n').append(AiScreenCatalog.render())
+                .append("\nPara indicar uma tela, cite o nome e a rota (ex.: Agenda — /agenda).");
+        return sb.toString();
     }
 
     private String firstWords(String message) {

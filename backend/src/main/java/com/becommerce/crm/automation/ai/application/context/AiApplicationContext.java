@@ -31,6 +31,10 @@ public record AiApplicationContext(
         if (haystack.contains("report")) return "REPORT";
         if (haystack.contains("audit")) return "AUDIT";
         if (haystack.contains("settings")) return "SETTINGS";
+        if (haystack.contains("agenda") || haystack.contains("appointment")) return "AGENDA";
+        if (haystack.contains("finance")) return "FINANCE";
+        if (haystack.contains("catalog")) return "CATALOG";
+        if (haystack.contains("inbox")) return "INBOX";
         return "GENERAL";
     }
 }

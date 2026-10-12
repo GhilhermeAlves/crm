@@ -1,9 +1,35 @@
 "use client";
 
+import { Fragment, type ReactNode } from "react";
+import Link from "next/link";
 import { Sparkles, UserRound } from "lucide-react";
+import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { AiChatRole } from "../types/ai.types";
+
+const KNOWN_ROUTES = new Set<string>(Object.values(ROUTES));
+const ROUTE_RE = /(^|[\s(])(\/[a-z][a-z0-9/-]*)/g;
+
+/** Transforma rotas internas conhecidas citadas pelo Léo (ex.: /agenda) em links. */
+export function linkifyRoutes(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let last = 0;
+  for (const match of Array.from(text.matchAll(ROUTE_RE))) {
+    const route = match[2].replace(/\/+$/, "");
+    if (!KNOWN_ROUTES.has(route)) continue;
+    const start = (match.index ?? 0) + match[1].length;
+    nodes.push(text.slice(last, start));
+    nodes.push(
+      <Link key={start} href={route} className="font-medium underline underline-offset-2">
+        {route}
+      </Link>,
+    );
+    last = start + route.length;
+  }
+  nodes.push(text.slice(last));
+  return nodes;
+}
 
 type Props = {
   role: AiChatRole;
@@ -51,7 +77,11 @@ export function AiMessageBubble({ role, content, error = false, pending = false 
             IA está analisando...
           </span>
         ) : (
-          <p className="whitespace-pre-wrap break-words">{content}</p>
+          <p className="whitespace-pre-wrap break-words">
+            {isUser
+              ? content
+              : linkifyRoutes(content).map((node, i) => <Fragment key={i}>{node}</Fragment>)}
+          </p>
         )}
       </div>
       {isUser && (

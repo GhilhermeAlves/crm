@@ -9,9 +9,12 @@ import com.becommerce.crm.sales.task.application.port.in.TaskUseCase;
 import com.becommerce.crm.sales.activity.domain.ActivityType;
 import com.becommerce.crm.automation.ai.domain.AiAction;
 import com.becommerce.crm.sales.task.domain.TaskPriority;
+import com.becommerce.crm.sales.scheduling.application.dto.RescheduleRequest;
+import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -29,13 +32,16 @@ public class AiActionExecutor {
     private final TaskUseCase taskUseCase;
     private final ActivityUseCase activityUseCase;
     private final OpportunityUseCase opportunityUseCase;
+    private final AppointmentUseCase appointmentUseCase;
 
     public AiActionExecutor(TaskUseCase taskUseCase,
                             ActivityUseCase activityUseCase,
-                            OpportunityUseCase opportunityUseCase) {
+                            OpportunityUseCase opportunityUseCase,
+                            AppointmentUseCase appointmentUseCase) {
         this.taskUseCase = taskUseCase;
         this.activityUseCase = activityUseCase;
         this.opportunityUseCase = opportunityUseCase;
+        this.appointmentUseCase = appointmentUseCase;
     }
 
     public Object execute(AiAction action) {
@@ -72,6 +78,12 @@ public class AiActionExecutor {
                             localDateTime(p.get("expectedCloseDate")),
                             str(p.get("notes"))),
                     action.getUserId());
+            case "cancel_appointment" -> appointmentUseCase.cancel(
+                    action.getCompanyId(), uuid(p.get("appointmentId")), str(p.get("reason")));
+            case "reschedule_appointment" -> appointmentUseCase.reschedule(
+                    action.getCompanyId(), uuid(p.get("appointmentId")),
+                    new RescheduleRequest(Instant.parse(str(p.get("startAt"))),
+                            Instant.parse(str(p.get("endAt"))), false));
             default -> throw new IllegalArgumentException(
                     "Ferramenta de escrita nao suportada: " + action.getTool());
         };

@@ -18,7 +18,7 @@ import {
   useAiConversations,
   useAiPermissions,
 } from "../hooks/useAi";
-import { useAiContext } from "../hooks/useAiContext";
+import { useAiContext, useAiScreenContext } from "../hooks/useAiContext";
 import { aiAnalysisErrorMessage, aiErrorMessage } from "../services/ai.service";
 import { AiActionProposalCard } from "./AiActionProposalCard";
 import { AiAnalysisCard } from "./AiAnalysisCard";
@@ -49,6 +49,7 @@ export function AiChatAssistant({ embedded = false }: { embedded?: boolean } = {
   const { user } = useAuth();
   const { canChat } = useAiPermissions();
   const context = useAiContext();
+  const screenContext = useAiScreenContext();
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -128,7 +129,7 @@ export function AiChatAssistant({ embedded = false }: { embedded?: boolean } = {
       setChatState("processing");
 
       chatMutation.mutate(
-        { message: trimmed, conversationId, context },
+        { message: trimmed, conversationId, context: context ?? screenContext },
         {
           onSuccess: (res) => {
             setConversationId(res.conversationId);
@@ -167,7 +168,7 @@ export function AiChatAssistant({ embedded = false }: { embedded?: boolean } = {
         },
       );
     },
-    [chatMutation, context, conversationId, input, processing, queryClient],
+    [chatMutation, context, screenContext, conversationId, input, processing, queryClient],
   );
 
   const runAnalysis = useCallback(() => {

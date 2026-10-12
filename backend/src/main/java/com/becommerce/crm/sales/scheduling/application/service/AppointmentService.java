@@ -156,6 +156,28 @@ public class AppointmentService implements AppointmentUseCase {
 
     @Override
     @Transactional
+    public AppointmentResponse cancel(UUID companyId, UUID appointmentId, String reason) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            Appointment appointment = requireOwned(companyId, appointmentId);
+            String trimmed = reason == null || reason.isBlank() ? null : reason.trim();
+            if (trimmed != null && trimmed.length() > 500) {
+                trimmed = trimmed.substring(0, 500);
+            }
+            appointment.cancel(trimmed);
+            appointmentRepository.save(appointment);
+
+            auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Appointment",
+                    appointment.getId().toString(), "Agendamento cancelado: " + appointment.getTitle(),
+                    null, null);
+            return toResponse(appointment);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional
     public void delete(UUID companyId, UUID appointmentId) {
         try {
             TenantContext.setCompanyId(companyId);

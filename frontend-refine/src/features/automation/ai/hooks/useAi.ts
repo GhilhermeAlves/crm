@@ -83,7 +83,10 @@ export function useAiConfirmAction(conversationId: string | null) {
     onError: (error: Error) => {
       toast.error(aiErrorMessage(error));
     },
-    onSuccess: () => {
+    onSuccess: (action) => {
+      if (action?.tool?.endsWith("_appointment")) {
+        queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      }
       queryClient.invalidateQueries({
         queryKey: ["ai", "conversations", conversationId, "actions"],
       });
