@@ -15,6 +15,7 @@ import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionStatus;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
+import com.becommerce.crm.masterdata.inventory.application.service.InventoryService;
 import com.becommerce.crm.sales.activity.application.port.in.ActivityUseCase;
 import com.becommerce.crm.sales.pipeline.application.port.in.OpportunityUseCase;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
@@ -231,7 +232,8 @@ class FinanceWriteToolsTest {
     @Test
     void executorCreatesAndPaysWithPersistedValues() {
         AiActionExecutor executor = new AiActionExecutor(mock(TaskUseCase.class), mock(ActivityUseCase.class),
-                mock(OpportunityUseCase.class), mock(AppointmentUseCase.class), transactions);
+                mock(OpportunityUseCase.class), mock(AppointmentUseCase.class), transactions,
+                mock(InventoryService.class));
         UUID contactId = UUID.randomUUID();
 
         AiAction create = mock(AiAction.class);

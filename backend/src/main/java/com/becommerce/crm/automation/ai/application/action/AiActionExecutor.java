@@ -8,6 +8,9 @@ import com.becommerce.crm.finance.transaction.application.service.FinancialTrans
 import com.becommerce.crm.finance.transaction.domain.PaymentMethod;
 import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
+import com.becommerce.crm.masterdata.inventory.application.dto.RegisterMovementRequest;
+import com.becommerce.crm.masterdata.inventory.application.service.InventoryService;
+import com.becommerce.crm.masterdata.inventory.domain.StockMovementType;
 import com.becommerce.crm.sales.pipeline.application.dto.UpdateOpportunityRequest;
 import com.becommerce.crm.sales.pipeline.application.port.in.OpportunityUseCase;
 import com.becommerce.crm.sales.task.application.dto.CreateTaskRequest;
@@ -43,17 +46,20 @@ public class AiActionExecutor {
     private final OpportunityUseCase opportunityUseCase;
     private final AppointmentUseCase appointmentUseCase;
     private final FinancialTransactionService financialTransactionService;
+    private final InventoryService inventoryService;
 
     public AiActionExecutor(TaskUseCase taskUseCase,
                             ActivityUseCase activityUseCase,
                             OpportunityUseCase opportunityUseCase,
                             AppointmentUseCase appointmentUseCase,
-                            FinancialTransactionService financialTransactionService) {
+                            FinancialTransactionService financialTransactionService,
+                            InventoryService inventoryService) {
         this.taskUseCase = taskUseCase;
         this.activityUseCase = activityUseCase;
         this.opportunityUseCase = opportunityUseCase;
         this.appointmentUseCase = appointmentUseCase;
         this.financialTransactionService = financialTransactionService;
+        this.inventoryService = inventoryService;
     }
 
     /**
@@ -122,6 +128,10 @@ public class AiActionExecutor {
             case "pay_transaction" -> financialTransactionService.pay(
                     action.getCompanyId(), uuid(p.get("transactionId")),
                     new PayTransactionRequest(localDate(p.get("paidAt"))), action.getUserId());
+            case "register_stock_movement" -> inventoryService.registerMovement(
+                    action.getCompanyId(), uuid(p.get("itemId")),
+                    new RegisterMovementRequest(enumOf(p.get("type"), StockMovementType.class),
+                            intValue(p.get("quantity")), str(p.get("note"))));
             default -> throw new IllegalArgumentException(
                     "Ferramenta de escrita nao suportada: " + action.getTool());
         };
