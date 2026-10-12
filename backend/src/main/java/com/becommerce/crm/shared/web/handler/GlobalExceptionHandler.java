@@ -40,6 +40,8 @@ import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisValidat
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogItemNotFoundException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogSkuConflictException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.InvalidCatalogItemException;
+import com.becommerce.crm.masterdata.inventory.domain.exception.InsufficientStockException;
+import com.becommerce.crm.masterdata.inventory.domain.exception.InventoryItemNotFoundException;
 import com.becommerce.crm.finance.report.domain.exception.ReportSuggestionValidationException;
 import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionNotFoundException;
 import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionValidationException;
@@ -214,6 +216,17 @@ public class GlobalExceptionHandler {
             ));
     }
 
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientStock(InsufficientStockException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(InvalidCatalogItemException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidCatalogItem(InvalidCatalogItemException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -362,7 +375,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({CampaignNotFoundException.class, TemplateNotFoundException.class,
         CatalogItemNotFoundException.class, AnamnesisModelNotFoundException.class,
-        FinancialTransactionNotFoundException.class})
+        FinancialTransactionNotFoundException.class, InventoryItemNotFoundException.class})
     public ResponseEntity<Map<String, Object>> handleCampaignOrTemplateNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(

@@ -47,6 +47,22 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
                 result.getTotalElements());
     }
 
+    @Override
+    public PageResult searchProducts(UUID companyId, String query, String category, Boolean lowStock,
+                                     Boolean active, int page, int pageSize) {
+        String pattern = query == null ? null : "%" + escapeLike(query.toLowerCase(Locale.ROOT)) + "%";
+        Page<CatalogItemJpaEntity> result = jpaRepository.searchProducts(companyId,
+                category == null ? null : category, lowStock, active, pattern,
+                PageRequest.of(page, pageSize, Sort.by(Sort.Direction.ASC, "name")));
+        return new PageResult(result.getContent().stream().map(CatalogItemRepositoryImpl::toDomain).toList(),
+                result.getTotalElements());
+    }
+
+    @Override
+    public Optional<CatalogItem> findByIdForUpdate(UUID id) {
+        return jpaRepository.findByIdForUpdate(id).map(CatalogItemRepositoryImpl::toDomain);
+    }
+
     /** '%' e '_' digitados pelo usuário são literais, não curingas. */
     private static String escapeLike(String value) {
         return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");

@@ -23,5 +23,12 @@ public interface CatalogItemRepository {
     PageResult search(UUID companyId, String query, CatalogItemType type, Boolean active,
                       int page, int pageSize);
 
+    /** Produtos (itemType = PRODUCT) com estoque. {@code lowStock} filtra min_stock > 0 e quantity <= min_stock. */
+    PageResult searchProducts(UUID companyId, String query, String category, Boolean lowStock,
+                              Boolean active, int page, int pageSize);
+
+    /** Lock pessimista de linha para registrar movimentação (PESSIMISTIC_WRITE). */
+    Optional<CatalogItem> findByIdForUpdate(UUID id);
+
     record PageResult(List<CatalogItem> content, long totalElements) {}
 }

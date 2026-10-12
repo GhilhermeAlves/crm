@@ -28,5 +28,6 @@ public enum AuditModule {
     OMNICHANNEL,
     FOLLOWUPS,
     CATALOG,
-    ANAMNESIS
+    ANAMNESIS,
+    INVENTORY
 }

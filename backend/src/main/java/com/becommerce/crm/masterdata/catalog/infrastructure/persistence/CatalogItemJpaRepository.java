@@ -3,9 +3,13 @@ package com.becommerce.crm.masterdata.catalog.infrastructure.persistence;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
+
+import java.util.Optional;
 import java.util.UUID;
 
 public interface CatalogItemJpaRepository extends JpaRepository<CatalogItemJpaEntity, UUID> {
@@ -28,4 +32,24 @@ public interface CatalogItemJpaRepository extends JpaRepository<CatalogItemJpaEn
             + "AND i.sku = :sku AND (:excludeId IS NULL OR i.id <> :excludeId)")
     boolean existsBySku(@Param("companyId") UUID companyId, @Param("sku") String sku,
                         @Param("excludeId") UUID excludeId);
+
+    @Query("SELECT i FROM CatalogItemJpaEntity i WHERE i.companyId = :companyId "
+            + "AND i.itemType = 'PRODUCT' "
+            + "AND (:active IS NULL OR i.active = :active) "
+            + "AND (:lowStock IS NULL OR NOT (:lowStock = TRUE) "
+            + "     OR (i.minStock > 0 AND i.quantity <= i.minStock)) "
+            + "AND (:category IS NULL OR i.category = :category) "
+            + "AND (:pattern IS NULL OR LOWER(i.name) LIKE :pattern "
+            + "     OR LOWER(COALESCE(i.category, '')) LIKE :pattern "
+            + "     OR LOWER(COALESCE(i.sku, '')) LIKE :pattern)")
+    Page<CatalogItemJpaEntity> searchProducts(@Param("companyId") UUID companyId,
+                                              @Param("category") String category,
+                                              @Param("lowStock") Boolean lowStock,
+                                              @Param("active") Boolean active,
+                                              @Param("pattern") String pattern,
+                                              Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT i FROM CatalogItemJpaEntity i WHERE i.id = :id")
+    Optional<CatalogItemJpaEntity> findByIdForUpdate(@Param("id") UUID id);
 }
