@@ -55,7 +55,7 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
     static CatalogItem toDomain(CatalogItemJpaEntity e) {
         return CatalogItem.reconstitute(e.getId(), e.getCompanyId(), CatalogItemType.valueOf(e.getItemType()),
                 e.getName(), e.getDescription(), e.getCategory(), e.getPrice(), e.getCurrency(), e.getSku(),
-                e.isActive(), e.getCreatedAt(), e.getUpdatedAt());
+                e.isActive(), e.getUnit(), e.getMinStock(), e.getQuantity(), e.getCreatedAt(), e.getUpdatedAt());
     }
 
     static CatalogItemJpaEntity toEntity(CatalogItem i) {
@@ -69,6 +69,9 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
         e.setPrice(i.getPrice());
         e.setCurrency(i.getCurrency());
         e.setSku(i.getSku());
+        e.setUnit(i.getUnit());
+        e.setMinStock(i.getMinStock());
+        e.setQuantity(i.getQuantity());
         e.setActive(i.isActive());
         e.setCreatedAt(i.getCreatedAt());
         e.setUpdatedAt(i.getUpdatedAt());

@@ -2,6 +2,7 @@ package com.becommerce.crm.masterdata.catalog.application.dto;
 
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -17,6 +18,8 @@ public record CatalogItemRequest(
         @Size(max = 80) String category,
         @DecimalMin(value = "0.00") BigDecimal price,
         @Pattern(regexp = "^[A-Za-z]{3}$", message = "Moeda deve ter 3 letras (ex.: BRL)") String currency,
-        @Size(max = 64) String sku
+        @Size(max = 64) String sku,
+        @Size(max = 20) String unit,
+        @Min(0) Integer minStock
 ) {
 }
