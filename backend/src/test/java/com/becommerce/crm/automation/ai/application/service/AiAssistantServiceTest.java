@@ -324,4 +324,25 @@ class AiAssistantServiceTest {
         verify(chatRepository, never()).findMessagesByConversation(any());
         assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
     }
+
+    @Test
+    void systemPromptHasCurrentDateScreenAndConfirmationRule() {
+        aiAssistantService.setClock(java.time.Clock.fixed(
+                java.time.Instant.parse("2026-10-12T12:30:00Z"), java.time.ZoneOffset.UTC));
+
+        String prompt = aiAssistantService.systemPrompt(AiApplicationContext.of("agenda", "/agenda"));
+
+        assertTrue(prompt.startsWith("Você é o Léo"));
+        assertTrue(prompt.contains("12/10/2026 09:30 (horário de Brasília)"), prompt);
+        assertTrue(prompt.contains("O usuário está na tela: Agenda (/agenda)."));
+        assertTrue(prompt.contains("PROPOSTA que o usuário confirma"));
+        assertTrue(prompt.contains("- Controle financeiro — /finance/control: "));
+    }
+
+    @Test
+    void systemPromptWithoutKnownScreenOmitsCurrentScreen() {
+        String prompt = aiAssistantService.systemPrompt(null);
+
+        assertFalse(prompt.contains("O usuário está na tela"));
+    }
 }
