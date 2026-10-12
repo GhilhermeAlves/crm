@@ -22,11 +22,11 @@ class ReportDatasetBuilderTest {
     @Test
     void dreGroupsCategoriesAndSubtractsExpensesAndFees() {
         MonthlyDreDataset dre = ReportDatasetBuilder.dre(List.of(
-                new CategoryTotalRow(TransactionCategory.PROCEDURE, 3, 300_000, 1_500),
-                new CategoryTotalRow(TransactionCategory.CONSULTATION, 2, 50_000, 0),
-                new CategoryTotalRow(TransactionCategory.TAXES, 1, 20_000, 0),
-                new CategoryTotalRow(TransactionCategory.RENT, 1, 100_000, 0),
-                new CategoryTotalRow(TransactionCategory.SUPPLIES, 2, 10_000, 0)));
+                new CategoryTotalRow(TransactionCategory.PROCEDURE, 3, 300_000, 1_500, 2),
+                new CategoryTotalRow(TransactionCategory.CONSULTATION, 2, 50_000, 0, 0),
+                new CategoryTotalRow(TransactionCategory.TAXES, 1, 20_000, 0, 0),
+                new CategoryTotalRow(TransactionCategory.RENT, 1, 100_000, 0, 0),
+                new CategoryTotalRow(TransactionCategory.SUPPLIES, 2, 10_000, 0, 0)));
 
         assertThat(dre.groups()).extracting(DreGroup::label).containsExactly("Receitas",
                 "Deduções sobre receita", "Despesas com pessoal", "Despesas administrativas",
@@ -43,6 +43,7 @@ class ReportDatasetBuilderTest {
 
         assertThat(dre.groups().get(2).totalCents()).isZero();
         assertThat(dre.groups().get(6).totalCents()).isEqualTo(1_500);
+        assertThat(dre.groups().get(6).count()).isEqualTo(2);
 
         // 350.000 - 20.000 - 100.000 - 10.000 - 1.500
         assertThat(dre.resultCents()).isEqualTo(218_500);

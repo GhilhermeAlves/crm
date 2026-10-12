@@ -49,7 +49,7 @@ public final class PdfReportLayout {
 
     private static final DateTimeFormatter ISSUED = DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm:ss");
 
-    private static final Font TITLE = font(FontFactory.HELVETICA_BOLD, 15, PRIMARY);
+    private static final Font TITLE = font(FontFactory.HELVETICA_BOLD, 14, PRIMARY);
     private static final Font META = font(FontFactory.HELVETICA, 9, MUTED);
     private static final Font META_STRONG = font(FontFactory.HELVETICA_BOLD, 10, TEXT);
     private static final Font HEADING = font(FontFactory.HELVETICA_BOLD, 11, PRIMARY);
@@ -85,7 +85,7 @@ public final class PdfReportLayout {
     }
 
     private static void header(Document document, ReportDocument report) {
-        PdfPTable header = new PdfPTable(new float[] {3f, 2f});
+        PdfPTable header = new PdfPTable(new float[] {3.6f, 1.6f});
         header.setWidthPercentage(100);
         PdfPCell left = new PdfPCell();
         left.setBorder(Rectangle.NO_BORDER);

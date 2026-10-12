@@ -81,9 +81,7 @@ public class ReportDatasetBuilder {
         for (CategoryTotalRow row : rows) {
             byCategory.put(row.category(), row);
             feeCents += row.feeCents();
-            if (row.feeCents() > 0) {
-                feeCount += row.count();
-            }
+            feeCount += row.feeCount();
         }
         List<DreGroup> groups = new ArrayList<>();
         long result = 0L;

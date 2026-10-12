@@ -27,7 +27,8 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
             TransactionCategory.valueOf(rs.getString("category")),
             rs.getLong("total_count"),
             rs.getLong("total"),
-            rs.getLong("fee"));
+            rs.getLong("fee"),
+            rs.getLong("fee_count"));
 
     private static final RowMapper<DailyTotalRow> DAILY_ROW = (rs, i) -> new DailyTotalRow(
             rs.getDate("day").toLocalDate(),
@@ -71,7 +72,8 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
     @Override
     public List<CategoryTotalRow> paidByCategory(UUID companyId, LocalDate from, LocalDate to) {
         String sql = "SELECT ft.category AS category, COUNT(*) AS total_count, "
-                + "SUM(ft.amount_cents) AS total, SUM(ft.fee_cents) AS fee "
+                + "SUM(ft.amount_cents) AS total, SUM(ft.fee_cents) AS fee, "
+                + "COUNT(*) FILTER (WHERE ft.fee_cents > 0) AS fee_count "
                 + "FROM financial_transactions ft "
                 + "WHERE ft.company_id = :companyId AND ft.status = 'PAID' "
                 + "AND ft.paid_at BETWEEN :from AND :to "

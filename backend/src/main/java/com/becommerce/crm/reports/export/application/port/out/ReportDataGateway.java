@@ -34,7 +34,8 @@ public interface ReportDataGateway {
 
     record CompanyHeader(String name, String cnpj) {}
 
-    record CategoryTotalRow(TransactionCategory category, long count, long totalCents, long feeCents) {}
+    record CategoryTotalRow(TransactionCategory category, long count, long totalCents, long feeCents,
+                            long feeCount) {}
 
     record DailyTotalRow(LocalDate date, TransactionType type, long totalCents) {}
 
