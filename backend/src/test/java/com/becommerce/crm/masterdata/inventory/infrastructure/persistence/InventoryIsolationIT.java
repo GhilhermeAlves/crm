@@ -170,10 +170,12 @@ class InventoryIsolationIT {
         }
     }
 
+    /** Só os itens do seed (SKU-1): outros testes inserem itens e a ordem de execução não é fixa. */
     private static String visibleNames() throws SQLException {
         try (Connection conn = tenantAwareDataSource.getConnection();
              Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery("SELECT string_agg(name, ',' ORDER BY name) FROM catalog_items")) {
+             ResultSet rs = st.executeQuery("SELECT string_agg(name, ',' ORDER BY name) FROM catalog_items "
+                     + "WHERE sku = 'SKU-1'")) {
             rs.next();
             return rs.getString(1);
         }
