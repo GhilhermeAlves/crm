@@ -20,7 +20,7 @@ export type CatalogItem = {
   type: CatalogItemType;
   name: string;
   description: string | null;
-  category: string | null;
+  category: CatalogCategory | null;
   price: number | null;
   currency: string;
   sku: string | null;
@@ -36,7 +36,7 @@ export type CatalogItemRequest = {
   type: CatalogItemType;
   name: string;
   description?: string;
-  category?: string;
+  category?: CatalogCategory;
   price?: number | null;
   currency?: string;
   sku?: string;

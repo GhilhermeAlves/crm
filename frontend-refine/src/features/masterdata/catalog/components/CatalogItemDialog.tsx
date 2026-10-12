@@ -15,11 +15,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  CATALOG_CATEGORIES,
+  CATALOG_CATEGORY_LABELS,
   CATALOG_TYPE_LABELS,
+  type CatalogCategory,
   type CatalogItem,
   type CatalogItemRequest,
   type CatalogItemType,
 } from "../types/catalog.types";
+import {
+  STOCK_UNITS,
+  UNIT_LABELS,
+  type StockUnit,
+} from "@/features/masterdata/inventory/types/inventory.types";
 
 type Props = {
   open: boolean;
@@ -36,6 +44,8 @@ type FormState = {
   category: string;
   price: string;
   sku: string;
+  unit: StockUnit | "";
+  minStock: string;
 };
 
 function initialState(item: CatalogItem | null): FormState {
@@ -46,6 +56,8 @@ function initialState(item: CatalogItem | null): FormState {
     category: item?.category ?? "",
     price: item?.price != null ? String(item.price).replace(".", ",") : "",
     sku: item?.sku ?? "",
+    unit: item?.unit ?? "",
+    minStock: item ? String(item.minStock) : "0",
   };
 }
 
@@ -79,14 +91,22 @@ export function CatalogItemDialog({ open, onOpenChange, item, isSubmitting, onSu
       toast.error("Preço inválido. Use, por exemplo, 199,90.");
       return;
     }
+    const minStock = form.minStock.trim()
+      ? Math.max(0, Math.floor(Number(form.minStock) || 0))
+      : 0;
     onSubmit({
       type: form.type,
       name: form.name.trim(),
       description: form.description.trim() || undefined,
-      category: form.category.trim() || undefined,
+      category:
+        ((form.type === "PRODUCT" ? form.category : form.category.trim()) || undefined) as
+          | CatalogCategory
+          | undefined,
       price,
       currency: "BRL",
       sku: form.sku.trim() || undefined,
+      unit: form.type === "PRODUCT" && form.unit ? form.unit : null,
+      minStock: form.type === "PRODUCT" ? minStock : 0,
     });
   };
 
@@ -115,13 +135,31 @@ export function CatalogItemDialog({ open, onOpenChange, item, isSubmitting, onSu
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="catalog-category">Categoria</Label>
-              <Input
-                id="catalog-category"
-                placeholder="Ex.: Planos"
-                value={form.category}
-                onChange={(e) => set("category", e.target.value)}
-                maxLength={80}
-              />
+              {form.type === "PRODUCT" ? (
+                <Select
+                  value={form.category}
+                  onValueChange={(v) => set("category", v as CatalogCategory)}
+                >
+                  <SelectTrigger id="catalog-category">
+                    <SelectValue placeholder="Selecione…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATALOG_CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {CATALOG_CATEGORY_LABELS[c]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="catalog-category"
+                  placeholder="Ex.: Planos"
+                  value={form.category}
+                  onChange={(e) => set("category", e.target.value)}
+                  maxLength={80}
+                />
+              )}
             </div>
           </div>
           <div className="space-y-1.5">
@@ -145,6 +183,37 @@ export function CatalogItemDialog({ open, onOpenChange, item, isSubmitting, onSu
               maxLength={4000}
             />
           </div>
+          {form.type === "PRODUCT" ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="catalog-unit">Unidade</Label>
+                <Select value={form.unit} onValueChange={(v) => set("unit", v as StockUnit)}>
+                  <SelectTrigger id="catalog-unit">
+                    <SelectValue placeholder="Sem unidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STOCK_UNITS.map((unit) => (
+                      <SelectItem key={unit} value={unit}>
+                        {UNIT_LABELS[unit]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="catalog-min-stock">Estoque mínimo</Label>
+                <Input
+                  id="catalog-min-stock"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  value={form.minStock}
+                  onChange={(e) => set("minStock", e.target.value)}
+                />
+              </div>
+            </div>
+          ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="catalog-price">Preço (R$)</Label>
