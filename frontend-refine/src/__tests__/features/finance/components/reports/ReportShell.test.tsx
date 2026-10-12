@@ -6,14 +6,6 @@ import { ReportCard } from "@/features/finance/components/reports/ReportCard";
 import { ReportListChip } from "@/features/finance/components/reports/ReportListChip";
 import { ReportShell } from "@/features/finance/components/reports/ReportShell";
 
-if (typeof globalThis.ResizeObserver === "undefined") {
-  globalThis.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
-}
-
 const renderShell = (onExport: () => void = () => {}) =>
   render(
     <ReportShell

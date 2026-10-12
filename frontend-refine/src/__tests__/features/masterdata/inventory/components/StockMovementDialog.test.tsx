@@ -15,7 +15,7 @@ const item: InventoryItem = {
 };
 
 describe("StockMovementDialog", () => {
-  it("chama onSubmit com entrada após preencher e salvar", () => {
+  it("chama onSubmit com entrada após preencher e salvar", async () => {
     const onSubmit = vi.fn();
     render(
       <StockMovementDialog
@@ -28,7 +28,7 @@ describe("StockMovementDialog", () => {
     );
 
     fireEvent.click(screen.getByLabelText("Tipo"));
-    fireEvent.click(screen.getByRole("option", { name: "Entrada" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Entrada" }, { timeout: 5000 }));
     fireEvent.change(screen.getByLabelText("Quantidade"), { target: { value: "10" } });
     fireEvent.change(screen.getByLabelText("Observação"), { target: { value: "Compra" } });
     fireEvent.click(screen.getByRole("button", { name: "Registrar" }));
