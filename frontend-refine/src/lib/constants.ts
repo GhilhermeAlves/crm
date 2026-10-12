@@ -38,6 +38,7 @@ export const ROUTES = {
   AGENDA: "/agenda",
   TASKS: "/tasks",
   CATALOG: "/catalog",
+  INVENTORY: "/estoque",
   ACTIVITIES: "/activities",
   WORKFLOWS: "/workflows",
   INBOX: "/inbox",
