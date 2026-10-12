@@ -1,4 +1,18 @@
+import type { StockUnit } from "@/features/masterdata/inventory/types/inventory.types";
+
 export type CatalogItemType = "PRODUCT" | "SERVICE";
+
+export type CatalogCategory = "EPI" | "INSTRUMENTO" | "MATERIAL_DE_CONSUMO" | "MEDICAMENTO" | "OUTROS";
+
+export const CATALOG_CATEGORY_LABELS: Record<CatalogCategory, string> = {
+  EPI: "EPI",
+  INSTRUMENTO: "Instrumento",
+  MATERIAL_DE_CONSUMO: "Material de consumo",
+  MEDICAMENTO: "Medicamento",
+  OUTROS: "Outros",
+};
+
+export const CATALOG_CATEGORIES = Object.keys(CATALOG_CATEGORY_LABELS) as CatalogCategory[];
 
 export type CatalogItem = {
   id: string;
@@ -10,6 +24,9 @@ export type CatalogItem = {
   price: number | null;
   currency: string;
   sku: string | null;
+  unit: StockUnit | null;
+  minStock: number;
+  quantity: number;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -23,6 +40,8 @@ export type CatalogItemRequest = {
   price?: number | null;
   currency?: string;
   sku?: string;
+  unit?: StockUnit | null;
+  minStock?: number;
 };
 
 export type CatalogFilters = {
