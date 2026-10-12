@@ -23,6 +23,9 @@ public interface AppointmentUseCase {
 
     AppointmentResponse changeStatus(UUID companyId, UUID appointmentId, AppointmentStatus status);
 
+    /** Cancela registrando o motivo (ex.: desmarcado pelo assistente Léo). */
+    AppointmentResponse cancel(UUID companyId, UUID appointmentId, String reason);
+
     void delete(UUID companyId, UUID appointmentId);
 
     List<AppointmentResponse> list(UUID companyId, Instant from, Instant to, List<UUID> hostIds);
