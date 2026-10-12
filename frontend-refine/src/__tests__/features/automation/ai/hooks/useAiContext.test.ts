@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { resolveAiContext, resolveAiScreenContext } from "@/features/automation/ai/hooks/useAiContext";
+import {
+  resolveAiContext,
+  resolveAiScreenContext,
+} from "@/features/automation/ai/hooks/useAiContext";
 
 describe("resolveAiContext (AI-04 §8-11)", () => {
   it("resolves Customer 360 em /customers/{id}", () => {
@@ -63,7 +66,10 @@ describe("resolveAiScreenContext", () => {
   });
 
   it("id inválido vira só tela", () => {
-    expect(resolveAiScreenContext("/contacts/abc")).toEqual({ screen: "contacts", route: "/contacts/abc" });
+    expect(resolveAiScreenContext("/contacts/abc")).toEqual({
+      screen: "contacts",
+      route: "/contacts/abc",
+    });
   });
 
   it("retorna null em rotas públicas e na raiz", () => {

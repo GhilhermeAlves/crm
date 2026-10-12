@@ -78,7 +78,9 @@ export function AiMessageBubble({ role, content, error = false, pending = false 
           </span>
         ) : (
           <p className="whitespace-pre-wrap break-words">
-            {isUser ? content : linkifyRoutes(content).map((node, i) => <Fragment key={i}>{node}</Fragment>)}
+            {isUser
+              ? content
+              : linkifyRoutes(content).map((node, i) => <Fragment key={i}>{node}</Fragment>)}
           </p>
         )}
       </div>

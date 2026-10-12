@@ -4,9 +4,16 @@ import { AiMessageBubble } from "@/features/automation/ai/components/AiMessageBu
 
 describe("AiMessageBubble — links de rota", () => {
   it("transforma rotas conhecidas em links na resposta do Léo", () => {
-    render(<AiMessageBubble role="assistant" content="Abra a Agenda — /agenda e o Controle financeiro (/finance/control)." />);
+    render(
+      <AiMessageBubble
+        role="assistant"
+        content="Abra a Agenda — /agenda e o Controle financeiro (/finance/control)."
+      />,
+    );
     expect(screen.getByRole("link", { name: "/agenda" }).getAttribute("href")).toBe("/agenda");
-    expect(screen.getByRole("link", { name: "/finance/control" }).getAttribute("href")).toBe("/finance/control");
+    expect(screen.getByRole("link", { name: "/finance/control" }).getAttribute("href")).toBe(
+      "/finance/control",
+    );
   });
 
   it("não cria link para rota desconhecida nem na mensagem do usuário", () => {
