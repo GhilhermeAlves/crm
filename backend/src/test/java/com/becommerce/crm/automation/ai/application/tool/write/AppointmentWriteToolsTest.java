@@ -5,6 +5,7 @@ import com.becommerce.crm.automation.ai.application.action.AiActionService;
 import com.becommerce.crm.automation.ai.application.context.AiPermissionContext;
 import com.becommerce.crm.automation.ai.application.tool.AiToolContext;
 import com.becommerce.crm.automation.ai.domain.AiAction;
+import com.becommerce.crm.finance.transaction.application.service.FinancialTransactionService;
 import com.becommerce.crm.sales.activity.application.port.in.ActivityUseCase;
 import com.becommerce.crm.sales.pipeline.application.port.in.OpportunityUseCase;
 import com.becommerce.crm.sales.scheduling.application.dto.AppointmentResponse;
@@ -118,7 +119,7 @@ class AppointmentWriteToolsTest {
     @Test
     void executorRunsPersistedParameters() {
         AiActionExecutor executor = new AiActionExecutor(mock(TaskUseCase.class), mock(ActivityUseCase.class),
-                mock(OpportunityUseCase.class), appointments);
+                mock(OpportunityUseCase.class), appointments, mock(FinancialTransactionService.class));
         UUID id = UUID.randomUUID();
 
         AiAction cancel = mock(AiAction.class);
