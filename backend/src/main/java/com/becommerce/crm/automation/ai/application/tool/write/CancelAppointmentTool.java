@@ -68,7 +68,8 @@ public class CancelAppointmentTool implements AiTool {
         Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
         schema.put("properties", Map.of(
-                "appointmentId", Map.of("type", "string", "format", "uuid"),
+                "appointmentId", Map.of("type", "string", "format", "uuid", "description",
+                        "id EXATO retornado por search_appointments; nunca invente nem use texto de exemplo"),
                 "reason", Map.of("type", "string", "description", "Motivo do cancelamento (max 500)")));
         schema.put("required", List.of("appointmentId"));
         return schema;

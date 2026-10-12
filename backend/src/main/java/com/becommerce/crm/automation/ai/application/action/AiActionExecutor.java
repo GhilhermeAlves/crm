@@ -12,6 +12,8 @@ import com.becommerce.crm.sales.task.domain.TaskPriority;
 import com.becommerce.crm.sales.scheduling.application.dto.RescheduleRequest;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -44,6 +46,12 @@ public class AiActionExecutor {
         this.appointmentUseCase = appointmentUseCase;
     }
 
+    /**
+     * Transação própria: se o service de domínio falhar (conflito de horário,
+     * registro inexistente), só esta escrita é desfeita e o {@code AiActionService}
+     * consegue gravar a ação como FAILED em vez de estourar UnexpectedRollbackException.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Object execute(AiAction action) {
         Map<String, Object> p = action.getParameters();
         return switch (action.getTool()) {

@@ -91,8 +91,14 @@ public class AiAssistantService implements AiAssistantUseCase {
         this.auditor = auditor;
     }
 
+    /**
+     * Sem transação envolvendo o chat todo: cada gravação usa a sua. Assim uma Tool
+     * cujo service lança exceção (ex.: id inexistente) não marca a conversa inteira
+     * como rollback-only (UnexpectedRollbackException), e nenhuma conexão fica presa
+     * durante a chamada ao modelo. O TenantContext é restabelecido antes de cada
+     * acesso ao banco, pois services e Tools o limpam ao terminar.
+     */
     @Override
-    @Transactional
     public AiChatResponse chat(UUID companyId, UUID userId, List<String> permissions, AiChatRequest request) {
         try {
             TenantContext.setCompanyId(companyId);
@@ -100,6 +106,7 @@ public class AiAssistantService implements AiAssistantUseCase {
             AiConversation conversation = resolveConversation(companyId, userId, request);
             ResolvedAiContext resolvedContext = contextResolver.resolve(companyId, userId, permissions, request.context());
             String crmContext = resolvedContext.crmContext();
+            TenantContext.setCompanyId(companyId);
 
             chatRepository.saveMessage(AiMessage.create(companyId, conversation.getId(), ROLE_USER, request.message()));
 
@@ -187,6 +194,7 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
             working.add(new AiProvider.ChatMessage(ROLE_ASSISTANT, result.content(), result.toolCalls(), null));
             for (AiProvider.ToolCall call : result.toolCalls()) {
                 AiToolResult toolResult = toolRegistry.execute(call.name(), toolCtx, call.arguments());
+                TenantContext.setCompanyId(companyId);
                 if (toolResult.success() && toolResult.data() instanceof AiActionResponse proposal) {
                     actions.add(proposal);
                 }
@@ -296,7 +304,10 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
                 .append("ela cria uma PROPOSTA que o usuário confirma no card exibido no chat. Nunca diga que ")
                 .append("já executou — diga que deixou pronto para confirmação. Antes de desmarcar ou ")
                 .append("remarcar, localize a consulta com search_appointments; se houver mais de uma ")
-                .append("possível, pergunte qual. Horários são sempre no fuso de Brasília.\n\n");
+                .append("possível, pergunte qual. Use SEMPRE o id exato devolvido pela busca — nunca ")
+                .append("invente ids. Se o usuário perguntar se algo já foi feito (ex.: \"a consulta foi ")
+                .append("desmarcada?\"), CONSULTE com a ferramenta de busca e informe o status; não repita a ")
+                .append("ação. Horários são sempre no fuso de Brasília.\n\n");
 
         ZonedDateTime now = ZonedDateTime.now(clock.withZone(CLINIC_ZONE));
         sb.append("Agora é ").append(now.format(NOW_FORMAT)).append(" (horário de Brasília).\n");
