@@ -8,6 +8,7 @@ import com.becommerce.crm.masterdata.contact.application.port.out.ContactReposit
 import com.becommerce.crm.sales.scheduling.application.dto.AppointmentResponse;
 import com.becommerce.crm.sales.scheduling.application.dto.CreateAppointmentRequest;
 import com.becommerce.crm.sales.scheduling.application.dto.SlotResponse;
+import com.becommerce.crm.sales.scheduling.application.dto.RescheduleRequest;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTypeRepository;
 import com.becommerce.crm.sales.scheduling.application.service.SlotService;
@@ -90,7 +91,7 @@ class WhatsAppSchedulingToolsTest {
     @Test
     void guidanceEDefinicoes_listamTiposEFerramentas() {
         assertTrue(tools.guidance(tools.bookableTypes(companyId)).contains("Avaliação (1h)"));
-        assertEquals(List.of(WhatsAppSchedulingTools.LIST_MINE, WhatsAppSchedulingTools.CANCEL,
+        assertEquals(List.of(WhatsAppSchedulingTools.LIST_MINE, WhatsAppSchedulingTools.CANCEL, WhatsAppSchedulingTools.RESCHEDULE,
                         WhatsAppSchedulingTools.CHECK_SLOTS, WhatsAppSchedulingTools.BOOK),
                 tools.definitions().stream().map(AiProvider.ToolDefinition::name).toList());
     }
@@ -219,14 +220,14 @@ class WhatsAppSchedulingToolsTest {
         UUID mine = UUID.randomUUID();
         AppointmentResponse scheduled = appointment(mine, AppointmentStatus.SCHEDULED, "Telefone: +55 (34) 99999-8888", start);
         when(appointmentUseCase.list(eq(companyId), any(), any(), isNull())).thenReturn(List.of(scheduled));
-        when(appointmentUseCase.changeStatus(companyId, mine, AppointmentStatus.CANCELED))
+        when(appointmentUseCase.cancel(companyId, mine, "WhatsApp: imprevisto"))
                 .thenReturn(appointment(mine, AppointmentStatus.CANCELED, scheduled.notes(), start));
 
         String result = tools.execute(ctx, call(WhatsAppSchedulingTools.CANCEL,
                 Map.of("consulta_id", mine.toString(), "motivo", "imprevisto")));
 
         assertTrue(result.startsWith("Cancelado com sucesso"), result);
-        verify(appointmentUseCase).changeStatus(companyId, mine, AppointmentStatus.CANCELED);
+        verify(appointmentUseCase).cancel(companyId, mine, "WhatsApp: imprevisto");
         verify(notificationUseCase).create(eq(companyId), any(CreateNotificationRequest.class), any());
     }
 
@@ -240,6 +241,87 @@ class WhatsAppSchedulingToolsTest {
         String result = tools.execute(ctx, call(WhatsAppSchedulingTools.CANCEL, Map.of("consulta_id", other.toString())));
 
         assertTrue(result.contains("não foi encontrada"), result);
-        verify(appointmentUseCase, never()).changeStatus(any(), any(), any());
+        verify(appointmentUseCase, never()).cancel(any(), any(), any());
+    }
+
+    @Test
+    void cancelar_semMotivo_gravaTextoPadrao() {
+        Instant start = at(LocalDate.now(ZONE).plusDays(3), 18, 0);
+        UUID mine = UUID.randomUUID();
+        AppointmentResponse scheduled = appointment(mine, AppointmentStatus.SCHEDULED, "Telefone: +55 (34) 99999-8888", start);
+        when(appointmentUseCase.list(eq(companyId), any(), any(), isNull())).thenReturn(List.of(scheduled));
+        when(appointmentUseCase.cancel(eq(companyId), eq(mine), any()))
+                .thenReturn(appointment(mine, AppointmentStatus.CANCELED, scheduled.notes(), start));
+
+        tools.execute(ctx, call(WhatsAppSchedulingTools.CANCEL, Map.of("consulta_id", mine.toString())));
+
+        verify(appointmentUseCase).cancel(companyId, mine, "Cancelado pelo paciente via WhatsApp");
+    }
+
+    @Test
+    void remarcar_moveConsultaDoPacienteMantendoDuracaoENotifica() {
+        LocalDate oldDay = LocalDate.now(ZONE).plusDays(3);
+        LocalDate newDay = LocalDate.now(ZONE).plusDays(5);
+        UUID mine = UUID.randomUUID();
+        AppointmentResponse scheduled = appointment(mine, AppointmentStatus.SCHEDULED,
+                "Telefone: +55 (34) 99999-8888", at(oldDay, 18, 0));
+        when(appointmentUseCase.list(eq(companyId), any(), any(), isNull())).thenReturn(List.of(scheduled));
+        when(slotService.getAvailableSlots(companyId, avaliacao.getId(), newDay, newDay))
+                .thenReturn(List.of(new SlotResponse(at(newDay, 15, 0), at(newDay, 16, 0))));
+        RescheduleRequest expected = new RescheduleRequest(at(newDay, 15, 0), at(newDay, 16, 0), false);
+        when(appointmentUseCase.reschedule(companyId, mine, expected))
+                .thenReturn(appointment(mine, AppointmentStatus.SCHEDULED, scheduled.notes(), at(newDay, 15, 0)));
+
+        String result = tools.execute(ctx, call(WhatsAppSchedulingTools.RESCHEDULE,
+                Map.of("consulta_id", mine.toString(), "novo_inicio", newDay + "T15:00")));
+
+        assertTrue(result.startsWith("Remarcado com sucesso"), result);
+        verify(appointmentUseCase).reschedule(companyId, mine, expected);
+        verify(notificationUseCase).create(eq(companyId), any(CreateNotificationRequest.class), any());
+        assertEquals(companyId, TenantContext.getCompanyId());
+    }
+
+    @Test
+    void remarcar_recusaConsultaDeOutroPaciente() {
+        UUID other = UUID.randomUUID();
+        when(appointmentUseCase.list(eq(companyId), any(), any(), isNull())).thenReturn(List.of(
+                appointment(other, AppointmentStatus.SCHEDULED, "Telefone: +55 (11) 91111-2222",
+                        at(LocalDate.now(ZONE).plusDays(3), 18, 0))));
+
+        String result = tools.execute(ctx, call(WhatsAppSchedulingTools.RESCHEDULE,
+                Map.of("consulta_id", other.toString(), "novo_inicio", LocalDate.now(ZONE).plusDays(5) + "T15:00")));
+
+        assertTrue(result.contains("não foi encontrada"), result);
+        verify(appointmentUseCase, never()).reschedule(any(), any(), any());
+    }
+
+    @Test
+    void remarcar_horarioOcupado_respondeSemLancar() {
+        LocalDate newDay = LocalDate.now(ZONE).plusDays(5);
+        UUID mine = UUID.randomUUID();
+        when(appointmentUseCase.list(eq(companyId), any(), any(), isNull())).thenReturn(List.of(
+                appointment(mine, AppointmentStatus.SCHEDULED, "Telefone: +55 (34) 99999-8888",
+                        at(LocalDate.now(ZONE).plusDays(3), 18, 0))));
+        when(slotService.getAvailableSlots(any(), any(), any(), any())).thenReturn(List.of());
+
+        String result = tools.execute(ctx, call(WhatsAppSchedulingTools.RESCHEDULE,
+                Map.of("consulta_id", mine.toString(), "novo_inicio", newDay + "T15:00")));
+
+        assertTrue(result.startsWith("Esse horário não está disponível"), result);
+        verify(appointmentUseCase, never()).reschedule(any(), any(), any());
+    }
+
+    @Test
+    void remarcar_horarioNoPassado_recusa() {
+        UUID mine = UUID.randomUUID();
+        when(appointmentUseCase.list(eq(companyId), any(), any(), isNull())).thenReturn(List.of(
+                appointment(mine, AppointmentStatus.SCHEDULED, "Telefone: +55 (34) 99999-8888",
+                        at(LocalDate.now(ZONE).plusDays(3), 18, 0))));
+
+        String result = tools.execute(ctx, call(WhatsAppSchedulingTools.RESCHEDULE,
+                Map.of("consulta_id", mine.toString(), "novo_inicio", LocalDate.now(ZONE).minusDays(1) + "T10:00")));
+
+        assertTrue(result.contains("futuro"), result);
+        verify(appointmentUseCase, never()).reschedule(any(), any(), any());
     }
 }
