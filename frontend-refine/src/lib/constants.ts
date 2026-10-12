@@ -60,6 +60,7 @@ export const ROUTES = {
   REPORTS_AGENDA: "/reports/agenda",
   REPORTS_CASH_FLOW: "/reports/cash-flow",
   REPORTS_REVENUE: "/reports/revenue",
+  REPORTS_EXPORT: "/reports/export",
 } as const;
 
 export const PUBLIC_ROUTES = [
