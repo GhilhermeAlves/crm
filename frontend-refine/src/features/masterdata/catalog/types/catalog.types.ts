@@ -2,7 +2,8 @@ import type { StockUnit } from "@/features/masterdata/inventory/types/inventory.
 
 export type CatalogItemType = "PRODUCT" | "SERVICE";
 
-export type CatalogCategory = "EPI" | "INSTRUMENTO" | "MATERIAL_DE_CONSUMO" | "MEDICAMENTO" | "OUTROS";
+export type CatalogCategory =
+  "EPI" | "INSTRUMENTO" | "MATERIAL_DE_CONSUMO" | "MEDICAMENTO" | "OUTROS";
 
 export const CATALOG_CATEGORY_LABELS: Record<CatalogCategory, string> = {
   EPI: "EPI",

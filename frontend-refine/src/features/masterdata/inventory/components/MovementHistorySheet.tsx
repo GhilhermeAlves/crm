@@ -1,7 +1,14 @@
 "use client";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useItemMovements } from "../hooks/useInventory";
 import { STOCK_MOVEMENT_TYPE_LABELS, type InventoryItem } from "../types/inventory.types";

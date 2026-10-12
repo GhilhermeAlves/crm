@@ -26,7 +26,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useInventory, useRegisterMovement } from "@/features/masterdata/inventory/hooks/useInventory";
+import {
+  useInventory,
+  useRegisterMovement,
+} from "@/features/masterdata/inventory/hooks/useInventory";
 import { StockMovementDialog } from "@/features/masterdata/inventory/components/StockMovementDialog";
 import { MovementHistorySheet } from "@/features/masterdata/inventory/components/MovementHistorySheet";
 import { LowStockBadge } from "@/features/masterdata/inventory/components/LowStockBadge";
@@ -152,7 +155,11 @@ export default function EstoquePage() {
                       </TableCell>
                       <TableCell className="text-right">{item.minStock}</TableCell>
                       <TableCell>
-                        {item.active ? <Badge>Ativo</Badge> : <Badge variant="secondary">Inativo</Badge>}
+                        {item.active ? (
+                          <Badge>Ativo</Badge>
+                        ) : (
+                          <Badge variant="secondary">Inativo</Badge>
+                        )}
                         <LowStockBadge item={item} />
                       </TableCell>
                       <TableCell className="text-right">
@@ -174,7 +181,12 @@ export default function EstoquePage() {
                   Página {page + 1} de {Math.max(totalPages, 1)}
                 </span>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage(page - 1)}
+                  >
                     Anterior
                   </Button>
                   <Button
@@ -189,7 +201,10 @@ export default function EstoquePage() {
               </div>
             </div>
           ) : (
-            <EmptyState title="Nenhum produto em estoque" description="Cadastre produtos no Catálogo." />
+            <EmptyState
+              title="Nenhum produto em estoque"
+              description="Cadastre produtos no Catálogo."
+            />
           )}
         </CardContent>
       </Card>

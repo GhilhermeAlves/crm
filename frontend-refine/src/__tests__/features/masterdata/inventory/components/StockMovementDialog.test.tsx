@@ -18,7 +18,13 @@ describe("StockMovementDialog", () => {
   it("chama onSubmit com entrada após preencher e salvar", () => {
     const onSubmit = vi.fn();
     render(
-      <StockMovementDialog open onOpenChange={() => {}} item={item} isSubmitting={false} onSubmit={onSubmit} />,
+      <StockMovementDialog
+        open
+        onOpenChange={() => {}}
+        item={item}
+        isSubmitting={false}
+        onSubmit={onSubmit}
+      />,
     );
 
     fireEvent.click(screen.getByLabelText("Tipo"));

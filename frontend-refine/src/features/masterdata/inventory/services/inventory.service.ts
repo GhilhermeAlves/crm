@@ -24,7 +24,12 @@ export const InventoryService = {
     return response.data;
   },
 
-  async listMovements(companyId: string, itemId: string, page = 0, pageSize = 20): Promise<StockMovementPage> {
+  async listMovements(
+    companyId: string,
+    itemId: string,
+    page = 0,
+    pageSize = 20,
+  ): Promise<StockMovementPage> {
     const response = await api.get<StockMovementPage>(`${base(companyId)}/${itemId}/movements`, {
       params: { page, pageSize },
     });

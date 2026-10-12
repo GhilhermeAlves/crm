@@ -22,7 +22,10 @@ export function useItemMovements(companyId: string | null, itemId: string | null
 }
 
 export function useRegisterMovement(companyId: string | null) {
-  const { onSuccess, onError } = useMutationDefaults<unknown, { itemId: string; request: RegisterMovementRequest }>();
+  const { onSuccess, onError } = useMutationDefaults<
+    unknown,
+    { itemId: string; request: RegisterMovementRequest }
+  >();
   return useMutation({
     mutationFn: ({ itemId, request }: { itemId: string; request: RegisterMovementRequest }) =>
       InventoryService.registerMovement(companyId as string, itemId, request),

@@ -91,17 +91,13 @@ export function CatalogItemDialog({ open, onOpenChange, item, isSubmitting, onSu
       toast.error("Preço inválido. Use, por exemplo, 199,90.");
       return;
     }
-    const minStock = form.minStock.trim()
-      ? Math.max(0, Math.floor(Number(form.minStock) || 0))
-      : 0;
+    const minStock = form.minStock.trim() ? Math.max(0, Math.floor(Number(form.minStock) || 0)) : 0;
     onSubmit({
       type: form.type,
       name: form.name.trim(),
       description: form.description.trim() || undefined,
-      category:
-        ((form.type === "PRODUCT" ? form.category : form.category.trim()) || undefined) as
-          | CatalogCategory
-          | undefined,
+      category: ((form.type === "PRODUCT" ? form.category : form.category.trim()) || undefined) as
+        CatalogCategory | undefined,
       price,
       currency: "BRL",
       sku: form.sku.trim() || undefined,

@@ -25,7 +25,14 @@ describe("InventoryService", () => {
     });
     await InventoryService.list(companyId, { q: "luva", category: "EPI", lowStock: true, page: 2 });
     expect(getMock).toHaveBeenCalledWith(`/companies/${companyId}/inventory`, {
-      params: { q: "luva", category: "EPI", lowStock: true, active: undefined, page: 2, pageSize: 20 },
+      params: {
+        q: "luva",
+        category: "EPI",
+        lowStock: true,
+        active: undefined,
+        page: 2,
+        pageSize: 20,
+      },
     });
   });
 
