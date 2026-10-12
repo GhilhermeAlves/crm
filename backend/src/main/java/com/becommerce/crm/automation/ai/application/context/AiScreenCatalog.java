@@ -23,6 +23,7 @@ public final class AiScreenCatalog {
         add("/agenda", "Agenda", "consultas: marcar, confirmar, desmarcar e remarcar");
         add("/tasks", "Tarefas", "tarefas e follow-ups da equipe");
         add("/catalog", "Catálogo", "serviços e produtos");
+        add("/estoque", "Estoque", "saldo dos produtos, entradas, saídas e ajustes");
         add("/activities", "Timeline", "histórico de atividades");
         add("/workflows", "Automações", "regras automáticas");
         add("/assistant", "Léo · Assistente IA", "conversas com o Léo");

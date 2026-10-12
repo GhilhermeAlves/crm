@@ -336,6 +336,8 @@ class AiAssistantServiceTest {
         assertTrue(prompt.contains("12/10/2026 09:30 (horário de Brasília)"), prompt);
         assertTrue(prompt.contains("O usuário está na tela: Agenda (/agenda)."));
         assertTrue(prompt.contains("PROPOSTA que o usuário confirma"));
+        assertTrue(prompt.contains(
+                "lançar receitas/despesas, dar baixa em lançamentos e registrar movimentações de estoque"));
         assertTrue(prompt.contains("- Controle financeiro — /finance/control: "));
     }
 

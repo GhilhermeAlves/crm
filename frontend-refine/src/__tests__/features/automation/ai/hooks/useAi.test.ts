@@ -353,6 +353,28 @@ describe("useAiConfirmAction / useAiCancelAction (AI-05)", () => {
     );
   });
 
+  it("invalida o financeiro ao confirmar um lançamento", async () => {
+    confirmMock.mockResolvedValue({ id: "act-1", status: "EXECUTED", tool: "create_transaction" });
+    const { result } = renderHookWith(() => useAiConfirmAction("conv-1"));
+
+    result.current.mutate("act-1");
+
+    await waitFor(() => expect(invalidateMock).toHaveBeenCalledWith({ queryKey: ["finance"] }));
+  });
+
+  it("invalida o estoque ao confirmar uma movimentação", async () => {
+    confirmMock.mockResolvedValue({
+      id: "act-1",
+      status: "EXECUTED",
+      tool: "register_stock_movement",
+    });
+    const { result } = renderHookWith(() => useAiConfirmAction("conv-1"));
+
+    result.current.mutate("act-1");
+
+    await waitFor(() => expect(invalidateMock).toHaveBeenCalledWith({ queryKey: ["inventory"] }));
+  });
+
   it("cancela e invalida as ações da conversa", async () => {
     cancelMock.mockResolvedValue({ id: "act-1", status: "CANCELLED" });
     const { result } = renderHookWith(() => useAiCancelAction("conv-1"));
