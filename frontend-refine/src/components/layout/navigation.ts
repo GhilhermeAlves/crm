@@ -9,6 +9,7 @@ import {
   Building2,
   ClipboardList,
   Package,
+  Boxes,
   HardDrive,
   Workflow as WorkflowIcon,
   Sparkles,
@@ -82,6 +83,12 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.CATALOG,
         icon: Package,
         permission: "catalog:read",
+      },
+      {
+        label: "Estoque",
+        href: ROUTES.INVENTORY,
+        icon: Boxes,
+        permission: "inventory:read",
       },
       {
         label: "Timeline",

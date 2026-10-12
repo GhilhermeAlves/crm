@@ -17,6 +17,9 @@ public record CatalogItemResponse(
         BigDecimal price,
         String currency,
         String sku,
+        String unit,
+        Integer minStock,
+        int quantity,
         boolean active,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
@@ -24,6 +27,7 @@ public record CatalogItemResponse(
     public static CatalogItemResponse from(CatalogItem i) {
         return new CatalogItemResponse(i.getId(), i.getCompanyId(), i.getType(), i.getName(),
                 i.getDescription(), i.getCategory(), i.getPrice(), i.getCurrency(), i.getSku(),
+                i.getUnit(), i.getMinStock(), i.getQuantity(),
                 i.isActive(), i.getCreatedAt(), i.getUpdatedAt());
     }
 }

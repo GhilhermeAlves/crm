@@ -20,6 +20,7 @@ const routeLabels: Record<string, string> = {
   pipeline: "Pipeline",
   chat: "Chat",
   campaigns: "Campanhas",
+  estoque: "Estoque",
   reports: "Relatórios",
   settings: "Segurança",
   roles: "Perfis",

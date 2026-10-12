@@ -47,6 +47,22 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
                 result.getTotalElements());
     }
 
+    @Override
+    public PageResult searchProducts(UUID companyId, String query, String category, Boolean lowStock,
+                                     Boolean active, int page, int pageSize) {
+        String pattern = query == null ? null : "%" + escapeLike(query.toLowerCase(Locale.ROOT)) + "%";
+        Page<CatalogItemJpaEntity> result = jpaRepository.searchProducts(companyId,
+                category == null ? null : category, lowStock, active, pattern,
+                PageRequest.of(page, pageSize, Sort.by(Sort.Direction.ASC, "name")));
+        return new PageResult(result.getContent().stream().map(CatalogItemRepositoryImpl::toDomain).toList(),
+                result.getTotalElements());
+    }
+
+    @Override
+    public Optional<CatalogItem> findByIdForUpdate(UUID id) {
+        return jpaRepository.findByIdForUpdate(id).map(CatalogItemRepositoryImpl::toDomain);
+    }
+
     /** '%' e '_' digitados pelo usuário são literais, não curingas. */
     private static String escapeLike(String value) {
         return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
@@ -55,7 +71,7 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
     static CatalogItem toDomain(CatalogItemJpaEntity e) {
         return CatalogItem.reconstitute(e.getId(), e.getCompanyId(), CatalogItemType.valueOf(e.getItemType()),
                 e.getName(), e.getDescription(), e.getCategory(), e.getPrice(), e.getCurrency(), e.getSku(),
-                e.isActive(), e.getCreatedAt(), e.getUpdatedAt());
+                e.isActive(), e.getUnit(), e.getMinStock(), e.getQuantity(), e.getCreatedAt(), e.getUpdatedAt());
     }
 
     static CatalogItemJpaEntity toEntity(CatalogItem i) {
@@ -69,6 +85,9 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
         e.setPrice(i.getPrice());
         e.setCurrency(i.getCurrency());
         e.setSku(i.getSku());
+        e.setUnit(i.getUnit());
+        e.setMinStock(i.getMinStock());
+        e.setQuantity(i.getQuantity());
         e.setActive(i.isActive());
         e.setCreatedAt(i.getCreatedAt());
         e.setUpdatedAt(i.getUpdatedAt());

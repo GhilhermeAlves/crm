@@ -7,6 +7,7 @@ import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogItemNotFoundException;
 import com.becommerce.crm.masterdata.catalog.domain.exception.CatalogSkuConflictException;
+import com.becommerce.crm.masterdata.catalog.domain.exception.InvalidCatalogItemException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
@@ -42,7 +44,7 @@ class CatalogServiceTest {
 
     private static CatalogItemRequest request(String sku) {
         return new CatalogItemRequest(CatalogItemType.PRODUCT, "Plano Pro", null, null,
-                new BigDecimal("10.00"), "BRL", sku);
+                new BigDecimal("10.00"), "BRL", sku, null, null);
     }
 
     @Test
@@ -60,9 +62,24 @@ class CatalogServiceTest {
     }
 
     @Test
+    void createRejectsInvalidProductCategory() {
+        assertThrows(InvalidCatalogItemException.class, () -> service.create(COMPANY,
+                new CatalogItemRequest(CatalogItemType.PRODUCT, "X", null, "INVALID",
+                        null, "BRL", null, null, null)));
+    }
+
+    @Test
+    void serviceItemNeverHasStockFields() {
+        service.create(COMPANY, new CatalogItemRequest(CatalogItemType.SERVICE, "Consulta", null,
+                "Consultas", null, "BRL", null, "CAIXA", 7));
+        verify(repository).save(argThat(i ->
+                i.getType() == CatalogItemType.SERVICE && i.getUnit() == null && i.getMinStock() == 0));
+    }
+
+    @Test
     void updateIgnoresOwnSkuButRejectsAnothersSku() {
         CatalogItem item = CatalogItem.create(COMPANY, CatalogItemType.PRODUCT, "A", null, null, null, null,
-                "SKU-1");
+                "SKU-1", null, 0);
         when(repository.findById(item.getId())).thenReturn(Optional.of(item));
         when(repository.existsBySku(COMPANY, "SKU-2", item.getId())).thenReturn(true);
 
@@ -73,7 +90,7 @@ class CatalogServiceTest {
     @Test
     void itemOfAnotherCompanyIsNotFound() {
         CatalogItem other = CatalogItem.create(UUID.randomUUID(), CatalogItemType.PRODUCT, "A", null, null,
-                null, null, null);
+                null, null, null, null, 0);
         when(repository.findById(other.getId())).thenReturn(Optional.of(other));
 
         assertThrows(CatalogItemNotFoundException.class, () -> service.getById(COMPANY, other.getId()));
@@ -84,7 +101,7 @@ class CatalogServiceTest {
     @Test
     void deactivatePersistsInactiveItem() {
         CatalogItem item = CatalogItem.create(COMPANY, CatalogItemType.SERVICE, "A", null, null, null, null,
-                null);
+                null, null, 0);
         when(repository.findById(item.getId())).thenReturn(Optional.of(item));
 
         assertFalse(service.setActive(COMPANY, item.getId(), false).active());

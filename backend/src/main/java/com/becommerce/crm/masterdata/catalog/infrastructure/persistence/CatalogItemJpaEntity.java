@@ -40,6 +40,15 @@ public class CatalogItemJpaEntity {
     @Column(name = "sku")
     private String sku;
 
+    @Column(name = "unit")
+    private String unit;
+
+    @Column(name = "min_stock")
+    private int minStock;
+
+    @Column(name = "quantity")
+    private int quantity;
+
     @Column(name = "active")
     private boolean active;
 
@@ -67,6 +76,12 @@ public class CatalogItemJpaEntity {
     public void setCurrency(String currency) { this.currency = currency; }
     public String getSku() { return sku; }
     public void setSku(String sku) { this.sku = sku; }
+    public String getUnit() { return unit; }
+    public void setUnit(String unit) { this.unit = unit; }
+    public int getMinStock() { return minStock; }
+    public void setMinStock(int minStock) { this.minStock = minStock; }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public LocalDateTime getCreatedAt() { return createdAt; }

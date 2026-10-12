@@ -17,7 +17,8 @@ test.describe("Catálogo", () => {
 
     await page.getByRole("button", { name: "Novo item" }).click();
     await page.getByLabel("Nome").fill(name);
-    await page.getByLabel("Categoria").fill("Planos");
+    await page.getByLabel("Categoria").click();
+    await page.getByRole("option", { name: "Outros" }).click();
     await page.getByLabel("Preço (R$)").fill("199,90");
     await page.getByRole("button", { name: "Salvar" }).click();
     await expect(page.getByText("Item criado")).toBeVisible();
