@@ -23,14 +23,9 @@ import { ReportNumberCard } from "./ReportNumberCard";
 import { ReportOptionChip } from "./ReportOptionChip";
 import { ReportPeriodChip } from "./ReportPeriodChip";
 import { ReportShell } from "./ReportShell";
-import { downloadCsv, type CsvValue } from "./report-csv";
+import { useRequestReportExport } from "@/features/reports/export/useReportExports";
 import { formatReportNumber, formatReportPercent } from "./report-format";
-import {
-  reportPeriodLabel,
-  resolveReportPeriod,
-  type ReportPeriodKey,
-  type ReportPeriodRange,
-} from "./report-period";
+import { resolveReportPeriod, type ReportPeriodKey, type ReportPeriodRange } from "./report-period";
 
 const STATUS_OPTIONS: ReportFilterOption[] = [
   { value: "CANCELADO", label: "Cancelado" },
@@ -66,7 +61,6 @@ export function AgendaReport({ companyId }: AgendaReportProps) {
   const [professionalIds, setProfessionalIds] = useState<string[]>([]);
 
   const range = resolveReportPeriod(period, customRange);
-  const periodLabel = reportPeriodLabel(period, customRange);
 
   const types = useAppointmentTypes(companyId);
   const members = useMembers(companyId);
@@ -111,25 +105,10 @@ export function AgendaReport({ companyId }: AgendaReportProps) {
     setCustomRange(next === "custom" ? (nextCustom ?? null) : null);
   };
 
+  const requestExport = useRequestReportExport(companyId);
+  // Exportação passa pelo fluxo de relatórios: gera em segundo plano e avisa no sino.
   const handleExport = () => {
-    const rows: CsvValue[][] = [
-      ["Relatório da Agenda"],
-      ["Período", periodLabel],
-      [],
-      ["Indicador", "Valor"],
-      ["Agendamentos Totais", data?.total ?? 0],
-      ["Agendamentos Com Comparecimento", data?.attended ?? 0],
-      ["Agendamentos Sem Comparecimento", data?.notAttended ?? 0],
-      ["Taxa de Comparecimento (%)", data?.attendanceRate ?? 0],
-      [],
-      ["Agendamentos por Status"],
-      ["Status", "Quantidade"],
-      ...byStatus.map((item) => [
-        APPOINTMENT_STATUS_LABELS[item.status as AppointmentStatus] ?? item.status,
-        item.count,
-      ]),
-    ];
-    downloadCsv("relatorio-agenda.csv", rows);
+    requestExport.mutate({ type: "AGENDA", format: "XLSX", from: range.from, to: range.to });
   };
 
   return (

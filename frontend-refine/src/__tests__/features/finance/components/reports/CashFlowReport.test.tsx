@@ -3,6 +3,10 @@ import { render, screen } from "@testing-library/react";
 
 import { CashFlowReport } from "@/features/finance/components/reports/CashFlowReport";
 
+vi.mock("@/features/reports/export/useReportExports", () => ({
+  useRequestReportExport: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 vi.mock("@/features/finance/hooks/useFinance", () => ({
   useCashFlow: () => ({
     data: {

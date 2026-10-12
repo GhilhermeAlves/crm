@@ -18,7 +18,7 @@ import { ReportListChip } from "./ReportListChip";
 import { ReportNumberCard } from "./ReportNumberCard";
 import { ReportPeriodChip } from "./ReportPeriodChip";
 import { ReportShell } from "./ReportShell";
-import { downloadCsv, type CsvValue } from "./report-csv";
+import { useRequestReportExport } from "@/features/reports/export/useReportExports";
 import {
   formatCompactBRL,
   formatPeriodTick,
@@ -132,50 +132,10 @@ export function OverviewReport({ companyId }: OverviewReportProps) {
     setCustomRange(next === "custom" ? (nextCustom ?? null) : null);
   };
 
+  const requestExport = useRequestReportExport(companyId);
+  // Exportação passa pelo fluxo de relatórios: gera em segundo plano e avisa no sino.
   const handleExport = () => {
-    const totals = data?.totals;
-    const rows: CsvValue[][] = [
-      ["Relatório Geral da Clínica"],
-      ["Período", periodLabel],
-      [],
-      ["Resumo do Período"],
-      ["Indicador", "Valor"],
-      ["Consultas", totals?.appointments ?? 0],
-      ["Taxa de Confirmação (%)", totals?.confirmationRate ?? 0],
-      ["Taxa de Comparecimento (%)", totals?.attendanceRate ?? 0],
-      ["Procedimentos", totals?.proceduresDone ?? 0],
-      ["Receita (R$)", ((totals?.revenueCents ?? 0) / 100).toFixed(2)],
-      [],
-      ["Profissionais da Clínica"],
-      ["Nome do Profissional"],
-      ...professionals.map((item) => [item.name]),
-      [],
-      ["Consultas por Status de Comparecimento"],
-      ["Período", "Compareceu", "Não compareceu", "Pendente"],
-      ...(data?.appointmentsByAttendance ?? []).map((item) => [
-        item.period,
-        item.attended,
-        item.notAttended,
-        item.pending,
-      ]),
-      [],
-      ["Consultas Confirmadas (%)"],
-      ["Período", "Taxa"],
-      ...(data?.confirmed ?? []).map((item) => [item.period, item.rate]),
-      [],
-      ["Consultas Comparecidas (%)"],
-      ["Período", "Taxa"],
-      ...(data?.attended ?? []).map((item) => [item.period, item.rate]),
-      [],
-      ["Procedimentos"],
-      ["Período", "Concluídos", "Pendentes"],
-      ...(data?.procedures ?? []).map((item) => [item.period, item.done, item.pending]),
-      [],
-      ["Receita"],
-      ["Período", "Receita (R$)"],
-      ...(data?.revenue ?? []).map((item) => [item.period, (item.amountCents / 100).toFixed(2)]),
-    ];
-    downloadCsv("relatorio-geral-clinica.csv", rows);
+    requestExport.mutate({ type: "TRANSACTIONS", format: "XLSX", from: range.from, to: range.to });
   };
 
   return (

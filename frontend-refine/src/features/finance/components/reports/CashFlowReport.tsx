@@ -15,15 +15,10 @@ import { ReportLineChart, type ReportLineSeries } from "./ReportLineChart";
 import { ReportPeriodChip } from "./ReportPeriodChip";
 import { ReportPieChart, type ReportPieSlice } from "./ReportPieChart";
 import { ReportShell } from "./ReportShell";
-import { downloadCsv, type CsvValue } from "./report-csv";
+import { useRequestReportExport } from "@/features/reports/export/useReportExports";
 import { formatCompactMoney, formatMoneyLabel, formatPeriodTick } from "./report-format";
 import { toPaymentMethodValues } from "./report-cash-flow";
-import {
-  reportPeriodLabel,
-  resolveReportPeriod,
-  type ReportPeriodKey,
-  type ReportPeriodRange,
-} from "./report-period";
+import { resolveReportPeriod, type ReportPeriodKey, type ReportPeriodRange } from "./report-period";
 
 const INCOME_HISTORY_SERIES: ReportLineSeries[] = [
   { key: "forecast", name: "Previsão", color: "#eab308" },
@@ -78,7 +73,6 @@ export function CashFlowReport({ companyId }: CashFlowReportProps) {
   const [granularity, setGranularity] = useState<ReportGranularity>("MONTH");
 
   const range = resolveReportPeriod(period, customRange);
-  const periodLabel = reportPeriodLabel(period, customRange);
 
   const query = useCashFlow(companyId, {
     from: range.from,
@@ -134,56 +128,10 @@ export function CashFlowReport({ companyId }: CashFlowReportProps) {
     setCustomRange(next === "custom" ? (nextCustom ?? null) : null);
   };
 
+  const requestExport = useRequestReportExport(companyId);
+  // Exportação passa pelo fluxo de relatórios: gera em segundo plano e avisa no sino.
   const handleExport = () => {
-    const rows: CsvValue[][] = [
-      ["Relatório de Fluxo de Caixa"],
-      ["Período", periodLabel],
-      [],
-      ["Fluxo de Caixa"],
-      [
-        "Período",
-        "Entradas (R$)",
-        "Recebimentos em Aberto (R$)",
-        "Saídas (R$)",
-        "Pagamentos em Aberto (R$)",
-        "Saldo Mensal (R$)",
-        "Saldo Acumulado (R$)",
-      ],
-      ...(data?.series ?? []).map((item) => [
-        item.period,
-        (item.incomeCents / 100).toFixed(2),
-        (item.openReceivablesCents / 100).toFixed(2),
-        (item.expenseCents / 100).toFixed(2),
-        (item.openPayablesCents / 100).toFixed(2),
-        (item.periodBalanceCents / 100).toFixed(2),
-        (item.accumulatedBalanceCents / 100).toFixed(2),
-      ]),
-      [],
-      ["Detalhamento de Entradas"],
-      ["Forma de Pagamento", "Valor (R$)"],
-      ...methodValues.map((item) => [item.label, (item.cents / 100).toFixed(2)]),
-      [],
-      ["Histórico de Entrada, Previsão e Inadimplência"],
-      ["Período", "Previsão (R$)", "Entrada (R$)", "Inadimplência (R$)", "Em Aberto (R$)"],
-      ...(data?.incomeHistory ?? []).map((item) => [
-        item.period,
-        (item.forecastCents / 100).toFixed(2),
-        (item.incomeCents / 100).toFixed(2),
-        (item.defaultCents / 100).toFixed(2),
-        (item.openCents / 100).toFixed(2),
-      ]),
-      [],
-      ["Detalhamento de Saídas"],
-      ["Histórico de Saída, Previsão e Inadimplência"],
-      ["Período", "Saída (R$)", "Em Aberto (R$)", "Inadimplência (R$)"],
-      ...(data?.expenseHistory ?? []).map((item) => [
-        item.period,
-        (item.expenseCents / 100).toFixed(2),
-        (item.openCents / 100).toFixed(2),
-        (item.defaultCents / 100).toFixed(2),
-      ]),
-    ];
-    downloadCsv("relatorio-fluxo-de-caixa.csv", rows);
+    requestExport.mutate({ type: "CASH_FLOW", format: "XLSX", from: range.from, to: range.to });
   };
 
   return (

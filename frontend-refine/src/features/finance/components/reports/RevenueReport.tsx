@@ -17,15 +17,10 @@ import { ReportLineChart } from "./ReportLineChart";
 import { ReportListChip } from "./ReportListChip";
 import { ReportPeriodChip } from "./ReportPeriodChip";
 import { ReportShell } from "./ReportShell";
-import { downloadCsv, type CsvValue } from "./report-csv";
+import { useRequestReportExport } from "@/features/reports/export/useReportExports";
 import { formatCompactMoney, formatPeriodTick, truncateLabel } from "./report-format";
 import { buildRevenueSeries } from "./report-revenue";
-import {
-  reportPeriodLabel,
-  resolveReportPeriod,
-  type ReportPeriodKey,
-  type ReportPeriodRange,
-} from "./report-period";
+import { resolveReportPeriod, type ReportPeriodKey, type ReportPeriodRange } from "./report-period";
 
 const PAID_NOTE =
   "São considerados somente os valores correspondentes às operações financeiras marcadas como pagas no Controle Financeiro. Exemplo: orçamento composto por um único procedimento de R$200, com parcelamento em 2x de R$100 e vencimento em junho e julho. Se somente a parcela de junho for paga, a receita desse procedimento será de R$100 em junho e R$0 em julho.";
@@ -62,7 +57,6 @@ export function RevenueReport({ companyId }: RevenueReportProps) {
   const [procedureIds, setProcedureIds] = useState<string[]>([]);
 
   const range = resolveReportPeriod(period, customRange);
-  const periodLabel = reportPeriodLabel(period, customRange);
 
   const query = useRevenueDistribution(companyId, {
     from: range.from,
@@ -105,36 +99,10 @@ export function RevenueReport({ companyId }: RevenueReportProps) {
     setCustomRange(next === "custom" ? (nextCustom ?? null) : null);
   };
 
+  const requestExport = useRequestReportExport(companyId);
+  // Exportação passa pelo fluxo de relatórios: gera em segundo plano e avisa no sino.
   const handleExport = () => {
-    const rows: CsvValue[][] = [
-      ["Relatório de Distribuição de Receita"],
-      ["Período", periodLabel],
-      [],
-      ["Receita por Procedimento"],
-      ["Período", "Procedimento", "Receita (R$)"],
-      ...(data?.byProcedure ?? []).map((item) => [
-        item.period,
-        item.name,
-        (item.amountCents / 100).toFixed(2),
-      ]),
-      [],
-      ["Preço Médio por Procedimento"],
-      ["Procedimento", "Preço Médio (R$)", "Preço Médio com Desconto (R$)"],
-      ...(data?.averageByProcedure ?? []).map((item) => [
-        item.name,
-        (item.averageCents / 100).toFixed(2),
-        (item.averageNetCents / 100).toFixed(2),
-      ]),
-      [],
-      ["Receita por Profissional"],
-      ["Período", "Profissional", "Receita (R$)"],
-      ...(data?.byProfessional ?? []).map((item) => [
-        item.period,
-        item.name,
-        (item.amountCents / 100).toFixed(2),
-      ]),
-    ];
-    downloadCsv("relatorio-distribuicao-de-receita.csv", rows);
+    requestExport.mutate({ type: "TRANSACTIONS", format: "XLSX", from: range.from, to: range.to });
   };
 
   return (
