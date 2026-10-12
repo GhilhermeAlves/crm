@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveAiContext } from "@/features/automation/ai/hooks/useAiContext";
+import { resolveAiContext, resolveAiScreenContext } from "@/features/automation/ai/hooks/useAiContext";
 
 describe("resolveAiContext (AI-04 §8-11)", () => {
   it("resolves Customer 360 em /customers/{id}", () => {
@@ -45,5 +45,29 @@ describe("resolveAiContext (AI-04 §8-11)", () => {
 
   it("retorna null para segmento desconhecido", () => {
     expect(resolveAiContext("/unknown/3fa85f64-5717-4562-b3fc-2c963f66afa6")).toBeNull();
+  });
+});
+
+describe("resolveAiScreenContext", () => {
+  it("envia a tela atual mesmo sem registro em foco", () => {
+    expect(resolveAiScreenContext("/agenda")).toEqual({ screen: "agenda", route: "/agenda" });
+    expect(resolveAiScreenContext("/finance/control")).toEqual({
+      screen: "finance",
+      route: "/finance/control",
+    });
+  });
+
+  it("mantém o contexto de registro quando houver", () => {
+    const id = "5fa85f64-5717-4562-b3fc-2c963f66afa6";
+    expect(resolveAiScreenContext(`/contacts/${id}`)).toEqual(resolveAiContext(`/contacts/${id}`));
+  });
+
+  it("id inválido vira só tela", () => {
+    expect(resolveAiScreenContext("/contacts/abc")).toEqual({ screen: "contacts", route: "/contacts/abc" });
+  });
+
+  it("retorna null em rotas públicas e na raiz", () => {
+    expect(resolveAiScreenContext("/")).toBeNull();
+    expect(resolveAiScreenContext("/login")).toBeNull();
   });
 });

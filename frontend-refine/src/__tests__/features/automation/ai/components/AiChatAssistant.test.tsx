@@ -52,6 +52,7 @@ vi.mock("@/features/automation/ai/services/ai.service", () => ({
 
 vi.mock("@/features/automation/ai/hooks/useAiContext", () => ({
   useAiContext: () => useAiContextMock(),
+  useAiScreenContext: () => null,
 }));
 
 vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
