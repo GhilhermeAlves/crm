@@ -141,7 +141,7 @@ export function AiAssistantLauncher() {
         <Sparkles className="h-6 w-6 animate-pulse" />
       </button>
       {open && (
-        <div className="fixed bottom-24 right-4 z-50 flex max-h-[min(80vh,560px)] w-[min(400px,calc(100vw-32px))] flex-col overflow-hidden rounded-xl border bg-card shadow-2xl">
+        <div className="fixed bottom-24 right-4 z-50 flex h-[min(80vh,560px)] w-[min(400px,calc(100vw-32px))] flex-col overflow-hidden rounded-xl border bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b px-4 py-2">
             <span className="text-sm font-semibold">Léo · Assistente IA</span>
             <div className="flex items-center gap-1">

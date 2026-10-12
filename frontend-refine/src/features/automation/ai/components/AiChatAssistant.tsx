@@ -317,7 +317,8 @@ export function AiChatAssistant({ embedded = false }: { embedded?: boolean } = {
           </div>
         </div>
 
-        <ScrollArea className="min-h-0 flex-1">
+        {/* Rolagem nativa: o ScrollArea do Radix não rola quando a altura vem de flex-1. */}
+        <div className="min-h-0 flex-1 overflow-y-auto" data-testid="ai-chat-messages">
           <div className="space-y-3 p-4">
             {uiMessages.length === 0 && (
               <p className="py-10 text-center text-sm text-muted-foreground">
@@ -349,7 +350,7 @@ export function AiChatAssistant({ embedded = false }: { embedded?: boolean } = {
             )}
             <div ref={bottomRef} />
           </div>
-        </ScrollArea>
+        </div>
 
         <form onSubmit={sendMessage} className="border-t p-3">
           <div className="flex items-end gap-2">
