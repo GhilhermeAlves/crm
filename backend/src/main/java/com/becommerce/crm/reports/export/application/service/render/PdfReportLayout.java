@@ -24,7 +24,6 @@ import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 
-import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -39,13 +38,13 @@ import java.util.Locale;
  */
 public final class PdfReportLayout {
 
-    static final Color PRIMARY = new Color(30, 64, 175);
-    private static final Color GROUP_BAND = new Color(226, 232, 248);
-    private static final Color ZEBRA = new Color(247, 248, 251);
-    private static final Color SUBTOTAL_BG = new Color(236, 239, 245);
-    private static final Color LINE = new Color(214, 219, 228);
-    private static final Color MUTED = new Color(140, 146, 158);
-    private static final Color TEXT = new Color(33, 37, 41);
+    static final java.awt.Color PRIMARY = new java.awt.Color(30, 64, 175);
+    private static final java.awt.Color GROUP_BAND = new java.awt.Color(226, 232, 248);
+    private static final java.awt.Color ZEBRA = new java.awt.Color(247, 248, 251);
+    private static final java.awt.Color SUBTOTAL_BG = new java.awt.Color(236, 239, 245);
+    private static final java.awt.Color LINE = new java.awt.Color(214, 219, 228);
+    private static final java.awt.Color MUTED = new java.awt.Color(140, 146, 158);
+    private static final java.awt.Color TEXT = new java.awt.Color(33, 37, 41);
 
     private static final DateTimeFormatter ISSUED = DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm:ss");
 
@@ -53,12 +52,12 @@ public final class PdfReportLayout {
     private static final Font META = font(FontFactory.HELVETICA, 9, MUTED);
     private static final Font META_STRONG = font(FontFactory.HELVETICA_BOLD, 10, TEXT);
     private static final Font HEADING = font(FontFactory.HELVETICA_BOLD, 11, PRIMARY);
-    private static final Font HEAD = font(FontFactory.HELVETICA_BOLD, 8.5f, Color.WHITE);
+    private static final Font HEAD = font(FontFactory.HELVETICA_BOLD, 8.5f, java.awt.Color.WHITE);
     private static final Font CELL = font(FontFactory.HELVETICA, 8.5f, TEXT);
     private static final Font CELL_ZERO = font(FontFactory.HELVETICA, 8.5f, MUTED);
     private static final Font CELL_BOLD = font(FontFactory.HELVETICA_BOLD, 8.5f, TEXT);
     private static final Font GROUP = font(FontFactory.HELVETICA_BOLD, 8.5f, PRIMARY);
-    private static final Font TOTAL = font(FontFactory.HELVETICA_BOLD, 9.5f, Color.WHITE);
+    private static final Font TOTAL = font(FontFactory.HELVETICA_BOLD, 9.5f, java.awt.Color.WHITE);
 
     private PdfReportLayout() {
     }
@@ -147,10 +146,10 @@ public final class PdfReportLayout {
                 itemIndex = 0;
                 continue;
             }
-            Color background = switch (row.kind()) {
+            java.awt.Color background = switch (row.kind()) {
                 case TOTAL -> PRIMARY;
                 case SUBTOTAL -> SUBTOTAL_BG;
-                default -> itemIndex++ % 2 == 1 ? ZEBRA : Color.WHITE;
+                default -> itemIndex++ % 2 == 1 ? ZEBRA : java.awt.Color.WHITE;
             };
             for (int i = 0; i < columns.size(); i++) {
                 Object value = i < row.cells().size() ? row.cells().get(i) : null;
@@ -202,7 +201,7 @@ public final class PdfReportLayout {
         };
     }
 
-    private static Font font(String name, float size, Color color) {
+    private static Font font(String name, float size, java.awt.Color color) {
         return FontFactory.getFont(name, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED, size, Font.NORMAL, color);
     }
 
