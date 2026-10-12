@@ -31,7 +31,7 @@ export interface NavItem {
   icon: LucideIcon;
   badge?: string;
   permission?: string;
-  children?: { label: string; href: string }[];
+  children?: { label: string; href: string; permission?: string }[];
 }
 
 export interface NavGroup {
@@ -187,7 +187,34 @@ export const NAVIGATION: NavGroup[] = [
   {
     title: "Análise",
     items: [
-      { label: "Relatórios", href: ROUTES.REPORTS, icon: BarChart3 },
+      {
+        label: "Relatórios",
+        href: ROUTES.REPORTS,
+        icon: BarChart3,
+        children: [
+          { label: "Painel de relatórios", href: ROUTES.REPORTS },
+          {
+            label: "Contábil mensal (DRE)",
+            href: `${ROUTES.REPORTS_EXPORT}/monthly-dre`,
+            permission: "finance:read",
+          },
+          {
+            label: "Fluxo de caixa",
+            href: `${ROUTES.REPORTS_EXPORT}/cash-flow`,
+            permission: "finance:read",
+          },
+          {
+            label: "Extrato de lançamentos",
+            href: `${ROUTES.REPORTS_EXPORT}/transactions`,
+            permission: "finance:read",
+          },
+          {
+            label: "Agenda / atendimentos",
+            href: `${ROUTES.REPORTS_EXPORT}/agenda`,
+            permission: "appointment:read",
+          },
+        ],
+      },
       { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
     ],
   },

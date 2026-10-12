@@ -12,6 +12,7 @@ import {
   useNotificationPermissions,
 } from "@/features/communication/notifications/hooks/useNotifications";
 import { formatRelativeTime } from "@/features/communication/notifications/lib/format";
+import { ReportExportDownloadButton } from "@/features/reports/export/ReportExportDownloadButton";
 import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -99,6 +100,13 @@ export function NotificationBell() {
                   </span>
                 </div>
                 {n.body && <p className="text-xs text-muted-foreground">{n.body}</p>}
+                <ReportExportDownloadButton
+                  companyId={companyId}
+                  metadata={n.metadata}
+                  onDownloaded={() => {
+                    if (!n.read && perms.canUpdate) markRead.mutate(n.id);
+                  }}
+                />
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                   {TYPE_LABEL[n.type] ?? n.type}
                 </span>

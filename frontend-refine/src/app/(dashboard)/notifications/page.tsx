@@ -14,6 +14,7 @@ import {
   useNotificationPermissions,
 } from "@/features/communication/notifications/hooks/useNotifications";
 import { formatRelativeTime } from "@/features/communication/notifications/lib/format";
+import { ReportExportDownloadButton } from "@/features/reports/export/ReportExportDownloadButton";
 import type {
   Notification,
   NotificationType,
@@ -42,6 +43,31 @@ const TYPE_LABEL: Record<NotificationType, string> = {
 };
 
 function NotificationRow({
+  notification,
+  onRead,
+  canUpdate,
+  companyId,
+}: {
+  notification: Notification;
+  onRead: (id: string) => void;
+  canUpdate: boolean;
+  companyId: string | null;
+}) {
+  return (
+    <div className="space-y-2">
+      <NotificationContent notification={notification} onRead={onRead} canUpdate={canUpdate} />
+      <ReportExportDownloadButton
+        companyId={companyId}
+        metadata={notification.metadata}
+        onDownloaded={() => {
+          if (!notification.read && canUpdate) onRead(notification.id);
+        }}
+      />
+    </div>
+  );
+}
+
+function NotificationContent({
   notification,
   onRead,
   canUpdate,
@@ -149,6 +175,7 @@ export default function NotificationsPage() {
                   notification={n}
                   canUpdate={perms.canUpdate}
                   onRead={(id) => markRead.mutate(id)}
+                  companyId={companyId}
                 />
               ))}
             </div>

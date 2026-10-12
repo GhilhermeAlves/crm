@@ -52,6 +52,8 @@ import com.becommerce.crm.sales.pipeline.domain.exception.PipelineValidationExce
 import com.becommerce.crm.sales.pipeline.domain.exception.StageNotFoundException;
 import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import com.becommerce.crm.masterdata.storage.domain.exception.StorageObjectNotFoundException;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportNotFoundException;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportValidationException;
 import com.becommerce.crm.sales.task.domain.exception.TaskNotFoundException;
 import com.becommerce.crm.sales.task.domain.exception.TaskValidationException;
 import com.becommerce.crm.communication.notification.domain.exception.NotificationNotFoundException;
@@ -688,6 +690,29 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 404,
                 "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ReportExportNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleReportExportNotFoundException(ReportExportNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ReportExportValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleReportExportValidationException(
+            ReportExportValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

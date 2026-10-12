@@ -3,6 +3,10 @@ import { render, screen } from "@testing-library/react";
 
 import { RevenueReport } from "@/features/finance/components/reports/RevenueReport";
 
+vi.mock("@/features/reports/export/useReportExports", () => ({
+  useRequestReportExport: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 vi.mock("@/features/finance/hooks/useFinance", () => ({
   useRevenueDistribution: () => ({
     data: { byProcedure: [], averageByProcedure: [], byProfessional: [] },

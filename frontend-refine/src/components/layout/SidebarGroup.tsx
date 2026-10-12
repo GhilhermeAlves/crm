@@ -32,7 +32,13 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
     return permissions.includes(permission);
   };
 
-  const visibleItems = group.items.filter((item) => hasPermission(item.permission));
+  const visibleItems = group.items
+    .filter((item) => hasPermission(item.permission))
+    .map((item) =>
+      item.children
+        ? { ...item, children: item.children.filter((child) => hasPermission(child.permission)) }
+        : item,
+    );
 
   return (
     <div>

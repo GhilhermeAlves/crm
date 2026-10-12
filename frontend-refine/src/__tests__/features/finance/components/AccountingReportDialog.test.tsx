@@ -10,7 +10,10 @@ const state = vi.hoisted(() => ({
 
 vi.mock("@/features/finance/hooks/useFinance", () => ({
   useAvailableMonths: () => ({ data: state.months, isLoading: state.loading }),
-  useGenerateAccountingReport: () => ({ mutate: state.generate, isPending: state.pending }),
+}));
+
+vi.mock("@/features/reports/export/useReportExports", () => ({
+  useRequestReportExport: () => ({ mutate: state.generate, isPending: state.pending }),
 }));
 
 import { AccountingReportDialog } from "@/features/finance/components/AccountingReportDialog";
@@ -22,7 +25,7 @@ const renderDialog = (onOpenChange: (open: boolean) => void = () => {}) =>
   render(<AccountingReportDialog open onOpenChange={onOpenChange} companyId="company-1" />);
 
 const generateButton = () =>
-  screen.getByRole("button", { name: /Gerar e baixar/ }) as HTMLButtonElement;
+  screen.getByRole("button", { name: /Gerar relatório/ }) as HTMLButtonElement;
 
 const selectMonth = (label: string) => {
   fireEvent.click(screen.getByRole("combobox"));
@@ -52,10 +55,10 @@ describe("AccountingReportDialog", () => {
 
     expect(generateButton().disabled).toBe(true);
 
-    fireEvent.click(screen.getByRole("radio", { name: /Extrato Financeiro/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /Fluxo de caixa/ }));
     expect(generateButton().disabled).toBe(true);
 
-    fireEvent.click(screen.getByRole("radio", { name: "CSV" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Excel" }));
     expect(generateButton().disabled).toBe(true);
 
     selectMonth("Janeiro 2020");
@@ -71,29 +74,25 @@ describe("AccountingReportDialog", () => {
     expect(screen.getAllByText("Setembro 2026").length).toBeGreaterThan(0);
   });
 
-  it("gera o relatório com o tipo, mês e formato escolhidos", () => {
+  it("pede o relatório com o tipo, mês e formato escolhidos e fecha", () => {
     state.months = ["2026-09"];
     state.generate.mockImplementation((_body, options) => {
-      options.onSuccess({
-        blob: new Blob(["x"]),
-        fileName: "relatorio-statement-2026-09.csv",
-      });
+      options.onSuccess();
     });
 
     const onOpenChange = vi.fn();
     renderDialog(onOpenChange);
 
-    fireEvent.click(screen.getByRole("radio", { name: /Extrato Financeiro/ }));
-    fireEvent.click(screen.getByRole("radio", { name: "CSV" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Fluxo de caixa/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Excel" }));
     selectMonth("Setembro 2026");
 
     fireEvent.click(generateButton());
 
     expect(state.generate).toHaveBeenCalledWith(
-      { type: "STATEMENT", month: "2026-09", format: "CSV" },
+      { type: "CASH_FLOW", format: "XLSX", from: "2026-09-01", to: "2026-09-30" },
       expect.anything(),
     );
-    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +23,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-import { useAvailableMonths, useGenerateAccountingReport } from "../hooks/useFinance";
-import type { AccountingReportType, ReportFormat } from "../types/finance.types";
-import { downloadBlob, formatMonthLabel, previousMonthKey } from "../utils/accounting-report";
+import { useAvailableMonths } from "../hooks/useFinance";
+import type { ExportFormat, ReportExportType } from "@/features/reports/export/types";
+import { useRequestReportExport } from "@/features/reports/export/useReportExports";
+import { formatMonthLabel, previousMonthKey } from "../utils/accounting-report";
 
 type AccountingReportDialogProps = {
   open: boolean;
@@ -35,32 +35,32 @@ type AccountingReportDialogProps = {
 };
 
 type ReportTypeOption = {
-  value: AccountingReportType;
+  value: ReportExportType;
   title: string;
   description: string;
 };
 
 const REPORT_TYPE_OPTIONS: ReportTypeOption[] = [
   {
-    value: "MONTHLY_ACCOUNTING",
-    title: "Relatório Contábil Mensal",
+    value: "MONTHLY_DRE",
+    title: "Contábil mensal (DRE)",
     description: "Receitas e despesas do mês por categoria, para DRE ou Carnê-Leão.",
   },
   {
-    value: "STATEMENT",
-    title: "Extrato Financeiro",
-    description: "Mostra o que entrou e saiu do caixa da clínica no mês.",
+    value: "CASH_FLOW",
+    title: "Fluxo de caixa",
+    description: "O que entrou e saiu do caixa da clínica, dia a dia, no mês.",
   },
   {
     value: "TRANSACTIONS",
-    title: "Detalhamento por Transação",
-    description: "Cada lançamento em tabela, com datas, valores, taxas e parcelas.",
+    title: "Extrato de lançamentos",
+    description: "Cada lançamento do mês em tabela, com paciente, categoria, valor e status.",
   },
 ];
 
-const FORMAT_OPTIONS: { value: ReportFormat; label: string }[] = [
+const FORMAT_OPTIONS: { value: ExportFormat; label: string }[] = [
   { value: "PDF", label: "PDF" },
-  { value: "CSV", label: "CSV" },
+  { value: "XLSX", label: "Excel" },
 ];
 
 export function AccountingReportDialog({
@@ -68,13 +68,13 @@ export function AccountingReportDialog({
   onOpenChange,
   companyId,
 }: AccountingReportDialogProps) {
-  const [type, setType] = useState<AccountingReportType | "">("");
+  const [type, setType] = useState<ReportExportType | "">("");
   const [month, setMonth] = useState("");
-  const [format, setFormat] = useState<ReportFormat | "">("");
+  const [format, setFormat] = useState<ExportFormat | "">("");
 
   const monthsQuery = useAvailableMonths(companyId);
   const months = monthsQuery.data ?? [];
-  const generate = useGenerateAccountingReport(companyId);
+  const generate = useRequestReportExport(companyId);
 
   // Ao fechar, as escolhas voltam ao estado inicial.
   useEffect(() => {
@@ -97,19 +97,15 @@ export function AccountingReportDialog({
 
   const handleGenerate = () => {
     if (!type || !month || !format) return;
-    generate.mutate(
-      { type, month, format },
-      {
-        onSuccess: ({ blob, fileName }) => {
-          downloadBlob(blob, fileName);
-          onOpenChange(false);
-          toast.success("Relatório gerado");
-        },
-        onError: (error: Error) => {
-          toast.error(error.message || "Erro ao gerar o relatório.");
-        },
-      },
-    );
+    // O arquivo é gerado em segundo plano e chega pelo sino (toast no hook).
+    // DRE é por mês; os demais tipos recebem o mês como intervalo de datas.
+    const [year, monthNumber] = month.split("-").map(Number);
+    const lastDay = new Date(year, monthNumber, 0).getDate();
+    const request =
+      type === "MONTHLY_DRE"
+        ? { type, month, format }
+        : { type, format, from: `${month}-01`, to: `${month}-${String(lastDay).padStart(2, "0")}` };
+    generate.mutate(request, { onSuccess: () => onOpenChange(false) });
   };
 
   return (
@@ -118,17 +114,15 @@ export function AccountingReportDialog({
         <DialogHeader>
           <DialogTitle>Gerar relatórios contábeis</DialogTitle>
           <DialogDescription>
-            Baixe o resultado mensal da sua clínica em um dos três formatos abaixo.
+            Gere o resultado mensal da sua clínica. Quando o arquivo ficar pronto, o link de
+            download aparece no sino de notificações.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Tipo de relatório</h3>
-            <RadioGroup
-              value={type}
-              onValueChange={(value) => setType(value as AccountingReportType)}
-            >
+            <RadioGroup value={type} onValueChange={(value) => setType(value as ReportExportType)}>
               {REPORT_TYPE_OPTIONS.map((option) => (
                 <label
                   key={option.value}
@@ -179,7 +173,7 @@ export function AccountingReportDialog({
             <h3 className="text-sm font-semibold">Formato do relatório</h3>
             <RadioGroup
               value={format}
-              onValueChange={(value) => setFormat(value as ReportFormat)}
+              onValueChange={(value) => setFormat(value as ExportFormat)}
               className="flex gap-6"
             >
               {FORMAT_OPTIONS.map((option) => (
@@ -203,7 +197,7 @@ export function AccountingReportDialog({
                 Gerando…
               </>
             ) : (
-              "Gerar e baixar"
+              "Gerar relatório"
             )}
           </Button>
         </div>
