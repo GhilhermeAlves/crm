@@ -14,6 +14,7 @@ class AiScreenCatalogTest {
         assertEquals("Conciliação", AiScreenCatalog.find("/finance/reconciliation").name());
         assertEquals("Gestão financeira", AiScreenCatalog.find("/finance").name());
         assertEquals("Contatos", AiScreenCatalog.find("/contacts/123").name());
+        assertEquals("Estoque", AiScreenCatalog.find("/estoque").name());
         assertEquals("Config. Agenda", AiScreenCatalog.find("/settings/agenda/availability").name());
     }
 

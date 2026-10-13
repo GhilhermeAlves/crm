@@ -34,14 +34,6 @@ vi.mock("@/features/finance/hooks/useFinance", () => ({
   }),
 }));
 
-if (typeof globalThis.ResizeObserver === "undefined") {
-  globalThis.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
-}
-
 describe("CashFlowReport", () => {
   it("mostra sempre as 8 formas de pagamento do detalhamento de entradas", () => {
     render(<CashFlowReport companyId="c1" />);

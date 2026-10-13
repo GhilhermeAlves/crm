@@ -1,6 +1,7 @@
 package com.becommerce.crm.automation.ai.application.tool;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -17,6 +18,8 @@ public final class AgendaFormat {
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("pt-BR"));
     private static final DateTimeFormatter SHORT =
             DateTimeFormatter.ofPattern("dd/MM 'às' HH:mm", Locale.forLanguageTag("pt-BR"));
+    private static final DateTimeFormatter DATE =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.forLanguageTag("pt-BR"));
 
     private AgendaFormat() {
     }
@@ -27,5 +30,9 @@ public final class AgendaFormat {
 
     public static String shortDateTime(Instant instant) {
         return instant == null ? null : SHORT.format(instant.atZone(CLINIC_ZONE));
+    }
+
+    public static String date(LocalDate date) {
+        return date == null ? null : DATE.format(date);
     }
 }

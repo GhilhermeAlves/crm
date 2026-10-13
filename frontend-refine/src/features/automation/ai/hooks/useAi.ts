@@ -87,6 +87,12 @@ export function useAiConfirmAction(conversationId: string | null) {
       if (action?.tool?.endsWith("_appointment")) {
         queryClient.invalidateQueries({ queryKey: ["appointments"] });
       }
+      if (action?.tool === "create_transaction" || action?.tool === "pay_transaction") {
+        queryClient.invalidateQueries({ queryKey: ["finance"] });
+      }
+      if (action?.tool === "register_stock_movement") {
+        queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      }
       queryClient.invalidateQueries({
         queryKey: ["ai", "conversations", conversationId, "actions"],
       });

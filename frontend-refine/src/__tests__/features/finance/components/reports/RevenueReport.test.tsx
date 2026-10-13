@@ -20,14 +20,6 @@ vi.mock("@/features/masterdata/catalog/hooks/useCatalog", () => ({
   useCatalog: () => ({ data: { content: [] }, isLoading: false }),
 }));
 
-if (typeof globalThis.ResizeObserver === "undefined") {
-  globalThis.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver;
-}
-
 describe("RevenueReport", () => {
   it("mostra 'Sem resultados' nas seções vazias", () => {
     render(<RevenueReport companyId="c1" />);
