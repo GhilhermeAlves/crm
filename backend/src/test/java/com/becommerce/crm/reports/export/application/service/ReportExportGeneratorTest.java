@@ -67,7 +67,7 @@ class ReportExportGeneratorTest {
         UUID objectId = UUID.randomUUID();
         when(storage.upload(eq(COMPANY), anyString(), anyString(), any(), eq(USER)))
                 .thenReturn(new StorageResponse(objectId, "k", "f", "application/pdf", 10, COMPANY,
-                        LocalDateTime.now()));
+                        LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 
@@ -112,7 +112,7 @@ class ReportExportGeneratorTest {
         ReportExport export = pending(ReportExportType.CASH_FLOW, ExportFormat.XLSX);
         when(gateway.paidByDay(any(), any(), any())).thenReturn(List.of());
         when(storage.upload(any(), anyString(), anyString(), any(), any()))
-                .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now()));
+                .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 

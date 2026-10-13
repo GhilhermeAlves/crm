@@ -18,6 +18,9 @@ public class StorageJpaEntity {
     @Column(name = "company_id")
     private UUID companyId;
 
+    @Column(name = "contact_id")
+    private UUID contactId;
+
     @Column(name = "object_key")
     private String objectKey;
 
@@ -43,6 +46,8 @@ public class StorageJpaEntity {
     public void setId(UUID id) { this.id = id; }
     public UUID getCompanyId() { return companyId; }
     public void setCompanyId(UUID companyId) { this.companyId = companyId; }
+    public UUID getContactId() { return contactId; }
+    public void setContactId(UUID contactId) { this.contactId = contactId; }
     public String getObjectKey() { return objectKey; }
     public void setObjectKey(String objectKey) { this.objectKey = objectKey; }
     public String getFileName() { return fileName; }

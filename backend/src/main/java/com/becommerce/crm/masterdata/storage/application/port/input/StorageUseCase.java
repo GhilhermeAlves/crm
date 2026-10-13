@@ -16,8 +16,19 @@ public interface StorageUseCase {
     StorageResponse upload(UUID companyId, String fileName, String contentType,
                            byte[] data, UUID userId);
 
+    /**
+     * Faz upload de um arquivo vinculado a um paciente ({@code contactId}) da
+     * empresa, com as mesmas validações de quota de {@link #upload}. Lança
+     * {@code ContactNotFoundException} se o contato não pertencer à empresa.
+     */
+    StorageResponse uploadForContact(UUID companyId, UUID contactId, String fileName,
+                                     String contentType, byte[] data, UUID userId);
+
     /** Metadados (sem bytes) dos arquivos da empresa, mais recentes primeiro. */
     List<StorageResponse> list(UUID companyId);
+
+    /** Metadados (sem bytes) dos arquivos vinculados a um paciente, mais recentes primeiro. */
+    List<StorageResponse> listForContact(UUID companyId, UUID contactId);
 
     /**
      * Recupera o conteúdo de um arquivo da empresa. Lança

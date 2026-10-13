@@ -38,7 +38,16 @@ public class StorageRepositoryImpl implements StorageRepository {
     public List<StorageObject> listByCompanyId(UUID companyId) {
         return jpaRepository.findSummariesByCompanyId(companyId).stream()
                 .map(s -> StorageObject.reconstitute(
-                        s.getId(), companyId, s.getObjectKey(), s.getFileName(),
+                        s.getId(), companyId, null, s.getObjectKey(), s.getFileName(),
+                        s.getContentType(), s.getSizeBytes(), null, null, s.getCreatedAt()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StorageObject> listByContactId(UUID companyId, UUID contactId) {
+        return jpaRepository.findSummariesByContactId(companyId, contactId).stream()
+                .map(s -> StorageObject.reconstitute(
+                        s.getId(), companyId, contactId, s.getObjectKey(), s.getFileName(),
                         s.getContentType(), s.getSizeBytes(), null, null, s.getCreatedAt()))
                 .collect(Collectors.toList());
     }
@@ -52,6 +61,7 @@ public class StorageRepositoryImpl implements StorageRepository {
         StorageJpaEntity e = new StorageJpaEntity();
         e.setId(o.getId());
         e.setCompanyId(o.getCompanyId());
+        e.setContactId(o.getContactId());
         e.setObjectKey(o.getObjectKey());
         e.setFileName(o.getFileName());
         e.setContentType(o.getContentType());
@@ -64,7 +74,7 @@ public class StorageRepositoryImpl implements StorageRepository {
 
     private static StorageObject toDomain(StorageJpaEntity e) {
         return StorageObject.reconstitute(
-                e.getId(), e.getCompanyId(), e.getObjectKey(), e.getFileName(),
+                e.getId(), e.getCompanyId(), e.getContactId(), e.getObjectKey(), e.getFileName(),
                 e.getContentType(), e.getSizeBytes(), e.getData(),
                 e.getCreatedBy(), e.getCreatedAt());
     }

@@ -10,5 +10,6 @@ public record StorageResponse(
         String contentType,
         long sizeBytes,
         UUID companyId,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        UUID contactId
 ) {}
