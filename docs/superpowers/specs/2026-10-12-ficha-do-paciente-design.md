@@ -4,6 +4,24 @@
 **Referência:** Capim (`dash.capim.com.br/#/patients/{id}/...`), levantado navegando um paciente real em modo somente leitura.
 **Plano de implementação (Fase 1):** `docs/superpowers/plans/2026-10-12-ficha-do-paciente.md`
 
+## 0. Status
+
+**Fase 1 — IMPLEMENTADA** (branch `feat/patient-record`), cobrindo os critérios de aceite da seção 7:
+
+- Layout da ficha com cabeçalho e abas (`/contacts/[id]` + `/consultas`, `/financeiro`, `/arquivos`, `/anotacoes`).
+- Cadastro completo persistido (endereço, plano, nº do prontuário, referência, responsável) e página `/contacts/[id]/edit`; prontuário duplicado → 409 com mensagem pt-BR.
+- Abas Consultas (próximas/histórico, marcar Compareceu/Não compareceu), Financeiro (4 cards + lista + "Registrar pagamento"), Arquivos (upload/listar/baixar/excluir por paciente) e Anotações (autor/data, editar/excluir por autor ou ADMIN).
+- Lista de contatos estilo "Lista de Pacientes" (colunas CPF/Celular/Prontuário/Paciente desde) com busca por nome, CPF, celular e prontuário.
+- Migration `V097__patient_record.sql` (a V096 é `report_exports`; o plano citava V096).
+- Verificação: `mvn -q test` e suite Vitest completa verdes.
+
+**Ficou para as Fases 2-3 (spec/plano próprios):**
+
+- **Fase 2:** Anamnese preenchida por paciente (respostas sobre snapshot do modelo + selo no cabeçalho), Evoluções (rascunho → finalizada imutável), Documentos (receita/atestado com PDF) e foto do paciente.
+- **Fase 3:** Ficha clínica (odontograma permanente/decídua, procedimentos por dente/face com estados, filtro por tipo) e Orçamentos (itens, desconto, status Aprovado/Perdido, geração de parcelas em `financial_transactions`).
+- Fora de escopo: análise de crédito, assinatura eletrônica, migração de dados, pastas na aba Arquivos.
+
+
 ## 1. Objetivo
 
 Transformar a página de detalhe do contato (`/contacts/[id]`, hoje "Customer 360" voltado a vendas) numa **ficha do paciente** no estilo Capim: cabeçalho fixo com dados do paciente e abas que dão acesso a todos os dados clínicos, financeiros e administrativos dele. O Customer 360 atual (oportunidades, tarefas, linha do tempo) continua acessível como uma aba.
