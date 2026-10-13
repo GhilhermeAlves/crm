@@ -141,6 +141,7 @@ interface Props {
   defaultStart?: string;
   defaultEnd?: string;
   defaultHostId?: string;
+  defaultContactId?: string;
 }
 
 export function CreateAppointmentDialog({
@@ -155,6 +156,7 @@ export function CreateAppointmentDialog({
   defaultStart,
   defaultEnd,
   defaultHostId,
+  defaultContactId,
 }: Props) {
   const [tab, setTab] = useState<PanelTab>("consulta");
   const [allDay, setAllDay] = useState(false);
@@ -172,6 +174,7 @@ export function CreateAppointmentDialog({
     defaultValues: {
       title: "",
       hostId: defaultHostId ?? "",
+      contactId: defaultContactId,
       startAt: defaultStart ?? "",
       endAt: defaultEnd ?? "",
       status: "CONFIRMED",
@@ -205,6 +208,7 @@ export function CreateAppointmentDialog({
       form.reset({
         title: "",
         hostId: defaultHostId ?? "",
+        contactId: defaultContactId,
         startAt: defaultStart ?? "",
         endAt: defaultEnd ?? "",
         status: "CONFIRMED",
@@ -219,7 +223,7 @@ export function CreateAppointmentDialog({
       setAllDay(false);
       setTab("consulta");
     }
-  }, [open, defaultStart, defaultEnd, defaultHostId, form, blockForm]);
+  }, [open, defaultStart, defaultEnd, defaultHostId, defaultContactId, form, blockForm]);
 
   useEffect(() => {
     if (date) {

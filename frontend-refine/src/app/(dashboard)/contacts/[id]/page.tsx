@@ -69,33 +69,22 @@ export default function Customer360Page() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Link
-            href={ROUTES.CONTACTS}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Contatos
-          </Link>
-          <h1 className="text-2xl font-bold tracking-tight">Customer 360</h1>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {activityPerms.canCreate && (
-            <Button size="sm" onClick={() => setActivityOpen(true)}>
-              <PhoneCall className="mr-1 h-4 w-4" /> Registrar atividade
-            </Button>
-          )}
-          {taskPerms.canCreate && (
-            <Button size="sm" variant="outline" onClick={() => setTaskOpen(true)}>
-              <CalendarPlus className="mr-1 h-4 w-4" /> Nova tarefa
-            </Button>
-          )}
-          <Button size="sm" variant="outline" asChild>
-            <Link href={ROUTES.PIPELINE}>
-              <TrendingUp className="mr-1 h-4 w-4" /> Pipeline
-            </Link>
+      <div className="flex flex-wrap justify-end gap-2">
+        {activityPerms.canCreate && (
+          <Button size="sm" onClick={() => setActivityOpen(true)}>
+            <PhoneCall className="mr-1 h-4 w-4" /> Registrar atividade
           </Button>
-        </div>
+        )}
+        {taskPerms.canCreate && (
+          <Button size="sm" variant="outline" onClick={() => setTaskOpen(true)}>
+            <CalendarPlus className="mr-1 h-4 w-4" /> Nova tarefa
+          </Button>
+        )}
+        <Button size="sm" variant="outline" asChild>
+          <Link href={ROUTES.PIPELINE}>
+            <TrendingUp className="mr-1 h-4 w-4" /> Pipeline
+          </Link>
+        </Button>
       </div>
 
       <ContactSummaryCard contact={c360.contact} />

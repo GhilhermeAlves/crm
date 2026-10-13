@@ -22,6 +22,9 @@ public interface AppointmentRepository {
     /** Próximos agendamentos não cancelados do contato (contexto do paciente para o agente de IA). */
     List<Appointment> findUpcomingByContact(UUID companyId, UUID contactId, Instant from, int limit);
 
+    /** Histórico de consultas do paciente (ficha do paciente), mais recentes primeiro. */
+    List<Appointment> findByCompanyIdAndContactIdOrderByStartAtDesc(UUID companyId, UUID contactId, int limit);
+
     long countByHostIdInWeek(UUID hostId, Instant weekStart, Instant weekEnd);
 
     void delete(Appointment appointment);

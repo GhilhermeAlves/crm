@@ -74,6 +74,10 @@ type TransactionFormDialogProps = {
   companyId: string | null;
   /** Quando informado, o diálogo entra em modo edição. */
   transaction?: FinancialTransaction | null;
+  /** Tipo pré-selecionado na criação; quando informado, o tipo fica travado. */
+  defaultType?: TransactionType;
+  /** Paciente pré-selecionado e travado na criação (ex.: aberto pela ficha). */
+  lockedContact?: { id: string; name: string };
 };
 
 const maskBRL = (raw: string): string => {
@@ -90,8 +94,8 @@ const centsToInput = (cents: number): string =>
 
 const today = (): string => format(new Date(), "yyyy-MM-dd");
 
-const emptyValues = (): TransactionFormValues => ({
-  type: "INCOME",
+const emptyValues = (type: TransactionType = "INCOME"): TransactionFormValues => ({
+  type,
   description: "",
   category: "",
   amount: "",
@@ -270,6 +274,8 @@ export function TransactionFormDialog({
   onOpenChange,
   companyId,
   transaction,
+  defaultType,
+  lockedContact,
 }: TransactionFormDialogProps) {
   const isEditing = !!transaction;
 
@@ -289,8 +295,14 @@ export function TransactionFormDialog({
 
   useEffect(() => {
     if (!open) return;
-    form.reset(transaction ? fromTransaction(transaction) : emptyValues());
-  }, [open, transaction, form]);
+    form.reset(transaction ? fromTransaction(transaction) : emptyValues(defaultType));
+  }, [open, transaction, defaultType, form]);
+
+  useEffect(() => {
+    if (open && !transaction && lockedContact) {
+      form.setValue("contactId", lockedContact.id);
+    }
+  }, [open, transaction, lockedContact, form]);
 
   const values = form.watch();
   const isValid = transactionFormSchema.safeParse(values).success;
@@ -339,12 +351,14 @@ export function TransactionFormDialog({
                         <button
                           key={option}
                           type="button"
+                          disabled={!!defaultType}
                           onClick={() => handleTypeChange(option)}
                           className={cn(
                             "flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
                             field.value === option
                               ? "border-primary bg-primary/10 text-primary"
                               : "border-input text-muted-foreground hover:bg-muted",
+                            !!defaultType && "cursor-not-allowed opacity-70",
                           )}
                         >
                           {TRANSACTION_TYPE_LABELS[option]}
@@ -498,12 +512,18 @@ export function TransactionFormDialog({
 
               <FormItem className="sm:col-span-1">
                 <OptionalLabel>Paciente</OptionalLabel>
-                <ContactCombobox
-                  contacts={contacts}
-                  value={values.contactId}
-                  onChange={(id) => form.setValue("contactId", id)}
-                  placeholder="Selecione um paciente"
-                />
+                {lockedContact ? (
+                  <div className="flex h-9 items-center rounded-md border border-input bg-muted/50 px-3 text-sm">
+                    {lockedContact.name}
+                  </div>
+                ) : (
+                  <ContactCombobox
+                    contacts={contacts}
+                    value={values.contactId}
+                    onChange={(id) => form.setValue("contactId", id)}
+                    placeholder="Selecione um paciente"
+                  />
+                )}
               </FormItem>
 
               <div className="space-y-2">

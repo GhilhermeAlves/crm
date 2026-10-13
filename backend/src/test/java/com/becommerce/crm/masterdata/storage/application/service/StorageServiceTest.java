@@ -2,6 +2,9 @@ package com.becommerce.crm.masterdata.storage.application.service;
 
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.company.application.service.CompanyQuotaService;
+import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
+import com.becommerce.crm.masterdata.contact.domain.Contact;
+import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageDownload;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;
 import com.becommerce.crm.masterdata.storage.application.port.output.StorageRepository;
@@ -29,11 +32,19 @@ class StorageServiceTest {
 
     @Mock StorageRepository storageRepository;
     @Mock CompanyQuotaService quotaService;
+    @Mock ContactRepository contactRepository;
     @Mock TenantAuditRecorder auditor;
 
     @InjectMocks StorageService storageService;
 
     private final UUID companyId = UUID.randomUUID();
+    private final UUID contactId = UUID.randomUUID();
+
+    private void ownedContact() {
+        Contact contact = mock(Contact.class);
+        when(contact.getCompanyId()).thenReturn(companyId);
+        when(contactRepository.findById(contactId)).thenReturn(Optional.of(contact));
+    }
 
     @Test
     void shouldUploadWhenWithinQuota() {
@@ -120,6 +131,54 @@ class StorageServiceTest {
         storageService.delete(companyId, objectId);
 
         verify(storageRepository).deleteByIdAndCompanyId(objectId, companyId);
+    }
+
+    @Test
+    void shouldUploadForContactWhenContactBelongsToCompany() {
+        byte[] data = new byte[64];
+        ownedContact();
+        doNothing().when(quotaService).assertCanAddSpace(companyId, data.length);
+        when(storageRepository.save(any(StorageObject.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        StorageResponse response = storageService.uploadForContact(companyId, contactId,
+                "exame.pdf", "application/pdf", data, UUID.randomUUID());
+
+        assertEquals(contactId, response.contactId());
+        assertEquals("exame.pdf", response.fileName());
+        verify(storageRepository).save(any(StorageObject.class));
+    }
+
+    @Test
+    void shouldRejectUploadForContactOfAnotherCompany() {
+        Contact other = mock(Contact.class);
+        when(other.getCompanyId()).thenReturn(UUID.randomUUID());
+        when(contactRepository.findById(contactId)).thenReturn(Optional.of(other));
+
+        assertThrows(ContactNotFoundException.class, () -> storageService.uploadForContact(companyId, contactId,
+                "exame.pdf", "application/pdf", new byte[8], UUID.randomUUID()));
+        verify(storageRepository, never()).save(any(StorageObject.class));
+    }
+
+    @Test
+    void shouldListOnlyContactFiles() {
+        ownedContact();
+        StorageObject obj = StorageObject.reconstitute(
+                UUID.randomUUID(), companyId, contactId, "k", "exame.pdf", "application/pdf", 3, null,
+                UUID.randomUUID(), null);
+        when(storageRepository.listByContactId(companyId, contactId)).thenReturn(List.of(obj));
+
+        List<StorageResponse> result = storageService.listForContact(companyId, contactId);
+
+        assertEquals(1, result.size());
+        assertEquals(contactId, result.get(0).contactId());
+        verify(storageRepository, never()).listByCompanyId(any());
+    }
+
+    @Test
+    void shouldThrowWhenListingFilesOfMissingContact() {
+        when(contactRepository.findById(contactId)).thenReturn(Optional.empty());
+
+        assertThrows(ContactNotFoundException.class, () -> storageService.listForContact(companyId, contactId));
     }
 
     @Test

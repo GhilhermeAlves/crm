@@ -5,6 +5,7 @@ export interface StorageObject {
   contentType: string;
   sizeBytes: number;
   companyId: string;
+  contactId: string | null;
   createdAt: string;
 }
 

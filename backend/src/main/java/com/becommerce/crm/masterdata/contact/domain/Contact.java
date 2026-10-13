@@ -8,6 +8,11 @@ import java.util.UUID;
  * Contato por empresa (Sprint 8.6). Corresponde à tabela {@code contacts} (V015),
  * já protegida por RLS. {@code deletedAt != null} sinaliza exclusão lógica — não
  * conta para {@code max_contacts}.
+ *
+ * <p>Ficha do paciente (V097): além dos dados básicos, o contato carrega o
+ * cadastro clínico/administrativo (endereço, plano de saúde, nº do prontuário,
+ * referência e responsável). {@code recordNumber} é único por empresa quando
+ * preenchido.</p>
  */
 public class Contact {
 
@@ -26,6 +31,21 @@ public class Contact {
     private String gender;
     private String maritalStatus;
     private String professionalStatus;
+    private String zipCode;
+    private String street;
+    private String addressNumber;
+    private String addressComplement;
+    private String neighborhood;
+    private String city;
+    private String state;
+    private String healthPlan;
+    private String healthPlanNumber;
+    private String recordNumber;
+    private String referralSource;
+    private boolean hasGuardian;
+    private String guardianName;
+    private String guardianCpf;
+    private String guardianPhone;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
@@ -34,6 +54,11 @@ public class Contact {
                     String phone, String mobile, String notes, LocalDate birthDate,
                     String cpf, String rg, String rgIssuer, String gender, String maritalStatus,
                     String professionalStatus,
+                    String zipCode, String street, String addressNumber, String addressComplement,
+                    String neighborhood, String city, String state, String healthPlan,
+                    String healthPlanNumber, String recordNumber, String referralSource,
+                    boolean hasGuardian, String guardianName, String guardianCpf,
+                    String guardianPhone,
                     LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
         this.companyId = companyId;
@@ -50,6 +75,21 @@ public class Contact {
         this.gender = gender;
         this.maritalStatus = maritalStatus;
         this.professionalStatus = professionalStatus;
+        this.zipCode = zipCode;
+        this.street = street;
+        this.addressNumber = addressNumber;
+        this.addressComplement = addressComplement;
+        this.neighborhood = neighborhood;
+        this.city = city;
+        this.state = state;
+        this.healthPlan = healthPlan;
+        this.healthPlanNumber = healthPlanNumber;
+        this.recordNumber = recordNumber;
+        this.referralSource = referralSource;
+        this.hasGuardian = hasGuardian;
+        this.guardianName = guardianName;
+        this.guardianCpf = guardianCpf;
+        this.guardianPhone = guardianPhone;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
@@ -62,6 +102,8 @@ public class Contact {
         LocalDateTime now = LocalDateTime.now();
         return new Contact(UUID.randomUUID(), companyId, firstName, lastName, email, phone, mobile,
                 notes, birthDate, cpf, rg, rgIssuer, gender, maritalStatus, professionalStatus,
+                null, null, null, null, null, null, null, null, null, null, null, false,
+                null, null, null,
                 now, now, null);
     }
 
@@ -71,8 +113,29 @@ public class Contact {
                                        String gender, String maritalStatus, String professionalStatus,
                                        LocalDateTime createdAt, LocalDateTime updatedAt,
                                        LocalDateTime deletedAt) {
+        return reconstitute(id, companyId, firstName, lastName, email, phone, mobile, notes,
+                birthDate, cpf, rg, rgIssuer, gender, maritalStatus, professionalStatus,
+                null, null, null, null, null, null, null, null, null, null, null, false,
+                null, null, null,
+                createdAt, updatedAt, deletedAt);
+    }
+
+    public static Contact reconstitute(UUID id, UUID companyId, String firstName, String lastName,
+                                       String email, String phone, String mobile, String notes,
+                                       LocalDate birthDate, String cpf, String rg, String rgIssuer,
+                                       String gender, String maritalStatus, String professionalStatus,
+                                       String zipCode, String street, String addressNumber,
+                                       String addressComplement, String neighborhood, String city,
+                                       String state, String healthPlan, String healthPlanNumber,
+                                       String recordNumber, String referralSource, boolean hasGuardian,
+                                       String guardianName, String guardianCpf, String guardianPhone,
+                                       LocalDateTime createdAt, LocalDateTime updatedAt,
+                                       LocalDateTime deletedAt) {
         return new Contact(id, companyId, firstName, lastName, email, phone, mobile, notes,
                 birthDate, cpf, rg, rgIssuer, gender, maritalStatus, professionalStatus,
+                zipCode, street, addressNumber, addressComplement, neighborhood, city, state,
+                healthPlan, healthPlanNumber, recordNumber, referralSource, hasGuardian,
+                guardianName, guardianCpf, guardianPhone,
                 createdAt, updatedAt, deletedAt);
     }
 
@@ -91,6 +154,21 @@ public class Contact {
     public String getGender() { return gender; }
     public String getMaritalStatus() { return maritalStatus; }
     public String getProfessionalStatus() { return professionalStatus; }
+    public String getZipCode() { return zipCode; }
+    public String getStreet() { return street; }
+    public String getAddressNumber() { return addressNumber; }
+    public String getAddressComplement() { return addressComplement; }
+    public String getNeighborhood() { return neighborhood; }
+    public String getCity() { return city; }
+    public String getState() { return state; }
+    public String getHealthPlan() { return healthPlan; }
+    public String getHealthPlanNumber() { return healthPlanNumber; }
+    public String getRecordNumber() { return recordNumber; }
+    public String getReferralSource() { return referralSource; }
+    public boolean isHasGuardian() { return hasGuardian; }
+    public String getGuardianName() { return guardianName; }
+    public String getGuardianCpf() { return guardianCpf; }
+    public String getGuardianPhone() { return guardianPhone; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
@@ -109,6 +187,21 @@ public class Contact {
     public void setGender(String gender) { this.gender = gender; }
     public void setMaritalStatus(String maritalStatus) { this.maritalStatus = maritalStatus; }
     public void setProfessionalStatus(String professionalStatus) { this.professionalStatus = professionalStatus; }
+    public void setZipCode(String zipCode) { this.zipCode = zipCode; }
+    public void setStreet(String street) { this.street = street; }
+    public void setAddressNumber(String addressNumber) { this.addressNumber = addressNumber; }
+    public void setAddressComplement(String addressComplement) { this.addressComplement = addressComplement; }
+    public void setNeighborhood(String neighborhood) { this.neighborhood = neighborhood; }
+    public void setCity(String city) { this.city = city; }
+    public void setState(String state) { this.state = state; }
+    public void setHealthPlan(String healthPlan) { this.healthPlan = healthPlan; }
+    public void setHealthPlanNumber(String healthPlanNumber) { this.healthPlanNumber = healthPlanNumber; }
+    public void setRecordNumber(String recordNumber) { this.recordNumber = recordNumber; }
+    public void setReferralSource(String referralSource) { this.referralSource = referralSource; }
+    public void setHasGuardian(boolean hasGuardian) { this.hasGuardian = hasGuardian; }
+    public void setGuardianName(String guardianName) { this.guardianName = guardianName; }
+    public void setGuardianCpf(String guardianCpf) { this.guardianCpf = guardianCpf; }
+    public void setGuardianPhone(String guardianPhone) { this.guardianPhone = guardianPhone; }
 
     public void touch() {
         this.updatedAt = LocalDateTime.now();

@@ -53,6 +53,14 @@ public class AppointmentController {
         return ResponseEntity.ok(useCase.getById(companyId, appointmentId));
     }
 
+    @GetMapping("/api/v1/companies/{companyId}/contacts/{contactId}/appointments")
+    @PreAuthorize("hasAuthority('appointment:read')")
+    public ResponseEntity<List<AppointmentResponse>> listByContact(
+            @CurrentCompanyId("Você só pode acessar agendamentos da sua própria empresa.") UUID companyId,
+            @PathVariable UUID contactId) {
+        return ResponseEntity.ok(useCase.listByContact(companyId, contactId));
+    }
+
     @PutMapping("/api/v1/companies/{companyId}/appointments/{appointmentId}")
     @PreAuthorize("hasAuthority('appointment:update')")
     public ResponseEntity<AppointmentResponse> update(

@@ -47,6 +47,14 @@ public class ContactRepositoryImpl implements ContactRepository {
                 .map(ContactRepositoryImpl::toDomain);
     }
 
+    @Override
+    public boolean existsByRecordNumber(UUID companyId, String recordNumber, UUID excludeContactId) {
+        if (excludeContactId == null) {
+            return jpaRepository.existsByCompanyIdAndRecordNumber(companyId, recordNumber);
+        }
+        return jpaRepository.existsByCompanyIdAndRecordNumberAndIdNot(companyId, recordNumber, excludeContactId);
+    }
+
     private static ContactJpaEntity toEntity(Contact c) {
         ContactJpaEntity e = new ContactJpaEntity();
         e.setId(c.getId());
@@ -64,6 +72,21 @@ public class ContactRepositoryImpl implements ContactRepository {
         e.setGender(c.getGender());
         e.setMaritalStatus(c.getMaritalStatus());
         e.setProfessionalStatus(c.getProfessionalStatus());
+        e.setZipCode(c.getZipCode());
+        e.setStreet(c.getStreet());
+        e.setAddressNumber(c.getAddressNumber());
+        e.setAddressComplement(c.getAddressComplement());
+        e.setNeighborhood(c.getNeighborhood());
+        e.setCity(c.getCity());
+        e.setState(c.getState());
+        e.setHealthPlan(c.getHealthPlan());
+        e.setHealthPlanNumber(c.getHealthPlanNumber());
+        e.setRecordNumber(c.getRecordNumber());
+        e.setReferralSource(c.getReferralSource());
+        e.setHasGuardian(c.isHasGuardian());
+        e.setGuardianName(c.getGuardianName());
+        e.setGuardianCpf(c.getGuardianCpf());
+        e.setGuardianPhone(c.getGuardianPhone());
         e.setCreatedAt(c.getCreatedAt());
         e.setUpdatedAt(c.getUpdatedAt());
         e.setDeletedAt(c.getDeletedAt());
@@ -76,6 +99,10 @@ public class ContactRepositoryImpl implements ContactRepository {
                 e.getEmail(), e.getPhone(), e.getMobile(), e.getNotes(),
                 e.getBirthDate(), e.getCpf(), e.getRg(), e.getRgIssuer(),
                 e.getGender(), e.getMaritalStatus(), e.getProfessionalStatus(),
+                e.getZipCode(), e.getStreet(), e.getAddressNumber(), e.getAddressComplement(),
+                e.getNeighborhood(), e.getCity(), e.getState(), e.getHealthPlan(),
+                e.getHealthPlanNumber(), e.getRecordNumber(), e.getReferralSource(),
+                e.isHasGuardian(), e.getGuardianName(), e.getGuardianCpf(), e.getGuardianPhone(),
                 e.getCreatedAt(), e.getUpdatedAt(), e.getDeletedAt());
     }
 }

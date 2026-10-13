@@ -17,15 +17,26 @@ public interface StorageJpaRepository extends JpaRepository<StorageJpaEntity, UU
 
     Optional<StorageJpaEntity> findByIdAndCompanyId(UUID id, UUID companyId);
 
-    /** Lista metadados (sem {@code data}) dos objetos da empresa, mais recentes primeiro. */
+    /** Lista metadados (sem {@code data}) dos arquivos da empresa (sem paciente), mais recentes primeiro. */
     @Query("""
             select s.id as id, s.objectKey as objectKey, s.fileName as fileName,
                    s.contentType as contentType, s.sizeBytes as sizeBytes, s.createdAt as createdAt
             from StorageJpaEntity s
-            where s.companyId = :companyId
+            where s.companyId = :companyId and s.contactId is null
             order by s.createdAt desc
             """)
     List<StorageSummary> findSummariesByCompanyId(@Param("companyId") UUID companyId);
+
+    /** Lista metadados dos arquivos vinculados a um paciente, mais recentes primeiro. */
+    @Query("""
+            select s.id as id, s.objectKey as objectKey, s.fileName as fileName,
+                   s.contentType as contentType, s.sizeBytes as sizeBytes, s.createdAt as createdAt
+            from StorageJpaEntity s
+            where s.companyId = :companyId and s.contactId = :contactId
+            order by s.createdAt desc
+            """)
+    List<StorageSummary> findSummariesByContactId(@Param("companyId") UUID companyId,
+                                                  @Param("contactId") UUID contactId);
 
     @Modifying
     @Query("delete from StorageJpaEntity s where s.companyId = :companyId and s.id = :id")

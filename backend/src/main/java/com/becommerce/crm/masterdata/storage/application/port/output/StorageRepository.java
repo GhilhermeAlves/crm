@@ -27,6 +27,9 @@ public interface StorageRepository {
     /** Metadados (sem bytes) dos objetos da empresa, mais recentes primeiro. */
     List<StorageObject> listByCompanyId(UUID companyId);
 
+    /** Metadados (sem bytes) dos arquivos vinculados a um paciente, mais recentes primeiro. */
+    List<StorageObject> listByContactId(UUID companyId, UUID contactId);
+
     /** Remove o objeto de uma empresa (no-op se não pertencer a ela). */
     void deleteByIdAndCompanyId(UUID id, UUID companyId);
 }

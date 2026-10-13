@@ -26,6 +26,21 @@ function makeContact(overrides: Partial<Contact> = {}): Contact {
     gender: null,
     maritalStatus: null,
     professionalStatus: null,
+    zipCode: null,
+    street: null,
+    addressNumber: null,
+    addressComplement: null,
+    neighborhood: null,
+    city: null,
+    state: null,
+    healthPlan: null,
+    healthPlanNumber: null,
+    recordNumber: null,
+    referralSource: null,
+    hasGuardian: false,
+    guardianName: null,
+    guardianCpf: null,
+    guardianPhone: null,
     createdAt: "2026-08-13T00:00:00",
     ...overrides,
   };
@@ -37,10 +52,18 @@ describe("ContactTable (Sprint 13)", () => {
     expect(screen.getByText("Nenhum contato cadastrado ainda.")).toBeTruthy();
   });
 
-  it("renders contact rows with name and email", () => {
-    render(<ContactTable contacts={[makeContact()]} />);
+  it("renders contact rows with name, cpf, mobile and record number", () => {
+    render(
+      <ContactTable
+        contacts={[
+          makeContact({ cpf: "11122233344", mobile: "11988887777", recordNumber: "PRT-42" }),
+        ]}
+      />,
+    );
     expect(screen.getByText(/Ana/)).toBeTruthy();
-    expect(screen.getByText(/ana@e.com/)).toBeTruthy();
+    expect(screen.getByText("111.222.333-44")).toBeTruthy();
+    expect(screen.getByText("(11) 98888-7777")).toBeTruthy();
+    expect(screen.getByText("PRT-42")).toBeTruthy();
   });
 
   it("links each row to the customer 360 page", () => {

@@ -22,6 +22,8 @@ import com.becommerce.crm.identity.domain.exception.IdentityServiceUnavailableEx
 import com.becommerce.crm.sales.activity.domain.exception.ActivityNotFoundException;
 import com.becommerce.crm.sales.activity.domain.exception.ActivityValidationException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
+import com.becommerce.crm.masterdata.contact.domain.exception.ContactConflictException;
+import com.becommerce.crm.masterdata.contact.note.domain.exception.ContactNoteNotFoundException;
 import com.becommerce.crm.identity.domain.exception.DuplicateRoleException;
 import com.becommerce.crm.identity.domain.exception.InvalidCredentialsException;
 import com.becommerce.crm.identity.domain.exception.InvalidTokenException;
@@ -492,6 +494,17 @@ public class GlobalExceptionHandler {
             ));
     }
 
+    @ExceptionHandler(ContactNoteNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleContactNoteNotFoundException(ContactNoteNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(PipelineValidationException.class)
     public ResponseEntity<Map<String, Object>> handlePipelineValidationException(PipelineValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -785,6 +798,17 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 400,
                 "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ContactConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleContactConflictException(ContactConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

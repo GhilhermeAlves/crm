@@ -8,10 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { ContactTable } from "@/features/masterdata/contacts/components/ContactTable";
-import { CreateContactDialog } from "@/features/masterdata/contacts/components/CreateContactDialog";
 import {
   useContacts,
-  useUpdateContact,
   useDeleteContact,
   useContactPermissions,
 } from "@/features/masterdata/contacts/hooks/useContacts";
@@ -28,35 +26,34 @@ export default function ContactsPage() {
   const companyId = user?.companyId ?? null;
 
   const { data: contacts, isLoading, isError, refetch } = useContacts(companyId);
-  const updateContact = useUpdateContact(companyId);
   const deleteContact = useDeleteContact(companyId);
   const { canCreate, canUpdate, canDelete } = useContactPermissions();
 
   const [search, setSearch] = useState("");
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [deletingContact, setDeletingContact] = useState<Contact | null>(null);
 
   const filteredContacts = useMemo(() => {
     const q = search.trim().toLowerCase();
+    if (!q) return contacts ?? [];
+    const digits = q.replace(/\D/g, "");
     return (contacts ?? []).filter((c) => {
-      if (!q) return true;
       const fullName = `${c.firstName} ${c.lastName ?? ""}`.trim().toLowerCase();
-      return (
+      const matchesText =
         fullName.includes(q) ||
         (c.email ?? "").toLowerCase().includes(q) ||
-        (c.phone ?? "").toLowerCase().includes(q) ||
-        (c.notes ?? "").toLowerCase().includes(q)
+        (c.recordNumber ?? "").toLowerCase().includes(q);
+      if (matchesText) return true;
+      if (!digits) return false;
+      const onlyDigits = (value: string | null | undefined) =>
+        (value ?? "").replace(/\D/g, "").includes(digits);
+      return (
+        onlyDigits(c.cpf) ||
+        onlyDigits(c.mobile) ||
+        onlyDigits(c.phone) ||
+        onlyDigits(c.recordNumber)
       );
     });
   }, [contacts, search]);
-
-  const handleUpdate = (values: Parameters<typeof updateContact.mutate>[0]["data"]) => {
-    if (!editingContact) return;
-    updateContact.mutate(
-      { id: editingContact.id, data: values },
-      { onSuccess: () => setEditingContact(null) },
-    );
-  };
 
   const handleDelete = () => {
     if (!deletingContact) return;
@@ -64,8 +61,6 @@ export default function ContactsPage() {
       onSuccess: () => setDeletingContact(null),
     });
   };
-
-  const totalCount = contacts?.length ?? 0;
 
   if (!can("contact:page:view")) {
     return (
@@ -89,7 +84,7 @@ export default function ContactsPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquise pelo nome, e-mail ou telefone"
+              placeholder="Pesquise por nome, CPF, celular ou prontuário"
               className="pl-9"
             />
           </div>
@@ -121,19 +116,11 @@ export default function ContactsPage() {
         ) : (
           <ContactTable
             contacts={filteredContacts}
-            onEdit={canUpdate ? setEditingContact : undefined}
+            onEdit={canUpdate ? (c) => router.push(`/contacts/${c.id}/edit`) : undefined}
             onDelete={canDelete ? setDeletingContact : undefined}
           />
         )}
       </div>
-
-      <CreateContactDialog
-        open={!!editingContact}
-        onOpenChange={(open) => !open && setEditingContact(null)}
-        isLoading={updateContact.isPending}
-        contact={editingContact}
-        onSubmit={handleUpdate}
-      />
 
       <ConfirmDialog
         open={!!deletingContact}
