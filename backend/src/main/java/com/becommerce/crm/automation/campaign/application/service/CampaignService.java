@@ -159,7 +159,7 @@ public class CampaignService implements CampaignUseCase {
             if (!omniChannel.getCompanyId().equals(companyId)) {
                 throw new IllegalArgumentException("Canal não encontrado.");
             }
-            if (!"ACTIVE".equals(omniChannel.getStatus())) {
+            if (omniChannel.getStatus() != com.becommerce.crm.communication.omnichannel.domain.ChannelStatus.ACTIVE) {
                 throw new IllegalStateException("Canal precisa estar ACTIVE.");
             }
             com.becommerce.crm.communication.template.domain.MessageTemplate template =
