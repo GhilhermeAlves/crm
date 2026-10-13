@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { usePermission } from "@/features/identity/auth/hooks/useAuthorization";
 import { TransactionFormDialog } from "@/features/finance/components/TransactionFormDialog";
-import { useTransactions } from "@/features/finance/hooks/useFinance";
+import { useAllTransactions } from "@/features/finance/hooks/useFinance";
 import type { FinancialTransaction } from "@/features/finance/types/finance.types";
 import { centsToBRL } from "@/features/finance/utils/money";
 import { summarizePatientTransactions } from "@/features/finance/utils/patient-summary";
@@ -88,12 +88,11 @@ export function PatientFinance({ contact }: { contact: Contact }) {
   const can = usePermission();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useTransactions(companyId, {
+  const { data, isLoading } = useAllTransactions(companyId, {
     contactId: contact.id,
     type: "INCOME",
-    pageSize: 200,
   });
-  const transactions = data?.content ?? [];
+  const transactions = useMemo(() => data ?? [], [data]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
 

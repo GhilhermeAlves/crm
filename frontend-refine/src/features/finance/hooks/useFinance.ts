@@ -4,6 +4,7 @@ import { FinanceService } from "../services/finance.service";
 import type {
   AccountingReportRequest,
   CreateFinancialTransactionRequest,
+  FinancialTransaction,
   ListTransactionsFilters,
   ReportGranularity,
   TransactionFilters,
@@ -25,6 +26,28 @@ export function useTransactions(companyId: string | null, filters: ListTransacti
   return useQuery({
     queryKey: ["finance", companyId, "transactions", filters],
     queryFn: () => FinanceService.listTransactions(companyId as string, filters),
+    enabled: !!companyId,
+  });
+}
+
+// O backend limita a página a 100 itens; percorre todas para totais corretos (ex.: ficha do paciente).
+const ALL_PAGES_SIZE = 100;
+
+export function useAllTransactions(companyId: string | null, filters: TransactionFilters = {}) {
+  return useQuery({
+    queryKey: ["finance", companyId, "transactions", "all", filters],
+    queryFn: async () => {
+      const items: FinancialTransaction[] = [];
+      for (let page = 0; ; page++) {
+        const result = await FinanceService.listTransactions(companyId as string, {
+          ...filters,
+          page,
+          pageSize: ALL_PAGES_SIZE,
+        });
+        items.push(...result.content);
+        if (page + 1 >= result.totalPages || result.content.length === 0) return items;
+      }
+    },
     enabled: !!companyId,
   });
 }

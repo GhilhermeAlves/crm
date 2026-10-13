@@ -1,10 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMutationDefaults } from "@/lib/query/mutation-utils";
 import { PatientService } from "../services/patient.service";
-import type {
-  CreateContactNoteRequest,
-  UpdateContactNoteRequest,
-} from "../types/patient.types";
+import type { CreateContactNoteRequest, UpdateContactNoteRequest } from "../types/patient.types";
 
 export function useContactAppointments(companyId: string | null, contactId: string | null) {
   return useQuery({
