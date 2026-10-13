@@ -31,6 +31,7 @@ export function useDeleteFile(companyId: string | null) {
     mutationFn: (objectId: string) => StorageService.remove(companyId as string, objectId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["storage", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["contact-files"] });
       toast.success("Arquivo excluído");
     },
     onError: (error: Error) => {

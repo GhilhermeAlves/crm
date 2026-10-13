@@ -14,6 +14,21 @@ export type Contact = {
   gender: string | null;
   maritalStatus: string | null;
   professionalStatus: string | null;
+  zipCode: string | null;
+  street: string | null;
+  addressNumber: string | null;
+  addressComplement: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  healthPlan: string | null;
+  healthPlanNumber: string | null;
+  recordNumber: string | null;
+  referralSource: string | null;
+  hasGuardian: boolean;
+  guardianName: string | null;
+  guardianCpf: string | null;
+  guardianPhone: string | null;
   createdAt: string;
 };
 
@@ -31,6 +46,21 @@ export type CreateContactRequest = {
   gender?: string;
   maritalStatus?: string;
   professionalStatus?: string;
+  zipCode?: string;
+  street?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  healthPlan?: string;
+  healthPlanNumber?: string;
+  recordNumber?: string;
+  referralSource?: string;
+  hasGuardian?: boolean;
+  guardianName?: string;
+  guardianCpf?: string;
+  guardianPhone?: string;
 };
 
 export type UpdateContactRequest = {
@@ -47,6 +77,21 @@ export type UpdateContactRequest = {
   gender?: string;
   maritalStatus?: string;
   professionalStatus?: string;
+  zipCode?: string;
+  street?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  healthPlan?: string;
+  healthPlanNumber?: string;
+  recordNumber?: string;
+  referralSource?: string;
+  hasGuardian?: boolean;
+  guardianName?: string;
+  guardianCpf?: string;
+  guardianPhone?: string;
 };
 
 // ---------------------------------------------------------------------------
