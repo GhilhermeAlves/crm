@@ -24,7 +24,7 @@ ALTER TABLE contacts
     ADD COLUMN address_complement VARCHAR(80),
     ADD COLUMN neighborhood       VARCHAR(80),
     ADD COLUMN city               VARCHAR(80),
-    ADD COLUMN state              CHAR(2),
+    ADD COLUMN state              VARCHAR(2),
     ADD COLUMN health_plan        VARCHAR(80),
     ADD COLUMN health_plan_number VARCHAR(40),
     ADD COLUMN record_number      VARCHAR(40),
