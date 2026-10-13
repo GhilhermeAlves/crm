@@ -286,4 +286,23 @@ class ContactServiceTest {
         assertEquals("Ana Maria", response.firstName());
         verify(contactRepository).save(any(Contact.class));
     }
+
+    // ===== busca da lista de pacientes (nome, CPF, celular, prontuario) =====
+
+    @Test
+    void searchShouldMatchByNameCpfDigitsMobileAndRecordNumber() {
+        Contact ana = Contact.create(companyId, "Ana", "Souza", "ana@empresa.com", "1130001111",
+                "11988887777", null, null, "11122233344", null, null, null, null, null);
+        ana.setRecordNumber("PRT-42");
+        Contact bruno = Contact.create(companyId, "Bruno", "Lima", "bruno@empresa.com", "2130002222",
+                "21977776666", null, null, null, null, null, null, null, null);
+        when(contactRepository.findByCompanyIdActive(companyId))
+                .thenReturn(java.util.List.of(ana, bruno));
+
+        assertEquals(1, contactService.search(companyId, "111.222.333-44", 10).size());
+        assertEquals(1, contactService.search(companyId, "988887", 10).size());
+        assertEquals(1, contactService.search(companyId, "prt-42", 10).size());
+        assertEquals(2, contactService.search(companyId, "empresa.com", 10).size());
+        assertEquals(1, contactService.search(companyId, "bruno", 10).size());
+    }
 }

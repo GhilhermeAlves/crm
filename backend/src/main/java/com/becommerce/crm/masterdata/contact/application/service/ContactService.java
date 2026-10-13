@@ -139,11 +139,35 @@ public class ContactService implements ContactUseCase {
         }
     }
 
+    /**
+     * Busca da lista de pacientes: casa por nome, e-mail, telefone/celular,
+     * numero do prontuario e CPF. Como CPF/telefone podem vir formatados,
+     * tambem comparamos apenas os digitos (busca "111.222.333-44" casa com
+     * "11122233344").
+     */
     private static boolean matches(Contact c, String q) {
-        return (c.getFirstName() != null && c.getFirstName().toLowerCase().contains(q))
-                || (c.getLastName() != null && c.getLastName().toLowerCase().contains(q))
-                || (c.getEmail() != null && c.getEmail().toLowerCase().contains(q))
-                || (c.getPhone() != null && c.getPhone().toLowerCase().contains(q));
+        if (containsIgnoreCase(c.getFirstName(), q)
+                || containsIgnoreCase(c.getLastName(), q)
+                || containsIgnoreCase(c.getEmail(), q)
+                || containsIgnoreCase(c.getPhone(), q)
+                || containsIgnoreCase(c.getMobile(), q)
+                || containsIgnoreCase(c.getRecordNumber(), q)) {
+            return true;
+        }
+        String digits = q.replaceAll("\\D", "");
+        return !digits.isEmpty()
+                && (digitsContain(c.getCpf(), digits)
+                || digitsContain(c.getPhone(), digits)
+                || digitsContain(c.getMobile(), digits)
+                || digitsContain(c.getRecordNumber(), digits));
+    }
+
+    private static boolean containsIgnoreCase(String value, String q) {
+        return value != null && value.toLowerCase().contains(q);
+    }
+
+    private static boolean digitsContain(String value, String digits) {
+        return value != null && value.replaceAll("\\D", "").contains(digits);
     }
 
     @Override

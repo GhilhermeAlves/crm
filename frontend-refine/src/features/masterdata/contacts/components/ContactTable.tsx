@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Pencil, Trash2, XCircle, History } from "lucide-react";
 import type { Contact } from "../types/contact.types";
 import { ROUTES } from "@/lib/constants";
+import { formatCpf, formatPhone } from "@/lib/format";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -106,9 +107,10 @@ export function ContactTable({ contacts, isLoading, onEdit, onDelete }: Props) {
                 />
               </TableHead>
               <TableHead>Nome</TableHead>
-              <TableHead>E-mail</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Contato desde</TableHead>
+              <TableHead>CPF</TableHead>
+              <TableHead>Celular</TableHead>
+              <TableHead>Prontuário</TableHead>
+              <TableHead>Paciente desde</TableHead>
               <TableHead className="w-[160px] text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -127,9 +129,14 @@ export function ContactTable({ contacts, isLoading, onEdit, onDelete }: Props) {
                     {fullName(c)}
                   </Link>
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">{c.email ?? "—"}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {c.phone ?? c.mobile ?? "—"}
+                  {c.cpf ? formatCpf(c.cpf) : "—"}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {c.mobile ? formatPhone(c.mobile) : c.phone ? formatPhone(c.phone) : "—"}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {c.recordNumber ?? "—"}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {formatDate(c.createdAt)}
