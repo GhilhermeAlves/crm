@@ -62,7 +62,9 @@ class AiReadToolsTest {
     void shouldGetCustomer() {
         ContactResponse c = new ContactResponse(UUID.randomUUID(), companyId, "João", "Silva",
                 "joao@x.com", "+5511", null, "nota",
-                null, null, null, null, null, null, null, LocalDateTime.now());
+                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, false, null, null, null,
+                LocalDateTime.now());
         when(contactUseCase.getById(companyId, c.id())).thenReturn(c);
 
         var result = new CustomerTool(contactUseCase).execute(ctx, Map.of("customerId", c.id().toString()));
@@ -92,7 +94,9 @@ class AiReadToolsTest {
     void shouldGetContact() {
         ContactResponse c = new ContactResponse(UUID.randomUUID(), companyId, "Ana", "Souza",
                 "ana@x.com", null, null, null,
-                null, null, null, null, null, null, null, LocalDateTime.now());
+                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, false, null, null, null,
+                LocalDateTime.now());
         when(contactUseCase.getById(companyId, c.id())).thenReturn(c);
 
         var result = new ContactTool(contactUseCase).execute(ctx, Map.of("contactId", c.id().toString()));
@@ -104,7 +108,9 @@ class AiReadToolsTest {
     void shouldSearchContacts() {
         ContactResponse c = new ContactResponse(UUID.randomUUID(), companyId, "Maria", "Lima",
                 "maria@x.com", null, null, null,
-                null, null, null, null, null, null, null, LocalDateTime.now());
+                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, false, null, null, null,
+                LocalDateTime.now());
         when(contactUseCase.search(companyId, "maria", 20)).thenReturn(List.of(c));
 
         var result = new SearchContactsTool(contactUseCase).execute(ctx, Map.of("query", "maria"));
@@ -265,7 +271,9 @@ class AiReadToolsTest {
     @Test
     void shouldCapExcessiveSearchLimit() {
         ContactResponse c = new ContactResponse(UUID.randomUUID(), companyId, "X", "Y", null, null,
-                null, null, null, null, null, null, null, null, null, LocalDateTime.now());
+                null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, false, null, null, null,
+                LocalDateTime.now());
         when(contactUseCase.search(companyId, null, 50)).thenReturn(List.of(c));
         var result = new SearchContactsTool(contactUseCase).execute(ctx, Map.of("limit", 9999));
         assertTrue(result.success());

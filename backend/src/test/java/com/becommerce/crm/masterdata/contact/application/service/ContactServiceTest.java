@@ -7,6 +7,8 @@ import com.becommerce.crm.masterdata.contact.application.dto.request.CreateConta
 import com.becommerce.crm.masterdata.contact.application.dto.request.UpdateContactRequest;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
+import com.becommerce.crm.masterdata.contact.domain.exception.ContactConflictException;
+import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import com.becommerce.crm.shared.security.authorization.CurrentUserAuthorities;
@@ -37,14 +39,66 @@ class ContactServiceTest {
 
     private final UUID companyId = UUID.randomUUID();
 
+    // ===== helpers (28 campos: 13 base + 15 da ficha) =====
+
+    private static CreateContactRequest createRequest(String firstName, String lastName, String email,
+                                                      String phone, String notes) {
+        return new CreateContactRequest(firstName, lastName, email, phone, null, notes, null,
+                null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
+    }
+
+    private static CreateContactRequest createPatientRequest(boolean hasGuardian, String guardianName,
+                                                             String guardianCpf, String guardianPhone,
+                                                             String recordNumber, String zipCode,
+                                                             String state) {
+        return new CreateContactRequest("Ana", "Souza", "ana@empresa.com", null, null, null, null,
+                null, null, null, null, null, null,
+                zipCode, "Av Paulista", "1000", null, "Bela Vista", "São Paulo", state, "Unimed",
+                "12345", recordNumber, "Indicação", hasGuardian, guardianName, guardianCpf, guardianPhone);
+    }
+
+    private static UpdateContactRequest updateWithEmail(String email) {
+        return new UpdateContactRequest(null, null, email, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null);
+    }
+
+    private static UpdateContactRequest updateWithPhone(String phone) {
+        return new UpdateContactRequest(null, null, null, phone, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null);
+    }
+
+    private static UpdateContactRequest updateWithFirstNameAndNotes(String firstName, String notes) {
+        return new UpdateContactRequest(firstName, null, null, null, null, notes, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null);
+    }
+
+    private static UpdateContactRequest updateWithHealthPlan(String healthPlan) {
+        return new UpdateContactRequest(null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, healthPlan, null, null, null,
+                null, null, null, null);
+    }
+
+    private static UpdateContactRequest updateWithRecordNumber(String recordNumber) {
+        return new UpdateContactRequest(null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, recordNumber, null,
+                null, null, null, null);
+    }
+
+    // ===== criação =====
+
     @Test
     void shouldCreateContactWhenBelowLimit() {
         doNothing().when(quotaService).assertCanAddContact(companyId);
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ContactResponse response = contactService.create(
-                companyId, new CreateContactRequest("Ana", "Souza", "ana@empresa.com", "119",
-                        null, "nota", null, null, null, null, null, null, null), UUID.randomUUID());
+                companyId, createRequest("Ana", "Souza", "ana@empresa.com", "119", "nota"),
+                UUID.randomUUID());
 
         assertNotNull(response.id());
         assertEquals("Ana", response.firstName());
@@ -58,12 +112,108 @@ class ContactServiceTest {
                 .when(quotaService).assertCanAddContact(companyId);
 
         assertThrows(QuotaExceededException.class,
-                () -> contactService.create(companyId, new CreateContactRequest("Ana", "Souza", "ana@empresa.com",
-                        null, null, null, null, null, null, null, null, null, null), UUID.randomUUID()));
+                () -> contactService.create(companyId,
+                        createRequest("Ana", "Souza", "ana@empresa.com", null, null),
+                        UUID.randomUUID()));
         verify(contactRepository, never()).save(any(Contact.class));
     }
 
-    // ===== Sprint 20 — autorização granular por campo (piloto Contatos) =====
+    // ===== ficha do paciente (V097) — cadastro, responsável e prontuário =====
+
+    @Test
+    void shouldCreatePatientWithAddressAndGuardianNormalized() {
+        doNothing().when(quotaService).assertCanAddContact(companyId);
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ContactResponse response = contactService.create(companyId,
+                createPatientRequest(true, "Maria Souza", "111.222.333-44", "(11) 98888-7777",
+                        "PRT-01", "01310-100", "SP"),
+                UUID.randomUUID());
+
+        assertEquals("01310100", response.zipCode());
+        assertEquals("Av Paulista", response.street());
+        assertEquals("SP", response.state());
+        assertEquals("PRT-01", response.recordNumber());
+        assertTrue(response.hasGuardian());
+        assertEquals("Maria Souza", response.guardianName());
+        assertEquals("11122233344", response.guardianCpf());
+        assertEquals("11988887777", response.guardianPhone());
+    }
+
+    @Test
+    void shouldRequireGuardianNameAndPhoneWhenHasGuardian() {
+        doNothing().when(quotaService).assertCanAddContact(companyId);
+
+        assertThrows(ContactValidationException.class, () -> contactService.create(companyId,
+                createPatientRequest(true, "Maria", null, null, null, null, null),
+                UUID.randomUUID()));
+        verify(contactRepository, never()).save(any(Contact.class));
+    }
+
+    @Test
+    void shouldClearGuardianDataWhenHasGuardianFalse() {
+        doNothing().when(quotaService).assertCanAddContact(companyId);
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ContactResponse response = contactService.create(companyId,
+                createPatientRequest(false, "Maria", "11122233344", "11988887777", null, null, null),
+                UUID.randomUUID());
+
+        assertFalse(response.hasGuardian());
+        assertNull(response.guardianName());
+        assertNull(response.guardianCpf());
+        assertNull(response.guardianPhone());
+    }
+
+    @Test
+    void shouldRejectDuplicateRecordNumber() {
+        doNothing().when(quotaService).assertCanAddContact(companyId);
+        when(contactRepository.existsByRecordNumber(companyId, "PRT-01", null)).thenReturn(true);
+
+        assertThrows(ContactConflictException.class, () -> contactService.create(companyId,
+                createPatientRequest(false, null, null, null, "PRT-01", null, null),
+                UUID.randomUUID()));
+        verify(contactRepository, never()).save(any(Contact.class));
+    }
+
+    // ===== atualização =====
+
+    @Test
+    void updateShouldAllowOwnRecordNumber() {
+        Contact contact = existingContact();
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+        when(contactRepository.existsByRecordNumber(companyId, "PRT-01", contact.getId())).thenReturn(false);
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ContactResponse response = contactService.update(companyId, contact.getId(),
+                updateWithRecordNumber("PRT-01"));
+
+        assertEquals("PRT-01", response.recordNumber());
+    }
+
+    @Test
+    void updateShouldRejectDuplicateRecordNumber() {
+        Contact contact = existingContact();
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+        when(contactRepository.existsByRecordNumber(companyId, "PRT-02", contact.getId())).thenReturn(true);
+
+        assertThrows(ContactConflictException.class,
+                () -> contactService.update(companyId, contact.getId(), updateWithRecordNumber("PRT-02")));
+        verify(contactRepository, never()).save(any(Contact.class));
+    }
+
+    @Test
+    void updateShouldClearFieldWhenEmptyStringSent() {
+        Contact contact = existingContact();
+        contact.setHealthPlan("Unimed");
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ContactResponse response = contactService.update(companyId, contact.getId(),
+                updateWithHealthPlan(""));
+
+        assertNull(response.healthPlan());
+    }
 
     private Contact existingContact() {
         return Contact.reconstitute(UUID.randomUUID(), companyId, "Ana", "Souza",
@@ -72,6 +222,8 @@ class ContactServiceTest {
                 null, null, null);
     }
 
+    // ===== Sprint 20 — autorização granular por campo (piloto Contatos) =====
+
     @Test
     void updateShouldDenyEmailChangeWithoutFieldPermission() {
         Contact contact = existingContact();
@@ -79,9 +231,7 @@ class ContactServiceTest {
         when(authorities.has("contact:field:email:update")).thenReturn(false);
 
         assertThrows(CrmAccessDeniedException.class, () -> contactService.update(
-                companyId, contact.getId(),
-                new UpdateContactRequest(null, null, "novo@empresa.com", null,
-                        null, null, null, null, null, null, null, null, null)));
+                companyId, contact.getId(), updateWithEmail("novo@empresa.com")));
 
         verify(contactRepository, never()).save(any(Contact.class));
     }
@@ -94,8 +244,7 @@ class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var response = contactService.update(companyId, contact.getId(),
-                new UpdateContactRequest(null, null, "novo@empresa.com", null,
-                        null, null, null, null, null, null, null, null, null));
+                updateWithEmail("novo@empresa.com"));
 
         assertEquals("novo@empresa.com", response.email());
         verify(contactRepository).save(any(Contact.class));
@@ -108,9 +257,7 @@ class ContactServiceTest {
         when(authorities.has("contact:field:phone:update")).thenReturn(false);
 
         assertThrows(CrmAccessDeniedException.class, () -> contactService.update(
-                companyId, contact.getId(),
-                new UpdateContactRequest(null, null, null, "11888887777",
-                        null, null, null, null, null, null, null, null, null)));
+                companyId, contact.getId(), updateWithPhone("11888887777")));
     }
 
     @Test
@@ -120,8 +267,7 @@ class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var response = contactService.update(companyId, contact.getId(),
-                new UpdateContactRequest(null, null, "ana@empresa.com", null,
-                        null, null, null, null, null, null, null, null, null));
+                updateWithEmail("ana@empresa.com"));
 
         assertEquals("ana@empresa.com", response.email());
         verify(authorities, never()).has(anyString());
@@ -135,8 +281,7 @@ class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var response = contactService.update(companyId, contact.getId(),
-                new UpdateContactRequest("Ana Maria", null, null, null,
-                        null, "obs", null, null, null, null, null, null, null));
+                updateWithFirstNameAndNotes("Ana Maria", "obs"));
 
         assertEquals("Ana Maria", response.firstName());
         verify(contactRepository).save(any(Contact.class));

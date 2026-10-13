@@ -15,4 +15,8 @@ public interface ContactJpaRepository extends JpaRepository<ContactJpaEntity, UU
     List<ContactJpaEntity> findByCompanyIdAndDeletedAtIsNullOrderByFirstNameAscLastNameAsc(UUID companyId);
 
     Optional<ContactJpaEntity> findFirstByCompanyIdAndPhoneAndDeletedAtIsNull(UUID companyId, String phone);
+
+    boolean existsByCompanyIdAndRecordNumber(UUID companyId, String recordNumber);
+
+    boolean existsByCompanyIdAndRecordNumberAndIdNot(UUID companyId, String recordNumber, UUID id);
 }

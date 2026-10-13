@@ -74,6 +74,8 @@ class ContactControllerTest {
         when(contactUseCase.create(any(), any(CreateContactRequest.class), any(UUID.class)))
                 .thenReturn(new ContactResponse(UUID.randomUUID(), companyId, "Ana", "Souza", "ana@e.com", null,
                         null, null, null, null, null, null, null, null, null,
+                        null, null, null, null, null, null, null, null, null, null, null, false,
+                        null, null, null,
                         java.time.LocalDateTime.now()));
 
         mockMvc.perform(post("/api/v1/companies/" + companyId + "/contacts")
@@ -115,6 +117,8 @@ class ContactControllerTest {
         when(contactUseCase.update(any(), any(), any(UpdateContactRequest.class)))
                 .thenReturn(new ContactResponse(contactId, companyId, "Ana", "Souza", "ana@e.com", null,
                         null, null, null, null, null, null, null, null, null,
+                        null, null, null, null, null, null, null, null, null, null, null, false,
+                        null, null, null,
                         java.time.LocalDateTime.now()));
 
         mockMvc.perform(put("/api/v1/companies/" + companyId + "/contacts/" + contactId)

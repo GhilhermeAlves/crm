@@ -10,6 +10,7 @@ import com.becommerce.crm.masterdata.contact.application.port.out.ContactReposit
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
+import com.becommerce.crm.masterdata.contact.domain.exception.ContactConflictException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanySettingsRepository;
 import com.becommerce.crm.masterdata.company.domain.CompanySettings;
@@ -63,6 +64,11 @@ public class ContactService implements ContactUseCase {
                     request.email(), request.phone(), request.mobile(), request.notes(),
                     request.birthDate(), request.cpf(), request.rg(), request.rgIssuer(),
                     request.gender(), request.maritalStatus(), request.professionalStatus());
+            applyPatientFieldsCreate(companyId, contact, request.zipCode(), request.street(),
+                    request.addressNumber(), request.addressComplement(), request.neighborhood(),
+                    request.city(), request.state(), request.healthPlan(), request.healthPlanNumber(),
+                    request.recordNumber(), request.referralSource(), request.hasGuardian(),
+                    request.guardianName(), request.guardianCpf(), request.guardianPhone());
             Contact saved = contactRepository.save(contact);
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, "Contact",
@@ -167,6 +173,11 @@ public class ContactService implements ContactUseCase {
             if (request.gender() != null) contact.setGender(blankToNull(request.gender()));
             if (request.maritalStatus() != null) contact.setMaritalStatus(blankToNull(request.maritalStatus()));
             if (request.professionalStatus() != null) contact.setProfessionalStatus(blankToNull(request.professionalStatus()));
+            applyPatientFieldsUpdate(companyId, contact, request.zipCode(), request.street(),
+                    request.addressNumber(), request.addressComplement(), request.neighborhood(),
+                    request.city(), request.state(), request.healthPlan(), request.healthPlanNumber(),
+                    request.recordNumber(), request.referralSource(), request.hasGuardian(),
+                    request.guardianName(), request.guardianCpf(), request.guardianPhone());
             requireCpfIfConfigured(companyId, contact.getCpf());
             contact.touch();
             Contact saved = contactRepository.save(contact);
@@ -212,6 +223,10 @@ public class ContactService implements ContactUseCase {
                 c.getEmail(), c.getPhone(), c.getMobile(), c.getNotes(),
                 c.getBirthDate(), c.getCpf(), c.getRg(), c.getRgIssuer(),
                 c.getGender(), c.getMaritalStatus(), c.getProfessionalStatus(),
+                c.getZipCode(), c.getStreet(), c.getAddressNumber(), c.getAddressComplement(),
+                c.getNeighborhood(), c.getCity(), c.getState(), c.getHealthPlan(),
+                c.getHealthPlanNumber(), c.getRecordNumber(), c.getReferralSource(),
+                c.isHasGuardian(), c.getGuardianName(), c.getGuardianCpf(), c.getGuardianPhone(),
                 c.getCreatedAt());
     }
 
@@ -227,6 +242,96 @@ public class ContactService implements ContactUseCase {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    /** Mantém apenas dígitos (CEP/CPF/telefone); vazio → {@code null}. */
+    private static String digitsOnly(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String digits = value.replaceAll("\\D", "");
+        return digits.isEmpty() ? null : digits;
+    }
+
+    private void applyPatientFieldsCreate(UUID companyId, Contact contact,
+                                          String zipCode, String street, String addressNumber,
+                                          String addressComplement, String neighborhood, String city,
+                                          String state, String healthPlan, String healthPlanNumber,
+                                          String recordNumber, String referralSource,
+                                          Boolean hasGuardian, String guardianName,
+                                          String guardianCpf, String guardianPhone) {
+        contact.setZipCode(digitsOnly(zipCode));
+        contact.setStreet(blankToNull(street));
+        contact.setAddressNumber(blankToNull(addressNumber));
+        contact.setAddressComplement(blankToNull(addressComplement));
+        contact.setNeighborhood(blankToNull(neighborhood));
+        contact.setCity(blankToNull(city));
+        contact.setState(blankToNull(state));
+        contact.setHealthPlan(blankToNull(healthPlan));
+        contact.setHealthPlanNumber(blankToNull(healthPlanNumber));
+        contact.setReferralSource(blankToNull(referralSource));
+        String normalizedRecord = blankToNull(recordNumber);
+        assertRecordNumberAvailable(companyId, normalizedRecord, null);
+        contact.setRecordNumber(normalizedRecord);
+        applyGuardian(contact, Boolean.TRUE.equals(hasGuardian), blankToNull(guardianName),
+                digitsOnly(guardianCpf), digitsOnly(guardianPhone));
+    }
+
+    private void applyPatientFieldsUpdate(UUID companyId, Contact contact,
+                                          String zipCode, String street, String addressNumber,
+                                          String addressComplement, String neighborhood, String city,
+                                          String state, String healthPlan, String healthPlanNumber,
+                                          String recordNumber, String referralSource,
+                                          Boolean hasGuardian, String guardianName,
+                                          String guardianCpf, String guardianPhone) {
+        if (zipCode != null) contact.setZipCode(digitsOnly(zipCode));
+        if (street != null) contact.setStreet(blankToNull(street));
+        if (addressNumber != null) contact.setAddressNumber(blankToNull(addressNumber));
+        if (addressComplement != null) contact.setAddressComplement(blankToNull(addressComplement));
+        if (neighborhood != null) contact.setNeighborhood(blankToNull(neighborhood));
+        if (city != null) contact.setCity(blankToNull(city));
+        if (state != null) contact.setState(blankToNull(state));
+        if (healthPlan != null) contact.setHealthPlan(blankToNull(healthPlan));
+        if (healthPlanNumber != null) contact.setHealthPlanNumber(blankToNull(healthPlanNumber));
+        if (referralSource != null) contact.setReferralSource(blankToNull(referralSource));
+        if (recordNumber != null) {
+            String normalizedRecord = blankToNull(recordNumber);
+            assertRecordNumberAvailable(companyId, normalizedRecord, contact.getId());
+            contact.setRecordNumber(normalizedRecord);
+        }
+        boolean anyGuardianField = guardianName != null || guardianCpf != null || guardianPhone != null;
+        if (hasGuardian != null || anyGuardianField) {
+            boolean effective = hasGuardian != null ? hasGuardian : contact.isHasGuardian();
+            String name = guardianName != null ? blankToNull(guardianName) : contact.getGuardianName();
+            String cpf = guardianCpf != null ? digitsOnly(guardianCpf) : contact.getGuardianCpf();
+            String phone = guardianPhone != null ? digitsOnly(guardianPhone) : contact.getGuardianPhone();
+            applyGuardian(contact, effective, name, cpf, phone);
+        }
+    }
+
+    private void applyGuardian(Contact contact, boolean hasGuardian,
+                               String guardianName, String guardianCpf, String guardianPhone) {
+        if (!hasGuardian) {
+            contact.setHasGuardian(false);
+            contact.setGuardianName(null);
+            contact.setGuardianCpf(null);
+            contact.setGuardianPhone(null);
+            return;
+        }
+        if (guardianName == null || guardianPhone == null) {
+            throw new ContactValidationException("Informe o nome e o telefone do responsável.");
+        }
+        contact.setHasGuardian(true);
+        contact.setGuardianName(guardianName);
+        contact.setGuardianCpf(guardianCpf);
+        contact.setGuardianPhone(guardianPhone);
+    }
+
+    private void assertRecordNumberAvailable(UUID companyId, String recordNumber, UUID excludeContactId) {
+        if (recordNumber != null
+                && contactRepository.existsByRecordNumber(companyId, recordNumber, excludeContactId)) {
+            throw new ContactConflictException("Já existe um paciente com este nº de prontuário.");
+        }
     }
 
     /** Preferência da empresa (Minha Empresa → Preferências): CPF obrigatório em contatos. */

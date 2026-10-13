@@ -24,4 +24,10 @@ public interface ContactRepository {
 
     /** Contato ativo da empresa que corresponda ao telefone (matching de mensagens). */
     Optional<Contact> findByCompanyIdAndPhone(UUID companyId, String phone);
+
+    /**
+     * Verifica se já existe contato da empresa com o nº de prontuário informado.
+     * {@code excludeContactId} (opcional) ignora o próprio contato na edição.
+     */
+    boolean existsByRecordNumber(UUID companyId, String recordNumber, UUID excludeContactId);
 }
