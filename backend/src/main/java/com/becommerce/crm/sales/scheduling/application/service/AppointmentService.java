@@ -24,6 +24,7 @@ import java.util.UUID;
 public class AppointmentService implements AppointmentUseCase {
 
     private static final Duration MAX_RANGE = Duration.ofDays(62);
+    private static final int CONTACT_HISTORY_LIMIT = 200;
 
     private final AppointmentRepository appointmentRepository;
     private final ScheduleBlockRepository blockRepository;
@@ -199,6 +200,19 @@ public class AppointmentService implements AppointmentUseCase {
             TenantContext.setCompanyId(companyId);
             validateRange(from, to);
             return appointmentRepository.findByCompanyIdAndRange(companyId, from, to, hostIds)
+                    .stream().map(AppointmentService::toResponse).toList();
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> listByContact(UUID companyId, UUID contactId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            return appointmentRepository
+                    .findByCompanyIdAndContactIdOrderByStartAtDesc(companyId, contactId, CONTACT_HISTORY_LIMIT)
                     .stream().map(AppointmentService::toResponse).toList();
         } finally {
             TenantContext.clear();

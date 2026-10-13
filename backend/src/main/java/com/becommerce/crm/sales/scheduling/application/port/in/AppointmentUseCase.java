@@ -29,4 +29,7 @@ public interface AppointmentUseCase {
     void delete(UUID companyId, UUID appointmentId);
 
     List<AppointmentResponse> list(UUID companyId, Instant from, Instant to, List<UUID> hostIds);
+
+    /** Histórico de consultas do paciente (ficha do paciente), mais recentes primeiro. */
+    List<AppointmentResponse> listByContact(UUID companyId, UUID contactId);
 }
