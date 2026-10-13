@@ -34,6 +34,7 @@ import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLonge
 import com.becommerce.crm.sales.lead.domain.exception.DuplicateLeadException;
 import com.becommerce.crm.sales.lead.domain.exception.LeadNotFoundException;
 import com.becommerce.crm.automation.campaign.domain.exception.CampaignNotFoundException;
+import com.becommerce.crm.automation.campaign.domain.exception.CampaignValidationException;
 import com.becommerce.crm.communication.template.domain.exception.TemplateNotFoundException;
 import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisModelNotFoundException;
 import com.becommerce.crm.masterdata.anamnesis.domain.exception.AnamnesisValidationException;
@@ -383,6 +384,17 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 404,
                 "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(CampaignValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleCampaignValidationException(CampaignValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

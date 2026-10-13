@@ -15,6 +15,7 @@ import com.becommerce.crm.automation.campaign.domain.AudienceType;
 import com.becommerce.crm.automation.campaign.domain.Campaign;
 import com.becommerce.crm.automation.campaign.domain.CampaignStatus;
 import com.becommerce.crm.automation.campaign.domain.exception.CampaignNotFoundException;
+import com.becommerce.crm.automation.campaign.domain.exception.CampaignValidationException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,7 +116,7 @@ public class CampaignService implements CampaignUseCase {
             TenantContext.setCompanyId(companyId);
             Campaign campaign = requireOwned(companyId, campaignId);
             if (campaign.getStatus() == CampaignStatus.RUNNING) {
-                throw new IllegalStateException("Campanha em execução não pode ser excluída; cancele-a primeiro.");
+                throw new CampaignValidationException("Campanha em execução não pode ser excluída; cancele-a primeiro.");
             }
             campaignRepository.delete(campaign);
 
@@ -151,16 +152,16 @@ public class CampaignService implements CampaignUseCase {
             TenantContext.setCompanyId(companyId);
             Campaign campaign = requireOwned(companyId, campaignId);
             if (campaign.getStatus() != CampaignStatus.DRAFT && campaign.getStatus() != CampaignStatus.SCHEDULED) {
-                throw new IllegalStateException("Canal só pode ser alterado em DRAFT ou SCHEDULED.");
+                throw new CampaignValidationException("O canal só pode ser alterado em campanhas em rascunho ou agendadas.");
             }
             // valida posse do canal omnichannel e do template
             var omniChannel = omnichannelChannelRepository.findById(request.providerChannelId())
-                    .orElseThrow(() -> new IllegalArgumentException("Canal não encontrado."));
+                    .orElseThrow(() -> new CampaignValidationException("Canal não encontrado."));
             if (!omniChannel.getCompanyId().equals(companyId)) {
-                throw new IllegalArgumentException("Canal não encontrado.");
+                throw new CampaignValidationException("Canal não encontrado.");
             }
             if (omniChannel.getStatus() != com.becommerce.crm.communication.omnichannel.domain.ChannelStatus.ACTIVE) {
-                throw new IllegalStateException("Canal precisa estar ACTIVE.");
+                throw new CampaignValidationException("O canal selecionado precisa estar ativo.");
             }
             com.becommerce.crm.communication.template.domain.MessageTemplate template =
                     templateRepository.findById(request.templateId())
@@ -197,13 +198,13 @@ public class CampaignService implements CampaignUseCase {
             requireChannelAttached(campaignId);
             requireAudienceNotEmpty(campaign);
             if (request.scheduledAt() == null || request.scheduledAt().isBefore(LocalDateTime.now())) {
-                throw new IllegalArgumentException("Data de agendamento deve estar no futuro.");
+                throw new CampaignValidationException("Data de agendamento deve estar no futuro.");
             }
 
             if (campaign.getStatus() == CampaignStatus.DRAFT) {
                 campaign.transitionTo(CampaignStatus.SCHEDULED);
             } else if (campaign.getStatus() != CampaignStatus.SCHEDULED) {
-                throw new IllegalStateException(
+                throw new CampaignValidationException(
                         "Somente campanhas DRAFT ou SCHEDULED podem ser agendadas.");
             }
             campaign.setScheduledAt(request.scheduledAt());
@@ -286,7 +287,7 @@ public class CampaignService implements CampaignUseCase {
             Campaign campaign = requireOwned(companyId, campaignId);
             if (campaign.getStatus() == CampaignStatus.COMPLETED
                     || campaign.getStatus() == CampaignStatus.CANCELLED) {
-                throw new IllegalStateException("Campanha já finalizada (" + campaign.getStatus() + ").");
+                throw new CampaignValidationException("Campanha já finalizada (" + campaign.getStatus() + ").");
             }
             executionService.cancel(companyId, campaignId);
             campaign.transitionTo(CampaignStatus.CANCELLED);
@@ -315,7 +316,7 @@ public class CampaignService implements CampaignUseCase {
 
     private void requireChannelAttached(UUID campaignId) {
         if (eventRepository.findChannelByCampaignId(campaignId).isEmpty()) {
-            throw new IllegalStateException("Campanha precisa de canal + template antes de ser agendada/executada.");
+            throw new CampaignValidationException("Campanha precisa de canal + template antes de ser agendada/executada.");
         }
     }
 
@@ -323,7 +324,7 @@ public class CampaignService implements CampaignUseCase {
         List<AudienceResolver.Recipient> recipients = audienceResolver.resolve(
                 campaign.getCompanyId(), campaign.getAudienceType(), campaign.getAudienceCriteria());
         if (recipients.isEmpty()) {
-            throw new IllegalStateException("Público da campanha está vazio.");
+            throw new CampaignValidationException("Público da campanha está vazio: nenhum contato com telefone ou celular cadastrado.");
         }
         campaign.setEstimatedRecipients(recipients.size());
     }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isAxiosError } from "axios";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import {
   useCreateCampaign,
@@ -49,6 +50,14 @@ const initialState: WizardState = {
   mode: "now",
   scheduledAt: "",
 };
+
+// Mostra o motivo enviado pelo backend em vez do genérico "Request failed with status code 400".
+function apiErrorMessage(e: unknown): string {
+  if (isAxiosError<{ message?: string }>(e) && e.response?.data?.message) {
+    return e.response.data.message;
+  }
+  return "Erro ao criar campanha. Tente novamente.";
+}
 
 export default function NewCampaignPage() {
   const router = useRouter();
@@ -154,7 +163,7 @@ export default function NewCampaignPage() {
 
       router.push(`${ROUTES.CAMPAIGNS}/${campaign.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro ao criar campanha");
+      setError(apiErrorMessage(e));
     }
   };
 
@@ -166,20 +175,6 @@ export default function NewCampaignPage() {
     }
     setError(null);
 
-    // Persiste a campanha base ao sair da etapa Informações
-    if (step === 0 && !createdCampaign) {
-      try {
-        const campaign = await createMutation.mutateAsync({
-          name: state.name,
-          description: state.description || undefined,
-          audienceType: state.audienceType,
-        });
-        setCreatedCampaign(campaign);
-      } catch {
-        setError("Erro ao criar campanha. Verifique os dados.");
-        return;
-      }
-    }
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
 
@@ -368,7 +363,7 @@ export default function NewCampaignPage() {
           </div>
         )}
 
-        {step === 5 && createdCampaign && (
+        {step === 5 && (
           <dl className="space-y-2 text-sm">
             <div>
               <dt className="inline font-medium">Nome: </dt>

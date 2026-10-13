@@ -7,6 +7,7 @@ import com.becommerce.crm.automation.campaign.application.port.output.CampaignEv
 import com.becommerce.crm.automation.campaign.application.port.output.CampaignRepository;
 import com.becommerce.crm.automation.campaign.domain.AudienceType;
 import com.becommerce.crm.automation.campaign.domain.Campaign;
+import com.becommerce.crm.automation.campaign.domain.exception.CampaignValidationException;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelChannelRepository;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.ChannelProvider;
@@ -84,8 +85,8 @@ class CampaignServiceAttachChannelTest {
 
         assertThatThrownBy(() -> service.attachChannel(companyId, campaign.getId(),
                 new AttachChannelRequest("WHATSAPP", channel.getId(), UUID.randomUUID()), userId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("ACTIVE");
+                .isInstanceOf(CampaignValidationException.class)
+                .hasMessageContaining("ativo");
         verify(eventRepository, never()).saveChannel(any());
     }
 }
