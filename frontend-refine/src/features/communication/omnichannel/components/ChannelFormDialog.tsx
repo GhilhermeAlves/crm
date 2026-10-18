@@ -118,7 +118,9 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {form.watch("provider") === "META_CLOUD" ? "Phone number ID (Meta)" : "Instância Evolution"}
+                    {form.watch("provider") === "META_CLOUD"
+                      ? "Phone number ID (Meta)"
+                      : "Instância Evolution"}
                   </FormLabel>
                   <FormControl>
                     <Input
