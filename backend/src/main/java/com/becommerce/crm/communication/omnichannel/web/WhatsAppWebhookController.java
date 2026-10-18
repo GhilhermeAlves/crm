@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -20,7 +22,8 @@ import java.util.Map;
 /**
  * Webhook da Evolution API. Configurar na instância a URL
  * {@code http://backend:8080/api/v1/omnichannel/whatsapp/webhook?token=<OMNICHANNEL_WHATSAPP_WEBHOOK_TOKEN>}
- * (ou o header {@code X-Webhook-Token}).
+ * (ou o header {@code X-Webhook-Token}). Na Meta, a Callback URL usa o mesmo
+ * {@code ?token=} e o Verify Token é {@code META_WEBHOOK_VERIFY_TOKEN}.
  */
 @RestController
 @RequestMapping("/api/v1/omnichannel/whatsapp/webhook")
@@ -38,6 +41,21 @@ public class WhatsAppWebhookController {
         this.webhookUseCase = webhookUseCase;
         this.tokenVerifier = tokenVerifier;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Handshake de verificação da Meta: responde o {@code hub.challenge} em texto
+     * puro quando {@code hub.mode=subscribe} e o verify token confere.
+     */
+    @GetMapping
+    public ResponseEntity<String> verify(
+            @RequestParam(name = "hub.mode", required = false) String mode,
+            @RequestParam(name = "hub.verify_token", required = false) String verifyToken,
+            @RequestParam(name = "hub.challenge", required = false) String challenge) {
+        if (challenge == null || !tokenVerifier.isMetaSubscription(mode, verifyToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(challenge);
     }
 
     /** Evento recebido (mensagem ou status). Idempotente. Exige o token do webhook. */

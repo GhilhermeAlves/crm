@@ -4,7 +4,7 @@
 
 export type ChannelType = "WHATSAPP";
 
-export type ChannelProvider = "EVOLUTION" | "FAKE";
+export type ChannelProvider = "EVOLUTION" | "META_CLOUD" | "FAKE";
 
 export type ChannelStatus = "ACTIVE" | "INACTIVE" | "ERROR";
 
@@ -104,6 +104,7 @@ export const CHANNEL_STATUS_LABELS: Record<ChannelStatus, string> = {
 
 export const CHANNEL_PROVIDER_LABELS: Record<ChannelProvider, string> = {
   EVOLUTION: "Evolution API",
+  META_CLOUD: "WhatsApp Oficial (Meta Cloud API)",
   FAKE: "Fake (desenvolvimento)",
 };
 

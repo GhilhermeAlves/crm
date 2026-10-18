@@ -2,6 +2,7 @@ package com.becommerce.crm.communication.omnichannel.infrastructure.whatsapp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,11 +26,36 @@ public class WhatsAppWebhookTokenVerifier {
     private final boolean allowUnsigned;
     private final String webhookToken;
 
+    /** Verify token do handshake da Meta ({@code hub.verify_token}); vazio = handshake recusado. */
+    private final String metaVerifyToken;
+
+    @Autowired
     public WhatsAppWebhookTokenVerifier(
             @Value("${omnichannel.whatsapp.webhook-allow-unsigned:false}") boolean allowUnsigned,
-            @Value("${omnichannel.whatsapp.webhook-token:}") String webhookToken) {
+            @Value("${omnichannel.whatsapp.webhook-token:}") String webhookToken,
+            @Value("${omnichannel.whatsapp.meta.verify-token:}") String metaVerifyToken) {
         this.allowUnsigned = allowUnsigned;
         this.webhookToken = webhookToken == null ? "" : webhookToken.trim();
+        this.metaVerifyToken = metaVerifyToken == null ? "" : metaVerifyToken.trim();
+    }
+
+    public WhatsAppWebhookTokenVerifier(boolean allowUnsigned, String webhookToken) {
+        this(allowUnsigned, webhookToken, "");
+    }
+
+    /** Handshake GET da Meta: {@code hub.mode=subscribe} e verify token correto. */
+    public boolean isMetaSubscription(String mode, String verifyToken) {
+        if (!"subscribe".equals(mode) || metaVerifyToken.isEmpty() || verifyToken == null) {
+            log.warn("Verificação de webhook da Meta recusada");
+            return false;
+        }
+        boolean ok = MessageDigest.isEqual(
+                metaVerifyToken.getBytes(StandardCharsets.UTF_8),
+                verifyToken.trim().getBytes(StandardCharsets.UTF_8));
+        if (!ok) {
+            log.warn("Verificação de webhook da Meta com verify token inválido");
+        }
+        return ok;
     }
 
     /** @param token token recebido (query param {@code token} ou header {@code X-Webhook-Token}) */
