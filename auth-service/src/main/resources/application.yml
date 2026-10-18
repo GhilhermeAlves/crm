@@ -84,7 +84,7 @@ auth:
     client-id: ${AUTH_GATEWAY_CLIENT_ID:crm-gateway}
     client-secret: ${AUTH_GATEWAY_CLIENT_SECRET:}
     redirect-uri: ${AUTH_GATEWAY_REDIRECT_URI:http://localhost:8082/auth/callback}
-    allowed-redirect-uris: ${AUTH_GATEWAY_ALLOWED_REDIRECT_URIS:http://localhost:3000,https://srv1348261.hstgr.cloud}
+    allowed-redirect-uris: ${AUTH_GATEWAY_ALLOWED_REDIRECT_URIS:http://localhost:3000,https://clin3dpro.cloud}
     cookie-name: ${AUTH_GATEWAY_COOKIE_NAME:crm_session}
     secure-cookie: ${AUTH_GATEWAY_SECURE_COOKIE:true}
     session-ttl: ${AUTH_GATEWAY_SESSION_TTL:8h}

@@ -41,11 +41,11 @@ services:
       - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:8080}
       - AUTH_DEFAULT_COMPANY_ID=${AUTH_DEFAULT_COMPANY_ID:-}
       - AUTH_INTERNAL_API_TOKEN=${AUTH_INTERNAL_API_TOKEN}
-      - APP_CORS_ALLOWED_ORIGINS=https://srv1348261.hstgr.cloud,http://localhost:3000
+      - APP_CORS_ALLOWED_ORIGINS=https://clin3dpro.cloud,http://localhost:3000
       # Fonte canônica lida por app.cors.allowed-origins (application*.yml). O
       # APP_* acima é mantido por compatibilidade (relaxed binding do Spring).
-      - CORS_ALLOWED_ORIGINS=https://srv1348261.hstgr.cloud,http://localhost:3000
-      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
+      - CORS_ALLOWED_ORIGINS=https://clin3dpro.cloud,http://localhost:3000
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=https://clin3dpro.cloud/realms/CRM
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKS_URI=http://crm-keycloak:8080/realms/CRM/protocol/openid-connect/certs
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://crm-keycloak:8080/realms/CRM/protocol/openid-connect/certs
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
@@ -62,7 +62,7 @@ services:
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-}
       - MAIL_PROVIDER=${MAIL_PROVIDER:-console}
       - MAIL_FROM=${MAIL_FROM:-}
-      - MAIL_FRONTEND_BASE_URL=${MAIL_FRONTEND_BASE_URL:-https://srv1348261.hstgr.cloud}
+      - MAIL_FRONTEND_BASE_URL=${MAIL_FRONTEND_BASE_URL:-https://clin3dpro.cloud}
       - SMTP_HOST=${SMTP_HOST:-}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USERNAME=${SMTP_USERNAME:-}
@@ -97,22 +97,22 @@ services:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - AUTH_KEYCLOAK_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
+      - AUTH_KEYCLOAK_ISSUER_URI=https://clin3dpro.cloud/realms/CRM
       - AUTH_KEYCLOAK_JWKS_URI=http://crm-keycloak:8080/realms/CRM/protocol/openid-connect/certs
       - AUTH_GATEWAY_ENABLED=true
       - AUTH_GATEWAY_ENABLED_PROVIDERS=google
       - AUTH_GATEWAY_PHONE_ENABLED=true
       - AUTH_GATEWAY_CLIENT_ID=crm-gateway
       - AUTH_GATEWAY_CLIENT_SECRET=${AUTH_GATEWAY_CLIENT_SECRET}
-      - AUTH_GATEWAY_REDIRECT_URI=https://srv1348261.hstgr.cloud/auth/callback
-      - AUTH_GATEWAY_ALLOWED_REDIRECT_URIS=https://srv1348261.hstgr.cloud/login,https://srv1348261.hstgr.cloud/dashboard,https://srv1348261.hstgr.cloud,http://localhost:3000
+      - AUTH_GATEWAY_REDIRECT_URI=https://clin3dpro.cloud/auth/callback
+      - AUTH_GATEWAY_ALLOWED_REDIRECT_URIS=https://clin3dpro.cloud/login,https://clin3dpro.cloud/dashboard,https://clin3dpro.cloud,http://localhost:3000
       # Dev local: deriva o redirect_uri da origem do request (nginx repassa
       # Host $host). Producao inalterada (origem = dominio > allowlist); permite
       # o login via localhost:3000 com o middleware/proxy do Next.
       - AUTH_GATEWAY_DYNAMIC_REDIRECT_URI=true
-      - AUTH_GATEWAY_APP_BASE_URL=https://srv1348261.hstgr.cloud
+      - AUTH_GATEWAY_APP_BASE_URL=https://clin3dpro.cloud
       - AUTH_GATEWAY_API_BACKEND_URL=http://backend:8080
-      - AUTH_GATEWAY_ISSUER_URI=https://srv1348261.hstgr.cloud/realms/CRM
+      - AUTH_GATEWAY_ISSUER_URI=https://clin3dpro.cloud/realms/CRM
       - AUTH_GATEWAY_SESSION_STORE=redis
       # Sprint 6.10 (Task 1.8) — timeout de sessão ociosa do gateway:
       # sessões permanecem ativas por 4h de inatividade (padrão era 0s = sem timeout).
@@ -125,6 +125,7 @@ services:
       - AUTH_KEYCLOAK_ADMIN_CLIENT_SECRET=${AUTH_KEYCLOAK_ADMIN_CLIENT_SECRET}
       - AUTH_INTERNAL_API_TOKEN=${AUTH_INTERNAL_API_TOKEN}
     extra_hosts:
+      - "clin3dpro.cloud:76.13.237.238"
       - "srv1348261.hstgr.cloud:76.13.237.238"
     networks:
       - crm-network
