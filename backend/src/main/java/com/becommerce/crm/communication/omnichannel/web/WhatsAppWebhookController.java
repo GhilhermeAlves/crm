@@ -1,6 +1,7 @@
 package com.becommerce.crm.communication.omnichannel.web;
 
 import com.becommerce.crm.communication.omnichannel.application.port.input.WhatsAppWebhookUseCase;
+import com.becommerce.crm.communication.omnichannel.infrastructure.whatsapp.MetaWhatsAppWebhookParser;
 import com.becommerce.crm.communication.omnichannel.infrastructure.whatsapp.WhatsAppWebhookTokenVerifier;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,12 +59,16 @@ public class WhatsAppWebhookController {
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(challenge);
     }
 
-    /** Evento recebido (mensagem ou status). Idempotente. Exige o token do webhook. */
+    /**
+     * Evento recebido (mensagem ou status). Idempotente. Exige o token do webhook;
+     * payloads da Meta exigem também a assinatura {@code X-Hub-Signature-256}.
+     */
     @PostMapping
     public ResponseEntity<Void> handle(
             @RequestParam(name = "token", required = false) String token,
             @RequestHeader(value = "X-Webhook-Token", required = false) String headerToken,
-            @RequestBody String rawPayload) {
+            @RequestHeader(value = "X-Hub-Signature-256", required = false) String metaSignature,
+            @RequestBody byte[] rawPayload) {
         if (!tokenVerifier.isAuthenticated(token != null ? token : headerToken)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -74,6 +79,11 @@ public class WhatsAppWebhookController {
         } catch (Exception e) {
             log.warn("Webhook WhatsApp com payload inválido; rejeitando");
             return ResponseEntity.badRequest().build();
+        }
+        // A assinatura é sobre os bytes exatos recebidos, por isso o corpo chega como byte[].
+        if (MetaWhatsAppWebhookParser.isMetaPayload(payload)
+                && !tokenVerifier.isValidMetaSignature(rawPayload, metaSignature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         webhookUseCase.handleEvent(payload);
         return ResponseEntity.ok().build();

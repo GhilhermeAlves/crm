@@ -142,6 +142,7 @@ omnichannel:
       base-url: ${META_GRAPH_BASE_URL:https://graph.facebook.com}
       api-version: ${META_GRAPH_API_VERSION:v25.0}
       verify-token: ${META_WEBHOOK_VERIFY_TOKEN:}   # "Verify token" do webhook no painel da Meta
+      app-secret: ${META_APP_SECRET:}               # App Secret: valida o X-Hub-Signature-256 de cada POST
 
 springdoc:
   api-docs:
