@@ -34,7 +34,9 @@ import static org.mockito.Mockito.*;
 
 class WhatsAppWebhookServiceTest {
 
-    private final WhatsAppWebhookParser parser = mock(WhatsAppWebhookParser.class);
+    // Métodos default (splitEvents) executam a implementação real.
+    private final WhatsAppWebhookParser parser =
+            mock(WhatsAppWebhookParser.class, org.mockito.Mockito.CALLS_REAL_METHODS);
     private final OmnichannelCompanyResolver companyResolver = mock(OmnichannelCompanyResolver.class);
     private final OmnichannelChannelRepository channelRepository = mock(OmnichannelChannelRepository.class);
     private final OmnichannelConversationRepository conversationRepository = mock(OmnichannelConversationRepository.class);

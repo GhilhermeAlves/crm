@@ -3,6 +3,7 @@ package com.becommerce.crm.communication.omnichannel.application.port.output;
 import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
 import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,6 +38,14 @@ public interface WhatsAppWebhookParser {
 
     /** Atualização de status (SENT/DELIVERED/READ/FAILED) normalizada. */
     record StatusData(String externalMessageId, MessageStatus status, String error) {
+    }
+
+    /**
+     * Quebra um payload em eventos individuais (uma mensagem ou um status cada).
+     * A Meta agrupa vários no mesmo POST; a Evolution manda um por vez.
+     */
+    default List<Map<String, Object>> splitEvents(Map<String, Object> raw) {
+        return List.of(raw);
     }
 
     boolean isInboundMessage(Map<String, Object> raw);

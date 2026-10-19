@@ -138,6 +138,11 @@ omnichannel:
     owner-reply-pause-hours: ${WHATSAPP_OWNER_REPLY_PAUSE_HOURS:12}   # IA pausa na conversa quando o dono do número responde pelo celular
     evolution:
       base-url: ${EVOLUTION_BASE_URL:}      # ex.: http://evolution-api:8080 (apikey via EVOLUTION_API_KEY / secrets_ref do canal)
+    meta:                                   # WhatsApp Cloud API (canais META_CLOUD; token via META_WHATSAPP_ACCESS_TOKEN / secrets_ref do canal)
+      base-url: ${META_GRAPH_BASE_URL:https://graph.facebook.com}
+      api-version: ${META_GRAPH_API_VERSION:v25.0}
+      verify-token: ${META_WEBHOOK_VERIFY_TOKEN:}   # "Verify token" do webhook no painel da Meta
+      app-secret: ${META_APP_SECRET:}               # App Secret: valida o X-Hub-Signature-256 de cada POST
 
 springdoc:
   api-docs:

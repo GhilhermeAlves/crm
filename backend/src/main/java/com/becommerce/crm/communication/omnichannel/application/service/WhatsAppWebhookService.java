@@ -91,6 +91,14 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
     @Override
     @Transactional
     public void handleEvent(Map<String, Object> payload) {
+        // Payload em lote (Meta) vira um evento por mensagem/status; idempotência
+        // por external_message_id cobre o reenvio do lote inteiro em caso de falha.
+        for (Map<String, Object> event : parser.splitEvents(payload)) {
+            handleSingleEvent(event);
+        }
+    }
+
+    private void handleSingleEvent(Map<String, Object> payload) {
         UUID companyId = null;
         try {
             String channelRef = parser.providerChannelReference(payload);

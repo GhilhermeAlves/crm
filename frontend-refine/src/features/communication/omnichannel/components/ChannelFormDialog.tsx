@@ -33,7 +33,7 @@ import {
 const channelSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(120),
   type: z.literal("WHATSAPP"),
-  provider: z.enum(["EVOLUTION", "FAKE"] as const),
+  provider: z.enum(["EVOLUTION", "META_CLOUD", "FAKE"] as const),
   externalId: z.string().max(120).optional(),
   config: z.string().max(4000).optional(),
   secretsRef: z.string().max(200).optional(),
@@ -117,9 +117,20 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
               name="externalId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Instância Evolution</FormLabel>
+                  <FormLabel>
+                    {form.watch("provider") === "META_CLOUD"
+                      ? "Phone number ID (Meta)"
+                      : "Instância Evolution"}
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome da instância (ex.: comercial)" {...field} />
+                    <Input
+                      placeholder={
+                        form.watch("provider") === "META_CLOUD"
+                          ? "ID do número no WhatsApp Manager (ex.: 1234567890)"
+                          : "Nome da instância (ex.: comercial)"
+                      }
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -146,7 +157,7 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
                   <FormLabel>Referência de secret</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Opcional: variável com a apikey (padrão EVOLUTION_API_KEY)"
+                      placeholder="Opcional: variável com a credencial (padrão EVOLUTION_API_KEY / META_WHATSAPP_ACCESS_TOKEN)"
                       {...field}
                     />
                   </FormControl>
