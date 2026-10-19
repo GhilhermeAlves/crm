@@ -58,10 +58,15 @@ public class OmnichannelMessageRepositoryImpl implements OmnichannelMessageRepos
 
     @Override
     public PageResponse<Message> findByConversation(UUID conversationId, int page, int pageSize) {
-        Page<OmnichannelMessageJpaEntity> result = jpaRepository.findByConversationIdOrderByCreatedAtAsc(
+        // Página 0 = mensagens mais recentes (páginas seguintes, mais antigas); o conteúdo
+        // volta em ordem cronológica para o chat. Com ASC, conversas longas nunca exibiam
+        // as mensagens novas.
+        Page<OmnichannelMessageJpaEntity> result = jpaRepository.findByConversationIdOrderByCreatedAtDesc(
                 conversationId, PageRequest.of(page, pageSize));
-        return PageResponse.of(result.stream().map(OmnichannelMessageRepositoryImpl::toDomain).toList(),
-                page, pageSize, result.getTotalElements());
+        java.util.List<Message> content = new java.util.ArrayList<>(
+                result.stream().map(OmnichannelMessageRepositoryImpl::toDomain).toList());
+        java.util.Collections.reverse(content);
+        return PageResponse.of(content, page, pageSize, result.getTotalElements());
     }
 
     @Override

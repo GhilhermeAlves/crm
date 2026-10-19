@@ -43,7 +43,7 @@ test.describe("Inbox — conversas do seed (Task 4.3)", () => {
 
     const conv1 = conversation(CONV1_PHONE);
     await expect(conv1).toBeVisible();
-    await expect(conv1.getByText("2")).toBeVisible();
+    await expect(conv1.getByText("2", { exact: true })).toBeVisible();
 
     await expect(conversation(CONV2_PHONE)).toBeVisible();
   });

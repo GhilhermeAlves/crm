@@ -66,8 +66,8 @@ public class AiSuggestionService implements AiSuggestionUseCase {
     }
 
     private List<AiSuggestionProvider.MessageLine> buildHistory(UUID conversationId) {
-        // Mensagens da conversa (persistência ordena por createdAt ASC). Página
-        // grande o suficiente para prover contexto inicial da conversa.
+        // Mensagens mais recentes da conversa, em ordem cronológica (página 0 da
+        // persistência), em quantidade suficiente para dar contexto à sugestão.
         var page = messageRepository.findByConversation(conversationId, 0, HISTORY_LIMIT * 2);
         return page.content().stream()
                 .filter(m -> m.getDirection() == MessageDirection.INBOUND

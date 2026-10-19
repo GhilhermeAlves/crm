@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 import { Bot, CalendarClock, Loader2, Send, Sparkles, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   type ConversationDetail,
 } from "../types/omnichannel.types";
 import { FollowUpDialog } from "./FollowUpDialog";
+import { formatDaySeparator, formatMessageTime, messageDayKey } from "../utils/messageDates";
 
 function formatFollowUpDate(value: string): string {
   return new Date(value).toLocaleString("pt-BR", {
@@ -56,9 +57,12 @@ export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Prop
   const createFollowUp = useCreateFollowUp(detail ? detail.id : null);
   const cancelFollowUp = useCancelFollowUp(detail ? detail.id : null);
 
+  // A página tem tamanho fixo: com conversa longa a quantidade não muda quando
+  // chega mensagem nova, então rola pela última mensagem, não pelo total.
+  const lastMessageId = detail?.messages.content.at(-1)?.id;
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [detail?.messages.content.length]);
+  }, [lastMessageId]);
 
   if (isLoading) {
     return (
@@ -188,28 +192,40 @@ export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Prop
               Nenhuma mensagem nesta conversa.
             </p>
           )}
-          {detail.messages.content.map((m) => {
+          {detail.messages.content.map((m, i, all) => {
             const outbound = m.direction === "OUTBOUND";
+            const newDay =
+              i === 0 || messageDayKey(all[i - 1].createdAt) !== messageDayKey(m.createdAt);
             return (
-              <div key={m.id} className={cn("flex", outbound ? "justify-end" : "justify-start")}>
-                <div
-                  className={cn(
-                    "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm",
-                    outbound ? "bg-primary text-primary-foreground" : "bg-muted",
-                  )}
-                >
-                  <p className="whitespace-pre-wrap break-words">{m.body}</p>
+              <Fragment key={m.id}>
+                {newDay && (
+                  <div className="flex justify-center py-2">
+                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground first-letter:uppercase">
+                      {formatDaySeparator(m.createdAt)}
+                    </span>
+                  </div>
+                )}
+                <div className={cn("flex", outbound ? "justify-end" : "justify-start")}>
                   <div
                     className={cn(
-                      "mt-1 flex items-center gap-2 text-[11px]",
-                      outbound ? "text-primary-foreground/70" : "text-muted-foreground",
+                      "max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm",
+                      outbound ? "bg-primary text-primary-foreground" : "bg-muted",
                     )}
                   >
-                    <span>{MESSAGE_STATUS_LABELS[m.status]}</span>
-                    {m.status === "FAILED" && m.providerError && <span>• {m.providerError}</span>}
+                    <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                    <div
+                      className={cn(
+                        "mt-1 flex items-center gap-2 text-[11px]",
+                        outbound ? "text-primary-foreground/70" : "text-muted-foreground",
+                      )}
+                    >
+                      <time dateTime={m.createdAt}>{formatMessageTime(m.createdAt)}</time>
+                      <span>• {MESSAGE_STATUS_LABELS[m.status]}</span>
+                      {m.status === "FAILED" && m.providerError && <span>• {m.providerError}</span>}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Fragment>
             );
           })}
           <div ref={bottomRef} />

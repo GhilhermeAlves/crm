@@ -17,8 +17,6 @@ public interface OmnichannelMessageJpaRepository extends JpaRepository<Omnichann
 
     Optional<OmnichannelMessageJpaEntity> findByClientMessageId(UUID clientMessageId);
 
-    Page<OmnichannelMessageJpaEntity> findByConversationIdOrderByCreatedAtAsc(UUID conversationId, Pageable pageable);
-
     Page<OmnichannelMessageJpaEntity> findByConversationIdOrderByCreatedAtDesc(UUID conversationId, Pageable pageable);
 
     Optional<OmnichannelMessageJpaEntity> findFirstByConversationIdOrderByCreatedAtDesc(UUID conversationId);
