@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/common/EmptyState";
 import type { Conversation } from "../types/omnichannel.types";
+import { formatConversationTimestamp } from "../utils/messageDates";
 
 type Props = {
   conversations: Conversation[];
@@ -47,15 +48,22 @@ export function ConversationList({ conversations, isLoading, activeId, onSelect 
           >
             <div className="flex w-full items-center justify-between">
               <span className="font-medium">{c.externalPhone}</span>
+              {c.lastMessageAt && (
+                <span className="text-xs text-muted-foreground">
+                  {formatConversationTimestamp(c.lastMessageAt)}
+                </span>
+              )}
+            </div>
+            <div className="flex w-full items-center justify-between gap-2">
+              <p className="line-clamp-1 text-left text-sm text-muted-foreground">
+                {c.lastMessage ?? "Sem mensagens"}
+              </p>
               {c.unreadCount > 0 && (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
                   {c.unreadCount}
                 </span>
               )}
             </div>
-            <p className="line-clamp-1 w-full text-left text-sm text-muted-foreground">
-              {c.lastMessage ?? "Sem mensagens"}
-            </p>
           </Button>
         ))}
       </div>
