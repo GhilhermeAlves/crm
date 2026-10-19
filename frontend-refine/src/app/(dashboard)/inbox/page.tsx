@@ -82,6 +82,7 @@ export default function InboxPage() {
               isLoading={conversation.isLoading}
               canSend={canSend}
               sending={sendMessage.isPending}
+              onIgnore={canUpdate && selected ? () => setToIgnore(selected) : undefined}
               onSend={(body) => {
                 if (selected) sendMessage.mutate({ conversationId: selected.id, body });
               }}
