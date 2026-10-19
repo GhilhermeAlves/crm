@@ -36,7 +36,7 @@ class MetaCloudWhatsAppProviderTest {
     }
 
     private MetaCloudWhatsAppProvider provider(Map<String, String> env) {
-        return new MetaCloudWhatsAppProvider(BASE_URL + "/", "v20.0", builder, env::get);
+        return new MetaCloudWhatsAppProvider(BASE_URL + "/", "v25.0", builder, env::get);
     }
 
     private WhatsAppProvider.SendRequest request(String phoneNumberId, String secretsRef) {
@@ -46,7 +46,7 @@ class MetaCloudWhatsAppProviderTest {
 
     @Test
     void send_devePostarNoPhoneNumberIdComBearerERetornarWamid() {
-        server.expect(requestTo(BASE_URL + "/v20.0/123456/messages"))
+        server.expect(requestTo(BASE_URL + "/v25.0/123456/messages"))
                 .andExpect(method(POST))
                 .andExpect(header("Authorization", "Bearer token-global"))
                 .andExpect(content().json("""
@@ -65,7 +65,7 @@ class MetaCloudWhatsAppProviderTest {
 
     @Test
     void send_devePreferirTokenDoSecretsRefDoCanal() {
-        server.expect(requestTo(BASE_URL + "/v20.0/123456/messages"))
+        server.expect(requestTo(BASE_URL + "/v25.0/123456/messages"))
                 .andExpect(header("Authorization", "Bearer token-canal"))
                 .andRespond(withSuccess("{\"messages\":[{\"id\":\"wamid.C\"}]}", MediaType.APPLICATION_JSON));
 
@@ -76,7 +76,7 @@ class MetaCloudWhatsAppProviderTest {
 
     @Test
     void send_erroHttp_lancaProviderException() {
-        server.expect(requestTo(BASE_URL + "/v20.0/123456/messages")).andRespond(withStatus(BAD_REQUEST));
+        server.expect(requestTo(BASE_URL + "/v25.0/123456/messages")).andRespond(withStatus(BAD_REQUEST));
 
         OmnichannelProviderException e = assertThrows(OmnichannelProviderException.class,
                 () -> provider(Map.of("META_WHATSAPP_ACCESS_TOKEN", "t")).send(request("123456", null)));

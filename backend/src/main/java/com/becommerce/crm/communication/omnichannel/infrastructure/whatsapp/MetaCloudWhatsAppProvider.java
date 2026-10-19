@@ -44,7 +44,7 @@ public class MetaCloudWhatsAppProvider implements WhatsAppProvider {
     @Autowired
     public MetaCloudWhatsAppProvider(
             @Value("${omnichannel.whatsapp.meta.base-url:https://graph.facebook.com}") String baseUrl,
-            @Value("${omnichannel.whatsapp.meta.api-version:v20.0}") String apiVersion,
+            @Value("${omnichannel.whatsapp.meta.api-version:v25.0}") String apiVersion,
             RestClient.Builder restClientBuilder) {
         this(baseUrl, apiVersion, restClientBuilder, System::getenv);
     }
