@@ -33,7 +33,12 @@ describe("ConversationList", () => {
 
   it("esconde a opção sem permissão", () => {
     render(
-      <ConversationList conversations={[conversation]} isLoading={false} activeId={null} onSelect={vi.fn()} />,
+      <ConversationList
+        conversations={[conversation]}
+        isLoading={false}
+        activeId={null}
+        onSelect={vi.fn()}
+      />,
     );
 
     expect(screen.queryByRole("button", { name: "Ignorar contato" })).toBeNull();

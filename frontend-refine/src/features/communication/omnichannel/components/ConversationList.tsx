@@ -17,7 +17,13 @@ type Props = {
   onIgnore?: (conversation: Conversation) => void;
 };
 
-export function ConversationList({ conversations, isLoading, activeId, onSelect, onIgnore }: Props) {
+export function ConversationList({
+  conversations,
+  isLoading,
+  activeId,
+  onSelect,
+  onIgnore,
+}: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
@@ -51,7 +57,12 @@ export function ConversationList({ conversations, isLoading, activeId, onSelect,
               <div className="flex w-full items-center justify-between">
                 <span className="font-medium">{c.externalPhone}</span>
                 {c.lastMessageAt && (
-                  <span className={cn("text-xs text-muted-foreground", onIgnore && "group-hover:invisible")}>
+                  <span
+                    className={cn(
+                      "text-xs text-muted-foreground",
+                      onIgnore && "group-hover:invisible",
+                    )}
+                  >
                     {formatConversationTimestamp(c.lastMessageAt)}
                   </span>
                 )}
