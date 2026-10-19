@@ -173,6 +173,24 @@ describe("ChatThread (Sprint 3 - Human Takeover / Sprint 4 - Follow-ups)", () =>
 
     expect(screen.queryByRole("button", { name: /Assumir manualmente/i })).toBeNull();
   });
+
+  it("mostra Ignorar contato no topo quando há onIgnore", () => {
+    const onIgnore = vi.fn();
+    render(
+      <ChatThread
+        detail={detail("AUTOMATIC")}
+        isLoading={false}
+        canSend={true}
+        onSend={vi.fn()}
+        sending={false}
+        onIgnore={onIgnore}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ignorar contato/i }));
+
+    expect(onIgnore).toHaveBeenCalled();
+  });
 });
 
 describe("ChatThread (Sprint 4 - Follow-ups)", () => {

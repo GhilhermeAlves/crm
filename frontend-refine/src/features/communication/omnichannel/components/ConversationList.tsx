@@ -45,11 +45,12 @@ export function ConversationList({
     <ScrollArea className="h-full" type="always">
       <div className="divide-y">
         {conversations.map((c) => (
-          <div key={c.id} className="group relative">
+          <div key={c.id} className="relative">
             <Button
               variant="ghost"
               className={cn(
                 "h-auto w-full flex-col items-stretch gap-1 rounded-none px-4 py-3",
+                onIgnore && "pr-12",
                 activeId === c.id && "bg-accent",
               )}
               onClick={() => onSelect(c)}
@@ -57,12 +58,7 @@ export function ConversationList({
               <div className="flex w-full items-center justify-between">
                 <span className="font-medium">{c.externalPhone}</span>
                 {c.lastMessageAt && (
-                  <span
-                    className={cn(
-                      "text-xs text-muted-foreground",
-                      onIgnore && "group-hover:invisible",
-                    )}
-                  >
+                  <span className="text-xs text-muted-foreground">
                     {formatConversationTimestamp(c.lastMessageAt)}
                   </span>
                 )}
@@ -82,7 +78,7 @@ export function ConversationList({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1.5 h-7 w-7 opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+                className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-destructive"
                 aria-label="Ignorar contato"
                 title="Ignorar contato"
                 onClick={() => onIgnore(c)}

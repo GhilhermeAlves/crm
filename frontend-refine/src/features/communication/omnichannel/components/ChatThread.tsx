@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
-import { Bot, CalendarClock, Loader2, Send, Sparkles, UserCheck } from "lucide-react";
+import { Bot, CalendarClock, Loader2, Send, Sparkles, UserCheck, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,9 +42,11 @@ type Props = {
   canSend: boolean;
   onSend: (body: string) => void;
   sending: boolean;
+  /** Sem ele, a opção de ignorar não aparece (usuário sem permissão). */
+  onIgnore?: () => void;
 };
 
-export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Props) {
+export function ChatThread({ detail, isLoading, canSend, onSend, sending, onIgnore }: Props) {
   const [body, setBody] = useState("");
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -132,6 +134,12 @@ export function ChatThread({ detail, isLoading, canSend, onSend, sending }: Prop
                 <UserCheck className="h-4 w-4" />
               )}
               {humanMode ? "Retomar IA" : "Assumir manualmente"}
+            </Button>
+          )}
+          {onIgnore && (
+            <Button type="button" variant="outline" size="sm" onClick={onIgnore}>
+              <UserX className="h-4 w-4" />
+              Ignorar contato
             </Button>
           )}
         </div>
