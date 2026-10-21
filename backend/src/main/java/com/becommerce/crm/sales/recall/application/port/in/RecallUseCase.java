@@ -23,6 +23,8 @@ public interface RecallUseCase {
 
     RecallResponse schedule(UUID companyId, UUID recallId, ScheduleRecallRequest request);
 
+    com.becommerce.crm.shared.application.dto.PageResponse<RecallSuggestionResponse> suggestions(UUID companyId, int sinceMonths, int page, int pageSize);
+
     List<RecallSuggestionResponse> suggestions(UUID companyId, int sinceMonths);
 
     void dismissSuggestion(UUID companyId, UUID contactId, UUID dismissedBy);

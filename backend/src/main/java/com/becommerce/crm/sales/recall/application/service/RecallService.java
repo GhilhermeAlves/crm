@@ -137,7 +137,7 @@ public class RecallService implements RecallUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RecallSuggestionResponse> suggestions(UUID companyId, int sinceMonths) {
+    public com.becommerce.crm.shared.application.dto.PageResponse<RecallSuggestionResponse> suggestions(UUID companyId, int sinceMonths, int page, int pageSize) {
         try {
             TenantContext.setCompanyId(companyId);
             if (!SUGGESTION_WINDOWS.contains(sinceMonths)) {
@@ -145,15 +145,27 @@ public class RecallService implements RecallUseCase {
             }
             ZoneId zone = ZoneId.systemDefault();
             Instant cutoff = LocalDate.now().minusMonths(sinceMonths).atStartOfDay(zone).toInstant();
-            return recallRepository.findSuggestionCandidates(companyId, cutoff, Instant.now()).stream()
+            List<RecallSuggestionResponse> all = recallRepository.findSuggestionCandidates(companyId, cutoff, Instant.now()).stream()
                     .filter(candidate -> !candidate.hasFutureAppointment())
                     .filter(candidate -> !candidate.hasPendingRecall())
                     .filter(candidate -> !candidate.dismissed())
                     .map(RecallService::toSuggestionResponse)
                     .toList();
+            int p = Math.max(page, 0);
+            int ps = Math.max(pageSize, 1);
+            int fromIdx = Math.min(p * ps, all.size());
+            int toIdx = Math.min(fromIdx + ps, all.size());
+            List<RecallSuggestionResponse> content = all.subList(fromIdx, toIdx);
+            return com.becommerce.crm.shared.application.dto.PageResponse.of(content, p, ps, all.size());
         } finally {
             TenantContext.clear();
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RecallSuggestionResponse> suggestions(UUID companyId, int sinceMonths) {
+        return suggestions(companyId, sinceMonths, 0, Integer.MAX_VALUE).content();
     }
 
     @Override

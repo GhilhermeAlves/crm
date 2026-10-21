@@ -87,10 +87,12 @@ public class RecallController {
 
     @GetMapping("/suggestions")
     @PreAuthorize("hasAuthority('appointment:read')")
-    public ResponseEntity<List<RecallSuggestionResponse>> suggestions(
+    public ResponseEntity<com.becommerce.crm.shared.application.dto.PageResponse<RecallSuggestionResponse>> suggestions(
             @CurrentCompanyId("Você só pode acessar retornos da sua própria empresa.") UUID companyId,
-            @RequestParam(defaultValue = "3") int since) {
-        return ResponseEntity.ok(useCase.suggestions(companyId, since));
+            @RequestParam(defaultValue = "3") int since,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
+        return ResponseEntity.ok(useCase.suggestions(companyId, since, page, pageSize));
     }
 
     @PostMapping("/suggestions/{contactId}/dismiss")
