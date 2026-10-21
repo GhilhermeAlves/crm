@@ -168,3 +168,48 @@ export const BirthdayMessageService = {
     return r.data;
   },
 };
+
+/** Ajustes da agenda da empresa. Horários no formato "HH:mm". */
+export interface AgendaSettings {
+  defaultDurationMinutes: number;
+  workHoursStart: string;
+  workHoursEnd: string;
+  notifyOnBooking: boolean;
+  notify24hBefore: boolean;
+  notify1hBefore: boolean;
+  notifyOnCancel: boolean;
+  notifyOnReschedule: boolean;
+}
+
+/** Mesmos valores padrão do backend (V099), usados enquanto os ajustes carregam. */
+export const DEFAULT_AGENDA_SETTINGS: AgendaSettings = {
+  defaultDurationMinutes: 30,
+  workHoursStart: "08:00",
+  workHoursEnd: "18:00",
+  notifyOnBooking: true,
+  notify24hBefore: true,
+  notify1hBefore: false,
+  notifyOnCancel: true,
+  notifyOnReschedule: true,
+};
+
+/** O backend devolve LocalTime como "08:00:00"; a tela trabalha com "08:00". */
+export function normalizeAgendaSettings(data: AgendaSettings): AgendaSettings {
+  return {
+    ...data,
+    workHoursStart: data.workHoursStart.slice(0, 5),
+    workHoursEnd: data.workHoursEnd.slice(0, 5),
+  };
+}
+
+export const AgendaSettingsService = {
+  async get(companyId: string): Promise<AgendaSettings> {
+    const r = await api.get<AgendaSettings>(`${BASE}/${companyId}/agenda-settings`);
+    return normalizeAgendaSettings(r.data);
+  },
+
+  async save(companyId: string, data: AgendaSettings): Promise<AgendaSettings> {
+    const r = await api.put<AgendaSettings>(`${BASE}/${companyId}/agenda-settings`, data);
+    return normalizeAgendaSettings(r.data);
+  },
+};

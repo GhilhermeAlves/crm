@@ -16,6 +16,7 @@ import {
   subMonths,
   addDays,
   subDays,
+  addMinutes,
   isSameDay,
   isSameMonth,
   parseISO,
@@ -73,7 +74,9 @@ import {
   useChangeAppointmentStatus,
   useDeleteAppointment,
   useRescheduleAppointment,
+  useAgendaSettings,
 } from "@/features/sales/scheduling/hooks/useScheduling";
+import { DEFAULT_AGENDA_SETTINGS } from "@/features/sales/scheduling/services/scheduling.service";
 import { useSchedulingPermissions } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import type {
   Appointment,
@@ -111,8 +114,13 @@ export default function AgendaPage() {
   const [showHolidays, setShowHolidays] = useState(true);
   const [showWeekends, setShowWeekends] = useState(true);
   const [showBirthdays, setShowBirthdays] = useState(true);
-  const [workHoursStart, setWorkHoursStart] = useState("08:00");
-  const [workHoursEnd, setWorkHoursEnd] = useState("18:00");
+  // Horário de trabalho vem dos ajustes da agenda; o popover só ajusta nesta sessão.
+  const { data: agendaSettings = DEFAULT_AGENDA_SETTINGS } = useAgendaSettings(companyId);
+  const [workHoursOverride, setWorkHoursOverride] = useState<{ start?: string; end?: string }>({});
+  const workHoursStart = workHoursOverride.start ?? agendaSettings.workHoursStart;
+  const workHoursEnd = workHoursOverride.end ?? agendaSettings.workHoursEnd;
+  const setWorkHoursStart = (start: string) => setWorkHoursOverride((o) => ({ ...o, start }));
+  const setWorkHoursEnd = (end: string) => setWorkHoursOverride((o) => ({ ...o, end }));
 
   const range = useMemo(() => {
     if (view === "day") {
@@ -232,15 +240,17 @@ export default function AgendaPage() {
   }, [memberOptions]);
 
   const handleSlotClick = useCallback(
-    (start: Date, end: Date) => {
+    (start: Date) => {
       if (!perms.canCreate) return;
+      // A duração da nova consulta segue o padrão configurado nos ajustes da agenda.
+      const end = addMinutes(start, agendaSettings.defaultDurationMinutes);
       setDefaultSlot({
         start: format(start, "yyyy-MM-dd'T'HH:mm"),
         end: format(end, "yyyy-MM-dd'T'HH:mm"),
       });
       setCreateOpen(true);
     },
-    [perms.canCreate],
+    [perms.canCreate, agendaSettings.defaultDurationMinutes],
   );
 
   const handleAppointmentClick = useCallback((appt: Appointment) => {
