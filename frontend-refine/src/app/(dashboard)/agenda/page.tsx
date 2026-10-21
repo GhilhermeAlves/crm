@@ -83,6 +83,7 @@ import type { CreateAppointmentFormValues } from "@/features/sales/scheduling/sc
 import { cn } from "@/lib/utils";
 import { getHolidayForDate } from "@/lib/holidays";
 import { isWeekend } from "date-fns";
+import { RecallsTab } from "@/features/sales/recall/components/RecallsTab";
 
 type CalendarView = "day" | "week" | "month" | "list" | "professionals";
 type AgendaTab = "agenda" | "retornos";
@@ -612,9 +613,7 @@ export default function AgendaPage() {
             />
           )
         ) : (
-          <div className="flex flex-1 items-center justify-center text-muted-foreground">
-            <p className="text-sm">Retornos — em breve</p>
-          </div>
+          <RecallsTab />
         )}
 
         {/* Detail panel */}
