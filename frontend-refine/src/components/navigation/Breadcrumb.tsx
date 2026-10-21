@@ -32,6 +32,9 @@ const pathLabels: Record<string, string> = {
   [ROUTES.SETTINGS_COMPANY_USERS]: "Equipe",
 };
 
+/** Segmentos sem página própria: aparecem como texto, sem link. */
+const pathsWithoutPage = new Set(["/settings"]);
+
 type BreadcrumbProps = {
   className?: string;
 };
@@ -76,6 +79,8 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
             {segment.isLast ? (
               <span className="font-medium text-foreground">{segment.label}</span>
+            ) : pathsWithoutPage.has(segment.href) ? (
+              <span className="text-muted-foreground">{segment.label}</span>
             ) : (
               <Link
                 href={segment.href}

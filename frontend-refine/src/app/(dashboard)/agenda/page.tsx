@@ -34,6 +34,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
+import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
@@ -482,7 +483,7 @@ export default function AgendaPage() {
                 Profissionais
               </span>
               <Link
-                href="/settings/users"
+                href={ROUTES.SETTINGS_COMPANY_USERS}
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
