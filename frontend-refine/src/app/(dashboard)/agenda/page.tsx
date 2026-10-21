@@ -72,6 +72,7 @@ import {
   useCreateBlock,
   useChangeAppointmentStatus,
   useDeleteAppointment,
+  useRescheduleAppointment,
 } from "@/features/sales/scheduling/hooks/useScheduling";
 import { useSchedulingPermissions } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import type {
@@ -179,6 +180,7 @@ export default function AgendaPage() {
   const createAppointment = useCreateAppointment(companyId);
   const createBlock = useCreateBlock(companyId);
   const changeStatus = useChangeAppointmentStatus(companyId);
+  const reschedule = useRescheduleAppointment(companyId);
   const deleteAppointment = useDeleteAppointment(companyId);
 
   const goToday = () => {
@@ -249,6 +251,16 @@ export default function AgendaPage() {
     changeStatus.mutate(
       { id, status },
       { onSuccess: (updated) => setSelectedAppointment(updated) },
+    );
+  };
+
+  const handleAppointmentDrop = (appointment: Appointment, start: Date, end: Date) => {
+    reschedule.mutate(
+      { id: appointment.id, data: { startAt: start.toISOString(), endAt: end.toISOString() } },
+      {
+        onSuccess: (updated) =>
+          setSelectedAppointment((current) => (current?.id === updated.id ? updated : current)),
+      },
     );
   };
 
@@ -591,6 +603,7 @@ export default function AgendaPage() {
               blocks={filteredBlocks}
               onSlotClick={handleSlotClick}
               onAppointmentClick={handleAppointmentClick}
+              onAppointmentDrop={perms.canUpdate ? handleAppointmentDrop : undefined}
               selectedAppointmentId={selectedAppointment?.id}
               memberColorMap={memberColorMap}
               startHour={parseInt(workHoursStart.split(":")[0], 10)}
