@@ -1,17 +1,28 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { X, Clock, User, MapPin, FileText, Phone, Mail } from "lucide-react";
+import {
+  X,
+  Clock,
+  User,
+  MapPin,
+  FileText,
+  Phone,
+  Mail,
+  Trash2,
+  CircleCheck,
+  CircleX,
+  MessageCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { AppointmentStatusBadge } from "./AppointmentStatusBadge";
-import {
+  APPOINTMENT_STATUS_LABELS,
   LOCATION_KIND_LABELS,
   type Appointment,
   type AppointmentStatus,
@@ -29,21 +40,23 @@ interface Props {
   canDelete: boolean;
 }
 
-const STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
-  SCHEDULED: ["CONFIRMED", "CANCELED"],
-  CONFIRMED: ["COMPLETED", "NO_SHOW", "CANCELED"],
-  CANCELED: [],
-  COMPLETED: [],
-  NO_SHOW: [],
-};
+/** Situação do atendimento, em botões de um clique. */
+const QUICK_STATUSES: AppointmentStatus[] = ["SCHEDULED", "CONFIRMED", "CANCELED"];
 
-const STATUS_ACTION_LABELS: Record<AppointmentStatus, string> = {
-  SCHEDULED: "Agendar",
-  CONFIRMED: "Confirmar",
-  CANCELED: "Cancelar",
-  COMPLETED: "Concluir",
-  NO_SHOW: "Marcar falta",
-};
+/** Espelha as regras do backend (Appointment.confirm/cancel/complete/markNoShow). */
+export function canMoveTo(current: AppointmentStatus, target: AppointmentStatus): boolean {
+  if (current === target || current === "CANCELED") return false;
+  if (target === "CONFIRMED") return current === "SCHEDULED";
+  // Voltar para pendente só remarcando.
+  return target !== "SCHEDULED";
+}
+
+/** Só dígitos, com DDI 55 quando o número veio sem ele. */
+export function whatsappUrl(phone: string): string | null {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10) return null;
+  return `https://wa.me/${digits.length <= 11 ? `55${digits}` : digits}`;
+}
 
 export function AppointmentDetailPanel({
   appointment,
@@ -55,31 +68,119 @@ export function AppointmentDetailPanel({
   canUpdate,
   canDelete,
 }: Props) {
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const start = new Date(appointment.startAt);
   const end = new Date(appointment.endAt);
-  const transitions = STATUS_TRANSITIONS[appointment.status];
+  const status = appointment.status;
+  const whatsapp = contact?.phone ? whatsappUrl(contact.phone) : null;
+
+  const changeTo = (target: AppointmentStatus) => {
+    if (target === "CANCELED") setConfirmCancel(true);
+    else onChangeStatus(appointment.id, target);
+  };
 
   return (
     <div className="flex w-80 flex-col gap-4 border-l bg-card p-4">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <h3 className="text-lg font-semibold leading-tight">{appointment.title}</h3>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex shrink-0 items-center">
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Excluir agendamento"
+              title="Excluir agendamento"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" aria-label="Fechar" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      <AppointmentStatusBadge status={appointment.status} />
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Clock className="h-4 w-4 shrink-0" />
+        <span>
+          {format(start, "EEEE, dd 'de' MMMM", { locale: ptBR })} ·{" "}
+          {format(start, "HH:mm", { locale: ptBR })} – {format(end, "HH:mm", { locale: ptBR })}
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground">Situação do atendimento</p>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Situação do atendimento">
+          {QUICK_STATUSES.map((s) => {
+            const active = status === s;
+            return (
+              <Button
+                key={s}
+                type="button"
+                size="sm"
+                variant={active ? "default" : "outline"}
+                aria-pressed={active}
+                className="h-7 rounded-full px-3 text-xs"
+                disabled={!active && (!canUpdate || !canMoveTo(status, s))}
+                onClick={() => !active && changeTo(s)}
+              >
+                {APPOINTMENT_STATUS_LABELS[s]}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          type="button"
+          variant={status === "COMPLETED" ? "default" : "outline"}
+          aria-pressed={status === "COMPLETED"}
+          className={cn(status === "COMPLETED" && "bg-emerald-600 hover:bg-emerald-600")}
+          disabled={status !== "COMPLETED" && (!canUpdate || !canMoveTo(status, "COMPLETED"))}
+          onClick={() => status !== "COMPLETED" && changeTo("COMPLETED")}
+        >
+          <CircleCheck className="h-4 w-4" />
+          {APPOINTMENT_STATUS_LABELS.COMPLETED}
+        </Button>
+        <Button
+          type="button"
+          variant={status === "NO_SHOW" ? "destructive" : "outline"}
+          aria-pressed={status === "NO_SHOW"}
+          disabled={status !== "NO_SHOW" && (!canUpdate || !canMoveTo(status, "NO_SHOW"))}
+          onClick={() => status !== "NO_SHOW" && changeTo("NO_SHOW")}
+        >
+          <CircleX className="h-4 w-4" />
+          {APPOINTMENT_STATUS_LABELS.NO_SHOW}
+        </Button>
+      </div>
 
       {contact && (
         <div className="space-y-1 rounded-md border bg-muted/30 p-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <User className="h-4 w-4 shrink-0" />
-            {contact.firstName} {contact.lastName}
+            <Link href={`${ROUTES.CONTACTS}/${contact.id}`} className="hover:underline">
+              {contact.firstName} {contact.lastName}
+            </Link>
           </div>
           {contact.phone && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Phone className="h-3 w-3 shrink-0" />
               {contact.phone}
+              {whatsapp && (
+                <a
+                  href={whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Conversar no WhatsApp"
+                  title="Conversar no WhatsApp"
+                  className="ml-auto text-emerald-600 hover:text-emerald-700"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </a>
+              )}
             </div>
           )}
           {contact.email && (
@@ -97,14 +198,6 @@ export function AppointmentDetailPanel({
           <span>{hostName}</span>
         </div>
       )}
-
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Clock className="h-4 w-4 shrink-0" />
-        <span>
-          {format(start, "dd MMM yyyy HH:mm", { locale: ptBR })} –{" "}
-          {format(end, "HH:mm", { locale: ptBR })}
-        </span>
-      </div>
 
       {appointment.locationKind && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -134,33 +227,31 @@ export function AppointmentDetailPanel({
         </div>
       )}
 
-      {canUpdate && transitions.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full">
-              Alterar status
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {transitions.map((s) => (
-              <DropdownMenuItem key={s} onClick={() => onChangeStatus(appointment.id, s)}>
-                {STATUS_ACTION_LABELS[s]}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-
-      {canDelete && (
-        <Button
-          variant="destructive"
-          size="sm"
-          className="w-full"
-          onClick={() => onDelete(appointment.id)}
-        >
-          Excluir
-        </Button>
-      )}
+      <ConfirmDialog
+        open={confirmCancel}
+        onOpenChange={setConfirmCancel}
+        title="Cancelar agendamento?"
+        description="Um agendamento cancelado não pode ser reaberto nem remarcado."
+        confirmLabel="Cancelar agendamento"
+        cancelLabel="Voltar"
+        variant="destructive"
+        onConfirm={() => {
+          onChangeStatus(appointment.id, "CANCELED");
+          setConfirmCancel(false);
+        }}
+      />
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Excluir agendamento?"
+        description="O agendamento será removido da agenda."
+        confirmLabel="Excluir"
+        variant="destructive"
+        onConfirm={() => {
+          onDelete(appointment.id);
+          setConfirmDelete(false);
+        }}
+      />
     </div>
   );
 }

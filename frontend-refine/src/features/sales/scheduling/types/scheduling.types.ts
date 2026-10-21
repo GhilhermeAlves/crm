@@ -144,11 +144,11 @@ export type CreateBlockRequest = {
 };
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
-  SCHEDULED: "Agendado",
+  SCHEDULED: "Pendente",
   CONFIRMED: "Confirmado",
   CANCELED: "Cancelado",
-  COMPLETED: "Concluído",
-  NO_SHOW: "Não compareceu",
+  COMPLETED: "Compareceu",
+  NO_SHOW: "Faltou",
 };
 
 export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatus, string> = {

@@ -32,6 +32,7 @@ import {
   Link2,
   ExternalLink,
   SlidersHorizontal,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
@@ -57,6 +58,8 @@ import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/
 import type { CreateBlockFormValues } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import { AppointmentDetailPanel } from "@/features/sales/scheduling/components/AppointmentDetailPanel";
 import { MiniCalendar } from "@/features/sales/scheduling/components/MiniCalendar";
+import { StatusFilter } from "@/features/sales/scheduling/components/StatusFilter";
+import { filterAppointments } from "@/features/sales/scheduling/utils/filterAppointments";
 import { MemberFilter, getMemberColor } from "@/features/sales/scheduling/components/MemberFilter";
 import {
   useAppointments,
@@ -97,6 +100,8 @@ export default function AgendaPage() {
     end: string;
   } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string> | null>(null);
+  const [statusFilter, setStatusFilter] = useState<Set<AppointmentStatus>>(new Set());
+  const [patientSearch, setPatientSearch] = useState("");
   const [showHolidays, setShowHolidays] = useState(true);
   const [showWeekends, setShowWeekends] = useState(true);
   const [showBirthdays, setShowBirthdays] = useState(true);
@@ -153,8 +158,13 @@ export default function AgendaPage() {
   }, [memberOptions]);
 
   const filteredAppointments = useMemo(
-    () => appointments.filter((a) => effectiveSelectedIds.has(a.hostId)),
-    [appointments, effectiveSelectedIds],
+    () =>
+      filterAppointments(
+        appointments,
+        { hostIds: effectiveSelectedIds, statuses: statusFilter, search: patientSearch },
+        contacts,
+      ),
+    [appointments, effectiveSelectedIds, statusFilter, patientSearch, contacts],
   );
 
   const filteredBlocks = useMemo(
@@ -231,8 +241,11 @@ export default function AgendaPage() {
   }, []);
 
   const handleChangeStatus = (id: string, status: AppointmentStatus) => {
-    changeStatus.mutate({ id, status });
-    setSelectedAppointment(null);
+    // O painel fica aberto e mostra a nova situação (ações de um clique).
+    changeStatus.mutate(
+      { id, status },
+      { onSuccess: (updated) => setSelectedAppointment(updated) },
+    );
   };
 
   const handleDelete = (id: string) => {
@@ -393,6 +406,18 @@ export default function AgendaPage() {
             </div>
           </PopoverContent>
         </Popover>
+
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={patientSearch}
+            onChange={(e) => setPatientSearch(e.target.value)}
+            placeholder="Buscar paciente"
+            aria-label="Buscar paciente"
+            className="h-8 w-44 pl-7 text-sm"
+          />
+        </div>
+        <StatusFilter value={statusFilter} onChange={setStatusFilter} />
 
         <div className="mx-auto" />
 
