@@ -7,6 +7,8 @@ import {
   AvailabilityService,
   BirthdayMessageService,
   type BirthdayMessageSettings,
+  AgendaSettingsService,
+  type AgendaSettings,
 } from "../services/scheduling.service";
 import type {
   AppointmentType,
@@ -311,5 +313,27 @@ export function useSaveBirthdayMessage(companyId: string | null) {
       invalidateKeys: [["birthday-message", companyId]],
     }),
     onError: onError({ errorMessage: "Erro ao salvar mensagem de aniversário" }),
+  });
+}
+
+// --- Agenda settings ---
+
+export function useAgendaSettings(companyId: string | null) {
+  return useQuery({
+    queryKey: ["agenda-settings", companyId],
+    queryFn: () => AgendaSettingsService.get(companyId as string),
+    enabled: !!companyId,
+  });
+}
+
+export function useSaveAgendaSettings(companyId: string | null) {
+  const { onSuccess, onError } = useMutationDefaults();
+  return useMutation({
+    mutationFn: (data: AgendaSettings) => AgendaSettingsService.save(companyId as string, data),
+    onSuccess: onSuccess({
+      successMessage: "Ajustes da agenda salvos",
+      invalidateKeys: [["agenda-settings", companyId]],
+    }),
+    onError: onError({ errorMessage: "Erro ao salvar ajustes da agenda" }),
   });
 }

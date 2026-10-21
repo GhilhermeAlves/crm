@@ -8,7 +8,10 @@ import {
   useCreateAppointmentType,
   useUpdateAppointmentType,
   useDeleteAppointmentType,
+  useAgendaSettings,
+  useSaveAgendaSettings,
 } from "@/features/sales/scheduling/hooks/useScheduling";
+import { AgendaSettingsForm } from "@/features/sales/scheduling/components/AgendaSettingsForm";
 import { useSchedulingPermissions } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
 import { AppointmentTypeFormDialog } from "@/features/sales/scheduling/components/AppointmentTypeFormDialog";
@@ -37,6 +40,8 @@ export default function AgendaGeneralPage() {
   const createType = useCreateAppointmentType(companyId);
   const updateType = useUpdateAppointmentType(companyId);
   const deleteType = useDeleteAppointmentType(companyId);
+  const { data: agendaSettings } = useAgendaSettings(companyId);
+  const saveAgendaSettings = useSaveAgendaSettings(companyId);
 
   const [typeFormOpen, setTypeFormOpen] = useState(false);
   const [editingType, setEditingType] = useState<AppointmentType | null>(null);
@@ -73,6 +78,15 @@ export default function AgendaGeneralPage() {
           livres são calculados a partir deles e da disponibilidade de cada profissional.
         </p>
       </div>
+
+      {agendaSettings && (
+        <AgendaSettingsForm
+          settings={agendaSettings}
+          canConfigure={perms.canConfigure}
+          isSaving={saveAgendaSettings.isPending}
+          onSave={(values) => saveAgendaSettings.mutate(values)}
+        />
+      )}
 
       <AppointmentTypeList
         types={types}
