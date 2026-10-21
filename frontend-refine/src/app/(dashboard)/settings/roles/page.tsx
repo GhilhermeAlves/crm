@@ -108,7 +108,7 @@ export default function SettingsRolesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <PageTitle>Perfis de acesso</PageTitle>
+          <PageTitle>Perfis e Permissões</PageTitle>
           <p className="text-sm text-muted-foreground">
             Papéis e permissões desta empresa. A empresa ativa determina o que é exibido.
           </p>

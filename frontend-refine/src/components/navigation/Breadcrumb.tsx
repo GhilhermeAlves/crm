@@ -22,8 +22,14 @@ const routeLabels: Record<string, string> = {
   campaigns: "Campanhas",
   estoque: "Estoque",
   reports: "Relatórios",
-  settings: "Segurança",
-  roles: "Perfis",
+  settings: "Configurações",
+  company: "Minha Empresa",
+  roles: "Perfis e Permissões",
+};
+
+/** Caminhos cujo nome no menu difere do nome do segmento. */
+const pathLabels: Record<string, string> = {
+  [ROUTES.SETTINGS_COMPANY_USERS]: "Equipe",
 };
 
 type BreadcrumbProps = {
@@ -40,7 +46,8 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
         const href = "/" + parts.slice(0, index + 1).join("/");
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(part);
         if (isUuid) return null;
-        const label = routeLabels[part] || part.charAt(0).toUpperCase() + part.slice(1);
+        const label =
+          pathLabels[href] || routeLabels[part] || part.charAt(0).toUpperCase() + part.slice(1);
         return { label, href, isLast: index === parts.length - 1 };
       })
       .filter(Boolean) as { label: string; href: string; isLast: boolean }[];
