@@ -38,7 +38,9 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
       item.children
         ? { ...item, children: item.children.filter((child) => hasPermission(child.permission)) }
         : item,
-    );
+    )
+    // Item que só agrupa submenus some quando nenhum deles é permitido.
+    .filter((item) => !item.children || item.children.length > 0);
 
   return (
     <div>
