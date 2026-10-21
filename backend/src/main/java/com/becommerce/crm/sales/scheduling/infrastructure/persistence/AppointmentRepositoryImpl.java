@@ -92,6 +92,7 @@ public class AppointmentRepositoryImpl implements AppointmentRepository {
         e.setCreatedBy(a.getCreatedBy());
         e.setCreatedAt(a.getCreatedAt());
         e.setUpdatedAt(a.getUpdatedAt());
+        e.setChairId(a.getChairId());
         return e;
     }
 
@@ -104,6 +105,6 @@ public class AppointmentRepositoryImpl implements AppointmentRepository {
                 e.getLocationKind() != null ? LocationKind.valueOf(e.getLocationKind()) : null,
                 e.getLocationDetail(), e.getMeetingUrl(), e.getNotes(), e.getCancelReason(),
                 e.getPublicToken(), e.getGoogleEventId(), e.getCreatedBy(),
-                e.getCreatedAt(), e.getUpdatedAt());
+                e.getCreatedAt(), e.getUpdatedAt(), e.getChairId());
     }
 }

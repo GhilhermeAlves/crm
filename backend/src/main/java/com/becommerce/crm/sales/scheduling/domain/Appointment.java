@@ -28,6 +28,7 @@ public class Appointment {
     private final UUID createdBy;
     private final Instant createdAt;
     private Instant updatedAt;
+    private UUID chairId;
 
     private Appointment(UUID id, UUID companyId, UUID appointmentTypeId, UUID hostId,
                         UUID contactId, UUID opportunityId, String title,
@@ -35,7 +36,7 @@ public class Appointment {
                         AppointmentSource source, LocationKind locationKind, String locationDetail,
                         String meetingUrl, String notes, String cancelReason,
                         String publicToken, String googleEventId, UUID createdBy,
-                        Instant createdAt, Instant updatedAt) {
+                        Instant createdAt, Instant updatedAt, UUID chairId) {
         this.id = id;
         this.companyId = companyId;
         this.appointmentTypeId = appointmentTypeId;
@@ -57,13 +58,14 @@ public class Appointment {
         this.createdBy = createdBy;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.chairId = chairId;
     }
 
     public static Appointment create(UUID companyId, UUID appointmentTypeId, UUID hostId,
                                      UUID contactId, UUID opportunityId, String title,
                                      Instant startAt, Instant endAt, AppointmentSource source,
                                      LocationKind locationKind, String locationDetail,
-                                     String notes, UUID createdBy) {
+                                     String notes, UUID createdBy, UUID chairId) {
         validateTitle(title);
         validateRange(startAt, endAt);
         Instant now = Instant.now();
@@ -72,7 +74,29 @@ public class Appointment {
                 contactId, opportunityId, title.trim(), startAt, endAt,
                 AppointmentStatus.SCHEDULED, source != null ? source : AppointmentSource.INTERNAL,
                 locationKind, locationDetail, null, notes, null,
-                token, null, createdBy, now, now);
+                token, null, createdBy, now, now, chairId);
+    }
+
+    public static Appointment create(UUID companyId, UUID appointmentTypeId, UUID hostId,
+                                     UUID contactId, UUID opportunityId, String title,
+                                     Instant startAt, Instant endAt, AppointmentSource source,
+                                     LocationKind locationKind, String locationDetail,
+                                     String notes, UUID createdBy) {
+        return create(companyId, appointmentTypeId, hostId, contactId, opportunityId, title, startAt, endAt,
+                source, locationKind, locationDetail, notes, createdBy, null);
+    }
+
+    public static Appointment reconstitute(UUID id, UUID companyId, UUID appointmentTypeId, UUID hostId,
+                                           UUID contactId, UUID opportunityId, String title,
+                                           Instant startAt, Instant endAt, AppointmentStatus status,
+                                           AppointmentSource source, LocationKind locationKind,
+                                           String locationDetail, String meetingUrl, String notes,
+                                           String cancelReason, String publicToken, String googleEventId,
+                                           UUID createdBy, Instant createdAt, Instant updatedAt,
+                                           UUID chairId) {
+        return new Appointment(id, companyId, appointmentTypeId, hostId, contactId, opportunityId,
+                title, startAt, endAt, status, source, locationKind, locationDetail, meetingUrl,
+                notes, cancelReason, publicToken, googleEventId, createdBy, createdAt, updatedAt, chairId);
     }
 
     public static Appointment reconstitute(UUID id, UUID companyId, UUID appointmentTypeId, UUID hostId,
@@ -82,13 +106,13 @@ public class Appointment {
                                            String locationDetail, String meetingUrl, String notes,
                                            String cancelReason, String publicToken, String googleEventId,
                                            UUID createdBy, Instant createdAt, Instant updatedAt) {
-        return new Appointment(id, companyId, appointmentTypeId, hostId, contactId, opportunityId,
+        return reconstitute(id, companyId, appointmentTypeId, hostId, contactId, opportunityId,
                 title, startAt, endAt, status, source, locationKind, locationDetail, meetingUrl,
-                notes, cancelReason, publicToken, googleEventId, createdBy, createdAt, updatedAt);
+                notes, cancelReason, publicToken, googleEventId, createdBy, createdAt, updatedAt, null);
     }
 
     public void update(String title, UUID contactId, UUID opportunityId, LocationKind locationKind,
-                       String locationDetail, String notes) {
+                       String locationDetail, String notes, UUID chairId) {
         if (status == AppointmentStatus.CANCELED) {
             throw new SchedulingValidationException("Agendamento cancelado não pode ser alterado.");
         }
@@ -101,7 +125,13 @@ public class Appointment {
         this.locationKind = locationKind;
         this.locationDetail = locationDetail;
         this.notes = notes;
+        this.chairId = chairId;
         touch();
+    }
+
+    public void update(String title, UUID contactId, UUID opportunityId, LocationKind locationKind,
+                       String locationDetail, String notes) {
+        update(title, contactId, opportunityId, locationKind, locationDetail, notes, this.chairId);
     }
 
     public void reschedule(Instant newStart, Instant newEnd) {
@@ -156,6 +186,14 @@ public class Appointment {
         this.googleEventId = googleEventId;
     }
 
+    public void assignChair(UUID chairId) {
+        if (status == AppointmentStatus.CANCELED) {
+            throw new SchedulingValidationException("Agendamento cancelado não pode ser alterado.");
+        }
+        this.chairId = chairId;
+        touch();
+    }
+
     private static void validateTitle(String title) {
         if (title == null || title.isBlank()) {
             throw new SchedulingValidationException("O título do agendamento é obrigatório.");
@@ -199,4 +237,5 @@ public class Appointment {
     public UUID getCreatedBy() { return createdBy; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public UUID getChairId() { return chairId; }
 }

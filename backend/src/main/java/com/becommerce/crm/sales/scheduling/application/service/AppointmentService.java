@@ -3,6 +3,7 @@ package com.becommerce.crm.sales.scheduling.application.service;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
+import com.becommerce.crm.sales.chair.application.port.in.ChairUseCase;
 import com.becommerce.crm.sales.scheduling.application.dto.*;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentRepository;
@@ -29,13 +30,16 @@ public class AppointmentService implements AppointmentUseCase {
     private final AppointmentRepository appointmentRepository;
     private final ScheduleBlockRepository blockRepository;
     private final TenantAuditRecorder auditor;
+    private final ChairUseCase chairUseCase;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               ScheduleBlockRepository blockRepository,
-                              TenantAuditRecorder auditor) {
+                              TenantAuditRecorder auditor,
+                              ChairUseCase chairUseCase) {
         this.appointmentRepository = appointmentRepository;
         this.blockRepository = blockRepository;
         this.auditor = auditor;
+        this.chairUseCase = chairUseCase;
     }
 
     @Override
@@ -53,15 +57,17 @@ public class AppointmentService implements AppointmentUseCase {
             boolean force = request.force() != null && request.force();
             if (!force) {
                 checkConflicts(request.hostId(), request.startAt(), request.endAt(), companyId, null);
+                checkChairConflicts(companyId, request.chairId(), request.startAt(), request.endAt(), null);
             } else {
                 checkHardConflicts(request.hostId(), request.startAt(), request.endAt(), companyId, null);
+                checkChairConflicts(companyId, request.chairId(), request.startAt(), request.endAt(), null);
             }
 
             Appointment appointment = Appointment.create(companyId, request.appointmentTypeId(),
                     request.hostId(), request.contactId(), request.opportunityId(),
                     request.title(), request.startAt(), request.endAt(),
                     source, request.locationKind(), request.locationDetail(),
-                    request.notes(), createdBy);
+                    request.notes(), createdBy, request.chairId());
             appointmentRepository.save(appointment);
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SCHEDULING, "Appointment",
@@ -90,8 +96,14 @@ public class AppointmentService implements AppointmentUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             Appointment appointment = requireOwned(companyId, appointmentId);
+            if (request.chairId() != null || appointment.getChairId() != null) {
+                UUID chairId = request.chairId() != null ? request.chairId() : appointment.getChairId();
+                if (chairId != null) {
+                    checkChairConflicts(companyId, chairId, appointment.getStartAt(), appointment.getEndAt(), appointmentId);
+                }
+            }
             appointment.update(request.title(), request.contactId(), request.opportunityId(),
-                    request.locationKind(), request.locationDetail(), request.notes());
+                    request.locationKind(), request.locationDetail(), request.notes(), request.chairId());
             appointmentRepository.save(appointment);
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Appointment",
@@ -113,9 +125,11 @@ public class AppointmentService implements AppointmentUseCase {
             if (!force) {
                 checkConflicts(appointment.getHostId(), request.startAt(), request.endAt(),
                         companyId, appointmentId);
+                checkChairConflicts(companyId, appointment.getChairId(), request.startAt(), request.endAt(), appointmentId);
             } else {
                 checkHardConflicts(appointment.getHostId(), request.startAt(), request.endAt(),
                         companyId, appointmentId);
+                checkChairConflicts(companyId, appointment.getChairId(), request.startAt(), request.endAt(), appointmentId);
             }
 
             appointment.reschedule(request.startAt(), request.endAt());
@@ -241,6 +255,26 @@ public class AppointmentService implements AppointmentUseCase {
         }
     }
 
+    private void checkChairConflicts(UUID companyId, UUID chairId, Instant start, Instant end, UUID excludeAppointmentId) {
+        if (chairId == null) {
+            return;
+        }
+        if (!chairUseCase.existsInCompany(companyId, chairId)) {
+            throw new SchedulingValidationException("Cadeira inválida para esta empresa.");
+        }
+        Interval proposed = new Interval(start, end);
+        List<Appointment> existing = appointmentRepository.findByCompanyIdAndRange(companyId, start, end, null);
+        boolean hasConflict = existing.stream()
+                .filter(a -> a.getChairId() != null)
+                .filter(a -> a.getChairId().equals(chairId))
+                .filter(a -> a.getStatus() != AppointmentStatus.CANCELED)
+                .filter(a -> excludeAppointmentId == null || !a.getId().equals(excludeAppointmentId))
+                .anyMatch(a -> proposed.overlaps(new Interval(a.getStartAt(), a.getEndAt())));
+        if (hasConflict) {
+            throw new SlotUnavailableException();
+        }
+    }
+
     private void validateRange(Instant from, Instant to) {
         if (from == null || to == null) {
             throw new SchedulingValidationException("Período de consulta é obrigatório.");
@@ -264,6 +298,6 @@ public class AppointmentService implements AppointmentUseCase {
                 a.getHostId(), a.getContactId(), a.getOpportunityId(), a.getTitle(),
                 a.getStartAt(), a.getEndAt(), a.getStatus(), a.getSource(), a.getLocationKind(),
                 a.getLocationDetail(), a.getMeetingUrl(), a.getNotes(), a.getCancelReason(),
-                a.getPublicToken(), a.getCreatedBy(), a.getCreatedAt(), a.getUpdatedAt());
+                a.getPublicToken(), a.getCreatedBy(), a.getCreatedAt(), a.getUpdatedAt(), a.getChairId());
     }
 }

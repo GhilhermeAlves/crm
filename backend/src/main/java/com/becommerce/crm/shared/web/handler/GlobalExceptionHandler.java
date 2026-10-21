@@ -76,6 +76,8 @@ import com.becommerce.crm.sales.followup.domain.exception.FollowUpNotFoundExcept
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpSequenceNotFoundException;
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpSequenceValidationException;
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpValidationException;
+import com.becommerce.crm.sales.chair.domain.exception.ChairNotFoundException;
+import com.becommerce.crm.sales.chair.domain.exception.ChairValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -828,12 +830,34 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SlotUnavailableException.class)
     public ResponseEntity<Map<String, Object>> handleSlotUnavailableException(SlotUnavailableException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-            .body(Map.of(
-                "status", 409,
-                "error", "Conflict",
-                "message", ex.getMessage(),
-                "timestamp", LocalDateTime.now().toString()
-            ));
+                .body(Map.of(
+                        "status", 409,
+                        "error", "Conflict",
+                        "message", ex.getMessage(),
+                        "timestamp", LocalDateTime.now().toString()
+                ));
+    }
+
+    @ExceptionHandler(ChairNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleChairNotFoundException(ChairNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "status", 404,
+                        "error", "Not Found",
+                        "message", ex.getMessage(),
+                        "timestamp", LocalDateTime.now().toString()
+                ));
+    }
+
+    @ExceptionHandler(ChairValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleChairValidationException(ChairValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
+                        "error", "Bad Request",
+                        "message", ex.getMessage(),
+                        "timestamp", LocalDateTime.now().toString()
+                ));
     }
 
     @ExceptionHandler(Exception.class)

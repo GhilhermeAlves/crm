@@ -27,5 +27,6 @@ public record AppointmentResponse(
         String publicToken,
         UUID createdBy,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID chairId
 ) {}

@@ -24,5 +24,6 @@ public record CreateAppointmentRequest(
         LocationKind locationKind,
         String locationDetail,
         String notes,
-        Boolean force
+        Boolean force,
+        UUID chairId
 ) {}

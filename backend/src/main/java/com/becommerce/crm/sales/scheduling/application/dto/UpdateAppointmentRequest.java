@@ -12,5 +12,6 @@ public record UpdateAppointmentRequest(
         UUID opportunityId,
         LocationKind locationKind,
         String locationDetail,
-        String notes
+        String notes,
+        UUID chairId
 ) {}
