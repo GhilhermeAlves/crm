@@ -636,6 +636,8 @@ export default function AgendaPage() {
           )
         }
         isLoadingBlock={createBlock.isPending}
+        workHoursStart={workHoursStart}
+        workHoursEnd={workHoursEnd}
         appointmentTypes={appointmentTypes}
         members={memberOptions}
         contacts={contacts}
