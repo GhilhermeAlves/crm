@@ -1,9 +1,4 @@
-export function whatsappUrl(phone: string | null | undefined): string | null {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 10) return null;
-  return `https://wa.me/${digits.length <= 11 ? `55${digits}` : digits}`;
-}
+export { buildWhatsAppUrl as whatsappUrl, whatsappUrl as buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export function formatDateOnly(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
