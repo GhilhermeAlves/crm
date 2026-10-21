@@ -80,6 +80,8 @@ import com.becommerce.crm.sales.chair.domain.exception.ChairNotFoundException;
 import com.becommerce.crm.sales.chair.domain.exception.ChairValidationException;
 import com.becommerce.crm.sales.tag.domain.exception.TagNotFoundException;
 import com.becommerce.crm.sales.tag.domain.exception.TagValidationException;
+import com.becommerce.crm.sales.holiday.domain.exception.HolidayNotFoundException;
+import com.becommerce.crm.sales.holiday.domain.exception.HolidayValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -875,6 +877,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TagValidationException.class)
     public ResponseEntity<Map<String, Object>> handleTagValidationException(TagValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
+                        "error", "Bad Request",
+                        "message", ex.getMessage(),
+                        "timestamp", LocalDateTime.now().toString()
+                ));
+    }
+
+    @ExceptionHandler(HolidayNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleHolidayNotFoundException(HolidayNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "status", 404,
+                        "error", "Not Found",
+                        "message", ex.getMessage(),
+                        "timestamp", LocalDateTime.now().toString()
+                ));
+    }
+
+    @ExceptionHandler(HolidayValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleHolidayValidationException(HolidayValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
                         "status", 400,
