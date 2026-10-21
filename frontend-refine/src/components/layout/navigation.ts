@@ -17,8 +17,8 @@ import {
   Bot,
   Palette,
   Shield,
+  UsersRound,
   MailPlus,
-  KeyRound,
   CalendarDays,
   FileText,
   CircleDollarSign,
@@ -41,67 +41,11 @@ export interface NavGroup {
 
 export const NAVIGATION: NavGroup[] = [
   {
-    title: "CRM",
+    title: "Principal",
     items: [
-      {
-        label: "Início",
-        href: ROUTES.CRM,
-        icon: Home,
-      },
-      {
-        label: "Leads",
-        href: ROUTES.LEADS,
-        icon: Users,
-        permission: "lead:page:view",
-      },
-      {
-        label: "Contatos",
-        href: ROUTES.CONTACTS,
-        icon: Contact,
-        permission: "contact:page:view",
-      },
-      {
-        label: "Pipeline",
-        href: ROUTES.PIPELINE,
-        icon: GitBranch,
-        permission: "pipeline:page:view",
-      },
-      {
-        label: "Agenda",
-        href: ROUTES.AGENDA,
-        icon: CalendarDays,
-        permission: "appointment:read",
-      },
-      {
-        label: "Tarefas",
-        href: ROUTES.TASKS,
-        icon: ClipboardList,
-        permission: "task:page:view",
-      },
-      {
-        label: "Catálogo",
-        href: ROUTES.CATALOG,
-        icon: Package,
-        permission: "catalog:read",
-      },
-      {
-        label: "Estoque",
-        href: ROUTES.INVENTORY,
-        icon: Boxes,
-        permission: "inventory:read",
-      },
-      {
-        label: "Timeline",
-        href: ROUTES.ACTIVITIES,
-        icon: MailPlus,
-        permission: "activity:page:view",
-      },
-      {
-        label: "Automações",
-        href: ROUTES.WORKFLOWS,
-        icon: WorkflowIcon,
-        permission: "workflow:page:view",
-      },
+      { label: "Início", href: ROUTES.CRM, icon: Home },
+      { label: "Agenda", href: ROUTES.AGENDA, icon: CalendarDays, permission: "appointment:read" },
+      { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:page:view" },
       {
         label: "Léo · Assistente IA",
         href: ROUTES.ASSISTANT,
@@ -111,7 +55,26 @@ export const NAVIGATION: NavGroup[] = [
     ],
   },
   {
-    title: "Comunicação",
+    title: "Comercial",
+    items: [
+      { label: "Leads", href: ROUTES.LEADS, icon: Users, permission: "lead:page:view" },
+      { label: "Contatos", href: ROUTES.CONTACTS, icon: Contact, permission: "contact:page:view" },
+      {
+        label: "Pipeline",
+        href: ROUTES.PIPELINE,
+        icon: GitBranch,
+        permission: "pipeline:page:view",
+      },
+      {
+        label: "Histórico",
+        href: ROUTES.ACTIVITIES,
+        icon: MailPlus,
+        permission: "activity:page:view",
+      },
+    ],
+  },
+  {
+    title: "Atendimento",
     items: [
       {
         label: "Inbox",
@@ -126,7 +89,7 @@ export const NAVIGATION: NavGroup[] = [
         permission: "omnichannel:page:view",
       },
       {
-        label: "Sequências de Follow-up",
+        label: "Follow-ups",
         href: ROUTES.FOLLOW_UP_SEQUENCES,
         icon: ClipboardList,
         permission: "omnichannel:followup:sequence:read",
@@ -137,42 +100,21 @@ export const NAVIGATION: NavGroup[] = [
         icon: Megaphone,
         permission: "campaign:page:view",
       },
-    ],
-  },
-  {
-    title: "Administração",
-    items: [
       {
-        label: "Empresas",
-        href: ROUTES.TENANTS,
-        icon: Building2,
-        permission: "company:view",
-      },
-      {
-        label: "Membros",
-        href: ROUTES.MEMBERS,
-        icon: Users,
-        permission: "membership:view",
-      },
-      {
-        label: "Convites",
-        href: ROUTES.INVITATIONS,
-        icon: MailPlus,
-        permission: "membership:view",
-      },
-      {
-        label: "Permissões",
-        href: ROUTES.PERMISSIONS,
-        icon: KeyRound,
-        permission: "role:read",
+        label: "Automações",
+        href: ROUTES.WORKFLOWS,
+        icon: WorkflowIcon,
+        permission: "workflow:page:view",
       },
     ],
   },
   {
-    title: "Gestão",
+    title: "Operação",
     items: [
+      { label: "Catálogo", href: ROUTES.CATALOG, icon: Package, permission: "catalog:read" },
+      { label: "Estoque", href: ROUTES.INVENTORY, icon: Boxes, permission: "inventory:read" },
       {
-        label: "Gestão financeira",
+        label: "Financeiro",
         href: ROUTES.FINANCE_CONTROL,
         icon: CircleDollarSign,
         permission: "finance:read",
@@ -219,22 +161,6 @@ export const NAVIGATION: NavGroup[] = [
     ],
   },
   {
-    title: "Sistema",
-    items: [
-      {
-        label: "Auditoria",
-        href: ROUTES.AUDIT,
-        icon: ClipboardList,
-        permission: "audit:page:view",
-      },
-      {
-        label: "Design System",
-        href: ROUTES.DESIGN_SYSTEM,
-        icon: Palette,
-      },
-    ],
-  },
-  {
     title: "Configurações",
     items: [
       {
@@ -244,40 +170,42 @@ export const NAVIGATION: NavGroup[] = [
         children: [
           { label: "Dados da empresa", href: ROUTES.SETTINGS_COMPANY },
           { label: "Preferências", href: `${ROUTES.SETTINGS_COMPANY}/preferences` },
-          { label: "Criar novo usuário", href: `${ROUTES.SETTINGS_COMPANY}/users/new` },
-          { label: "Gerenciar usuários", href: `${ROUTES.SETTINGS_COMPANY}/users` },
-          { label: "Migração de dados", href: `${ROUTES.SETTINGS_COMPANY}/migration` },
           { label: "Lista de serviços", href: `${ROUTES.SETTINGS_COMPANY}/services` },
+          { label: "Migração de dados", href: `${ROUTES.SETTINGS_COMPANY}/migration` },
         ],
       },
       {
-        label: "Usuários",
-        href: ROUTES.SETTINGS_USERS,
-        icon: Users,
-        permission: "security:page:view",
+        // Fase 1: agrupa as telas de usuário que existem hoje; a página única com abas vem depois.
+        label: "Equipe",
+        href: ROUTES.MEMBERS,
+        icon: UsersRound,
+        children: [
+          { label: "Membros", href: ROUTES.MEMBERS, permission: "membership:view" },
+          { label: "Convites", href: ROUTES.INVITATIONS, permission: "membership:view" },
+          { label: "Usuários", href: ROUTES.SETTINGS_USERS, permission: "security:page:view" },
+          { label: "Gerenciar usuários", href: `${ROUTES.SETTINGS_COMPANY}/users` },
+          { label: "Criar novo usuário", href: `${ROUTES.SETTINGS_COMPANY}/users/new` },
+        ],
       },
       {
-        label: "Perfis",
+        label: "Perfis e Permissões",
         href: ROUTES.SETTINGS_ROLES,
         icon: Shield,
-        permission: "security:page:view",
+        children: [
+          { label: "Perfis", href: ROUTES.SETTINGS_ROLES, permission: "security:page:view" },
+          { label: "Permissões", href: ROUTES.PERMISSIONS, permission: "role:read" },
+        ],
       },
       {
-        label: "Config. Agenda",
+        label: "Agenda",
         href: ROUTES.SETTINGS_AGENDA,
         icon: CalendarDays,
         permission: "scheduling:configure",
         children: [
           { label: "Ajustes gerais", href: ROUTES.SETTINGS_AGENDA },
-          {
-            label: "Configurar disponibilidade",
-            href: `${ROUTES.SETTINGS_AGENDA}/availability`,
-          },
-          {
-            label: "Central de notificações",
-            href: `${ROUTES.SETTINGS_AGENDA}/notifications`,
-          },
-          { label: "Mensagem de aniversário", href: `${ROUTES.SETTINGS_AGENDA}/birthday` },
+          { label: "Disponibilidade", href: `${ROUTES.SETTINGS_AGENDA}/availability` },
+          { label: "Notificações", href: `${ROUTES.SETTINGS_AGENDA}/notifications` },
+          { label: "Aniversários", href: `${ROUTES.SETTINGS_AGENDA}/birthday` },
         ],
       },
       {
@@ -296,6 +224,22 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Receituários", href: `${ROUTES.SETTINGS_DOCUMENTS}/prescriptions` },
         ],
       },
+    ],
+  },
+  {
+    title: "Sistema",
+    items: [
+      { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, permission: "company:view" },
+      {
+        label: "Auditoria",
+        href: ROUTES.AUDIT,
+        icon: ClipboardList,
+        permission: "audit:page:view",
+      },
+      // Ferramenta de desenvolvimento: fora do menu em produção.
+      ...(process.env.NODE_ENV === "production"
+        ? []
+        : [{ label: "Design System", href: ROUTES.DESIGN_SYSTEM, icon: Palette }]),
     ],
   },
 ];

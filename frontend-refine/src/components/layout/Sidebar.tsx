@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -101,7 +101,7 @@ function SidebarContent({ collapsed, onNavClick }: SidebarContentProps) {
 }
 
 export function Sidebar() {
-  const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebar();
+  const { collapsed, mobileOpen, setMobileOpen } = useSidebar();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -120,21 +120,6 @@ export function Sidebar() {
         )}
       >
         <SidebarContent collapsed={effectiveCollapsed} />
-        <div className="border-t border-white/10 p-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-slate-300 hover:bg-purple-500/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-            onClick={toggle}
-            aria-label={effectiveCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
-          >
-            {effectiveCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
       </aside>
 
       {/* Mobile Sidebar */}
