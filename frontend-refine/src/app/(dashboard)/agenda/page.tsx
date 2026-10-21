@@ -32,6 +32,9 @@ import {
   Link2,
   ExternalLink,
   SlidersHorizontal,
+  Search,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
@@ -57,6 +60,9 @@ import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/
 import type { CreateBlockFormValues } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import { AppointmentDetailPanel } from "@/features/sales/scheduling/components/AppointmentDetailPanel";
 import { MiniCalendar } from "@/features/sales/scheduling/components/MiniCalendar";
+import { StatusFilter } from "@/features/sales/scheduling/components/StatusFilter";
+import { filterAppointments } from "@/features/sales/scheduling/utils/filterAppointments";
+import { useFullscreen } from "@/features/sales/scheduling/hooks/useFullscreen";
 import { MemberFilter, getMemberColor } from "@/features/sales/scheduling/components/MemberFilter";
 import {
   useAppointments,
@@ -66,6 +72,7 @@ import {
   useCreateBlock,
   useChangeAppointmentStatus,
   useDeleteAppointment,
+  useRescheduleAppointment,
 } from "@/features/sales/scheduling/hooks/useScheduling";
 import { useSchedulingPermissions } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import type {
@@ -97,6 +104,9 @@ export default function AgendaPage() {
     end: string;
   } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string> | null>(null);
+  const [statusFilter, setStatusFilter] = useState<Set<AppointmentStatus>>(new Set());
+  const fullscreen = useFullscreen<HTMLDivElement>();
+  const [patientSearch, setPatientSearch] = useState("");
   const [showHolidays, setShowHolidays] = useState(true);
   const [showWeekends, setShowWeekends] = useState(true);
   const [showBirthdays, setShowBirthdays] = useState(true);
@@ -153,8 +163,13 @@ export default function AgendaPage() {
   }, [memberOptions]);
 
   const filteredAppointments = useMemo(
-    () => appointments.filter((a) => effectiveSelectedIds.has(a.hostId)),
-    [appointments, effectiveSelectedIds],
+    () =>
+      filterAppointments(
+        appointments,
+        { hostIds: effectiveSelectedIds, statuses: statusFilter, search: patientSearch },
+        contacts,
+      ),
+    [appointments, effectiveSelectedIds, statusFilter, patientSearch, contacts],
   );
 
   const filteredBlocks = useMemo(
@@ -165,6 +180,7 @@ export default function AgendaPage() {
   const createAppointment = useCreateAppointment(companyId);
   const createBlock = useCreateBlock(companyId);
   const changeStatus = useChangeAppointmentStatus(companyId);
+  const reschedule = useRescheduleAppointment(companyId);
   const deleteAppointment = useDeleteAppointment(companyId);
 
   const goToday = () => {
@@ -231,8 +247,21 @@ export default function AgendaPage() {
   }, []);
 
   const handleChangeStatus = (id: string, status: AppointmentStatus) => {
-    changeStatus.mutate({ id, status });
-    setSelectedAppointment(null);
+    // O painel fica aberto e mostra a nova situação (ações de um clique).
+    changeStatus.mutate(
+      { id, status },
+      { onSuccess: (updated) => setSelectedAppointment(updated) },
+    );
+  };
+
+  const handleAppointmentDrop = (appointment: Appointment, start: Date, end: Date) => {
+    reschedule.mutate(
+      { id: appointment.id, data: { startAt: start.toISOString(), endAt: end.toISOString() } },
+      {
+        onSuccess: (updated) =>
+          setSelectedAppointment((current) => (current?.id === updated.id ? updated : current)),
+      },
+    );
   };
 
   const handleDelete = (id: string) => {
@@ -272,7 +301,15 @@ export default function AgendaPage() {
   }, [currentDate, view]);
 
   return (
-    <div className="-m-4 flex h-[calc(100%+2rem)] flex-col lg:-m-6 lg:h-[calc(100%+3rem)]">
+    <div
+      ref={fullscreen.ref}
+      className={cn(
+        "flex flex-col bg-background",
+        fullscreen.isFullscreen
+          ? "h-screen w-screen"
+          : "-m-4 h-[calc(100%+2rem)] lg:-m-6 lg:h-[calc(100%+3rem)]",
+      )}
+    >
       {/* ── Toolbar (Capim style) ── */}
       <div className="flex shrink-0 items-center gap-2 border-b px-3 py-2">
         {/* Left: Hoje + nav */}
@@ -394,6 +431,18 @@ export default function AgendaPage() {
           </PopoverContent>
         </Popover>
 
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={patientSearch}
+            onChange={(e) => setPatientSearch(e.target.value)}
+            placeholder="Buscar paciente"
+            aria-label="Buscar paciente"
+            className="h-8 w-44 pl-7 text-sm"
+          />
+        </div>
+        <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+
         <div className="mx-auto" />
 
         {/* Right: Agenda/Retornos toggle + settings */}
@@ -423,6 +472,28 @@ export default function AgendaPage() {
         </div>
 
         <TooltipProvider delayDuration={300}>
+          {fullscreen.supported && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label={fullscreen.isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                  onClick={fullscreen.toggle}
+                >
+                  {fullscreen.isFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {fullscreen.isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+              </TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -532,6 +603,7 @@ export default function AgendaPage() {
               blocks={filteredBlocks}
               onSlotClick={handleSlotClick}
               onAppointmentClick={handleAppointmentClick}
+              onAppointmentDrop={perms.canUpdate ? handleAppointmentDrop : undefined}
               selectedAppointmentId={selectedAppointment?.id}
               memberColorMap={memberColorMap}
               startHour={parseInt(workHoursStart.split(":")[0], 10)}
@@ -577,6 +649,8 @@ export default function AgendaPage() {
           )
         }
         isLoadingBlock={createBlock.isPending}
+        workHoursStart={workHoursStart}
+        workHoursEnd={workHoursEnd}
         appointmentTypes={appointmentTypes}
         members={memberOptions}
         contacts={contacts}

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, startOfDay, endOfDay, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { AlertTriangle, CalendarIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,6 +142,20 @@ interface Props {
   defaultEnd?: string;
   defaultHostId?: string;
   defaultContactId?: string;
+  /** Horário de trabalho no formato "HH:mm", para avisar quando a consulta fica fora dele. */
+  workHoursStart?: string;
+  workHoursEnd?: string;
+}
+
+/** Strings "HH:mm" comparam bem em ordem lexicográfica. */
+export function isOutsideWorkHours(
+  from: string,
+  to: string,
+  workStart?: string,
+  workEnd?: string,
+): boolean {
+  if (!workStart || !workEnd) return false;
+  return from < workStart || to > workEnd;
 }
 
 export function CreateAppointmentDialog({
@@ -157,6 +171,8 @@ export function CreateAppointmentDialog({
   defaultEnd,
   defaultHostId,
   defaultContactId,
+  workHoursStart,
+  workHoursEnd,
 }: Props) {
   const [tab, setTab] = useState<PanelTab>("consulta");
   const [allDay, setAllDay] = useState(false);
@@ -376,6 +392,15 @@ export function CreateAppointmentDialog({
                   Dia inteiro
                 </label>
               </div>
+            )}
+            {!allDay && isOutsideWorkHours(timeFrom, timeTo, workHoursStart, workHoursEnd) && (
+              <p
+                role="status"
+                className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
+              >
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Evento fora da faixa de horário de trabalho ({workHoursStart} – {workHoursEnd}).
+              </p>
             )}
             {allDay && (
               <label className="flex items-center gap-2 text-sm">

@@ -27,6 +27,8 @@ interface Props {
   blocks: ScheduleBlock[];
   onSlotClick?: (start: Date, end: Date) => void;
   onAppointmentClick?: (appointment: Appointment) => void;
+  /** Arrastar e soltar: recebe o agendamento e os novos início/fim. */
+  onAppointmentDrop?: (appointment: Appointment, start: Date, end: Date) => void;
   selectedAppointmentId?: string | null;
   memberColorMap?: Map<string, string>;
   startHour?: number;
@@ -139,12 +141,36 @@ function FiveMinuteLines({
   return <>{lines}</>;
 }
 
+const DRAG_MIME = "application/x-appointment";
+const SNAP_MINUTES = 5;
+
+/** Só agendamentos ainda em aberto podem ser remarcados. */
+export function isDraggable(appointment: Appointment): boolean {
+  return appointment.status === "SCHEDULED" || appointment.status === "CONFIRMED";
+}
+
+/** Novo início/fim ao soltar em `dropY` (px a partir do topo da coluna), mantendo a duração. */
+export function computeDropTimes(
+  appointment: Appointment,
+  day: Date,
+  dropY: number,
+  hourHeight: number,
+  rangeStart: number,
+): { start: Date; end: Date } {
+  const raw = (dropY / hourHeight) * 60 + rangeStart * 60;
+  const minutes = Math.max(0, Math.round(raw / SNAP_MINUTES) * SNAP_MINUTES);
+  const duration = differenceInMinutes(parseISO(appointment.endAt), parseISO(appointment.startAt));
+  const start = addMinutes(startOfDay(day), minutes);
+  return { start, end: addMinutes(start, duration) };
+}
+
 function DayColumn({
   date,
   appointments,
   blocks,
   onSlotClick,
   onAppointmentClick,
+  onAppointmentDrop,
   selectedAppointmentId,
   memberColorMap,
   hourHeight,
@@ -157,6 +183,7 @@ function DayColumn({
   blocks: ScheduleBlock[];
   onSlotClick?: (start: Date, end: Date) => void;
   onAppointmentClick?: (appointment: Appointment) => void;
+  onAppointmentDrop?: (appointment: Appointment, start: Date, end: Date) => void;
   selectedAppointmentId?: string | null;
   memberColorMap?: Map<string, string>;
   hourHeight: number;
@@ -165,6 +192,7 @@ function DayColumn({
   totalHours: number;
 }) {
   const colRef = useRef<HTMLDivElement>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   const dayAppointments = appointments.filter((a) => isSameDay(parseISO(a.startAt), date));
   const dayBlocks = blocks.filter((b) => isSameDay(parseISO(b.startAt), date));
@@ -181,12 +209,36 @@ function DayColumn({
     onSlotClick(start, end);
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    setDragOver(false);
+    const payload = e.dataTransfer.getData(DRAG_MIME);
+    if (!payload || !onAppointmentDrop || !colRef.current) return;
+    e.preventDefault();
+    const { id, offsetY } = JSON.parse(payload) as { id: string; offsetY: number };
+    const appt = appointments.find((a) => a.id === id);
+    if (!appt) return;
+    const y = e.clientY - colRef.current.getBoundingClientRect().top - offsetY;
+    const { start, end } = computeDropTimes(appt, date, y, hourHeight, rangeStart);
+    if (start.getTime() !== parseISO(appt.startAt).getTime()) onAppointmentDrop(appt, start, end);
+  };
+
   return (
     <div
       ref={colRef}
-      className="relative flex-1 cursor-pointer border-r last:border-r-0"
+      className={cn(
+        "relative flex-1 cursor-pointer border-r last:border-r-0",
+        dragOver && "bg-primary/5",
+      )}
       style={{ height: totalHours * hourHeight }}
       onClick={handleClick}
+      onDragOver={(e) => {
+        if (!onAppointmentDrop || !e.dataTransfer.types.includes(DRAG_MIME)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
     >
       <FiveMinuteLines hourHeight={hourHeight} rangeStart={rangeStart} rangeEnd={rangeEnd} />
 
@@ -212,13 +264,21 @@ function DayColumn({
         const pos = getEventPosition(appt.startAt, appt.endAt, hourHeight, rangeStart);
         const isSelected = selectedAppointmentId === appt.id;
         const memberColor = memberColorMap?.get(appt.hostId);
+        const canDrag = !!onAppointmentDrop && isDraggable(appt);
         return (
           <button
             key={appt.id}
+            draggable={canDrag}
+            onDragStart={(e) => {
+              const offsetY = e.clientY - e.currentTarget.getBoundingClientRect().top;
+              e.dataTransfer.setData(DRAG_MIME, JSON.stringify({ id: appt.id, offsetY }));
+              e.dataTransfer.effectAllowed = "move";
+            }}
             className={cn(
               "absolute left-0.5 right-0.5 z-10 overflow-hidden rounded px-1 py-0.5 text-left text-[11px] font-medium shadow-sm transition-shadow",
               !memberColor && "bg-primary/90 text-primary-foreground hover:bg-primary",
               isSelected && "ring-2 ring-ring ring-offset-1",
+              canDrag && "cursor-grab active:cursor-grabbing",
             )}
             style={{
               top: pos.top,
@@ -250,6 +310,7 @@ export function WeeklyCalendar({
   blocks,
   onSlotClick,
   onAppointmentClick,
+  onAppointmentDrop,
   selectedAppointmentId,
   memberColorMap,
   startHour = DEFAULT_START_HOUR,
@@ -324,6 +385,7 @@ export function WeeklyCalendar({
             blocks={blocks}
             onSlotClick={onSlotClick}
             onAppointmentClick={onAppointmentClick}
+            onAppointmentDrop={onAppointmentDrop}
             selectedAppointmentId={selectedAppointmentId}
             memberColorMap={memberColorMap}
             hourHeight={hourHeight}
