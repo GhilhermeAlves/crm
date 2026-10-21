@@ -47,6 +47,8 @@ export type Appointment = {
   publicToken: string | null;
   googleEventId: string | null;
   createdBy: string;
+  chairId: string | null;
+  tagIds: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -119,6 +121,8 @@ export type CreateAppointmentRequest = {
   locationDetail?: string;
   notes?: string;
   force?: boolean;
+  chairId?: string | null;
+  tagIds?: string[];
 };
 
 export type UpdateAppointmentRequest = {
@@ -128,6 +132,8 @@ export type UpdateAppointmentRequest = {
   locationKind?: LocationKind;
   locationDetail?: string;
   notes?: string;
+  chairId?: string | null;
+  tagIds?: string[];
 };
 
 export type RescheduleRequest = {
