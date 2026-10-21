@@ -33,6 +33,8 @@ import {
   ExternalLink,
   SlidersHorizontal,
   Search,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
@@ -60,6 +62,7 @@ import { AppointmentDetailPanel } from "@/features/sales/scheduling/components/A
 import { MiniCalendar } from "@/features/sales/scheduling/components/MiniCalendar";
 import { StatusFilter } from "@/features/sales/scheduling/components/StatusFilter";
 import { filterAppointments } from "@/features/sales/scheduling/utils/filterAppointments";
+import { useFullscreen } from "@/features/sales/scheduling/hooks/useFullscreen";
 import { MemberFilter, getMemberColor } from "@/features/sales/scheduling/components/MemberFilter";
 import {
   useAppointments,
@@ -101,6 +104,7 @@ export default function AgendaPage() {
   } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string> | null>(null);
   const [statusFilter, setStatusFilter] = useState<Set<AppointmentStatus>>(new Set());
+  const fullscreen = useFullscreen<HTMLDivElement>();
   const [patientSearch, setPatientSearch] = useState("");
   const [showHolidays, setShowHolidays] = useState(true);
   const [showWeekends, setShowWeekends] = useState(true);
@@ -285,7 +289,15 @@ export default function AgendaPage() {
   }, [currentDate, view]);
 
   return (
-    <div className="-m-4 flex h-[calc(100%+2rem)] flex-col lg:-m-6 lg:h-[calc(100%+3rem)]">
+    <div
+      ref={fullscreen.ref}
+      className={cn(
+        "flex flex-col bg-background",
+        fullscreen.isFullscreen
+          ? "h-screen w-screen"
+          : "-m-4 h-[calc(100%+2rem)] lg:-m-6 lg:h-[calc(100%+3rem)]",
+      )}
+    >
       {/* ── Toolbar (Capim style) ── */}
       <div className="flex shrink-0 items-center gap-2 border-b px-3 py-2">
         {/* Left: Hoje + nav */}
@@ -448,6 +460,28 @@ export default function AgendaPage() {
         </div>
 
         <TooltipProvider delayDuration={300}>
+          {fullscreen.supported && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label={fullscreen.isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                  onClick={fullscreen.toggle}
+                >
+                  {fullscreen.isFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {fullscreen.isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+              </TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
