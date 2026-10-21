@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MoreHorizontal, ShieldAlert, UserMinus, UserRoundCog } from "lucide-react";
+import { MoreHorizontal, Shield, ShieldAlert, UserMinus, UserRoundCog } from "lucide-react";
 
 import { usePermission } from "@/features/identity/auth/hooks/useAuthorization";
 import { useRoles } from "@/features/identity/rbac/hooks/useRoles";
+import { UserPermissionsDialog } from "@/features/identity/rbac/components/UserPermissionsDialog";
 import { useRemoveMember, useUpdateMemberRole } from "@/features/identity/members/hooks/useMembers";
 import { isAdminLevelRole, roleLabel } from "@/features/identity/members/lib/labels";
 import { computeMembershipLimits } from "@/features/identity/members/lib/membership-limits";
@@ -58,8 +59,10 @@ export function MemberRowActions({ companyId, member, activeMembers }: MemberRow
   const can = usePermission();
   const canUpdate = can("user:update");
   const canDelete = can("user:delete");
+  const canManagePermissions = can("membership:manage");
 
   const [roleOpen, setRoleOpen] = useState(false);
+  const [permissionsOpen, setPermissionsOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const updateRole = useUpdateMemberRole(companyId);
@@ -72,7 +75,7 @@ export function MemberRowActions({ companyId, member, activeMembers }: MemberRow
     ? "Este é o único administrador ativo da empresa."
     : "Este é o último membro ativo da empresa.";
 
-  if (!canUpdate && !canDelete) return null;
+  if (!canUpdate && !canDelete && !canManagePermissions) return null;
 
   return (
     <>
@@ -98,6 +101,12 @@ export function MemberRowActions({ companyId, member, activeMembers }: MemberRow
               Alterar papel
             </DropdownMenuItem>
           )}
+          {canManagePermissions && (
+            <DropdownMenuItem onSelect={() => setPermissionsOpen(true)}>
+              <Shield />
+              Permissões individuais
+            </DropdownMenuItem>
+          )}
           {canDelete && (
             <DropdownMenuItem
               onSelect={() => setConfirmOpen(true)}
@@ -111,6 +120,14 @@ export function MemberRowActions({ companyId, member, activeMembers }: MemberRow
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {canManagePermissions && (
+        <UserPermissionsDialog
+          member={member}
+          open={permissionsOpen}
+          onOpenChange={setPermissionsOpen}
+        />
+      )}
 
       {canUpdate && (
         <ChangeRoleDialog

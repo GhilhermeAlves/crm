@@ -175,26 +175,16 @@ export const NAVIGATION: NavGroup[] = [
         ],
       },
       {
-        // Fase 1: agrupa as telas de usuário que existem hoje; a página única com abas vem depois.
         label: "Equipe",
-        href: ROUTES.MEMBERS,
+        href: ROUTES.SETTINGS_COMPANY_USERS,
         icon: UsersRound,
-        children: [
-          { label: "Membros", href: ROUTES.MEMBERS, permission: "membership:view" },
-          { label: "Convites", href: ROUTES.INVITATIONS, permission: "membership:view" },
-          { label: "Usuários", href: ROUTES.SETTINGS_USERS, permission: "security:page:view" },
-          { label: "Gerenciar usuários", href: `${ROUTES.SETTINGS_COMPANY}/users` },
-          { label: "Criar novo usuário", href: `${ROUTES.SETTINGS_COMPANY}/users/new` },
-        ],
+        permission: "user:read",
       },
       {
         label: "Perfis e Permissões",
         href: ROUTES.SETTINGS_ROLES,
         icon: Shield,
-        children: [
-          { label: "Perfis", href: ROUTES.SETTINGS_ROLES, permission: "security:page:view" },
-          { label: "Permissões", href: ROUTES.PERMISSIONS, permission: "role:read" },
-        ],
+        permission: "security:page:view",
       },
       {
         label: "Agenda",

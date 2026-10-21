@@ -44,7 +44,7 @@ test.describe("Perfis de acesso — seed E2E (Task 4.3)", () => {
 
   test("lista os perfis canônicos da empresa", async () => {
     await page.goto("/settings/roles");
-    await expect(page.getByRole("heading", { name: "Perfis de acesso" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Perfis e Permissões" })).toBeVisible();
 
     // RoleBadge renderiza o nome (ADMIN/MANAGER ...). Pode aparecer também no
     // heading do perfil ativo; .first() cobre.

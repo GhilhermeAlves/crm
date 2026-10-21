@@ -140,7 +140,7 @@ function UsersManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <PageTitle>Usuários</PageTitle>
+          <PageTitle>Equipe</PageTitle>
           <p className="text-sm text-muted-foreground">
             Gerencie quem tem acesso à empresa: papéis, convites e acesso.
           </p>
