@@ -47,3 +47,7 @@ BEGIN
         EXECUTE format('CREATE POLICY tenant_isolation_policy ON %I USING (company_id = app.current_tenant_id()) WITH CHECK (company_id = app.current_tenant_id())', t);
     END LOOP;
 END $$;
+
+-- Papel da aplicação (padrão V087/V091+): sem isso, produção falha com "permission denied".
+GRANT SELECT, INSERT, UPDATE, DELETE ON recalls TO crm_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON recall_suggestion_dismissals TO crm_app;
