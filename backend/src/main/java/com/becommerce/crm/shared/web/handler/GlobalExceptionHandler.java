@@ -78,6 +78,8 @@ import com.becommerce.crm.sales.followup.domain.exception.FollowUpSequenceValida
 import com.becommerce.crm.sales.followup.domain.exception.FollowUpValidationException;
 import com.becommerce.crm.sales.chair.domain.exception.ChairNotFoundException;
 import com.becommerce.crm.sales.chair.domain.exception.ChairValidationException;
+import com.becommerce.crm.sales.tag.domain.exception.TagNotFoundException;
+import com.becommerce.crm.sales.tag.domain.exception.TagValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -851,6 +853,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ChairValidationException.class)
     public ResponseEntity<Map<String, Object>> handleChairValidationException(ChairValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
+                        "error", "Bad Request",
+                        "message", ex.getMessage(),
+                        "timestamp", LocalDateTime.now().toString()
+                ));
+    }
+
+    @ExceptionHandler(TagNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTagNotFoundException(TagNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "status", 404,
+                        "error", "Not Found",
+                        "message", ex.getMessage(),
+                        "timestamp", LocalDateTime.now().toString()
+                ));
+    }
+
+    @ExceptionHandler(TagValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleTagValidationException(TagValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
                         "status", 400,
