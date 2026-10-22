@@ -26,7 +26,7 @@ function Calendar({
       locale={ptBR}
       showOutsideDays={showOutsideDays}
       captionLayout={captionLayout}
-      className={cn("p-3", className)}
+      className={cn("relative p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -36,14 +36,14 @@ function Calendar({
         dropdown:
           "appearance-none bg-transparent border border-input rounded-md px-2 py-1 text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring",
         dropdown_root: "relative inline-flex items-center",
-        nav: "space-x-1 flex items-center",
+        nav: "absolute inset-x-3 top-3 flex items-center justify-between",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1",
+          "relative z-10 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
         ),
         button_next: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1",
+          "relative z-10 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
         ),
         month_grid: "w-full border-collapse space-y-1",
         weekdays: "flex",

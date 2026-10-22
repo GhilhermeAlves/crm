@@ -1,6 +1,6 @@
 "use client";
 
-import { format, setHours, setMinutes } from "date-fns";
+import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,8 @@ export function DateTimePicker({
   dateOnly = false,
   placeholder = "Selecione a data",
 }: DateTimePickerProps) {
-  const dateValue = value ? new Date(value) : undefined;
+  // parseISO: "yyyy-MM-dd" vira meia-noite local; new Date() leria como UTC e voltaria um dia.
+  const dateValue = value ? parseISO(value) : undefined;
   const timeStr = dateValue
     ? `${String(dateValue.getHours()).padStart(2, "0")}:${String(dateValue.getMinutes()).padStart(2, "0")}`
     : "08:00";
