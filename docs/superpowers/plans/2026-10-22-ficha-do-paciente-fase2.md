@@ -315,11 +315,11 @@ END $$;
 (Confira os nomes reais dos getters de CPF/nascimento/cidade na classe de domínio do contato antes de usar.)
 
 **Endpoints** (base `/api/v1/companies/{companyId}/patients/{contactId}/documents`):
-- [ ] `GET` → lista, mais recente primeiro → `contact:read`.
-- [ ] `POST /preview` → renderiza o modelo com os dados do paciente e devolve o texto **sem gravar** → `contact:read`. Modelo inativo → erro.
-- [ ] `POST` → emite (grava o `body` exatamente como veio — o usuário pode ter editado o preview) → `contact:update`, 201.
-- [ ] `GET /{id}/pdf` → `contact:read`, `Content-Type: application/pdf`, `Content-Disposition: inline; filename="<tipo>-<sobrenome-ou-nome>-<yyyy-MM-dd>.pdf"` (sem acentos/espaços no nome do arquivo). Veja `AccountingReportController` para montar a resposta.
-- [ ] `DELETE /{id}` → `contact:update` **e** admin (não-admin → `CrmAccessDeniedException("Só administradores podem excluir documentos emitidos.")`), 204.
+- [x] `GET` → lista, mais recente primeiro → `contact:read`.
+- [x] `POST /preview` → renderiza o modelo com os dados do paciente e devolve o texto **sem gravar** → `contact:read`. Modelo inativo → erro.
+- [x] `POST` → emite (grava o `body` exatamente como veio — o usuário pode ter editado o preview) → `contact:update`, 201.
+- [x] `GET /{id}/pdf` → `contact:read`, `Content-Type: application/pdf`, `Content-Disposition: inline; filename="<tipo>-<sobrenome-ou-nome>-<yyyy-MM-dd>.pdf"` (sem acentos/espaços no nome do arquivo). Veja `AccountingReportController` para montar a resposta.
+- [x] `DELETE /{id}` → `contact:update` **e** admin (não-admin → `CrmAccessDeniedException("Só administradores podem excluir documentos emitidos.")`), 204.
 
 **`PatientDocumentPdfRenderer.render(PatientDocument doc, String companyName, String patientName): byte[]`** com OpenPDF (copie a forma de abrir `Document`/`PdfWriter`/fontes do `AccountingReportRenderer`):
 - A4, margens 50pt. Cabeçalho: nome da empresa em negrito 14pt, linha separadora.
@@ -327,10 +327,10 @@ END $$;
 - `Paciente: <nome>` em 11pt.
 - Corpo em 11pt, preservando quebras de linha (`\n` → novo parágrafo).
 - Rodapé de assinatura: linha `______________________________`, `professionalName`, e `professionalRegistry` se houver; data de emissão `dd/MM/yyyy`.
-- [ ] Testes: renderer de variáveis (todas as chaves, chave desconhecida, espaços), PDF começa com `%PDF` e tem tamanho > 1000 bytes, delete por não-admin → erro, preview de outra empresa → NotFound.
-- [ ] Auditoria `AuditModule.CONTACTS`, `RESOURCE = "PatientDocument"`.
-- [ ] Verificação: `cd backend && mvn -q test`.
-- [ ] Commit: `feat(pacientes): documentos do paciente com modelos e PDF`
+- [x] Testes: renderer de variáveis (todas as chaves, chave desconhecida, espaços), PDF começa com `%PDF` e tem tamanho > 1000 bytes, delete por não-admin → erro, preview de outra empresa → NotFound.
+- [x] Auditoria `AuditModule.CONTACTS`, `RESOURCE = "PatientDocument"`.
+- [x] Verificação: `cd backend && mvn -q test`.
+- [x] Commit: `feat(pacientes): documentos do paciente com modelos e PDF`
 
 ---
 
