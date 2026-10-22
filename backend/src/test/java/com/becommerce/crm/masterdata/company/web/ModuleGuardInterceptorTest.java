@@ -53,6 +53,8 @@ class ModuleGuardInterceptorTest {
         assertEquals(Optional.of(CompanyModule.PATIENTS),
                 ModuleGuardInterceptor.requiredModule("contacts", "/abc/make-patient"));
         assertEquals(Optional.empty(), ModuleGuardInterceptor.requiredModule("contacts", "/abc"));
+        assertEquals(Optional.of(CompanyModule.PATIENTS),
+                ModuleGuardInterceptor.requiredModule("document-templates", "/x"));
         assertEquals(Optional.of(CompanyModule.CRM), ModuleGuardInterceptor.requiredModule("opportunities", null));
         assertEquals(Optional.of(CompanyModule.AGENDA), ModuleGuardInterceptor.requiredModule("appointments", null));
         assertEquals(Optional.of(CompanyModule.FINANCE), ModuleGuardInterceptor.requiredModule("finance", "/t"));

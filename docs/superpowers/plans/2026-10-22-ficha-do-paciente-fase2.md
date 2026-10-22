@@ -51,8 +51,8 @@
 
 **Files:** Create `backend/src/main/resources/db/migration/V105__patient_clinical_record.sql`
 
-- [ ] Cabeçalho de comentário no estilo da V097 explicando as 4 tabelas, a coluna de foto, o trigger de imutabilidade e que as permissões são reaproveitadas (`contact:read/update`, `anamnesis:read/manage`).
-- [ ] Escreva exatamente este SQL (pode ajustar só comentários):
+- [x] Cabeçalho de comentário no estilo da V097 explicando as 4 tabelas, a coluna de foto, o trigger de imutabilidade e que as permissões são reaproveitadas (`contact:read/update`, `anamnesis:read/manage`).
+- [x] Escreva exatamente este SQL (pode ajustar só comentários):
 
 ```sql
 -- ===========================================================================
@@ -338,15 +338,15 @@ END $$;
 
 **Files (modificar):** classe de domínio do contato, `ContactJpaEntity` (ou equivalente), o mapper/response do contato, `masterdata/contact/web/PatientController.java`, `masterdata/company/web/ModuleGuardInterceptor.java` e o teste existente dele (procure `ModuleGuardInterceptorTest`).
 
-- [ ] Adicione `photoStorageId` (UUID, nulo) ao domínio, entidade JPA (`@Column(name = "photo_storage_id")`) e à resposta do contato (`ContactResponse` ou o DTO que `GET /patients/{id}` devolve) como `photoStorageId`.
-- [ ] No `PatientController` (ou em um `PatientPhotoController` novo no mesmo pacote, se o controller ficar grande):
+- [x] Adicione `photoStorageId` (UUID, nulo) ao domínio, entidade JPA (`@Column(name = "photo_storage_id")`) e à resposta do contato (`ContactResponse` ou o DTO que `GET /patients/{id}` devolve) como `photoStorageId`.
+- [x] No `PatientController` (ou em um `PatientPhotoController` novo no mesmo pacote, se o controller ficar grande):
   - `PUT    /api/v1/companies/{companyId}/patients/{contactId}/photo` (multipart `file`) → `contact:update`. Aceita só `image/jpeg`, `image/png`, `image/webp` e até **5 MB**; senão `ContactValidationException("A foto deve ser JPG, PNG ou WEBP de até 5 MB.")`. Grava com `StorageUseCase.uploadForContact(...)` (mesmo método do `ContactFileController`), salva o id em `photo_storage_id`. Se já havia foto, **apague o arquivo antigo** depois de gravar o novo (use o método de exclusão já existente do `StorageUseCase`). Responde o contato atualizado.
   - `GET    .../photo` → `contact:read`. Devolve os bytes com o `Content-Type` do arquivo e `Cache-Control: private, max-age=300`; 404 se não houver foto. Reaproveite o método de download que o `StorageController` usa.
   - `DELETE .../photo` → `contact:update`, 204. Zera a coluna e apaga o arquivo.
-- [ ] `ModuleGuardInterceptor.RESOURCE_MODULES`: adicione `Map.entry("document-templates", CompanyModule.PATIENTS)`. No teste do interceptor, acrescente um caso para `document-templates` → PATIENTS.
-- [ ] Testes do serviço/controle da foto: tipo inválido → erro; acima de 5 MB → erro; troca apaga a anterior.
-- [ ] Verificação: `cd backend && mvn -q test`.
-- [ ] Commit: `feat(pacientes): foto do paciente e módulo nos modelos de documento`
+- [x] `ModuleGuardInterceptor.RESOURCE_MODULES`: adicione `Map.entry("document-templates", CompanyModule.PATIENTS)`. No teste do interceptor, acrescente um caso para `document-templates` → PATIENTS.
+- [x] Testes do serviço/controle da foto: tipo inválido → erro; acima de 5 MB → erro; troca apaga a anterior.
+- [x] Verificação: `cd backend && mvn -q test`.
+- [x] Commit: `feat(pacientes): foto do paciente e módulo nos modelos de documento`
 
 > **Checkpoint backend:** antes de seguir, rode `cd backend && mvn -q verify -DskipITs` (ou `mvn -q test` se `verify` exigir Docker) e confirme 0 falhas e 0 violações de Checkstyle.
 
