@@ -1,5 +1,9 @@
-import { api } from "@/lib/api";
-import type { CompanyHoliday, CreateHolidayRequest, UpdateHolidayRequest } from "../types/holiday.types";
+import api from "@/lib/api";
+import type {
+  CompanyHoliday,
+  CreateHolidayRequest,
+  UpdateHolidayRequest,
+} from "../types/holiday.types";
 
 export class HolidayService {
   static async list(companyId: string, from?: string, to?: string): Promise<CompanyHoliday[]> {
@@ -11,11 +15,18 @@ export class HolidayService {
   }
 
   static async create(companyId: string, data: CreateHolidayRequest): Promise<CompanyHoliday> {
-    const response = await api.post<CompanyHoliday>(`/api/v1/companies/${companyId}/holidays`, data);
+    const response = await api.post<CompanyHoliday>(
+      `/api/v1/companies/${companyId}/holidays`,
+      data,
+    );
     return response.data;
   }
 
-  static async update(companyId: string, id: string, data: UpdateHolidayRequest): Promise<CompanyHoliday> {
+  static async update(
+    companyId: string,
+    id: string,
+    data: UpdateHolidayRequest,
+  ): Promise<CompanyHoliday> {
     const response = await api.put<CompanyHoliday>(
       `/api/v1/companies/${companyId}/holidays/${id}`,
       data,

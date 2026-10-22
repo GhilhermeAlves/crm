@@ -1,4 +1,4 @@
-export { buildWhatsAppUrl as whatsappUrl, whatsappUrl as buildWhatsAppUrl } from "@/lib/whatsapp";
+export { whatsappUrl } from "@/lib/whatsapp";
 
 export function formatDateOnly(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");

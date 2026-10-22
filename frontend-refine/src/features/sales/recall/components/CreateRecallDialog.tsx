@@ -26,7 +26,10 @@ interface Props {
   members: { id: string; name: string }[];
   isLoading: boolean;
   onSubmit: (values: CreateRecallFormValues) => void;
+  tags?: { id: string; name: string }[];
 }
+
+const NO_TAG = "__none__";
 
 const DUE_UNITS = Object.keys(RECALL_DUE_UNIT_LABELS) as RecallDueUnit[];
 
@@ -37,6 +40,7 @@ export function CreateRecallDialog({
   members,
   isLoading,
   onSubmit,
+  tags = [],
 }: Props) {
   const form = useForm<CreateRecallFormValues>({
     resolver: zodResolver(createRecallSchema),
@@ -44,7 +48,7 @@ export function CreateRecallDialog({
       contactId: "",
       phone: "",
       hostId: "",
-      tag: "",
+      tagId: undefined,
       dueInAmount: 6,
       dueInUnit: "MONTHS",
     },
@@ -56,7 +60,7 @@ export function CreateRecallDialog({
         contactId: "",
         phone: "",
         hostId: "",
-        tag: "",
+        tagId: undefined,
         dueInAmount: 6,
         dueInUnit: "MONTHS",
       });
@@ -123,15 +127,27 @@ export function CreateRecallDialog({
 
           <div className="space-y-2">
             <Label htmlFor="recall-tag">Marcador</Label>
-            <Input
-              id="recall-tag"
-              placeholder="Ex.: Limpeza, Ortodontia…"
-              {...form.register("tag")}
-            />
-            <p className="text-xs text-muted-foreground">Opcional</p>
-            {form.formState.errors.tag && (
-              <p className="text-sm text-destructive">{form.formState.errors.tag.message}</p>
-            )}
+            <Select
+              value={form.watch("tagId") ?? NO_TAG}
+              onValueChange={(value) =>
+                form.setValue("tagId", value === NO_TAG ? undefined : value)
+              }
+            >
+              <SelectTrigger id="recall-tag">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_TAG}>Sem marcador</SelectItem>
+                {tags.map((tag) => (
+                  <SelectItem key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Opcional. Os marcadores são cadastrados em Configurações → Agenda → Marcadores.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

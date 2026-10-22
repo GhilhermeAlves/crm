@@ -47,8 +47,8 @@ export type Appointment = {
   publicToken: string | null;
   googleEventId: string | null;
   createdBy: string;
-  chairId: string | null;
-  tagIds: string[];
+  chairId?: string | null;
+  tagIds?: string[];
   createdAt: string;
   updatedAt: string;
 };

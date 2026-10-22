@@ -11,7 +11,7 @@ const BASE = "/companies";
 
 export type RecallListParams = {
   hostId?: string;
-  tag?: string;
+  tagId?: string;
   q?: string;
   window: string;
   page?: number;
@@ -22,7 +22,7 @@ export const RecallService = {
   async list(companyId: string, params: RecallListParams): Promise<RecallPageResponse<Recall>> {
     const search = new URLSearchParams({ window: params.window });
     if (params.hostId) search.set("hostId", params.hostId);
-    if (params.tag) search.set("tag", params.tag);
+    if (params.tagId) search.set("tagId", params.tagId);
     if (params.q) search.set("q", params.q);
     if (params.page !== undefined) search.set("page", String(params.page));
     if (params.pageSize !== undefined) search.set("pageSize", String(params.pageSize));

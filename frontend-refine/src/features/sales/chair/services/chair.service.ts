@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 import type { Chair, CreateChairRequest, UpdateChairRequest } from "../types/chair.types";
 
 export class ChairService {

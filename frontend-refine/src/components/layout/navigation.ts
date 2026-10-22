@@ -194,6 +194,9 @@ export const NAVIGATION: NavGroup[] = [
         children: [
           { label: "Ajustes gerais", href: ROUTES.SETTINGS_AGENDA },
           { label: "Disponibilidade", href: `${ROUTES.SETTINGS_AGENDA}/availability` },
+          { label: "Cadeiras", href: `${ROUTES.SETTINGS_AGENDA}/chairs` },
+          { label: "Marcadores", href: `${ROUTES.SETTINGS_AGENDA}/tags` },
+          { label: "Feriados", href: `${ROUTES.SETTINGS_AGENDA}/holidays` },
           { label: "Notificações", href: `${ROUTES.SETTINGS_AGENDA}/notifications` },
           { label: "Aniversários", href: `${ROUTES.SETTINGS_AGENDA}/birthday` },
         ],
