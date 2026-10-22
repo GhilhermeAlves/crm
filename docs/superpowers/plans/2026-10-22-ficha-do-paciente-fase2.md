@@ -189,11 +189,11 @@ BEGIN
 END $$;
 ```
 
-- [ ] **Antes de commitar, confirme** (cada comando deve achar a referência esperada):
+- [x] **Antes de commitar, confirme** (cada comando deve achar a referência esperada):
   - `git grep -n "CREATE SCHEMA.*app\|FUNCTION app.current_tenant_id" backend/src/main/resources/db/migration` → o schema `app` existe. Se a função `app.current_tenant_id` estiver em outro schema, crie a função do trigger no mesmo schema e anote a divergência.
   - `git grep -n "CREATE TABLE appointments\|CREATE TABLE storage_objects" backend/src/main/resources/db/migration` → as duas tabelas referenciadas existem.
   - `git grep -n "patient_anamneses\|patient_evolutions\|document_templates\|patient_documents\|photo_storage_id" backend/src/main/resources/db/migration` → só aparece na V105.
-- [ ] Commit: `feat(pacientes): migration V105 com anamnese, evoluções, documentos e foto`
+- [x] Commit: `feat(pacientes): migration V105 com anamnese, evoluções, documentos e foto`
 
 ---
 
@@ -213,22 +213,22 @@ END $$;
 - `backend/src/test/java/com/becommerce/crm/clinical/documenttemplate/application/service/DocumentTemplateServiceTest.java`
 
 **Regras:**
-- [ ] Domínio: `create(companyId, type, title, body, createdBy)` faz `trim`, rejeita vazio e tamanhos acima dos limites com `ContactValidationException` (mensagens pt-BR). `edit(type, title, body, active)`.
-- [ ] Endpoints (todos com `@CurrentCompanyId("Você só pode acessar modelos de documento da sua própria empresa.")`):
+- [x] Domínio: `create(companyId, type, title, body, createdBy)` faz `trim`, rejeita vazio e tamanhos acima dos limites com `ContactValidationException` (mensagens pt-BR). `edit(type, title, body, active)`.
+- [x] Endpoints (todos com `@CurrentCompanyId("Você só pode acessar modelos de documento da sua própria empresa.")`):
   - `GET    /api/v1/companies/{companyId}/document-templates?type=PRESCRIPTION&activeOnly=true` → `anamnesis:read`. Ordenado por `type`, depois `title`.
   - `GET    /api/v1/companies/{companyId}/document-templates/{id}` → `anamnesis:read`.
   - `POST   /api/v1/companies/{companyId}/document-templates` → `anamnesis:manage`, 201.
   - `PUT    /api/v1/companies/{companyId}/document-templates/{id}` → `anamnesis:manage`.
   - `DELETE /api/v1/companies/{companyId}/document-templates/{id}` → `anamnesis:manage`, 204. Documentos já emitidos ficam (FK `SET NULL`).
-- [ ] Serviço valida que o modelo é da mesma empresa (`requireOwned` → `DocumentTemplateNotFoundException` → 404). Registre a exceção no `GlobalExceptionHandler` do mesmo jeito que `ContactNoteNotFoundException` está registrada (procure com `git grep -n ContactNoteNotFoundException backend/src/main`).
-- [ ] Auditoria com `AuditModule.SETTINGS`, `RESOURCE = "DocumentTemplate"`.
-- [ ] **Semente sob demanda:** se o `GET` de lista encontrar a empresa **sem nenhum modelo**, crie e grave 3 modelos padrão antes de responder (idempotente, como o modelo padrão de anamnese em `AnamnesisService`):
+- [x] Serviço valida que o modelo é da mesma empresa (`requireOwned` → `DocumentTemplateNotFoundException` → 404). Registre a exceção no `GlobalExceptionHandler` do mesmo jeito que `ContactNoteNotFoundException` está registrada (procure com `git grep -n ContactNoteNotFoundException backend/src/main`).
+- [x] Auditoria com `AuditModule.SETTINGS`, `RESOURCE = "DocumentTemplate"`.
+- [x] **Semente sob demanda:** se o `GET` de lista encontrar a empresa **sem nenhum modelo**, crie e grave 3 modelos padrão antes de responder (idempotente, como o modelo padrão de anamnese em `AnamnesisService`):
   - CERTIFICATE "Atestado de comparecimento": `Atesto, para os devidos fins, que {{paciente.nome}}, CPF {{paciente.cpf}}, esteve em atendimento odontológico nesta clínica em {{data}}, no período das ____ às ____.`
   - CERTIFICATE "Atestado de afastamento": `Atesto, para os devidos fins, que {{paciente.nome}}, CPF {{paciente.cpf}}, necessita de ____ dia(s) de afastamento de suas atividades a partir de {{data}}, por motivo de tratamento odontológico.`
   - PRESCRIPTION "Receituário simples": `Paciente: {{paciente.nome}}\n\nUso oral:\n\n1. ________________________________\n   Tomar ____________________________\n\n{{cidade}}, {{data}}.`
-- [ ] Teste (`@ExtendWith(MockitoExtension.class)`, como `ContactNoteServiceTest`): cria; rejeita título vazio; outra empresa → NotFound; lista vazia → semeia 3; lista com modelos → não semeia.
-- [ ] Verificação: `cd backend && mvn -q test`.
-- [ ] Commit: `feat(pacientes): modelos de documento por empresa`
+- [x] Teste (`@ExtendWith(MockitoExtension.class)`, como `ContactNoteServiceTest`): cria; rejeita título vazio; outra empresa → NotFound; lista vazia → semeia 3; lista com modelos → não semeia.
+- [x] Verificação: `cd backend && mvn -q test`.
+- [x] Commit: `feat(pacientes): modelos de documento por empresa`
 
 ---
 
@@ -248,27 +248,27 @@ END $$;
 - `alerts`: lista de strings (texto pronto para exibir).
 
 **Endpoints** (base `/api/v1/companies/{companyId}/patients/{contactId}/anamneses`):
-- [ ] `GET    ` → lista (mais recente primeiro) → `contact:read`. Resposta `List<PatientAnamnesisResponse>`.
-- [ ] `GET    /current` → a `COMPLETED` mais recente, ou **204 sem corpo** se não houver → `contact:read`. (O cabeçalho do paciente usa isto para o selo.)
-- [ ] `GET    /{id}` → `contact:read`.
-- [ ] `POST   ` body `StartPatientAnamnesisRequest(UUID modelId)` → `contact:update`, 201. Busca o modelo com `AnamnesisService.getById(companyId, modelId)` (reaproveite, **não** acesse os repositórios de anamnese diretamente); rejeita modelo inativo (`ContactValidationException("Este modelo de anamnese está inativo.")`); grava `DRAFT` com `snapshot`, `model_name`, `model_version` do modelo e `answers = {}`. Se `modelId` vier nulo, use o modelo padrão da empresa (procure em `AnamnesisService` como ele acha/provisiona o `is_default` e reaproveite o mesmo método; se for `private`, torne-o público sem mudar o comportamento).
-- [ ] `PUT    /{id}` body `SavePatientAnamnesisRequest(Map<UUID, PatientAnamnesisAnswer> answers, boolean complete)` → `contact:update`.
+- [x] `GET    ` → lista (mais recente primeiro) → `contact:read`. Resposta `List<PatientAnamnesisResponse>`.
+- [x] `GET    /current` → a `COMPLETED` mais recente, ou **204 sem corpo** se não houver → `contact:read`. (O cabeçalho do paciente usa isto para o selo.)
+- [x] `GET    /{id}` → `contact:read`.
+- [x] `POST   ` body `StartPatientAnamnesisRequest(UUID modelId)` → `contact:update`, 201. Busca o modelo com `AnamnesisService.getById(companyId, modelId)` (reaproveite, **não** acesse os repositórios de anamnese diretamente); rejeita modelo inativo (`ContactValidationException("Este modelo de anamnese está inativo.")`); grava `DRAFT` com `snapshot`, `model_name`, `model_version` do modelo e `answers = {}`. Se `modelId` vier nulo, use o modelo padrão da empresa (procure em `AnamnesisService` como ele acha/provisiona o `is_default` e reaproveite o mesmo método; se for `private`, torne-o público sem mudar o comportamento).
+- [x] `PUT    /{id}` body `SavePatientAnamnesisRequest(Map<UUID, PatientAnamnesisAnswer> answers, boolean complete)` → `contact:update`.
   - Só `DRAFT` pode ser salva; `COMPLETED` → `ContactValidationException("Anamnese concluída não pode ser alterada. Inicie uma nova.")`.
   - Só o autor ou admin (mesma regra e mensagem do `ContactNoteService.assertCanModify`, trocando "anotações" por "anamneses").
   - Ignore (descarte) chaves de `answers` que não são perguntas do `snapshot`.
   - Se `complete = true`: valida que toda pergunta `required` do snapshot tem `value` não vazio (string não branca, lista não vazia, boolean/number não nulo). Se faltar, `ContactValidationException("Responda as perguntas obrigatórias: <texto1>; <texto2>")` com no máximo 3 textos. Passando, marca `COMPLETED`, `completed_by`, `completed_at = now()` e calcula `alerts` com o `AnamnesisAlertExtractor`.
-- [ ] `DELETE /{id}` → `contact:update`, 204. Só `DRAFT`, só autor ou admin.
+- [x] `DELETE /{id}` → `contact:update`, 204. Só `DRAFT`, só autor ou admin.
 
 **`AnamnesisAlertExtractor.extract(AnamnesisModelResponse snapshot, Map<UUID, PatientAnamnesisAnswer> answers): List<String>`** — gera um alerta para cada pergunta com `highlight = true` que foi respondida "positivamente":
 - `YES_NO` / `YES_NO_WITH_TEXT`: `value` é `true` ou a string `"YES"`/`"SIM"` (sem diferenciar maiúsculas).
 - `SHORT_TEXT` / `LONG_TEXT` / `NUMBER`: `value` não vazio.
 - `SINGLE_SELECT` / `MULTI_SELECT`: algum valor selecionado.
 - Texto do alerta: `"<texto da pergunta>"`, e se houver `complement` não vazio: `"<texto da pergunta>: <complement>"`. Para select, sem complement: `"<texto>: <labels das opções escolhidas separadas por ', '>"`.
-- [ ] Testes do extractor: cobre os 4 grupos de tipo, pergunta sem `highlight` não gera alerta, complement anexado.
-- [ ] Testes do serviço: inicia com modelo padrão; inicia com modelo inativo → erro; salvar COMPLETED → erro; concluir com obrigatória vazia → erro com o texto da pergunta; concluir calcula `alerts`; outro usuário não-admin não edita; `/current` vazio.
-- [ ] Auditoria `AuditModule.CONTACTS`, `RESOURCE = "PatientAnamnesis"`. Exceção NotFound registrada no `GlobalExceptionHandler`.
-- [ ] Verificação: `cd backend && mvn -q test`.
-- [ ] Commit: `feat(pacientes): anamnese preenchida com snapshot do modelo e alertas`
+- [x] Testes do extractor: cobre os 4 grupos de tipo, pergunta sem `highlight` não gera alerta, complement anexado.
+- [x] Testes do serviço: inicia com modelo padrão; inicia com modelo inativo → erro; salvar COMPLETED → erro; concluir com obrigatória vazia → erro com o texto da pergunta; concluir calcula `alerts`; outro usuário não-admin não edita; `/current` vazio.
+- [x] Auditoria `AuditModule.CONTACTS`, `RESOURCE = "PatientAnamnesis"`. Exceção NotFound registrada no `GlobalExceptionHandler`.
+- [x] Verificação: `cd backend && mvn -q test`.
+- [x] Commit: `feat(pacientes): anamnese preenchida com snapshot do modelo e alertas`
 
 ---
 
@@ -277,16 +277,16 @@ END $$;
 **Files (criar):** estrutura completa, com `domain/PatientEvolution.java`, `domain/PatientEvolutionStatus.java` (`DRAFT, FINALIZED`), `domain/exception/PatientEvolutionNotFoundException.java`, DTOs `PatientEvolutionRequest(@NotBlank @Size(max=20000) String body, UUID appointmentId)` e `PatientEvolutionResponse(UUID id, UUID contactId, UUID appointmentId, String body, PatientEvolutionStatus status, UUID createdBy, String createdByName, UUID finalizedBy, String finalizedByName, LocalDateTime finalizedAt, LocalDateTime createdAt, LocalDateTime updatedAt)`, serviço, persistência, controller e `PatientEvolutionServiceTest`.
 
 **Endpoints** (base `/api/v1/companies/{companyId}/patients/{contactId}/evolutions`):
-- [ ] `GET` → lista, mais recente primeiro, com nomes de autor (cache de nomes igual ao `ContactNoteService.authorName`) → `contact:read`.
-- [ ] `POST` → cria `DRAFT` → `contact:update`, 201. Se `appointmentId` vier, valide que a consulta existe, é da mesma empresa e do **mesmo paciente** (use o repositório/porta de agendamentos já existente; procure com `git grep -n "interface .*AppointmentRepository" backend/src/main`). Senão `ContactValidationException("Consulta não encontrada para este paciente.")`.
-- [ ] `PUT /{id}` → edita `body`/`appointmentId` de um `DRAFT` → `contact:update`. Autor ou admin.
-- [ ] `POST /{id}/finalize` → `DRAFT` → `FINALIZED` → `contact:update`. **Só o autor** (nem admin finaliza evolução de outro: quem assina é quem escreveu). Mensagem: `"Só o autor pode finalizar esta evolução."`.
-- [ ] `DELETE /{id}` → só `DRAFT`, autor ou admin, 204.
-- [ ] Qualquer `PUT`/`finalize`/`DELETE` em `FINALIZED` → `ContactValidationException("Evolução finalizada não pode ser alterada.")` **no serviço** (o trigger do banco é a segunda barreira).
-- [ ] Testes: cria; edita rascunho; finaliza; editar/excluir finalizada → erro; admin não finaliza de outro; consulta de outro paciente → erro.
-- [ ] Auditoria `AuditModule.CONTACTS`, `RESOURCE = "PatientEvolution"`; finalizar usa `AuditAction.UPDATE` com mensagem `"Evolução finalizada."`.
-- [ ] Verificação: `cd backend && mvn -q test`.
-- [ ] Commit: `feat(pacientes): evoluções clínicas com finalização imutável`
+- [x] `GET` → lista, mais recente primeiro, com nomes de autor (cache de nomes igual ao `ContactNoteService.authorName`) → `contact:read`.
+- [x] `POST` → cria `DRAFT` → `contact:update`, 201. Se `appointmentId` vier, valide que a consulta existe, é da mesma empresa e do **mesmo paciente** (use o repositório/porta de agendamentos já existente; procure com `git grep -n "interface .*AppointmentRepository" backend/src/main`). Senão `ContactValidationException("Consulta não encontrada para este paciente.")`.
+- [x] `PUT /{id}` → edita `body`/`appointmentId` de um `DRAFT` → `contact:update`. Autor ou admin.
+- [x] `POST /{id}/finalize` → `DRAFT` → `FINALIZED` → `contact:update`. **Só o autor** (nem admin finaliza evolução de outro: quem assina é quem escreveu). Mensagem: `"Só o autor pode finalizar esta evolução."`.
+- [x] `DELETE /{id}` → só `DRAFT`, autor ou admin, 204.
+- [x] Qualquer `PUT`/`finalize`/`DELETE` em `FINALIZED` → `ContactValidationException("Evolução finalizada não pode ser alterada.")` **no serviço** (o trigger do banco é a segunda barreira).
+- [x] Testes: cria; edita rascunho; finaliza; editar/excluir finalizada → erro; admin não finaliza de outro; consulta de outro paciente → erro.
+- [x] Auditoria `AuditModule.CONTACTS`, `RESOURCE = "PatientEvolution"`; finalizar usa `AuditAction.UPDATE` com mensagem `"Evolução finalizada."`.
+- [x] Verificação: `cd backend && mvn -q test`.
+- [x] Commit: `feat(pacientes): evoluções clínicas com finalização imutável`
 
 ---
 
