@@ -33,6 +33,7 @@ export type Contact = {
   /** Módulo Pacientes (V104): contato marcado como paciente. */
   isPatient?: boolean;
   patientSince?: string | null;
+  photoStorageId?: string | null;
 };
 
 export type CreateContactRequest = {

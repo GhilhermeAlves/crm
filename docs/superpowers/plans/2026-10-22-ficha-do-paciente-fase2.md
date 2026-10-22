@@ -361,13 +361,13 @@ END $$;
 
 **Files (modificar):** `features/clinical/patients/services/patient.service.ts` e `hooks/usePatient.ts` (foto); o tipo `Contact` em `features/masterdata/contacts/types/contact.types.ts` ganha `photoStorageId?: string | null`.
 
-- [ ] Tipos espelham exatamente os DTOs das Tasks 2–6 (nomes em camelCase iguais aos records Java). Para o snapshot da anamnese, **reaproveite** os tipos de `features/masterdata/anamnesis/types/anamnesis.types.ts` (não duplique).
-- [ ] Services usam `api` de `@/lib/api` e a base `/companies/${companyId}/patients/${contactId}/...` (e `/companies/${companyId}/document-templates`).
+- [x] Tipos espelham exatamente os DTOs das Tasks 2–6 (nomes em camelCase iguais aos records Java). Para o snapshot da anamnese, **reaproveite** os tipos de `features/masterdata/anamnesis/types/anamnesis.types.ts` (não duplique).
+- [x] Services usam `api` de `@/lib/api` e a base `/companies/${companyId}/patients/${contactId}/...` (e `/companies/${companyId}/document-templates`).
   - PDF: `api.get(url, { responseType: "blob" })` e a função `openPatientDocumentPdf(companyId, contactId, id)` abre o blob numa aba nova (`URL.createObjectURL` + `window.open`, revogando a URL após 60 s).
   - Foto: `uploadPhoto` com `FormData` (campo `file`), `deletePhoto`, e `fetchPhotoUrl` que baixa o blob e devolve uma object URL.
   - `getCurrent` da anamnese: status 204 → `null`.
-- [ ] Hooks no padrão de `usePatient.ts`: queries com chave `["patient-anamneses", companyId, contactId]`, `["patient-anamnesis-current", companyId, contactId]`, `["patient-evolutions", ...]`, `["patient-documents", ...]`, `["document-templates", companyId]`, `["patient-photo", companyId, contactId, photoStorageId]`; mutations com `useMutationDefaults` e mensagens pt-BR ("Anamnese salva", "Anamnese concluída", "Evolução salva", "Evolução finalizada", "Documento emitido", "Foto atualizada", "Modelo salvo", etc.). Mutations de foto invalidam também as chaves de `patientKeys(companyId)`.
-- [ ] Verificação frontend (item 9). Commit: `feat(pacientes): services e hooks da Fase 2 da ficha`
+- [x] Hooks no padrão de `usePatient.ts`: queries com chave `["patient-anamneses", companyId, contactId]`, `["patient-anamnesis-current", companyId, contactId]`, `["patient-evolutions", ...]`, `["patient-documents", ...]`, `["document-templates", companyId]`, `["patient-photo", companyId, contactId, photoStorageId]`; mutations com `useMutationDefaults` e mensagens pt-BR ("Anamnese salva", "Anamnese concluída", "Evolução salva", "Evolução finalizada", "Documento emitido", "Foto atualizada", "Modelo salvo", etc.). Mutations de foto invalidam também as chaves de `patientKeys(companyId)`.
+- [x] Verificação frontend (item 9). Commit: `feat(pacientes): services e hooks da Fase 2 da ficha`
 
 ---
 
