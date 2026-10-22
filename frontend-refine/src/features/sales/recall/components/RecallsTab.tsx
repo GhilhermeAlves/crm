@@ -48,6 +48,7 @@ import {
   useRecallSuggestions,
   useScheduleRecall,
 } from "../hooks/useRecalls";
+import { useTags } from "@/features/sales/tag/hooks/useTags";
 import { CreateRecallDialog } from "./CreateRecallDialog";
 import { useRecallPermissions } from "../schemas/recall.schema";
 import { RECALL_WINDOW_LABELS, type Recall, type RecallWindow } from "../types/recall.types";
@@ -76,7 +77,7 @@ export function RecallsTab() {
   const [search, setSearch] = useState("");
   const [hostFilter, setHostFilter] = useState("all");
   const [windowFilter, setWindowFilter] = useState<RecallWindow>("NEXT_7_DAYS");
-  const [tagFilter, setTagFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("all");
   const [sinceMonths, setSinceMonths] = useState(3);
   const [expandedContactId, setExpandedContactId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -90,7 +91,7 @@ export function RecallsTab() {
   const recallsQuery = useRecalls(companyId, {
     q: search.trim() || undefined,
     hostId: hostFilter === "all" ? undefined : hostFilter,
-    tag: tagFilter.trim() || undefined,
+    tagId: tagFilter === "all" ? undefined : tagFilter,
     window: windowFilter,
     pageSize: 100,
   });
@@ -98,6 +99,8 @@ export function RecallsTab() {
   const membersQuery = useMembers(companyId);
   const contactsQuery = useContacts(companyId);
   const appointmentTypesQuery = useAppointmentTypes(companyId);
+  const { data: tags = [] } = useTags(companyId);
+  const tagNameById = useMemo(() => new Map(tags.map((t) => [t.id, t.name])), [tags]);
 
   const createRecall = useCreateRecall(companyId);
   const dismissRecall = useDismissRecall(companyId);
@@ -137,7 +140,7 @@ export function RecallsTab() {
     contactId: string;
     phone: string;
     hostId: string;
-    tag?: string;
+    tagId?: string;
     dueInAmount: number;
     dueInUnit: "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
   }) => {
@@ -146,7 +149,7 @@ export function RecallsTab() {
         contactId: values.contactId,
         phone: values.phone,
         hostId: values.hostId,
-        tag: values.tag?.trim() ? values.tag.trim() : undefined,
+        tagId: values.tagId,
         dueInAmount: values.dueInAmount,
         dueInUnit: values.dueInUnit,
       },
@@ -228,12 +231,19 @@ export function RecallsTab() {
             ))}
           </SelectContent>
         </Select>
-        <Input
-          placeholder="Marcador"
-          value={tagFilter}
-          onChange={(event) => setTagFilter(event.target.value)}
-          className="w-40"
-        />
+        <Select value={tagFilter} onValueChange={setTagFilter}>
+          <SelectTrigger className="w-44" aria-label="Filtrar por marcador">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os marcadores</SelectItem>
+            {tags.map((tag) => (
+              <SelectItem key={tag.id} value={tag.id}>
+                {tag.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
@@ -284,7 +294,7 @@ export function RecallsTab() {
                           </div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {recall.tag ?? "—"}
+                          {(recall.tagId && tagNameById.get(recall.tagId)) ?? recall.tag ?? "—"}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
@@ -521,6 +531,7 @@ export function RecallsTab() {
         members={memberOptions}
         isLoading={createRecall.isPending}
         onSubmit={handleCreateRecall}
+        tags={tags}
       />
 
       <CreateAppointmentDialog

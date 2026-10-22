@@ -145,7 +145,12 @@ interface Props {
   /** Horário de trabalho no formato "HH:mm", para avisar quando a consulta fica fora dele. */
   workHoursStart?: string;
   workHoursEnd?: string;
+  /** Cadeiras ativas e marcadores da empresa (Fase C). Sem itens, o campo não aparece. */
+  chairs?: { id: string; name: string; color: string | null }[];
+  tags?: { id: string; name: string; color: string | null }[];
 }
+
+const NO_CHAIR = "__none__";
 
 /** Strings "HH:mm" comparam bem em ordem lexicográfica. */
 export function isOutsideWorkHours(
@@ -173,6 +178,8 @@ export function CreateAppointmentDialog({
   defaultContactId,
   workHoursStart,
   workHoursEnd,
+  chairs = [],
+  tags = [],
 }: Props) {
   const [tab, setTab] = useState<PanelTab>("consulta");
   const [allDay, setAllDay] = useState(false);
@@ -195,6 +202,7 @@ export function CreateAppointmentDialog({
       endAt: defaultEnd ?? "",
       status: "CONFIRMED",
       recurrence: "none",
+      tagIds: [],
     },
   });
 
@@ -229,6 +237,7 @@ export function CreateAppointmentDialog({
         endAt: defaultEnd ?? "",
         status: "CONFIRMED",
         recurrence: "none",
+        tagIds: [],
       });
       blockForm.reset({
         hostId: defaultHostId ?? "",
@@ -369,6 +378,67 @@ export function CreateAppointmentDialog({
                 <p className="text-sm text-destructive">{form.formState.errors.hostId.message}</p>
               )}
             </div>
+
+            {/* Cadeira */}
+            {chairs.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="chairId">Cadeira</Label>
+                <Select
+                  value={form.watch("chairId") ?? NO_CHAIR}
+                  onValueChange={(v) => form.setValue("chairId", v === NO_CHAIR ? undefined : v)}
+                >
+                  <SelectTrigger id="chairId">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_CHAIR}>Sem cadeira</SelectItem>
+                    {chairs.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Marcadores */}
+            {tags.length > 0 && (
+              <div className="space-y-2">
+                <Label>Marcadores</Label>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Marcadores">
+                  {tags.map((t) => {
+                    const selected = (form.watch("tagIds") ?? []).includes(t.id);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => {
+                          const current = form.getValues("tagIds") ?? [];
+                          form.setValue(
+                            "tagIds",
+                            selected ? current.filter((id) => id !== t.id) : [...current, t.id],
+                          );
+                        }}
+                        className={cn(
+                          "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
+                          selected
+                            ? "border-primary bg-primary/10 font-medium"
+                            : "text-muted-foreground hover:bg-muted",
+                        )}
+                      >
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: t.color ?? "currentColor" }}
+                        />
+                        {t.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Data */}
             <div className="space-y-2">

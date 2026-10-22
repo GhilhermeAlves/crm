@@ -29,6 +29,9 @@ public class RecallJpaEntity {
 
     private String tag;
 
+    @Column(name = "tag_id")
+    private UUID tagId;
+
     @Column(name = "due_date")
     private LocalDate dueDate;
 
@@ -92,6 +95,14 @@ public class RecallJpaEntity {
 
     public void setTag(String tag) {
         this.tag = tag;
+    }
+
+    public UUID getTagId() {
+        return tagId;
+    }
+
+    public void setTagId(UUID tagId) {
+        this.tagId = tagId;
     }
 
     public LocalDate getDueDate() {

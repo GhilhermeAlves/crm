@@ -31,6 +31,10 @@ interface Props {
   onAppointmentDrop?: (appointment: Appointment, start: Date, end: Date) => void;
   selectedAppointmentId?: string | null;
   memberColorMap?: Map<string, string>;
+  /** Cor de cada marcador (id → cor), para as bolinhas no bloco do agendamento. */
+  tagColorMap?: Map<string, string>;
+  /** Nome do feriado do dia (clínica ou nacional), mostrado no cabeçalho. */
+  holidayName?: (day: Date) => string | undefined;
   startHour?: number;
   endHour?: number;
   showWeekends?: boolean;
@@ -173,6 +177,7 @@ function DayColumn({
   onAppointmentDrop,
   selectedAppointmentId,
   memberColorMap,
+  tagColorMap,
   hourHeight,
   rangeStart,
   rangeEnd,
@@ -186,6 +191,7 @@ function DayColumn({
   onAppointmentDrop?: (appointment: Appointment, start: Date, end: Date) => void;
   selectedAppointmentId?: string | null;
   memberColorMap?: Map<string, string>;
+  tagColorMap?: Map<string, string>;
   hourHeight: number;
   rangeStart: number;
   rangeEnd: number;
@@ -290,7 +296,20 @@ function DayColumn({
               onAppointmentClick?.(appt);
             }}
           >
-            <span className="block truncate leading-tight">{appt.title}</span>
+            <span className="flex items-center gap-1 leading-tight">
+              {(appt.tagIds ?? []).slice(0, 3).map((tagId) => {
+                const color = tagColorMap?.get(tagId);
+                return color ? (
+                  <span
+                    key={tagId}
+                    data-testid="tag-dot"
+                    className="h-1.5 w-1.5 shrink-0 rounded-full ring-1 ring-white/70"
+                    style={{ backgroundColor: color }}
+                  />
+                ) : null;
+              })}
+              <span className="truncate">{appt.title}</span>
+            </span>
             {pos.height > 28 && (
               <span className="block truncate text-[10px] opacity-80">
                 {format(parseISO(appt.startAt), "HH:mm")} – {format(parseISO(appt.endAt), "HH:mm")}
@@ -313,6 +332,8 @@ export function WeeklyCalendar({
   onAppointmentDrop,
   selectedAppointmentId,
   memberColorMap,
+  tagColorMap,
+  holidayName,
   startHour = DEFAULT_START_HOUR,
   endHour = DEFAULT_END_HOUR,
   showWeekends = true,
@@ -352,12 +373,13 @@ export function WeeklyCalendar({
         <div className="w-12 shrink-0 border-r bg-muted/30" />
         {days.map((d) => {
           const today = isToday(d);
+          const holiday = holidayName?.(d);
           return (
             <div
               key={d.toISOString()}
               className={cn(
                 "flex-1 border-r py-1.5 text-center text-xs last:border-r-0",
-                today ? "bg-primary/10" : "bg-muted/30",
+                today ? "bg-primary/10" : holiday ? "bg-red-50 dark:bg-red-950/20" : "bg-muted/30",
               )}
             >
               <span className="text-muted-foreground">{format(d, "EEE.", { locale: ptBR })} </span>
@@ -369,6 +391,14 @@ export function WeeklyCalendar({
               >
                 {format(d, "d")}
               </span>
+              {holiday && (
+                <span
+                  className="block truncate px-1 text-[10px] font-medium text-red-600 dark:text-red-400"
+                  title={holiday}
+                >
+                  {holiday}
+                </span>
+              )}
             </div>
           );
         })}
@@ -388,6 +418,7 @@ export function WeeklyCalendar({
             onAppointmentDrop={onAppointmentDrop}
             selectedAppointmentId={selectedAppointmentId}
             memberColorMap={memberColorMap}
+            tagColorMap={tagColorMap}
             hourHeight={hourHeight}
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}

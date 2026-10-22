@@ -27,7 +27,8 @@ class RecallServiceSuggestionTest {
     private final RecallSuggestionDismissalRepository dismissalRepository =
             mock(RecallSuggestionDismissalRepository.class);
     private final TenantAuditRecorder auditor = mock(TenantAuditRecorder.class);
-    private final RecallService service = new RecallService(repository, dismissalRepository, auditor);
+    private final RecallService service = new RecallService(repository, dismissalRepository, auditor,
+            org.mockito.Mockito.mock(com.becommerce.crm.sales.tag.application.port.in.TagUseCase.class));
 
     private final UUID companyId = UUID.randomUUID();
 

@@ -48,6 +48,8 @@ export const createAppointmentSchema = z.object({
   notes: z.string().max(2000, "Observações muito longas").optional(),
   recurrence: z.enum(RECURRENCE_OPTIONS).optional(),
   force: z.boolean().optional(),
+  chairId: z.string().uuid().optional(),
+  tagIds: z.array(z.string().uuid()).optional(),
 });
 
 export type CreateAppointmentFormValues = z.infer<typeof createAppointmentSchema>;

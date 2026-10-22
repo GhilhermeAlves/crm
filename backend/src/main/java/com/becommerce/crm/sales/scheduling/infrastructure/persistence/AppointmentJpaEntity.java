@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.UUID;
-
 @Entity
 @Table(name = "appointments")
 public class AppointmentJpaEntity {
@@ -36,6 +35,7 @@ public class AppointmentJpaEntity {
     private Instant endAt;
 
     private String status;
+
     private String source;
 
     @Column(name = "location_kind")
@@ -66,6 +66,9 @@ public class AppointmentJpaEntity {
 
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @Column(name = "chair_id")
+    private UUID chairId;
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -109,4 +112,6 @@ public class AppointmentJpaEntity {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public UUID getChairId() { return chairId; }
+    public void setChairId(UUID chairId) { this.chairId = chairId; }
 }

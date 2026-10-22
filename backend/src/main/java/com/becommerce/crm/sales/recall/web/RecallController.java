@@ -42,11 +42,12 @@ public class RecallController {
             @CurrentCompanyId("Você só pode acessar retornos da sua própria empresa.") UUID companyId,
             @RequestParam(required = false) UUID hostId,
             @RequestParam(required = false) String tag,
+            @RequestParam(required = false) UUID tagId,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "NEXT_7_DAYS") String window,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize) {
-        return ResponseEntity.ok(useCase.list(companyId, hostId, tag, q, window, page, pageSize));
+        return ResponseEntity.ok(useCase.list(companyId, hostId, tag, tagId, q, window, page, pageSize));
     }
 
     @PostMapping
@@ -87,10 +88,12 @@ public class RecallController {
 
     @GetMapping("/suggestions")
     @PreAuthorize("hasAuthority('appointment:read')")
-    public ResponseEntity<List<RecallSuggestionResponse>> suggestions(
+    public ResponseEntity<com.becommerce.crm.shared.application.dto.PageResponse<RecallSuggestionResponse>> suggestions(
             @CurrentCompanyId("Você só pode acessar retornos da sua própria empresa.") UUID companyId,
-            @RequestParam(defaultValue = "3") int since) {
-        return ResponseEntity.ok(useCase.suggestions(companyId, since));
+            @RequestParam(defaultValue = "3") int since,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
+        return ResponseEntity.ok(useCase.suggestions(companyId, since, page, pageSize));
     }
 
     @PostMapping("/suggestions/{contactId}/dismiss")

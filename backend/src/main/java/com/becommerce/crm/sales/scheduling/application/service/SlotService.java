@@ -1,5 +1,6 @@
 package com.becommerce.crm.sales.scheduling.application.service;
 
+import com.becommerce.crm.sales.holiday.application.port.out.HolidayRepository;
 import com.becommerce.crm.sales.scheduling.application.dto.SlotResponse;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentRepository;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTypeRepository;
@@ -23,15 +24,18 @@ public class SlotService {
     private final AvailabilityRepository availabilityRepository;
     private final AppointmentRepository appointmentRepository;
     private final ScheduleBlockRepository blockRepository;
+    private final HolidayRepository holidayRepository;
 
     public SlotService(AppointmentTypeRepository typeRepository,
                        AvailabilityRepository availabilityRepository,
                        AppointmentRepository appointmentRepository,
-                       ScheduleBlockRepository blockRepository) {
+                       ScheduleBlockRepository blockRepository,
+                       HolidayRepository holidayRepository) {
         this.typeRepository = typeRepository;
         this.availabilityRepository = availabilityRepository;
         this.appointmentRepository = appointmentRepository;
         this.blockRepository = blockRepository;
+        this.holidayRepository = holidayRepository;
     }
 
     @Transactional(readOnly = true)
@@ -54,6 +58,11 @@ public class SlotService {
             }
 
             Set<Interval> allSlots = new TreeSet<>(Comparator.comparing(Interval::start));
+
+            Set<LocalDate> blockedHolidays = holidayRepository.findByCompanyIdAndDateRange(companyId, from, to).stream()
+                    .filter(h -> h.isBlocksSchedule())
+                    .map(h -> h.getDate())
+                    .collect(java.util.HashSet::new, java.util.HashSet::add, java.util.HashSet::addAll);
 
             for (UUID hostId : hostIds) {
                 ZoneId hostZone = ZoneId.of(
@@ -78,6 +87,10 @@ public class SlotService {
 
                 LocalDate day = from;
                 while (!day.isAfter(to)) {
+                    if (blockedHolidays.contains(day)) {
+                        day = day.plusDays(1);
+                        continue;
+                    }
                     List<TimeRange> dayWindows = availability.getWindowsForDate(day);
                     List<Interval> slots = SlotCalculator.freeSlots(day, type.getDurationMinutes(),
                             type.getSlotIntervalMinutes(), type.getBufferBeforeMinutes(),

@@ -17,6 +17,7 @@ public class Recall {
     private String phone;
     private UUID hostId;
     private String tag;
+    private UUID tagId;
     private LocalDate dueDate;
     private RecallStatus status;
     private UUID appointmentId;
@@ -85,6 +86,28 @@ public class Recall {
             case MONTHS -> today.plusMonths(amount);
             case YEARS -> today.plusYears(amount);
         };
+    }
+
+    /**
+     * Vincula o marcador cadastrado (tabela tags, V101). O texto {@code tag} acompanha o nome
+     * para manter compatíveis os retornos antigos, que só tinham texto livre.
+     */
+    public void linkTag(UUID tagId, String tagName) {
+        if (status == RecallStatus.DISMISSED) {
+            throw new RecallValidationException("Retorno descartado não pode ser alterado.");
+        }
+        this.tagId = tagId;
+        this.tag = tagId == null ? null : normalizeTag(tagName);
+        touch();
+    }
+
+    /** Usado só ao reconstituir do banco. */
+    public void restoreTagId(UUID tagId) {
+        this.tagId = tagId;
+    }
+
+    public UUID getTagId() {
+        return tagId;
     }
 
     public void update(String phone, UUID hostId, String tag, LocalDate dueDate) {
