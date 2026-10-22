@@ -43,6 +43,14 @@ public final class AgentContextRenderer {
     private static final DateTimeFormatter HOLIDAY_FORMAT = DateTimeFormatter.ofPattern("dd/MM", PT_BR);
     static final int HOLIDAY_LOOKAHEAD_DAYS = 30;
 
+    /** Retomada após atendimento humano: o agente continua o assunto em vez de recomeçar. */
+    static final String HUMAN_HANDOFF_GUIDANCE = """
+            RETOMADA APÓS ATENDIMENTO HUMANO
+            - Um atendente humano da equipe conversou com este contato; as mensagens dele aparecem no histórico com o prefixo [Atendente humano].
+            - Leia o histórico inteiro antes de responder e continue exatamente o assunto em andamento, respeitando o que a equipe combinou ou prometeu.
+            - Não reinicie a conversa com saudação de primeiro contato e não ofereça agendamento se o assunto não for esse.
+            - Se não tiver certeza do que a equipe combinou, diga que vai confirmar com a equipe em vez de inventar.""";
+
     private AgentContextRenderer() {
     }
 
@@ -52,6 +60,9 @@ public final class AgentContextRenderer {
         messages.add(system(dynamicContext(ctx)));
         if (!ctx.tools().isEmpty() && !ctx.tools().guidance().isEmpty()) {
             messages.add(system(String.join("\n\n", ctx.tools().guidance())));
+        }
+        if (ctx.history().humanHandled()) {
+            messages.add(system(HUMAN_HANDOFF_GUIDANCE));
         }
         for (ConversationHistory.Entry entry : ctx.history().entries()) {
             messages.add(new AiProvider.ChatMessage(entry.role(), entry.content()));

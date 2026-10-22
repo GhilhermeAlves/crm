@@ -52,6 +52,25 @@ public class OmnichannelInboxNotifierImpl implements OmnichannelInboxNotifier {
                 companyId, conversationId);
     }
 
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void notifyAutomatedSenderIgnored(UUID companyId, UUID conversationId, String phone, String reason) {
+        String title = "Leo: robô detectado no WhatsApp";
+        String text = formatPhone(phone) + " parece ser um atendimento automático (" + reason
+                + "). O número foi colocado na lista de ignorados; remova de lá se for uma pessoa.";
+        String metadata = "{\"conversationId\":\"" + conversationId + "\"}";
+        for (User user : userRepository.findAllByCompanyId(companyId)) {
+            if (user.getStatus() == null || !user.getStatus().isActive()) {
+                continue;
+            }
+            notificationUseCase.create(companyId,
+                    new CreateNotificationRequest(user.getId(), NotificationType.MESSAGE, title, text, metadata),
+                    SYSTEM_ACTOR);
+        }
+        log.info("[WHATSAPP][BOT] companyId={} conversationId={} robô ignorado ({})",
+                companyId, conversationId, reason);
+    }
+
     private static String preview(String body) {
         if (body == null || body.isBlank()) {
             return "(sem texto)";

@@ -17,6 +17,7 @@ import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.IgnoredContact;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.MessageAuthor;
 import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 import com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
@@ -236,6 +237,7 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         Message manual = Message.createOutbound(companyId, conversation.getId(), channel.getId(),
                 channel.getExternalId(), data.from(), data.body(), UUID.randomUUID());
         manual.markSent(data.externalMessageId());
+        manual.markSentBy(MessageAuthor.HUMAN);
         messageRepository.saveByExternalId(manual);
 
         conversation.pauseAutomationUntil(now.plus(ownerReplyPause));
