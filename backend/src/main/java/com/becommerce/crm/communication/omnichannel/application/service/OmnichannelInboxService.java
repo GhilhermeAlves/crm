@@ -15,6 +15,7 @@ import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.MessageAuthor;
 import com.becommerce.crm.communication.omnichannel.domain.OmnichannelNotFoundException;
 import com.becommerce.crm.communication.omnichannel.domain.OmnichannelProviderException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
@@ -96,6 +97,7 @@ public class OmnichannelInboxService implements OmnichannelInboxUseCase {
 
             Message message = Message.createOutbound(companyId, conversationId, channel.getId(),
                     channel.getExternalId(), conversation.getExternalPhone(), body, UUID.randomUUID());
+            message.markSentBy(MessageAuthor.HUMAN);
             Message persisted = messagePersister.persistPending(message);
 
             try {

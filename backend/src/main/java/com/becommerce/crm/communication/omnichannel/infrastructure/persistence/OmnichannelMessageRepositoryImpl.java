@@ -3,6 +3,7 @@ package com.becommerce.crm.communication.omnichannel.infrastructure.persistence;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelMessageRepository;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.MessageAuthor;
 import com.becommerce.crm.communication.omnichannel.domain.MessageDirection;
 import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
 import com.becommerce.crm.communication.omnichannel.domain.MessageType;
@@ -35,7 +36,7 @@ public class OmnichannelMessageRepositoryImpl implements OmnichannelMessageRepos
                 e.getId(), e.getCompanyId(), e.getConversationId(), e.getChannelId(), e.getDirection(),
                 e.getSenderPhone(), e.getRecipientPhone(), e.getType(), e.getBody(), e.getStatus(),
                 e.getExternalMessageId(), e.getClientMessageId(), e.getProviderError(),
-                e.getSentAt(), e.getReceivedAt(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getSentAt(), e.getReceivedAt(), e.getCreatedAt(), e.getUpdatedAt(), e.getSentBy());
         // Devolve a linha persistida (a existente se houve conflito) pela chave externa.
         return toDomain(jpaRepository.findByExternalMessageId(message.getExternalMessageId())
                 .orElseGet(() -> jpaRepository.save(e)));
@@ -135,14 +136,19 @@ public class OmnichannelMessageRepositoryImpl implements OmnichannelMessageRepos
         e.setReceivedAt(m.getReceivedAt());
         e.setCreatedAt(m.getCreatedAt());
         e.setUpdatedAt(m.getUpdatedAt());
+        e.setSentBy(m.getSentBy() != null ? m.getSentBy().name() : null);
         return e;
     }
 
     private static Message toDomain(OmnichannelMessageJpaEntity e) {
-        return Message.reconstitute(e.getId(), e.getCompanyId(), e.getConversationId(), e.getChannelId(),
+        Message message = Message.reconstitute(e.getId(), e.getCompanyId(), e.getConversationId(), e.getChannelId(),
                 MessageDirection.valueOf(e.getDirection()), e.getSenderPhone(), e.getRecipientPhone(),
                 MessageType.valueOf(e.getType()), e.getBody(), MessageStatus.valueOf(e.getStatus()),
                 e.getExternalMessageId(), e.getClientMessageId(), e.getProviderError(),
                 e.getSentAt(), e.getReceivedAt(), e.getCreatedAt(), e.getUpdatedAt());
+        if (e.getSentBy() != null) {
+            message.markSentBy(MessageAuthor.valueOf(e.getSentBy()));
+        }
+        return message;
     }
 }

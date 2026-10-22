@@ -9,4 +9,7 @@ import java.util.UUID;
 public interface OmnichannelInboxNotifier {
 
     void notifyNewInbound(UUID companyId, UUID conversationId, String fromPhone, String body);
+
+    /** O Leo identificou um robô/resposta automática e colocou o número na lista de ignorados. */
+    void notifyAutomatedSenderIgnored(UUID companyId, UUID conversationId, String phone, String reason);
 }
