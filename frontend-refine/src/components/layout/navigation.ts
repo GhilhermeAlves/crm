@@ -74,6 +74,18 @@ export const NAVIGATION: NavGroup[] = [
         permission: "contact:read",
         module: "PATIENTS",
       },
+      {
+        label: "Financeiro",
+        href: ROUTES.FINANCE_CONTROL,
+        icon: CircleDollarSign,
+        permission: "finance:read",
+        module: "FINANCE",
+        children: [
+          { label: "Controle financeiro", href: ROUTES.FINANCE_CONTROL },
+          { label: "Conciliação", href: ROUTES.FINANCE_RECONCILIATION },
+          { label: "Comissões", href: ROUTES.FINANCE_COMMISSIONS },
+        ],
+      },
       { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:page:view" },
       {
         label: "Léo · Assistente IA",
@@ -159,18 +171,6 @@ export const NAVIGATION: NavGroup[] = [
     items: [
       { label: "Catálogo", href: ROUTES.CATALOG, icon: Package, permission: "catalog:read" },
       { label: "Estoque", href: ROUTES.INVENTORY, icon: Boxes, permission: "inventory:read" },
-      {
-        label: "Financeiro",
-        href: ROUTES.FINANCE_CONTROL,
-        icon: CircleDollarSign,
-        permission: "finance:read",
-        module: "FINANCE",
-        children: [
-          { label: "Controle financeiro", href: ROUTES.FINANCE_CONTROL },
-          { label: "Conciliação", href: ROUTES.FINANCE_RECONCILIATION },
-          { label: "Comissões", href: ROUTES.FINANCE_COMMISSIONS },
-        ],
-      },
     ],
   },
   {
