@@ -12,7 +12,7 @@ Dar à ficha do paciente o odontograma com procedimentos por dente e o orçament
 ## Regras de negócio
 
 1. **Financeiro de tratamento só nasce de orçamento aprovado.** Procedimento na ficha nunca gera lançamento (diferente do Capim, que tem o checkbox "Gerar lançamento financeiro" — não teremos).
-2. O **próprio atendente aprova** o orçamento no sistema (sem assinatura do paciente). Precisa de `budget:approve`.
+2. O **próprio atendente aprova** o orçamento no sistema (sem assinatura do paciente). Precisa de `contact:update` (mesma permissão de escrita da ficha).
 3. Orçamento aprovado é **imutável**. Para mudar: cancelar (estorna parcelas pendentes) e criar outro.
 4. Orçamento **Perdido**: procedimentos continuam na ficha como "A realizar", sem vínculo.
 5. Um procedimento pertence a no máximo um orçamento ativo (rascunho ou aprovado).
@@ -46,11 +46,11 @@ Dar à ficha do paciente o odontograma com procedimentos por dente e o orçament
 | performed_at | DATE | preenchido ao marcar `DONE` |
 | created_by, created_at, updated_at | | padrão |
 
-Permissões: `clinical_record:read` (todos os papéis), `clinical_record:manage` (ADMIN, MANAGER, AGENT), concedidas por empresa no padrão da V105.
+Permissões: **nenhuma nova** (padrão da Fase 2): leitura `contact:read`, escrita `contact:update`.
 
 ### API
 
-`/api/v1/companies/{companyId}/contacts/{contactId}/procedures` — `GET` (filtro `status`), `POST`, `PUT /{id}`, `POST /{id}/done`, `DELETE /{id}` (proibido se vinculado a orçamento aprovado).
+`/api/v1/companies/{companyId}/patients/{contactId}/procedures` — `GET` (filtro `status`), `POST`, `PUT /{id}`, `POST /{id}/done`, `DELETE /{id}` (proibido se vinculado a orçamento aprovado).
 
 ### Tela (aba "Ficha clínica")
 
@@ -69,13 +69,13 @@ Permissões: `clinical_record:read` (todos os papéis), `clinical_record:manage`
 
 `payment_plan`: `{ downPaymentCents, downPaymentMethod, installments, firstDueDate, method }`.
 
-FK `patient_procedures.budget_id → budgets` e `financial_transactions.budget_id` (nova coluna, ON DELETE SET NULL). Permissões `budget:read`, `budget:manage`, `budget:approve` (ADMIN, MANAGER, AGENT).
+FK `patient_procedures.budget_id → budgets` e `financial_transactions.budget_id` (nova coluna, ON DELETE SET NULL). Rotas em `/api/v1/companies/{companyId}/patients/{contactId}/budgets`; permissões `contact:read` / `contact:update` (nenhuma nova).
 
 ### Fluxo
 
 - **Etapa 1 — Procedimentos:** escolher procedimentos "A realizar" da ficha ou adicionar novos (que nascem como `TO_DO` na ficha); título, validade, desconto R$/%, observações; saldo total calculado no backend.
 - **Etapa 2 — Pagamento (opcional):** entrada + parcelas + 1º vencimento + meio (`BOLETO`, `CREDIT_CARD`, `DEBIT_CARD`, `PIX`, `CASH`, `TRANSFER`, `CHECK`, `OTHER`). Sem plano, a aprovação gera 1 receita à vista vencendo hoje.
-- **Aprovar** (`POST .../budgets/{id}/approve`, transacional): status `APPROVED`, gera `financial_transactions` `INCOME`/`PROCEDURE`/`PENDING` com `contact_id`, `budget_id`, `installment_group_id` comum; soma das parcelas = total (centavos residuais na última).
+- **Aprovar** (`POST .../budgets/{id}/approve`, transacional): status `APPROVED`, gera `financial_transactions` `INCOME`/`PROCEDURE`/`PENDING` com `contact_id`, `budget_id`, `installment_group_id` comum; parcelas geradas por `FinancialTransaction.createSeries` (já existente: centavos residuais na 1ª parcela, vencimentos mensais).
 - **Marcar como perdido**: `LOST` + motivo opcional; desvincula procedimentos.
 - **Cancelar aprovado**: `CANCELLED`; parcelas `PENDING` viram `CANCELLED`; parcelas pagas permanecem (aviso na tela).
 - Aba "Orçamentos": tabela Título, Última edição, Editado por, Saldo total, Status, ações (Visualizar, Aprovar, Marcar como perdido, Cancelar, Excluir rascunho).
