@@ -97,6 +97,26 @@ public class AnamnesisService {
         }
     }
 
+    /**
+     * Modelo padrão da empresa, provisionando o template inicial se necessário.
+     * Reutilizado pela anamnese do paciente para iniciar sem modelo explícito.
+     */
+    @Transactional
+    public AnamnesisModelResponse getDefaultModel(UUID companyId, UUID createdBy) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            ensureDefaultTemplate(companyId, createdBy);
+            AnamnesisModel model = modelRepository.findByCompanyIdOrderByName(companyId).stream()
+                    .filter(AnamnesisModel::isDefault)
+                    .findFirst()
+                    .orElseThrow(() -> new AnamnesisValidationException(
+                            "Nenhum modelo de anamnese disponível para esta empresa."));
+            return toResponse(model);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
     @Transactional
     public AnamnesisModelResponse create(UUID companyId, CreateAnamnesisModelRequest request, UUID createdBy) {
         try {
