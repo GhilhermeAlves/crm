@@ -27,4 +27,27 @@ public interface ContactUseCase {
     ContactResponse update(UUID companyId, UUID contactId, UpdateContactRequest request);
 
     void delete(UUID companyId, UUID contactId);
+
+    // ── Módulo Pacientes (V104): paciente = contato com is_patient = true ──
+
+    /** Cria o contato já marcado como paciente (mesmas regras do {@link #create}). */
+    ContactResponse createPatient(UUID companyId, CreateContactRequest request, UUID createdBy);
+
+    /** Pacientes ativos filtrados por nome, CPF, celular ou prontuário. */
+    List<ContactResponse> searchPatients(UUID companyId, String query);
+
+    /** Paciente da empresa; 404 se o contato não existir ou não for paciente. */
+    ContactResponse getPatient(UUID companyId, UUID contactId);
+
+    ContactResponse updatePatient(UUID companyId, UUID contactId, UpdateContactRequest request);
+
+    /** Marca o contato como paciente (idempotente). */
+    ContactResponse makePatient(UUID companyId, UUID contactId);
+
+    /**
+     * Variante sem exceção para fluxos de outros módulos (agendamento): contato
+     * inexistente/excluído retorna {@code false} sem marcar a transação
+     * corrente para rollback.
+     */
+    boolean markAsPatientIfExists(UUID companyId, UUID contactId);
 }

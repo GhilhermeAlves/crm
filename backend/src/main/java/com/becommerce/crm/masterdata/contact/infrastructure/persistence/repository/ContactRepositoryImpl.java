@@ -42,6 +42,14 @@ public class ContactRepositoryImpl implements ContactRepository {
     }
 
     @Override
+    public List<Contact> findPatientsByCompanyIdActive(UUID companyId) {
+        return jpaRepository.findByCompanyIdAndPatientTrueAndDeletedAtIsNullOrderByFirstNameAscLastNameAsc(companyId)
+                .stream()
+                .map(ContactRepositoryImpl::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<Contact> findByCompanyIdAndPhone(UUID companyId, String phone) {
         return jpaRepository.findFirstByCompanyIdAndPhoneAndDeletedAtIsNull(companyId, phone)
                 .map(ContactRepositoryImpl::toDomain);
@@ -90,11 +98,13 @@ public class ContactRepositoryImpl implements ContactRepository {
         e.setCreatedAt(c.getCreatedAt());
         e.setUpdatedAt(c.getUpdatedAt());
         e.setDeletedAt(c.getDeletedAt());
+        e.setPatient(c.isPatient());
+        e.setPatientSince(c.getPatientSince());
         return e;
     }
 
     private static Contact toDomain(ContactJpaEntity e) {
-        return Contact.reconstitute(
+        Contact contact = Contact.reconstitute(
                 e.getId(), e.getCompanyId(), e.getFirstName(), e.getLastName(),
                 e.getEmail(), e.getPhone(), e.getMobile(), e.getNotes(),
                 e.getBirthDate(), e.getCpf(), e.getRg(), e.getRgIssuer(),
@@ -104,5 +114,7 @@ public class ContactRepositoryImpl implements ContactRepository {
                 e.getHealthPlanNumber(), e.getRecordNumber(), e.getReferralSource(),
                 e.isHasGuardian(), e.getGuardianName(), e.getGuardianCpf(), e.getGuardianPhone(),
                 e.getCreatedAt(), e.getUpdatedAt(), e.getDeletedAt());
+        contact.restorePatient(e.isPatient(), e.getPatientSince());
+        return contact;
     }
 }

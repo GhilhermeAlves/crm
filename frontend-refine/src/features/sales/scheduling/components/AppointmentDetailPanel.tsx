@@ -165,7 +165,10 @@ export function AppointmentDetailPanel({
         <div className="space-y-1 rounded-md border bg-muted/30 p-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <User className="h-4 w-4 shrink-0" />
-            <Link href={`${ROUTES.CONTACTS}/${contact.id}`} className="hover:underline">
+            <Link
+              href={`${contact.isPatient ? ROUTES.PATIENTS : ROUTES.CONTACTS}/${contact.id}`}
+              className="hover:underline"
+            >
               {contact.firstName} {contact.lastName}
             </Link>
           </div>

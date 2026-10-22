@@ -139,4 +139,30 @@ class AppointmentServiceChairTagTest {
         assertEquals(List.of(tagId), result.get(0).tagIds());
         assertEquals(List.of(), result.get(1).tagIds());
     }
+
+    @Test
+    void marksContactAsPatientOnCreateAndRestoresTenant() {
+        UUID contactId = UUID.randomUUID();
+        com.becommerce.crm.masterdata.contact.application.service.PatientAutoMarker marker =
+                mock(com.becommerce.crm.masterdata.contact.application.service.PatientAutoMarker.class);
+        AtomicReference<UUID> tenantAtAudit = new AtomicReference<>();
+        when(marker.markOnAppointment(companyId, contactId)).thenAnswer(inv -> {
+            TenantContext.clear(); // como o ContactService faz no finally
+            return true;
+        });
+        TenantAuditRecorder auditor = mock(TenantAuditRecorder.class);
+        doAnswer(inv -> {
+            tenantAtAudit.set(TenantContext.getCompanyId());
+            return null;
+        }).when(auditor).record(any(), any(), any(), any(), any(), any(), any(), any());
+        AppointmentService withMarker = new AppointmentService(repository,
+                mock(ScheduleBlockRepository.class), auditor, chairs, tags, tagRepository);
+        withMarker.setPatientAutoMarker(marker);
+
+        withMarker.create(companyId, new CreateAppointmentRequest(null, hostId, contactId, null, "Avaliação",
+                start, start.plus(1, ChronoUnit.HOURS), null, null, null, false, null, null), null);
+
+        verify(marker).markOnAppointment(companyId, contactId);
+        assertEquals(companyId, tenantAtAudit.get());
+    }
 }

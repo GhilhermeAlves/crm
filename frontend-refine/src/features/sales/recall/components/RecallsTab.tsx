@@ -469,7 +469,7 @@ export function RecallsTab() {
                                   <DropdownMenuContent align="end">
                                     <DropdownMenuItem
                                       onClick={() =>
-                                        router.push(`${ROUTES.CONTACTS}/${suggestion.contactId}`)
+                                        router.push(`${ROUTES.PATIENTS}/${suggestion.contactId}`)
                                       }
                                     >
                                       Ver ficha clínica

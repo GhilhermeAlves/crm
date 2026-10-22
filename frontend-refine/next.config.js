@@ -13,6 +13,19 @@ const nextConfig = {
       },
     ],
   },
+  // A ficha do paciente saiu de Contatos (módulo Pacientes, V104): links antigos
+  // das abas clínicas continuam funcionando. /contacts/:id/edit segue sendo a
+  // edição do contato.
+  async redirects() {
+    return [
+      { source: "/contacts/:id/consultas", destination: "/patients/:id", permanent: false },
+      {
+        source: "/contacts/:id/:tab(financeiro|arquivos|anotacoes)",
+        destination: "/patients/:id/:tab",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 if (devGatewayTarget) {

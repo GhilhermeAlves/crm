@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useActiveCompanyModules } from "@/features/identity/modules/hooks/useCompanyModules";
 import type { NavGroup, NavItem } from "./navigation";
 import { SidebarItem } from "./SidebarItem";
 
@@ -39,6 +40,7 @@ export function groupHasActive(items: NavItem[], pathname: string): boolean {
 export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps) {
   const { permissions, roles } = useAuth();
   const isSuperAdmin = roles.includes("SUPER_ADMIN");
+  const { isEnabled: isModuleEnabled } = useActiveCompanyModules();
   const pathname = usePathname();
 
   const hasPermission = (permission?: string) => {
@@ -53,6 +55,8 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
   const visibleItems = group.items
     .filter((item) => !item.superAdminOnly || isSuperAdmin)
     .filter((item) => hasPermission(item.permission))
+    // Módulos da empresa (V104): enquanto carregam, tudo aparece.
+    .filter((item) => !item.module || isModuleEnabled(item.module))
     .map((item) =>
       item.children
         ? { ...item, children: item.children.filter((child) => hasPermission(child.permission)) }

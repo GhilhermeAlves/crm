@@ -29,8 +29,10 @@ import {
   LineChart,
   Settings,
   ServerCog,
+  HeartPulse,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
+import type { CompanyModuleName } from "@/features/identity/modules/types/modules.types";
 
 export interface NavItem {
   label: string;
@@ -38,6 +40,8 @@ export interface NavItem {
   icon: LucideIcon;
   badge?: string;
   permission?: string;
+  /** Módulo da empresa exigido (V104); some do menu quando desligado. */
+  module?: CompanyModuleName;
   /** Visível só para o dono da plataforma (SUPER_ADMIN), nunca para as empresas clientes. */
   superAdminOnly?: boolean;
   children?: { label: string; href: string; permission?: string }[];
@@ -56,7 +60,20 @@ export const NAVIGATION: NavGroup[] = [
     icon: LayoutDashboard,
     items: [
       { label: "Início", href: ROUTES.CRM, icon: Home },
-      { label: "Agenda", href: ROUTES.AGENDA, icon: CalendarDays, permission: "appointment:read" },
+      {
+        label: "Agenda",
+        href: ROUTES.AGENDA,
+        icon: CalendarDays,
+        permission: "appointment:read",
+        module: "AGENDA",
+      },
+      {
+        label: "Pacientes",
+        href: ROUTES.PATIENTS,
+        icon: HeartPulse,
+        permission: "contact:read",
+        module: "PATIENTS",
+      },
       { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:page:view" },
       {
         label: "Léo · Assistente IA",
@@ -70,19 +87,33 @@ export const NAVIGATION: NavGroup[] = [
     title: "Comercial",
     icon: Briefcase,
     items: [
-      { label: "Leads", href: ROUTES.LEADS, icon: Users, permission: "lead:page:view" },
-      { label: "Contatos", href: ROUTES.CONTACTS, icon: Contact, permission: "contact:page:view" },
+      {
+        label: "Leads",
+        href: ROUTES.LEADS,
+        icon: Users,
+        permission: "lead:page:view",
+        module: "CRM",
+      },
+      {
+        label: "Contatos",
+        href: ROUTES.CONTACTS,
+        icon: Contact,
+        permission: "contact:page:view",
+        module: "CRM",
+      },
       {
         label: "Pipeline",
         href: ROUTES.PIPELINE,
         icon: GitBranch,
         permission: "pipeline:page:view",
+        module: "CRM",
       },
       {
         label: "Histórico",
         href: ROUTES.ACTIVITIES,
         icon: MailPlus,
         permission: "activity:page:view",
+        module: "CRM",
       },
     ],
   },
@@ -133,6 +164,7 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.FINANCE_CONTROL,
         icon: CircleDollarSign,
         permission: "finance:read",
+        module: "FINANCE",
         children: [
           { label: "Controle financeiro", href: ROUTES.FINANCE_CONTROL },
           { label: "Conciliação", href: ROUTES.FINANCE_RECONCILIATION },

@@ -73,6 +73,15 @@ public class ContactController {
         return ResponseEntity.ok(contactUseCase.update(companyId, contactId, request));
     }
 
+    /** Marca o contato como paciente (idempotente). Exige o módulo PATIENTS. */
+    @PostMapping("/{contactId}/make-patient")
+    @PreAuthorize("hasAuthority('contact:update')")
+    public ResponseEntity<ContactResponse> makePatient(
+            @CurrentCompanyId("Você só pode acessar contatos da sua própria empresa.") UUID companyId,
+            @PathVariable UUID contactId) {
+        return ResponseEntity.ok(contactUseCase.makePatient(companyId, contactId));
+    }
+
     @DeleteMapping("/{contactId}")
     @PreAuthorize("hasAuthority('contact:delete')")
     public ResponseEntity<Void> delete(

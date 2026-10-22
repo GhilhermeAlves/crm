@@ -30,6 +30,9 @@ export type Contact = {
   guardianCpf: string | null;
   guardianPhone: string | null;
   createdAt: string;
+  /** Módulo Pacientes (V104): contato marcado como paciente. */
+  isPatient?: boolean;
+  patientSince?: string | null;
 };
 
 export type CreateContactRequest = {

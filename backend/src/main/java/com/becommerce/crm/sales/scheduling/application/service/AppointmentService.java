@@ -15,6 +15,8 @@ import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingNotFoundEx
 import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingValidationException;
 import com.becommerce.crm.sales.scheduling.domain.exception.SlotUnavailableException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import com.becommerce.crm.masterdata.contact.application.service.PatientAutoMarker;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,6 +54,14 @@ public class AppointmentService implements AppointmentUseCase {
         this.tagRepository = tagRepository;
     }
 
+    private PatientAutoMarker patientAutoMarker;
+
+    /** Opcional: marca o contato como paciente ao agendar (módulo PATIENTS, V104). */
+    @Autowired(required = false)
+    public void setPatientAutoMarker(PatientAutoMarker patientAutoMarker) {
+        this.patientAutoMarker = patientAutoMarker;
+    }
+
     @Override
     @Transactional
     public AppointmentResponse create(UUID companyId, CreateAppointmentRequest request, UUID createdBy) {
@@ -81,6 +91,11 @@ public class AppointmentService implements AppointmentUseCase {
             appointmentRepository.save(appointment);
             if (request.tagIds() != null) {
                 tagRepository.replace(companyId, appointment.getId(), request.tagIds());
+            }
+            if (patientAutoMarker != null) {
+                patientAutoMarker.markOnAppointment(companyId, request.contactId());
+                // markAsPatientIfExists limpa o TenantContext no finally; reaplica para o audit.
+                TenantContext.setCompanyId(companyId);
             }
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SCHEDULING, "Appointment",

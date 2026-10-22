@@ -15,6 +15,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import com.becommerce.crm.analytics.audit.application.service.AuditLogNotFoundException;
 import com.becommerce.crm.masterdata.company.domain.CompanyAlreadyExistsException;
 import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
+import com.becommerce.crm.masterdata.company.domain.InvalidCompanyModulesException;
+import com.becommerce.crm.masterdata.company.domain.ModuleDisabledException;
 import com.becommerce.crm.masterdata.company.domain.CompanyDeletionForbiddenException;
 import com.becommerce.crm.identity.domain.exception.DuplicateEmailException;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
@@ -240,6 +242,31 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCatalogItemException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidCatalogItem(InvalidCatalogItemException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ModuleDisabledException.class)
+    public ResponseEntity<Map<String, Object>> handleModuleDisabledException(ModuleDisabledException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(Map.of(
+                "status", 403,
+                "code", "MODULE_DISABLED",
+                "module", ex.getModule().name(),
+                "error", "Forbidden",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(InvalidCompanyModulesException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidCompanyModulesException(
+        InvalidCompanyModulesException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(Map.of(
                 "status", 400,
