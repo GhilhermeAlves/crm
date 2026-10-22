@@ -53,6 +53,31 @@ describe("createPatientSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("aceita cadastro só com o nome (telefone, e-mail e endereço opcionais)", () => {
+    const result = createPatientSchema().safeParse({ firstName: "Ana" });
+    expect(result.success).toBe(true);
+  });
+
+  it("aceita campos opcionais enviados vazios", () => {
+    const result = createPatientSchema().safeParse({
+      firstName: "Ana",
+      mobile: "",
+      email: "",
+      street: "",
+      addressNumber: "",
+      neighborhood: "",
+      city: "",
+      state: "",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejeita e-mail inválido quando preenchido", () => {
+    const result = createPatientSchema().safeParse({ ...base, email: "ana@" });
+    expect(result.success).toBe(false);
+    expect(issuePaths(result)).toContain("email");
+  });
+
   it("rejeita UF inválida", () => {
     const result = createPatientSchema().safeParse({ ...base, state: "XX" });
     expect(result.success).toBe(false);
