@@ -5,6 +5,7 @@ import com.becommerce.crm.sales.scheduling.domain.AppointmentStatus;
 import com.becommerce.crm.sales.scheduling.domain.LocationKind;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record AppointmentResponse(
@@ -28,5 +29,6 @@ public record AppointmentResponse(
         UUID createdBy,
         Instant createdAt,
         Instant updatedAt,
-        UUID chairId
+        UUID chairId,
+        List<UUID> tagIds
 ) {}

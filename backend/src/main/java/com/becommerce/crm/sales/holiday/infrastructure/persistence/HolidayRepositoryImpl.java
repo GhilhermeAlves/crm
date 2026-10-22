@@ -35,9 +35,9 @@ public class HolidayRepositoryImpl implements HolidayRepository {
 
     @Override
     public List<CompanyHoliday> findByCompanyIdAndDateRange(UUID companyId, LocalDate from, LocalDate to) {
-        return jpa.findByCompanyIdAndDateBetweenOrderByDateAsc(companyId, from, to).stream()
-                .map(HolidayRepositoryImpl::toDomain)
-                .toList();
+        // Feriados anuais ficam gravados no ano em que foram cadastrados: carrega os da
+        // empresa (poucas linhas) e projeta as ocorrências no período pedido.
+        return CompanyHoliday.occurrencesBetween(findByCompanyId(companyId), from, to);
     }
 
     @Override

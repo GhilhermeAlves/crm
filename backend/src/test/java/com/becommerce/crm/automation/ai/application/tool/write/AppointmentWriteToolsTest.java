@@ -57,7 +57,7 @@ class AppointmentWriteToolsTest {
         Instant start = Instant.parse("2026-10-13T13:00:00Z");
         when(appointments.getById(companyId, id)).thenReturn(new AppointmentResponse(id, companyId, null,
                 UUID.randomUUID(), null, null, "Avaliação", start, start.plusSeconds(2700), status,
-                AppointmentSource.INTERNAL, null, null, null, null, null, null, null, null, null));
+                AppointmentSource.INTERNAL, null, null, null, null, null, null, null, null, null, null, List.of()));
         return id;
     }
 

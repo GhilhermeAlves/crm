@@ -19,12 +19,14 @@ public interface RecallJpaRepository extends JpaRepository<RecallJpaEntity, UUID
             "AND r.status <> 'DISMISSED' " +
             "AND (:hostId IS NULL OR r.hostId = :hostId) " +
             "AND (:tag IS NULL OR LOWER(r.tag) LIKE :tag) " +
+            "AND (:tagId IS NULL OR r.tagId = :tagId) " +
             "AND (:like IS NULL OR LOWER(CONCAT(COALESCE(c.firstName, ''), ' ', COALESCE(c.lastName, ''))) LIKE :like) " +
             "AND (:dueFrom IS NULL OR r.dueDate >= :dueFrom) " +
             "AND (:dueTo IS NULL OR r.dueDate < :dueTo)")
     Page<RecallJpaEntity> findByCompany(@Param("companyId") UUID companyId,
                                         @Param("hostId") UUID hostId,
                                         @Param("tag") String tag,
+                                        @Param("tagId") UUID tagId,
                                         @Param("like") String like,
                                         @Param("dueFrom") LocalDate dueFrom,
                                         @Param("dueTo") LocalDate dueTo,

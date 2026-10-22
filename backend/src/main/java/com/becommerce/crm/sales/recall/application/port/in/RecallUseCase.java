@@ -14,7 +14,7 @@ public interface RecallUseCase {
 
     RecallResponse create(UUID companyId, CreateRecallRequest request, UUID createdBy);
 
-    PageResponse<RecallResponse> list(UUID companyId, UUID hostId, String tag, String q, String window,
+    PageResponse<RecallResponse> list(UUID companyId, UUID hostId, String tag, UUID tagId, String q, String window,
                                       int page, int pageSize);
 
     RecallResponse update(UUID companyId, UUID recallId, UpdateRecallRequest request);

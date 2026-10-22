@@ -15,6 +15,8 @@ import com.becommerce.crm.sales.recall.domain.Recall;
 import com.becommerce.crm.sales.recall.domain.RecallWindow;
 import com.becommerce.crm.sales.recall.domain.exception.RecallNotFoundException;
 import com.becommerce.crm.sales.recall.domain.exception.RecallValidationException;
+import com.becommerce.crm.sales.tag.application.dto.TagResponse;
+import com.becommerce.crm.sales.tag.application.port.in.TagUseCase;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
@@ -35,13 +37,27 @@ public class RecallService implements RecallUseCase {
     private final RecallRepository recallRepository;
     private final RecallSuggestionDismissalRepository dismissalRepository;
     private final TenantAuditRecorder auditor;
+    private final TagUseCase tagUseCase;
 
     public RecallService(RecallRepository recallRepository,
                          RecallSuggestionDismissalRepository dismissalRepository,
-                         TenantAuditRecorder auditor) {
+                         TenantAuditRecorder auditor,
+                         TagUseCase tagUseCase) {
         this.recallRepository = recallRepository;
         this.dismissalRepository = dismissalRepository;
         this.auditor = auditor;
+        this.tagUseCase = tagUseCase;
+    }
+
+    /** Vincula o marcador cadastrado; lança TagNotFoundException se não for da empresa. */
+    private void linkTag(UUID companyId, Recall recall, UUID tagId) {
+        try {
+            TagResponse tag = tagUseCase.getById(companyId, tagId);
+            recall.linkTag(tag.id(), tag.name());
+        } finally {
+            // O TagService limpa o TenantContext; reaplica para o save seguinte passar no RLS.
+            TenantContext.setCompanyId(companyId);
+        }
     }
 
     @Override
@@ -52,6 +68,9 @@ public class RecallService implements RecallUseCase {
             LocalDate dueDate = Recall.dueDateFrom(LocalDate.now(), request.dueInAmount(), request.dueInUnit());
             Recall recall = Recall.create(companyId, request.contactId(), request.phone(), request.hostId(),
                     request.tag(), dueDate, createdBy);
+            if (request.tagId() != null) {
+                linkTag(companyId, recall, request.tagId());
+            }
             recallRepository.save(recall);
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SCHEDULING, "Recall",
                     recall.getId().toString(), "Retorno criado para o contato " + request.contactId(),
@@ -64,14 +83,14 @@ public class RecallService implements RecallUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<RecallResponse> list(UUID companyId, UUID hostId, String tag, String q, String window,
+    public PageResponse<RecallResponse> list(UUID companyId, UUID hostId, String tag, UUID tagId, String q, String window,
                                              int page, int pageSize) {
         try {
             TenantContext.setCompanyId(companyId);
             RecallWindow recallWindow = RecallWindow.from(window);
             LocalDate today = LocalDate.now();
             RecallRepository.PageResult result = recallRepository.findByCompany(
-                    companyId, hostId, normalizeLowercase(tag), normalizeLike(q),
+                    companyId, hostId, normalizeLowercase(tag), tagId, normalizeLike(q),
                     recallWindow.fromInclusive(today), recallWindow.toExclusive(today),
                     Math.max(page, 0), Math.max(pageSize, 1));
             List<RecallResponse> content = result.content().stream().map(RecallService::toResponse).toList();
@@ -94,6 +113,12 @@ public class RecallService implements RecallUseCase {
                     ? Recall.dueDateFrom(LocalDate.now(), request.dueInAmount(), request.dueInUnit())
                     : null;
             recall.update(request.phone(), request.hostId(), request.tag(), dueDate);
+            if (request.tagId() != null) {
+                linkTag(companyId, recall, request.tagId());
+            } else if (request.tag() != null && request.tag().isBlank()) {
+                // tag "" sem tagId = remover o marcador.
+                recall.linkTag(null, null);
+            }
             recallRepository.save(recall);
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Recall",
                     recall.getId().toString(), "Retorno atualizado", null, null);
@@ -214,7 +239,7 @@ public class RecallService implements RecallUseCase {
         return new RecallResponse(recall.getId(), recall.getCompanyId(), recall.getContactId(),
                 recall.getPhone(), recall.getHostId(), recall.getTag(), recall.getDueDate(),
                 recall.getStatus(), recall.getAppointmentId(), recall.getCreatedBy(),
-                recall.getCreatedAt(), recall.getUpdatedAt());
+                recall.getCreatedAt(), recall.getUpdatedAt(), recall.getTagId());
     }
 
     private static RecallSuggestionResponse toSuggestionResponse(RecallRepository.SuggestionCandidate candidate) {

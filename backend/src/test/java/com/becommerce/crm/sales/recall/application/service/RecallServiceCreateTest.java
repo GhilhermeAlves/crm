@@ -29,7 +29,8 @@ class RecallServiceCreateTest {
     private final RecallSuggestionDismissalRepository dismissalRepository =
             mock(RecallSuggestionDismissalRepository.class);
     private final TenantAuditRecorder auditor = mock(TenantAuditRecorder.class);
-    private final RecallService service = new RecallService(repository, dismissalRepository, auditor);
+    private final RecallService service = new RecallService(repository, dismissalRepository, auditor,
+            org.mockito.Mockito.mock(com.becommerce.crm.sales.tag.application.port.in.TagUseCase.class));
 
     private final UUID companyId = UUID.randomUUID();
     private final UUID contactId = UUID.randomUUID();
@@ -41,7 +42,7 @@ class RecallServiceCreateTest {
         when(repository.save(any(Recall.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         RecallResponse response = service.create(companyId,
-                new CreateRecallRequest(contactId, "(11) 99999-8888", hostId, "Limpeza", 2, RecallDueUnit.WEEKS),
+                new CreateRecallRequest(contactId, "(11) 99999-8888", hostId, "Limpeza", 2, RecallDueUnit.WEEKS, null),
                 createdBy);
 
         ArgumentCaptor<Recall> captor = ArgumentCaptor.forClass(Recall.class);
@@ -61,7 +62,7 @@ class RecallServiceCreateTest {
         when(repository.save(any(Recall.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.create(companyId,
-                new CreateRecallRequest(contactId, "11999998888", hostId, null, 6, RecallDueUnit.MONTHS),
+                new CreateRecallRequest(contactId, "11999998888", hostId, null, 6, RecallDueUnit.MONTHS, null),
                 createdBy);
 
         ArgumentCaptor<Recall> captor = ArgumentCaptor.forClass(Recall.class);
@@ -74,7 +75,7 @@ class RecallServiceCreateTest {
         when(repository.save(any(Recall.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.create(companyId,
-                new CreateRecallRequest(contactId, "11999998888", hostId, null, 1, RecallDueUnit.DAYS),
+                new CreateRecallRequest(contactId, "11999998888", hostId, null, 1, RecallDueUnit.DAYS, null),
                 createdBy);
 
         verify(auditor).record(eq(companyId), eq(AuditAction.CREATE), eq(AuditModule.SCHEDULING),

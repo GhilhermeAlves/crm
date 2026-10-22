@@ -22,5 +22,6 @@ public record CreateRecallRequest(
         @Min(value = 1, message = "Prazo deve ser maior que zero")
         Integer dueInAmount,
         @NotNull(message = "Unidade do prazo é obrigatória")
-        RecallDueUnit dueInUnit
+        RecallDueUnit dueInUnit,
+        UUID tagId
 ) {}

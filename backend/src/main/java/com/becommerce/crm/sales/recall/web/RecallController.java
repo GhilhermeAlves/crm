@@ -42,11 +42,12 @@ public class RecallController {
             @CurrentCompanyId("Você só pode acessar retornos da sua própria empresa.") UUID companyId,
             @RequestParam(required = false) UUID hostId,
             @RequestParam(required = false) String tag,
+            @RequestParam(required = false) UUID tagId,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "NEXT_7_DAYS") String window,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize) {
-        return ResponseEntity.ok(useCase.list(companyId, hostId, tag, q, window, page, pageSize));
+        return ResponseEntity.ok(useCase.list(companyId, hostId, tag, tagId, q, window, page, pageSize));
     }
 
     @PostMapping

@@ -3,6 +3,7 @@ package com.becommerce.crm.sales.scheduling.application.dto;
 import com.becommerce.crm.sales.scheduling.domain.LocationKind;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
 import java.util.UUID;
 
 public record UpdateAppointmentRequest(
@@ -13,5 +14,6 @@ public record UpdateAppointmentRequest(
         LocationKind locationKind,
         String locationDetail,
         String notes,
-        UUID chairId
+        UUID chairId,
+        List<UUID> tagIds
 ) {}

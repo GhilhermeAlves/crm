@@ -15,7 +15,7 @@ CREATE INDEX idx_tags_company ON tags (company_id);
 
 CREATE TABLE appointment_tags (
     appointment_id UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
-    tag_id          UUID NOT NULL REFERENCES tags(id) ON DELETE RESTRICT,
+    tag_id          UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
     company_id      UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (appointment_id, tag_id)

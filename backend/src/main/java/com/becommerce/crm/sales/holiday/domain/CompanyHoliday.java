@@ -4,6 +4,10 @@ import com.becommerce.crm.sales.holiday.domain.exception.HolidayValidationExcept
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 public class CompanyHoliday {
@@ -49,6 +53,32 @@ public class CompanyHoliday {
                                               boolean recurringYearly, boolean blocksSchedule, Instant createdAt,
                                               Instant updatedAt) {
         return new CompanyHoliday(id, companyId, date, name, recurringYearly, blocksSchedule, createdAt, updatedAt);
+    }
+
+    /**
+     * Ocorrências dentro de [from, to] (inclusive). Feriados anuais se repetem a partir do ano
+     * cadastrado; 29/02 cai em 28/02 nos anos não bissextos. Cada ocorrência mantém o id original.
+     */
+    public static List<CompanyHoliday> occurrencesBetween(Collection<CompanyHoliday> holidays,
+                                                          LocalDate from, LocalDate to) {
+        List<CompanyHoliday> result = new ArrayList<>();
+        for (CompanyHoliday h : holidays) {
+            if (!h.recurringYearly) {
+                if (!h.date.isBefore(from) && !h.date.isAfter(to)) {
+                    result.add(h);
+                }
+                continue;
+            }
+            for (int year = Math.max(from.getYear(), h.date.getYear()); year <= to.getYear(); year++) {
+                LocalDate occurrence = h.date.withYear(year);
+                if (!occurrence.isBefore(from) && !occurrence.isAfter(to)) {
+                    result.add(new CompanyHoliday(h.id, h.companyId, occurrence, h.name, true,
+                            h.blocksSchedule, h.createdAt, h.updatedAt));
+                }
+            }
+        }
+        result.sort(Comparator.comparing(CompanyHoliday::getDate));
+        return result;
     }
 
     public void update(LocalDate date, String name, Boolean recurringYearly, Boolean blocksSchedule) {

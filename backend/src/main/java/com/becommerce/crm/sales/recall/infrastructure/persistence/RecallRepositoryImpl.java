@@ -35,12 +35,12 @@ public class RecallRepositoryImpl implements RecallRepository {
     }
 
     @Override
-    public PageResult findByCompany(UUID companyId, UUID hostId, String tag, String q,
+    public PageResult findByCompany(UUID companyId, UUID hostId, String tag, UUID tagId, String q,
                                     LocalDate dueFromInclusive, LocalDate dueToExclusive,
                                     int page, int pageSize) {
         PageRequest pageRequest = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.ASC, "dueDate"));
         Page<RecallJpaEntity> result = jpaRepository.findByCompany(
-                companyId, hostId, tag, q, dueFromInclusive, dueToExclusive, pageRequest);
+                companyId, hostId, tag, tagId, q, dueFromInclusive, dueToExclusive, pageRequest);
         List<Recall> recalls = result.getContent().stream().map(RecallRepositoryImpl::toDomain).toList();
         return new PageResult(recalls, result.getTotalElements());
     }
@@ -71,6 +71,7 @@ public class RecallRepositoryImpl implements RecallRepository {
         entity.setPhone(recall.getPhone());
         entity.setHostId(recall.getHostId());
         entity.setTag(recall.getTag());
+        entity.setTagId(recall.getTagId());
         entity.setDueDate(recall.getDueDate());
         entity.setStatus(recall.getStatus().name());
         entity.setAppointmentId(recall.getAppointmentId());
@@ -81,9 +82,11 @@ public class RecallRepositoryImpl implements RecallRepository {
     }
 
     private static Recall toDomain(RecallJpaEntity entity) {
-        return Recall.reconstitute(entity.getId(), entity.getCompanyId(), entity.getContactId(),
+        Recall recall = Recall.reconstitute(entity.getId(), entity.getCompanyId(), entity.getContactId(),
                 entity.getPhone(), entity.getHostId(), entity.getTag(), entity.getDueDate(),
                 RecallStatus.valueOf(entity.getStatus()), entity.getAppointmentId(), entity.getCreatedBy(),
                 entity.getCreatedAt(), entity.getUpdatedAt());
+        recall.restoreTagId(entity.getTagId());
+        return recall;
     }
 }

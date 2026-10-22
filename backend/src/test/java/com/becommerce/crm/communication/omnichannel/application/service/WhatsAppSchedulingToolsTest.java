@@ -195,7 +195,7 @@ class WhatsAppSchedulingToolsTest {
     private AppointmentResponse appointment(UUID id, AppointmentStatus status, String notes, Instant start) {
         return new AppointmentResponse(id, companyId, avaliacao.getId(), hostA, null, null, "Avaliação — Maria",
                 start, start.plusSeconds(3600), status, AppointmentSource.WHATSAPP, LocationKind.IN_PERSON, null,
-                null, notes, null, null, null, Instant.now(), Instant.now());
+                null, notes, null, null, null, Instant.now(), Instant.now(), null, List.of());
     }
 
     @Test

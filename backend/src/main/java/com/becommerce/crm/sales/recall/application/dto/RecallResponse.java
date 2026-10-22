@@ -18,5 +18,6 @@ public record RecallResponse(
         UUID appointmentId,
         UUID createdBy,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID tagId
 ) {}
