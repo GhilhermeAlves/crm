@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record CreateAppointmentRequest(
@@ -24,5 +25,7 @@ public record CreateAppointmentRequest(
         LocationKind locationKind,
         String locationDetail,
         String notes,
-        Boolean force
+        Boolean force,
+        UUID chairId,
+        List<UUID> tagIds
 ) {}

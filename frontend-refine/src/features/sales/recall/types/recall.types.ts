@@ -10,7 +10,9 @@ export type Recall = {
   contactId: string;
   phone: string | null;
   hostId: string;
+  /** Texto do marcador (mantido em sincronia com o nome do marcador cadastrado). */
   tag: string | null;
+  tagId: string | null;
   dueDate: string;
   status: RecallStatus;
   appointmentId: string | null;
@@ -33,7 +35,7 @@ export type CreateRecallRequest = {
   contactId: string;
   phone: string;
   hostId: string;
-  tag?: string;
+  tagId?: string;
   dueInAmount: number;
   dueInUnit: RecallDueUnit;
 };

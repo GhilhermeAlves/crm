@@ -84,11 +84,16 @@ import type {
 } from "@/features/sales/scheduling/types/scheduling.types";
 import type { CreateAppointmentFormValues } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import { cn } from "@/lib/utils";
-import { getHolidayForDate } from "@/lib/holidays";
+import { useChairs } from "@/features/sales/chair/hooks/useChairs";
+import { ChairsDayView } from "@/features/sales/chair/components/ChairsDayView";
+import { useTags } from "@/features/sales/tag/hooks/useTags";
+import { TagFilter } from "@/features/sales/tag/components/TagFilter";
+import { useHolidays } from "@/features/sales/holiday/hooks/useHolidays";
+import { buildHolidayLookup } from "@/features/sales/holiday/utils/holidayLookup";
 import { isWeekend } from "date-fns";
 import { RecallsTab } from "@/features/sales/recall/components/RecallsTab";
 
-type CalendarView = "day" | "week" | "month" | "list" | "professionals";
+type CalendarView = "day" | "week" | "month" | "list" | "professionals" | "chairs";
 type AgendaTab = "agenda" | "retornos";
 
 export default function AgendaPage() {
@@ -109,6 +114,7 @@ export default function AgendaPage() {
   } | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string> | null>(null);
   const [statusFilter, setStatusFilter] = useState<Set<AppointmentStatus>>(new Set());
+  const [tagFilter, setTagFilter] = useState<Set<string>>(new Set());
   const fullscreen = useFullscreen<HTMLDivElement>();
   const [patientSearch, setPatientSearch] = useState("");
   const [showHolidays, setShowHolidays] = useState(true);
@@ -135,7 +141,7 @@ export default function AgendaPage() {
         to: endOfDay(endOfMonth(currentDate)).toISOString(),
       };
     }
-    if (view === "professionals") {
+    if (view === "professionals" || view === "chairs") {
       return {
         from: startOfDay(currentDate).toISOString(),
         to: endOfDay(currentDate).toISOString(),
@@ -153,6 +159,19 @@ export default function AgendaPage() {
   const { data: appointmentTypes = [] } = useAppointmentTypes(companyId);
   const { data: members = [] } = useMembers(companyId);
   const { data: contacts = [] } = useContacts(companyId);
+  const { data: chairs = [] } = useChairs(companyId);
+  const { data: tags = [] } = useTags(companyId);
+  const { data: clinicHolidays = [] } = useHolidays(
+    companyId,
+    format(parseISO(range.from), "yyyy-MM-dd"),
+    format(parseISO(range.to), "yyyy-MM-dd"),
+  );
+  const holidayName = useMemo(() => buildHolidayLookup(clinicHolidays), [clinicHolidays]);
+  const activeChairs = useMemo(() => chairs.filter((c) => c.active), [chairs]);
+  const tagColorMap = useMemo(
+    () => new Map(tags.filter((t) => t.color).map((t) => [t.id, t.color as string])),
+    [tags],
+  );
 
   const memberOptions = useMemo(
     () => members.map((m) => ({ id: m.userId, name: m.name })),
@@ -175,10 +194,15 @@ export default function AgendaPage() {
     () =>
       filterAppointments(
         appointments,
-        { hostIds: effectiveSelectedIds, statuses: statusFilter, search: patientSearch },
+        {
+          hostIds: effectiveSelectedIds,
+          statuses: statusFilter,
+          search: patientSearch,
+          tagIds: tagFilter,
+        },
         contacts,
       ),
-    [appointments, effectiveSelectedIds, statusFilter, patientSearch, contacts],
+    [appointments, effectiveSelectedIds, statusFilter, patientSearch, tagFilter, contacts],
   );
 
   const filteredBlocks = useMemo(
@@ -302,7 +326,7 @@ export default function AgendaPage() {
   }, [selectedAppointment, memberOptions]);
 
   const periodLabel = useMemo(() => {
-    if (view === "day" || view === "professionals")
+    if (view === "day" || view === "professionals" || view === "chairs")
       return format(currentDate, "dd 'de' MMMM yyyy", { locale: ptBR });
     if (view === "month" || view === "list")
       return format(currentDate, "MMMM 'de' yyyy", { locale: ptBR });
@@ -351,7 +375,9 @@ export default function AgendaPage() {
                     ? "Mês"
                     : view === "list"
                       ? "Lista"
-                      : "Profissionais"}
+                      : view === "chairs"
+                        ? "Cadeiras"
+                        : "Profissionais"}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-64 space-y-4 p-4">
@@ -363,6 +389,7 @@ export default function AgendaPage() {
                   ["month", "Mês"],
                   ["list", "Lista"],
                   ["professionals", "Profissionais"],
+                  ["chairs", "Cadeiras"],
                 ] as const
               ).map(([value, label]) => (
                 <button
@@ -453,6 +480,7 @@ export default function AgendaPage() {
           />
         </div>
         <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+        <TagFilter tags={tags} value={tagFilter} onChange={setTagFilter} />
 
         <div className="mx-auto" />
 
@@ -592,7 +620,7 @@ export default function AgendaPage() {
               }}
               onAppointmentClick={handleAppointmentClick}
               memberColorMap={memberColorMap}
-              showHolidays={showHolidays}
+              holidayName={showHolidays ? holidayName : undefined}
               showWeekends={showWeekends}
             />
           ) : view === "list" ? (
@@ -601,6 +629,15 @@ export default function AgendaPage() {
               onAppointmentClick={handleAppointmentClick}
               memberColorMap={memberColorMap}
               memberOptions={memberOptions}
+            />
+          ) : view === "chairs" ? (
+            <ChairsDayView
+              date={currentDate}
+              chairs={chairs}
+              appointments={filteredAppointments}
+              onAppointmentClick={handleAppointmentClick}
+              selectedAppointmentId={selectedAppointment?.id}
+              memberColorMap={memberColorMap}
             />
           ) : view === "professionals" ? (
             <div className="flex flex-1 items-center justify-center text-muted-foreground">
@@ -617,6 +654,8 @@ export default function AgendaPage() {
               onAppointmentDrop={perms.canUpdate ? handleAppointmentDrop : undefined}
               selectedAppointmentId={selectedAppointment?.id}
               memberColorMap={memberColorMap}
+              tagColorMap={tagColorMap}
+              holidayName={showHolidays ? holidayName : undefined}
               startHour={parseInt(workHoursStart.split(":")[0], 10)}
               endHour={parseInt(workHoursEnd.split(":")[0], 10) || 24}
               showWeekends={showWeekends}
@@ -637,6 +676,8 @@ export default function AgendaPage() {
             onDelete={handleDelete}
             canUpdate={perms.canUpdate}
             canDelete={perms.canDelete}
+            chairs={chairs}
+            tags={tags}
           />
         )}
       </div>
@@ -660,6 +701,8 @@ export default function AgendaPage() {
         isLoadingBlock={createBlock.isPending}
         workHoursStart={workHoursStart}
         workHoursEnd={workHoursEnd}
+        chairs={activeChairs}
+        tags={tags}
         appointmentTypes={appointmentTypes}
         members={memberOptions}
         contacts={contacts}
@@ -679,7 +722,7 @@ function MonthView({
   onDayClick,
   onAppointmentClick,
   memberColorMap,
-  showHolidays,
+  holidayName,
   showWeekends,
 }: {
   currentDate: Date;
@@ -687,7 +730,8 @@ function MonthView({
   onDayClick: (d: Date) => void;
   onAppointmentClick: (a: Appointment) => void;
   memberColorMap: Map<string, string>;
-  showHolidays: boolean;
+  /** Nome do feriado (clínica ou nacional); ausente = feriados ocultos. */
+  holidayName?: (day: Date) => string | undefined;
   showWeekends: boolean;
 }) {
   const monthStart = startOfMonth(currentDate);
@@ -723,7 +767,7 @@ function MonthView({
           const isCurrentMonth = isSameMonth(day, currentDate);
           const today = isSameDay(day, new Date());
           const dayAppts = appointments.filter((a) => isSameDay(parseISO(a.startAt), day));
-          const holiday = showHolidays ? getHolidayForDate(day) : undefined;
+          const holiday = holidayName?.(day);
 
           return (
             <div
@@ -747,7 +791,7 @@ function MonthView({
                 </span>
                 {holiday && (
                   <span className="truncate text-[9px] font-medium text-red-600 dark:text-red-400">
-                    {holiday.name}
+                    {holiday}
                   </span>
                 )}
               </div>

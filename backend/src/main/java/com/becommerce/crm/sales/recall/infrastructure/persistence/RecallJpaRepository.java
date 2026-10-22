@@ -19,54 +19,70 @@ public interface RecallJpaRepository extends JpaRepository<RecallJpaEntity, UUID
             "AND r.status <> 'DISMISSED' " +
             "AND (:hostId IS NULL OR r.hostId = :hostId) " +
             "AND (:tag IS NULL OR LOWER(r.tag) LIKE :tag) " +
+            "AND (:tagId IS NULL OR r.tagId = :tagId) " +
             "AND (:like IS NULL OR LOWER(CONCAT(COALESCE(c.firstName, ''), ' ', COALESCE(c.lastName, ''))) LIKE :like) " +
             "AND (:dueFrom IS NULL OR r.dueDate >= :dueFrom) " +
             "AND (:dueTo IS NULL OR r.dueDate < :dueTo)")
     Page<RecallJpaEntity> findByCompany(@Param("companyId") UUID companyId,
                                         @Param("hostId") UUID hostId,
                                         @Param("tag") String tag,
+                                        @Param("tagId") UUID tagId,
                                         @Param("like") String like,
                                         @Param("dueFrom") LocalDate dueFrom,
                                         @Param("dueTo") LocalDate dueTo,
                                         Pageable pageable);
 
     @Query(nativeQuery = true, value = """
+            WITH latest_completed AS (
+                SELECT DISTINCT ON (a.company_id, a.contact_id)
+                       a.company_id,
+                       a.contact_id,
+                       a.host_id,
+                       a.start_at AS "lastAppointmentAt"
+                FROM appointments a
+                JOIN contacts c ON c.id = a.contact_id
+                WHERE a.company_id = :companyId
+                  AND a.status = 'COMPLETED'
+                  AND a.contact_id IS NOT NULL
+                  AND c.deleted_at IS NULL
+                ORDER BY a.company_id, a.contact_id, a.start_at DESC
+            )
             SELECT
                 c.id AS "contactId",
                 c.first_name AS "firstName",
                 c.last_name AS "lastName",
                 c.mobile AS "mobile",
                 c.phone AS "phone",
-                a.host_id AS "hostId",
-                a.start_at AS "lastAppointmentAt",
+                lc.host_id AS "hostId",
+                lc."lastAppointmentAt",
                 COALESCE(types.recentProcedures, '') AS "recentProcedures",
                 EXISTS (
                     SELECT 1 FROM appointments f
-                    WHERE f.company_id = a.company_id
-                      AND f.contact_id = a.contact_id
+                    WHERE f.company_id = lc.company_id
+                      AND f.contact_id = lc.contact_id
                       AND f.status <> 'CANCELED'
                       AND f.start_at >= :now
                 ) AS "hasFutureAppointment",
                 EXISTS (
                     SELECT 1 FROM recalls rl
-                    WHERE rl.company_id = a.company_id
-                      AND rl.contact_id = a.contact_id
+                    WHERE rl.company_id = lc.company_id
+                      AND rl.contact_id = lc.contact_id
                       AND rl.status = 'PENDING'
                 ) AS "hasPendingRecall",
                 EXISTS (
                     SELECT 1 FROM recall_suggestion_dismissals d
-                    WHERE d.company_id = a.company_id
-                      AND d.contact_id = a.contact_id
+                    WHERE d.company_id = lc.company_id
+                      AND d.contact_id = lc.contact_id
                 ) AS "dismissed"
-            FROM appointments a
-            JOIN contacts c ON c.id = a.contact_id
+            FROM latest_completed lc
+            JOIN contacts c ON c.id = lc.contact_id
             LEFT JOIN LATERAL (
                 SELECT string_agg(t.name, E'\\n' ORDER BY ra."startAt" DESC) AS "recentProcedures"
                 FROM (
                     SELECT ra2.appointment_type_id, ra2.start_at AS "startAt"
                     FROM appointments ra2
-                    WHERE ra2.company_id = a.company_id
-                      AND ra2.contact_id = a.contact_id
+                    WHERE ra2.company_id = lc.company_id
+                      AND ra2.contact_id = lc.contact_id
                       AND ra2.status = 'COMPLETED'
                       AND ra2.appointment_type_id IS NOT NULL
                     ORDER BY ra2.start_at DESC
@@ -74,19 +90,8 @@ public interface RecallJpaRepository extends JpaRepository<RecallJpaEntity, UUID
                 ) ra
                 JOIN appointment_types t ON t.id = ra.appointment_type_id
             ) types ON TRUE
-            WHERE a.company_id = :companyId
-              AND a.status = 'COMPLETED'
-              AND a.contact_id IS NOT NULL
-              AND c.deleted_at IS NULL
-              AND a.start_at < :cutoff
-              AND a.start_at = (
-                  SELECT MAX(a2.start_at)
-                  FROM appointments a2
-                  WHERE a2.company_id = a.company_id
-                    AND a2.contact_id = a.contact_id
-                    AND a2.status = 'COMPLETED'
-              )
-            ORDER BY a.start_at ASC
+            WHERE lc."lastAppointmentAt" < :cutoff
+            ORDER BY lc."lastAppointmentAt" ASC
             """)
     List<RecallSuggestionRow> findSuggestionCandidates(@Param("companyId") UUID companyId,
                                                        @Param("cutoff") Instant cutoff,

@@ -45,7 +45,7 @@ class SearchAppointmentsToolTest {
         Instant s = Instant.parse(start);
         return new AppointmentResponse(UUID.randomUUID(), companyId, null, UUID.randomUUID(), contactId, null,
                 "Consulta", s, s.plusSeconds(3600), status, AppointmentSource.INTERNAL, null, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null, List.of());
     }
 
     @SuppressWarnings("unchecked")

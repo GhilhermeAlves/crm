@@ -28,7 +28,10 @@ class AppointmentServiceCancelTest {
 
     private final AppointmentRepository repository = mock(AppointmentRepository.class);
     private final AppointmentService service = new AppointmentService(repository,
-            mock(ScheduleBlockRepository.class), mock(TenantAuditRecorder.class));
+            mock(ScheduleBlockRepository.class), mock(TenantAuditRecorder.class),
+            mock(com.becommerce.crm.sales.chair.application.port.in.ChairUseCase.class),
+            mock(com.becommerce.crm.sales.tag.application.port.in.TagUseCase.class),
+            mock(com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTagRepository.class));
     private final UUID companyId = UUID.randomUUID();
 
     private Appointment appointment(UUID company) {

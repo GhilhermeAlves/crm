@@ -3,9 +3,12 @@ package com.becommerce.crm.sales.scheduling.application.service;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
+import com.becommerce.crm.sales.chair.application.port.in.ChairUseCase;
+import com.becommerce.crm.sales.tag.application.port.in.TagUseCase;
 import com.becommerce.crm.sales.scheduling.application.dto.*;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentRepository;
+import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTagRepository;
 import com.becommerce.crm.sales.scheduling.application.port.out.ScheduleBlockRepository;
 import com.becommerce.crm.sales.scheduling.domain.*;
 import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingNotFoundException;
@@ -17,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -29,13 +34,22 @@ public class AppointmentService implements AppointmentUseCase {
     private final AppointmentRepository appointmentRepository;
     private final ScheduleBlockRepository blockRepository;
     private final TenantAuditRecorder auditor;
+    private final ChairUseCase chairUseCase;
+    private final TagUseCase tagUseCase;
+    private final AppointmentTagRepository tagRepository;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               ScheduleBlockRepository blockRepository,
-                              TenantAuditRecorder auditor) {
+                              TenantAuditRecorder auditor,
+                              ChairUseCase chairUseCase,
+                              TagUseCase tagUseCase,
+                              AppointmentTagRepository tagRepository) {
         this.appointmentRepository = appointmentRepository;
         this.blockRepository = blockRepository;
         this.auditor = auditor;
+        this.chairUseCase = chairUseCase;
+        this.tagUseCase = tagUseCase;
+        this.tagRepository = tagRepository;
     }
 
     @Override
@@ -50,19 +64,24 @@ public class AppointmentService implements AppointmentUseCase {
                                       AppointmentSource source) {
         try {
             TenantContext.setCompanyId(companyId);
+            validateTags(companyId, request.tagIds());
             boolean force = request.force() != null && request.force();
             if (!force) {
                 checkConflicts(request.hostId(), request.startAt(), request.endAt(), companyId, null);
             } else {
                 checkHardConflicts(request.hostId(), request.startAt(), request.endAt(), companyId, null);
             }
+            checkChairConflicts(companyId, request.chairId(), request.startAt(), request.endAt(), null);
 
             Appointment appointment = Appointment.create(companyId, request.appointmentTypeId(),
                     request.hostId(), request.contactId(), request.opportunityId(),
                     request.title(), request.startAt(), request.endAt(),
                     source, request.locationKind(), request.locationDetail(),
-                    request.notes(), createdBy);
+                    request.notes(), createdBy, request.chairId());
             appointmentRepository.save(appointment);
+            if (request.tagIds() != null) {
+                tagRepository.replace(companyId, appointment.getId(), request.tagIds());
+            }
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SCHEDULING, "Appointment",
                     appointment.getId().toString(), "Agendamento criado: " + appointment.getTitle(),
@@ -90,9 +109,17 @@ public class AppointmentService implements AppointmentUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             Appointment appointment = requireOwned(companyId, appointmentId);
+            validateTags(companyId, request.tagIds());
+            // A atualização substitui a cadeira (null = sem cadeira): só a nova precisa estar livre.
+            checkChairConflicts(companyId, request.chairId(), appointment.getStartAt(),
+                    appointment.getEndAt(), appointmentId);
             appointment.update(request.title(), request.contactId(), request.opportunityId(),
-                    request.locationKind(), request.locationDetail(), request.notes());
+                    request.locationKind(), request.locationDetail(), request.notes(), request.chairId());
             appointmentRepository.save(appointment);
+            // tagIds ausente mantém os marcadores; uma lista (mesmo vazia) substitui.
+            if (request.tagIds() != null) {
+                tagRepository.replace(companyId, appointmentId, request.tagIds());
+            }
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Appointment",
                     appointment.getId().toString(), "Agendamento atualizado: " + appointment.getTitle(),
@@ -113,9 +140,11 @@ public class AppointmentService implements AppointmentUseCase {
             if (!force) {
                 checkConflicts(appointment.getHostId(), request.startAt(), request.endAt(),
                         companyId, appointmentId);
+                checkChairConflicts(companyId, appointment.getChairId(), request.startAt(), request.endAt(), appointmentId);
             } else {
                 checkHardConflicts(appointment.getHostId(), request.startAt(), request.endAt(),
                         companyId, appointmentId);
+                checkChairConflicts(companyId, appointment.getChairId(), request.startAt(), request.endAt(), appointmentId);
             }
 
             appointment.reschedule(request.startAt(), request.endAt());
@@ -199,8 +228,7 @@ public class AppointmentService implements AppointmentUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             validateRange(from, to);
-            return appointmentRepository.findByCompanyIdAndRange(companyId, from, to, hostIds)
-                    .stream().map(AppointmentService::toResponse).toList();
+            return toResponses(appointmentRepository.findByCompanyIdAndRange(companyId, from, to, hostIds));
         } finally {
             TenantContext.clear();
         }
@@ -211,9 +239,8 @@ public class AppointmentService implements AppointmentUseCase {
     public List<AppointmentResponse> listByContact(UUID companyId, UUID contactId) {
         try {
             TenantContext.setCompanyId(companyId);
-            return appointmentRepository
-                    .findByCompanyIdAndContactIdOrderByStartAtDesc(companyId, contactId, CONTACT_HISTORY_LIMIT)
-                    .stream().map(AppointmentService::toResponse).toList();
+            return toResponses(appointmentRepository
+                    .findByCompanyIdAndContactIdOrderByStartAtDesc(companyId, contactId, CONTACT_HISTORY_LIMIT));
         } finally {
             TenantContext.clear();
         }
@@ -241,6 +268,30 @@ public class AppointmentService implements AppointmentUseCase {
         }
     }
 
+    private void checkChairConflicts(UUID companyId, UUID chairId, Instant start, Instant end, UUID excludeAppointmentId) {
+        if (chairId == null) {
+            return;
+        }
+        boolean chairExists = chairUseCase.existsInCompany(companyId, chairId);
+        // O outro use case limpa o TenantContext no finally; sem reaplicar, os próximos
+        // comandos SQL desta transação rodariam sem empresa e o RLS os bloquearia.
+        TenantContext.setCompanyId(companyId);
+        if (!chairExists) {
+            throw new SchedulingValidationException("Cadeira inválida para esta empresa.");
+        }
+        Interval proposed = new Interval(start, end);
+        List<Appointment> existing = appointmentRepository.findByCompanyIdAndRange(companyId, start, end, null);
+        boolean hasConflict = existing.stream()
+                .filter(a -> a.getChairId() != null)
+                .filter(a -> a.getChairId().equals(chairId))
+                .filter(a -> a.getStatus() != AppointmentStatus.CANCELED)
+                .filter(a -> excludeAppointmentId == null || !a.getId().equals(excludeAppointmentId))
+                .anyMatch(a -> proposed.overlaps(new Interval(a.getStartAt(), a.getEndAt())));
+        if (hasConflict) {
+            throw new SlotUnavailableException();
+        }
+    }
+
     private void validateRange(Instant from, Instant to) {
         if (from == null || to == null) {
             throw new SchedulingValidationException("Período de consulta é obrigatório.");
@@ -259,11 +310,38 @@ public class AppointmentService implements AppointmentUseCase {
         return appointment;
     }
 
-    private static AppointmentResponse toResponse(Appointment a) {
+    private void validateTags(UUID companyId, Collection<UUID> tagIds) {
+        if (tagIds == null) {
+            return;
+        }
+        for (UUID tagId : tagIds) {
+            boolean valid = tagId != null && tagUseCase.existsInCompany(companyId, tagId);
+            TenantContext.setCompanyId(companyId); // ver checkChairConflicts
+            if (!valid) {
+                throw new SchedulingValidationException("Marcador inválido para esta empresa.");
+            }
+        }
+    }
+
+    private AppointmentResponse toResponse(Appointment a) {
+        List<UUID> tagIds = tagRepository.findTagIds(List.of(a.getId())).getOrDefault(a.getId(), List.of());
+        return toResponse(a, tagIds);
+    }
+
+    /** Lista com os marcadores carregados numa única consulta. */
+    private List<AppointmentResponse> toResponses(List<Appointment> appointments) {
+        Map<UUID, List<UUID>> tags = tagRepository.findTagIds(appointments.stream().map(Appointment::getId).toList());
+        return appointments.stream()
+                .map(a -> toResponse(a, tags.getOrDefault(a.getId(), List.of())))
+                .toList();
+    }
+
+    private static AppointmentResponse toResponse(Appointment a, List<UUID> tagIds) {
         return new AppointmentResponse(a.getId(), a.getCompanyId(), a.getAppointmentTypeId(),
                 a.getHostId(), a.getContactId(), a.getOpportunityId(), a.getTitle(),
                 a.getStartAt(), a.getEndAt(), a.getStatus(), a.getSource(), a.getLocationKind(),
                 a.getLocationDetail(), a.getMeetingUrl(), a.getNotes(), a.getCancelReason(),
-                a.getPublicToken(), a.getCreatedBy(), a.getCreatedAt(), a.getUpdatedAt());
+                a.getPublicToken(), a.getCreatedBy(), a.getCreatedAt(), a.getUpdatedAt(), a.getChairId(),
+                tagIds);
     }
 }

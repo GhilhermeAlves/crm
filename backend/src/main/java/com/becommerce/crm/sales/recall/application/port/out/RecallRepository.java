@@ -14,7 +14,7 @@ public interface RecallRepository {
 
     Optional<Recall> findById(UUID id);
 
-    PageResult findByCompany(UUID companyId, UUID hostId, String tag, String q,
+    PageResult findByCompany(UUID companyId, UUID hostId, String tag, UUID tagId, String q,
                              LocalDate dueFromInclusive, LocalDate dueToExclusive,
                              int page, int pageSize);
 

@@ -37,7 +37,8 @@ class RecallServiceListTest {
     private final RecallSuggestionDismissalRepository dismissalRepository =
             mock(RecallSuggestionDismissalRepository.class);
     private final TenantAuditRecorder auditor = mock(TenantAuditRecorder.class);
-    private final RecallService service = new RecallService(repository, dismissalRepository, auditor);
+    private final RecallService service = new RecallService(repository, dismissalRepository, auditor,
+            org.mockito.Mockito.mock(com.becommerce.crm.sales.tag.application.port.in.TagUseCase.class));
 
     private final UUID companyId = UUID.randomUUID();
     private final UUID hostId = UUID.randomUUID();
@@ -50,14 +51,14 @@ class RecallServiceListTest {
 
     @Test
     void todayWindowPassesHalfOpenRangeForToday() {
-        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
+        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
                 .thenReturn(new RecallRepository.PageResult(List.of(), 0));
 
-        service.list(companyId, null, null, null, "TODAY", 0, 20);
+        service.list(companyId, null, null, null, null, "TODAY", 0, 20);
 
         ArgumentCaptor<LocalDate> from = ArgumentCaptor.forClass(LocalDate.class);
         ArgumentCaptor<LocalDate> to = ArgumentCaptor.forClass(LocalDate.class);
-        verify(repository).findByCompany(eq(companyId), isNull(), isNull(), isNull(),
+        verify(repository).findByCompany(eq(companyId), isNull(), isNull(), isNull(), isNull(),
                 from.capture(), to.capture(), eq(0), eq(20));
         assertEquals(LocalDate.now(), from.getValue());
         assertEquals(LocalDate.now().plusDays(1), to.getValue());
@@ -65,14 +66,14 @@ class RecallServiceListTest {
 
     @Test
     void overdueWindowEndsAtTodayExclusive() {
-        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
+        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
                 .thenReturn(new RecallRepository.PageResult(List.of(), 0));
 
-        service.list(companyId, null, null, null, "OVERDUE", 0, 20);
+        service.list(companyId, null, null, null, null, "OVERDUE", 0, 20);
 
         ArgumentCaptor<LocalDate> from = ArgumentCaptor.forClass(LocalDate.class);
         ArgumentCaptor<LocalDate> to = ArgumentCaptor.forClass(LocalDate.class);
-        verify(repository).findByCompany(eq(companyId), isNull(), isNull(), isNull(),
+        verify(repository).findByCompany(eq(companyId), isNull(), isNull(), isNull(), isNull(),
                 from.capture(), to.capture(), eq(0), eq(20));
         assertNull(from.getValue());
         assertEquals(LocalDate.now(), to.getValue());
@@ -80,14 +81,14 @@ class RecallServiceListTest {
 
     @Test
     void defaultsToNextSevenDaysWhenWindowIsBlank() {
-        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
+        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
                 .thenReturn(new RecallRepository.PageResult(List.of(), 0));
 
-        service.list(companyId, null, null, null, null, 0, 20);
+        service.list(companyId, null, null, null, null, null, 0, 20);
 
         ArgumentCaptor<LocalDate> from = ArgumentCaptor.forClass(LocalDate.class);
         ArgumentCaptor<LocalDate> to = ArgumentCaptor.forClass(LocalDate.class);
-        verify(repository).findByCompany(eq(companyId), isNull(), isNull(), isNull(),
+        verify(repository).findByCompany(eq(companyId), isNull(), isNull(), isNull(), isNull(),
                 from.capture(), to.capture(), eq(0), eq(20));
         assertEquals(LocalDate.now(), from.getValue());
         assertEquals(LocalDate.now().plusDays(8), to.getValue());
@@ -95,29 +96,29 @@ class RecallServiceListTest {
 
     @Test
     void normalizesSearchAndTagFilters() {
-        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
+        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
                 .thenReturn(new RecallRepository.PageResult(List.of(), 0));
 
-        service.list(companyId, hostId, "  Limpeza ", "  Maria  ", "ALL", 0, 20);
+        service.list(companyId, hostId, "  Limpeza ", null, "  Maria  ", "ALL", 0, 20);
 
-        verify(repository).findByCompany(eq(companyId), eq(hostId), eq("limpeza"), eq("%maria%"),
+        verify(repository).findByCompany(eq(companyId), eq(hostId), eq("limpeza"), isNull(), eq("%maria%"),
                 isNull(), isNull(), eq(0), eq(20));
     }
 
     @Test
     void rejectsUnknownWindow() {
         assertThrows(RecallValidationException.class,
-                () -> service.list(companyId, null, null, null, "SOMETIME", 0, 20));
-        verify(repository, never()).findByCompany(any(), any(), any(), any(), any(), any(), anyInt(), anyInt());
+                () -> service.list(companyId, null, null, null, null, "SOMETIME", 0, 20));
+        verify(repository, never()).findByCompany(any(), any(), any(), any(), any(), any(), any(), anyInt(), anyInt());
     }
 
     @Test
     void mapsContentIntoPageResponse() {
         Recall stored = recall(companyId);
-        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
+        when(repository.findByCompany(any(), any(), any(), any(), any(), any(), any(), eq(0), eq(20)))
                 .thenReturn(new RecallRepository.PageResult(List.of(stored), 1));
 
-        PageResponse<RecallResponse> page = service.list(companyId, null, null, null, "NEXT_7_DAYS", 0, 20);
+        PageResponse<RecallResponse> page = service.list(companyId, null, null, null, null, "NEXT_7_DAYS", 0, 20);
 
         assertEquals(1, page.totalElements());
         assertEquals(1, page.content().size());
@@ -131,7 +132,7 @@ class RecallServiceListTest {
         when(repository.findById(foreign.getId())).thenReturn(Optional.of(foreign));
 
         assertThrows(RecallNotFoundException.class, () -> service.update(companyId, foreign.getId(),
-                new UpdateRecallRequest(null, null, null, null, null)));
+                new UpdateRecallRequest(null, null, null, null, null, null)));
         verify(repository, never()).save(any(Recall.class));
     }
 
@@ -141,7 +142,7 @@ class RecallServiceListTest {
         when(repository.findById(stored.getId())).thenReturn(Optional.of(stored));
 
         assertThrows(RecallValidationException.class, () -> service.update(companyId, stored.getId(),
-                new UpdateRecallRequest(null, null, null, 2, null)));
+                new UpdateRecallRequest(null, null, null, 2, null, null)));
     }
 
     @Test
@@ -151,7 +152,7 @@ class RecallServiceListTest {
         when(repository.save(any(Recall.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         RecallResponse response = service.update(companyId, stored.getId(),
-                new UpdateRecallRequest(null, null, null, 10, RecallDueUnit.DAYS));
+                new UpdateRecallRequest(null, null, null, 10, RecallDueUnit.DAYS, null));
 
         assertEquals(LocalDate.now().plusDays(10), response.dueDate());
     }

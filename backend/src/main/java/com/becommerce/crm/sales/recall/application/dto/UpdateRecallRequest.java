@@ -14,5 +14,6 @@ public record UpdateRecallRequest(
         String tag,
         @Min(value = 1, message = "Prazo deve ser maior que zero")
         Integer dueInAmount,
-        RecallDueUnit dueInUnit
+        RecallDueUnit dueInUnit,
+        UUID tagId
 ) {}

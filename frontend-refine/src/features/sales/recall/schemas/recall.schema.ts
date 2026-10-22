@@ -8,11 +8,7 @@ export const createRecallSchema = z.object({
     .min(1, "Celular é obrigatório")
     .max(20, "Celular deve ter no máximo 20 caracteres"),
   hostId: z.string().uuid("Dentista é obrigatório"),
-  tag: z
-    .string()
-    .max(120, "Marcador deve ter no máximo 120 caracteres")
-    .optional()
-    .or(z.literal("")),
+  tagId: z.string().uuid().optional(),
   dueInAmount: z.coerce
     .number()
     .int("Prazo deve ser um número inteiro")

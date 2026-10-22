@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { whatsappUrl } from "@/lib/whatsapp";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,6 +17,7 @@ import {
   CircleCheck,
   CircleX,
   MessageCircle,
+  Armchair,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -38,6 +40,9 @@ interface Props {
   onDelete: (id: string) => void;
   canUpdate: boolean;
   canDelete: boolean;
+  /** Cadastros da empresa, para mostrar o nome/cor da cadeira e dos marcadores. */
+  chairs?: { id: string; name: string; color: string | null }[];
+  tags?: { id: string; name: string; color: string | null }[];
 }
 
 /** Situação do atendimento, em botões de um clique. */
@@ -51,12 +56,7 @@ export function canMoveTo(current: AppointmentStatus, target: AppointmentStatus)
   return target !== "SCHEDULED";
 }
 
-/** Só dígitos, com DDI 55 quando o número veio sem ele. */
-export function whatsappUrl(phone: string): string | null {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 10) return null;
-  return `https://wa.me/${digits.length <= 11 ? `55${digits}` : digits}`;
-}
+export { whatsappUrl };
 
 export function AppointmentDetailPanel({
   appointment,
@@ -67,7 +67,11 @@ export function AppointmentDetailPanel({
   onDelete,
   canUpdate,
   canDelete,
+  chairs = [],
+  tags = [],
 }: Props) {
+  const chair = chairs.find((c) => c.id === appointment.chairId);
+  const appointmentTags = tags.filter((t) => appointment.tagIds?.includes(t.id));
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const start = new Date(appointment.startAt);
@@ -196,6 +200,30 @@ export function AppointmentDetailPanel({
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <User className="h-4 w-4 shrink-0" />
           <span>{hostName}</span>
+        </div>
+      )}
+
+      {chair && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Armchair className="h-4 w-4 shrink-0" />
+          <span>{chair.name}</span>
+        </div>
+      )}
+
+      {appointmentTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5" aria-label="Marcadores do agendamento">
+          {appointmentTags.map((t) => (
+            <span
+              key={t.id}
+              className="flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs"
+            >
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: t.color ?? "currentColor" }}
+              />
+              {t.name}
+            </span>
+          ))}
         </div>
       )}
 
