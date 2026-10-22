@@ -56,7 +56,9 @@ public class BotDetectionToolProvider implements AgentToolProvider {
     public Optional<String> guidance(AgentConfig agent, AgentToolSession session) {
         return Optional.of("""
                 Robôs e respostas automáticas (marcar_como_robo):
-                - Se quem escreve for outro robô (menu de opções, "mensagem automática", assistente virtual, respostas que ignoram o que você disse ou a mesma saudação repetida), NÃO tente agendar nem continuar: chame marcar_como_robo.
+                - Se quem escreve for outro robô (menu de opções, "mensagem automática", assistente virtual, \
+                respostas que ignoram o que você disse ou a mesma saudação repetida), \
+                NÃO tente agendar nem continuar: chame marcar_como_robo.
                 - Depois de chamar, responda exatamente __SILENCIO__ (nada será enviado).
                 - Na dúvida se é uma pessoa, continue normalmente.""");
     }
