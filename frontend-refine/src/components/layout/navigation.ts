@@ -22,6 +22,13 @@ import {
   CalendarDays,
   FileText,
   CircleDollarSign,
+  LayoutDashboard,
+  Briefcase,
+  Headphones,
+  Wrench,
+  LineChart,
+  Settings,
+  ServerCog,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 
@@ -36,12 +43,15 @@ export interface NavItem {
 
 export interface NavGroup {
   title?: string;
+  /** Ícone do grupo: aparece no título e, com a barra recolhida, abre o menu do grupo. */
+  icon?: LucideIcon;
   items: NavItem[];
 }
 
 export const NAVIGATION: NavGroup[] = [
   {
     title: "Principal",
+    icon: LayoutDashboard,
     items: [
       { label: "Início", href: ROUTES.CRM, icon: Home },
       { label: "Agenda", href: ROUTES.AGENDA, icon: CalendarDays, permission: "appointment:read" },
@@ -56,6 +66,7 @@ export const NAVIGATION: NavGroup[] = [
   },
   {
     title: "Comercial",
+    icon: Briefcase,
     items: [
       { label: "Leads", href: ROUTES.LEADS, icon: Users, permission: "lead:page:view" },
       { label: "Contatos", href: ROUTES.CONTACTS, icon: Contact, permission: "contact:page:view" },
@@ -75,6 +86,7 @@ export const NAVIGATION: NavGroup[] = [
   },
   {
     title: "Atendimento",
+    icon: Headphones,
     items: [
       {
         label: "Inbox",
@@ -110,6 +122,7 @@ export const NAVIGATION: NavGroup[] = [
   },
   {
     title: "Operação",
+    icon: Wrench,
     items: [
       { label: "Catálogo", href: ROUTES.CATALOG, icon: Package, permission: "catalog:read" },
       { label: "Estoque", href: ROUTES.INVENTORY, icon: Boxes, permission: "inventory:read" },
@@ -128,6 +141,7 @@ export const NAVIGATION: NavGroup[] = [
   },
   {
     title: "Análise",
+    icon: LineChart,
     items: [
       {
         label: "Relatórios",
@@ -162,6 +176,7 @@ export const NAVIGATION: NavGroup[] = [
   },
   {
     title: "Configurações",
+    icon: Settings,
     items: [
       {
         label: "Minha Empresa",
@@ -221,6 +236,7 @@ export const NAVIGATION: NavGroup[] = [
   },
   {
     title: "Sistema",
+    icon: ServerCog,
     items: [
       { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, permission: "company:view" },
       {
