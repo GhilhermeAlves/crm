@@ -305,4 +305,88 @@ class ContactServiceTest {
         assertEquals(2, contactService.search(companyId, "empresa.com", 10).size());
         assertEquals(1, contactService.search(companyId, "bruno", 10).size());
     }
+
+    // ===== Módulo Pacientes (V104) =====
+
+    @Test
+    void createPatientShouldMarkContactAsPatientSinceToday() {
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ContactResponse response = contactService.createPatient(companyId,
+                createRequest("Ana", "Souza", "ana@empresa.com", null, null), UUID.randomUUID());
+
+        assertTrue(response.isPatient());
+        assertEquals(java.time.LocalDate.now(), response.patientSince());
+    }
+
+    @Test
+    void createShouldNotMarkPlainContactAsPatient() {
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ContactResponse response = contactService.create(companyId,
+                createRequest("Ana", "Souza", "ana@empresa.com", null, null), UUID.randomUUID());
+
+        assertFalse(response.isPatient());
+        assertNull(response.patientSince());
+    }
+
+    @Test
+    void makePatientShouldBeIdempotentAndKeepOriginalDate() {
+        Contact contact = existingContact();
+        java.time.LocalDate since = java.time.LocalDate.of(2025, 1, 10);
+        contact.restorePatient(true, since);
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+
+        ContactResponse response = contactService.makePatient(companyId, contact.getId());
+
+        assertTrue(response.isPatient());
+        assertEquals(since, response.patientSince());
+        verify(contactRepository, never()).save(any());
+    }
+
+    @Test
+    void makePatientShouldMarkContact() {
+        Contact contact = existingContact();
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ContactResponse response = contactService.makePatient(companyId, contact.getId());
+
+        assertTrue(response.isPatient());
+        assertEquals(java.time.LocalDate.now(), response.patientSince());
+    }
+
+    @Test
+    void getPatientShouldReturn404ForContactThatIsNotPatient() {
+        Contact contact = existingContact();
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+
+        assertThrows(com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException.class,
+                () -> contactService.getPatient(companyId, contact.getId()));
+    }
+
+    @Test
+    void searchPatientsShouldFilterByRecordNumberAndCpf() {
+        Contact ana = existingContact();
+        ana.setRecordNumber("PRT-7");
+        ana.setCpf("11122233344");
+        ana.restorePatient(true, java.time.LocalDate.now());
+        Contact bruno = Contact.reconstitute(UUID.randomUUID(), companyId, "Bruno", null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        bruno.restorePatient(true, java.time.LocalDate.now());
+        when(contactRepository.findPatientsByCompanyIdActive(companyId)).thenReturn(java.util.List.of(ana, bruno));
+
+        assertEquals(2, contactService.searchPatients(companyId, null).size());
+        assertEquals(1, contactService.searchPatients(companyId, "prt-7").size());
+        assertEquals(1, contactService.searchPatients(companyId, "111.222.333-44").size());
+    }
+
+    @Test
+    void markAsPatientIfExistsShouldIgnoreMissingContactWithoutThrowing() {
+        UUID missing = UUID.randomUUID();
+        when(contactRepository.findById(missing)).thenReturn(java.util.Optional.empty());
+
+        assertFalse(contactService.markAsPatientIfExists(companyId, missing));
+        verify(contactRepository, never()).save(any());
+    }
 }

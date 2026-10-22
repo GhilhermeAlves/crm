@@ -21,7 +21,8 @@ import java.util.UUID;
  * {@code /api/v1/companies/{companyId}/storage/{objectId}}.
  */
 @RestController
-@RequestMapping("/api/v1/companies/{companyId}/contacts/{contactId}/files")
+@RequestMapping({"/api/v1/companies/{companyId}/contacts/{contactId}/files",
+        "/api/v1/companies/{companyId}/patients/{contactId}/files"})
 public class ContactFileController {
 
     private final StorageUseCase storageUseCase;

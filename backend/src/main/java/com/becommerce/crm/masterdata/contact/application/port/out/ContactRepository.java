@@ -22,6 +22,9 @@ public interface ContactRepository {
     /** Contatos ativos (não excluídos logicamente) da empresa, ordenados por nome. */
     List<Contact> findByCompanyIdActive(UUID companyId);
 
+    /** Pacientes ativos da empresa ({@code is_patient = true}), ordenados por nome. */
+    List<Contact> findPatientsByCompanyIdActive(UUID companyId);
+
     /** Contato ativo da empresa que corresponda ao telefone (matching de mensagens). */
     Optional<Contact> findByCompanyIdAndPhone(UUID companyId, String phone);
 

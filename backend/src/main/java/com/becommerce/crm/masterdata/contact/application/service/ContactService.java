@@ -19,6 +19,7 @@ import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -54,6 +55,17 @@ public class ContactService implements ContactUseCase {
     @Override
     @Transactional
     public ContactResponse create(UUID companyId, CreateContactRequest request, UUID createdBy) {
+        return create(companyId, request, createdBy, false);
+    }
+
+    @Override
+    @Transactional
+    public ContactResponse createPatient(UUID companyId, CreateContactRequest request, UUID createdBy) {
+        return create(companyId, request, createdBy, true);
+    }
+
+    private ContactResponse create(UUID companyId, CreateContactRequest request, UUID createdBy,
+                                   boolean patient) {
         try {
             TenantContext.setCompanyId(companyId);
             quotaService.assertCanAddContact(companyId);
@@ -69,6 +81,9 @@ public class ContactService implements ContactUseCase {
                     request.city(), request.state(), request.healthPlan(), request.healthPlanNumber(),
                     request.recordNumber(), request.referralSource(), request.hasGuardian(),
                     request.guardianName(), request.guardianCpf(), request.guardianPhone());
+            if (patient) {
+                contact.markAsPatient(LocalDate.now());
+            }
             Contact saved = contactRepository.save(contact);
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, "Contact",
@@ -124,6 +139,93 @@ public class ContactService implements ContactUseCase {
         } finally {
             TenantContext.clear();
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContactResponse> searchPatients(UUID companyId, String query) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            String q = query == null ? "" : query.trim().toLowerCase();
+            return contactRepository.findPatientsByCompanyIdActive(companyId).stream()
+                    .filter(c -> q.isEmpty() || matches(c, q))
+                    .map(ContactService::toResponse)
+                    .toList();
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ContactResponse getPatient(UUID companyId, UUID contactId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            return toResponse(requirePatient(companyId, contactId));
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional
+    public ContactResponse updatePatient(UUID companyId, UUID contactId, UpdateContactRequest request) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            requirePatient(companyId, contactId);
+        } finally {
+            TenantContext.clear();
+        }
+        return update(companyId, contactId, request);
+    }
+
+    @Override
+    @Transactional
+    public ContactResponse makePatient(UUID companyId, UUID contactId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            Contact contact = requireOwnedActive(companyId, contactId);
+            if (!contact.markAsPatient(LocalDate.now())) {
+                return toResponse(contact);
+            }
+            contact.touch();
+            Contact saved = contactRepository.save(contact);
+            auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, "Contact",
+                    saved.getId().toString(), "Contato marcado como paciente: " + trim(firstName(saved)),
+                    null, Map.of("isPatient", "true"));
+            return toResponse(saved);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean markAsPatientIfExists(UUID companyId, UUID contactId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            Contact contact = contactRepository.findById(contactId)
+                    .filter(c -> c.getCompanyId().equals(companyId) && c.isActive())
+                    .orElse(null);
+            if (contact == null) {
+                return false;
+            }
+            if (contact.markAsPatient(LocalDate.now())) {
+                contact.touch();
+                contactRepository.save(contact);
+            }
+            return true;
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    private Contact requirePatient(UUID companyId, UUID contactId) {
+        Contact contact = requireOwnedActive(companyId, contactId);
+        if (!contact.isPatient()) {
+            throw new ContactNotFoundException(contactId);
+        }
+        return contact;
     }
 
     private void requireFieldPermission(String currentValue, String newValue,
@@ -251,7 +353,7 @@ public class ContactService implements ContactUseCase {
                 c.getNeighborhood(), c.getCity(), c.getState(), c.getHealthPlan(),
                 c.getHealthPlanNumber(), c.getRecordNumber(), c.getReferralSource(),
                 c.isHasGuardian(), c.getGuardianName(), c.getGuardianCpf(), c.getGuardianPhone(),
-                c.getCreatedAt());
+                c.getCreatedAt(), c.isPatient(), c.getPatientSince());
     }
 
     private String firstName(Contact c) {

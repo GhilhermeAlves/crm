@@ -100,6 +100,12 @@ public class ContactJpaEntity {
     @Column(name = "guardian_cpf")
     private String guardianCpf;
 
+    @Column(name = "is_patient", nullable = false)
+    private boolean patient;
+
+    @Column(name = "patient_since")
+    private LocalDate patientSince;
+
     @Column(name = "guardian_phone")
     private String guardianPhone;
 
@@ -178,4 +184,8 @@ public class ContactJpaEntity {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public boolean isPatient() { return patient; }
+    public void setPatient(boolean patient) { this.patient = patient; }
+    public LocalDate getPatientSince() { return patientSince; }
+    public void setPatientSince(LocalDate patientSince) { this.patientSince = patientSince; }
 }

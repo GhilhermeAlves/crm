@@ -30,7 +30,8 @@ public class ContactNoteController {
         this.useCase = useCase;
     }
 
-    @GetMapping("/api/v1/companies/{companyId}/contacts/{contactId}/notes")
+    @GetMapping({"/api/v1/companies/{companyId}/contacts/{contactId}/notes",
+            "/api/v1/companies/{companyId}/patients/{contactId}/notes"})
     @PreAuthorize("hasAuthority('contact:read')")
     public ResponseEntity<List<ContactNoteResponse>> list(
             @CurrentCompanyId("Você só pode acessar anotações da sua própria empresa.") UUID companyId,
@@ -38,7 +39,8 @@ public class ContactNoteController {
         return ResponseEntity.ok(useCase.list(companyId, contactId));
     }
 
-    @PostMapping("/api/v1/companies/{companyId}/contacts/{contactId}/notes")
+    @PostMapping({"/api/v1/companies/{companyId}/contacts/{contactId}/notes",
+            "/api/v1/companies/{companyId}/patients/{contactId}/notes"})
     @PreAuthorize("hasAuthority('contact:update')")
     public ResponseEntity<ContactNoteResponse> create(
             @CurrentCompanyId("Você só pode acessar anotações da sua própria empresa.") UUID companyId,
@@ -49,7 +51,8 @@ public class ContactNoteController {
                 .body(useCase.create(companyId, contactId, request, principal.userId()));
     }
 
-    @PutMapping("/api/v1/companies/{companyId}/contacts/{contactId}/notes/{noteId}")
+    @PutMapping({"/api/v1/companies/{companyId}/contacts/{contactId}/notes/{noteId}",
+            "/api/v1/companies/{companyId}/patients/{contactId}/notes/{noteId}"})
     @PreAuthorize("hasAuthority('contact:update')")
     public ResponseEntity<ContactNoteResponse> update(
             @CurrentCompanyId("Você só pode acessar anotações da sua própria empresa.") UUID companyId,
@@ -61,7 +64,8 @@ public class ContactNoteController {
                 principal.userId(), isAdmin(principal)));
     }
 
-    @DeleteMapping("/api/v1/companies/{companyId}/contacts/{contactId}/notes/{noteId}")
+    @DeleteMapping({"/api/v1/companies/{companyId}/contacts/{contactId}/notes/{noteId}",
+            "/api/v1/companies/{companyId}/patients/{contactId}/notes/{noteId}"})
     @PreAuthorize("hasAuthority('contact:update')")
     public ResponseEntity<Void> delete(
             @CurrentCompanyId("Você só pode acessar anotações da sua própria empresa.") UUID companyId,

@@ -49,6 +49,8 @@ public class Contact {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    private boolean patient;
+    private LocalDate patientSince;
 
     private Contact(UUID id, UUID companyId, String firstName, String lastName, String email,
                     String phone, String mobile, String notes, LocalDate birthDate,
@@ -173,6 +175,8 @@ public class Contact {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public boolean isActive() { return deletedAt == null; }
+    public boolean isPatient() { return patient; }
+    public LocalDate getPatientSince() { return patientSince; }
 
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
@@ -205,6 +209,25 @@ public class Contact {
 
     public void touch() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Marca o contato como paciente (módulo Pacientes, V104). Idempotente:
+     * quem já é paciente mantém a data original.
+     */
+    public boolean markAsPatient(LocalDate since) {
+        if (patient) {
+            return false;
+        }
+        this.patient = true;
+        this.patientSince = since;
+        return true;
+    }
+
+    /** Restaura a marcação persistida (uso exclusivo da camada de persistência). */
+    public void restorePatient(boolean patient, LocalDate patientSince) {
+        this.patient = patient;
+        this.patientSince = patientSince;
     }
 
     public void delete() {
