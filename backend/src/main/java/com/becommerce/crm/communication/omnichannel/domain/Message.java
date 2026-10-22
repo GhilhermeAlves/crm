@@ -25,6 +25,7 @@ public class Message {
     private java.time.LocalDateTime receivedAt;
     private final java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
+    private MessageAuthor sentBy;
 
     private Message(java.util.UUID id, java.util.UUID companyId, java.util.UUID conversationId,
                     java.util.UUID channelId, MessageDirection direction, String senderPhone,
@@ -83,6 +84,11 @@ public class Message {
                 sentAt, receivedAt, createdAt, updatedAt);
     }
 
+    /** Autoria de uma mensagem enviada (IA ou equipe); {@code null} quando desconhecida. */
+    public void markSentBy(MessageAuthor sentBy) {
+        this.sentBy = sentBy;
+    }
+
     /** Define o tipo de conteúdo (mensagens de mídia recebidas). */
     public void markType(MessageType type) {
         this.type = type != null ? type : MessageType.TEXT;
@@ -120,4 +126,5 @@ public class Message {
     public java.time.LocalDateTime getReceivedAt() { return receivedAt; }
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }
     public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
+    public MessageAuthor getSentBy() { return sentBy; }
 }

@@ -22,6 +22,7 @@ import com.becommerce.crm.automation.ai.domain.VoiceReplyMode;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.MessageAuthor;
 import com.becommerce.crm.communication.omnichannel.domain.MessageDirection;
 import com.becommerce.crm.communication.omnichannel.domain.MessageType;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -75,6 +77,20 @@ public class WhatsAppInboundAutoReplyProcessor {
     private static final Logger log = LoggerFactory.getLogger(WhatsAppInboundAutoReplyProcessor.class);
 
     private static final int HISTORY_LIMIT = 20;
+    /** Janela usada quando a equipe atendeu a conversa (retomada após humano). */
+    private static final int HUMAN_HANDOFF_HISTORY_LIMIT = 40;
+    /** Marca, no histórico do agente, as mensagens escritas por uma pessoa da equipe. */
+    static final String HUMAN_PREFIX = "[Atendente humano] ";
+    /** Mensagens recentes analisadas para reconhecer repetição de robô. */
+    private static final int BOT_CHECK_WINDOW = 10;
+
+    private AutomatedSenderGuard automatedSenderGuard;
+
+    /** Opcional (testes legados não o informam): sem ele, não há detecção automática de robô. */
+    @Autowired(required = false)
+    public void setAutomatedSenderGuard(AutomatedSenderGuard automatedSenderGuard) {
+        this.automatedSenderGuard = automatedSenderGuard;
+    }
     private static final int DEFAULT_MAX_TOKENS = 600;
     /**
      * Sem tokenizer (o projeto não possui utilitário de contagem; decisão do
@@ -251,6 +267,18 @@ public class WhatsAppInboundAutoReplyProcessor {
                 return;
             }
 
+            // Outro robô do outro lado (resposta automática, menu): o Leo ignora o
+            // número em vez de a IA ficar conversando/agendando com ele.
+            if (automatedSenderGuard != null) {
+                Optional<String> automated = AutomatedSenderDetector.detect(currentText,
+                        messageRepository.findRecentByConversation(conversationId, BOT_CHECK_WINDOW));
+                if (automated.isPresent()) {
+                    automatedSenderGuard.ignore(companyId, conversationId, conversation.getExternalPhone(),
+                            automated.get());
+                    return;
+                }
+            }
+
             AgentRuntimeInput input = new AgentRuntimeInput(companyId, conversationId, conversation.getContactId(),
                     conversation.getExternalPhone(), senderName, inboundMessageId, currentText,
                     loadHistory(agentConfig, conversationId, inboundMessageId));
@@ -258,10 +286,17 @@ public class WhatsAppInboundAutoReplyProcessor {
             if (reply == null) {
                 return;
             }
+            // O agente chamou marcar_como_robo: nada é enviado.
+            if (reply.contains(BotDetectionToolProvider.SILENCE)) {
+                log.info("Auto-resposta suprimida: robô identificado pelo agente (company={}, conversation={})",
+                        companyId, conversationId);
+                return;
+            }
             String capped = capLength(reply, agentConfig.getMaxChars());
 
             Message outbound = Message.createOutbound(companyId, conversationId, channel.getId(),
                     channel.getExternalId(), conversation.getExternalPhone(), capped, UUID.randomUUID());
+            outbound.markSentBy(MessageAuthor.AI);
             Message persisted = messagePersister.persistPending(outbound);
 
             boolean voice = shouldReplyWithVoice(agentConfig.getVoiceReplyMode(), inboundIsAudio);
@@ -361,11 +396,18 @@ public class WhatsAppInboundAutoReplyProcessor {
     private ConversationHistory loadHistory(AgentConfig agentConfig, UUID conversationId, UUID inboundMessageId) {
         int outputBudget = agentConfig.getMaxTokens() != null && agentConfig.getMaxTokens() > 0
                 ? agentConfig.getMaxTokens() : DEFAULT_MAX_TOKENS;
-        int historyCharBudget = outputBudget * HISTORY_TOKEN_MULTIPLIER * CHARS_PER_TOKEN;
+        List<Message> content = messageRepository.findRecentByConversation(conversationId,
+                HUMAN_HANDOFF_HISTORY_LIMIT);
+        // A equipe atendeu nesta janela: o agente retoma com contexto ampliado
+        // (mais mensagens e o dobro do orçamento) para não perder o assunto.
+        boolean humanHandled = content.stream().anyMatch(m -> m.getSentBy() == MessageAuthor.HUMAN);
+        if (!humanHandled && content.size() > HISTORY_LIMIT) {
+            content = content.subList(content.size() - HISTORY_LIMIT, content.size());
+        }
+        int historyCharBudget = outputBudget * HISTORY_TOKEN_MULTIPLIER * CHARS_PER_TOKEN * (humanHandled ? 2 : 1);
 
         List<ConversationHistory.Entry> kept = new ArrayList<>();
         int usedChars = 0;
-        List<Message> content = messageRepository.findRecentByConversation(conversationId, HISTORY_LIMIT);
         // Histórico vem em ordem cronológica; percorre dos mais recentes aos mais antigos.
         for (int i = content.size() - 1; i >= 0; i--) {
             Message m = content.get(i);
@@ -376,15 +418,16 @@ public class WhatsAppInboundAutoReplyProcessor {
                 continue;
             }
             String role = m.getDirection() == MessageDirection.INBOUND ? "user" : "assistant";
-            int estimated = m.getBody().length() + role.length();
+            String text = m.getSentBy() == MessageAuthor.HUMAN ? HUMAN_PREFIX + m.getBody() : m.getBody();
+            int estimated = text.length() + role.length();
             // Sempre mantém pelo menos a mensagem mais recente; depois obedece ao orçamento.
             if (usedChars + estimated > historyCharBudget && !kept.isEmpty()) {
                 break;
             }
-            kept.add(0, new ConversationHistory.Entry(role, m.getBody()));
+            kept.add(0, new ConversationHistory.Entry(role, text));
             usedChars += estimated;
         }
-        return new ConversationHistory(kept);
+        return new ConversationHistory(kept, humanHandled);
     }
 
     private boolean isWithinCooldown(AgentConfig agentConfig, UUID companyId, UUID conversationId) {

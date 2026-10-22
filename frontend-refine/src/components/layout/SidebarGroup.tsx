@@ -38,7 +38,8 @@ export function groupHasActive(items: NavItem[], pathname: string): boolean {
 }
 
 export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps) {
-  const { permissions } = useAuth();
+  const { permissions, roles } = useAuth();
+  const isSuperAdmin = roles.includes("SUPER_ADMIN");
   const { isEnabled: isModuleEnabled } = useActiveCompanyModules();
   const pathname = usePathname();
 
@@ -52,6 +53,7 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
   };
 
   const visibleItems = group.items
+    .filter((item) => !item.superAdminOnly || isSuperAdmin)
     .filter((item) => hasPermission(item.permission))
     // Módulos da empresa (V104): enquanto carregam, tudo aparece.
     .filter((item) => !item.module || isModuleEnabled(item.module))

@@ -63,6 +63,9 @@ public class OmnichannelMessageJpaEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "sent_by")
+    private String sentBy;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getCompanyId() { return companyId; }
@@ -97,4 +100,6 @@ public class OmnichannelMessageJpaEntity {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getSentBy() { return sentBy; }
+    public void setSentBy(String sentBy) { this.sentBy = sentBy; }
 }

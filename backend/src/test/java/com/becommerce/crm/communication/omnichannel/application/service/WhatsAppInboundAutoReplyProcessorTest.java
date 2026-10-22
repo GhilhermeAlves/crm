@@ -17,6 +17,7 @@ import com.becommerce.crm.communication.omnichannel.domain.ChannelType;
 import com.becommerce.crm.communication.omnichannel.domain.Conversation;
 import com.becommerce.crm.communication.omnichannel.domain.ConversationStatus;
 import com.becommerce.crm.communication.omnichannel.domain.Message;
+import com.becommerce.crm.communication.omnichannel.domain.MessageAuthor;
 import com.becommerce.crm.communication.omnichannel.domain.MessageDirection;
 import com.becommerce.crm.communication.omnichannel.application.event.WhatsAppSendEvent;
 import com.becommerce.crm.communication.omnichannel.domain.MessageStatus;
@@ -455,7 +456,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 MessageDirection.OUTBOUND, "120000000", from, MessageType.TEXT, "resposta anterior",
                 MessageStatus.SENT, "wamid-01", UUID.randomUUID(), null, LocalDateTime.now(), null,
                 LocalDateTime.now(), LocalDateTime.now());
-        when(messageRepository.findRecentByConversation(conversationId, 20)).thenReturn(List.of(inbound, outbound));
+        when(messageRepository.findRecentByConversation(conversationId, 40)).thenReturn(List.of(inbound, outbound));
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
@@ -482,7 +483,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 MessageDirection.INBOUND, from, "120000000", MessageType.TEXT, body,
                 MessageStatus.SENT, "wamid-current", UUID.randomUUID(), null, null, null,
                 LocalDateTime.now(), LocalDateTime.now());
-        when(messageRepository.findRecentByConversation(conversationId, 20)).thenReturn(List.of(current));
+        when(messageRepository.findRecentByConversation(conversationId, 40)).thenReturn(List.of(current));
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
@@ -498,7 +499,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 message(MessageDirection.OUTBOUND, "x".repeat(120), "wamid-1"),
                 message(MessageDirection.INBOUND, "mensagem recente", "wamid-2"),
                 message(MessageDirection.INBOUND, "mais recente ainda", "wamid-3"));
-        when(messageRepository.findRecentByConversation(conversationId, 20)).thenReturn(history);
+        when(messageRepository.findRecentByConversation(conversationId, 40)).thenReturn(history);
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
@@ -521,7 +522,7 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 MessageDirection.INBOUND, from, "120000000", MessageType.TEXT, "   ",
                 MessageStatus.SENT, "wamid-blank", UUID.randomUUID(), null, null, null,
                 LocalDateTime.now(), LocalDateTime.now());
-        when(messageRepository.findRecentByConversation(conversationId, 20)).thenReturn(List.of(blank));
+        when(messageRepository.findRecentByConversation(conversationId, 40)).thenReturn(List.of(blank));
 
         processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
 
@@ -740,6 +741,74 @@ class WhatsAppInboundAutoReplyProcessorTest {
                 com.becommerce.crm.automation.ai.domain.VoiceReplyMode.ALWAYS, false));
         assertFalse(WhatsAppInboundAutoReplyProcessor.shouldReplyWithVoice(
                 com.becommerce.crm.automation.ai.domain.VoiceReplyMode.NEVER, true));
+    }
+
+    // ------------------------------------------- retomada após humano / robôs
+
+    @Test
+    void shouldLabelHumanMessagesAndAddHandoffGuidanceWhenTeamHandledConversation() {
+        config(true, true);
+        Message human = message(MessageDirection.OUTBOUND, "Pode trazer o raio-x amanhã", "wamid-h");
+        human.markSentBy(MessageAuthor.HUMAN);
+        when(messageRepository.findRecentByConversation(conversationId, 40))
+                .thenReturn(List.of(message(MessageDirection.INBOUND, "tenho o exame", "wamid-i"), human));
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        verify(aiProvider).chatWithTools(argThat(req -> {
+            List<AiProvider.ChatMessage> messages = req.messages();
+            assertTrue(messages.stream().anyMatch(m -> "assistant".equals(m.role())
+                    && "[Atendente humano] Pode trazer o raio-x amanhã".equals(m.content())));
+            assertTrue(messages.stream().anyMatch(m -> "system".equals(m.role())
+                    && m.content().contains("RETOMADA APÓS ATENDIMENTO HUMANO")));
+            return true;
+        }));
+    }
+
+    @Test
+    void shouldNotAddHandoffGuidanceWhenOnlyAiAnswered() {
+        config(true, true);
+        Message ai = message(MessageDirection.OUTBOUND, "Olá! Posso ajudar?", "wamid-a");
+        ai.markSentBy(MessageAuthor.AI);
+        when(messageRepository.findRecentByConversation(conversationId, 40)).thenReturn(List.of(ai));
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        verify(aiProvider).chatWithTools(argThat(req -> req.messages().stream()
+                .noneMatch(m -> m.content() != null && m.content().contains("RETOMADA APÓS ATENDIMENTO HUMANO"))));
+    }
+
+    @Test
+    void shouldMarkAutoReplyAsAiAuthored() {
+        config(true, true);
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        verify(messagePersister).persistPending(argThat(m -> m.getSentBy() == MessageAuthor.AI));
+    }
+
+    @Test
+    void shouldIgnoreAutomatedSenderWithoutReplying() {
+        config(true, true);
+        AutomatedSenderGuard guard = mock(AutomatedSenderGuard.class);
+        processor.setAutomatedSenderGuard(guard);
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from,
+                "Esta é uma mensagem automática. Digite o número da opção desejada.");
+
+        verify(guard).ignore(eq(companyId), eq(conversationId), eq(from), any());
+        verify(aiProvider, never()).chatWithTools(any());
+        verify(messagePersister, never()).persistPending(any());
+    }
+
+    @Test
+    void shouldNotSendWhenAgentMarkedSenderAsBot() {
+        config(true, true);
+        when(aiProvider.chatWithTools(any())).thenReturn(AiProvider.ChatResult.content(BotDetectionToolProvider.SILENCE));
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, body);
+
+        verify(messagePersister, never()).persistPending(any());
     }
 
     private Message message(MessageDirection direction, String text, String externalId) {

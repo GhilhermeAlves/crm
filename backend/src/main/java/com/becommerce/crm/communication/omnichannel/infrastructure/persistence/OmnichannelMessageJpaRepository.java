@@ -34,10 +34,10 @@ public interface OmnichannelMessageJpaRepository extends JpaRepository<Omnichann
             INSERT INTO omnichannel_messages
                 (id, company_id, conversation_id, channel_id, direction, sender_phone,
                  recipient_phone, type, body, status, external_message_id, client_message_id,
-                 provider_error, sent_at, received_at, created_at, updated_at)
+                 provider_error, sent_at, received_at, created_at, updated_at, sent_by)
             VALUES (:id, :companyId, :conversationId, :channelId, :direction, :senderPhone,
                     :recipientPhone, :type, :body, :status, :externalMessageId, :clientMessageId,
-                    :providerError, :sentAt, :receivedAt, :createdAt, :updatedAt)
+                    :providerError, :sentAt, :receivedAt, :createdAt, :updatedAt, :sentBy)
             ON CONFLICT (company_id, external_message_id) DO NOTHING
             """, nativeQuery = true)
     int insertInboundIdempotent(
@@ -57,7 +57,8 @@ public interface OmnichannelMessageJpaRepository extends JpaRepository<Omnichann
             @Param("sentAt") LocalDateTime sentAt,
             @Param("receivedAt") LocalDateTime receivedAt,
             @Param("createdAt") LocalDateTime createdAt,
-            @Param("updatedAt") LocalDateTime updatedAt);
+            @Param("updatedAt") LocalDateTime updatedAt,
+            @Param("sentBy") String sentBy);
 
     @Modifying
     @Query(value = """
