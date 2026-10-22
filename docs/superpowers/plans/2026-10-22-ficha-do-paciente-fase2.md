@@ -376,8 +376,8 @@ END $$;
 **Files (modificar):** `features/clinical/patients/components/PatientTabs.tsx`
 **Files (criar):** `app/(dashboard)/patients/[id]/anamnese/page.tsx`, `.../evolucoes/page.tsx`, `.../documentos/page.tsx` (cada uma no mesmo formato de `.../anotacoes/page.tsx`: pega `id`, `companyId`, `usePatient`, loader "Carregando …", e renderiza o componente da feature).
 
-- [ ] Ordem final das abas: `Consultas`, `Anamnese` (`anamnese`), `Evoluções` (`evolucoes`), `Documentos` (`documentos`), `Financeiro`, `Arquivos`, `Anotações`.
-- [ ] Commit junto com a Task 9 (as páginas importam os componentes dela).
+- [x] Ordem final das abas: `Consultas`, `Anamnese` (`anamnese`), `Evoluções` (`evolucoes`), `Documentos` (`documentos`), `Financeiro`, `Arquivos`, `Anotações`.
+- [x] Commit junto com a Task 9 (as páginas importam os componentes dela).
 
 ---
 
@@ -393,33 +393,33 @@ END $$;
 - testes em `features/clinical/*/components/__tests__/`
 
 **Anamnese (`PatientAnamnesisTab`):**
-- [ ] Sem nenhuma anamnese: estado vazio "Nenhuma anamnese preenchida." + `Select` com os modelos **ativos** (hook de `features/masterdata/anamnesis/hooks/useAnamnesis.ts`), padrão pré-selecionado, e botão "Iniciar anamnese".
-- [ ] Com `DRAFT`: mostra `AnamnesisAnswerForm` com botões "Salvar rascunho" (`complete: false`) e "Concluir" (`complete: true`), e "Descartar" (com `AlertDialog` de confirmação; não use `window.confirm`).
-- [ ] Com `COMPLETED` atual: mostra `AnamnesisAnswerView` (somente leitura, perguntas com `highlight` respondidas em destaque com `text-destructive`), cabeçalho "Preenchida por <nome> em dd/MM/yyyy" e botão "Nova anamnese".
-- [ ] Abaixo, "Histórico": lista das anteriores (data, modelo, status) que abrem em modo leitura.
-- [ ] `AnamnesisAnswerForm` renderiza cada pergunta do **snapshot** por seção (título da seção como `h3`), pelo tipo:
+- [x] Sem nenhuma anamnese: estado vazio "Nenhuma anamnese preenchida." + `Select` com os modelos **ativos** (hook de `features/masterdata/anamnesis/hooks/useAnamnesis.ts`), padrão pré-selecionado, e botão "Iniciar anamnese".
+- [x] Com `DRAFT`: mostra `AnamnesisAnswerForm` com botões "Salvar rascunho" (`complete: false`) e "Concluir" (`complete: true`), e "Descartar" (com `AlertDialog` de confirmação; não use `window.confirm`).
+- [x] Com `COMPLETED` atual: mostra `AnamnesisAnswerView` (somente leitura, perguntas com `highlight` respondidas em destaque com `text-destructive`), cabeçalho "Preenchida por <nome> em dd/MM/yyyy" e botão "Nova anamnese".
+- [x] Abaixo, "Histórico": lista das anteriores (data, modelo, status) que abrem em modo leitura.
+- [x] `AnamnesisAnswerForm` renderiza cada pergunta do **snapshot** por seção (título da seção como `h3`), pelo tipo:
   - `SHORT_TEXT` → `Input`; `LONG_TEXT` → `Textarea`; `NUMBER` → `Input type="number"`;
   - `YES_NO` / `YES_NO_WITH_TEXT` → dois botões/`RadioGroup` "Sim"/"Não" (valor `"YES"`/`"NO"`);
   - `SINGLE_SELECT` → `RadioGroup` das opções; `MULTI_SELECT` → `Checkbox` por opção (valor = `string[]` de `value`).
   - Campo de complemento (`Input` com `complementLabel` como label) aparece quando `allowComplement` e o gatilho bate: `YES` → resposta "YES"; `NO` → "NO"; `ALWAYS` → sempre; `OPTION` → a opção `complementOptionValue` está selecionada.
   - Pergunta `required` mostra `*` no label.
   - Seções com `isProfessional = true` ficam por último, com subtítulo "Preenchimento do profissional".
-- [ ] Teste: complemento aparece só quando "Sim" é marcado (gatilho `YES`); `MULTI_SELECT` envia array.
+- [x] Teste: complemento aparece só quando "Sim" é marcado (gatilho `YES`); `MULTI_SELECT` envia array.
 
 **Evoluções (`PatientEvolutionsTab`):**
-- [ ] Topo: `Textarea` "Nova evolução" + `Select` opcional "Vincular à consulta" (consultas do paciente via `useContactAppointments`, rótulo `dd/MM/yyyy HH:mm – <tipo>`) + botão "Salvar rascunho".
-- [ ] Lista em linha do tempo, mais recente primeiro. Cada item: data, autor, `Badge` "Rascunho" (variant `outline`) ou "Finalizada" (variant `secondary`), texto com `whitespace-pre-wrap`.
-- [ ] Rascunho do próprio usuário: botões "Editar", "Finalizar" (com `AlertDialog`: "Depois de finalizada, a evolução não pode mais ser alterada nem excluída.") e "Excluir". Admin vê "Editar"/"Excluir" em rascunhos de outros, mas **não** "Finalizar". Finalizada: nenhum botão; mostra "Finalizada por <nome> em dd/MM/yyyy HH:mm".
-- [ ] Use o mesmo jeito de saber se o usuário é admin/autor que o `PatientNotes.tsx` usa (leia-o e copie).
-- [ ] Teste: finalizada não mostra botões; rascunho do autor mostra "Finalizar".
+- [x] Topo: `Textarea` "Nova evolução" + `Select` opcional "Vincular à consulta" (consultas do paciente via `useContactAppointments`, rótulo `dd/MM/yyyy HH:mm – <tipo>`) + botão "Salvar rascunho".
+- [x] Lista em linha do tempo, mais recente primeiro. Cada item: data, autor, `Badge` "Rascunho" (variant `outline`) ou "Finalizada" (variant `secondary`), texto com `whitespace-pre-wrap`.
+- [x] Rascunho do próprio usuário: botões "Editar", "Finalizar" (com `AlertDialog`: "Depois de finalizada, a evolução não pode mais ser alterada nem excluída.") e "Excluir". Admin vê "Editar"/"Excluir" em rascunhos de outros, mas **não** "Finalizar". Finalizada: nenhum botão; mostra "Finalizada por <nome> em dd/MM/yyyy HH:mm".
+- [x] Use o mesmo jeito de saber se o usuário é admin/autor que o `PatientNotes.tsx` usa (leia-o e copie).
+- [x] Teste: finalizada não mostra botões; rascunho do autor mostra "Finalizar".
 
 **Documentos (`PatientDocumentsTab` + `IssueDocumentDialog`):**
-- [ ] Botão "Emitir documento" abre o dialog: `Select` de modelo ativo (agrupado por tipo com os rótulos "Receituário", "Atestado", "Termo", "Outro") → chama `/preview` → mostra `Input` título e `Textarea` corpo (grande, editável) com o texto renderizado; campos "Profissional" (pré-preenchido com o nome do usuário logado) e "Registro (CRO)" (opcional) → "Emitir".
-- [ ] Lista: tipo, título, profissional, data; botão "Abrir PDF" (abre em nova aba); "Excluir" só para admin (com `AlertDialog`).
-- [ ] Sem modelos ativos: texto "Nenhum modelo de documento ativo." com link para `/settings/documents`.
-- [ ] Teste: dialog chama preview ao escolher modelo e envia o corpo editado.
+- [x] Botão "Emitir documento" abre o dialog: `Select` de modelo ativo (agrupado por tipo com os rótulos "Receituário", "Atestado", "Termo", "Outro") → chama `/preview` → mostra `Input` título e `Textarea` corpo (grande, editável) com o texto renderizado; campos "Profissional" (pré-preenchido com o nome do usuário logado) e "Registro (CRO)" (opcional) → "Emitir".
+- [x] Lista: tipo, título, profissional, data; botão "Abrir PDF" (abre em nova aba); "Excluir" só para admin (com `AlertDialog`).
+- [x] Sem modelos ativos: texto "Nenhum modelo de documento ativo." com link para `/settings/documents`.
+- [x] Teste: dialog chama preview ao escolher modelo e envia o corpo editado.
 
-- [ ] Verificação frontend (item 9). Commit (Tasks 8+9): `feat(pacientes): abas de anamnese, evoluções e documentos na ficha`
+- [x] Verificação frontend (item 9). Commit (Tasks 8+9): `feat(pacientes): abas de anamnese, evoluções e documentos na ficha`
 
 ---
 
