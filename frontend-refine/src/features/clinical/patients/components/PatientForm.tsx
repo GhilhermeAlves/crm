@@ -373,7 +373,7 @@ export function PatientForm({
               name="mobile"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Celular</FormLabel>
+                  <OptionalLabel label="Celular" />
                   <FormControl>
                     <Input
                       placeholder="(00) 99999-9999"
@@ -411,7 +411,7 @@ export function PatientForm({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>E-mail</FormLabel>
+                  <OptionalLabel label="E-mail" />
                   <FormControl>
                     <Input
                       type="email"
@@ -463,7 +463,7 @@ export function PatientForm({
               name="street"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Logradouro</FormLabel>
+                  <OptionalLabel label="Logradouro" />
                   <FormControl>
                     <Input placeholder="Rua, Avenida..." {...field} />
                   </FormControl>
@@ -478,7 +478,7 @@ export function PatientForm({
               name="addressNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Número</FormLabel>
+                  <OptionalLabel label="Número" />
                   <FormControl>
                     <Input placeholder="Nº" {...field} />
                   </FormControl>
@@ -506,7 +506,7 @@ export function PatientForm({
               name="neighborhood"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bairro</FormLabel>
+                  <OptionalLabel label="Bairro" />
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -519,7 +519,7 @@ export function PatientForm({
               name="city"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cidade</FormLabel>
+                  <OptionalLabel label="Cidade" />
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -532,7 +532,7 @@ export function PatientForm({
               name="state"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Estado</FormLabel>
+                  <OptionalLabel label="Estado" />
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>

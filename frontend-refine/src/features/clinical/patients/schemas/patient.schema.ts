@@ -79,9 +79,13 @@ export function createPatientSchema(options: { requireCpf?: boolean } = {}) {
       healthPlanNumber: z.string().max(40).optional(),
       recordNumber: z.string().max(40).optional(),
       referralSource: z.string().max(80).optional(),
-      mobile: z.string().min(1, "Celular é obrigatório").max(20),
+      mobile: z.string().max(20).optional(),
       phone: z.string().max(20).optional(),
-      email: z.string().min(1, "E-mail é obrigatório").max(255).email("E-mail inválido"),
+      email: z
+        .string()
+        .max(255)
+        .optional()
+        .refine((val) => !val || z.string().email().safeParse(val).success, "E-mail inválido"),
       cep: z
         .string()
         .max(10)
@@ -91,16 +95,16 @@ export function createPatientSchema(options: { requireCpf?: boolean } = {}) {
             !val || val.replace(/\D/g, "").length === 0 || val.replace(/\D/g, "").length === 8,
           "CEP inválido",
         ),
-      street: z.string().min(1, "Logradouro é obrigatório").max(160),
-      addressNumber: z.string().min(1, "Número é obrigatório").max(20),
+      street: z.string().max(160).optional(),
+      addressNumber: z.string().max(20).optional(),
       complement: z.string().max(80).optional(),
-      neighborhood: z.string().min(1, "Bairro é obrigatório").max(80),
-      city: z.string().min(1, "Cidade é obrigatória").max(80),
+      neighborhood: z.string().max(80).optional(),
+      city: z.string().max(80).optional(),
       state: z
         .string()
-        .min(1, "Estado é obrigatório")
         .max(2)
-        .refine((val) => (UF_OPTIONS as readonly string[]).includes(val), "UF inválida"),
+        .optional()
+        .refine((val) => !val || (UF_OPTIONS as readonly string[]).includes(val), "UF inválida"),
       hasGuardian: z.boolean().optional(),
       guardianName: z.string().max(160).optional(),
       guardianCpf: optionalCpf,
