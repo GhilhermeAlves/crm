@@ -10,6 +10,14 @@ vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
   useAuth: () => ({ permissions: [] }),
 }));
 
+const modulesState = vi.hoisted(() => ({ enabled: null as string[] | null }));
+vi.mock("@/features/identity/modules/hooks/useCompanyModules", () => ({
+  useActiveCompanyModules: () => ({
+    enabledModules: modulesState.enabled,
+    isEnabled: (m: string) => modulesState.enabled === null || modulesState.enabled.includes(m),
+  }),
+}));
+
 const group: NavGroup = {
   title: "Configurações",
   icon: Settings,
@@ -29,6 +37,7 @@ const group: NavGroup = {
 
 beforeEach(() => {
   pathname = "/crm";
+  modulesState.enabled = null;
 });
 
 describe("SidebarGroup com a barra recolhida", () => {
@@ -72,5 +81,35 @@ describe("groupHasActive", () => {
     expect(groupHasActive(group.items, "/settings/agenda/chairs")).toBe(true);
     expect(groupHasActive(group.items, "/settings/company/users/123")).toBe(true);
     expect(groupHasActive(group.items, "/crm")).toBe(false);
+  });
+});
+
+describe("SidebarGroup e módulos da empresa", () => {
+  const clinicGroup: NavGroup = {
+    title: "Principal",
+    icon: Settings,
+    items: [
+      { label: "Agenda", href: "/agenda", icon: CalendarDays, module: "AGENDA" },
+      { label: "Pacientes", href: "/patients", icon: Users, module: "PATIENTS" },
+      { label: "Contatos", href: "/contacts", icon: Users, module: "CRM" },
+    ],
+  };
+
+  it("esconde itens de módulos desligados", () => {
+    modulesState.enabled = ["AGENDA", "PATIENTS"];
+    pathname = "/agenda";
+    render(<SidebarGroup group={clinicGroup} collapsed={false} />);
+
+    expect(screen.getByText("Pacientes")).toBeTruthy();
+    expect(screen.queryByText("Contatos")).toBeNull();
+  });
+
+  it("mostra tudo enquanto os módulos não carregaram", () => {
+    modulesState.enabled = null;
+    pathname = "/agenda";
+    render(<SidebarGroup group={clinicGroup} collapsed={false} />);
+
+    expect(screen.getByText("Pacientes")).toBeTruthy();
+    expect(screen.getByText("Contatos")).toBeTruthy();
   });
 });

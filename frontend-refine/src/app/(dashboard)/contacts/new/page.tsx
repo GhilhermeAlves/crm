@@ -12,12 +12,12 @@ import {
   useCreateContact,
   useSearchContacts,
 } from "@/features/masterdata/contacts/hooks/useContacts";
-import { PatientForm } from "@/features/masterdata/contacts/components/PatientForm";
+import { PatientForm } from "@/features/clinical/patients/components/PatientForm";
 import {
   contactToFormValues,
   formValuesToContactPayload,
   type PatientFormValues,
-} from "@/features/masterdata/contacts/schemas/patient.schema";
+} from "@/features/clinical/patients/schemas/patient.schema";
 import { formatCpf } from "@/lib/format";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 import { ROUTES } from "@/lib/constants";

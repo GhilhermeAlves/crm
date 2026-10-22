@@ -22,6 +22,7 @@ export const ROUTES = {
   LEADS: "/leads",
   LEADS_NEW: "/leads/new",
   CONTACTS: "/contacts",
+  PATIENTS: "/patients",
   PIPELINE: "/pipeline",
   CAMPAIGNS: "/campaigns",
   CAMPAIGNS_NEW: "/campaigns/new",

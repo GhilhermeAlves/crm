@@ -8,12 +8,16 @@ import { ROUTES } from "@/lib/constants";
 import { useTenant, useUpdateTenant } from "@/features/identity/tenants/hooks/useTenants";
 import { TenantForm } from "@/features/identity/tenants/components/TenantForm";
 import type { CreateTenantRequest } from "@/features/identity/tenants/types/tenant.types";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { CompanyModulesCard } from "@/features/identity/modules/components/CompanyModulesCard";
 
 export default function EditTenantPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: tenant, isLoading, error } = useTenant(id);
   const updateMutation = useUpdateTenant();
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes("SUPER_ADMIN");
 
   const handleSubmit = (data: CreateTenantRequest) => {
     updateMutation.mutate(
@@ -52,6 +56,7 @@ export default function EditTenantPage() {
         onSubmit={handleSubmit}
         isLoading={updateMutation.isPending}
       />
+      {isSuperAdmin && <CompanyModulesCard companyId={id} />}
     </div>
   );
 }

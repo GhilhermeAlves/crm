@@ -3,13 +3,14 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { CalendarPlus, Loader2, PhoneCall, TrendingUp } from "lucide-react";
+import { CalendarPlus, ChevronRight, Loader2, PhoneCall, TrendingUp } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { ROUTES } from "@/lib/constants";
-import { useCustomer360 } from "@/features/masterdata/contacts/hooks/useContacts";
+import { useContact, useCustomer360 } from "@/features/masterdata/contacts/hooks/useContacts";
+import { ContactPatientAction } from "@/features/clinical/patients/components/ContactPatientAction";
 import { ContactSummaryCard } from "@/features/masterdata/contacts/components/ContactSummaryCard";
 import { NextActionCard } from "@/features/masterdata/contacts/components/NextActionCard";
 import { OpportunitiesPanel } from "@/features/masterdata/contacts/components/OpportunitiesPanel";
@@ -31,6 +32,7 @@ export default function Customer360Page() {
   const companyId = user?.companyId ?? null;
 
   const { data: c360, isLoading, isError } = useCustomer360(companyId, contactId);
+  const { data: contact } = useContact(companyId, contactId);
   const queryClient = useQueryClient();
 
   const activityPerms = useActivityPermissions();
@@ -67,9 +69,29 @@ export default function Customer360Page() {
     );
   }
 
+  const fullName = contact ? [contact.firstName, contact.lastName].filter(Boolean).join(" ") : "";
+
   return (
     <div className="space-y-6">
+      <nav aria-label="Trilha de navegação" className="flex items-center gap-1 text-sm">
+        <Link
+          href={ROUTES.CONTACTS}
+          className="text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Contatos
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="font-medium text-foreground">{fullName || "Contato"}</span>
+      </nav>
+
       <div className="flex flex-wrap justify-end gap-2">
+        {contactId && (
+          <ContactPatientAction
+            companyId={companyId}
+            contactId={contactId}
+            isPatient={!!contact?.isPatient}
+          />
+        )}
         {activityPerms.canCreate && (
           <Button size="sm" onClick={() => setActivityOpen(true)}>
             <PhoneCall className="mr-1 h-4 w-4" /> Registrar atividade

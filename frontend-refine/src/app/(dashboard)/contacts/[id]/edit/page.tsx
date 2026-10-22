@@ -6,12 +6,12 @@ import { useParams, useRouter } from "next/navigation";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useContact, useUpdateContact } from "@/features/masterdata/contacts/hooks/useContacts";
-import { PatientForm } from "@/features/masterdata/contacts/components/PatientForm";
+import { PatientForm } from "@/features/clinical/patients/components/PatientForm";
 import {
   contactToFormValues,
   formValuesToContactPayload,
   type PatientFormValues,
-} from "@/features/masterdata/contacts/schemas/patient.schema";
+} from "@/features/clinical/patients/schemas/patient.schema";
 import { ROUTES } from "@/lib/constants";
 
 type ApiError = { response?: { status?: number; data?: { message?: string } } };
