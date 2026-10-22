@@ -38,6 +38,8 @@ export interface NavItem {
   icon: LucideIcon;
   badge?: string;
   permission?: string;
+  /** Visível só para o dono da plataforma (SUPER_ADMIN), nunca para as empresas clientes. */
+  superAdminOnly?: boolean;
   children?: { label: string; href: string; permission?: string }[];
 }
 
@@ -238,7 +240,7 @@ export const NAVIGATION: NavGroup[] = [
     title: "Sistema",
     icon: ServerCog,
     items: [
-      { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, permission: "company:view" },
+      { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, superAdminOnly: true },
       {
         label: "Auditoria",
         href: ROUTES.AUDIT,

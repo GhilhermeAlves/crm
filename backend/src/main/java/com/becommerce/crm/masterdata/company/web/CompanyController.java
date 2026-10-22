@@ -82,7 +82,7 @@ public class CompanyController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('company:create')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CreateCompanyRequest request,
                                                   @AuthenticationPrincipal CurrentUser principal) {
         CompanyResponse response = companyUseCase.createCompany(request, principal.userId());
@@ -98,7 +98,7 @@ public class CompanyController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('company:delete')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id,
                                        @AuthenticationPrincipal CurrentUser principal) {
         companyUseCase.deleteCompany(id, principal.companyId(), isSuperAdmin(principal));

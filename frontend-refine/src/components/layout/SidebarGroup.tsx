@@ -37,7 +37,8 @@ export function groupHasActive(items: NavItem[], pathname: string): boolean {
 }
 
 export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps) {
-  const { permissions } = useAuth();
+  const { permissions, roles } = useAuth();
+  const isSuperAdmin = roles.includes("SUPER_ADMIN");
   const pathname = usePathname();
 
   const hasPermission = (permission?: string) => {
@@ -50,6 +51,7 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
   };
 
   const visibleItems = group.items
+    .filter((item) => !item.superAdminOnly || isSuperAdmin)
     .filter((item) => hasPermission(item.permission))
     .map((item) =>
       item.children

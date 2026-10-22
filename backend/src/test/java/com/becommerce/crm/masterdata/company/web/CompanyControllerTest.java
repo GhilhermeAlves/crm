@@ -210,7 +210,7 @@ class CompanyControllerTest {
 
     @Test
     void shouldCreateCompany() throws Exception {
-        login(false);
+        login(true);
         CompanyResponse response = sampleResponse();
         when(companyUseCase.createCompany(any(CreateCompanyRequest.class), any(UUID.class))).thenReturn(response);
 
@@ -240,7 +240,7 @@ class CompanyControllerTest {
 
     @Test
     void shouldReturn409WhenCnpjAlreadyExists() throws Exception {
-        login(false);
+        login(true);
         when(companyUseCase.createCompany(any(CreateCompanyRequest.class), any(UUID.class)))
                 .thenThrow(new CompanyAlreadyExistsException("CNPJ", "12345678000190"));
 
