@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tags")
+@Table(name = "schedule_tags")
 public class TagJpaEntity {
 
     @Id
