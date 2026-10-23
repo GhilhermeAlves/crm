@@ -55,6 +55,8 @@ export function BudgetViewDialog({ contactId, budgetId, onOpenChange }: Props) {
     if (!budgetId || typeof window === "undefined") return;
     window.open(
       `/patients/${contactId}/orcamentos/${budgetId}/imprimir?blocos=${blocks.join(",")}`,
+      "_blank",
+      "noopener",
     );
   };
 
