@@ -72,7 +72,23 @@ Arquivos: `frontend-refine/src/features/sales/scheduling/{schemas/scheduling.sch
 - [ ] Commit `docs(agenda): marca o novo agendamento completo como implementado`.
 
 ## Divergências encontradas
-(preencher)
+
+- Link de cadastro: segue o padrão do convite (contexto de token via `set_config` + policies extras de RLS; token guardado como hash SHA-256). Não existe `app.find_registration_link`.
+- URL do link: `MAIL_FRONTEND_BASE_URL` + `/cadastro/<token>`.
+- Limite de taxa público: 20 requisições por 10 minutos por IP, via Redis.
+- Cadastro público: campo vazio = não altera o dado existente.
+- Telefone informado no cadastro público vai para `contacts.mobile`.
+- Status inicial `COMPLETED` e `NO_SHOW` é rejeitado na criação de agendamento.
+- Conflito de recorrência lança `SlotUnavailableException` listando até 5 datas.
+- WhatsApp: a janela `wa.me` abre de forma síncrona no clique; fallback é copiar o link.
+- Frontend: `/cadastro` liberado no middleware.
+- Deploy: a regra nginx `location ^~ /api/v1/public/registration/` deve ser aplicada à mão na VPS.
 
 ## Resultado final
-(preencher)
+
+Verificações executadas em 2026-10-23 na branch `feature/agendamento-completo`:
+
+- Backend `cd backend && mvn -q test`: exit 0. Soma dos relatórios em `target/surefire-reports`: 1401 testes, 0 falhas, 1 erro. O erro é `PatientProcedureIsolationIT` com `Could not find a valid Docker environment` (ambiente local sem Docker; roda no CI com Testcontainers).
+- Frontend `npm run lint`: exit 0 (apenas warnings de `no-unused-vars` em testes já existentes).
+- Frontend `npx tsc --noEmit`: exit 0.
+- Frontend `npx vitest run --pool=threads --testTimeout=30000`: 1 arquivo falhou, 119 passaram; 5 testes falharam, 617 passaram (622). Única falha: `src/__tests__/components/layout/SidebarGroup.test.tsx` (5 testes), falha de ambiente local, não relacionada a esta feature.

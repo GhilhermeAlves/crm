@@ -1,6 +1,19 @@
 # Novo agendamento completo (paridade com o Capim) + link de cadastro do paciente
 
-**Status:** aprovado pelo usuário em 2026-10-23 ("use os serviços do catálogo e inclua o link de cadastro agora"). Branch `feature/agendamento-completo` (base `crm-improvements-deploy-phase` @ 096b89f2). Sem merge/deploy até o usuário liberar o pacote todo.
+**Status:** Implementada em 2026-10-23. Aprovada pelo usuário em 2026-10-23 ("use os serviços do catálogo e inclua o link de cadastro agora"). Branch `feature/agendamento-completo` (base `crm-improvements-deploy-phase` @ 096b89f2). Sem merge/deploy até o usuário liberar o pacote todo.
+
+## Ajustes reais (código final)
+
+- **Link de cadastro — persistência e segurança:** segue o padrão do convite. O contexto do token é fixado via `set_config` e há policies extras de RLS para a leitura pública; o token é guardado como hash SHA-256 (o valor em claro existe só na URL devolvida). Não existe `app.find_registration_link`; a resolução pública usa o mecanismo do convite.
+- **URL do link:** `MAIL_FRONTEND_BASE_URL` + `/cadastro/<token>`.
+- **Limite de taxa:** 20 requisições por 10 minutos por IP, com contador no Redis.
+- **Cadastro público:** campo vazio = não alterar o dado existente do contato.
+- **Telefone:** o telefone informado no cadastro público vai para `contacts.mobile`.
+- **Status inicial:** `COMPLETED` e `NO_SHOW` são rejeitados na criação (só `SCHEDULED`, `CONFIRMED`, `CANCELED`).
+- **Conflito de recorrência:** lança `SlotUnavailableException` listando até 5 datas em conflito.
+- **WhatsApp:** a janela do `wa.me` abre de forma síncrona no clique; se o navegador bloquear, o fallback é copiar o link.
+- **Frontend:** `/cadastro` está liberado no middleware de autenticação.
+- **Deploy:** a regra nginx `location ^~ /api/v1/public/registration/` precisa ser aplicada à mão na VPS (além do `deploy.sh`).
 
 ## Problemas encontrados (comparação com o Capim, paciente "Teste Claude")
 
