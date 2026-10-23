@@ -20,7 +20,7 @@ public record PatientRegistrationRequest(
         @Email @Size(max = 255) String email,
         @Size(max = 20) String phone,
         @Valid Address address,
-        String website) {
+        @Size(max = 200) String website) {
 
     public record Address(
             @Size(max = 10) String zipCode,

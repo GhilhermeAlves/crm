@@ -199,7 +199,8 @@ public class RegistrationLinkService {
     }
 
     private static String trim(String value) {
-        return value == null ? null : value.trim();
+        // Campo vazio do paciente = "não alterar" (no update interno "" apagaria o dado).
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private static String digits(String value) {

@@ -214,6 +214,26 @@ class RegistrationLinkServiceTest {
     }
 
     @Test
+    void submit_blankFields_meanDoNotChange() {
+        when(repository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(link(NOW.plusDays(3), null)));
+        PatientRegistrationRequest req = new PatientRegistrationRequest("Maria", "  ", VALID_CPF, null, "", "",
+                new PatientRegistrationRequest.Address("", " ", "", "", "", "", ""), null);
+
+        service.submit(TOKEN, req);
+
+        ArgumentCaptor<UpdateContactRequest> update = ArgumentCaptor.forClass(UpdateContactRequest.class);
+        verify(contactUseCase).updateFromRegistrationLink(eq(companyId), eq(contactId), update.capture());
+        UpdateContactRequest u = update.getValue();
+        assertNull(u.email());
+        assertNull(u.lastName());
+        assertNull(u.mobile());
+        assertNull(u.zipCode());
+        assertNull(u.street());
+        assertNull(u.city());
+        assertNull(u.state());
+    }
+
+    @Test
     void cpfCheckDigits() {
         assertTrue(RegistrationLinkService.isValidCpf("52998224725"));
         assertFalse(RegistrationLinkService.isValidCpf("52998224724"));

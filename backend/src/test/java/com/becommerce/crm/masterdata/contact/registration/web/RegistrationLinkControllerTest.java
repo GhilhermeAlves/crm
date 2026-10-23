@@ -125,6 +125,23 @@ class RegistrationLinkControllerTest {
     }
 
     @Test
+    void submit_fieldsAboveColumnLimits_400() throws Exception {
+        String[] bodies = {
+                "{\"firstName\":\"" + "M".repeat(101) + "\"}",
+                "{\"firstName\":\"M\",\"email\":\"" + "a".repeat(250) + "@ex.com\"}",
+                "{\"firstName\":\"M\",\"cpf\":\"" + "1".repeat(15) + "\"}",
+                "{\"firstName\":\"M\",\"address\":{\"city\":\"" + "c".repeat(81) + "\"}}",
+                "{\"firstName\":\"M\",\"address\":{\"state\":\"SPX\"}}",
+                "{\"firstName\":\"M\",\"address\":{\"zipCode\":\"" + "1".repeat(11) + "\"}}"};
+        for (String body : bodies) {
+            mockMvc.perform(post("/api/v1/public/registration/tok")
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        verify(service, never()).submit(anyString(), any());
+    }
+
+    @Test
     void rateLimited_429() throws Exception {
         when(rateLimiter.tryAcquire(anyString())).thenReturn(false);
 
