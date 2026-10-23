@@ -34,7 +34,7 @@ export type AuthDecision = {
 /** True quando o pathname é público (não exige sessão). */
 export function isPublicPathname(pathname: string): boolean {
   if (pathname === "/") return true;
-  return PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 export function resolveAuthRedirect(input: {

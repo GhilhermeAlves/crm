@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Copy, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,21 @@ export function RegistrationLinkActions({
   const createLink = useCreateRegistrationLink(companyId, contactId);
   const canSend = whatsappUrl(phone) !== null;
 
+  const [manualUrl, setManualUrl] = useState<string | null>(null);
+
+  const copyUrl = async (url: string): Promise<boolean> => {
+    try {
+      if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) return false;
+      await navigator.clipboard.writeText(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const send = async () => {
+    // Abre a aba no clique (síncrono) para o navegador não bloquear o pop-up.
+    const win = window.open("about:blank", "_blank");
     try {
       const { url } = await createLink.mutateAsync();
       const greeting = firstName ? `Olá, ${firstName}!` : "Olá!";
@@ -33,8 +48,19 @@ export function RegistrationLinkActions({
         phone,
         `${greeting} Para agilizar seu atendimento, complete seu cadastro: ${url}`,
       );
-      if (target) window.open(target, "_blank", "noopener");
+      if (win && target) {
+        win.opener = null;
+        win.location.href = target;
+        return;
+      }
+      win?.close();
+      if (await copyUrl(url)) {
+        toast.success("Pop-up bloqueado: link copiado");
+      } else {
+        setManualUrl(url);
+      }
     } catch {
+      win?.close();
       // o toast de erro vem do useMutationDefaults
     }
   };
@@ -46,14 +72,11 @@ export function RegistrationLinkActions({
     } catch {
       return;
     }
-    try {
-      if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-        throw new Error("clipboard unavailable");
-      }
-      await navigator.clipboard.writeText(url);
+    if (await copyUrl(url)) {
+      setManualUrl(null);
       toast.success("Link de cadastro copiado");
-    } catch {
-      toast.error("Não foi possível copiar o link");
+    } else {
+      setManualUrl(url);
     }
   };
 
@@ -81,6 +104,15 @@ export function RegistrationLinkActions({
         <Copy className="mr-1.5 h-4 w-4" />
         Copiar link
       </Button>
+      {manualUrl && (
+        <input
+          readOnly
+          aria-label="Link de cadastro"
+          value={manualUrl}
+          onFocus={(e) => e.currentTarget.select()}
+          className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+        />
+      )}
     </div>
   );
 }

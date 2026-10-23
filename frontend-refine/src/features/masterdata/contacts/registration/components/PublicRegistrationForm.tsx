@@ -255,18 +255,23 @@ export function PublicRegistrationForm({ token }: { token: string }) {
           </p>
         </div>
         <form onSubmit={handleSubmit} noValidate className="grid gap-4 sm:grid-cols-2">
-          {field("firstName", "Nome", { autoComplete: "given-name" })}
-          {field("lastName", "Sobrenome", { autoComplete: "family-name" })}
+          {field("firstName", "Nome", { autoComplete: "given-name", maxLength: 100 })}
+          {field("lastName", "Sobrenome", { autoComplete: "family-name", maxLength: 100 })}
           {field("cpf", "CPF", { mask: formatCpf, inputMode: "numeric" })}
           {field("birthDate", "Data de nascimento", { type: "date", autoComplete: "bday" })}
-          {field("email", "E-mail", { type: "email", inputMode: "email", autoComplete: "email" })}
+          {field("email", "E-mail", {
+            type: "email",
+            inputMode: "email",
+            autoComplete: "email",
+            maxLength: 255,
+          })}
           {field("phone", "Celular", { mask: maskPhone, inputMode: "tel", autoComplete: "tel" })}
           {field("zipCode", "CEP", { mask: maskCep, inputMode: "numeric" })}
-          {field("street", "Rua", { autoComplete: "address-line1" })}
+          {field("street", "Rua", { autoComplete: "address-line1", maxLength: 160 })}
           {field("number", "Número", { maxLength: 20 })}
-          {field("complement", "Complemento")}
-          {field("neighborhood", "Bairro")}
-          {field("city", "Cidade")}
+          {field("complement", "Complemento", { maxLength: 80 })}
+          {field("neighborhood", "Bairro", { maxLength: 80 })}
+          {field("city", "Cidade", { maxLength: 80 })}
           {field("state", "UF", {
             mask: (v) =>
               v

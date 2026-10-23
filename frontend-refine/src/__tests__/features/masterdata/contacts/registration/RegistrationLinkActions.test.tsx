@@ -30,19 +30,48 @@ describe("RegistrationLinkActions", () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
-  it("gera o link e abre o wa.me com a mensagem", async () => {
-    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+  it("abre a janela no clique e redireciona para o wa.me com a mensagem", async () => {
+    const win = { location: { href: "" }, opener: "x", close: vi.fn() };
+    const open = vi.spyOn(window, "open").mockImplementation(() => win as unknown as Window);
     renderActions("(34) 99999-8888");
     fireEvent.click(screen.getByRole("button", { name: /Enviar link de cadastro/ }));
-    await waitFor(() => expect(open).toHaveBeenCalled());
+    // aberta de forma síncrona, antes de gerar o link
+    expect(open).toHaveBeenCalledWith("about:blank", "_blank");
+    await waitFor(() => expect(win.location.href).not.toBe(""));
     expect(RegistrationService.createLink).toHaveBeenCalledWith("co1", "ct1");
-    const [url, target, features] = open.mock.calls[0];
-    expect(String(url).startsWith("https://wa.me/5534999998888?text=")).toBe(true);
-    expect(decodeURIComponent(String(url))).toContain(
+    expect(win.location.href.startsWith("https://wa.me/5534999998888?text=")).toBe(true);
+    expect(decodeURIComponent(win.location.href)).toContain(
       `Olá, Ana! Para agilizar seu atendimento, complete seu cadastro: ${URL_LINK}`,
     );
-    expect(target).toBe("_blank");
-    expect(features).toBe("noopener");
+    expect(win.opener).toBeNull();
+  });
+
+  it("fecha a janela se a geração do link falhar", async () => {
+    const win = { location: { href: "" }, opener: "x", close: vi.fn() };
+    vi.spyOn(window, "open").mockImplementation(() => win as unknown as Window);
+    vi.spyOn(RegistrationService, "createLink").mockRejectedValue(new Error("x"));
+    renderActions("(34) 99999-8888");
+    fireEvent.click(screen.getByRole("button", { name: /Enviar link de cadastro/ }));
+    await waitFor(() => expect(win.close).toHaveBeenCalled());
+  });
+
+  it("pop-up bloqueado: copia o link e avisa", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    vi.spyOn(window, "open").mockImplementation(() => null);
+    renderActions("(34) 99999-8888");
+    fireEvent.click(screen.getByRole("button", { name: /Enviar link de cadastro/ }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(URL_LINK));
+    expect(toastSuccess).toHaveBeenCalledWith("Pop-up bloqueado: link copiado");
+  });
+
+  it("clipboard indisponível: mostra o link para cópia manual", async () => {
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    renderActions("(34) 99999-8888");
+    fireEvent.click(screen.getByRole("button", { name: /Copiar link/ }));
+    const input = (await screen.findByLabelText("Link de cadastro")) as HTMLInputElement;
+    expect(input.value).toBe(URL_LINK);
+    expect(input.readOnly).toBe(true);
   });
 
   it("copia o link para a área de transferência", async () => {
