@@ -69,13 +69,13 @@ import {
   useAppointments,
   useAppointmentTypes,
   useBlocks,
-  useCreateAppointment,
   useCreateBlock,
   useChangeAppointmentStatus,
   useDeleteAppointment,
   useRescheduleAppointment,
   useAgendaSettings,
 } from "@/features/sales/scheduling/hooks/useScheduling";
+import { useSubmitNewAppointment } from "@/features/sales/scheduling/hooks/useSubmitNewAppointment";
 import { DEFAULT_AGENDA_SETTINGS } from "@/features/sales/scheduling/services/scheduling.service";
 import { useSchedulingPermissions } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import type {
@@ -210,7 +210,7 @@ export default function AgendaPage() {
     [blocks, effectiveSelectedIds],
   );
 
-  const createAppointment = useCreateAppointment(companyId);
+  const createAppointment = useSubmitNewAppointment(companyId);
   const createBlock = useCreateBlock(companyId);
   const changeStatus = useChangeAppointmentStatus(companyId);
   const reschedule = useRescheduleAppointment(companyId);
@@ -305,14 +305,7 @@ export default function AgendaPage() {
   };
 
   const handleCreateAppointment = (values: CreateAppointmentFormValues) => {
-    createAppointment.mutate(
-      {
-        ...values,
-        startAt: new Date(values.startAt).toISOString(),
-        endAt: new Date(values.endAt).toISOString(),
-      },
-      { onSuccess: () => setCreateOpen(false) },
-    );
+    void createAppointment.submit(values, () => setCreateOpen(false));
   };
 
   const selectedContact = useMemo(() => {

@@ -13,9 +13,13 @@ import { AppointmentStatusBadge } from "@/features/sales/scheduling/components/A
 import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/CreateAppointmentDialog";
 import {
   useAppointmentTypes,
+  useAgendaSettings,
   useChangeAppointmentStatus,
-  useCreateAppointment,
 } from "@/features/sales/scheduling/hooks/useScheduling";
+import { useSubmitNewAppointment } from "@/features/sales/scheduling/hooks/useSubmitNewAppointment";
+import { DEFAULT_AGENDA_SETTINGS } from "@/features/sales/scheduling/services/scheduling.service";
+import { useChairs } from "@/features/sales/chair/hooks/useChairs";
+import { useTags } from "@/features/sales/tag/hooks/useTags";
 import type { CreateAppointmentFormValues } from "@/features/sales/scheduling/schemas/scheduling.schema";
 import type {
   Appointment,
@@ -185,7 +189,12 @@ export function PatientAppointments({ contact }: { contact: Contact }) {
   const { data: appointments = [], isLoading } = useContactAppointments(companyId, contactId);
   const { data: appointmentTypes = [] } = useAppointmentTypes(companyId);
   const { data: members = [] } = useMembers(companyId);
-  const createAppointment = useCreateAppointment(companyId);
+  const createAppointment = useSubmitNewAppointment(companyId);
+  // Mesma origem da página da Agenda: expediente dos ajustes, cadeiras ativas e marcadores.
+  const { data: agendaSettings = DEFAULT_AGENDA_SETTINGS } = useAgendaSettings(companyId);
+  const { data: chairs = [] } = useChairs(companyId);
+  const { data: tags = [] } = useTags(companyId);
+  const activeChairs = useMemo(() => chairs.filter((c) => c.active), [chairs]);
   const changeStatus = useChangeAppointmentStatus(companyId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -233,14 +242,10 @@ export function PatientAppointments({ contact }: { contact: Contact }) {
   };
 
   const handleCreate = (values: CreateAppointmentFormValues) => {
-    createAppointment.mutate(
-      {
-        ...values,
-        startAt: new Date(values.startAt).toISOString(),
-        endAt: new Date(values.endAt).toISOString(),
-      },
-      { onSuccess: () => setDialogOpen(false) },
-    );
+    void createAppointment.submit(values, () => {
+      queryClient.invalidateQueries({ queryKey: ["contact-appointments", companyId, contactId] });
+      setDialogOpen(false);
+    });
   };
 
   return (
@@ -294,6 +299,10 @@ export function PatientAppointments({ contact }: { contact: Contact }) {
         contacts={[contact]}
         defaultContactId={contactId}
         defaultHostId={user?.id}
+        workHoursStart={agendaSettings.workHoursStart}
+        workHoursEnd={agendaSettings.workHoursEnd}
+        chairs={activeChairs}
+        tags={tags}
       />
     </div>
   );
