@@ -1,6 +1,6 @@
 # Ficha do Paciente — Fase 3a: Ficha clínica (odontograma + procedimentos)
 
-**Status:** aprovado em brainstorming (2026-10-22). Branch `feature/pacientes-fase3a` (base `crm-improvements-deploy-phase`).
+**Status:** Implementada (branch `feature/pacientes-fase3a`, base `crm-improvements-deploy-phase`). Aprovado em brainstorming em 2026-10-22.
 
 A Fase 3 foi dividida em duas entregas com spec/plano/PR próprios:
 
@@ -46,7 +46,7 @@ Dentes válidos: permanente 11–18, 21–28, 31–38, 41–48; decídua 51–55
 
 ## 2. Regras de negócio (service)
 
-- **Criar:** valida serviço (`SERVICE`, ativo, mesma empresa), dentes x dentição, faces sem repetição. `DONE` exige `performedAt`. Se `DONE` e `generateTransaction = true`, cria `INCOME` `PENDING` ligada ao contato, valor `price_cents` (> 0, senão 422), descrição `Procedimento: <nome> – dentes <lista>` (ou "boca toda"), vencimento informado (padrão hoje), e grava `financial_transaction_id`.
+- **Criar:** valida serviço (`SERVICE`, ativo, mesma empresa), dentes x dentição, faces sem repetição. `DONE` exige `performedAt`. Se `DONE` e `generateTransaction = true`, cria `INCOME` `PENDING` ligada ao contato, categoria `PROCEDURE`, forma de pagamento `PaymentMethod.OTHER`, valor `price_cents` (> 0, senão 400), descrição `Procedimento: <nome> – dentes <lista>` (ou "boca toda"), vencimento informado (padrão hoje), e grava `financial_transaction_id`.
 - **Concluir** (`POST /{id}/complete`): só de `PLANNED` (senão 409). Recebe `performedAt`, `professionalId`, `generateTransaction`, `dueDate`. Mesma geração do item anterior.
 - **Editar** (`PATCH /{id}`): `PLANNED` e `PRE_EXISTING` editam todos os campos (inclusive trocar entre esses dois estados; ir para `DONE` só via concluir). `DONE` edita apenas `notes`; qualquer outro campo → 409.
 - **Excluir:** se houver lançamento `PAID` → 409 com mensagem "Procedimento com pagamento registrado não pode ser excluído". Se `PENDING` → lançamento vira `CANCELLED` na mesma transação. `CANCELLED` ou sem lançamento → exclui direto.
@@ -55,21 +55,23 @@ Dentes válidos: permanente 11–18, 21–28, 31–38, 41–48; decídua 51–55
 
 ## 3. API
 
-Base `/api/contacts/{contactId}/procedures`:
+Base `/api/v1/companies/{companyId}/patients/{contactId}/procedures`:
 
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/` | lista; filtros opcionais `state`, `category` (de `catalog_items`), `tooth`; ordenado por `created_at desc` |
 | POST | `/` | cria |
-| PATCH | `/{id}` | edita |
-| POST | `/{id}/complete` | conclui |
-| DELETE | `/{id}` | exclui (204) |
+| PATCH | `/{procedureId}` | edita |
+| POST | `/{procedureId}/complete` | conclui |
+| DELETE | `/{procedureId}` | exclui (204) |
 
 Resposta inclui `category`, `professionalName`, `teeth[{tooth, faces}]` e `transaction{id, status}` quando houver. O resumo do odontograma é calculado no frontend a partir da lista.
 
+Erros: validação → 400; conflito de estado ou exclusão com lançamento pago → 409; procedimento não encontrado → 404; gerar lançamento sem `finance:create` → 403.
+
 ## 4. Frontend (`frontend-refine`)
 
-- Rota `src/app/(dashboard)/patients/[id]/ficha-clinica/page.tsx`; aba **"Ficha clínica"** em `PatientTabs`, logo após "Visão geral", visível com `contact:read`.
+- Rota `src/app/(dashboard)/patients/[id]/ficha-clinica/page.tsx`; aba **"Ficha clínica"** em `PatientTabs`, logo após "Consultas", visível com `contact:read`.
 - `src/features/clinical/procedures/`:
   - `api.ts`, `hooks.ts` (`useProcedures(contactId, filters)` + mutations via mutation helper).
   - `Odontogram.tsx` — SVG; toggle Permanente/Decídua; 4 quadrantes. Cor do dente pela prioridade **A realizar > Realizado > Pré-existente**, com legenda; faces como 5 setores pintados quando há procedimento nelas; procedimentos sem dente não colorem. Clique no dente aplica/limpa o filtro `tooth`. Reutilizável em modo seleção (usado no drawer).

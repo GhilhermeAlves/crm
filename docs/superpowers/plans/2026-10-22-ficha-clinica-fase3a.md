@@ -1629,8 +1629,21 @@ Orçamentos e `budget_id` (Fase 3b); anotações por dente; impressão/PDF do od
 
 ## Divergências encontradas
 
-(preencher durante a execução)
+Ver ledger do SDD; divergências registradas nos relatórios das tasks (chave de cache do financeiro ['finance', companyId]; canEdit em ProcedureList; useId nos campos do drawer).
 
 ## Resultado final
 
-(preencher na Task 11)
+Verificação executada na Task 11 (branch `feature/pacientes-fase3a`, após `fe276615`):
+
+- `cd backend && mvn -q test`: sem falhas, `EXIT=0` (log completo em `.superpowers/sdd/2026-10-22-ficha-clinica-fase3a/task-11-backend.log`; as linhas de stack trace no log são saída de testes que registram exceções esperadas).
+- `cd frontend-refine && npm run lint`: `EXIT=0` (somente warnings preexistentes, sem erros).
+- `npx tsc --noEmit`: `EXIT=0`, sem erros.
+- `npx vitest run --pool=threads`:
+  ```
+  Test Files  1 failed | 110 passed (111)
+       Tests  5 failed | 569 passed (574)
+  ```
+  As 5 falhas são todas em `src/__tests__/components/layout/SidebarGroup.test.tsx` (ambiente local: `node_modules` emprestado via junction; não relacionado a esta feature). Registrado como está, sem correção.
+- Prettier (`npx prettier --check --end-of-line auto` nos 16 arquivos de `frontend-refine` alterados desde `origin/crm-improvements-deploy-phase`): "All matched files use Prettier code style!".
+
+CI do GitHub (backend, frontend, E2E) é a verificação de referência para este fechamento e não foi consultado nesta execução.
