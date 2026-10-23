@@ -144,6 +144,8 @@ public class PatientProcedure {
         }
         this.state = ProcedureState.DONE;
         this.performedAt = date;
+        // A intenção de gerar o lançamento se encerra ao realizar.
+        this.generateTransactionOnDone = false;
         if (professional != null) {
             this.professionalId = professional;
         }

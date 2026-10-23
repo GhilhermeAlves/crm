@@ -242,6 +242,16 @@ class PatientProcedureServiceTest {
     }
 
     @Test
+    void completeClearsGenerateOnDoneFlag() {
+        PatientProcedure p = existing(ProcedureState.PLANNED);
+        p.setGenerateTransactionOnDone(true);
+        PatientProcedureResponse r = service.complete(COMPANY_ID, CONTACT_ID, p.getId(),
+                new CompleteProcedureRequest(LocalDate.of(2026, 10, 22), null, true, null), ACTOR_ID, true);
+        assertThat(r.generateTransactionOnDone()).isFalse();
+        assertThat(p.isGenerateTransactionOnDone()).isFalse();
+    }
+
+    @Test
     void completeGeneratesTransaction() {
         PatientProcedure p = existing(ProcedureState.PLANNED);
         PatientProcedureResponse r = service.complete(COMPANY_ID, CONTACT_ID, p.getId(),

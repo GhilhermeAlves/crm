@@ -60,6 +60,7 @@ function makeProcedure(
     teeth: [{ tooth: 11, faces: ["M"] }],
     transaction: null,
     budget: null,
+    generateTransactionOnDone: false,
     createdAt: "2026-10-20T10:00:00",
     updatedAt: "2026-10-20T10:00:00",
     ...overrides,
@@ -114,6 +115,13 @@ describe("ProcedureDrawer", () => {
     expect(payload.generateTransaction).toBe(true);
     expect(payload.priceCents).toBe(123456);
     expect(payload.dueDate).toBeNull();
+  });
+
+  it("orçamento aprovado esconde o lançamento e mostra a cobrança pelo orçamento", () => {
+    permissions.value = ["finance:create"];
+    renderDrawer(makeProcedure({ budget: { id: "b1", title: "Plano", status: "APPROVED" } }));
+    expect(screen.queryByText("Gerar lançamento financeiro")).toBeNull();
+    expect(screen.getByText("Cobrado pelo orçamento Plano.")).toBeTruthy();
   });
 
   it("rótulo Procedimentos e lista com valor ao lado do nome", () => {

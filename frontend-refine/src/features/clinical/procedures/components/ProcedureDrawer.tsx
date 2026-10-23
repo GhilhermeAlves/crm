@@ -97,6 +97,8 @@ export function ProcedureDrawer({
   const locked = procedure?.state === "DONE";
   const editing = Boolean(procedure);
   const canFinance = can("finance:create");
+  // Procedimento de orçamento aprovado já é cobrado pelo orçamento.
+  const budgetApproved = procedure?.budget?.status === "APPROVED";
   const services = catalog?.content ?? [];
   const isPending = create.isPending || update.isPending;
 
@@ -141,6 +143,7 @@ export function ProcedureDrawer({
     // Em "A realizar" o flag é guardado e só vira lançamento ao marcar como realizado.
     const generateOnDone =
       state === "PLANNED" &&
+      !budgetApproved &&
       (canFinance ? generateTransaction : (procedure?.generateTransactionOnDone ?? false));
     const payload: PatientProcedureRequest =
       locked && procedure
@@ -325,7 +328,12 @@ export function ProcedureDrawer({
             />
           </div>
 
-          {canFinance && !locked && (
+          {budgetApproved && procedure?.budget && (
+            <p className="text-sm text-muted-foreground">
+              Cobrado pelo orçamento {procedure.budget.title}.
+            </p>
+          )}
+          {canFinance && !locked && !budgetApproved && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Checkbox

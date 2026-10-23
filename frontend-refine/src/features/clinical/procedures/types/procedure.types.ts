@@ -25,7 +25,7 @@ export type PatientProcedureResponse = {
   createdAt: string;
   updatedAt: string;
   budget: { id: string; title: string; status: BudgetStatus } | null;
-  generateTransactionOnDone?: boolean;
+  generateTransactionOnDone: boolean;
 };
 
 export type PatientProcedureRequest = {
