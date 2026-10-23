@@ -53,7 +53,8 @@ export function CompleteProcedureDialog({ companyId, contactId, procedure, onOpe
     setDueDate(today());
   }, [procedure]);
 
-  const canFinance = can("finance:create");
+  const budgetApproved = procedure?.budget?.status === "APPROVED";
+  const canFinance = can("finance:create") && !budgetApproved;
 
   const confirm = () => {
     if (!procedure) return;
@@ -104,6 +105,11 @@ export function CompleteProcedureDialog({ companyId, contactId, procedure, onOpe
               </SelectContent>
             </Select>
           </div>
+          {budgetApproved && procedure?.budget && (
+            <p className="text-sm text-muted-foreground">
+              Cobrado pelo orçamento {procedure.budget.title}.
+            </p>
+          )}
           {canFinance && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">

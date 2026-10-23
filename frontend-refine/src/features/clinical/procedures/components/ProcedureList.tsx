@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { BUDGET_STATUS_LABELS } from "@/features/clinical/budgets/utils/installments";
 import { useDeleteProcedure } from "../hooks/useProcedures";
 import type {
   PatientProcedureResponse,
@@ -158,12 +159,14 @@ export function ProcedureList({
                 <TableHead>Data</TableHead>
                 <TableHead>Profissional</TableHead>
                 <TableHead>Lançamento</TableHead>
+                <TableHead>Orçamento</TableHead>
                 {canEdit && <TableHead>Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {visible.map((p) => {
                 const paid = p.transaction?.status === "PAID";
+                const budgetApproved = p.budget?.status === "APPROVED";
                 return (
                   <TableRow key={p.id}>
                     <TableCell>
@@ -182,6 +185,11 @@ export function ProcedureList({
                     <TableCell>
                       {p.transaction ? TRANSACTION_LABELS[p.transaction.status] : "—"}
                     </TableCell>
+                    <TableCell>
+                      {p.budget
+                        ? `${p.budget.title} · ${BUDGET_STATUS_LABELS[p.budget.status]}`
+                        : "—"}
+                    </TableCell>
                     {canEdit && (
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -197,11 +205,13 @@ export function ProcedureList({
                             size="icon"
                             variant="ghost"
                             aria-label="Excluir procedimento"
-                            disabled={paid}
+                            disabled={paid || budgetApproved}
                             title={
-                              paid
-                                ? "Procedimento com pagamento registrado não pode ser excluído"
-                                : undefined
+                              budgetApproved
+                                ? "Procedimento de orçamento aprovado não pode ser excluído"
+                                : paid
+                                  ? "Procedimento com pagamento registrado não pode ser excluído"
+                                  : undefined
                             }
                             onClick={() => setToDelete(p)}
                           >
@@ -227,6 +237,11 @@ export function ProcedureList({
           {toDelete?.transaction?.status === "PENDING" && (
             <p className="text-sm">
               O lançamento financeiro pendente deste procedimento será cancelado.
+            </p>
+          )}
+          {toDelete?.budget?.status === "DRAFT" && (
+            <p className="text-sm">
+              O procedimento será removido do orçamento {toDelete.budget.title}.
             </p>
           )}
           <AlertDialogFooter>

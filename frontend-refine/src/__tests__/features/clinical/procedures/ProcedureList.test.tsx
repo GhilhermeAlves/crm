@@ -120,4 +120,34 @@ describe("ProcedureList", () => {
     expect(screen.queryByText("Marcar como realizado")).toBeNull();
     expect(screen.queryByRole("button", { name: "Excluir procedimento" })).toBeNull();
   });
+
+  it("mostra o orçamento do procedimento ou traço", () => {
+    renderList([
+      makeProcedure({
+        id: "p1",
+        name: "Restauração",
+        budget: { id: "b1", title: "Plano ortodôntico", status: "DRAFT" },
+      }),
+      makeProcedure({ id: "p2", name: "Limpeza", budget: null }),
+    ]);
+    expect(screen.getByText("Orçamento")).toBeTruthy();
+    expect(screen.getByText("Plano ortodôntico · Rascunho")).toBeTruthy();
+  });
+
+  it("procedimento de orçamento aprovado não pode ser excluído", () => {
+    renderList([makeProcedure({ budget: { id: "b1", title: "Plano", status: "APPROVED" } })]);
+    const button = screen.getByRole("button", {
+      name: "Excluir procedimento",
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute("title")).toBe(
+      "Procedimento de orçamento aprovado não pode ser excluído",
+    );
+  });
+
+  it("exclusão em orçamento rascunho avisa remoção do orçamento", () => {
+    renderList([makeProcedure({ budget: { id: "b1", title: "Plano", status: "DRAFT" } })]);
+    fireEvent.click(screen.getByRole("button", { name: "Excluir procedimento" }));
+    expect(screen.getByText("O procedimento será removido do orçamento Plano.")).toBeTruthy();
+  });
 });
