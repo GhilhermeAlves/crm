@@ -39,6 +39,11 @@ public class BudgetRepositoryImpl implements BudgetRepository {
     }
 
     @Override
+    public Optional<Budget> findByIdForUpdate(UUID id) {
+        return jpaRepository.findByIdForUpdate(id).map(BudgetRepositoryImpl::toDomain);
+    }
+
+    @Override
     public List<Budget> findByCompanyIdAndContactIdOrderByUpdatedAtDesc(UUID companyId, UUID contactId) {
         return jpaRepository.findByCompanyIdAndContactIdOrderByUpdatedAtDesc(companyId, contactId).stream()
                 .map(BudgetRepositoryImpl::toDomain).toList();

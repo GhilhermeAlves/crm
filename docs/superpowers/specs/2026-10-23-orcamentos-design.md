@@ -18,6 +18,7 @@ Aba **Orçamentos** na ficha do paciente: montar um orçamento a partir de proce
 6. **Interação com a 3a:**
    - Procedimento em orçamento `APPROVED`: ao concluir, a opção "gerar lançamento" some no front e o backend recusa `generateTransaction=true` (400 "Este procedimento já é cobrado pelo orçamento aprovado.") — evita cobrança dupla.
    - Excluir procedimento em orçamento `DRAFT`: remove o item (e recalcula). Em orçamento `APPROVED`: 409.
+   - Concluir com lançamento um procedimento que está em orçamento `DRAFT` é permitido, mas aprovar depois recusa com 409 ("O procedimento <nome> não está mais \"A realizar\". Atualize o orçamento antes de aprovar.") se algum item não estiver `PLANNED` ou já tiver lançamento — nada é salvo e nenhuma parcela é gerada. Aprovação, perda e edição leem o orçamento com lock pessimista (`SELECT ... FOR UPDATE`) para serializar operações concorrentes.
    - Editar preço de procedimento não altera o item do orçamento (snapshot).
    - A resposta do procedimento ganha `budget: {id, title, status} | null` (orçamento não perdido) e a lista "Ficha geral" mostra a coluna **Orçamento**.
 7. **Excluir orçamento:** só `DRAFT` ou `LOST`. `APPROVED` → 409 (marque como perdido antes).

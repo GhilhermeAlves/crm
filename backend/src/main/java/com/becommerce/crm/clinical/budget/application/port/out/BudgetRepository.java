@@ -14,6 +14,9 @@ public interface BudgetRepository {
 
     Optional<Budget> findById(UUID id);
 
+    /** Carrega com lock pessimista (SELECT ... FOR UPDATE) para serializar aprovação/perda/edição. */
+    Optional<Budget> findByIdForUpdate(UUID id);
+
     List<Budget> findByCompanyIdAndContactIdOrderByUpdatedAtDesc(UUID companyId, UUID contactId);
 
     void delete(Budget budget);

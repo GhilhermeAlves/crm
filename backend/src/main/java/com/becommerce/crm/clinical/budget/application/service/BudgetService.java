@@ -95,7 +95,7 @@ public class BudgetService implements BudgetUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
-            return toResponse(requireOwned(companyId, contactId, budgetId));
+            return toResponse(requireOwned(companyId, contactId, budgetId, false));
         } finally {
             TenantContext.clear();
         }
@@ -127,7 +127,7 @@ public class BudgetService implements BudgetUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
-            Budget budget = requireOwned(companyId, contactId, budgetId);
+            Budget budget = requireOwned(companyId, contactId, budgetId, true);
             if (!budget.isDraft()) {
                 throw new ContactConflictException("Só orçamentos em rascunho podem ser editados.");
             }
@@ -153,7 +153,10 @@ public class BudgetService implements BudgetUseCase {
             if (!canCreateFinance) {
                 throw new CrmAccessDeniedException("Você não tem permissão para gerar lançamentos financeiros.");
             }
-            Budget budget = requireOwned(companyId, contactId, budgetId);
+            Budget budget = requireOwned(companyId, contactId, budgetId, true);
+            if (budget.isDraft()) {
+                requireItemsStillBillable(budget);
+            }
             budget.approve(request.paymentMethod(), request.installments(), request.firstDueDate(), actorId);
             if (budget.totalCents() > 0) {
                 List<FinancialTransaction> series = FinancialTransaction.createSeries(companyId,
@@ -179,7 +182,7 @@ public class BudgetService implements BudgetUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
-            Budget budget = requireOwned(companyId, contactId, budgetId);
+            Budget budget = requireOwned(companyId, contactId, budgetId, true);
             if (budget.isApproved()) {
                 List<FinancialTransaction> linked = loadTransactions(budget);
                 if (linked.stream().anyMatch(tx -> tx.getStatus() == TransactionStatus.PAID)) {
@@ -210,7 +213,7 @@ public class BudgetService implements BudgetUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
-            Budget budget = requireOwned(companyId, contactId, budgetId);
+            Budget budget = requireOwned(companyId, contactId, budgetId, false);
             if (budget.isApproved()) {
                 throw new ContactConflictException(
                         "Orçamento aprovado não pode ser excluído. Marque como perdido antes.");
@@ -257,6 +260,19 @@ public class BudgetService implements BudgetUseCase {
         return items;
     }
 
+    /** Evita cobrança dupla: procedimento concluído (ou já cobrado) depois de entrar no rascunho barra a aprovação. */
+    private void requireItemsStillBillable(Budget budget) {
+        for (BudgetItem item : budget.getItems()) {
+            PatientProcedure procedure = procedureRepository.findById(item.procedureId()).orElse(null);
+            if (procedure == null || procedure.getState() != ProcedureState.PLANNED
+                    || procedure.getFinancialTransactionId() != null) {
+                String name = procedure == null ? "removido" : procedure.getNameSnapshot();
+                throw new ContactConflictException("O procedimento " + name
+                        + " não está mais \"A realizar\". Atualize o orçamento antes de aprovar.");
+            }
+        }
+    }
+
     private List<FinancialTransaction> loadTransactions(Budget budget) {
         List<FinancialTransaction> result = new ArrayList<>();
         for (UUID id : budget.getTransactionIds()) {
@@ -273,8 +289,9 @@ public class BudgetService implements BudgetUseCase {
         }
     }
 
-    private Budget requireOwned(UUID companyId, UUID contactId, UUID budgetId) {
-        Budget budget = repository.findById(budgetId).orElseThrow(() -> new BudgetNotFoundException(budgetId));
+    private Budget requireOwned(UUID companyId, UUID contactId, UUID budgetId, boolean forUpdate) {
+        Budget budget = (forUpdate ? repository.findByIdForUpdate(budgetId) : repository.findById(budgetId))
+                .orElseThrow(() -> new BudgetNotFoundException(budgetId));
         if (!budget.getCompanyId().equals(companyId) || !budget.getContactId().equals(contactId)) {
             throw new BudgetNotFoundException(budgetId);
         }

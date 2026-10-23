@@ -24,11 +24,11 @@ export function BudgetPrintView({ budget, blocks, patientName }: Props) {
   const createdAt = Number.isNaN(updated.getTime()) ? "" : format(updated, "dd/MM/yyyy");
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 bg-background p-8 text-foreground">
+    <div className="mx-auto max-w-3xl space-y-6 p-8">
       <header className="space-y-1 border-b pb-4">
         <h1 className="text-2xl font-semibold">{budget.title}</h1>
         <p className="text-sm">Paciente: {patientName}</p>
-        {createdAt && <p className="text-sm text-muted-foreground">Data: {createdAt}</p>}
+        {createdAt && <p className="text-sm text-neutral-600">Data: {createdAt}</p>}
       </header>
 
       <table className="w-full text-sm">

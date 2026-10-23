@@ -113,6 +113,7 @@ class BudgetServiceTest {
         }
         Budget budget = Budget.create(COMPANY_ID, CONTACT_ID, "Tratamento", items, 0L, null, ACTOR_ID);
         lenient().when(repository.findById(budget.getId())).thenReturn(Optional.of(budget));
+        lenient().when(repository.findByIdForUpdate(budget.getId())).thenReturn(Optional.of(budget));
         return budget;
     }
 
@@ -167,7 +168,7 @@ class BudgetServiceTest {
         Budget budget = Budget.create(COMPANY_ID, CONTACT_ID, "Tratamento",
                 List.of(new BudgetItem(UUID.randomUUID(), a.getId(), 9000, 0)), 0L, null, ACTOR_ID);
         UUID originalItemId = budget.getItems().get(0).id();
-        when(repository.findById(budget.getId())).thenReturn(Optional.of(budget));
+        when(repository.findByIdForUpdate(budget.getId())).thenReturn(Optional.of(budget));
         when(repository.findActiveByProcedureIds(any(), anyCollection())).thenReturn(Map.of(a.getId(), budget));
 
         BudgetResponse r = service.update(COMPANY_ID, CONTACT_ID, budget.getId(),
@@ -186,7 +187,7 @@ class BudgetServiceTest {
         PatientProcedure a = procedure(CONTACT_ID, ProcedureState.PLANNED, 10000);
         Budget budget = Budget.create(COMPANY_ID, CONTACT_ID, "Tratamento",
                 List.of(new BudgetItem(UUID.randomUUID(), a.getId(), 9000, 0)), 0L, null, ACTOR_ID);
-        when(repository.findById(budget.getId())).thenReturn(Optional.of(budget));
+        when(repository.findByIdForUpdate(budget.getId())).thenReturn(Optional.of(budget));
 
         BudgetResponse r = service.update(COMPANY_ID, CONTACT_ID, budget.getId(),
                 request(0, Map.of(a.getId(), 7000L), a), ACTOR_ID);
@@ -213,6 +214,24 @@ class BudgetServiceTest {
         });
         assertThat(r.status()).isEqualTo(BudgetStatus.APPROVED);
         assertThat(budget.getTransactionIds()).hasSize(3);
+    }
+
+    @Test
+    void approveRefusesWhenProcedureIsNoLongerPlannedOrAlreadyBilled() {
+        PatientProcedure planned = procedure(CONTACT_ID, ProcedureState.PLANNED, 10000);
+        Budget budget = draft(planned);
+        PatientProcedure billed = PatientProcedure.reconstitute(planned.getId(), COMPANY_ID, CONTACT_ID, ITEM_ID,
+                "Restauração", ProcedureState.DONE, Dentition.PERMANENT, 10000, null, null,
+                LocalDate.of(2026, 10, 1), UUID.randomUUID(), List.of(new ProcedureTooth(11, Set.of(ToothFace.M))),
+                ACTOR_ID, LocalDateTime.now(), LocalDateTime.now());
+        when(procedureRepository.findById(planned.getId())).thenReturn(Optional.of(billed));
+
+        assertThatThrownBy(() -> service.approve(COMPANY_ID, CONTACT_ID, budget.getId(), approval(2), ACTOR_ID, true))
+                .isInstanceOf(ContactConflictException.class)
+                .hasMessage("O procedimento Restauração não está mais \"A realizar\". Atualize o orçamento antes de aprovar.");
+        verify(transactionRepository, never()).saveAll(anyList());
+        verify(repository, never()).save(any());
+        assertThat(budget.isDraft()).isTrue();
     }
 
     @Test
@@ -246,6 +265,7 @@ class BudgetServiceTest {
                 java.util.Arrays.stream(txs).map(FinancialTransaction::getId).toList(), ACTOR_ID, ACTOR_ID,
                 LocalDateTime.now(), LocalDateTime.now());
         lenient().when(repository.findById(budget.getId())).thenReturn(Optional.of(budget));
+        lenient().when(repository.findByIdForUpdate(budget.getId())).thenReturn(Optional.of(budget));
         for (FinancialTransaction tx : txs) {
             lenient().when(transactionRepository.findById(tx.getId())).thenReturn(Optional.of(tx));
         }
