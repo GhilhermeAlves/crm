@@ -19,6 +19,8 @@ export const PUBLIC_PATHS = [
   "/link-account",
   // Convite: prévia e cadastro sem sessão; quem já tem conta entra a partir dela.
   "/convite",
+  // Cadastro do paciente por link: o paciente preenche os próprios dados sem sessão.
+  "/cadastro",
 ] as const;
 
 /** Link legado de convite, redirecionado para /convite/{token}. */

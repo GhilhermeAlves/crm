@@ -16,6 +16,10 @@ vi.mock("@/features/sales/tag/hooks/useTags", () => ({
   useCreateTag: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+vi.mock("@/features/masterdata/contacts/registration/components/RegistrationLinkActions", () => ({
+  RegistrationLinkActions: () => <button type="button">Enviar link de cadastro</button>,
+}));
+
 const HOST_ID = "11111111-1111-4111-8111-111111111111";
 const CONTACT_ID = "22222222-2222-4222-8222-222222222222";
 
@@ -69,6 +73,11 @@ describe("CreateAppointmentDialog", () => {
     const values = await submit(onSubmit);
     expect(values.status).toBe("SCHEDULED");
     expect(values.recurrence).toBeNull();
+  });
+
+  it("mostra o envio do link de cadastro quando há paciente", () => {
+    renderDialog();
+    expect(screen.getByRole("button", { name: "Enviar link de cadastro" })).toBeTruthy();
   });
 
   it("pré-preenche o título com o nome do paciente", () => {

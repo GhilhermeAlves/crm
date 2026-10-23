@@ -35,6 +35,7 @@ import {
   type RecurrencePreset,
   type RecurrenceValue,
 } from "../schemas/scheduling.schema";
+import { RegistrationLinkActions } from "@/features/masterdata/contacts/registration/components/RegistrationLinkActions";
 import { ContactCombobox } from "./ContactCombobox";
 import { RecurrenceDialog, describeRecurrence } from "./RecurrenceDialog";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
@@ -477,7 +478,14 @@ export function CreateAppointmentDialog({
                   }}
                 />
                 {phoneError && <p className="text-sm text-destructive">{phoneError}</p>}
-                {/* Espaço reservado para "Enviar link de cadastro" (Task 7). */}
+                <RegistrationLinkActions
+                  companyId={companyId}
+                  contactId={form.watch("contactId") as string}
+                  firstName={
+                    contacts.find((c) => c.id === form.watch("contactId"))?.firstName ?? ""
+                  }
+                  phone={phone}
+                />
               </div>
             )}
 

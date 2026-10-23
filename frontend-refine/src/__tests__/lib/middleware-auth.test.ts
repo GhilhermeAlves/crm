@@ -84,6 +84,13 @@ describe("resolveAuthRedirect (middleware, flag-only)", () => {
     ).toBeUndefined();
   });
 
+  it("keeps the public registration path public", () => {
+    expect(PUBLIC_PATHS).toContain("/cadastro");
+    expect(
+      resolveAuthRedirect({ pathname: "/cadastro/tok", hasSession: false }).redirectTo,
+    ).toBeUndefined();
+  });
+
   it("exposes the session cookie name used by the middleware", () => {
     expect(SESSION_COOKIE).toBe("crm_session");
   });
