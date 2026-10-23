@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -99,7 +100,7 @@ public class BudgetRepositoryImpl implements BudgetRepository {
         e.setItems(items);
         e.setTransactions(b.getTransactionIds().stream()
                 .map(id -> new BudgetTransactionLink(b.getCompanyId(), id))
-                .collect(Collectors.toCollection(ArrayList::new)));
+                .collect(Collectors.toCollection(HashSet::new)));
         return e;
     }
 

@@ -15,7 +15,9 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -79,7 +81,7 @@ public class BudgetJpaEntity {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "budget_transactions", joinColumns = @JoinColumn(name = "budget_id"))
-    private List<BudgetTransactionLink> transactions = new ArrayList<>();
+    private Set<BudgetTransactionLink> transactions = new HashSet<>();
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -117,6 +119,6 @@ public class BudgetJpaEntity {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public List<BudgetItemJpaEntity> getItems() { return items; }
     public void setItems(List<BudgetItemJpaEntity> items) { this.items = items; }
-    public List<BudgetTransactionLink> getTransactions() { return transactions; }
-    public void setTransactions(List<BudgetTransactionLink> transactions) { this.transactions = transactions; }
+    public Set<BudgetTransactionLink> getTransactions() { return transactions; }
+    public void setTransactions(Set<BudgetTransactionLink> transactions) { this.transactions = transactions; }
 }
