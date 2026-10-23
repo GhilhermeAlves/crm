@@ -29,6 +29,7 @@ import com.becommerce.crm.masterdata.contact.note.domain.exception.ContactNoteNo
 import com.becommerce.crm.clinical.documenttemplate.domain.exception.DocumentTemplateNotFoundException;
 import com.becommerce.crm.clinical.anamnesis.domain.exception.PatientAnamnesisNotFoundException;
 import com.becommerce.crm.clinical.evolution.domain.exception.PatientEvolutionNotFoundException;
+import com.becommerce.crm.clinical.procedure.domain.exception.PatientProcedureNotFoundException;
 import com.becommerce.crm.clinical.document.domain.exception.PatientDocumentNotFoundException;
 import com.becommerce.crm.identity.domain.exception.DuplicateRoleException;
 import com.becommerce.crm.identity.domain.exception.InvalidCredentialsException;
@@ -569,6 +570,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PatientEvolutionNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handlePatientEvolutionNotFoundException(
             PatientEvolutionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(PatientProcedureNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handlePatientProcedureNotFoundException(
+            PatientProcedureNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
                 "status", 404,
