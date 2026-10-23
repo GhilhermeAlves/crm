@@ -1,6 +1,10 @@
 package com.becommerce.crm.clinical.procedure.application.service;
 
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
+import com.becommerce.crm.clinical.budget.application.port.out.BudgetRepository;
+import com.becommerce.crm.clinical.budget.domain.Budget;
+import com.becommerce.crm.clinical.budget.domain.BudgetItem;
+import com.becommerce.crm.clinical.budget.domain.BudgetStatus;
 import com.becommerce.crm.clinical.procedure.application.dto.CompleteProcedureRequest;
 import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureRequest;
 import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureResponse;
@@ -37,6 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -83,13 +88,16 @@ class PatientProcedureServiceTest {
     @Mock
     private CatalogItem catalogItem;
 
+    @Mock
+    private BudgetRepository budgetRepository;
+
     private PatientProcedureService service;
     private FinancialTransaction pendingTx;
 
     @BeforeEach
     void setUp() {
         service = new PatientProcedureService(repository, contactRepository, catalogRepository,
-                transactionRepository, userRepository, membershipRepository, auditor);
+                transactionRepository, userRepository, membershipRepository, auditor, budgetRepository);
         Contact contact = mock(Contact.class);
         lenient().when(contact.getCompanyId()).thenReturn(COMPANY_ID);
         lenient().when(contactRepository.findById(CONTACT_ID)).thenReturn(Optional.of(contact));
@@ -225,6 +233,79 @@ class PatientProcedureServiceTest {
         assertThat(pendingTx.getStatus()).isEqualTo(TransactionStatus.CANCELLED);
         verify(transactionRepository).save(pendingTx);
         verify(repository).delete(p);
+    }
+
+    private Budget budgetWith(PatientProcedure... procedures) {
+        List<BudgetItem> items = new java.util.ArrayList<>();
+        for (PatientProcedure p : procedures) {
+            items.add(new BudgetItem(UUID.randomUUID(), p.getId(), p.getPriceCents(), items.size()));
+        }
+        Budget budget = Budget.create(COMPANY_ID, CONTACT_ID, "Plano", items, 0, null, ACTOR_ID);
+        for (PatientProcedure p : procedures) {
+            lenient().when(budgetRepository.findActiveByProcedureIds(COMPANY_ID, List.of(p.getId())))
+                    .thenReturn(Map.of(p.getId(), budget));
+        }
+        return budget;
+    }
+
+    @Test
+    void listFillsBudgetRef() {
+        PatientProcedure a = existing(ProcedureState.PLANNED);
+        Budget budget = budgetWith(a);
+        when(repository.findByCompanyIdAndContactIdOrderByCreatedAtDesc(COMPANY_ID, CONTACT_ID))
+                .thenReturn(List.of(a));
+        PatientProcedureResponse r = service.list(COMPANY_ID, CONTACT_ID, null, null, null).get(0);
+        assertThat(r.budget()).isNotNull();
+        assertThat(r.budget().id()).isEqualTo(budget.getId());
+        assertThat(r.budget().title()).isEqualTo("Plano");
+        assertThat(r.budget().status()).isEqualTo(BudgetStatus.DRAFT);
+    }
+
+    @Test
+    void completeInApprovedBudgetWithGenerateIsRejected() {
+        PatientProcedure p = existing(ProcedureState.PLANNED);
+        Budget budget = budgetWith(p);
+        budget.approve(PaymentMethod.PIX, 1, LocalDate.now(), ACTOR_ID);
+        assertThatThrownBy(() -> service.complete(COMPANY_ID, CONTACT_ID, p.getId(),
+                new CompleteProcedureRequest(LocalDate.of(2026, 10, 22), null, true, LocalDate.of(2026, 11, 5)),
+                ACTOR_ID, true))
+                .isInstanceOf(ContactValidationException.class)
+                .hasMessage("Este procedimento já é cobrado pelo orçamento aprovado.");
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteInApprovedBudgetIsConflict() {
+        PatientProcedure p = existing(ProcedureState.PLANNED);
+        Budget budget = budgetWith(p);
+        budget.approve(PaymentMethod.PIX, 1, LocalDate.now(), ACTOR_ID);
+        assertThatThrownBy(() -> service.delete(COMPANY_ID, CONTACT_ID, p.getId(), ACTOR_ID))
+                .isInstanceOf(ContactConflictException.class)
+                .hasMessage("Procedimento de orçamento aprovado não pode ser excluído.");
+        verify(repository, never()).delete(any());
+    }
+
+    @Test
+    void deleteInDraftBudgetRemovesItemAndSavesBudget() {
+        PatientProcedure a = existing(ProcedureState.PLANNED);
+        PatientProcedure b = existing(ProcedureState.PLANNED);
+        Budget budget = budgetWith(a, b);
+        service.delete(COMPANY_ID, CONTACT_ID, a.getId(), ACTOR_ID);
+        assertThat(budget.getItems()).hasSize(1);
+        assertThat(budget.getItems().get(0).procedureId()).isEqualTo(b.getId());
+        verify(budgetRepository).save(budget);
+        verify(budgetRepository, never()).delete(any());
+        verify(repository).delete(a);
+    }
+
+    @Test
+    void deleteInSingleItemDraftBudgetDeletesBudget() {
+        PatientProcedure a = existing(ProcedureState.PLANNED);
+        Budget budget = budgetWith(a);
+        service.delete(COMPANY_ID, CONTACT_ID, a.getId(), ACTOR_ID);
+        verify(budgetRepository).delete(budget);
+        verify(budgetRepository, never()).save(any());
+        verify(repository).delete(a);
     }
 
     @Test

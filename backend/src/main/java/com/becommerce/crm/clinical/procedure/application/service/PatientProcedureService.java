@@ -3,6 +3,8 @@ package com.becommerce.crm.clinical.procedure.application.service;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
+import com.becommerce.crm.clinical.budget.application.port.out.BudgetRepository;
+import com.becommerce.crm.clinical.budget.domain.Budget;
 import com.becommerce.crm.clinical.procedure.application.dto.CompleteProcedureRequest;
 import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureRequest;
 import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureResponse;
@@ -61,6 +63,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final TenantAuditRecorder auditor;
+    private final BudgetRepository budgetRepository;
 
     public PatientProcedureService(PatientProcedureRepository repository,
                                    ContactRepository contactRepository,
@@ -68,7 +71,9 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                                    FinancialTransactionRepository transactionRepository,
                                    UserRepository userRepository,
                                    MembershipRepository membershipRepository,
-                                   TenantAuditRecorder auditor) {
+                                   TenantAuditRecorder auditor,
+                                   BudgetRepository budgetRepository) {
+        this.budgetRepository = budgetRepository;
         this.repository = repository;
         this.contactRepository = contactRepository;
         this.catalogRepository = catalogRepository;
@@ -87,12 +92,15 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             requireOwnedContact(companyId, contactId);
             Map<UUID, String> categories = new HashMap<>();
             Map<UUID, String> names = new HashMap<>();
-            return repository.findByCompanyIdAndContactIdOrderByCreatedAtDesc(companyId, contactId).stream()
+            List<PatientProcedure> all = repository.findByCompanyIdAndContactIdOrderByCreatedAtDesc(companyId, contactId);
+            Map<UUID, Budget> budgets = all.isEmpty() ? Map.of()
+                    : budgetRepository.findActiveByProcedureIds(companyId, all.stream().map(PatientProcedure::getId).toList());
+            return all.stream()
                     .filter(p -> state == null || p.getState() == state)
                     .filter(p -> tooth == null || p.getTeeth().stream().anyMatch(t -> t.tooth() == tooth))
                     .filter(p -> category == null || category.isBlank()
                             || category.equalsIgnoreCase(categoryOf(p.getCatalogItemId(), categories)))
-                    .map(p -> toResponse(p, categories, names))
+                    .map(p -> toResponse(p, categories, names, null, budgets.get(p.getId())))
                     .toList();
         } finally {
             TenantContext.clear();
@@ -120,7 +128,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                     procedure.getId().toString(), "Procedimento registrado na ficha clínica.", actorId, null);
             Map<UUID, String> categories = new HashMap<>();
             categories.put(request.catalogItemId(), item.getCategory());
-            return toResponse(procedure, categories, new HashMap<>(), generated);
+            return toResponse(procedure, categories, new HashMap<>(), generated, null);
         } finally {
             TenantContext.clear();
         }
@@ -165,6 +173,12 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             requireOwnedContact(companyId, contactId);
             PatientProcedure procedure = requireOwned(companyId, contactId, procedureId);
             requireProfessional(companyId, request.professionalId());
+            if (request.generateTransaction()) {
+                Budget active = activeBudgetOf(companyId, procedureId);
+                if (active != null && active.isApproved()) {
+                    throw new ContactValidationException("Este procedimento já é cobrado pelo orçamento aprovado.");
+                }
+            }
             procedure.complete(request.performedAt(), request.professionalId());
             FinancialTransaction generated = maybeGenerateTransaction(procedure, request.generateTransaction(),
                     request.dueDate(), actorId, canCreateFinance);
@@ -172,7 +186,8 @@ public class PatientProcedureService implements PatientProcedureUseCase {
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
                     procedure.getId().toString(), "Procedimento marcado como realizado.", actorId, null);
-            return toResponse(procedure, new HashMap<>(), new HashMap<>(), generated);
+            return toResponse(procedure, new HashMap<>(), new HashMap<>(), generated,
+                    activeBudgetOf(companyId, procedureId));
         } finally {
             TenantContext.clear();
         }
@@ -185,6 +200,10 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
             PatientProcedure procedure = requireOwned(companyId, contactId, procedureId);
+            Budget active = activeBudgetOf(companyId, procedureId);
+            if (active != null && active.isApproved()) {
+                throw new ContactConflictException("Procedimento de orçamento aprovado não pode ser excluído.");
+            }
             if (procedure.getFinancialTransactionId() != null) {
                 FinancialTransaction tx = transactionRepository.findById(procedure.getFinancialTransactionId())
                         .orElse(null);
@@ -197,12 +216,29 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                     transactionRepository.save(tx);
                 }
             }
+            detachFromDraftBudget(active, procedureId, actorId);
             repository.delete(procedure);
 
             auditor.record(companyId, AuditAction.DELETE, AuditModule.CONTACTS, RESOURCE,
                     procedureId.toString(), "Procedimento excluído da ficha clínica.", actorId, null);
         } finally {
             TenantContext.clear();
+        }
+    }
+
+    private Budget activeBudgetOf(UUID companyId, UUID procedureId) {
+        return budgetRepository.findActiveByProcedureIds(companyId, List.of(procedureId)).get(procedureId);
+    }
+
+    private void detachFromDraftBudget(Budget budget, UUID procedureId, UUID actorId) {
+        if (budget == null || !budget.isDraft()) {
+            return;
+        }
+        budget.removeItemForProcedure(procedureId, actorId);
+        if (budget.getItems().isEmpty()) {
+            budgetRepository.delete(budget);
+        } else {
+            budgetRepository.save(budget);
         }
     }
 
@@ -298,11 +334,11 @@ public class PatientProcedureService implements PatientProcedureUseCase {
 
     private PatientProcedureResponse toResponse(PatientProcedure p, Map<UUID, String> categories,
                                                 Map<UUID, String> names) {
-        return toResponse(p, categories, names, null);
+        return toResponse(p, categories, names, null, activeBudgetOf(p.getCompanyId(), p.getId()));
     }
 
     private PatientProcedureResponse toResponse(PatientProcedure p, Map<UUID, String> categories,
-                                                Map<UUID, String> names, FinancialTransaction known) {
+                                                Map<UUID, String> names, FinancialTransaction known, Budget budget) {
         PatientProcedureResponse.TransactionRef transaction = null;
         if (known != null) {
             transaction = new PatientProcedureResponse.TransactionRef(known.getId(), known.getStatus());
@@ -316,7 +352,8 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                 p.getDentition(), p.getPriceCents(), p.getProfessionalId(),
                 userName(p.getCompanyId(), p.getProfessionalId(), names), p.getNotes(), p.getPerformedAt(),
                 p.getTeeth().stream().map(t -> new ProcedureToothDto(t.tooth(), t.faces())).toList(),
-                transaction, p.getCreatedAt(), p.getUpdatedAt());
+                transaction, p.getCreatedAt(), p.getUpdatedAt(),
+                budget == null ? null : new PatientProcedureResponse.BudgetRef(budget.getId(), budget.getTitle(), budget.getStatus()));
     }
 
     private String userName(UUID companyId, UUID userId, Map<UUID, String> cache) {
