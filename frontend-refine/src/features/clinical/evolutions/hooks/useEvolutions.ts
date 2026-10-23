@@ -38,8 +38,13 @@ export function useUpdateEvolution(companyId: string, contactId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ evolutionId, payload }: { evolutionId: string; payload: PatientEvolutionRequest }) =>
-      evolutionService.update(companyId, contactId, evolutionId, payload),
+    mutationFn: ({
+      evolutionId,
+      payload,
+    }: {
+      evolutionId: string;
+      payload: PatientEvolutionRequest;
+    }) => evolutionService.update(companyId, contactId, evolutionId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: evolutionKeys.all(companyId, contactId) });
       toast.success("Evolução salva");
@@ -56,7 +61,8 @@ export function useFinalizeEvolution(companyId: string, contactId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (evolutionId: string) => evolutionService.finalize(companyId, contactId, evolutionId),
+    mutationFn: (evolutionId: string) =>
+      evolutionService.finalize(companyId, contactId, evolutionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: evolutionKeys.all(companyId, contactId) });
       toast.success("Evolução finalizada");

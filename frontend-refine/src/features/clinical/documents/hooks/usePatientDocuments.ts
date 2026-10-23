@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { documentTemplateService } from "../services/document-template.service";
+import {
+  documentTemplateService,
+  type DocumentTemplateRequest,
+} from "../services/document-template.service";
 import { patientDocumentService } from "../services/patient-document.service";
 import type { IssuePatientDocumentRequest } from "../types/document.types";
 
@@ -25,13 +28,15 @@ export function useCreateDocumentTemplate(companyId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: any) => documentTemplateService.create(companyId, payload),
+    mutationFn: (payload: DocumentTemplateRequest) =>
+      documentTemplateService.create(companyId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentTemplateKeys.all(companyId) });
       toast.success("Modelo salvo");
     },
     onError: (error: unknown) => {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast.error(message || "Não foi possível salvar o modelo");
     },
   });
@@ -41,14 +46,20 @@ export function useUpdateDocumentTemplate(companyId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ templateId, payload }: { templateId: string; payload: any }) =>
-      documentTemplateService.update(companyId, templateId, payload),
+    mutationFn: ({
+      templateId,
+      payload,
+    }: {
+      templateId: string;
+      payload: DocumentTemplateRequest;
+    }) => documentTemplateService.update(companyId, templateId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentTemplateKeys.all(companyId) });
       toast.success("Modelo salvo");
     },
     onError: (error: unknown) => {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast.error(message || "Não foi possível salvar o modelo");
     },
   });
@@ -64,7 +75,8 @@ export function useDeleteDocumentTemplate(companyId: string) {
       toast.success("Modelo excluído");
     },
     onError: (error: unknown) => {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast.error(message || "Não foi possível excluir o modelo");
     },
   });

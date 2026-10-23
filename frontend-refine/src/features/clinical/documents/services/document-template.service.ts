@@ -1,8 +1,5 @@
-import { api } from "@/lib/api";
-import type {
-  DocumentTemplateResponse,
-  DocumentType,
-} from "../types/document.types";
+import api from "@/lib/api";
+import type { DocumentTemplateResponse, DocumentType } from "../types/document.types";
 
 export type DocumentTemplateRequest = {
   type: DocumentType;
@@ -18,7 +15,10 @@ export const documentTemplateService = {
     });
     return response.data;
   },
-  create: async (companyId: string, payload: DocumentTemplateRequest): Promise<DocumentTemplateResponse> => {
+  create: async (
+    companyId: string,
+    payload: DocumentTemplateRequest,
+  ): Promise<DocumentTemplateResponse> => {
     const response = await api.post(`/companies/${companyId}/document-templates`, payload);
     return response.data;
   },
@@ -27,7 +27,10 @@ export const documentTemplateService = {
     templateId: string,
     payload: DocumentTemplateRequest,
   ): Promise<DocumentTemplateResponse> => {
-    const response = await api.put(`/companies/${companyId}/document-templates/${templateId}`, payload);
+    const response = await api.put(
+      `/companies/${companyId}/document-templates/${templateId}`,
+      payload,
+    );
     return response.data;
   },
   delete: async (companyId: string, templateId: string): Promise<void> => {

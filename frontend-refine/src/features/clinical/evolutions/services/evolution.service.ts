@@ -1,14 +1,9 @@
-import { api } from "@/lib/api";
-import type {
-  PatientEvolutionRequest,
-  PatientEvolutionResponse,
-} from "../types/evolution.types";
+import api from "@/lib/api";
+import type { PatientEvolutionRequest, PatientEvolutionResponse } from "../types/evolution.types";
 
 export const evolutionService = {
   list: async (companyId: string, contactId: string): Promise<PatientEvolutionResponse[]> => {
-    const response = await api.get(
-      `/companies/${companyId}/patients/${contactId}/evolutions`,
-    );
+    const response = await api.get(`/companies/${companyId}/patients/${contactId}/evolutions`);
     return response.data;
   },
   create: async (
@@ -44,13 +39,7 @@ export const evolutionService = {
     );
     return response.data;
   },
-  delete: async (
-    companyId: string,
-    contactId: string,
-    evolutionId: string,
-  ): Promise<void> => {
-    await api.delete(
-      `/companies/${companyId}/patients/${contactId}/evolutions/${evolutionId}`,
-    );
+  delete: async (companyId: string, contactId: string, evolutionId: string): Promise<void> => {
+    await api.delete(`/companies/${companyId}/patients/${contactId}/evolutions/${evolutionId}`);
   },
 };

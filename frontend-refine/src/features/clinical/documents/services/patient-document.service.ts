@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import api from "@/lib/api";
 import type {
   IssuePatientDocumentRequest,
   PatientDocumentResponse,
@@ -8,9 +8,7 @@ import type {
 
 export const patientDocumentService = {
   list: async (companyId: string, contactId: string): Promise<PatientDocumentResponse[]> => {
-    const response = await api.get(
-      `/companies/${companyId}/patients/${contactId}/documents`,
-    );
+    const response = await api.get(`/companies/${companyId}/patients/${contactId}/documents`);
     return response.data;
   },
   preview: async (
@@ -45,13 +43,7 @@ export const patientDocumentService = {
     window.open(url, "_blank", "noopener,noreferrer");
     setTimeout(() => window.URL.revokeObjectURL(url), 60000);
   },
-  delete: async (
-    companyId: string,
-    contactId: string,
-    documentId: string,
-  ): Promise<void> => {
-    await api.delete(
-      `/companies/${companyId}/patients/${contactId}/documents/${documentId}`,
-    );
+  delete: async (companyId: string, contactId: string, documentId: string): Promise<void> => {
+    await api.delete(`/companies/${companyId}/patients/${contactId}/documents/${documentId}`);
   },
 };

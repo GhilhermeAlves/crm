@@ -32,11 +32,7 @@ export function useCurrentPatientAnamnesis(companyId: string, contactId: string)
   });
 }
 
-export function usePatientAnamnesis(
-  companyId: string,
-  contactId: string,
-  anamnesisId: string,
-) {
+export function usePatientAnamnesis(companyId: string, contactId: string, anamnesisId: string) {
   return useQuery({
     queryKey: patientAnamnesisKeys.detail(companyId, contactId, anamnesisId),
     queryFn: () => patientAnamnesisService.get(companyId, contactId, anamnesisId),
@@ -52,7 +48,9 @@ export function useStartPatientAnamnesis(companyId: string, contactId: string) {
       patientAnamnesisService.start(companyId, contactId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: patientAnamnesisKeys.all(companyId, contactId) });
-      queryClient.invalidateQueries({ queryKey: patientAnamnesisKeys.current(companyId, contactId) });
+      queryClient.invalidateQueries({
+        queryKey: patientAnamnesisKeys.current(companyId, contactId),
+      });
       toast.success("Anamnese iniciada");
     },
     onError: (error: unknown) => {
@@ -76,8 +74,12 @@ export function useSavePatientAnamnesis(companyId: string, contactId: string) {
     }) => patientAnamnesisService.save(companyId, contactId, anamnesisId, payload),
     onSuccess: (data: PatientAnamnesisResponse) => {
       queryClient.invalidateQueries({ queryKey: patientAnamnesisKeys.all(companyId, contactId) });
-      queryClient.invalidateQueries({ queryKey: patientAnamnesisKeys.current(companyId, contactId) });
-      queryClient.invalidateQueries({ queryKey: patientAnamnesisKeys.detail(companyId, contactId, data.id) });
+      queryClient.invalidateQueries({
+        queryKey: patientAnamnesisKeys.current(companyId, contactId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: patientAnamnesisKeys.detail(companyId, contactId, data.id),
+      });
       toast.success(data.status === "COMPLETED" ? "Anamnese concluída" : "Anamnese salva");
     },
     onError: (error: unknown) => {
@@ -96,7 +98,9 @@ export function useDiscardPatientAnamnesis(companyId: string, contactId: string)
       patientAnamnesisService.discard(companyId, contactId, anamnesisId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: patientAnamnesisKeys.all(companyId, contactId) });
-      queryClient.invalidateQueries({ queryKey: patientAnamnesisKeys.current(companyId, contactId) });
+      queryClient.invalidateQueries({
+        queryKey: patientAnamnesisKeys.current(companyId, contactId),
+      });
       toast.success("Anamnese descartada");
     },
     onError: (error: unknown) => {
