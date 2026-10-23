@@ -48,7 +48,11 @@ import {
   useDocumentTemplates,
   useUpdateDocumentTemplate,
 } from "@/features/clinical/documents/hooks/usePatientDocuments";
-import { DOCUMENT_TYPE_LABELS, DocumentType } from "@/features/clinical/documents/types/document.types";
+import {
+  DOCUMENT_TYPE_LABELS,
+  DocumentType,
+  type DocumentTemplateResponse,
+} from "@/features/clinical/documents/types/document.types";
 
 const VARIABLES = [
   "paciente.nome",
@@ -63,7 +67,7 @@ const VARIABLES = [
 ];
 
 export default function DocumentTemplatesPage() {
-  const companyId = useCompanyId();
+  const companyId = useCompanyId() ?? "";
   const canManage = usePermission()("anamnesis:manage");
   const { data: templates = [], isLoading } = useDocumentTemplates(companyId, false);
   const createMutation = useCreateDocumentTemplate(companyId);
@@ -88,7 +92,7 @@ export default function DocumentTemplatesPage() {
     setDialogOpen(true);
   };
 
-  const openEdit = (template: any) => {
+  const openEdit = (template: DocumentTemplateResponse) => {
     setEditingId(template.id);
     setType(template.type);
     setTitle(template.title);
@@ -122,7 +126,7 @@ export default function DocumentTemplatesPage() {
     setDialogOpen(false);
   };
 
-  const handleToggle = (template: any, value: boolean) => {
+  const handleToggle = (template: DocumentTemplateResponse, value: boolean) => {
     updateMutation.mutate({
       templateId: template.id,
       payload: { type: template.type, title: template.title, body: template.body, active: value },
@@ -140,7 +144,9 @@ export default function DocumentTemplatesPage() {
 
       <section className="space-y-4 rounded-lg border bg-card p-5">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Gerenciamento de modelos para emissão de documentos</p>
+          <p className="text-sm text-muted-foreground">
+            Gerenciamento de modelos para emissão de documentos
+          </p>
           {canManage && (
             <Button size="sm" onClick={openCreate}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -172,18 +178,29 @@ export default function DocumentTemplatesPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              templates.map((t: any) => (
+              templates.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="text-sm">{t.title}</TableCell>
-                  <TableCell className="text-sm">{DOCUMENT_TYPE_LABELS?.[t.type] || t.type}</TableCell>
+                  <TableCell className="text-sm">
+                    {DOCUMENT_TYPE_LABELS?.[t.type] || t.type}
+                  </TableCell>
                   <TableCell>
-                    <Switch checked={!!t.active} onCheckedChange={(v) => handleToggle(t, v)} disabled={!canManage} />
+                    <Switch
+                      checked={!!t.active}
+                      onCheckedChange={(v) => handleToggle(t, v)}
+                      disabled={!canManage}
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1">
                       {canManage && (
                         <>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => openEdit(t)}
+                          >
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button
@@ -239,12 +256,20 @@ export default function DocumentTemplatesPage() {
                 <div className="flex flex-wrap gap-1">
                   {VARIABLES.map((v) => (
                     <Button key={v} variant="outline" size="sm" onClick={() => insertVariable(v)}>
-                      {"{{"}{v}{"}}"}
+                      {"{{"}
+                      {v}
+                      {"}}"}
                     </Button>
                   ))}
                 </div>
               </div>
-              <Textarea ref={textareaRef} rows={10} maxLength={9000} value={body} onChange={(e) => setBody(e.target.value)} />
+              <Textarea
+                ref={textareaRef}
+                rows={10}
+                maxLength={9000}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+              />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={active} onCheckedChange={setActive} />
@@ -271,7 +296,9 @@ export default function DocumentTemplatesPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => pendingDelete && handleDelete(pendingDelete)}>Excluir</AlertDialogAction>
+            <AlertDialogAction onClick={() => pendingDelete && handleDelete(pendingDelete)}>
+              Excluir
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

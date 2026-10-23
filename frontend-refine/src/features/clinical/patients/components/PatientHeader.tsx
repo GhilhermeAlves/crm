@@ -33,7 +33,7 @@ const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 export function PatientHeader({ contact }: { contact: Contact }) {
   const { canUpdate } = useContactPermissions();
   const { can } = useAuthorization();
-  const companyId = useCompanyId();
+  const companyId = useCompanyId() ?? "";
   const fullName = [contact.firstName, contact.lastName].filter(Boolean).join(" ");
   const hasMobile = !!contact.mobile && contact.mobile.replace(/\D/g, "").length > 0;
   const { data: photoUrl } = usePatientPhoto(companyId, contact.id, contact.photoStorageId);
@@ -148,9 +148,9 @@ export function PatientHeader({ contact }: { contact: Contact }) {
                 </PopoverContent>
               </Popover>
             ) : currentAnamnesis ? null : (
-              <Badge variant="outline" asChild>
-                <Link href={`${ROUTES.PATIENTS}/${contact.id}/anamnese`}>Sem anamnese</Link>
-              </Badge>
+              <Link href={`${ROUTES.PATIENTS}/${contact.id}/anamnese`}>
+                <Badge variant="outline">Sem anamnese</Badge>
+              </Link>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">

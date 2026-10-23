@@ -119,18 +119,15 @@ export const PatientService = {
   },
 
   async deletePhoto(companyId: string, contactId: string): Promise<Contact> {
-    const response = await api.delete<Contact>(
-      `${BASE}/${companyId}/patients/${contactId}/photo`,
-    );
+    const response = await api.delete<Contact>(`${BASE}/${companyId}/patients/${contactId}/photo`);
     return response.data;
   },
 
   async fetchPhoto(companyId: string, contactId: string): Promise<string | null> {
     try {
-      const response = await api.get(
-        `${BASE}/${companyId}/patients/${contactId}/photo`,
-        { responseType: "blob" },
-      );
+      const response = await api.get(`${BASE}/${companyId}/patients/${contactId}/photo`, {
+        responseType: "blob",
+      });
       if (response.status === 204 || !response.data) return null;
       return window.URL.createObjectURL(response.data);
     } catch {
