@@ -73,7 +73,7 @@ Erros: validação → 400; conflito de estado ou exclusão com lançamento pago
 
 - Rota `src/app/(dashboard)/patients/[id]/ficha-clinica/page.tsx`; aba **"Ficha clínica"** em `PatientTabs`, logo após "Consultas", visível com `contact:read`.
 - `src/features/clinical/procedures/`:
-  - `api.ts`, `hooks.ts` (`useProcedures(contactId, filters)` + mutations via mutation helper).
+  - `services/procedure.service.ts`, `hooks/useProcedures.ts` (`useProcedures(contactId, filters)` + mutations via mutation helper).
   - `Odontogram.tsx` — SVG; toggle Permanente/Decídua; 4 quadrantes. Cor do dente pela prioridade **A realizar > Realizado > Pré-existente**, com legenda; faces como 5 setores pintados quando há procedimento nelas; procedimentos sem dente não colorem. Clique no dente aplica/limpa o filtro `tooth`. Reutilizável em modo seleção (usado no drawer).
   - `ProcedureDrawer.tsx` — criar/editar: estado, serviço (autopreenche preço), valor, data (quando Realizado), dentes (mini-odontograma em modo seleção) + chips de faces por dente, profissional, observações, checkbox "Gerar lançamento financeiro" + vencimento (só em Realizado e com `finance:create`). Em `DONE`, apenas observações editáveis.
   - `CompleteProcedureDialog.tsx` — data, profissional, gerar lançamento + vencimento.
@@ -82,7 +82,7 @@ Erros: validação → 400; conflito de estado ou exclusão com lançamento pago
 
 ## 5. Testes e verificação
 
-- Backend: unitários do service (validação de dentes/faces, transições, 409 em edição de `DONE`, exclusão com `PAID`/`PENDING`, geração do lançamento, 403 sem `finance:create`); `PatientProcedureIsolationIT` (RLS); IT do controller.
+- Backend: unitários do service (validação de dentes/faces, transições, 409 em edição de `DONE`, exclusão com `PAID`/`PENDING`, geração do lançamento, 403 sem `finance:create`); `PatientProcedureIsolationIT` (RLS); teste unitário do controller (`PatientProcedureControllerTest`).
 - Frontend (Vitest): odontograma (prioridade de cor, filtro por clique, toggle de dentição), drawer (checkbox condicional, bloqueio em Realizado), lista (ações por estado, aviso de exclusão).
 - `mvn test`; `npm run lint`, `npx tsc --noEmit`, `npx vitest run --pool=threads`; Prettier `--check --end-of-line auto` em todo arquivo alterado do frontend. Sem banco local: conferir nome da migration, RLS e GRANT; o E2E do CI é o primeiro Postgres real.
 

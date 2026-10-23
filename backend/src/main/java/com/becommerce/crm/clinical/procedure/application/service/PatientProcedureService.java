@@ -22,6 +22,7 @@ import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
+import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
@@ -58,6 +59,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
     private final CatalogItemRepository catalogRepository;
     private final FinancialTransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
     private final TenantAuditRecorder auditor;
 
     public PatientProcedureService(PatientProcedureRepository repository,
@@ -65,12 +67,14 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                                    CatalogItemRepository catalogRepository,
                                    FinancialTransactionRepository transactionRepository,
                                    UserRepository userRepository,
+                                   MembershipRepository membershipRepository,
                                    TenantAuditRecorder auditor) {
         this.repository = repository;
         this.contactRepository = contactRepository;
         this.catalogRepository = catalogRepository;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
+        this.membershipRepository = membershipRepository;
         this.auditor = auditor;
     }
 
@@ -103,6 +107,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
             CatalogItem item = requireService(companyId, request.catalogItemId());
+            requireProfessional(companyId, request.professionalId());
             PatientProcedure procedure = PatientProcedure.create(companyId, contactId, request.catalogItemId(),
                     item.getName(), request.state(), request.dentition(), request.priceCents(),
                     request.professionalId(), request.notes(), request.performedAt(), toTeeth(request.teeth()),
@@ -129,6 +134,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
             PatientProcedure procedure = requireOwned(companyId, contactId, procedureId);
+            requireProfessional(companyId, request.professionalId());
             List<ProcedureTooth> teeth = toTeeth(request.teeth());
             if (procedure.isDone()) {
                 if (!sameExceptNotes(procedure, request, teeth)) {
@@ -158,6 +164,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
             PatientProcedure procedure = requireOwned(companyId, contactId, procedureId);
+            requireProfessional(companyId, request.professionalId());
             procedure.complete(request.performedAt(), request.professionalId());
             FinancialTransaction generated = maybeGenerateTransaction(procedure, request.generateTransaction(),
                     request.dueDate(), actorId, canCreateFinance);
@@ -196,6 +203,12 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                     procedureId.toString(), "Procedimento excluído da ficha clínica.", actorId, null);
         } finally {
             TenantContext.clear();
+        }
+    }
+
+    private void requireProfessional(UUID companyId, UUID professionalId) {
+        if (professionalId != null && !membershipRepository.existsActiveByUserIdAndCompanyId(professionalId, companyId)) {
+            throw new ContactValidationException("Profissional não encontrado nesta empresa.");
         }
     }
 
@@ -301,19 +314,22 @@ public class PatientProcedureService implements PatientProcedureUseCase {
         return new PatientProcedureResponse(p.getId(), p.getContactId(), p.getCatalogItemId(),
                 p.getNameSnapshot(), categoryOf(p.getCatalogItemId(), categories), p.getState(),
                 p.getDentition(), p.getPriceCents(), p.getProfessionalId(),
-                userName(p.getProfessionalId(), names), p.getNotes(), p.getPerformedAt(),
+                userName(p.getCompanyId(), p.getProfessionalId(), names), p.getNotes(), p.getPerformedAt(),
                 p.getTeeth().stream().map(t -> new ProcedureToothDto(t.tooth(), t.faces())).toList(),
                 transaction, p.getCreatedAt(), p.getUpdatedAt());
     }
 
-    private String userName(UUID userId, Map<UUID, String> cache) {
+    private String userName(UUID companyId, UUID userId, Map<UUID, String> cache) {
         if (userId == null) {
             return null;
         }
         if (cache.containsKey(userId)) {
             return cache.get(userId);
         }
-        String name = userRepository.findById(userId).map(User::getName).orElse(null);
+        String name = userRepository.findById(userId)
+                .filter(user -> companyId.equals(user.getCompanyId())
+                        || membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId))
+                .map(User::getName).orElse(null);
         cache.put(userId, name);
         return name;
     }

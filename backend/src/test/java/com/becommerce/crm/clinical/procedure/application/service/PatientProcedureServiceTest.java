@@ -18,6 +18,7 @@ import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionStatus;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
+import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
@@ -56,6 +57,7 @@ class PatientProcedureServiceTest {
     private static final UUID CONTACT_ID = UUID.randomUUID();
     private static final UUID ACTOR_ID = UUID.randomUUID();
     private static final UUID ITEM_ID = UUID.randomUUID();
+    private static final UUID OUTSIDER_ID = UUID.randomUUID();
 
     @Mock
     private PatientProcedureRepository repository;
@@ -76,6 +78,9 @@ class PatientProcedureServiceTest {
     private TenantAuditRecorder auditor;
 
     @Mock
+    private MembershipRepository membershipRepository;
+
+    @Mock
     private CatalogItem catalogItem;
 
     private PatientProcedureService service;
@@ -84,7 +89,7 @@ class PatientProcedureServiceTest {
     @BeforeEach
     void setUp() {
         service = new PatientProcedureService(repository, contactRepository, catalogRepository,
-                transactionRepository, userRepository, auditor);
+                transactionRepository, userRepository, membershipRepository, auditor);
         Contact contact = mock(Contact.class);
         lenient().when(contact.getCompanyId()).thenReturn(COMPANY_ID);
         lenient().when(contactRepository.findById(CONTACT_ID)).thenReturn(Optional.of(contact));
@@ -233,5 +238,61 @@ class PatientProcedureServiceTest {
         assertThat(service.list(COMPANY_ID, CONTACT_ID, null, null, 11)).hasSize(1);
         assertThat(service.list(COMPANY_ID, CONTACT_ID, null, "Dentística", null)).hasSize(2);
         assertThat(service.list(COMPANY_ID, CONTACT_ID, null, "Outra", null)).isEmpty();
+    }
+
+    @Test
+    void createRejectsProfessionalFromAnotherCompany() {
+        PatientProcedureRequest req = new PatientProcedureRequest(ITEM_ID, ProcedureState.PLANNED,
+                Dentition.PERMANENT, 15000L, OUTSIDER_ID, null, null,
+                List.of(new ProcedureToothDto(11, Set.of(ToothFace.M))), false, null);
+        assertThatThrownBy(() -> service.create(COMPANY_ID, CONTACT_ID, req, ACTOR_ID, false))
+                .isInstanceOf(ContactValidationException.class)
+                .hasMessage("Profissional não encontrado nesta empresa.");
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void updateRejectsProfessionalFromAnotherCompany() {
+        PatientProcedure p = existing(ProcedureState.PLANNED);
+        PatientProcedureRequest req = new PatientProcedureRequest(ITEM_ID, ProcedureState.PLANNED,
+                Dentition.PERMANENT, 15000L, OUTSIDER_ID, null, null,
+                List.of(new ProcedureToothDto(11, Set.of(ToothFace.M))), false, null);
+        assertThatThrownBy(() -> service.update(COMPANY_ID, CONTACT_ID, p.getId(), req, ACTOR_ID))
+                .isInstanceOf(ContactValidationException.class);
+    }
+
+    @Test
+    void completeRejectsProfessionalFromAnotherCompany() {
+        PatientProcedure p = existing(ProcedureState.PLANNED);
+        CompleteProcedureRequest req = new CompleteProcedureRequest(LocalDate.of(2026, 10, 22), OUTSIDER_ID,
+                true, null);
+        assertThatThrownBy(() -> service.complete(COMPANY_ID, CONTACT_ID, p.getId(), req, ACTOR_ID, true))
+                .isInstanceOf(ContactValidationException.class)
+                .hasMessage("Profissional não encontrado nesta empresa.");
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void acceptsProfessionalFromSameCompany() {
+        UUID member = UUID.randomUUID();
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(member, COMPANY_ID)).thenReturn(true);
+        PatientProcedureRequest req = new PatientProcedureRequest(ITEM_ID, ProcedureState.PLANNED,
+                Dentition.PERMANENT, 15000L, member, null, null, List.of(), false, null);
+        assertThat(service.create(COMPANY_ID, CONTACT_ID, req, ACTOR_ID, false).professionalId())
+                .isEqualTo(member);
+    }
+
+    @Test
+    void updatingDoneIgnoresFaceOrder() {
+        PatientProcedure p = PatientProcedure.create(COMPANY_ID, CONTACT_ID, ITEM_ID, "Restauração",
+                ProcedureState.DONE, Dentition.PERMANENT, 15000, null, null, LocalDate.of(2026, 10, 1),
+                List.of(new ProcedureTooth(11, new java.util.LinkedHashSet<>(List.of(ToothFace.M, ToothFace.D)))),
+                ACTOR_ID);
+        when(repository.findById(p.getId())).thenReturn(Optional.of(p));
+        PatientProcedureRequest req = new PatientProcedureRequest(ITEM_ID, ProcedureState.DONE,
+                Dentition.PERMANENT, 15000L, null, "novas", p.getPerformedAt(),
+                List.of(new ProcedureToothDto(11, new java.util.LinkedHashSet<>(List.of(ToothFace.D, ToothFace.M)))),
+                false, null);
+        assertThat(service.update(COMPANY_ID, CONTACT_ID, p.getId(), req, ACTOR_ID).notes()).isEqualTo("novas");
     }
 }
