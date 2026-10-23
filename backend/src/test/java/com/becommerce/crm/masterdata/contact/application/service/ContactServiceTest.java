@@ -251,6 +251,19 @@ class ContactServiceTest {
     }
 
     @Test
+    void updateFromRegistrationLinkShouldNotRequireFieldPermission() {
+        Contact contact = existingContact();
+        when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = contactService.updateFromRegistrationLink(companyId, contact.getId(),
+                updateWithEmail("paciente@ex.com"));
+
+        assertEquals("paciente@ex.com", response.email());
+        verify(authorities, never()).has(anyString());
+    }
+
+    @Test
     void updateShouldDenyPhoneChangeWithoutFieldPermission() {
         Contact contact = existingContact();
         when(contactRepository.findById(contact.getId())).thenReturn(java.util.Optional.of(contact));

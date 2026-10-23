@@ -913,6 +913,42 @@ public class GlobalExceptionHandler {
             ));
     }
 
+    @ExceptionHandler(com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationLinkNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleRegistrationLinkNotFoundException(
+            com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationLinkNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationLinkNoLongerValidException.class)
+    public ResponseEntity<Map<String, Object>> handleRegistrationLinkNoLongerValidException(
+            com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationLinkNoLongerValidException ex) {
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of(
+                "status", 410,
+                "error", "Gone",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationRateLimitException.class)
+    public ResponseEntity<Map<String, Object>> handleRegistrationRateLimitException(
+            com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationRateLimitException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(Map.of(
+                "status", 429,
+                "error", "Too Many Requests",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(ContactConflictException.class)
     public ResponseEntity<Map<String, Object>> handleContactConflictException(ContactConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
