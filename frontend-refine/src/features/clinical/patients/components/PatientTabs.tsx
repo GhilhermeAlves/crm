@@ -14,6 +14,7 @@ type PatientTab = {
 
 const TABS: PatientTab[] = [
   { label: "Consultas", segment: "" },
+  { label: "Ficha clínica", segment: "ficha-clinica" },
   { label: "Anamnese", segment: "anamnese" },
   { label: "Evoluções", segment: "evolucoes" },
   { label: "Documentos", segment: "documentos" },
