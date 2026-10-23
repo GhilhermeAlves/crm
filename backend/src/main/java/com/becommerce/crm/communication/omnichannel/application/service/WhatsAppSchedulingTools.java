@@ -281,7 +281,7 @@ public class WhatsAppSchedulingTools {
             try {
                 AppointmentResponse created = appointmentUseCase.create(ctx.companyId(),
                         new CreateAppointmentRequest(type.getId(), hostId, contactId, null, title, start, end,
-                                type.getLocationKind(), type.getLocationDetail(), notes, false, null, null),
+                                type.getLocationKind(), type.getLocationDetail(), notes, false, null, null, null, null),
                         null, AppointmentSource.WHATSAPP);
                 TenantContext.setCompanyId(ctx.companyId());
                 String hostName = hostName(hostId);

@@ -36,6 +36,9 @@ public class ScheduleBlockJpaEntity {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Column(name = "recurrence_group_id")
+    private UUID recurrenceGroupId;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getCompanyId() { return companyId; }
@@ -56,4 +59,6 @@ public class ScheduleBlockJpaEntity {
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public UUID getRecurrenceGroupId() { return recurrenceGroupId; }
+    public void setRecurrenceGroupId(UUID recurrenceGroupId) { this.recurrenceGroupId = recurrenceGroupId; }
 }

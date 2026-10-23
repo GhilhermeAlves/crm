@@ -8,6 +8,8 @@ import com.becommerce.crm.sales.scheduling.application.dto.CreateBlockRequest;
 import com.becommerce.crm.sales.scheduling.application.port.in.BlockUseCase;
 import com.becommerce.crm.sales.scheduling.application.port.out.ScheduleBlockRepository;
 import com.becommerce.crm.sales.scheduling.domain.BlockSource;
+import com.becommerce.crm.sales.scheduling.domain.Interval;
+import com.becommerce.crm.sales.scheduling.domain.RecurrenceExpander;
 import com.becommerce.crm.sales.scheduling.domain.ScheduleBlock;
 import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingNotFoundException;
 import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingValidationException;
@@ -35,13 +37,26 @@ public class BlockService implements BlockUseCase {
     public BlockResponse create(UUID companyId, CreateBlockRequest request, UUID createdBy) {
         try {
             TenantContext.setCompanyId(companyId);
-            ScheduleBlock block = ScheduleBlock.create(companyId, request.hostId(),
-                    request.startAt(), request.endAt(), request.reason(), createdBy);
-            repository.save(block);
+            List<Interval> occurrences = RecurrenceExpander.expand(request.startAt(), request.endAt(),
+                    request.recurrence());
+            UUID groupId = occurrences.size() > 1 ? UUID.randomUUID() : null;
+            ScheduleBlock first = null;
+            for (Interval occurrence : occurrences) {
+                ScheduleBlock block = ScheduleBlock.create(companyId, request.hostId(),
+                        occurrence.start(), occurrence.end(), request.reason(), createdBy);
+                block.setRecurrenceGroupId(groupId);
+                repository.save(block);
+                if (first == null) {
+                    first = block;
+                }
+            }
 
+            String description = occurrences.size() > 1
+                    ? "Bloqueio recorrente criado (" + occurrences.size() + " ocorrências)"
+                    : "Bloqueio criado";
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SCHEDULING, "ScheduleBlock",
-                    block.getId().toString(), "Bloqueio criado", createdBy, null);
-            return toResponse(block);
+                    first.getId().toString(), description, createdBy, null);
+            return toResponse(first);
         } finally {
             TenantContext.clear();
         }

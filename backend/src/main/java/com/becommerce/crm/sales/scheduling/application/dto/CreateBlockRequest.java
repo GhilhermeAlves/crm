@@ -1,5 +1,6 @@
 package com.becommerce.crm.sales.scheduling.application.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -14,5 +15,7 @@ public record CreateBlockRequest(
         @NotNull(message = "Data de fim é obrigatória")
         Instant endAt,
         @Size(max = 200, message = "Motivo deve ter no máximo 200 caracteres")
-        String reason
+        String reason,
+        @Valid
+        RecurrenceRequest recurrence
 ) {}

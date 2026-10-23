@@ -48,7 +48,7 @@ class AppointmentServiceChairTagTest {
 
     private CreateAppointmentRequest request(UUID chair, List<UUID> tagIds) {
         return new CreateAppointmentRequest(null, hostId, null, null, "Avaliação", start,
-                start.plus(1, ChronoUnit.HOURS), null, null, null, false, chair, tagIds);
+                start.plus(1, ChronoUnit.HOURS), null, null, null, false, chair, tagIds, null, null);
     }
 
     private Appointment existingInChair(UUID chair) {
@@ -160,7 +160,7 @@ class AppointmentServiceChairTagTest {
         withMarker.setPatientAutoMarker(marker);
 
         withMarker.create(companyId, new CreateAppointmentRequest(null, hostId, contactId, null, "Avaliação",
-                start, start.plus(1, ChronoUnit.HOURS), null, null, null, false, null, null), null);
+                start, start.plus(1, ChronoUnit.HOURS), null, null, null, false, null, null, null, null), null);
 
         verify(marker).markOnAppointment(companyId, contactId);
         assertEquals(companyId, tenantAtAudit.get());
