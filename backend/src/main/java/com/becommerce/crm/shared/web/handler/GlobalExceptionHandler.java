@@ -26,6 +26,10 @@ import com.becommerce.crm.sales.activity.domain.exception.ActivityValidationExce
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactConflictException;
 import com.becommerce.crm.masterdata.contact.note.domain.exception.ContactNoteNotFoundException;
+import com.becommerce.crm.clinical.documenttemplate.domain.exception.DocumentTemplateNotFoundException;
+import com.becommerce.crm.clinical.anamnesis.domain.exception.PatientAnamnesisNotFoundException;
+import com.becommerce.crm.clinical.evolution.domain.exception.PatientEvolutionNotFoundException;
+import com.becommerce.crm.clinical.document.domain.exception.PatientDocumentNotFoundException;
 import com.becommerce.crm.identity.domain.exception.DuplicateRoleException;
 import com.becommerce.crm.identity.domain.exception.InvalidCredentialsException;
 import com.becommerce.crm.identity.domain.exception.InvalidTokenException;
@@ -529,6 +533,54 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ContactNoteNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleContactNoteNotFoundException(ContactNoteNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(DocumentTemplateNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleDocumentTemplateNotFoundException(
+            DocumentTemplateNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(PatientAnamnesisNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handlePatientAnamnesisNotFoundException(
+            PatientAnamnesisNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(PatientEvolutionNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handlePatientEvolutionNotFoundException(
+            PatientEvolutionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(PatientDocumentNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handlePatientDocumentNotFoundException(
+            PatientDocumentNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
                 "status", 404,

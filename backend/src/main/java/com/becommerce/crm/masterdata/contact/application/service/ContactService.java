@@ -353,7 +353,7 @@ public class ContactService implements ContactUseCase {
                 c.getNeighborhood(), c.getCity(), c.getState(), c.getHealthPlan(),
                 c.getHealthPlanNumber(), c.getRecordNumber(), c.getReferralSource(),
                 c.isHasGuardian(), c.getGuardianName(), c.getGuardianCpf(), c.getGuardianPhone(),
-                c.getCreatedAt(), c.isPatient(), c.getPatientSince());
+                c.getCreatedAt(), c.isPatient(), c.getPatientSince(), c.getPhotoStorageId());
     }
 
     private String firstName(Contact c) {

@@ -1,6 +1,7 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMutationDefaults } from "@/lib/query/mutation-utils";
 import { PatientService } from "../services/patient.service";
+import { toast } from "sonner";
 import type {
   CreateContactRequest,
   UpdateContactRequest,
@@ -151,5 +152,58 @@ export function useUploadContactFile(companyId: string | null, contactId: string
       ],
     }),
     onError: onError({ errorMessage: "Erro ao enviar arquivo" }),
+  });
+}
+
+export function useUploadPatientPhoto(companyId: string | null, contactId: string | null) {
+  const { onSuccess, onError } = useMutationDefaults<unknown, File>();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) =>
+      PatientService.uploadPhoto(companyId as string, contactId as string, file),
+    onSuccess: (data, _vars, _ctx) => {
+      queryClient.invalidateQueries({ queryKey: ["patient", companyId, contactId] });
+      queryClient.invalidateQueries({ queryKey: ["patients", companyId] });
+      queryClient.invalidateQueries({ queryKey: patientKeys(companyId) });
+      queryClient.invalidateQueries({ queryKey: ["patient-photo", companyId, contactId] });
+      toast.success("Foto atualizada");
+    },
+    onError: (error: unknown) => {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
+      toast.error(message || "Erro ao enviar foto");
+    },
+  });
+}
+
+export function useDeletePatientPhoto(companyId: string | null, contactId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => PatientService.deletePhoto(companyId as string, contactId as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patient", companyId, contactId] });
+      queryClient.invalidateQueries({ queryKey: ["patients", companyId] });
+      queryClient.invalidateQueries({ queryKey: patientKeys(companyId) });
+      queryClient.invalidateQueries({ queryKey: ["patient-photo", companyId, contactId] });
+      toast.success("Foto removida");
+    },
+    onError: (error: unknown) => {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
+      toast.error(message || "Erro ao remover foto");
+    },
+  });
+}
+
+export function usePatientPhoto(
+  companyId: string | null,
+  contactId: string | null,
+  photoStorageId?: string | null,
+) {
+  return useQuery({
+    queryKey: ["patient-photo", companyId, contactId, photoStorageId],
+    queryFn: () => PatientService.fetchPhoto(companyId as string, contactId as string),
+    enabled: !!companyId && !!contactId && !!photoStorageId,
+    staleTime: 300000,
   });
 }

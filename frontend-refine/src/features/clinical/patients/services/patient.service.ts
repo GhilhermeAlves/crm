@@ -102,10 +102,36 @@ export const PatientService = {
     const response = await api.post<StorageObject>(
       `${BASE}/${companyId}/patients/${contactId}/files`,
       formData,
-      // `null` remove o default `application/json` e deixa o browser montar o
-      // multipart/form-data com o boundary correto (ver StorageService.upload).
       { headers: { "Content-Type": null } },
     );
     return response.data;
+  },
+
+  async uploadPhoto(companyId: string, contactId: string, file: File): Promise<Contact> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.put<Contact>(
+      `${BASE}/${companyId}/patients/${contactId}/photo`,
+      formData,
+      { headers: { "Content-Type": null } },
+    );
+    return response.data;
+  },
+
+  async deletePhoto(companyId: string, contactId: string): Promise<Contact> {
+    const response = await api.delete<Contact>(`${BASE}/${companyId}/patients/${contactId}/photo`);
+    return response.data;
+  },
+
+  async fetchPhoto(companyId: string, contactId: string): Promise<string | null> {
+    try {
+      const response = await api.get(`${BASE}/${companyId}/patients/${contactId}/photo`, {
+        responseType: "blob",
+      });
+      if (response.status === 204 || !response.data) return null;
+      return window.URL.createObjectURL(response.data);
+    } catch {
+      return null;
+    }
   },
 };

@@ -18,6 +18,7 @@ public class Contact {
 
     private final UUID id;
     private final UUID companyId;
+    private UUID photoStorageId;
     private String firstName;
     private String lastName;
     private String email;
@@ -52,7 +53,7 @@ public class Contact {
     private boolean patient;
     private LocalDate patientSince;
 
-    private Contact(UUID id, UUID companyId, String firstName, String lastName, String email,
+    private Contact(UUID id, UUID companyId, UUID photoStorageId, String firstName, String lastName, String email,
                     String phone, String mobile, String notes, LocalDate birthDate,
                     String cpf, String rg, String rgIssuer, String gender, String maritalStatus,
                     String professionalStatus,
@@ -64,6 +65,7 @@ public class Contact {
                     LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
         this.companyId = companyId;
+        this.photoStorageId = photoStorageId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -102,7 +104,7 @@ public class Contact {
                                  String cpf, String rg, String rgIssuer, String gender,
                                  String maritalStatus, String professionalStatus) {
         LocalDateTime now = LocalDateTime.now();
-        return new Contact(UUID.randomUUID(), companyId, firstName, lastName, email, phone, mobile,
+        return new Contact(UUID.randomUUID(), companyId, null, firstName, lastName, email, phone, mobile,
                 notes, birthDate, cpf, rg, rgIssuer, gender, maritalStatus, professionalStatus,
                 null, null, null, null, null, null, null, null, null, null, null, false,
                 null, null, null,
@@ -119,7 +121,20 @@ public class Contact {
                 birthDate, cpf, rg, rgIssuer, gender, maritalStatus, professionalStatus,
                 null, null, null, null, null, null, null, null, null, null, null, false,
                 null, null, null,
-                createdAt, updatedAt, deletedAt);
+                createdAt, updatedAt, deletedAt, null);
+    }
+
+    public static Contact reconstitute(UUID id, UUID companyId, String firstName, String lastName,
+                                       String email, String phone, String mobile, String notes,
+                                       LocalDate birthDate, String cpf, String rg, String rgIssuer,
+                                       String gender, String maritalStatus, String professionalStatus,
+                                       LocalDateTime createdAt, LocalDateTime updatedAt,
+                                       LocalDateTime deletedAt, UUID photoStorageId) {
+        return reconstitute(id, companyId, firstName, lastName, email, phone, mobile, notes,
+                birthDate, cpf, rg, rgIssuer, gender, maritalStatus, professionalStatus,
+                null, null, null, null, null, null, null, null, null, null, null, false,
+                null, null, null,
+                createdAt, updatedAt, deletedAt, photoStorageId);
     }
 
     public static Contact reconstitute(UUID id, UUID companyId, String firstName, String lastName,
@@ -133,16 +148,37 @@ public class Contact {
                                        String guardianName, String guardianCpf, String guardianPhone,
                                        LocalDateTime createdAt, LocalDateTime updatedAt,
                                        LocalDateTime deletedAt) {
-        return new Contact(id, companyId, firstName, lastName, email, phone, mobile, notes,
+        return reconstitute(id, companyId, firstName, lastName, email, phone, mobile, notes,
+                birthDate, cpf, rg, rgIssuer, gender, maritalStatus, professionalStatus,
+                zipCode, street, addressNumber, addressComplement, neighborhood, city, state,
+                healthPlan, healthPlanNumber, recordNumber, referralSource, hasGuardian,
+                guardianName, guardianCpf, guardianPhone,
+                createdAt, updatedAt, deletedAt, null);
+    }
+
+    public static Contact reconstitute(UUID id, UUID companyId, String firstName, String lastName,
+                                       String email, String phone, String mobile, String notes,
+                                       LocalDate birthDate, String cpf, String rg, String rgIssuer,
+                                       String gender, String maritalStatus, String professionalStatus,
+                                       String zipCode, String street, String addressNumber,
+                                       String addressComplement, String neighborhood, String city,
+                                       String state, String healthPlan, String healthPlanNumber,
+                                       String recordNumber, String referralSource, boolean hasGuardian,
+                                       String guardianName, String guardianCpf, String guardianPhone,
+                                       LocalDateTime createdAt, LocalDateTime updatedAt,
+                                       LocalDateTime deletedAt, UUID photoStorageId) {
+        Contact contact = new Contact(id, companyId, photoStorageId, firstName, lastName, email, phone, mobile, notes,
                 birthDate, cpf, rg, rgIssuer, gender, maritalStatus, professionalStatus,
                 zipCode, street, addressNumber, addressComplement, neighborhood, city, state,
                 healthPlan, healthPlanNumber, recordNumber, referralSource, hasGuardian,
                 guardianName, guardianCpf, guardianPhone,
                 createdAt, updatedAt, deletedAt);
+        return contact;
     }
 
     public UUID getId() { return id; }
     public UUID getCompanyId() { return companyId; }
+    public UUID getPhotoStorageId() { return photoStorageId; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
     public String getEmail() { return email; }
@@ -229,6 +265,8 @@ public class Contact {
         this.patient = patient;
         this.patientSince = patientSince;
     }
+
+    public void setPhotoStorageId(UUID photoStorageId) { this.photoStorageId = photoStorageId; }
 
     public void delete() {
         if (deletedAt == null) {
