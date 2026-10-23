@@ -1,6 +1,6 @@
 # Ficha do Paciente (Fase 2) Implementation Plan
 
-> **Para o agente executor (opencode):** este documento é uma ORDEM, não uma sugestão. Execute task a task, **na ordem**, marcando cada checkbox (`- [ ]` → `- [x]`). Ao fim de cada task rode a verificação indicada; só faça o commit se ela passar. **Um commit por task.** Não faça push, merge, rebase nem PR. Não altere nada fora dos arquivos listados na task, exceto quando a task mandar. Se algo do plano não bater com o código real (nome de classe, método, assinatura), **pare, não invente**: escreva a divergência no fim deste arquivo, na seção "Divergências encontradas", e siga a solução mais próxima do padrão existente citado na task.
+> **Para o agente executor (opencode):** este documento é uma ORDEM, não uma sugestão. Execute task a task, **na ordem**, marcando cada checkbox (`- [x]` → `- [x]`). Ao fim de cada task rode a verificação indicada; só faça o commit se ela passar. **Um commit por task.** Não faça push, merge, rebase nem PR. Não altere nada fora dos arquivos listados na task, exceto quando a task mandar. Se algo do plano não bater com o código real (nome de classe, método, assinatura), **pare, não invente**: escreva a divergência no fim deste arquivo, na seção "Divergências encontradas", e siga a solução mais próxima do padrão existente citado na task.
 
 **Goal:** Completar a ficha do paciente (`/patients/[id]`) com quatro abas clínicas novas: **Anamnese** (respostas sobre um snapshot do modelo + selo de alerta no cabeçalho), **Evoluções** (rascunho → finalizada imutável), **Documentos** (receita/atestado/termo a partir de modelos, com PDF) e **foto do paciente**. Também substitui a tela mock `/settings/documents` (hoje só estado local) por modelos de documento persistidos.
 
@@ -427,10 +427,10 @@ END $$;
 
 **Files (modificar):** `features/clinical/patients/components/PatientHeader.tsx` (+ teste em `__tests__/` se já houver um do header).
 
-- [ ] Avatar à esquerda do nome (componente `Avatar` de `@/components/ui/avatar`, se existir; senão um `div` redondo 64px com `overflow-hidden`): mostra a foto (hook `usePatientPhoto`) ou as iniciais. Ao passar o mouse, botão com ícone `Camera` (lucide) abre um `input type="file" accept="image/jpeg,image/png,image/webp"` escondido; valide no cliente (tipo e 5 MB, `toast` de erro igual ao do backend) antes de enviar. Se houver foto, item "Remover foto". Só aparece para quem tem `contact:update` (`useAuthorization().can`).
-- [ ] Selo de alerta: usando `usePatientAnamnesisCurrent`, se `alerts.length > 0` mostre um `Badge` variant `destructive` com ícone `AlertTriangle` e texto `"<n> alerta(s) na anamnese"`; ao clicar/hover (`Popover` ou `Tooltip` existentes em `components/ui`) lista os alertas e um link "Ver anamnese" para a aba. Se não houver anamnese concluída, mostre um `Badge` variant `outline` "Sem anamnese" que leva à aba.
-- [ ] Teste: com 2 alertas mostra "2 alerta(s) na anamnese"; sem anamnese mostra "Sem anamnese".
-- [ ] Verificação frontend. Commit: `feat(pacientes): foto e alertas da anamnese no cabeçalho do paciente`
+- [x] Avatar à esquerda do nome (componente `Avatar` de `@/components/ui/avatar`, se existir; senão um `div` redondo 64px com `overflow-hidden`): mostra a foto (hook `usePatientPhoto`) ou as iniciais. Ao passar o mouse, botão com ícone `Camera` (lucide) abre um `input type="file" accept="image/jpeg,image/png,image/webp"` escondido; valide no cliente (tipo e 5 MB, `toast` de erro igual ao do backend) antes de enviar. Se houver foto, item "Remover foto". Só aparece para quem tem `contact:update` (`useAuthorization().can`).
+- [x] Selo de alerta: usando `usePatientAnamnesisCurrent`, se `alerts.length > 0` mostre um `Badge` variant `destructive` com ícone `AlertTriangle` e texto `"<n> alerta(s) na anamnese"`; ao clicar/hover (`Popover` ou `Tooltip` existentes em `components/ui`) lista os alertas e um link "Ver anamnese" para a aba. Se não houver anamnese concluída, mostre um `Badge` variant `outline` "Sem anamnese" que leva à aba.
+- [x] Teste: com 2 alertas mostra "2 alerta(s) na anamnese"; sem anamnese mostra "Sem anamnese".
+- [x] Verificação frontend. Commit: `feat(pacientes): foto e alertas da anamnese no cabeçalho do paciente`
 
 ---
 
@@ -438,24 +438,24 @@ END $$;
 
 **Files (modificar):** `frontend-refine/src/app/(dashboard)/settings/documents/page.tsx` (hoje usa `INITIAL_TEMPLATES` em estado local — **remova o mock por completo**).
 
-- [ ] Troque o estado local por `useDocumentTemplates`. Tabela com colunas Tipo, Título, Ativo (`Switch` que chama o `PUT` com `active`), Ações (editar/excluir com `AlertDialog`).
-- [ ] Dialog de criar/editar com `Select` de tipo, `Input` título, `Textarea` corpo (min. 12 linhas) e, abaixo do corpo, a lista de variáveis da Task 5 como botões pequenos (`Button variant="outline" size="sm"`) que **inserem** `{{variavel}}` na posição do cursor do textarea.
-- [ ] Botões de criar/editar/excluir só para quem tem `anamnesis:manage`.
-- [ ] **Não mexa** em `settings/documents/prescriptions/page.tsx` (medicamentos padrão ficam para depois); registre isso em "Divergências encontradas" só se algo depender dele.
-- [ ] Verificação frontend. Commit: `feat(pacientes): modelos de documento persistidos em Configurações`
+- [x] Troque o estado local por `useDocumentTemplates`. Tabela com colunas Tipo, Título, Ativo (`Switch` que chama o `PUT` com `active`), Ações (editar/excluir com `AlertDialog`).
+- [x] Dialog de criar/editar com `Select` de tipo, `Input` título, `Textarea` corpo (min. 12 linhas) e, abaixo do corpo, a lista de variáveis da Task 5 como botões pequenos (`Button variant="outline" size="sm"`) que **inserem** `{{variavel}}` na posição do cursor do textarea.
+- [x] Botões de criar/editar/excluir só para quem tem `anamnesis:manage`.
+- [x] **Não mexa** em `settings/documents/prescriptions/page.tsx` (medicamentos padrão ficam para depois); registre isso em "Divergências encontradas" só se algo depender dele.
+- [x] Verificação frontend. Commit: `feat(pacientes): modelos de documento persistidos em Configurações`
 
 ---
 
 ## Task 12: Fechamento
 
-- [ ] Atualize `docs/superpowers/specs/2026-10-12-ficha-do-paciente-design.md`: na seção de status, marque **Fase 2 — IMPLEMENTADA** (branch `feature/pacientes-fase2`) com 1 linha por entrega (anamnese, evoluções, documentos/PDF, foto, modelos em Configurações). Fase 3 continua pendente.
-- [ ] Rode **tudo** de novo e cole a saída resumida (últimas linhas) no fim deste arquivo, seção "Resultado final":
+- [x] Atualize `docs/superpowers/specs/2026-10-12-ficha-do-paciente-design.md`: na seção de status, marque **Fase 2 — IMPLEMENTADA** (branch `feature/pacientes-fase2`) com 1 linha por entrega (anamnese, evoluções, documentos/PDF, foto, modelos em Configurações). Fase 3 continua pendente.
+- [x] Rode **tudo** de novo e cole a saída resumida (últimas linhas) no fim deste arquivo, seção "Resultado final":
   - `cd backend && mvn -q test`
   - `cd frontend-refine && npm run lint && npx tsc --noEmit && npx vitest run --pool=threads`
   - `npx prettier --check --end-of-line auto $(git diff --name-only origin/crm-improvements-deploy-phase -- frontend-refine | sed 's#^frontend-refine/##')` (rodar de dentro de `frontend-refine`)
-- [ ] `git log --oneline origin/crm-improvements-deploy-phase..HEAD` deve mostrar ~11 commits, um por task.
-- [ ] Commit: `docs(pacientes): marca a Fase 2 da ficha como implementada`
-- [ ] **Pare aqui.** Não faça push. Avise que terminou.
+- [x] `git log --oneline origin/crm-improvements-deploy-phase..HEAD` deve mostrar ~11 commits, um por task.
+- [x] Commit: `docs(pacientes): marca a Fase 2 da ficha como implementada`
+- [x] **Pare aqui.** Não faça push. Avise que terminou.
 
 ---
 
@@ -479,8 +479,16 @@ Odontograma, procedimentos e orçamentos (Fase 3); assinatura eletrônica/ICP-Br
 
 ## Divergências encontradas
 
-(O executor preenche aqui.)
+- O agente executor commitou as Tasks 10 e 11 antes das Tasks 8+9 e sem rodar a verificação do frontend (o worktree não tinha `node_modules`). Os commits e603cc33, 7035ea76 e c75de871 isolados **não compilam**; a branch fica consistente a partir de 31c5e909.
+- Corrigido em 31c5e909: hook `useCompanyId` inexistente (criado em `features/identity/auth/hooks`), `import { api }` → import default de `@/lib/api`, `Badge asChild` (não suportado), 24 `any` explícitos, `usePermission` chamado condicionalmente na aba Anamnese (regra de hooks) e rótulo de consulta usando `startTime`/`type` (inexistentes) → `startAt`/`title`.
+- Os testes pedidos nas Tasks 9 e 10 não tinham sido escritos; adicionados no fechamento.
 
 ## Resultado final
 
-(O executor preenche aqui.)
+Verificação em 2026-10-22 (HEAD após o fechamento):
+
+- Backend `mvn -q test`: 1289 testes, 0 falhas, 0 erros (ITs com Testcontainers só no CI).
+- Frontend `npx tsc --noEmit`: 0 erros. `npm run lint`: ok. Prettier: ok nos arquivos alterados.
+- Vitest completo: 555 testes, 550 ok; as 5 falhas são de `SidebarGroup.test.tsx`, que já falhavam localmente na `crm-improvements-deploy-phase` antes desta fase e passam no CI.
+- Testes novos: `PatientEvolutionsTab` (3), `AnamnesisAnswerForm` (2), `PatientDocumentsTab` (1), `PatientHeader` (2).
+- Critérios de aceite 2–10 são manuais/E2E (sem banco local): conferir no app depois do CI verde. Critério 1 conferido no código (ordem das abas).

@@ -15,6 +15,17 @@
 - Migration `V097__patient_record.sql` (a V096 é `report_exports`; o plano citava V096).
 - Verificação: `mvn -q test` e suite Vitest completa verdes.
 
+**Fase 2 — IMPLEMENTADA** (branch `feature/pacientes-fase2`, plano `docs/superpowers/plans/2026-10-22-ficha-do-paciente-fase2.md`):
+
+- Anamnese preenchida sobre snapshot do modelo, com alertas e selo no cabeçalho.
+- Evoluções clínicas (rascunho → finalizada imutável, reforçado por trigger).
+- Documentos do paciente a partir de modelos, com PDF.
+- Foto do paciente no cabeçalho.
+- Modelos de documento persistidos em Configurações → Documentos.
+- Migration `V105__patient_clinical_record.sql`.
+
+**Fase 3 — pendente** (spec `docs/superpowers/specs/2026-10-22-ficha-clinica-orcamentos-design.md`).
+
 **Ficou para as Fases 2-3 (spec/plano próprios):**
 
 - **Fase 2:** Anamnese preenchida por paciente (respostas sobre snapshot do modelo + selo no cabeçalho), Evoluções (rascunho → finalizada imutável), Documentos (receita/atestado com PDF) e foto do paciente.
