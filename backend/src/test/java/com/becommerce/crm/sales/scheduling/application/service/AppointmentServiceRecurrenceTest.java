@@ -32,7 +32,9 @@ class AppointmentServiceRecurrenceTest {
     private final TagUseCase tags = mock(TagUseCase.class);
     private final AppointmentService service = new AppointmentService(repository,
             mock(ScheduleBlockRepository.class), mock(TenantAuditRecorder.class), mock(ChairUseCase.class),
-            tags, tagRepository);
+            tags, tagRepository,
+            mock(com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository.class),
+            mock(com.becommerce.crm.sales.scheduling.application.port.out.AppointmentProcedureRepository.class));
 
     private final UUID companyId = UUID.randomUUID();
     private final UUID hostId = UUID.randomUUID();
@@ -45,7 +47,7 @@ class AppointmentServiceRecurrenceTest {
 
     private CreateAppointmentRequest request(AppointmentStatus status, RecurrenceRequest recurrence, List<UUID> tagIds) {
         return new CreateAppointmentRequest(null, hostId, null, null, "Avaliação", start,
-                start.plus(1, ChronoUnit.HOURS), null, null, null, false, null, tagIds, status, recurrence);
+                start.plus(1, ChronoUnit.HOURS), null, null, null, false, null, tagIds, status, recurrence, null);
     }
 
     @Test

@@ -45,7 +45,7 @@ class SearchAppointmentsToolTest {
         Instant s = Instant.parse(start);
         return new AppointmentResponse(UUID.randomUUID(), companyId, null, UUID.randomUUID(), contactId, null,
                 "Consulta", s, s.plusSeconds(3600), status, AppointmentSource.INTERNAL, null, null, null,
-                null, null, null, null, null, null, null, List.of());
+                null, null, null, null, null, null, null, List.of(), List.of());
     }
 
     @SuppressWarnings("unchecked")
@@ -94,7 +94,7 @@ class SearchAppointmentsToolTest {
 
     @Test
     void unknownPatientFails() {
-        when(contacts.search(companyId, "ninguem", 5)).thenReturn(List.of());
+        when(contacts.search(companyId, "ninguem", 5)).thenReturn(List.of(), List.of());
 
         AiToolResult result = tool.execute(ctx, Map.of("patient", "ninguem"));
 

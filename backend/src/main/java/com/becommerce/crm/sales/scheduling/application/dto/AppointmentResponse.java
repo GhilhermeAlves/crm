@@ -30,5 +30,6 @@ public record AppointmentResponse(
         Instant createdAt,
         Instant updatedAt,
         UUID chairId,
-        List<UUID> tagIds
+        List<UUID> tagIds,
+        List<ProcedureRef> procedures
 ) {}

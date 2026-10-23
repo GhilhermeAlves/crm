@@ -32,5 +32,6 @@ public record CreateAppointmentRequest(
         List<UUID> tagIds,
         AppointmentStatus status,
         @Valid
-        RecurrenceRequest recurrence
+        RecurrenceRequest recurrence,
+        List<UUID> catalogItemIds
 ) {}

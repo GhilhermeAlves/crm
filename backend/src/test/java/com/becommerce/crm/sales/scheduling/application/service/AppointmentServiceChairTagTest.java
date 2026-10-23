@@ -34,7 +34,9 @@ class AppointmentServiceChairTagTest {
     private final TagUseCase tags = mock(TagUseCase.class);
     private final AppointmentTagRepository tagRepository = mock(AppointmentTagRepository.class);
     private final AppointmentService service = new AppointmentService(repository,
-            mock(ScheduleBlockRepository.class), mock(TenantAuditRecorder.class), chairs, tags, tagRepository);
+            mock(ScheduleBlockRepository.class), mock(TenantAuditRecorder.class), chairs, tags, tagRepository,
+            mock(com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository.class),
+            mock(com.becommerce.crm.sales.scheduling.application.port.out.AppointmentProcedureRepository.class));
 
     private final UUID companyId = UUID.randomUUID();
     private final UUID hostId = UUID.randomUUID();
@@ -48,7 +50,7 @@ class AppointmentServiceChairTagTest {
 
     private CreateAppointmentRequest request(UUID chair, List<UUID> tagIds) {
         return new CreateAppointmentRequest(null, hostId, null, null, "Avaliação", start,
-                start.plus(1, ChronoUnit.HOURS), null, null, null, false, chair, tagIds, null, null);
+                start.plus(1, ChronoUnit.HOURS), null, null, null, false, chair, tagIds, null, null, null);
     }
 
     private Appointment existingInChair(UUID chair) {
@@ -156,11 +158,13 @@ class AppointmentServiceChairTagTest {
             return null;
         }).when(auditor).record(any(), any(), any(), any(), any(), any(), any(), any());
         AppointmentService withMarker = new AppointmentService(repository,
-                mock(ScheduleBlockRepository.class), auditor, chairs, tags, tagRepository);
+                mock(ScheduleBlockRepository.class), auditor, chairs, tags, tagRepository,
+            mock(com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository.class),
+            mock(com.becommerce.crm.sales.scheduling.application.port.out.AppointmentProcedureRepository.class));
         withMarker.setPatientAutoMarker(marker);
 
         withMarker.create(companyId, new CreateAppointmentRequest(null, hostId, contactId, null, "Avaliação",
-                start, start.plus(1, ChronoUnit.HOURS), null, null, null, false, null, null, null, null), null);
+                start, start.plus(1, ChronoUnit.HOURS), null, null, null, false, null, null, null, null, null), null);
 
         verify(marker).markOnAppointment(companyId, contactId);
         assertEquals(companyId, tenantAtAudit.get());

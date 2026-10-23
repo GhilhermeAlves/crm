@@ -3,10 +3,14 @@ package com.becommerce.crm.sales.scheduling.application.service;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
+import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
+import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
+import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
 import com.becommerce.crm.sales.chair.application.port.in.ChairUseCase;
 import com.becommerce.crm.sales.tag.application.port.in.TagUseCase;
 import com.becommerce.crm.sales.scheduling.application.dto.*;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
+import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentProcedureRepository;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentRepository;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTagRepository;
 import com.becommerce.crm.sales.scheduling.application.port.out.ScheduleBlockRepository;
@@ -42,19 +46,25 @@ public class AppointmentService implements AppointmentUseCase {
     private final ChairUseCase chairUseCase;
     private final TagUseCase tagUseCase;
     private final AppointmentTagRepository tagRepository;
+    private final CatalogItemRepository catalogItemRepository;
+    private final AppointmentProcedureRepository procedureRepository;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               ScheduleBlockRepository blockRepository,
                               TenantAuditRecorder auditor,
                               ChairUseCase chairUseCase,
                               TagUseCase tagUseCase,
-                              AppointmentTagRepository tagRepository) {
+                              AppointmentTagRepository tagRepository,
+                              CatalogItemRepository catalogItemRepository,
+                              AppointmentProcedureRepository procedureRepository) {
         this.appointmentRepository = appointmentRepository;
         this.blockRepository = blockRepository;
         this.auditor = auditor;
         this.chairUseCase = chairUseCase;
         this.tagUseCase = tagUseCase;
         this.tagRepository = tagRepository;
+        this.catalogItemRepository = catalogItemRepository;
+        this.procedureRepository = procedureRepository;
     }
 
     private PatientAutoMarker patientAutoMarker;
@@ -78,6 +88,7 @@ public class AppointmentService implements AppointmentUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             validateTags(companyId, request.tagIds());
+            validateProcedures(companyId, request.catalogItemIds());
             boolean force = request.force() != null && request.force();
             List<Interval> occurrences = RecurrenceExpander.expand(request.startAt(), request.endAt(),
                     request.recurrence());
@@ -112,6 +123,9 @@ public class AppointmentService implements AppointmentUseCase {
                 appointmentRepository.save(created);
                 if (request.tagIds() != null) {
                     tagRepository.replace(companyId, created.getId(), request.tagIds());
+                }
+                if (request.catalogItemIds() != null) {
+                    procedureRepository.replace(companyId, created.getId(), request.catalogItemIds());
                 }
                 if (appointment == null) {
                     appointment = created;
@@ -154,6 +168,7 @@ public class AppointmentService implements AppointmentUseCase {
             TenantContext.setCompanyId(companyId);
             Appointment appointment = requireOwned(companyId, appointmentId);
             validateTags(companyId, request.tagIds());
+            validateProcedures(companyId, request.catalogItemIds());
             // A atualização substitui a cadeira (null = sem cadeira): só a nova precisa estar livre.
             checkChairConflicts(companyId, request.chairId(), appointment.getStartAt(),
                     appointment.getEndAt(), appointmentId);
@@ -163,6 +178,10 @@ public class AppointmentService implements AppointmentUseCase {
             // tagIds ausente mantém os marcadores; uma lista (mesmo vazia) substitui.
             if (request.tagIds() != null) {
                 tagRepository.replace(companyId, appointmentId, request.tagIds());
+            }
+            // Mesma regra para os procedimentos: ausente mantém, lista (mesmo vazia) substitui.
+            if (request.catalogItemIds() != null) {
+                procedureRepository.replace(companyId, appointmentId, request.catalogItemIds());
             }
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Appointment",
@@ -400,25 +419,46 @@ public class AppointmentService implements AppointmentUseCase {
         }
     }
 
-    private AppointmentResponse toResponse(Appointment a) {
-        List<UUID> tagIds = tagRepository.findTagIds(List.of(a.getId())).getOrDefault(a.getId(), List.of());
-        return toResponse(a, tagIds);
+    private void validateProcedures(UUID companyId, Collection<UUID> catalogItemIds) {
+        if (catalogItemIds == null) {
+            return;
+        }
+        for (UUID itemId : catalogItemIds) {
+            CatalogItem item = itemId == null ? null : catalogItemRepository.findById(itemId).orElse(null);
+            boolean valid = item != null
+                    && companyId.equals(item.getCompanyId())
+                    && item.getType() == CatalogItemType.SERVICE
+                    && item.isActive();
+            if (!valid) {
+                throw new SchedulingValidationException("Procedimento inválido para o agendamento.");
+            }
+        }
     }
 
-    /** Lista com os marcadores carregados numa única consulta. */
+    private AppointmentResponse toResponse(Appointment a) {
+        List<UUID> tagIds = tagRepository.findTagIds(List.of(a.getId())).getOrDefault(a.getId(), List.of());
+        List<ProcedureRef> procedures = procedureRepository.findProcedures(List.of(a.getId()))
+                .getOrDefault(a.getId(), List.of());
+        return toResponse(a, tagIds, procedures);
+    }
+
+    /** Lista com marcadores e procedimentos carregados em uma consulta cada (sem N+1). */
     private List<AppointmentResponse> toResponses(List<Appointment> appointments) {
-        Map<UUID, List<UUID>> tags = tagRepository.findTagIds(appointments.stream().map(Appointment::getId).toList());
+        List<UUID> ids = appointments.stream().map(Appointment::getId).toList();
+        Map<UUID, List<UUID>> tags = tagRepository.findTagIds(ids);
+        Map<UUID, List<ProcedureRef>> procedures = procedureRepository.findProcedures(ids);
         return appointments.stream()
-                .map(a -> toResponse(a, tags.getOrDefault(a.getId(), List.of())))
+                .map(a -> toResponse(a, tags.getOrDefault(a.getId(), List.of()),
+                        procedures.getOrDefault(a.getId(), List.of())))
                 .toList();
     }
 
-    private static AppointmentResponse toResponse(Appointment a, List<UUID> tagIds) {
+    private static AppointmentResponse toResponse(Appointment a, List<UUID> tagIds, List<ProcedureRef> procedures) {
         return new AppointmentResponse(a.getId(), a.getCompanyId(), a.getAppointmentTypeId(),
                 a.getHostId(), a.getContactId(), a.getOpportunityId(), a.getTitle(),
                 a.getStartAt(), a.getEndAt(), a.getStatus(), a.getSource(), a.getLocationKind(),
                 a.getLocationDetail(), a.getMeetingUrl(), a.getNotes(), a.getCancelReason(),
                 a.getPublicToken(), a.getCreatedBy(), a.getCreatedAt(), a.getUpdatedAt(), a.getChairId(),
-                tagIds);
+                tagIds, procedures);
     }
 }

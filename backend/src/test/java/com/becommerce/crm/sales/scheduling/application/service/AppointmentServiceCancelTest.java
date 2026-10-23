@@ -31,7 +31,9 @@ class AppointmentServiceCancelTest {
             mock(ScheduleBlockRepository.class), mock(TenantAuditRecorder.class),
             mock(com.becommerce.crm.sales.chair.application.port.in.ChairUseCase.class),
             mock(com.becommerce.crm.sales.tag.application.port.in.TagUseCase.class),
-            mock(com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTagRepository.class));
+            mock(com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTagRepository.class),
+            mock(com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository.class),
+            mock(com.becommerce.crm.sales.scheduling.application.port.out.AppointmentProcedureRepository.class));
     private final UUID companyId = UUID.randomUUID();
 
     private Appointment appointment(UUID company) {
