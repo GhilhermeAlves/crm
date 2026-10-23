@@ -34,6 +34,7 @@ function makeProcedure(
     teeth: [{ tooth: 11, faces: ["M"] }],
     transaction: null,
     budget: null,
+    generateTransactionOnDone: false,
     createdAt: "2026-10-20T10:00:00",
     updatedAt: "2026-10-20T10:00:00",
     ...overrides,
@@ -62,6 +63,16 @@ describe("CompleteProcedureDialog", () => {
     renderDialog(makeProcedure({ budget: { id: "b1", title: "Plano", status: "APPROVED" } }));
     expect(screen.queryByText("Gerar lançamento financeiro")).toBeNull();
     expect(screen.getByText("Cobrado pelo orçamento Plano.")).toBeTruthy();
+  });
+
+  it("vem pré-marcado quando o procedimento guardou gerar lançamento ao realizar", () => {
+    renderDialog(makeProcedure({ generateTransactionOnDone: true }));
+    expect(screen.getByRole("checkbox").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("sem o flag guardado o lançamento vem desmarcado", () => {
+    renderDialog(makeProcedure());
+    expect(screen.getByRole("checkbox").getAttribute("aria-checked")).toBe("false");
   });
 
   it("orçamento em rascunho mantém o lançamento financeiro", () => {

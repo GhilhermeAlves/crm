@@ -49,7 +49,7 @@ export function CompleteProcedureDialog({ companyId, contactId, procedure, onOpe
     if (!procedure) return;
     setPerformedAt(today());
     setProfessionalId(procedure.professionalId ?? NO_PROFESSIONAL);
-    setGenerateTransaction(false);
+    setGenerateTransaction(procedure.generateTransactionOnDone);
     setDueDate(today());
   }, [procedure]);
 

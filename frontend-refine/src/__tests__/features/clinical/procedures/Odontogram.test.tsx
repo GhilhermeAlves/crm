@@ -50,3 +50,14 @@ describe("Odontogram", () => {
     );
   });
 });
+
+describe("Odontogram — dente inteiro", () => {
+  it("procedimento sem faces pinta o desenho do dente", () => {
+    const summary = new Map<number, ToothSummary>([[36, { state: "DONE", faces: {} }]]);
+    render(
+      <Odontogram dentition="PERMANENT" summary={summary} selected={[]} onToothClick={vi.fn()} />,
+    );
+    const tooth = screen.getByRole("button", { name: "Dente 36, Realizado" });
+    expect(tooth.querySelectorAll(".fill-primary").length).toBe(2);
+  });
+});

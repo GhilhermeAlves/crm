@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMutationDefaults } from "@/lib/query/mutation-utils";
+import { budgetKeys } from "@/features/clinical/budgets/hooks/useBudgets";
 import { procedureService } from "../services/procedure.service";
 import type {
   CompleteProcedureRequest,
@@ -19,10 +20,14 @@ export function useProcedures(companyId: string, contactId: string) {
   });
 }
 
-// A chave raiz real do financeiro é ["finance", companyId] (ver useFinance.ts).
+// Chaves reais: financeiro ["finance", companyId] (useFinance.ts), catálogo
+// ["catalog", companyId] (useCatalog.ts) e paciente ["patient", companyId] (usePatient.ts).
 const invalidate = (companyId: string, contactId: string) => [
   procedureKeys.all(companyId, contactId),
+  budgetKeys.all(companyId, contactId),
   ["finance", companyId],
+  ["catalog", companyId],
+  ["patient", companyId],
 ];
 
 export function useCreateProcedure(companyId: string, contactId: string) {

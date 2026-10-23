@@ -26,21 +26,20 @@ function makeProcedure(
     teeth: [{ tooth: 11, faces: ["M"] }],
     transaction: null,
     budget: null,
+    generateTransactionOnDone: false,
     createdAt: "2026-10-20T10:00:00",
     updatedAt: "2026-10-20T10:00:00",
     ...overrides,
   };
 }
 
-function renderList(procedures: PatientProcedureResponse[], tooth: number | null = null) {
+function renderList(procedures: PatientProcedureResponse[]) {
   render(
     <ProcedureList
       companyId="co1"
       contactId="c1"
       procedures={procedures}
-      toothFilter={tooth}
       canEdit={true}
-      onClearTooth={vi.fn()}
       onEdit={vi.fn()}
       onComplete={vi.fn()}
     />,
@@ -90,28 +89,13 @@ describe("ProcedureList", () => {
     );
   });
 
-  it("filtro por dente vindo do odontograma", () => {
-    renderList(
-      [
-        makeProcedure({ id: "p1", name: "Restauração", teeth: [{ tooth: 11, faces: ["M"] }] }),
-        makeProcedure({ id: "p2", name: "Limpeza", teeth: [] }),
-      ],
-      11,
-    );
-    expect(screen.getByText("Restauração")).toBeTruthy();
-    expect(screen.queryByText("Limpeza")).toBeNull();
-    expect(screen.getByText("Dente 11")).toBeTruthy();
-  });
-
   it("sem permissão de edição esconde as ações", () => {
     render(
       <ProcedureList
         companyId="co1"
         contactId="c1"
         procedures={[makeProcedure()]}
-        toothFilter={null}
         canEdit={false}
-        onClearTooth={vi.fn()}
         onEdit={vi.fn()}
         onComplete={vi.fn()}
       />,

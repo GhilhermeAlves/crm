@@ -61,6 +61,7 @@ public class PatientProcedureRepositoryImpl implements PatientProcedureRepositor
         e.setNotes(p.getNotes());
         e.setPerformedAt(p.getPerformedAt());
         e.setFinancialTransactionId(p.getFinancialTransactionId());
+        e.setGenerateTransactionOnDone(p.isGenerateTransactionOnDone());
         e.setCreatedBy(p.getCreatedBy());
         e.setCreatedAt(p.getCreatedAt());
         e.setUpdatedAt(p.getUpdatedAt());
@@ -83,6 +84,6 @@ public class PatientProcedureRepositoryImpl implements PatientProcedureRepositor
         return PatientProcedure.reconstitute(e.getId(), e.getCompanyId(), e.getContactId(), e.getCatalogItemId(),
                 e.getNameSnapshot(), ProcedureState.valueOf(e.getState()), Dentition.valueOf(e.getDentition()),
                 e.getPriceCents(), e.getProfessionalId(), e.getNotes(), e.getPerformedAt(),
-                e.getFinancialTransactionId(), teeth, e.getCreatedBy(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getFinancialTransactionId(), e.isGenerateTransactionOnDone(), teeth, e.getCreatedBy(), e.getCreatedAt(), e.getUpdatedAt());
     }
 }

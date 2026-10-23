@@ -32,6 +32,7 @@ public class PatientProcedure {
     private String notes;
     private LocalDate performedAt;
     private UUID financialTransactionId;
+    private boolean generateTransactionOnDone;
     private List<ProcedureTooth> teeth;
     private final UUID createdBy;
     private final LocalDateTime createdAt;
@@ -83,9 +84,30 @@ public class PatientProcedure {
                                                 LocalDate performedAt, UUID financialTransactionId,
                                                 List<ProcedureTooth> teeth, UUID createdBy,
                                                 LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new PatientProcedure(id, companyId, contactId, catalogItemId, nameSnapshot, state, dentition,
-                priceCents, professionalId, notes, performedAt, financialTransactionId, List.copyOf(teeth),
-                createdBy, createdAt, updatedAt);
+        return reconstitute(id, companyId, contactId, catalogItemId, nameSnapshot, state, dentition, priceCents,
+                professionalId, notes, performedAt, financialTransactionId, false, teeth, createdBy, createdAt,
+                updatedAt);
+    }
+
+    public static PatientProcedure reconstitute(UUID id, UUID companyId, UUID contactId, UUID catalogItemId,
+                                                String nameSnapshot, ProcedureState state, Dentition dentition,
+                                                long priceCents, UUID professionalId, String notes,
+                                                LocalDate performedAt, UUID financialTransactionId,
+                                                boolean generateTransactionOnDone, List<ProcedureTooth> teeth,
+                                                UUID createdBy, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        PatientProcedure p = new PatientProcedure(id, companyId, contactId, catalogItemId, nameSnapshot, state,
+                dentition, priceCents, professionalId, notes, performedAt, financialTransactionId,
+                List.copyOf(teeth), createdBy, createdAt, updatedAt);
+        p.generateTransactionOnDone = generateTransactionOnDone;
+        return p;
+    }
+
+    /**
+     * Guarda a intenção de gerar o lançamento financeiro quando o procedimento for
+     * marcado como realizado. Só vale para {@code PLANNED}; nos demais estados fica falso.
+     */
+    public void setGenerateTransactionOnDone(boolean generate) {
+        this.generateTransactionOnDone = generate && state == ProcedureState.PLANNED;
     }
 
     public void edit(ProcedureState newState, Dentition newDentition, long newPriceCents, UUID newProfessionalId,
@@ -122,6 +144,8 @@ public class PatientProcedure {
         }
         this.state = ProcedureState.DONE;
         this.performedAt = date;
+        // A intenção de gerar o lançamento se encerra ao realizar.
+        this.generateTransactionOnDone = false;
         if (professional != null) {
             this.professionalId = professional;
         }
@@ -188,6 +212,7 @@ public class PatientProcedure {
     public String getNotes() { return notes; }
     public LocalDate getPerformedAt() { return performedAt; }
     public UUID getFinancialTransactionId() { return financialTransactionId; }
+    public boolean isGenerateTransactionOnDone() { return generateTransactionOnDone; }
     public List<ProcedureTooth> getTeeth() { return teeth; }
     public UUID getCreatedBy() { return createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }

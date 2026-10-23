@@ -10,6 +10,7 @@ import {
   STATE_LABELS,
   type ToothSummary,
 } from "../utils/teeth";
+import { FACE_SECTOR_PATHS, TOOTH_PATHS, faceLayout, isUpper, toothKind } from "./toothShapes";
 
 type OdontogramProps = {
   dentition: Dentition;
@@ -20,27 +21,72 @@ type OdontogramProps = {
   showLegend?: boolean;
 };
 
-// Setores de um dente 40x40: centro = oclusal/incisal; bordas = V (cima), L (baixo), M/D (lados).
-const FACE_PATHS: Record<ToothFace, string> = {
-  V: "M0 0 L40 0 L30 10 L10 10 Z",
-  L: "M0 40 L10 30 L30 30 L40 40 Z",
-  M: "M0 0 L10 10 L10 30 L0 40 Z",
-  D: "M40 0 L40 40 L30 30 L30 10 Z",
-  O: "M10 10 L30 10 L30 30 L10 30 Z",
-};
+function ToothDrawing({
+  tooth,
+  dentition,
+  summary,
+}: {
+  tooth: number;
+  dentition: Dentition;
+  summary?: ToothSummary;
+}) {
+  const { root, crown } = TOOTH_PATHS[toothKind(tooth, dentition)];
+  // Procedimento sem faces (ex.: canal, extração) pinta o dente inteiro.
+  const wholeTooth = summary && Object.keys(summary.faces).length === 0;
+  const fill = wholeTooth ? STATE_FILL[summary.state] : "fill-card";
+  return (
+    <svg viewBox="0 0 40 80" className="h-14 w-7" aria-hidden>
+      <g transform={isUpper(tooth) ? undefined : "matrix(1 0 0 -1 0 80)"}>
+        <path d={root} className={cn("stroke-muted-foreground", fill)} strokeWidth={1.5} />
+        <path d={crown} className={cn("stroke-muted-foreground", fill)} strokeWidth={1.5} />
+      </g>
+    </svg>
+  );
+}
+
+function FaceDiagram({ tooth, summary }: { tooth: number; summary?: ToothSummary }) {
+  const layout = faceLayout(tooth);
+  const fillFor = (face: ToothFace) => {
+    const state = summary?.faces[face];
+    return state ? STATE_FILL[state] : "fill-card";
+  };
+  return (
+    <svg viewBox="0 0 40 40" className="h-7 w-7" aria-hidden>
+      {(Object.keys(FACE_SECTOR_PATHS) as (keyof typeof FACE_SECTOR_PATHS)[]).map((position) => (
+        <path
+          key={position}
+          d={FACE_SECTOR_PATHS[position]}
+          className={cn("stroke-muted-foreground", fillFor(layout[position]))}
+          strokeWidth={1}
+        />
+      ))}
+      <circle
+        cx="20"
+        cy="20"
+        r="8"
+        className={cn("stroke-muted-foreground", fillFor(layout.center))}
+        strokeWidth={1}
+      />
+    </svg>
+  );
+}
 
 function Tooth({
   tooth,
+  dentition,
   summary,
   selected,
   onClick,
 }: {
   tooth: number;
+  dentition: Dentition;
   summary?: ToothSummary;
   selected: boolean;
   onClick: () => void;
 }) {
   const label = summary ? `Dente ${tooth}, ${STATE_LABELS[summary.state]}` : `Dente ${tooth}`;
+  const upper = isUpper(tooth);
+  const number = <span className="text-xs text-muted-foreground">{tooth}</span>;
   return (
     <button
       type="button"
@@ -48,26 +94,23 @@ function Tooth({
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-1 rounded-md p-1 hover:bg-muted",
+        "flex flex-col items-center gap-1 rounded-md px-0.5 py-1 hover:bg-muted",
         selected && "ring-2 ring-ring",
       )}
     >
-      <svg viewBox="0 0 40 40" className="h-8 w-8" aria-hidden>
-        {(Object.keys(FACE_PATHS) as ToothFace[]).map((face) => {
-          const faceState = summary?.faces[face];
-          return (
-            <path
-              key={face}
-              d={FACE_PATHS[face]}
-              className={cn("stroke-border", faceState ? STATE_FILL[faceState] : "fill-card")}
-            />
-          );
-        })}
-        {summary && Object.keys(summary.faces).length === 0 && (
-          <circle cx="20" cy="20" r="6" className={STATE_FILL[summary.state]} />
-        )}
-      </svg>
-      <span className="text-xs text-muted-foreground">{tooth}</span>
+      {upper ? (
+        <>
+          {number}
+          <ToothDrawing tooth={tooth} dentition={dentition} summary={summary} />
+          <FaceDiagram tooth={tooth} summary={summary} />
+        </>
+      ) : (
+        <>
+          <FaceDiagram tooth={tooth} summary={summary} />
+          <ToothDrawing tooth={tooth} dentition={dentition} summary={summary} />
+          {number}
+        </>
+      )}
     </button>
   );
 }
@@ -86,6 +129,7 @@ export function Odontogram({
       <Tooth
         key={tooth}
         tooth={tooth}
+        dentition={dentition}
         summary={summary.get(tooth)}
         selected={selected.includes(tooth)}
         onClick={() => onToothClick(tooth)}
@@ -110,7 +154,7 @@ export function Odontogram({
         </div>
       )}
       <div className="overflow-x-auto">
-        <div className="inline-grid min-w-max grid-cols-2 gap-x-4 gap-y-2">
+        <div className="mx-auto grid w-max grid-cols-2 gap-x-4 gap-y-2">
           <div className="flex justify-end border-b border-r pb-2 pr-2">{row(upperRight)}</div>
           <div className="flex border-b pb-2">{row(upperLeft)}</div>
           <div className="flex justify-end border-r pr-2">{row(lowerRight.slice().reverse())}</div>

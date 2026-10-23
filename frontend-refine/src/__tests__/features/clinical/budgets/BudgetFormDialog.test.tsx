@@ -34,6 +34,7 @@ function proc(overrides: Partial<PatientProcedureResponse>): PatientProcedureRes
     teeth: [{ tooth: 11, faces: ["M"] }],
     transaction: null,
     budget: null,
+    generateTransactionOnDone: false,
     createdAt: "2026-10-20T10:00:00",
     updatedAt: "2026-10-20T10:00:00",
     ...overrides,
