@@ -1,3 +1,5 @@
+import type { BudgetStatus } from "@/features/clinical/budgets/types/budget.types";
+
 export type ProcedureState = "PLANNED" | "DONE" | "PRE_EXISTING";
 export type Dentition = "PERMANENT" | "DECIDUOUS";
 export type ToothFace = "M" | "D" | "O" | "V" | "L";
@@ -22,6 +24,7 @@ export type PatientProcedureResponse = {
   transaction: { id: string; status: TransactionStatus } | null;
   createdAt: string;
   updatedAt: string;
+  budget: { id: string; title: string; status: BudgetStatus } | null;
 };
 
 export type PatientProcedureRequest = {
