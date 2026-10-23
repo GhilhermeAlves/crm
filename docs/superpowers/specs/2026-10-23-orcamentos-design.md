@@ -1,6 +1,6 @@
 # Ficha do Paciente — Fase 3b: Orçamentos
 
-**Status:** aprovado (decisões tomadas pelo agente com autorização do usuário em 2026-10-23: "não precisa me pedir permissão, faça o recomendado"). Branch `feature/pacientes-fase3b` (base `crm-improvements-deploy-phase` @ d215ac8a, já com a 3a).
+**Status:** Implementada (decisões tomadas pelo agente com autorização do usuário em 2026-10-23: "não precisa me pedir permissão, faça o recomendado"). Branch `feature/pacientes-fase3b` (base `crm-improvements-deploy-phase` @ d215ac8a, já com a 3a).
 
 Depende da 3a (`docs/superpowers/specs/2026-10-22-ficha-clinica-design.md`): procedimentos do paciente em `patient_procedures`.
 
@@ -21,7 +21,7 @@ Aba **Orçamentos** na ficha do paciente: montar um orçamento a partir de proce
    - Editar preço de procedimento não altera o item do orçamento (snapshot).
    - A resposta do procedimento ganha `budget: {id, title, status} | null` (orçamento não perdido) e a lista "Ficha geral" mostra a coluna **Orçamento**.
 7. **Excluir orçamento:** só `DRAFT` ou `LOST`. `APPROVED` → 409 (marque como perdido antes).
-8. **Visualizar:** diálogo com checkboxes dos blocos — valor total, valor por procedimento, dentistas, desconto, observações, forma de pagamento (todos marcados por padrão) — que abre uma página de impressão `/patients/[id]/orcamentos/[budgetId]/imprimir?blocos=...` com `window.print()`. Sem PDF no servidor. A escolha fica em `localStorage` (conveniência).
+8. **Visualizar:** diálogo com checkboxes dos blocos — valor total, valor por procedimento, dentistas, desconto, observações, forma de pagamento (todos marcados por padrão) — que abre uma página de impressão `/patients/[id]/orcamentos/[budgetId]/imprimir?blocos=total,procedures,dentists,discount,notes,payment` com `window.print()`. As chaves dos blocos estão em `utils/blocks.ts`; sem `blocos` na URL, todos aparecem. A página fica no grupo de rotas `app/(print)/` (layout próprio, com `ProtectedRoute`, sem sidebar/header do painel); a URL é a mesma. Sem PDF no servidor. A escolha fica em `localStorage` (conveniência).
 9. **Permissões:** leitura `contact:read`, escrita `contact:update`, aprovar também `finance:create`. Nenhuma permissão nova.
 10. **Fora de escopo:** assinatura eletrônica, envio por WhatsApp/e-mail (o botão "enviar" do Capim), desconto percentual, edição de orçamento aprovado, análise de crédito, múltiplas versões, aba Financeiro com cards por orçamento (a aba Financeiro existente já lista os lançamentos gerados).
 
@@ -59,7 +59,8 @@ Validações de criação/edição: título obrigatório; ≥ 1 procedimento; ca
 
 - Aba **Orçamentos** em `PatientTabs`, logo após "Ficha clínica" → `/patients/[id]/orcamentos`.
 - `src/features/clinical/budgets/`: types, service, hooks, `BudgetList` (tabela Título, Última edição, Editado por, Total, Status; ações Visualizar, Editar (DRAFT), Aprovar (DRAFT), Marcar como perdido, Excluir), `BudgetFormDialog` (título, checklist dos procedimentos "A realizar" livres com valor editável, desconto em R$, observações, subtotal/total ao vivo), `ApproveBudgetDialog` (forma de pagamento, parcelas 1–24, 1º vencimento; prévia das parcelas com resto na 1ª), `BudgetViewDialog` (checkboxes dos blocos) e a página de impressão.
-- Ficha clínica: coluna "Orçamento" na lista; `CompleteProcedureDialog` esconde "gerar lançamento" quando `procedure.budget?.status === "APPROVED"`.
+- Ficha clínica: coluna "Orçamento" na lista, com o texto "título · status" (ou "—"); `CompleteProcedureDialog` esconde "gerar lançamento" quando `procedure.budget?.status === "APPROVED"`.
+- Diálogos de confirmação usam os botões "Confirmar" (perder orçamento) e "Confirmar exclusão" (excluir), para não colidir com os textos dos botões da linha.
 
 ## 6. Testes
 

@@ -24,7 +24,7 @@
 - Modelos de documento persistidos em Configurações → Documentos.
 - Migration `V105__patient_clinical_record.sql`.
 
-**Fase 3 — em andamento**, dividida em 3a Ficha clínica (spec `docs/superpowers/specs/2026-10-22-ficha-clinica-design.md`) e 3b Orçamentos (spec próprio depois). 3a implementada (branch `feature/pacientes-fase3a`), 3b pendente.
+**Fase 3 — implementada (3a ficha clínica, 3b orçamentos)**, dividida em 3a Ficha clínica (spec `docs/superpowers/specs/2026-10-22-ficha-clinica-design.md`, branch `feature/pacientes-fase3a`) e 3b Orçamentos (spec `docs/superpowers/specs/2026-10-23-orcamentos-design.md`, branch `feature/pacientes-fase3b`).
 
 **Ficou para as Fases 2-3 (spec/plano próprios):**
 

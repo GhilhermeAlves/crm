@@ -283,8 +283,19 @@ Regras (construtor: `BudgetRepository`, `PatientProcedureRepository`, `ContactRe
 
 ## Divergências encontradas
 
-(preencher)
+- Página de impressão no grupo `app/(print)/` (layout próprio, sem sidebar/header), URL igual; no plano estava em `(dashboard)`.
+- Blocos na URL com chaves `total,procedures,dentists,discount,notes,payment` (`utils/blocks.ts`), não rótulos.
+- Célula "Orçamento" na ficha clínica mostra "título · status".
+- Botões de confirmação "Confirmar" / "Confirmar exclusão" nos AlertDialogs.
+- Task 3: `transactions` como `Set<BudgetTransactionLink>` (evita múltiplos bags EAGER, que quebrariam o boot com `MultipleBagFetchException`).
+- Task 9: reset dos diálogos só ao abrir ou mudar o id do orçamento (não por nova referência de dados).
 
 ## Resultado final
 
-(preencher)
+Verificação executada em 2026-10-23 na branch `feature/pacientes-fase3b`:
+
+- Backend `cd backend && mvn -q test`: saiu com código 0, sem falhas em testes unitários (surefire). Os ITs (failsafe, Testcontainers) não rodam nesse comando; `BudgetIsolationIT` e `PatientProcedureIsolationIT` dependem de Docker, ausente localmente. O CI do commit 52702da já tinha `BudgetIsolationIT` verde no Postgres real.
+- Frontend `npm run lint`: código 0, 0 erros, 52 avisos pré-existentes (nenhum nos arquivos de orçamento).
+- Frontend `npx tsc --noEmit`: sem saída (sem erros).
+- Frontend `npx vitest run --pool=threads`: 116 arquivos passando, 1 falhando (`SidebarGroup.test.tsx`, 5 testes, falha de ambiente local); 592 testes passando, 5 falhando.
+- Prettier `--check --end-of-line auto` nos 27 arquivos .ts/.tsx alterados na branch desde `d215ac8a`: "All matched files use Prettier code style!".
