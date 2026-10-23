@@ -17,6 +17,7 @@ public class ScheduleBlock {
     private final String externalId;
     private final UUID createdBy;
     private final Instant createdAt;
+    private UUID recurrenceGroupId;
 
     private ScheduleBlock(UUID id, UUID companyId, UUID hostId, Instant startAt, Instant endAt,
                           String reason, BlockSource source, String externalId, UUID createdBy,
@@ -76,4 +77,8 @@ public class ScheduleBlock {
     public String getExternalId() { return externalId; }
     public UUID getCreatedBy() { return createdBy; }
     public Instant getCreatedAt() { return createdAt; }
+    public UUID getRecurrenceGroupId() { return recurrenceGroupId; }
+
+    /** Vincula a ocorrência à série de recorrência (na criação ou ao reconstituir). */
+    public void setRecurrenceGroupId(UUID recurrenceGroupId) { this.recurrenceGroupId = recurrenceGroupId; }
 }

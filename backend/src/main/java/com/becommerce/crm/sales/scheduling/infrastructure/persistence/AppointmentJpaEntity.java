@@ -70,6 +70,9 @@ public class AppointmentJpaEntity {
     @Column(name = "chair_id")
     private UUID chairId;
 
+    @Column(name = "recurrence_group_id")
+    private UUID recurrenceGroupId;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getCompanyId() { return companyId; }
@@ -114,4 +117,6 @@ public class AppointmentJpaEntity {
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     public UUID getChairId() { return chairId; }
     public void setChairId(UUID chairId) { this.chairId = chairId; }
+    public UUID getRecurrenceGroupId() { return recurrenceGroupId; }
+    public void setRecurrenceGroupId(UUID recurrenceGroupId) { this.recurrenceGroupId = recurrenceGroupId; }
 }

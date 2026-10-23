@@ -58,13 +58,16 @@ public class ScheduleBlockRepositoryImpl implements ScheduleBlockRepository {
         e.setExternalId(b.getExternalId());
         e.setCreatedBy(b.getCreatedBy());
         e.setCreatedAt(b.getCreatedAt());
+        e.setRecurrenceGroupId(b.getRecurrenceGroupId());
         return e;
     }
 
     private static ScheduleBlock toDomain(ScheduleBlockJpaEntity e) {
-        return ScheduleBlock.reconstitute(e.getId(), e.getCompanyId(), e.getHostId(),
+        ScheduleBlock b = ScheduleBlock.reconstitute(e.getId(), e.getCompanyId(), e.getHostId(),
                 e.getStartAt(), e.getEndAt(), e.getReason(),
                 e.getSource() != null ? BlockSource.valueOf(e.getSource()) : null,
                 e.getExternalId(), e.getCreatedBy(), e.getCreatedAt());
+        b.setRecurrenceGroupId(e.getRecurrenceGroupId());
+        return b;
     }
 }

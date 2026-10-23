@@ -49,6 +49,7 @@ export type Appointment = {
   createdBy: string;
   chairId?: string | null;
   tagIds?: string[];
+  procedures?: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
 };
@@ -123,6 +124,18 @@ export type CreateAppointmentRequest = {
   force?: boolean;
   chairId?: string | null;
   tagIds?: string[];
+  status?: "SCHEDULED" | "CONFIRMED" | "CANCELED";
+  recurrence?: RecurrenceRequest | null;
+  catalogItemIds?: string[];
+};
+
+export type RecurrenceRequest = {
+  frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+  interval: number;
+  endType: "NEVER" | "ON_DATE" | "AFTER_COUNT";
+  /** yyyy-MM-dd */
+  until?: string;
+  count?: number;
 };
 
 export type UpdateAppointmentRequest = {
@@ -147,6 +160,7 @@ export type CreateBlockRequest = {
   startAt: string;
   endAt: string;
   reason?: string;
+  recurrence?: RecurrenceRequest | null;
 };
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {

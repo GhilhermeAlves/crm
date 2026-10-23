@@ -275,16 +275,32 @@ public class ContactService implements ContactUseCase {
     @Override
     @Transactional
     public ContactResponse update(UUID companyId, UUID contactId, UpdateContactRequest request) {
+        return applyUpdate(companyId, contactId, request, true);
+    }
+
+    @Override
+    @Transactional
+    public ContactResponse updateFromRegistrationLink(UUID companyId, UUID contactId,
+                                                      UpdateContactRequest request) {
+        return applyUpdate(companyId, contactId, request, false);
+    }
+
+    private ContactResponse applyUpdate(UUID companyId, UUID contactId, UpdateContactRequest request,
+                                        boolean enforceFieldPermissions) {
         try {
             TenantContext.setCompanyId(companyId);
             Contact contact = requireOwnedActive(companyId, contactId);
 
             // Sprint 20 — autorização granular por campo (piloto Contatos):
             // alteração de e-mail/telefone exige a permissão específica do campo.
-            requireFieldPermission(contact.getEmail(), request.email(),
-                    "contact:field:email:update", "e-mail");
-            requireFieldPermission(contact.getPhone(), request.phone(),
-                    "contact:field:phone:update", "telefone");
+            // O próprio paciente (link público de cadastro) não tem sessão nem
+            // permissões: lá a autorização é o token do link.
+            if (enforceFieldPermissions) {
+                requireFieldPermission(contact.getEmail(), request.email(),
+                        "contact:field:email:update", "e-mail");
+                requireFieldPermission(contact.getPhone(), request.phone(),
+                        "contact:field:phone:update", "telefone");
+            }
 
             if (request.firstName() != null) contact.setFirstName(request.firstName());
             if (request.lastName() != null) contact.setLastName(blankToNull(request.lastName()));

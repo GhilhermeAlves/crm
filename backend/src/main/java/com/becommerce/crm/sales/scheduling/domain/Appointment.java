@@ -29,6 +29,7 @@ public class Appointment {
     private final Instant createdAt;
     private Instant updatedAt;
     private UUID chairId;
+    private UUID recurrenceGroupId;
 
     private Appointment(UUID id, UUID companyId, UUID appointmentTypeId, UUID hostId,
                         UUID contactId, UUID opportunityId, String title,
@@ -238,4 +239,8 @@ public class Appointment {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public UUID getChairId() { return chairId; }
+    public UUID getRecurrenceGroupId() { return recurrenceGroupId; }
+
+    /** Vincula a ocorrência à série de recorrência (na criação ou ao reconstituir). */
+    public void setRecurrenceGroupId(UUID recurrenceGroupId) { this.recurrenceGroupId = recurrenceGroupId; }
 }

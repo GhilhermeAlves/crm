@@ -93,11 +93,12 @@ public class AppointmentRepositoryImpl implements AppointmentRepository {
         e.setCreatedAt(a.getCreatedAt());
         e.setUpdatedAt(a.getUpdatedAt());
         e.setChairId(a.getChairId());
+        e.setRecurrenceGroupId(a.getRecurrenceGroupId());
         return e;
     }
 
     private static Appointment toDomain(AppointmentJpaEntity e) {
-        return Appointment.reconstitute(e.getId(), e.getCompanyId(), e.getAppointmentTypeId(),
+        Appointment a = Appointment.reconstitute(e.getId(), e.getCompanyId(), e.getAppointmentTypeId(),
                 e.getHostId(), e.getContactId(), e.getOpportunityId(), e.getTitle(),
                 e.getStartAt(), e.getEndAt(),
                 e.getStatus() != null ? AppointmentStatus.valueOf(e.getStatus()) : null,
@@ -106,5 +107,7 @@ public class AppointmentRepositoryImpl implements AppointmentRepository {
                 e.getLocationDetail(), e.getMeetingUrl(), e.getNotes(), e.getCancelReason(),
                 e.getPublicToken(), e.getGoogleEventId(), e.getCreatedBy(),
                 e.getCreatedAt(), e.getUpdatedAt(), e.getChairId());
+        a.setRecurrenceGroupId(e.getRecurrenceGroupId());
+        return a;
     }
 }

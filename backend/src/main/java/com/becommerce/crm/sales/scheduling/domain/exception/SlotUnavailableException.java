@@ -5,4 +5,8 @@ public class SlotUnavailableException extends RuntimeException {
     public SlotUnavailableException() {
         super("Esse horário acabou de ser ocupado. Escolha outro horário.");
     }
+
+    public SlotUnavailableException(String message) {
+        super(message);
+    }
 }

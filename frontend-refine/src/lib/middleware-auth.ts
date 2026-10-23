@@ -19,6 +19,8 @@ export const PUBLIC_PATHS = [
   "/link-account",
   // Convite: prévia e cadastro sem sessão; quem já tem conta entra a partir dela.
   "/convite",
+  // Cadastro do paciente por link: o paciente preenche os próprios dados sem sessão.
+  "/cadastro",
 ] as const;
 
 /** Link legado de convite, redirecionado para /convite/{token}. */
@@ -32,7 +34,7 @@ export type AuthDecision = {
 /** True quando o pathname é público (não exige sessão). */
 export function isPublicPathname(pathname: string): boolean {
   if (pathname === "/") return true;
-  return PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 export function resolveAuthRedirect(input: {

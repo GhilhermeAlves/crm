@@ -15,5 +15,6 @@ public record UpdateAppointmentRequest(
         String locationDetail,
         String notes,
         UUID chairId,
-        List<UUID> tagIds
+        List<UUID> tagIds,
+        List<UUID> catalogItemIds
 ) {}

@@ -26,6 +26,13 @@ public interface ContactUseCase {
 
     ContactResponse update(UUID companyId, UUID contactId, UpdateContactRequest request);
 
+    /**
+     * Atualização feita pelo próprio paciente no link público de cadastro: mesmas
+     * regras do {@link #update}, sem a checagem de permissão por campo (não há
+     * usuário logado; a autorização é o token do link).
+     */
+    ContactResponse updateFromRegistrationLink(UUID companyId, UUID contactId, UpdateContactRequest request);
+
     void delete(UUID companyId, UUID contactId);
 
     // ── Módulo Pacientes (V104): paciente = contato com is_patient = true ──

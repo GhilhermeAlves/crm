@@ -29,7 +29,72 @@ export const createAppointmentTypeSchema = z.object({
 export type CreateAppointmentTypeFormValues = z.infer<typeof createAppointmentTypeSchema>;
 
 export const INITIAL_STATUSES = ["CONFIRMED", "SCHEDULED", "CANCELED"] as const;
-export const RECURRENCE_OPTIONS = ["none", "daily", "weekly", "monthly", "yearly"] as const;
+export const RECURRENCE_FREQUENCIES = ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"] as const;
+export const RECURRENCE_END_TYPES = ["NEVER", "ON_DATE", "AFTER_COUNT"] as const;
+
+/** Presets da tela; "custom" abre o diálogo "Configurar recorrência". */
+export const RECURRENCE_PRESETS = [
+  "none",
+  "daily",
+  "weekly",
+  "monthly",
+  "yearly",
+  "custom",
+] as const;
+export type RecurrencePreset = (typeof RECURRENCE_PRESETS)[number];
+
+export const recurrenceSchema = z
+  .object({
+    frequency: z.enum(RECURRENCE_FREQUENCIES),
+    interval: z.number().int().min(1).max(99),
+    endType: z.enum(RECURRENCE_END_TYPES),
+    until: z.string().optional(),
+    count: z.number().int().min(2).max(366).optional(),
+  })
+  .refine((r) => r.endType !== "ON_DATE" || !!r.until, {
+    message: "Informe a data final",
+    path: ["until"],
+  })
+  .refine((r) => r.endType !== "AFTER_COUNT" || r.count != null, {
+    message: "Informe o número de ocorrências",
+    path: ["count"],
+  });
+
+export type RecurrenceValue = z.infer<typeof recurrenceSchema>;
+
+const PRESET_FREQUENCY = {
+  daily: "DAILY",
+  weekly: "WEEKLY",
+  monthly: "MONTHLY",
+  yearly: "YEARLY",
+} as const satisfies Record<string, RecurrenceValue["frequency"]>;
+
+type FixedPreset = keyof typeof PRESET_FREQUENCY;
+
+export function recurrenceFromPreset(preset: FixedPreset | "none"): RecurrenceValue | null {
+  if (preset === "none") return null;
+  return { frequency: PRESET_FREQUENCY[preset], interval: 1, endType: "NEVER" };
+}
+
+export function presetFromRecurrence(r: RecurrenceValue | null | undefined): RecurrencePreset {
+  if (!r) return "none";
+  if (r.interval === 1 && r.endType === "NEVER") {
+    const found = (Object.keys(PRESET_FREQUENCY) as FixedPreset[]).find(
+      (k) => PRESET_FREQUENCY[k] === r.frequency,
+    );
+    if (found) return found;
+  }
+  return "custom";
+}
+
+/** Celular BR: 10 ou 11 dígitos (DDD + número), opcionalmente com o 55 na frente. */
+export function isValidBrazilianPhone(value: string): boolean {
+  let digits = value.replace(/\D/g, "");
+  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
+    digits = digits.slice(2);
+  }
+  return digits.length === 10 || digits.length === 11;
+}
 
 export const createAppointmentSchema = z.object({
   appointmentTypeId: z.string().uuid().optional(),
@@ -46,7 +111,13 @@ export const createAppointmentSchema = z.object({
   locationKind: z.enum(LOCATION_KINDS).optional(),
   locationDetail: z.string().max(200).optional(),
   notes: z.string().max(2000, "Observações muito longas").optional(),
-  recurrence: z.enum(RECURRENCE_OPTIONS).optional(),
+  recurrence: recurrenceSchema.nullable().optional(),
+  catalogItemIds: z.array(z.string().uuid()).optional(),
+  /** Só vai preenchido quando o celular do paciente foi alterado no formulário. */
+  contactPhone: z
+    .string()
+    .optional()
+    .refine((v) => !v || isValidBrazilianPhone(v), "Celular inválido (ex: (11) 99999-9999)"),
   force: z.boolean().optional(),
   chairId: z.string().uuid().optional(),
   tagIds: z.array(z.string().uuid()).optional(),
@@ -59,6 +130,7 @@ export const createBlockSchema = z.object({
   startAt: z.string().min(1, "Data/hora de início é obrigatória"),
   endAt: z.string().min(1, "Data/hora de fim é obrigatória"),
   reason: z.string().max(200, "Motivo muito longo").optional(),
+  recurrence: recurrenceSchema.nullable().optional(),
 });
 
 export type CreateBlockFormValues = z.infer<typeof createBlockSchema>;

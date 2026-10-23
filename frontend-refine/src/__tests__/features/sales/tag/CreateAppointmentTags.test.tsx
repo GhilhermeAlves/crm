@@ -2,6 +2,18 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/CreateAppointmentDialog";
 
+vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
+  useAuth: () => ({ user: { id: "u1", companyId: "co1" } }),
+}));
+
+vi.mock("@/features/masterdata/catalog/hooks/useCatalog", () => ({
+  useCatalog: () => ({ data: { content: [] } }),
+}));
+
+vi.mock("@/features/sales/tag/hooks/useTags", () => ({
+  useCreateTag: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 const HOST = "11111111-1111-4111-8111-111111111111";
 const TAG_A = "22222222-2222-4222-8222-222222222222";
 const TAG_B = "33333333-3333-4333-8333-333333333333";
@@ -54,10 +66,11 @@ describe("CreateAppointmentDialog — marcadores e cadeira", { timeout: 20_000 }
     expect(orto.getAttribute("aria-pressed")).toBe("false");
   });
 
-  it("sem cadeiras e marcadores cadastrados, os campos não aparecem", () => {
+  it("sem cadeiras, o campo não aparece; sem marcadores, só o + Novo marcador", () => {
     renderDialog({ tags: [], chairs: [] });
     expect(screen.queryByLabelText("Cadeira")).toBeNull();
-    expect(screen.queryByRole("group", { name: "Marcadores" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ortodontia" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Novo marcador" })).toBeTruthy();
   });
 
   it("com cadeiras, mostra o campo Cadeira", () => {

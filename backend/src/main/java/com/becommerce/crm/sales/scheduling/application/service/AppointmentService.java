@@ -3,10 +3,14 @@ package com.becommerce.crm.sales.scheduling.application.service;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
+import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
+import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
+import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
 import com.becommerce.crm.sales.chair.application.port.in.ChairUseCase;
 import com.becommerce.crm.sales.tag.application.port.in.TagUseCase;
 import com.becommerce.crm.sales.scheduling.application.dto.*;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
+import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentProcedureRepository;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentRepository;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentTagRepository;
 import com.becommerce.crm.sales.scheduling.application.port.out.ScheduleBlockRepository;
@@ -22,10 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AppointmentService implements AppointmentUseCase {
@@ -39,19 +46,25 @@ public class AppointmentService implements AppointmentUseCase {
     private final ChairUseCase chairUseCase;
     private final TagUseCase tagUseCase;
     private final AppointmentTagRepository tagRepository;
+    private final CatalogItemRepository catalogItemRepository;
+    private final AppointmentProcedureRepository procedureRepository;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               ScheduleBlockRepository blockRepository,
                               TenantAuditRecorder auditor,
                               ChairUseCase chairUseCase,
                               TagUseCase tagUseCase,
-                              AppointmentTagRepository tagRepository) {
+                              AppointmentTagRepository tagRepository,
+                              CatalogItemRepository catalogItemRepository,
+                              AppointmentProcedureRepository procedureRepository) {
         this.appointmentRepository = appointmentRepository;
         this.blockRepository = blockRepository;
         this.auditor = auditor;
         this.chairUseCase = chairUseCase;
         this.tagUseCase = tagUseCase;
         this.tagRepository = tagRepository;
+        this.catalogItemRepository = catalogItemRepository;
+        this.procedureRepository = procedureRepository;
     }
 
     private PatientAutoMarker patientAutoMarker;
@@ -75,22 +88,48 @@ public class AppointmentService implements AppointmentUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             validateTags(companyId, request.tagIds());
+            validateProcedures(companyId, request.catalogItemIds());
             boolean force = request.force() != null && request.force();
-            if (!force) {
-                checkConflicts(request.hostId(), request.startAt(), request.endAt(), companyId, null);
+            List<Interval> occurrences = RecurrenceExpander.expand(request.startAt(), request.endAt(),
+                    request.recurrence());
+            if (occurrences.size() == 1) {
+                checkOccurrence(request, companyId, force, request.startAt(), request.endAt());
             } else {
-                checkHardConflicts(request.hostId(), request.startAt(), request.endAt(), companyId, null);
+                // Recorrência: valida todas antes de gravar qualquer uma; conflito em
+                // qualquer ocorrência → nada é criado e as datas são listadas.
+                List<Instant> conflicts = new ArrayList<>();
+                for (Interval occurrence : occurrences) {
+                    try {
+                        checkOccurrence(request, companyId, force, occurrence.start(), occurrence.end());
+                    } catch (SlotUnavailableException e) {
+                        conflicts.add(occurrence.start());
+                    }
+                }
+                if (!conflicts.isEmpty()) {
+                    throw new SlotUnavailableException(conflictMessage(conflicts));
+                }
             }
-            checkChairConflicts(companyId, request.chairId(), request.startAt(), request.endAt(), null);
 
-            Appointment appointment = Appointment.create(companyId, request.appointmentTypeId(),
-                    request.hostId(), request.contactId(), request.opportunityId(),
-                    request.title(), request.startAt(), request.endAt(),
-                    source, request.locationKind(), request.locationDetail(),
-                    request.notes(), createdBy, request.chairId());
-            appointmentRepository.save(appointment);
-            if (request.tagIds() != null) {
-                tagRepository.replace(companyId, appointment.getId(), request.tagIds());
+            UUID groupId = occurrences.size() > 1 ? UUID.randomUUID() : null;
+            Appointment appointment = null;
+            for (Interval occurrence : occurrences) {
+                Appointment created = Appointment.create(companyId, request.appointmentTypeId(),
+                        request.hostId(), request.contactId(), request.opportunityId(),
+                        request.title(), occurrence.start(), occurrence.end(),
+                        source, request.locationKind(), request.locationDetail(),
+                        request.notes(), createdBy, request.chairId());
+                created.setRecurrenceGroupId(groupId);
+                applyInitialStatus(created, request.status());
+                appointmentRepository.save(created);
+                if (request.tagIds() != null) {
+                    tagRepository.replace(companyId, created.getId(), request.tagIds());
+                }
+                if (request.catalogItemIds() != null) {
+                    procedureRepository.replace(companyId, created.getId(), request.catalogItemIds());
+                }
+                if (appointment == null) {
+                    appointment = created;
+                }
             }
             if (patientAutoMarker != null) {
                 patientAutoMarker.markOnAppointment(companyId, request.contactId());
@@ -99,7 +138,11 @@ public class AppointmentService implements AppointmentUseCase {
             }
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SCHEDULING, "Appointment",
-                    appointment.getId().toString(), "Agendamento criado: " + appointment.getTitle(),
+                    appointment.getId().toString(),
+                    occurrences.size() > 1
+                            ? "Agendamento recorrente criado (" + occurrences.size() + " ocorrências): "
+                                    + appointment.getTitle()
+                            : "Agendamento criado: " + appointment.getTitle(),
                     createdBy, null);
             return toResponse(appointment);
         } finally {
@@ -125,6 +168,7 @@ public class AppointmentService implements AppointmentUseCase {
             TenantContext.setCompanyId(companyId);
             Appointment appointment = requireOwned(companyId, appointmentId);
             validateTags(companyId, request.tagIds());
+            validateProcedures(companyId, request.catalogItemIds());
             // A atualização substitui a cadeira (null = sem cadeira): só a nova precisa estar livre.
             checkChairConflicts(companyId, request.chairId(), appointment.getStartAt(),
                     appointment.getEndAt(), appointmentId);
@@ -134,6 +178,10 @@ public class AppointmentService implements AppointmentUseCase {
             // tagIds ausente mantém os marcadores; uma lista (mesmo vazia) substitui.
             if (request.tagIds() != null) {
                 tagRepository.replace(companyId, appointmentId, request.tagIds());
+            }
+            // Mesma regra para os procedimentos: ausente mantém, lista (mesmo vazia) substitui.
+            if (request.catalogItemIds() != null) {
+                procedureRepository.replace(companyId, appointmentId, request.catalogItemIds());
             }
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Appointment",
@@ -261,6 +309,39 @@ public class AppointmentService implements AppointmentUseCase {
         }
     }
 
+    private void checkOccurrence(CreateAppointmentRequest request, UUID companyId, boolean force,
+                                 Instant start, Instant end) {
+        if (!force) {
+            checkConflicts(request.hostId(), start, end, companyId, null);
+        } else {
+            checkHardConflicts(request.hostId(), start, end, companyId, null);
+        }
+        checkChairConflicts(companyId, request.chairId(), start, end, null);
+    }
+
+    private static void applyInitialStatus(Appointment appointment, AppointmentStatus status) {
+        if (status == null) {
+            return;
+        }
+        switch (status) {
+            case CONFIRMED -> appointment.confirm();
+            case CANCELED -> appointment.cancel(null);
+            case SCHEDULED -> { }
+            default -> throw new SchedulingValidationException(
+                    "Status inicial inválido: use agendado, confirmado ou cancelado.");
+        }
+    }
+
+    private static String conflictMessage(List<Instant> conflicts) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(RecurrenceExpander.ZONE);
+        String dates = conflicts.stream().limit(5).map(fmt::format).collect(Collectors.joining(", "));
+        if (conflicts.size() > 5) {
+            dates += " e mais " + (conflicts.size() - 5);
+        }
+        return "Há conflito de horário em " + conflicts.size()
+                + (conflicts.size() == 1 ? " ocorrência: " : " ocorrências: ") + dates + ".";
+    }
+
     private void checkConflicts(UUID hostId, Instant start, Instant end, UUID companyId, UUID excludeId) {
         checkHardConflicts(hostId, start, end, companyId, excludeId);
     }
@@ -338,25 +419,46 @@ public class AppointmentService implements AppointmentUseCase {
         }
     }
 
-    private AppointmentResponse toResponse(Appointment a) {
-        List<UUID> tagIds = tagRepository.findTagIds(List.of(a.getId())).getOrDefault(a.getId(), List.of());
-        return toResponse(a, tagIds);
+    private void validateProcedures(UUID companyId, Collection<UUID> catalogItemIds) {
+        if (catalogItemIds == null) {
+            return;
+        }
+        for (UUID itemId : catalogItemIds) {
+            CatalogItem item = itemId == null ? null : catalogItemRepository.findById(itemId).orElse(null);
+            boolean valid = item != null
+                    && companyId.equals(item.getCompanyId())
+                    && item.getType() == CatalogItemType.SERVICE
+                    && item.isActive();
+            if (!valid) {
+                throw new SchedulingValidationException("Procedimento inválido para o agendamento.");
+            }
+        }
     }
 
-    /** Lista com os marcadores carregados numa única consulta. */
+    private AppointmentResponse toResponse(Appointment a) {
+        List<UUID> tagIds = tagRepository.findTagIds(List.of(a.getId())).getOrDefault(a.getId(), List.of());
+        List<ProcedureRef> procedures = procedureRepository.findProcedures(List.of(a.getId()))
+                .getOrDefault(a.getId(), List.of());
+        return toResponse(a, tagIds, procedures);
+    }
+
+    /** Lista com marcadores e procedimentos carregados em uma consulta cada (sem N+1). */
     private List<AppointmentResponse> toResponses(List<Appointment> appointments) {
-        Map<UUID, List<UUID>> tags = tagRepository.findTagIds(appointments.stream().map(Appointment::getId).toList());
+        List<UUID> ids = appointments.stream().map(Appointment::getId).toList();
+        Map<UUID, List<UUID>> tags = tagRepository.findTagIds(ids);
+        Map<UUID, List<ProcedureRef>> procedures = procedureRepository.findProcedures(ids);
         return appointments.stream()
-                .map(a -> toResponse(a, tags.getOrDefault(a.getId(), List.of())))
+                .map(a -> toResponse(a, tags.getOrDefault(a.getId(), List.of()),
+                        procedures.getOrDefault(a.getId(), List.of())))
                 .toList();
     }
 
-    private static AppointmentResponse toResponse(Appointment a, List<UUID> tagIds) {
+    private static AppointmentResponse toResponse(Appointment a, List<UUID> tagIds, List<ProcedureRef> procedures) {
         return new AppointmentResponse(a.getId(), a.getCompanyId(), a.getAppointmentTypeId(),
                 a.getHostId(), a.getContactId(), a.getOpportunityId(), a.getTitle(),
                 a.getStartAt(), a.getEndAt(), a.getStatus(), a.getSource(), a.getLocationKind(),
                 a.getLocationDetail(), a.getMeetingUrl(), a.getNotes(), a.getCancelReason(),
                 a.getPublicToken(), a.getCreatedBy(), a.getCreatedAt(), a.getUpdatedAt(), a.getChairId(),
-                tagIds);
+                tagIds, procedures);
     }
 }

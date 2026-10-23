@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, startOfDay, endOfDay, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertTriangle, CalendarIcon } from "lucide-react";
+import { AlertTriangle, CalendarIcon, ExternalLink, Plus } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,9 +28,20 @@ import {
   type CreateAppointmentFormValues,
   type CreateBlockFormValues,
   INITIAL_STATUSES,
-  RECURRENCE_OPTIONS,
+  RECURRENCE_PRESETS,
+  isValidBrazilianPhone,
+  presetFromRecurrence,
+  recurrenceFromPreset,
+  type RecurrencePreset,
+  type RecurrenceValue,
 } from "../schemas/scheduling.schema";
+import { RegistrationLinkActions } from "@/features/masterdata/contacts/registration/components/RegistrationLinkActions";
 import { ContactCombobox } from "./ContactCombobox";
+import { RecurrenceDialog, describeRecurrence } from "./RecurrenceDialog";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useCatalog } from "@/features/masterdata/catalog/hooks/useCatalog";
+import { useCreateTag } from "@/features/sales/tag/hooks/useTags";
+import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
@@ -42,13 +53,77 @@ const STATUS_LABELS: Record<(typeof INITIAL_STATUSES)[number], string> = {
   CANCELED: "Cancelado",
 };
 
-const RECURRENCE_LABELS: Record<(typeof RECURRENCE_OPTIONS)[number], string> = {
+const RECURRENCE_LABELS: Record<RecurrencePreset, string> = {
   none: "Não se repete",
   daily: "Todos os dias",
   weekly: "Semanal",
   monthly: "Mensal",
   yearly: "Anual",
+  custom: "Personalizado…",
 };
+
+function contactName(c?: Contact): string {
+  if (!c) return "";
+  return [c.firstName, c.lastName].filter(Boolean).join(" ").trim();
+}
+
+function contactMobile(c?: Contact): string {
+  return c?.mobile ?? c?.phone ?? "";
+}
+
+/** Seletor "Repetir": presets + "Personalizado" (abre o diálogo "Configurar recorrência"). */
+function RecurrenceField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: RecurrenceValue | null | undefined;
+  onChange: (v: RecurrenceValue | null) => void;
+}) {
+  const [customOpen, setCustomOpen] = useState(false);
+  const preset = presetFromRecurrence(value);
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Select
+        value={preset}
+        onValueChange={(v) => {
+          if (v === "custom") setCustomOpen(true);
+          else onChange(recurrenceFromPreset(v as Exclude<RecurrencePreset, "custom">));
+        }}
+      >
+        <SelectTrigger id={id} aria-label={label}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {RECURRENCE_PRESETS.map((opt) => (
+            <SelectItem key={opt} value={opt}>
+              {RECURRENCE_LABELS[opt]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {preset === "custom" && value && (
+        <button
+          type="button"
+          className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+          onClick={() => setCustomOpen(true)}
+        >
+          {describeRecurrence(value)}
+        </button>
+      )}
+      <RecurrenceDialog
+        open={customOpen}
+        onOpenChange={setCustomOpen}
+        initialValue={value}
+        onConfirm={onChange}
+      />
+    </div>
+  );
+}
 
 function generateTimeOptions() {
   const options: string[] = [];
@@ -188,6 +263,23 @@ export function CreateAppointmentDialog({
   const [timeFrom, setTimeFrom] = useState("08:00");
   const [timeTo, setTimeTo] = useState("09:00");
 
+  const { user } = useAuth();
+  const companyId = user?.companyId ?? null;
+  const { data: catalogPage } = useCatalog(companyId, {
+    type: "SERVICE",
+    active: true,
+    pageSize: 200,
+  });
+  const procedures = catalogPage?.content ?? [];
+  const createTag = useCreateTag(companyId);
+
+  const [phone, setPhone] = useState("");
+  const [initialPhone, setInitialPhone] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [newTagOpen, setNewTagOpen] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagColor, setNewTagColor] = useState("#3b82f6");
+
   const [blockDate, setBlockDate] = useState<Date | undefined>(undefined);
   const [blockTimeFrom, setBlockTimeFrom] = useState("08:00");
   const [blockTimeTo, setBlockTimeTo] = useState("09:00");
@@ -200,9 +292,10 @@ export function CreateAppointmentDialog({
       contactId: defaultContactId,
       startAt: defaultStart ?? "",
       endAt: defaultEnd ?? "",
-      status: "CONFIRMED",
-      recurrence: "none",
+      status: "SCHEDULED",
+      recurrence: null,
       tagIds: [],
+      catalogItemIds: [],
     },
   });
 
@@ -230,24 +323,33 @@ export function CreateAppointmentDialog({
       setBlockTimeTo(endTime);
 
       form.reset({
-        title: "",
         hostId: defaultHostId ?? "",
         contactId: defaultContactId,
         startAt: defaultStart ?? "",
         endAt: defaultEnd ?? "",
-        status: "CONFIRMED",
-        recurrence: "none",
+        title: contactName(contacts.find((c) => c.id === defaultContactId)),
+        status: "SCHEDULED",
+        recurrence: null,
         tagIds: [],
+        catalogItemIds: [],
       });
       blockForm.reset({
         hostId: defaultHostId ?? "",
         startAt: defaultStart ?? "",
         endAt: defaultEnd ?? "",
         reason: "",
+        recurrence: null,
       });
+      const initial = contactMobile(contacts.find((c) => c.id === defaultContactId));
+      setInitialPhone(initial);
+      setPhone(initial);
+      setPhoneError(null);
+      setNewTagOpen(false);
       setAllDay(false);
       setTab("consulta");
     }
+    // contacts fica fora: recarregar a lista não deve apagar o que já foi digitado.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaultStart, defaultEnd, defaultHostId, defaultContactId, form, blockForm]);
 
   useEffect(() => {
@@ -264,7 +366,40 @@ export function CreateAppointmentDialog({
     }
   }, [blockDate, blockTimeFrom, blockTimeTo, blockForm]);
 
+  const handleContactChange = (id: string | undefined) => {
+    form.setValue("contactId", id);
+    const contact = contacts.find((c) => c.id === id);
+    if (contact && !form.getValues("title")?.trim()) {
+      form.setValue("title", contactName(contact), { shouldValidate: true });
+    }
+    const initial = contactMobile(contact);
+    setInitialPhone(initial);
+    setPhone(initial);
+    setPhoneError(null);
+  };
+
+  const handleCreateTag = () => {
+    const name = newTagName.trim();
+    if (!name) return;
+    createTag.mutate(
+      { name, color: newTagColor },
+      {
+        onSuccess: (tag) => {
+          form.setValue("tagIds", [...(form.getValues("tagIds") ?? []), tag.id]);
+          setNewTagName("");
+          setNewTagOpen(false);
+        },
+      },
+    );
+  };
+
   const handleSubmit = form.handleSubmit((values) => {
+    const changedPhone = phone.trim() !== initialPhone.trim() ? phone.trim() : "";
+    if (values.contactId && changedPhone && !isValidBrazilianPhone(changedPhone)) {
+      setPhoneError("Celular inválido (ex: (11) 99999-9999)");
+      return;
+    }
+    values.contactPhone = values.contactId && changedPhone ? changedPhone : undefined;
     if (allDay && date) {
       values.startAt = format(startOfDay(date), "yyyy-MM-dd'T'HH:mm");
       values.endAt = format(endOfDay(date), "yyyy-MM-dd'T'HH:mm");
@@ -283,35 +418,37 @@ export function CreateAppointmentDialog({
           <SheetTitle>Novo agendamento</SheetTitle>
         </SheetHeader>
 
-        {/* Tabs: Consulta / Bloqueio de Agenda */}
-        <div className="flex rounded-md border">
-          <button
-            type="button"
-            className={cn(
-              "flex-1 px-3 py-1.5 text-sm font-medium transition-colors",
-              tab === "consulta"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            onClick={() => setTab("consulta")}
-          >
-            Consulta
-          </button>
-          <button
-            type="button"
-            className={cn(
-              "flex-1 px-3 py-1.5 text-sm font-medium transition-colors",
-              tab === "bloqueio"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            onClick={() => setTab("bloqueio")}
-          >
-            Bloqueio de Agenda
-          </button>
-        </div>
+        {/* Tabs: Consulta / Bloqueio de Agenda (bloqueio só quando há onSubmitBlock, ex.: Agenda) */}
+        {onSubmitBlock && (
+          <div className="flex rounded-md border">
+            <button
+              type="button"
+              className={cn(
+                "flex-1 px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "consulta"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+              onClick={() => setTab("consulta")}
+            >
+              Consulta
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "flex-1 px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "bloqueio"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+              onClick={() => setTab("bloqueio")}
+            >
+              Bloqueio de Agenda
+            </button>
+          </div>
+        )}
 
-        {tab === "consulta" ? (
+        {tab === "consulta" || !onSubmitBlock ? (
           <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 pt-2">
             {/* Paciente */}
             <div className="space-y-2">
@@ -319,16 +456,44 @@ export function CreateAppointmentDialog({
               <ContactCombobox
                 contacts={contacts}
                 value={form.watch("contactId")}
-                onChange={(id) => form.setValue("contactId", id)}
+                onChange={handleContactChange}
                 placeholder="Selecione ou crie um novo paciente"
               />
             </div>
+
+            {/* Celular do(a) paciente: se mudar, o pai atualiza o contato antes de criar */}
+            {form.watch("contactId") && (
+              <div className="space-y-2">
+                <Label htmlFor="contactPhone">
+                  Celular do(a) paciente <span className="text-muted-foreground">(opcional)</span>
+                </Label>
+                <Input
+                  id="contactPhone"
+                  inputMode="tel"
+                  placeholder="(11) 99999-9999"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    setPhoneError(null);
+                  }}
+                />
+                {phoneError && <p className="text-sm text-destructive">{phoneError}</p>}
+                <RegistrationLinkActions
+                  companyId={companyId}
+                  contactId={form.watch("contactId") as string}
+                  firstName={
+                    contacts.find((c) => c.id === form.watch("contactId"))?.firstName ?? ""
+                  }
+                  phone={phone}
+                />
+              </div>
+            )}
 
             {/* Status */}
             <div className="space-y-2">
               <Label>Status</Label>
               <RadioGroup
-                value={form.watch("status") ?? "CONFIRMED"}
+                value={form.watch("status") ?? "SCHEDULED"}
                 onValueChange={(v) =>
                   form.setValue("status", v as CreateAppointmentFormValues["status"])
                 }
@@ -403,42 +568,120 @@ export function CreateAppointmentDialog({
             )}
 
             {/* Marcadores */}
-            {tags.length > 0 && (
-              <div className="space-y-2">
-                <Label>Marcadores</Label>
-                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Marcadores">
-                  {tags.map((t) => {
-                    const selected = (form.watch("tagIds") ?? []).includes(t.id);
+            <div className="space-y-2">
+              <Label>Marcadores</Label>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Marcadores">
+                {tags.map((t) => {
+                  const selected = (form.watch("tagIds") ?? []).includes(t.id);
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => {
+                        const current = form.getValues("tagIds") ?? [];
+                        form.setValue(
+                          "tagIds",
+                          selected ? current.filter((id) => id !== t.id) : [...current, t.id],
+                        );
+                      }}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
+                        selected
+                          ? "border-primary bg-primary/10 font-medium"
+                          : "text-muted-foreground hover:bg-muted",
+                      )}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: t.color ?? "currentColor" }}
+                      />
+                      {t.name}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setNewTagOpen((v) => !v)}
+                  className="flex items-center gap-1 rounded-full border border-dashed px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
+                >
+                  <Plus className="h-3 w-3" />
+                  Novo marcador
+                </button>
+              </div>
+              {newTagOpen && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    aria-label="Nome do marcador"
+                    placeholder="Nome do marcador"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                  />
+                  <input
+                    type="color"
+                    aria-label="Cor do marcador"
+                    value={newTagColor}
+                    onChange={(e) => setNewTagColor(e.target.value)}
+                    className="h-9 w-10 shrink-0 cursor-pointer rounded-md border bg-background"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!newTagName.trim() || createTag.isPending}
+                    onClick={handleCreateTag}
+                  >
+                    Criar
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Procedimentos (serviços ativos do catálogo) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Procedimentos</Label>
+                <a
+                  href={ROUTES.CATALOG}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Adicionar procedimentos
+                </a>
+              </div>
+              {procedures.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nenhum serviço ativo no catálogo.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Procedimentos">
+                  {procedures.map((p) => {
+                    const selected = (form.watch("catalogItemIds") ?? []).includes(p.id);
                     return (
                       <button
-                        key={t.id}
+                        key={p.id}
                         type="button"
                         aria-pressed={selected}
                         onClick={() => {
-                          const current = form.getValues("tagIds") ?? [];
+                          const current = form.getValues("catalogItemIds") ?? [];
                           form.setValue(
-                            "tagIds",
-                            selected ? current.filter((id) => id !== t.id) : [...current, t.id],
+                            "catalogItemIds",
+                            selected ? current.filter((id) => id !== p.id) : [...current, p.id],
                           );
                         }}
                         className={cn(
-                          "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
+                          "rounded-full border px-2.5 py-1 text-xs transition-colors",
                           selected
                             ? "border-primary bg-primary/10 font-medium"
                             : "text-muted-foreground hover:bg-muted",
                         )}
                       >
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: t.color ?? "currentColor" }}
-                        />
-                        {t.name}
+                        {p.name}
                       </button>
                     );
                   })}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Data */}
             <div className="space-y-2">
@@ -480,26 +723,12 @@ export function CreateAppointmentDialog({
             )}
 
             {/* Repetir agendamento */}
-            <div className="space-y-2">
-              <Label htmlFor="recurrence">Repetir agendamento</Label>
-              <Select
-                value={form.watch("recurrence") ?? "none"}
-                onValueChange={(v) =>
-                  form.setValue("recurrence", v as CreateAppointmentFormValues["recurrence"])
-                }
-              >
-                <SelectTrigger id="recurrence">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {RECURRENCE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>
-                      {RECURRENCE_LABELS[opt]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <RecurrenceField
+              id="recurrence"
+              label="Repetir agendamento"
+              value={form.watch("recurrence")}
+              onChange={(v) => form.setValue("recurrence", v)}
+            />
 
             {/* Observações */}
             <div className="space-y-2">
@@ -580,21 +809,12 @@ export function CreateAppointmentDialog({
             </div>
 
             {/* Repetir bloqueio */}
-            <div className="space-y-2">
-              <Label>Repetir bloqueio</Label>
-              <Select defaultValue="none">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {RECURRENCE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>
-                      {RECURRENCE_LABELS[opt]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <RecurrenceField
+              id="block-recurrence"
+              label="Repetir bloqueio"
+              value={blockForm.watch("recurrence")}
+              onChange={(v) => blockForm.setValue("recurrence", v)}
+            />
 
             {/* Observações */}
             <div className="space-y-2">

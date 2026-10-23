@@ -1,6 +1,8 @@
 package com.becommerce.crm.sales.scheduling.application.dto;
 
 import com.becommerce.crm.sales.scheduling.domain.LocationKind;
+import com.becommerce.crm.sales.scheduling.domain.AppointmentStatus;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,5 +29,9 @@ public record CreateAppointmentRequest(
         String notes,
         Boolean force,
         UUID chairId,
-        List<UUID> tagIds
+        List<UUID> tagIds,
+        AppointmentStatus status,
+        @Valid
+        RecurrenceRequest recurrence,
+        List<UUID> catalogItemIds
 ) {}

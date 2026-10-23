@@ -28,8 +28,20 @@ vi.mock("@/features/identity/members/hooks/useMembers", () => ({
 
 vi.mock("@/features/sales/scheduling/hooks/useScheduling", () => ({
   useAppointmentTypes: () => ({ data: typesState.value }),
-  useCreateAppointment: () => ({ mutate: vi.fn(), isPending: false }),
+  useAgendaSettings: () => ({ data: undefined }),
   useChangeAppointmentStatus: () => ({ mutate: changeStatusMock, isPending: false }),
+}));
+
+vi.mock("@/features/sales/scheduling/hooks/useSubmitNewAppointment", () => ({
+  useSubmitNewAppointment: () => ({ submit: vi.fn(), isPending: false }),
+}));
+
+vi.mock("@/features/sales/chair/hooks/useChairs", () => ({
+  useChairs: () => ({ data: [] }),
+}));
+
+vi.mock("@/features/sales/tag/hooks/useTags", () => ({
+  useTags: () => ({ data: [] }),
 }));
 
 vi.mock("@/features/sales/scheduling/components/CreateAppointmentDialog", () => ({

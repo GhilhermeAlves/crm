@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { resolveAuthRedirect, PUBLIC_PATHS, SESSION_COOKIE } from "@/lib/middleware-auth";
+import {
+  isPublicPathname,
+  resolveAuthRedirect,
+  PUBLIC_PATHS,
+  SESSION_COOKIE,
+} from "@/lib/middleware-auth";
 
 describe("resolveAuthRedirect (middleware, flag-only)", () => {
   it("redirects unauthenticated users (no session flag) to login with a redirect param", () => {
@@ -82,6 +87,20 @@ describe("resolveAuthRedirect (middleware, flag-only)", () => {
     expect(
       resolveAuthRedirect({ pathname: "/link-account", hasSession: false }).redirectTo,
     ).toBeUndefined();
+  });
+
+  it("keeps the public registration path public", () => {
+    expect(PUBLIC_PATHS).toContain("/cadastro");
+    expect(
+      resolveAuthRedirect({ pathname: "/cadastro/tok", hasSession: false }).redirectTo,
+    ).toBeUndefined();
+  });
+
+  it("matches public paths by segment, not by raw prefix", () => {
+    expect(isPublicPathname("/convite/abc")).toBe(true);
+    expect(isPublicPathname("/convite")).toBe(true);
+    expect(isPublicPathname("/cadastrofake")).toBe(false);
+    expect(isPublicPathname("/login-admin")).toBe(false);
   });
 
   it("exposes the session cookie name used by the middleware", () => {
