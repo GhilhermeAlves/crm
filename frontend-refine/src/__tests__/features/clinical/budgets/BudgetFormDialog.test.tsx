@@ -100,3 +100,35 @@ describe("BudgetFormDialog", () => {
     );
   });
 });
+
+describe("BudgetFormDialog - refetch", () => {
+  it("preserva o título digitado quando o budget muda de referência (mesmo id)", () => {
+    procedures.value = [proc({})];
+    const make = () => ({
+      id: "b1",
+      contactId: "c1",
+      title: "Original",
+      status: "DRAFT" as const,
+      subtotalCents: 15000,
+      discountCents: 0,
+      totalCents: 15000,
+      notes: null,
+      paymentMethod: null,
+      installments: null,
+      firstDueDate: null,
+      approvedAt: null,
+      lostAt: null,
+      items: [],
+      installmentsList: [],
+      updatedAt: "2026-10-20T10:00:00",
+      updatedByName: null,
+    });
+    const ui = (b: ReturnType<typeof make>) => (
+      <BudgetFormDialog companyId="co1" contactId="c1" open onOpenChange={vi.fn()} budget={b} />
+    );
+    const { rerender } = render(ui(make()));
+    fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Editado" } });
+    rerender(ui(make()));
+    expect((screen.getByLabelText("Título") as HTMLInputElement).value).toBe("Editado");
+  });
+});

@@ -46,12 +46,15 @@ export function ApproveBudgetDialog({ companyId, contactId, budget, onOpenChange
   const [installments, setInstallments] = useState(1);
   const [firstDueDate, setFirstDueDate] = useState(today());
 
+  // Reset só ao abrir ou trocar de orçamento (não a cada refetch com nova referência).
+  const hasBudget = budget != null;
+  const budgetId = budget?.id;
   useEffect(() => {
-    if (!budget) return;
+    if (!hasBudget) return;
     setPaymentMethod("PIX");
     setInstallments(1);
     setFirstDueDate(today());
-  }, [budget]);
+  }, [hasBudget, budgetId]);
 
   const totalCents = budget?.totalCents ?? 0;
   const validDate = firstDueDate !== "" && isValid(parseDate(firstDueDate));

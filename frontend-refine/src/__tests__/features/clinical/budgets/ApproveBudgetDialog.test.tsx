@@ -65,3 +65,15 @@ describe("ApproveBudgetDialog", () => {
     expect(screen.queryByText(/ª parcela/)).toBeNull();
   });
 });
+
+describe("ApproveBudgetDialog - refetch", () => {
+  it("preserva as parcelas digitadas quando o budget muda de referência", () => {
+    const ui = (b: BudgetSummary) => (
+      <ApproveBudgetDialog companyId="co1" contactId="c1" budget={b} onOpenChange={vi.fn()} />
+    );
+    const { rerender } = render(ui(makeBudget(10000)));
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "4" } });
+    rerender(ui(makeBudget(10000)));
+    expect((screen.getByLabelText("Parcelas") as HTMLInputElement).value).toBe("4");
+  });
+});

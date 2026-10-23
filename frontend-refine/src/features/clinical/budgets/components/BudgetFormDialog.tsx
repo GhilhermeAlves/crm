@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -36,6 +36,11 @@ export function BudgetFormDialog({ companyId, contactId, open, onOpenChange, bud
   const create = useCreateBudget(companyId, contactId);
   const update = useUpdateBudget(companyId, contactId);
 
+  // Reset só ao abrir ou trocar de orçamento: um refetch (nova referência) não apaga a edição.
+  const budgetRef = useRef(budget);
+  budgetRef.current = budget;
+  const budgetId = budget?.id;
+
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [discount, setDiscount] = useState("0");
@@ -52,6 +57,7 @@ export function BudgetFormDialog({ companyId, contactId, open, onOpenChange, bud
 
   useEffect(() => {
     if (!open) return;
+    const budget = budgetRef.current;
     setTitle(budget?.title ?? "");
     setNotes(budget?.notes ?? "");
     setDiscount(String((budget?.discountCents ?? 0) / 100));
@@ -60,7 +66,7 @@ export function BudgetFormDialog({ companyId, contactId, open, onOpenChange, bud
         (budget?.items ?? []).map((i) => [i.procedureId, String(i.priceCents / 100)]),
       ),
     );
-  }, [open, budget]);
+  }, [open, budgetId]);
 
   const toggle = (id: string, priceCents: number, checked: boolean) =>
     setPrices((prev) => {
@@ -81,6 +87,7 @@ export function BudgetFormDialog({ companyId, contactId, open, onOpenChange, bud
     selected.length > 0 &&
     !discountTooHigh &&
     discountCents >= 0 &&
+    selected.every((p) => toCents(prices[p.id]) >= 0) &&
     !pending;
 
   const save = () => {
