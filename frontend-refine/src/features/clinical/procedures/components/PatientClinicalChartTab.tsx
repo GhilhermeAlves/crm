@@ -24,7 +24,7 @@ export function PatientClinicalChartTab({
   const canEdit = can("contact:update");
   const { data: procedures = [], isLoading } = useProcedures(companyId, contactId);
   const [dentition, setDentition] = useState<Dentition>("PERMANENT");
-  const [toothFilter, setToothFilter] = useState<number | null>(null);
+  const [initialTooth, setInitialTooth] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<PatientProcedureResponse | null>(null);
   const [completing, setCompleting] = useState<PatientProcedureResponse | null>(null);
@@ -42,6 +42,7 @@ export function PatientClinicalChartTab({
               size="sm"
               onClick={() => {
                 setEditing(null);
+                setInitialTooth(null);
                 setDrawerOpen(true);
               }}
             >
@@ -52,15 +53,15 @@ export function PatientClinicalChartTab({
         <CardContent>
           <Odontogram
             dentition={dentition}
-            onDentitionChange={(value) => {
-              setDentition(value);
-              setToothFilter(null);
-            }}
+            onDentitionChange={setDentition}
             summary={summary}
-            selected={toothFilter == null ? [] : [toothFilter]}
-            onToothClick={(tooth) =>
-              setToothFilter((current) => (current === tooth ? null : tooth))
-            }
+            selected={[]}
+            onToothClick={(tooth) => {
+              if (!canEdit) return;
+              setEditing(null);
+              setInitialTooth(tooth);
+              setDrawerOpen(true);
+            }}
           />
         </CardContent>
       </Card>
@@ -68,10 +69,9 @@ export function PatientClinicalChartTab({
         companyId={companyId}
         contactId={contactId}
         procedures={procedures}
-        toothFilter={toothFilter}
-        onClearTooth={() => setToothFilter(null)}
         onEdit={(procedure) => {
           setEditing(procedure);
+          setInitialTooth(null);
           setDrawerOpen(true);
         }}
         onComplete={setCompleting}
@@ -83,6 +83,8 @@ export function PatientClinicalChartTab({
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         procedure={editing}
+        initialTooth={initialTooth}
+        initialDentition={dentition}
       />
       <CompleteProcedureDialog
         companyId={companyId}

@@ -55,6 +55,9 @@ public class PatientProcedureJpaEntity {
     @Column(name = "financial_transaction_id")
     private UUID financialTransactionId;
 
+    @Column(name = "generate_transaction_on_done")
+    private boolean generateTransactionOnDone;
+
     @Column(name = "created_by")
     private UUID createdBy;
 
@@ -92,6 +95,8 @@ public class PatientProcedureJpaEntity {
     public void setPerformedAt(LocalDate performedAt) { this.performedAt = performedAt; }
     public UUID getFinancialTransactionId() { return financialTransactionId; }
     public void setFinancialTransactionId(UUID financialTransactionId) { this.financialTransactionId = financialTransactionId; }
+    public boolean isGenerateTransactionOnDone() { return generateTransactionOnDone; }
+    public void setGenerateTransactionOnDone(boolean value) { this.generateTransactionOnDone = value; }
     public UUID getCreatedBy() { return createdBy; }
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }

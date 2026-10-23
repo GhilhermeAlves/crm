@@ -43,9 +43,7 @@ type Props = {
   companyId: string;
   contactId: string;
   procedures: PatientProcedureResponse[];
-  toothFilter: number | null;
   canEdit: boolean;
-  onClearTooth: () => void;
   onEdit: (procedure: PatientProcedureResponse) => void;
   onComplete: (procedure: PatientProcedureResponse) => void;
 };
@@ -71,9 +69,7 @@ export function ProcedureList({
   companyId,
   contactId,
   procedures,
-  toothFilter,
   canEdit,
-  onClearTooth,
   onEdit,
   onComplete,
 }: Props) {
@@ -91,10 +87,9 @@ export function ProcedureList({
   const visible = procedures.filter(
     (p) =>
       (stateFilter == null || p.state === stateFilter) &&
-      (category === ALL || p.category === category) &&
-      (toothFilter == null || p.teeth.some((t) => t.tooth === toothFilter)),
+      (category === ALL || p.category === category),
   );
-  const filtered = stateFilter != null || category !== ALL || toothFilter != null;
+  const filtered = stateFilter != null || category !== ALL;
 
   return (
     <Card>
@@ -133,14 +128,6 @@ export function ProcedureList({
               ))}
             </SelectContent>
           </Select>
-          {toothFilter != null && (
-            <Badge variant="secondary" className="gap-2">
-              Dente {toothFilter}
-              <button type="button" className="underline" onClick={onClearTooth}>
-                Limpar
-              </button>
-            </Badge>
-          )}
         </div>
       </CardHeader>
       <CardContent>

@@ -154,7 +154,7 @@ export function Odontogram({
         </div>
       )}
       <div className="overflow-x-auto">
-        <div className="inline-grid min-w-max grid-cols-2 gap-x-4 gap-y-2">
+        <div className="mx-auto grid w-max grid-cols-2 gap-x-4 gap-y-2">
           <div className="flex justify-end border-b border-r pb-2 pr-2">{row(upperRight)}</div>
           <div className="flex border-b pb-2">{row(upperLeft)}</div>
           <div className="flex justify-end border-r pr-2">{row(lowerRight.slice().reverse())}</div>

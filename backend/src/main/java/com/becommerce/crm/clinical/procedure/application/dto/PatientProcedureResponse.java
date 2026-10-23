@@ -13,7 +13,8 @@ import java.util.UUID;
 public record PatientProcedureResponse(UUID id, UUID contactId, UUID catalogItemId, String name, String category,
         ProcedureState state, Dentition dentition, long priceCents, UUID professionalId, String professionalName,
         String notes, LocalDate performedAt, List<ProcedureToothDto> teeth, TransactionRef transaction,
-        LocalDateTime createdAt, LocalDateTime updatedAt, BudgetRef budget) {
+        LocalDateTime createdAt, LocalDateTime updatedAt, BudgetRef budget,
+        boolean generateTransactionOnDone) {
 
     public record TransactionRef(UUID id, TransactionStatus status) {}
 

@@ -28,8 +28,8 @@ import type {
   ProcedureTooth,
   ToothFace,
 } from "../types/procedure.types";
-import { FACES, STATE_LABELS, type ToothSummary } from "../utils/teeth";
-import { Odontogram } from "./Odontogram";
+import { centsToMask, maskToCents } from "../utils/currency";
+import { DENTITION_LABELS, FACES, QUADRANTS, STATE_LABELS } from "../utils/teeth";
 
 type Props = {
   companyId: string;
@@ -37,24 +37,36 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   procedure?: PatientProcedureResponse | null;
+  /** Dente clicado no odontograma: abre "Novo procedimento" com ele já marcado. */
+  initialTooth?: number | null;
+  initialDentition?: Dentition;
 };
 
 const NO_PROFESSIONAL = "none";
 const STATES: ProcedureState[] = ["PLANNED", "DONE", "PRE_EXISTING"];
 const today = () => format(new Date(), "yyyy-MM-dd");
-const EMPTY_SUMMARY = new Map<number, ToothSummary>();
+const formatBRL = (reais: number) =>
+  reais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, procedure }: Props) {
+export function ProcedureDrawer({
+  companyId,
+  contactId,
+  open,
+  onOpenChange,
+  procedure,
+  initialTooth,
+  initialDentition,
+}: Props) {
   const uid = useId();
   const { can } = useAuthorization();
-  const { data: catalog } = useCatalog(companyId, { type: "SERVICE", active: true, pageSize: 100 });
+  const { data: catalog } = useCatalog(companyId, { type: "SERVICE", active: true, pageSize: 200 });
   const { data: members } = useMembers(companyId);
   const create = useCreateProcedure(companyId, contactId);
   const update = useUpdateProcedure(companyId, contactId);
 
   const [state, setState] = useState<ProcedureState>("PLANNED");
   const [catalogItemId, setCatalogItemId] = useState("");
-  const [priceCents, setPriceCents] = useState(0);
+  const [priceCents, setPriceCents] = useState<number | null>(null);
   const [dentition, setDentition] = useState<Dentition>("PERMANENT");
   const [teeth, setTeeth] = useState<ProcedureTooth[]>([]);
   const [professionalId, setProfessionalId] = useState(NO_PROFESSIONAL);
@@ -67,15 +79,20 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
     if (!open) return;
     setState(procedure?.state ?? "PLANNED");
     setCatalogItemId(procedure?.catalogItemId ?? "");
-    setPriceCents(procedure?.priceCents ?? 0);
-    setDentition(procedure?.dentition ?? "PERMANENT");
-    setTeeth(procedure?.teeth ?? []);
+    setPriceCents(procedure ? procedure.priceCents : null);
+    if (procedure) {
+      setDentition(procedure.dentition);
+      setTeeth(procedure.teeth);
+    } else {
+      setDentition(initialDentition ?? "PERMANENT");
+      setTeeth(initialTooth != null ? [{ tooth: initialTooth, faces: [] }] : []);
+    }
     setProfessionalId(procedure?.professionalId ?? NO_PROFESSIONAL);
     setNotes(procedure?.notes ?? "");
     setPerformedAt(procedure?.performedAt ?? today());
-    setGenerateTransaction(false);
+    setGenerateTransaction(procedure?.generateTransactionOnDone ?? false);
     setDueDate(today());
-  }, [open, procedure]);
+  }, [open, procedure, initialTooth, initialDentition]);
 
   const locked = procedure?.state === "DONE";
   const editing = Boolean(procedure);
@@ -86,7 +103,7 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
   const chooseService = (id: string) => {
     setCatalogItemId(id);
     const item = services.find((s) => s.id === id);
-    setPriceCents(Math.round((item?.price ?? 0) * 100));
+    setPriceCents(item?.price != null ? Math.round(item.price * 100) : null);
   };
 
   const toggleTooth = (tooth: number) => {
@@ -121,6 +138,10 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
 
   const save = () => {
     const withFinance = state === "DONE" && canFinance && generateTransaction;
+    // Em "A realizar" o flag é guardado e só vira lançamento ao marcar como realizado.
+    const generateOnDone =
+      state === "PLANNED" &&
+      (canFinance ? generateTransaction : (procedure?.generateTransactionOnDone ?? false));
     const payload: PatientProcedureRequest =
       locked && procedure
         ? {
@@ -139,12 +160,12 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
             catalogItemId,
             state,
             dentition,
-            priceCents,
+            priceCents: priceCents ?? 0,
             professionalId: professionalId === NO_PROFESSIONAL ? null : professionalId,
             notes: notes || null,
             performedAt: state === "DONE" ? performedAt : null,
             teeth,
-            generateTransaction: withFinance,
+            generateTransaction: withFinance || generateOnDone,
             dueDate: withFinance ? dueDate : null,
           };
     const options = { onSuccess: () => onOpenChange(false) };
@@ -191,19 +212,19 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`${uid}-service`}>Serviço</Label>
+            <Label htmlFor={`${uid}-service`}>Procedimentos</Label>
             <Select
               value={catalogItemId}
               onValueChange={chooseService}
               disabled={locked || editing}
             >
               <SelectTrigger id={`${uid}-service`}>
-                <SelectValue placeholder="Selecione o serviço" />
+                <SelectValue placeholder="Selecione um procedimento" />
               </SelectTrigger>
               <SelectContent>
                 {services.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.name}
+                    {s.price != null ? `${s.name} — ${formatBRL(s.price)}` : s.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -214,12 +235,12 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
             <Label htmlFor={`${uid}-price`}>Valor (R$)</Label>
             <Input
               id={`${uid}-price`}
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="numeric"
+              placeholder="0,00"
               disabled={locked}
-              value={priceCents / 100}
-              onChange={(e) => setPriceCents(Math.round(Number(e.target.value || 0) * 100))}
+              value={centsToMask(priceCents)}
+              onChange={(e) => setPriceCents(maskToCents(e.target.value))}
             />
           </div>
 
@@ -238,13 +259,25 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
 
           <div className="space-y-2">
             <Label>Dentes</Label>
-            <Odontogram
+            <div className="flex gap-2">
+              {(Object.keys(DENTITION_LABELS) as Dentition[]).map((value) => (
+                <Button
+                  key={value}
+                  type="button"
+                  size="sm"
+                  variant={value === dentition ? "default" : "outline"}
+                  disabled={locked}
+                  onClick={() => changeDentition(value)}
+                >
+                  {DENTITION_LABELS[value]}
+                </Button>
+              ))}
+            </div>
+            <ToothPicker
               dentition={dentition}
-              onDentitionChange={changeDentition}
-              summary={EMPTY_SUMMARY}
               selected={teeth.map((t) => t.tooth)}
-              onToothClick={toggleTooth}
-              showLegend={false}
+              disabled={locked}
+              onToggle={toggleTooth}
             />
             {teeth.map(({ tooth, faces }) => (
               <div key={tooth} className="flex flex-wrap items-center gap-1">
@@ -292,17 +325,23 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
             />
           </div>
 
-          {state === "DONE" && canFinance && !locked && (
+          {canFinance && !locked && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Checkbox
                   id={`${uid}-generate`}
-                  checked={generateTransaction}
+                  checked={state !== "PRE_EXISTING" && generateTransaction}
+                  disabled={state === "PRE_EXISTING"}
                   onCheckedChange={(v) => setGenerateTransaction(v === true)}
                 />
                 <Label htmlFor={`${uid}-generate`}>Gerar lançamento financeiro</Label>
               </div>
-              {generateTransaction && (
+              {state === "PLANNED" && (
+                <p className="text-xs text-muted-foreground">
+                  O lançamento será gerado quando o procedimento for marcado como realizado.
+                </p>
+              )}
+              {state === "DONE" && generateTransaction && (
                 <div className="space-y-2">
                   <Label htmlFor={`${uid}-due`}>Vencimento</Label>
                   <Input
@@ -326,5 +365,49 @@ export function ProcedureDrawer({ companyId, contactId, open, onOpenChange, proc
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+type ToothPickerProps = {
+  dentition: Dentition;
+  selected: number[];
+  disabled: boolean;
+  onToggle: (tooth: number) => void;
+};
+
+/** Seletor de dentes em toggle, por quadrante (vista do profissional, FDI). */
+function ToothPicker({ dentition, selected, disabled, onToggle }: ToothPickerProps) {
+  const [upperRight, upperLeft, lowerLeft, lowerRight] = QUADRANTS[dentition];
+  const group = (teeth: number[], className: string) => (
+    <div className={`flex gap-1 ${className}`}>
+      {teeth.map((tooth) => {
+        const pressed = selected.includes(tooth);
+        return (
+          <Button
+            key={tooth}
+            type="button"
+            size="sm"
+            variant={pressed ? "default" : "outline"}
+            className="h-8 w-9 px-0 text-xs"
+            aria-label={`Dente ${tooth}`}
+            aria-pressed={pressed}
+            disabled={disabled}
+            onClick={() => onToggle(tooth)}
+          >
+            {tooth}
+          </Button>
+        );
+      })}
+    </div>
+  );
+  return (
+    <div className="overflow-x-auto">
+      <div className="mx-auto grid w-max grid-cols-2 gap-x-2 gap-y-2">
+        {group(upperRight, "justify-end border-b border-r pb-2 pr-2")}
+        {group(upperLeft, "border-b pb-2")}
+        {group(lowerRight.slice().reverse(), "justify-end border-r pr-2")}
+        {group(lowerLeft, "")}
+      </div>
+    </div>
   );
 }

@@ -36,6 +36,7 @@ import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -120,6 +121,8 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                     item.getName(), request.state(), request.dentition(), request.priceCents(),
                     request.professionalId(), request.notes(), request.performedAt(), toTeeth(request.teeth()),
                     actorId);
+            procedure.setGenerateTransactionOnDone(request.generateTransaction());
+            rememberPriceInCatalog(item, request.priceCents());
             FinancialTransaction generated = maybeGenerateTransaction(procedure, request.generateTransaction(),
                     request.dueDate(), actorId, canCreateFinance);
             repository.save(procedure);
@@ -152,6 +155,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             } else {
                 procedure.edit(request.state(), request.dentition(), request.priceCents(),
                         request.professionalId(), request.notes(), teeth);
+                procedure.setGenerateTransactionOnDone(request.generateTransaction());
             }
             repository.save(procedure);
 
@@ -240,6 +244,17 @@ public class PatientProcedureService implements PatientProcedureUseCase {
         } else {
             budgetRepository.save(budget);
         }
+    }
+
+    /** Serviço sem preço no catálogo passa a usar o valor informado nas próximas vezes. */
+    private void rememberPriceInCatalog(CatalogItem item, Long priceCents) {
+        if (item.getPrice() != null || priceCents == null || priceCents <= 0) {
+            return;
+        }
+        item.update(item.getType(), item.getName(), item.getDescription(), item.getCategory(),
+                BigDecimal.valueOf(priceCents, 2), item.getCurrency(), item.getSku(), item.getUnit(),
+                item.getMinStock());
+        catalogRepository.save(item);
     }
 
     private void requireProfessional(UUID companyId, UUID professionalId) {
@@ -353,7 +368,8 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                 userName(p.getCompanyId(), p.getProfessionalId(), names), p.getNotes(), p.getPerformedAt(),
                 p.getTeeth().stream().map(t -> new ProcedureToothDto(t.tooth(), t.faces())).toList(),
                 transaction, p.getCreatedAt(), p.getUpdatedAt(),
-                budget == null ? null : new PatientProcedureResponse.BudgetRef(budget.getId(), budget.getTitle(), budget.getStatus()));
+                budget == null ? null : new PatientProcedureResponse.BudgetRef(budget.getId(), budget.getTitle(), budget.getStatus()),
+                p.isGenerateTransactionOnDone());
     }
 
     private String userName(UUID companyId, UUID userId, Map<UUID, String> cache) {

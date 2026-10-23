@@ -49,6 +49,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -190,6 +191,54 @@ class PatientProcedureServiceTest {
     void generateIgnoredWhenNotDone() {
         service.create(COMPANY_ID, CONTACT_ID, request(ProcedureState.PLANNED, 15000, null, true), ACTOR_ID, true);
         verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void createStoresPriceInCatalogWhenItemHasNone() {
+        when(catalogItem.getPrice()).thenReturn(null);
+        when(catalogItem.getType()).thenReturn(CatalogItemType.SERVICE);
+        service.create(COMPANY_ID, CONTACT_ID, request(ProcedureState.PLANNED, 12345, null, false), ACTOR_ID, false);
+        verify(catalogItem).update(eq(CatalogItemType.SERVICE), eq("Restauração"), any(), eq("Dentística"),
+                eq(new BigDecimal("123.45")), any(), any(), any(), any());
+        verify(catalogRepository).save(catalogItem);
+    }
+
+    @Test
+    void createKeepsCatalogPriceWhenAlreadySet() {
+        service.create(COMPANY_ID, CONTACT_ID, request(ProcedureState.PLANNED, 99900, null, false), ACTOR_ID, false);
+        verify(catalogRepository, never()).save(any());
+    }
+
+    @Test
+    void createDoesNotStoreZeroPriceInCatalog() {
+        when(catalogItem.getPrice()).thenReturn(null);
+        service.create(COMPANY_ID, CONTACT_ID, request(ProcedureState.PLANNED, 0, null, false), ACTOR_ID, false);
+        verify(catalogRepository, never()).save(any());
+    }
+
+    @Test
+    void plannedStoresGenerateOnDoneFlag() {
+        PatientProcedureResponse r = service.create(COMPANY_ID, CONTACT_ID,
+                request(ProcedureState.PLANNED, 15000, null, true), ACTOR_ID, true);
+        assertThat(r.generateTransactionOnDone()).isTrue();
+        ArgumentCaptor<PatientProcedure> captor = ArgumentCaptor.forClass(PatientProcedure.class);
+        verify(repository).save(captor.capture());
+        assertThat(captor.getValue().isGenerateTransactionOnDone()).isTrue();
+    }
+
+    @Test
+    void preExistingNeverStoresGenerateOnDoneFlag() {
+        PatientProcedureResponse r = service.create(COMPANY_ID, CONTACT_ID,
+                request(ProcedureState.PRE_EXISTING, 15000, null, true), ACTOR_ID, true);
+        assertThat(r.generateTransactionOnDone()).isFalse();
+    }
+
+    @Test
+    void updatePlannedStoresGenerateOnDoneFlag() {
+        PatientProcedure p = existing(ProcedureState.PLANNED);
+        PatientProcedureResponse r = service.update(COMPANY_ID, CONTACT_ID, p.getId(),
+                request(ProcedureState.PLANNED, 15000, null, true), ACTOR_ID);
+        assertThat(r.generateTransactionOnDone()).isTrue();
     }
 
     @Test

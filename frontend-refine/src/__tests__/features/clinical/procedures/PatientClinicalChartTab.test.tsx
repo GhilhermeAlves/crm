@@ -4,6 +4,9 @@ import { PatientClinicalChartTab } from "@/features/clinical/procedures/componen
 import type { PatientProcedureResponse } from "@/features/clinical/procedures/types/procedure.types";
 
 const can = vi.hoisted(() => ({ value: (() => true) as (permission: string) => boolean }));
+const drawer = vi.hoisted(() => ({
+  props: null as null | { open: boolean; initialTooth?: number | null; initialDentition?: string },
+}));
 
 function makeProcedure(
   overrides: Partial<PatientProcedureResponse> = {},
@@ -45,7 +48,14 @@ vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
 }));
 
 vi.mock("@/features/clinical/procedures/components/ProcedureDrawer", () => ({
-  ProcedureDrawer: () => null,
+  ProcedureDrawer: (props: {
+    open: boolean;
+    initialTooth?: number | null;
+    initialDentition?: string;
+  }) => {
+    drawer.props = props;
+    return null;
+  },
 }));
 
 vi.mock("@/features/clinical/procedures/components/CompleteProcedureDialog", () => ({
@@ -55,15 +65,26 @@ vi.mock("@/features/clinical/procedures/components/CompleteProcedureDialog", () 
 describe("PatientClinicalChartTab", () => {
   beforeEach(() => {
     can.value = () => true;
+    drawer.props = null;
   });
 
-  it("clicar no dente filtra a ficha geral e clicar de novo limpa", () => {
+  it("clicar no dente abre o novo procedimento com o dente e a dentição atual", () => {
     render(<PatientClinicalChartTab companyId="co1" contactId="c1" />);
-    expect(screen.getByText("Limpeza")).toBeTruthy();
+    expect(drawer.props?.open).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Dente 11, A realizar" }));
-    expect(screen.queryByText("Limpeza")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Dente 11, A realizar" }));
+    expect(drawer.props?.open).toBe(true);
+    expect(drawer.props?.initialTooth).toBe(11);
+    expect(drawer.props?.initialDentition).toBe("PERMANENT");
+    // A lista não é mais filtrada pelo dente.
     expect(screen.getByText("Limpeza")).toBeTruthy();
+    expect(screen.queryByText("Dente 11")).toBeNull();
+  });
+
+  it("sem contact:update clicar no dente não abre o drawer", () => {
+    can.value = () => false;
+    render(<PatientClinicalChartTab companyId="co1" contactId="c1" />);
+    fireEvent.click(screen.getByRole("button", { name: "Dente 11, A realizar" }));
+    expect(drawer.props?.open).toBe(false);
   });
 
   it("botão de novo procedimento exige contact:update", () => {
