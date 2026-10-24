@@ -14,7 +14,11 @@ import { CreateInvitationDialog } from "@/features/identity/invitations/componen
 import { InvitationRowActions } from "@/features/identity/invitations/components/InvitationRowActions";
 import { MemberRowActions } from "@/features/identity/members/components/MemberRowActions";
 import { invitationStatusMeta } from "@/features/identity/invitations/lib/invitation-status";
-import { memberStatusLabel, roleLabel } from "@/features/identity/members/lib/labels";
+import {
+  memberStatusLabel,
+  roleLabel,
+  specialtyLabel,
+} from "@/features/identity/members/lib/labels";
 import type { Member } from "@/features/identity/members/types/member.types";
 import type { Invitation } from "@/features/identity/invitations/types/invitation.types";
 import { PageTitle } from "@/components/common/PageTitle";
@@ -327,6 +331,7 @@ function MemberTableRow({
       </TableCell>
       <TableCell>
         <Badge variant="outline">{roleLabel(member.role)}</Badge>
+        <SpecialtyHint specialty={member.specialty} />
       </TableCell>
       <TableCell>
         <Badge variant={status.variant}>{status.label}</Badge>
@@ -357,6 +362,7 @@ function InvitationTableRow({
       </TableCell>
       <TableCell>
         <Badge variant="outline">{roleLabel(invitation.role)}</Badge>
+        <SpecialtyHint specialty={invitation.specialty} />
       </TableCell>
       <TableCell>
         <Badge variant={status.variant}>{status.label}</Badge>
@@ -425,6 +431,7 @@ function ActiveMembersTable({
             </TableCell>
             <TableCell>
               <Badge variant="outline">{roleLabel(member.role)}</Badge>
+              <SpecialtyHint specialty={member.specialty} />
             </TableCell>
             <TableCell className="text-sm text-muted-foreground">
               {formatDate(member.joinedAt)}
@@ -488,6 +495,7 @@ function PendingInvitationsTable({
             </TableCell>
             <TableCell>
               <Badge variant="outline">{roleLabel(invitation.role)}</Badge>
+              <SpecialtyHint specialty={invitation.specialty} />
             </TableCell>
             <TableCell className="text-sm text-muted-foreground">
               {format(parseISO(invitation.expiresAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
@@ -510,4 +518,9 @@ function TableSkeleton({ rows }: { rows: number }) {
       ))}
     </div>
   );
+}
+
+function SpecialtyHint({ specialty }: { specialty?: string | null }) {
+  const label = specialtyLabel(specialty);
+  return label ? <span className="ml-1.5 text-xs text-muted-foreground">{label}</span> : null;
 }

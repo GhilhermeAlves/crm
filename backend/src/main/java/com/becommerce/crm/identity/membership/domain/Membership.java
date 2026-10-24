@@ -20,6 +20,7 @@ public class Membership {
     private UUID userId;
     private UUID companyId;
     private String role;
+    private String specialty;
     private MembershipStatus status;
     private UUID invitedBy;
     private LocalDateTime joinedAt;
@@ -30,10 +31,15 @@ public class Membership {
     }
 
     public static Membership activate(UUID userId, UUID companyId, String role) {
+        return activate(userId, companyId, role, null);
+    }
+
+    public static Membership activate(UUID userId, UUID companyId, String role, String specialty) {
         Membership membership = new Membership();
         membership.userId = userId;
         membership.companyId = companyId;
         membership.role = role;
+        membership.specialty = specialty;
         membership.status = MembershipStatus.ACTIVE;
         membership.joinedAt = LocalDateTime.now();
         membership.createdAt = membership.joinedAt;
@@ -42,7 +48,11 @@ public class Membership {
     }
 
     public static Membership invite(UUID userId, UUID companyId, String role, UUID invitedBy) {
-        Membership membership = activate(userId, companyId, role);
+        return invite(userId, companyId, role, invitedBy, null);
+    }
+
+    public static Membership invite(UUID userId, UUID companyId, String role, UUID invitedBy, String specialty) {
+        Membership membership = activate(userId, companyId, role, specialty);
         membership.status = MembershipStatus.PENDING;
         membership.invitedBy = invitedBy;
         return membership;
@@ -101,6 +111,14 @@ public class Membership {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getSpecialty() {
+        return specialty;
+    }
+
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
     }
 
     public MembershipStatus getStatus() {

@@ -16,6 +16,18 @@ export function roleLabel(role: string | null | undefined): string {
   return ROLE_LABEL[role] ?? role.replace(/_/g, " ");
 }
 
+/** Especialidades aceitas no convite (ProfessionalSpecialty no backend). */
+export const SPECIALTY_LABEL: Record<string, string> = {
+  GENERIC: "Geral",
+  DENTAL: "Odontologia",
+  TRICHOLOGY: "Tricologia",
+};
+
+export function specialtyLabel(specialty: string | null | undefined): string | null {
+  if (!specialty) return null;
+  return SPECIALTY_LABEL[specialty] ?? specialty;
+}
+
 export const MEMBER_STATUS_LABEL: Record<string, string> = {
   ACTIVE: "Ativo",
   REMOVED: "Inativo",

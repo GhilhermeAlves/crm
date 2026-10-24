@@ -30,6 +30,7 @@ import com.becommerce.crm.clinical.documenttemplate.domain.exception.DocumentTem
 import com.becommerce.crm.clinical.anamnesis.domain.exception.PatientAnamnesisNotFoundException;
 import com.becommerce.crm.clinical.evolution.domain.exception.PatientEvolutionNotFoundException;
 import com.becommerce.crm.clinical.budget.domain.exception.BudgetNotFoundException;
+import com.becommerce.crm.clinical.trichoscopy.domain.exception.TrichoscopyImageNotFoundException;
 import com.becommerce.crm.clinical.procedure.domain.exception.PatientProcedureNotFoundException;
 import com.becommerce.crm.clinical.document.domain.exception.PatientDocumentNotFoundException;
 import com.becommerce.crm.identity.domain.exception.DuplicateRoleException;
@@ -571,6 +572,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PatientEvolutionNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handlePatientEvolutionNotFoundException(
             PatientEvolutionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                "status", 404,
+                "error", "Not Found",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(TrichoscopyImageNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTrichoscopyImageNotFoundException(
+            TrichoscopyImageNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of(
                 "status", 404,

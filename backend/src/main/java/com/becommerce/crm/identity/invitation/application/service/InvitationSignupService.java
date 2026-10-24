@@ -62,7 +62,7 @@ public class InvitationSignupService {
 
     private static InvitationResponse accepted(InvitationResponse pending) {
         return new InvitationResponse(pending.id(), pending.companyId(), pending.email(), pending.inviteeName(),
-                pending.role(), InvitationStatus.ACCEPTED, pending.invitedBy(), pending.expiresAt(),
+                pending.role(), pending.specialty(), InvitationStatus.ACCEPTED, pending.invitedBy(), pending.expiresAt(),
                 pending.createdAt());
     }
 }

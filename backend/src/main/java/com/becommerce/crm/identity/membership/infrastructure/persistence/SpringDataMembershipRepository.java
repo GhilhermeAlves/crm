@@ -50,6 +50,7 @@ public interface SpringDataMembershipRepository extends JpaRepository<Membership
                    m.role    AS role,
                    m.status  AS status,
                    m.joined_at AS joinedAt,
+                   m.specialty AS specialty,
                    u.name    AS name,
                    u.email   AS email
             FROM memberships m

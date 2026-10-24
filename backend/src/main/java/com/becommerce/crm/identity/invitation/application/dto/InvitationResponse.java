@@ -11,8 +11,14 @@ public record InvitationResponse(
         String email,
         String inviteeName,
         String role,
+        String specialty,
         InvitationStatus status,
         UUID invitedBy,
         LocalDateTime expiresAt,
         LocalDateTime createdAt
-) {}
+) {
+    public InvitationResponse(UUID id, UUID companyId, String email, String inviteeName, String role,
+                              InvitationStatus status, UUID invitedBy, LocalDateTime expiresAt, LocalDateTime createdAt) {
+        this(id, companyId, email, inviteeName, role, null, status, invitedBy, expiresAt, createdAt);
+    }
+}

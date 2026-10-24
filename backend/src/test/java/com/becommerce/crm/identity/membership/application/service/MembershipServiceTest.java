@@ -63,6 +63,7 @@ class MembershipServiceTest {
             @Override public java.time.LocalDateTime getJoinedAt() { return java.time.LocalDateTime.now(); }
             @Override public String getName() { return "Ghilherme Santos"; }
             @Override public String getEmail() { return "ghilherme007@gmail.com"; }
+            @Override public String getSpecialty() { return "TRICHOLOGY"; }
         };
     }
 
@@ -79,6 +80,7 @@ class MembershipServiceTest {
         assertEquals(USER_ID, members.get(0).userId());
         assertEquals("AGENT", members.get(0).role());
         assertEquals("ACTIVE", members.get(0).status());
+        assertEquals("TRICHOLOGY", members.get(0).specialty());
     }
 
     @Test

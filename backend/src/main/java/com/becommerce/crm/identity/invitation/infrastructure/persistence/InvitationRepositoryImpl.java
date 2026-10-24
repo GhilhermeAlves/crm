@@ -53,6 +53,7 @@ public class InvitationRepositoryImpl implements InvitationRepository {
         e.setEmail(i.getEmail());
         e.setInviteeName(i.getInviteeName());
         e.setRole(i.getRole());
+        e.setSpecialty(i.getSpecialty());
         e.setTokenHash(i.getTokenHash());
         e.setInvitedBy(i.getInvitedBy());
         e.setStatus(i.getStatus());
@@ -64,7 +65,7 @@ public class InvitationRepositoryImpl implements InvitationRepository {
 
     private static Invitation toDomain(JpaInvitation e) {
         return new Invitation(e.getId(), e.getCompanyId(), e.getEmail(), e.getInviteeName(), e.getRole(),
-                e.getTokenHash(), e.getInvitedBy(), e.getStatus(), e.getExpiresAt(),
+                e.getSpecialty(), e.getTokenHash(), e.getInvitedBy(), e.getStatus(), e.getExpiresAt(),
                 e.getCreatedAt(), e.getUpdatedAt());
     }
 }

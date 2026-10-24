@@ -1,6 +1,6 @@
 export type CompanyModuleName = "CRM" | "PATIENTS" | "AGENDA" | "FINANCE";
 
-export type CompanySegment = "GENERIC" | "DENTAL" | "OCCUPATIONAL_SAFETY";
+export type CompanySegment = "GENERIC" | "DENTAL" | "OCCUPATIONAL_SAFETY" | "TRICHOLOGY";
 
 export type CompanyModules = {
   companyId: string;
@@ -28,4 +28,5 @@ export const SEGMENT_OPTIONS: { value: CompanySegment; label: string }[] = [
   { value: "GENERIC", label: "Genérico" },
   { value: "DENTAL", label: "Odontologia / Saúde" },
   { value: "OCCUPATIONAL_SAFETY", label: "Segurança do trabalho" },
+  { value: "TRICHOLOGY", label: "Tricologia / Medicina capilar" },
 ];

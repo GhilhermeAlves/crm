@@ -20,4 +20,6 @@ public interface MemberProjection {
     String getName();
 
     String getEmail();
+
+    String getSpecialty();
 }
