@@ -28,6 +28,7 @@ public class MembershipRepositoryImpl implements MembershipRepository {
         entity.setUserId(membership.getUserId());
         entity.setCompanyId(membership.getCompanyId());
         entity.setRole(membership.getRole());
+        entity.setSpecialty(membership.getSpecialty());
         entity.setStatus(membership.getStatus().name());
         entity.setInvitedBy(membership.getInvitedBy());
         entity.setJoinedAt(membership.getJoinedAt());
@@ -98,6 +99,7 @@ public class MembershipRepositoryImpl implements MembershipRepository {
         membership.setUserId(entity.getUserId());
         membership.setCompanyId(entity.getCompanyId());
         membership.setRole(entity.getRole());
+        membership.setSpecialty(entity.getSpecialty());
         membership.setStatus(MembershipStatus.valueOf(entity.getStatus()));
         membership.setInvitedBy(entity.getInvitedBy());
         membership.setJoinedAt(entity.getJoinedAt());

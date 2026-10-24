@@ -187,7 +187,8 @@ public class MembershipService implements MembershipUseCase {
                 projection.getEmail(),
                 projection.getRole(),
                 projection.getStatus(),
-                projection.getJoinedAt());
+                projection.getJoinedAt(),
+                projection.getSpecialty());
     }
 
     private MemberResponse mapToMemberResponse(Membership membership, UUID userId) {
@@ -197,7 +198,8 @@ public class MembershipService implements MembershipUseCase {
                 null,
                 membership.getRole(),
                 membership.getStatus().name(),
-                membership.getJoinedAt());
+                membership.getJoinedAt(),
+                membership.getSpecialty());
     }
 
     private MembershipResponse mapToMembershipResponse(MembershipProjection projection) {

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateInvitation } from "../hooks/useInvitations";
 import { INVITATION_ROLES } from "../types/invitation.types";
-import { roleLabel } from "@/features/identity/members/lib/labels";
+import { roleLabel, SPECIALTY_LABEL } from "@/features/identity/members/lib/labels";
 import {
   Dialog,
   DialogContent,
@@ -38,11 +38,15 @@ const inviteSchema = z.object({
   name: z.string().max(255, "Máximo de 255 caracteres").optional(),
   email: z.string().email("E-mail inválido"),
   role: z.string().min(1, "Selecione o papel"),
+  specialty: z.string(),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
 
-const EMPTY: InviteFormValues = { name: "", email: "", role: "AGENT" };
+// Especialidade é opcional: NO_SPECIALTY não é enviada ao backend.
+const NO_SPECIALTY = "none";
+
+const EMPTY: InviteFormValues = { name: "", email: "", role: "AGENT", specialty: NO_SPECIALTY };
 
 type CreateInvitationDialogProps = {
   companyId: string;
@@ -76,7 +80,12 @@ export function CreateInvitationDialog({
 
   function onSubmit(values: InviteFormValues) {
     create.mutate(
-      { email: values.email, role: values.role, name: values.name?.trim() || undefined },
+      {
+        email: values.email,
+        role: values.role,
+        specialty: values.specialty === NO_SPECIALTY ? undefined : values.specialty,
+        name: values.name?.trim() || undefined,
+      },
       { onSuccess: close },
     );
   }
@@ -139,6 +148,31 @@ export function CreateInvitationDialog({
                       {INVITATION_ROLES.map((role) => (
                         <SelectItem key={role} value={role}>
                           {roleLabel(role)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="specialty"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Especialidade (opcional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a especialidade" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={NO_SPECIALTY}>Não informar</SelectItem>
+                      {Object.entries(SPECIALTY_LABEL).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
                         </SelectItem>
                       ))}
                     </SelectContent>

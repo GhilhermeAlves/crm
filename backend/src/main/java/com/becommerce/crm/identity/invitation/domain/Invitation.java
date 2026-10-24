@@ -21,6 +21,7 @@ public class Invitation {
     private String email;
     private String inviteeName;
     private String role;
+    private String specialty;
     private String tokenHash;
     private UUID invitedBy;
     private InvitationStatus status;
@@ -31,7 +32,7 @@ public class Invitation {
     public Invitation() {
     }
 
-    public Invitation(UUID id, UUID companyId, String email, String inviteeName, String role, String tokenHash,
+    public Invitation(UUID id, UUID companyId, String email, String inviteeName, String role, String specialty, String tokenHash,
                       UUID invitedBy, InvitationStatus status, LocalDateTime expiresAt,
                       LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -39,6 +40,7 @@ public class Invitation {
         this.email = email;
         this.inviteeName = inviteeName;
         this.role = role;
+        this.specialty = specialty;
         this.tokenHash = tokenHash;
         this.invitedBy = invitedBy;
         this.status = status;
@@ -49,13 +51,18 @@ public class Invitation {
 
     public static Invitation create(UUID companyId, String email, String role,
                                     String tokenHash, UUID invitedBy) {
-        return create(companyId, email, null, role, tokenHash, invitedBy);
+        return create(companyId, email, null, role, null, tokenHash, invitedBy);
     }
 
     public static Invitation create(UUID companyId, String email, String inviteeName, String role,
                                     String tokenHash, UUID invitedBy) {
+        return create(companyId, email, inviteeName, role, null, tokenHash, invitedBy);
+    }
+
+    public static Invitation create(UUID companyId, String email, String inviteeName, String role, String specialty,
+                                    String tokenHash, UUID invitedBy) {
         LocalDateTime now = LocalDateTime.now();
-        return new Invitation(UUID.randomUUID(), companyId, email, inviteeName, role, tokenHash,
+        return new Invitation(UUID.randomUUID(), companyId, email, inviteeName, role, specialty, tokenHash,
                 invitedBy, InvitationStatus.PENDING, now.plusDays(DEFAULT_TTL_DAYS),
                 now, now);
     }
@@ -125,6 +132,8 @@ public class Invitation {
     public void setEmail(String email) { this.email = email; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    public String getSpecialty() { return specialty; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
     public String getTokenHash() { return tokenHash; }
     public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
     public UUID getInvitedBy() { return invitedBy; }

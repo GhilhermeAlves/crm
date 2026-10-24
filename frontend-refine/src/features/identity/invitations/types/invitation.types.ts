@@ -6,6 +6,7 @@ export type Invitation = {
   email: string;
   inviteeName: string | null;
   role: string;
+  specialty?: string | null;
   status: InvitationStatus;
   invitedBy: string | null;
   expiresAt: string;
@@ -15,6 +16,7 @@ export type Invitation = {
 export type CreateInvitationRequest = {
   email: string;
   role: string;
+  specialty?: string;
   /** Opcional: aparece na lista de pendentes e pré-preenche o cadastro. */
   name?: string;
 };

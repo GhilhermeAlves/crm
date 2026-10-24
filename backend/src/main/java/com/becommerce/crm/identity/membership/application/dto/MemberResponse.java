@@ -12,5 +12,11 @@ public record MemberResponse(
         String email,
         String role,
         String status,
-        LocalDateTime joinedAt) {
+        LocalDateTime joinedAt,
+        String specialty) {
+
+    public MemberResponse(UUID userId, String name, String email, String role, String status,
+                          LocalDateTime joinedAt) {
+        this(userId, name, email, role, status, joinedAt, null);
+    }
 }

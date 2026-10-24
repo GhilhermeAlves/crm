@@ -13,6 +13,7 @@ export type Member = {
   role: string;
   status: MemberStatus;
   joinedAt: string | null;
+  specialty?: string | null;
 };
 
 export type InviteMemberRequest = {

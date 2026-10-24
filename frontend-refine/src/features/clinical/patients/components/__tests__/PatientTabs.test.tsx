@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { PatientTabs } from "@/features/clinical/patients/components/PatientTabs";
 
-const { pathState, permsState } = vi.hoisted(() => ({
+const { pathState, permsState, segmentState } = vi.hoisted(() => ({
+  segmentState: { value: "DENTAL" },
   pathState: { value: "/patients/c1" },
   permsState: { value: ["contact:read", "finance:read"] as string[] },
 }));
@@ -23,6 +24,14 @@ vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
   useAuthorization: () => ({
     can: (permission?: string) => !permission || permsState.value.includes(permission),
   }),
+}));
+
+vi.mock("@/features/identity/auth/hooks/useCompanyId", () => ({
+  useCompanyId: () => "co1",
+}));
+
+vi.mock("@/features/identity/modules/hooks/useCompanyModules", () => ({
+  useCompanyModules: () => ({ data: { segment: segmentState.value } }),
 }));
 
 describe("PatientTabs", () => {
@@ -47,6 +56,23 @@ describe("PatientTabs", () => {
     render(<PatientTabs contactId="c1" />);
 
     expect(screen.queryByText("Financeiro")).toBeNull();
+  });
+
+  it("shows Tricoscopia only for trichology clinics", () => {
+    pathState.value = "/patients/c1";
+    permsState.value = ["contact:read"];
+
+    segmentState.value = "DENTAL";
+    const { unmount } = render(<PatientTabs contactId="c1" />);
+    expect(screen.queryByText("Tricoscopia")).toBeNull();
+    expect(screen.getByText("Evoluções")).toBeTruthy();
+    unmount();
+
+    segmentState.value = "TRICHOLOGY";
+    render(<PatientTabs contactId="c1" />);
+    expect(screen.getByText("Tricoscopia").closest("a")?.getAttribute("href")).toBe(
+      "/patients/c1/tricoscopia",
+    );
   });
 
   it("marks the child tab active based on the pathname", () => {

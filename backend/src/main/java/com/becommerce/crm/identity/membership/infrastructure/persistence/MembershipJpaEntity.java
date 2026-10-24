@@ -25,6 +25,9 @@ public class MembershipJpaEntity {
     @Column(name = "role", nullable = false)
     private String role;
 
+    @Column(name = "specialty")
+    private String specialty;
+
     @Column(name = "status", nullable = false)
     private String status;
 
@@ -73,6 +76,14 @@ public class MembershipJpaEntity {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getSpecialty() {
+        return specialty;
+    }
+
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
     }
 
     public String getStatus() {

@@ -31,6 +31,9 @@ public class JpaInvitation {
     @Column(name = "role")
     private String role;
 
+    @Column(name = "specialty")
+    private String specialty;
+
     @Column(name = "token_hash")
     private String tokenHash;
 
@@ -60,6 +63,8 @@ public class JpaInvitation {
     public void setEmail(String email) { this.email = email; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    public String getSpecialty() { return specialty; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
     public String getTokenHash() { return tokenHash; }
     public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
     public UUID getInvitedBy() { return invitedBy; }

@@ -25,6 +25,7 @@ import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.UserRole;
 import com.becommerce.crm.identity.invitation.domain.Invitation;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
+import com.becommerce.crm.identity.invitation.domain.ProfessionalSpecialty;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoundException;
 import com.becommerce.crm.identity.membership.domain.Membership;
@@ -117,6 +118,7 @@ public class InvitationService implements InvitationUseCase {
         if (!ALLOWED_ROLES.contains(role)) {
             throw new IllegalArgumentException("Papel inválido para convite: " + role);
         }
+        String specialty = ProfessionalSpecialty.normalize(request.specialty());
         String email = normalize(request.email());
 
         // Enforcement max_users (Sprint 8.6): membros ativos + convites
@@ -139,7 +141,7 @@ public class InvitationService implements InvitationUseCase {
 
         String token = InvitationTokenService.generateToken();
         Invitation invitation = invitationRepository.save(
-                Invitation.create(companyId, email, blankToNull(request.name()), role,
+                Invitation.create(companyId, email, blankToNull(request.name()), role, specialty,
                         InvitationTokenService.hash(token), invitedBy));
 
         String tokenUrl = buildTokenUrl(token);
@@ -148,7 +150,7 @@ public class InvitationService implements InvitationUseCase {
         auditor.record(companyId, AuditAction.CREATE, AuditModule.INVITATIONS, "Invitation",
                 invitation.getId().toString(),
                 "Convite criado para " + email,
-                invitedBy, Map.of("email", email, "role", role));
+                invitedBy, Map.of("email", email, "role", role, "specialty", specialty == null ? "" : specialty));
         return toResponse(invitation);
     }
 
@@ -359,7 +361,7 @@ public class InvitationService implements InvitationUseCase {
                     "Limite de usuários da empresa atingido (" + target.getMaxUsers() + ").");
         }
 
-        membershipRepository.save(Membership.activate(user.getId(), companyId, invitation.getRole()));
+        membershipRepository.save(Membership.activate(user.getId(), companyId, invitation.getRole(), invitation.getSpecialty()));
         assignRole(user, invitation);
         user.grantCrmAccess();
         if (user.getCompanyId() == null) {
@@ -482,6 +484,6 @@ public class InvitationService implements InvitationUseCase {
      */
     private static InvitationResponse toResponse(Invitation i) {
         return new InvitationResponse(i.getId(), i.getCompanyId(), i.getEmail(), i.getInviteeName(), i.getRole(),
-                i.effectiveStatus(), i.getInvitedBy(), i.getExpiresAt(), i.getCreatedAt());
+                i.getSpecialty(), i.effectiveStatus(), i.getInvitedBy(), i.getExpiresAt(), i.getCreatedAt());
     }
 }

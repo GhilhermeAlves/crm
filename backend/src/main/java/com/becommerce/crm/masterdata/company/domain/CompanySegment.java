@@ -4,5 +4,6 @@ package com.becommerce.crm.masterdata.company.domain;
 public enum CompanySegment {
     GENERIC,
     DENTAL,
-    OCCUPATIONAL_SAFETY
+    OCCUPATIONAL_SAFETY,
+    TRICHOLOGY
 }
