@@ -2,20 +2,11 @@ package com.becommerce.crm.clinical.trichoscopy.infrastructure.persistence;
 
 import com.becommerce.crm.clinical.trichoscopy.application.port.out.TrichoscopyRepository;
 import com.becommerce.crm.clinical.trichoscopy.domain.PatientTrichoscopyImage;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-interface SpringDataTrichoscopyRepository extends JpaRepository<PatientTrichoscopyImageJpaEntity, UUID> {
-    List<PatientTrichoscopyImageJpaEntity> findByCompanyIdAndContactIdOrderByTakenAtDesc(UUID companyId,
-                                                                                         UUID contactId);
-
-    Optional<PatientTrichoscopyImageJpaEntity> findByIdAndCompanyIdAndContactId(UUID id, UUID companyId,
-                                                                               UUID contactId);
-}
 
 @Repository
 public class TrichoscopyRepositoryAdapter implements TrichoscopyRepository {
