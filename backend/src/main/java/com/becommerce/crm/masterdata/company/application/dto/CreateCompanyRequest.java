@@ -60,6 +60,10 @@ public record CreateCompanyRequest(
 
         String logoUrl,
 
-        String notes
+        String notes,
+
+        String segment,
+
+        java.util.List<String> enabledModules
 ) {
 }

@@ -68,6 +68,9 @@ class CompanyServiceTest {
     private com.becommerce.crm.automation.workflow.application.service.WorkflowTemplateSeeder workflowTemplateSeeder;
 
     @Mock
+    private com.becommerce.crm.masterdata.company.application.port.output.CompanyModulesRepository companyModulesRepository;
+
+    @Mock
     private TenantContext tenantContext;
 
     @InjectMocks
@@ -96,6 +99,7 @@ class CompanyServiceTest {
                 .thenReturn(Optional.of(sampleAdminRole));
         lenient().when(userRoleRepository.existsByUserIdAndRoleId(any(UUID.class), any(UUID.class)))
                 .thenReturn(false);
+        lenient().when(companyModulesRepository.update(any(UUID.class), any())).thenReturn(true);
     }
 
     @Test
@@ -187,7 +191,7 @@ class CompanyServiceTest {
                 "contato@empresa.com", "(11) 99999-0000", "https://empresa.com",
                 "01001000", "Rua Teste", "100", "Sala 1",
                 "Centro", "São Paulo", "SP", "Brasil",
-                "STARTER", 5, 1024, null, null, null
+                "STARTER", 5, 1024, null, null, null, null, null
         );
 
         CompanyResponse response = companyService.createCompany(request, sampleUser.getId());
@@ -217,7 +221,7 @@ class CompanyServiceTest {
                 "contato@empresa.com", "(11) 99999-0000", null,
                 "01001000", "Rua Teste", "100", null,
                 "Centro", "São Paulo", "SP", "Brasil",
-                "STARTER", null, null, null, null, null
+                "STARTER", null, null, null, null, null, null, null
         );
 
         assertThrows(CompanyAlreadyExistsException.class, () -> companyService.createCompany(request, sampleUser.getId()));
@@ -235,7 +239,7 @@ class CompanyServiceTest {
                 "contato@empresa.com", "(11) 99999-0000", null,
                 "01001000", "Rua Teste", "100", null,
                 "Centro", "São Paulo", "SP", "Brasil",
-                "STARTER", null, null, null, null, null
+                "STARTER", null, null, null, null, null, null, null
         );
 
         assertThrows(CompanyAlreadyExistsException.class, () -> companyService.createCompany(request, sampleUser.getId()));

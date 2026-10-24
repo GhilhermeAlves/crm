@@ -79,8 +79,8 @@ class OnboardingServiceTest {
                 "Minha Empresa LTDA", "Minha", "12345678000190",
                 null, null, "contato@minha.com", "(11) 99999-0000",
                 null, "01001000", "Rua Teste", "100", null,
-                "Centro", "São Paulo", "SP", "Brasil",
-                "STARTER", null, null, null, null, null);
+                "Centro", "S�o Paulo", "SP", "Brasil",
+                "STARTER", null, null, null, null, null, null, null);
     }
 
     private CompanyResponse response(UUID companyId) {

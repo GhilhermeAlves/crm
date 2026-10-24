@@ -45,6 +45,7 @@ public class CompanyService implements CompanyUseCase {
     private final UserRepository userRepository;
     private final CompanyQuotaService quotaService;
     private final WorkflowTemplateSeeder workflowTemplateSeeder;
+    private final com.becommerce.crm.masterdata.company.application.port.output.CompanyModulesRepository companyModulesRepository;
 
     public CompanyService(CompanyRepository companyRepository,
                           CompanySettingsRepository companySettingsRepository,
@@ -55,7 +56,8 @@ public class CompanyService implements CompanyUseCase {
                           UserRoleRepository userRoleRepository,
                           UserRepository userRepository,
                           CompanyQuotaService quotaService,
-                          WorkflowTemplateSeeder workflowTemplateSeeder) {
+                          WorkflowTemplateSeeder workflowTemplateSeeder,
+                          com.becommerce.crm.masterdata.company.application.port.output.CompanyModulesRepository companyModulesRepository) {
         this.companyRepository = companyRepository;
         this.companySettingsRepository = companySettingsRepository;
         this.eventPublisher = eventPublisher;
@@ -66,6 +68,7 @@ public class CompanyService implements CompanyUseCase {
         this.userRepository = userRepository;
         this.quotaService = quotaService;
         this.workflowTemplateSeeder = workflowTemplateSeeder;
+        this.companyModulesRepository = companyModulesRepository;
     }
 
     @Override
@@ -142,6 +145,29 @@ public class CompanyService implements CompanyUseCase {
         );
 
         Company saved = companyRepository.save(company);
+
+        // Configurar segmento e módulos na criação (opcionais). Se nulos: GENERIC com todos.
+        try {
+            CompanySegment segment = request.segment() != null && !request.segment().isBlank()
+                    ? CompanySegment.valueOf(request.segment().trim().toUpperCase(java.util.Locale.ROOT))
+                    : CompanySegment.GENERIC;
+            java.util.Set<CompanyModule> modules = (request.enabledModules() == null || request.enabledModules().isEmpty())
+                    ? com.becommerce.crm.masterdata.company.domain.CompanyModules.parse(java.util.List.of(
+                    "CRM", "PATIENTS", "AGENDA", "FINANCE", "TASKS", "ASSISTANT", "INBOX",
+                    "FOLLOW_UPS", "CAMPAIGNS", "WORKFLOWS", "CATALOG", "INVENTORY", "REPORTS", "STORAGE"))
+                    : CompanyModules.parse(request.enabledModules());
+            companyModulesRepository.update(saved.getId(), new CompanyModules(segment, modules));
+        } catch (Exception ignored) {
+            try {
+                companyModulesRepository.update(saved.getId(),
+                        new CompanyModules(CompanySegment.GENERIC,
+                                com.becommerce.crm.masterdata.company.domain.CompanyModules.parse(java.util.List.of(
+                                        "CRM", "PATIENTS", "AGENDA", "FINANCE", "TASKS", "ASSISTANT", "INBOX",
+                                        "FOLLOW_UPS", "CAMPAIGNS", "WORKFLOWS", "CATALOG", "INVENTORY", "REPORTS", "STORAGE"))));
+            } catch (Exception ignored2) {
+            }
+        }
+
         provisionNewCompany(saved.getId(), creatorUserId);
         eventPublisher.publish(CompanyCreatedEvent.create(saved));
         return mapToResponse(saved);
