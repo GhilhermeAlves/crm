@@ -86,7 +86,13 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Comissões", href: ROUTES.FINANCE_COMMISSIONS },
         ],
       },
-      { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:page:view", module: "TASKS" },
+      {
+        label: "Tarefas",
+        href: ROUTES.TASKS,
+        icon: ClipboardList,
+        permission: "task:page:view",
+        module: "TASKS",
+      },
       {
         label: "Léo · Assistente IA",
         href: ROUTES.ASSISTANT,
@@ -175,8 +181,20 @@ export const NAVIGATION: NavGroup[] = [
     title: "Operação",
     icon: Wrench,
     items: [
-      { label: "Catálogo", href: ROUTES.CATALOG, icon: Package, permission: "catalog:read", module: "CATALOG" },
-      { label: "Estoque", href: ROUTES.INVENTORY, icon: Boxes, permission: "inventory:read", module: "INVENTORY" },
+      {
+        label: "Catálogo",
+        href: ROUTES.CATALOG,
+        icon: Package,
+        permission: "catalog:read",
+        module: "CATALOG",
+      },
+      {
+        label: "Estoque",
+        href: ROUTES.INVENTORY,
+        icon: Boxes,
+        permission: "inventory:read",
+        module: "INVENTORY",
+      },
     ],
   },
   {
