@@ -86,12 +86,13 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Comissões", href: ROUTES.FINANCE_COMMISSIONS },
         ],
       },
-      { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:page:view" },
+      { label: "Tarefas", href: ROUTES.TASKS, icon: ClipboardList, permission: "task:page:view", module: "TASKS" },
       {
         label: "Léo · Assistente IA",
         href: ROUTES.ASSISTANT,
         icon: Sparkles,
         permission: "ai:chat",
+        module: "ASSISTANT",
       },
     ],
   },
@@ -138,30 +139,35 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.INBOX,
         icon: MessageSquare,
         permission: "omnichannel:page:view",
+        module: "INBOX",
       },
       {
         label: "Canais",
         href: ROUTES.CHANNELS,
         icon: Megaphone,
         permission: "omnichannel:page:view",
+        module: "INBOX",
       },
       {
         label: "Follow-ups",
         href: ROUTES.FOLLOW_UP_SEQUENCES,
         icon: ClipboardList,
         permission: "omnichannel:followup:sequence:read",
+        module: "FOLLOW_UPS",
       },
       {
         label: "Campanhas",
         href: ROUTES.CAMPAIGNS,
         icon: Megaphone,
         permission: "campaign:page:view",
+        module: "CAMPAIGNS",
       },
       {
         label: "Automações",
         href: ROUTES.WORKFLOWS,
         icon: WorkflowIcon,
         permission: "workflow:page:view",
+        module: "WORKFLOWS",
       },
     ],
   },
@@ -169,8 +175,8 @@ export const NAVIGATION: NavGroup[] = [
     title: "Operação",
     icon: Wrench,
     items: [
-      { label: "Catálogo", href: ROUTES.CATALOG, icon: Package, permission: "catalog:read" },
-      { label: "Estoque", href: ROUTES.INVENTORY, icon: Boxes, permission: "inventory:read" },
+      { label: "Catálogo", href: ROUTES.CATALOG, icon: Package, permission: "catalog:read", module: "CATALOG" },
+      { label: "Estoque", href: ROUTES.INVENTORY, icon: Boxes, permission: "inventory:read", module: "INVENTORY" },
     ],
   },
   {
@@ -181,6 +187,7 @@ export const NAVIGATION: NavGroup[] = [
         label: "Relatórios",
         href: ROUTES.REPORTS,
         icon: BarChart3,
+        module: "REPORTS",
         children: [
           { label: "Painel de relatórios", href: ROUTES.REPORTS },
           {
@@ -205,7 +212,7 @@ export const NAVIGATION: NavGroup[] = [
           },
         ],
       },
-      { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive },
+      { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive, module: "STORAGE" },
     ],
   },
   {
