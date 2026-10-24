@@ -10,13 +10,11 @@ const { permissions, createMutate, updateMutate } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/features/masterdata/catalog/hooks/useCatalog", () => ({
-  useCatalog: () => ({
-    data: {
-      content: [
-        { id: "s1", name: "Restauração", category: "Dentística", price: 150, active: true },
-        { id: "s2", name: "Avaliação", category: "Clínica", price: null, active: true },
-      ],
-    },
+  useAllCatalog: () => ({
+    data: [
+      { id: "s1", name: "Restauração", category: "Dentística", price: 150, active: true },
+      { id: "s2", name: "Avaliação", category: "Clínica", price: null, active: true },
+    ],
   }),
 }));
 
@@ -66,6 +64,8 @@ function makeProcedure(
     ...overrides,
   };
 }
+
+const openTeeth = () => fireEvent.click(screen.getByRole("button", { name: "Selecionar dentes" }));
 
 function renderDrawer(procedure: PatientProcedureResponse | null, initialTooth?: number) {
   render(
@@ -143,6 +143,7 @@ describe("ProcedureDrawer", () => {
 
   it("dente vindo do odontograma já chega marcado", () => {
     renderDrawer(null, 21);
+    openTeeth();
     expect(screen.getByRole("button", { name: "Dente 21" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
@@ -160,6 +161,7 @@ describe("ProcedureDrawer", () => {
 
   it("seletor de dentes em toggle marca, mostra faces e desmarca", () => {
     renderDrawer(null);
+    openTeeth();
     const tooth = screen.getByRole("button", { name: "Dente 11" });
     expect(tooth.getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(tooth);
@@ -172,6 +174,7 @@ describe("ProcedureDrawer", () => {
   it("decídua mostra os dentes 55 a 85", () => {
     renderDrawer(null);
     fireEvent.click(screen.getByRole("button", { name: "Decídua" }));
+    openTeeth();
     expect(screen.getByRole("button", { name: "Dente 55" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Dente 85" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Dente 18" })).toBeNull();

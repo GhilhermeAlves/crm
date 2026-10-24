@@ -26,11 +26,20 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   budget?: BudgetDetail | null;
+  /** Procedimento já marcado ao abrir um orçamento novo (botão "Orçar" da ficha). */
+  initialProcedureId?: string | null;
 };
 
 const toCents = (value: string) => Math.round(Number(value || 0) * 100);
 
-export function BudgetFormDialog({ companyId, contactId, open, onOpenChange, budget }: Props) {
+export function BudgetFormDialog({
+  companyId,
+  contactId,
+  open,
+  onOpenChange,
+  budget,
+  initialProcedureId,
+}: Props) {
   const uid = useId();
   const { data: procedures } = useProcedures(companyId, contactId);
   const create = useCreateBudget(companyId, contactId);
@@ -39,6 +48,8 @@ export function BudgetFormDialog({ companyId, contactId, open, onOpenChange, bud
   // Reset só ao abrir ou trocar de orçamento: um refetch (nova referência) não apaga a edição.
   const budgetRef = useRef(budget);
   budgetRef.current = budget;
+  const initialRef = useRef(initialProcedureId);
+  initialRef.current = initialProcedureId;
   const budgetId = budget?.id;
 
   const [title, setTitle] = useState("");
@@ -66,6 +77,12 @@ export function BudgetFormDialog({ companyId, contactId, open, onOpenChange, bud
         (budget?.items ?? []).map((i) => [i.procedureId, String(i.priceCents / 100)]),
       ),
     );
+    const initial =
+      !budget && initialRef.current
+        ? procedures?.find((p) => p.id === initialRef.current)
+        : undefined;
+    if (initial) setPrices({ [initial.id]: String(initial.priceCents / 100) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só ao abrir
   }, [open, budgetId]);
 
   const toggle = (id: string, priceCents: number, checked: boolean) =>

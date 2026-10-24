@@ -5,6 +5,7 @@ import type { PatientProcedureResponse } from "@/features/clinical/procedures/ty
 
 vi.mock("@/features/clinical/procedures/hooks/useProcedures", () => ({
   useDeleteProcedure: () => ({ mutate: vi.fn(), isPending: false }),
+  useCompleteProcedure: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 function makeProcedure(
@@ -33,6 +34,9 @@ function makeProcedure(
   };
 }
 
+const openMenu = (name = "Restauração") =>
+  fireEvent.click(screen.getByRole("button", { name: `Ações de ${name}` }));
+
 function renderList(procedures: PatientProcedureResponse[]) {
   render(
     <ProcedureList
@@ -52,7 +56,9 @@ describe("ProcedureList", () => {
       makeProcedure({ id: "p1", name: "Restauração", state: "PLANNED" }),
       makeProcedure({ id: "p2", name: "Limpeza", state: "DONE", performedAt: "2026-10-01" }),
     ]);
-    expect(screen.getAllByText("Marcar como realizado")).toHaveLength(1);
+    expect(screen.getByText("Realizado em 01/10/2026")).toBeTruthy();
+    openMenu("Restauração");
+    expect(screen.getByText("Marcar como realizado hoje")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Filtrar: Realizado" }));
     expect(screen.queryByText("Restauração")).toBeNull();
     expect(screen.getByText("Limpeza")).toBeTruthy();
@@ -66,6 +72,7 @@ describe("ProcedureList", () => {
         transaction: { id: "t1", status: "PENDING" },
       }),
     ]);
+    openMenu();
     fireEvent.click(screen.getByRole("button", { name: "Excluir procedimento" }));
     expect(
       screen.getByText("O lançamento financeiro pendente deste procedimento será cancelado."),
@@ -80,6 +87,7 @@ describe("ProcedureList", () => {
         transaction: { id: "t1", status: "PAID" },
       }),
     ]);
+    openMenu();
     const button = screen.getByRole("button", {
       name: "Excluir procedimento",
     }) as HTMLButtonElement;
@@ -89,7 +97,7 @@ describe("ProcedureList", () => {
     );
   });
 
-  it("sem permissão de edição esconde as ações", () => {
+  it("sem permissão de edição só deixa visualizar detalhes", () => {
     render(
       <ProcedureList
         companyId="co1"
@@ -98,28 +106,50 @@ describe("ProcedureList", () => {
         canEdit={false}
         onEdit={vi.fn()}
         onComplete={vi.fn()}
+        onBudget={vi.fn()}
       />,
     );
-    expect(screen.queryByText("Editar")).toBeNull();
-    expect(screen.queryByText("Marcar como realizado")).toBeNull();
+    expect(screen.queryByText("Orçar")).toBeNull();
+    openMenu();
+    expect(screen.getByText("Visualizar detalhes")).toBeTruthy();
+    expect(screen.queryByText("Editar procedimento")).toBeNull();
+    expect(screen.queryByText("Marcar como realizado hoje")).toBeNull();
     expect(screen.queryByRole("button", { name: "Excluir procedimento" })).toBeNull();
   });
 
-  it("mostra o orçamento do procedimento ou traço", () => {
-    renderList([
-      makeProcedure({
-        id: "p1",
-        name: "Restauração",
-        budget: { id: "b1", title: "Plano ortodôntico", status: "DRAFT" },
-      }),
-      makeProcedure({ id: "p2", name: "Limpeza", budget: null }),
-    ]);
-    expect(screen.getByText("Orçamento")).toBeTruthy();
-    expect(screen.getByText("Plano ortodôntico · Rascunho")).toBeTruthy();
+  it("procedimento orçado abre o orçamento; a realizar sem orçamento oferece Orçar", () => {
+    const onViewBudget = vi.fn();
+    const onBudget = vi.fn();
+    render(
+      <ProcedureList
+        companyId="co1"
+        contactId="c1"
+        procedures={[
+          makeProcedure({
+            id: "p1",
+            name: "Restauração",
+            budget: { id: "b1", title: "Plano ortodôntico", status: "DRAFT" },
+          }),
+          makeProcedure({ id: "p2", name: "Limpeza", budget: null }),
+        ]}
+        canEdit
+        onEdit={vi.fn()}
+        onComplete={vi.fn()}
+        onBudget={onBudget}
+        onViewBudget={onViewBudget}
+      />,
+    );
+    const link = screen.getByRole("button", { name: "Orçamento" });
+    expect(link.getAttribute("title")).toBe("Plano ortodôntico · Rascunho");
+    fireEvent.click(link);
+    expect(onViewBudget).toHaveBeenCalledWith("b1");
+    fireEvent.click(screen.getByRole("button", { name: /Orçar/ }));
+    expect(onBudget).toHaveBeenCalledWith(expect.objectContaining({ id: "p2" }));
   });
 
   it("procedimento de orçamento aprovado não pode ser excluído", () => {
     renderList([makeProcedure({ budget: { id: "b1", title: "Plano", status: "APPROVED" } })]);
+    openMenu();
     const button = screen.getByRole("button", {
       name: "Excluir procedimento",
     }) as HTMLButtonElement;
@@ -131,6 +161,7 @@ describe("ProcedureList", () => {
 
   it("exclusão em orçamento rascunho avisa remoção do orçamento", () => {
     renderList([makeProcedure({ budget: { id: "b1", title: "Plano", status: "DRAFT" } })]);
+    openMenu();
     fireEvent.click(screen.getByRole("button", { name: "Excluir procedimento" }));
     expect(screen.getByText("O procedimento será removido do orçamento Plano.")).toBeTruthy();
   });

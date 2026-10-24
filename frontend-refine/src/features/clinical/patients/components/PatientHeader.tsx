@@ -153,12 +153,6 @@ export function PatientHeader({ contact }: { contact: Contact }) {
               </Link>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">{fullName || "Paciente"}</h1>
-            {contact.recordNumber && (
-              <Badge variant="secondary">Prontuário nº {contact.recordNumber}</Badge>
-            )}
-          </div>
           {hasMobile && (
             <p className="text-sm text-muted-foreground">{formatPhone(contact.mobile as string)}</p>
           )}

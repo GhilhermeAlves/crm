@@ -42,6 +42,7 @@ const procedures = [
 vi.mock("@/features/clinical/procedures/hooks/useProcedures", () => ({
   useProcedures: () => ({ data: procedures, isLoading: false }),
   useDeleteProcedure: () => ({ mutate: vi.fn(), isPending: false }),
+  useCompleteProcedure: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
@@ -57,6 +58,14 @@ vi.mock("@/features/clinical/procedures/components/ProcedureDrawer", () => ({
     drawer.props = props;
     return null;
   },
+}));
+
+vi.mock("@/features/clinical/budgets/components/BudgetFormDialog", () => ({
+  BudgetFormDialog: () => null,
+}));
+
+vi.mock("@/features/clinical/budgets/components/BudgetDetailsDialog", () => ({
+  BudgetDetailsDialog: () => null,
 }));
 
 vi.mock("@/features/clinical/procedures/components/CompleteProcedureDialog", () => ({
