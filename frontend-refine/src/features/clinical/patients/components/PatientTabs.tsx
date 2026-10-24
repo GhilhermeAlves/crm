@@ -13,11 +13,13 @@ type PatientTab = {
   segment: string;
   permission?: string;
   trichologyOnly?: boolean;
+  nonDentalLabel?: string;
 };
 
 const TABS: PatientTab[] = [
   { label: "Consultas", segment: "" },
-  { label: "Ficha clínica", segment: "ficha-clinica" },
+  // Fora da odontologia a mesma página vira só a lista de procedimentos.
+  { label: "Ficha clínica", segment: "ficha-clinica", nonDentalLabel: "Procedimentos" },
   { label: "Orçamentos", segment: "orcamentos" },
   { label: "Anamnese", segment: "anamnese" },
   { label: "Evoluções", segment: "evolucoes" },
@@ -34,6 +36,7 @@ export function PatientTabs({ contactId }: { contactId: string }) {
   const companyId = useCompanyId();
   const { data: modules } = useCompanyModules(companyId);
   const isTrichology = modules?.segment === "TRICHOLOGY";
+  const isDental = modules?.segment === "DENTAL";
   const base = `${ROUTES.PATIENTS}/${contactId}`;
 
   const visibleTabs = TABS.filter((tab) => {
@@ -60,7 +63,7 @@ export function PatientTabs({ contactId }: { contactId: string }) {
                 isActive && "border-primary text-foreground",
               )}
             >
-              {tab.label}
+              {!isDental && tab.nonDentalLabel ? tab.nonDentalLabel : tab.label}
             </Link>
           );
         })}

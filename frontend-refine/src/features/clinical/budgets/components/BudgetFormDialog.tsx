@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useProcedures } from "@/features/clinical/procedures/hooks/useProcedures";
 import { formatTeeth } from "@/features/clinical/procedures/utils/teeth";
+import { useIsDentalClinic } from "@/features/identity/modules/hooks/useIsDentalClinic";
 import { centsToBRL } from "@/features/finance/utils/money";
 import { useCreateBudget, useUpdateBudget } from "../hooks/useBudgets";
 import type { BudgetDetail } from "../types/budget.types";
@@ -42,6 +43,7 @@ export function BudgetFormDialog({
 }: Props) {
   const uid = useId();
   const { data: procedures } = useProcedures(companyId, contactId);
+  const dental = useIsDentalClinic();
   const create = useCreateBudget(companyId, contactId);
   const update = useUpdateBudget(companyId, contactId);
 
@@ -149,7 +151,7 @@ export function BudgetFormDialog({
                       onCheckedChange={(v) => toggle(p.id, p.priceCents, v === true)}
                     />
                     <Label htmlFor={`${uid}-item-${p.id}`} className="flex-1 font-normal">
-                      {p.name} — {formatTeeth(p.teeth)}
+                      {dental ? `${p.name} — ${formatTeeth(p.teeth)}` : p.name}
                     </Label>
                     {checked && (
                       <Input

@@ -60,6 +60,8 @@ type Props = {
   onBudget?: (procedure: PatientProcedureResponse) => void;
   /** Link "Orçamento": abre o resumo do orçamento. */
   onViewBudget?: (budgetId: string) => void;
+  /** Coluna e detalhe de dentes: só em clínicas de odontologia. */
+  showTeeth?: boolean;
 };
 
 const ALL = "all";
@@ -146,6 +148,7 @@ export function ProcedureList({
   onComplete,
   onBudget,
   onViewBudget,
+  showTeeth = true,
 }: Props) {
   const remove = useDeleteProcedure(companyId, contactId);
   const complete = useCompleteProcedure(companyId, contactId);
@@ -254,7 +257,7 @@ export function ProcedureList({
               <thead className="bg-muted/60 text-xs text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Procedimento</th>
-                  <th className="px-4 py-3 text-left font-medium">Dente</th>
+                  {showTeeth && <th className="px-4 py-3 text-left font-medium">Dente</th>}
                   <th className="px-4 py-3 text-left font-medium">Estado</th>
                   <th className="px-4 py-3 text-right font-medium">Ações</th>
                 </tr>
@@ -271,9 +274,11 @@ export function ProcedureList({
                           <div className="text-xs text-muted-foreground">{p.category}</div>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                        {formatToothColumn(p)}
-                      </td>
+                      {showTeeth && (
+                        <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                          {formatToothColumn(p)}
+                        </td>
+                      )}
                       <td className="px-4 py-3">
                         <StatePill procedure={p} />
                       </td>
@@ -394,8 +399,12 @@ export function ProcedureList({
               <dd>
                 <StatePill procedure={details} />
               </dd>
-              <dt className="text-muted-foreground">Dentes</dt>
-              <dd>{formatTeeth(details.teeth)}</dd>
+              {showTeeth && (
+                <>
+                  <dt className="text-muted-foreground">Dentes</dt>
+                  <dd>{formatTeeth(details.teeth)}</dd>
+                </>
+              )}
               <dt className="text-muted-foreground">Valor</dt>
               <dd className="tabular-nums">{formatPrice(details.priceCents)}</dd>
               <dt className="text-muted-foreground">Profissional</dt>

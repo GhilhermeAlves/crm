@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import { centsToBRL } from "@/features/finance/utils/money";
+import { useIsDentalClinic } from "@/features/identity/modules/hooks/useIsDentalClinic";
 import { useBudget } from "../hooks/useBudgets";
 import type { BudgetStatus } from "../types/budget.types";
 import { BUDGET_STATUS_LABELS } from "../utils/installments";
@@ -36,6 +37,7 @@ type Props = {
 /** Resumo do orçamento: procedimentos, dentes e valores, com atalho para a aba Orçamentos. */
 export function BudgetDetailsDialog({ companyId, contactId, budgetId, onOpenChange }: Props) {
   const { data: budget, isLoading } = useBudget(companyId, contactId, budgetId);
+  const dental = useIsDentalClinic();
   const date = budget?.approvedAt ?? budget?.updatedAt;
 
   return (
@@ -77,7 +79,7 @@ export function BudgetDetailsDialog({ companyId, contactId, budgetId, onOpenChan
                 <thead className="sticky top-0 bg-muted/60 text-xs text-muted-foreground">
                   <tr>
                     <th className="px-3 py-2 text-left font-medium">Procedimento</th>
-                    <th className="px-3 py-2 text-center font-medium">Dentes</th>
+                    {dental && <th className="px-3 py-2 text-center font-medium">Dentes</th>}
                     <th className="px-3 py-2 text-right font-medium">Valor</th>
                   </tr>
                 </thead>
@@ -85,23 +87,25 @@ export function BudgetDetailsDialog({ companyId, contactId, budgetId, onOpenChan
                   {budget.items.map((item) => (
                     <tr key={item.procedureId} className="border-t even:bg-muted/20">
                       <td className="px-3 py-2">{item.name}</td>
-                      <td className="px-3 py-2 text-center">
-                        {item.teeth.length === 0 ? (
-                          <span className="text-muted-foreground">—</span>
-                        ) : (
-                          <span className="inline-flex flex-wrap justify-center gap-1">
-                            {item.teeth.map((t) => (
-                              <span
-                                key={t.tooth}
-                                className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary"
-                              >
-                                {t.tooth}
-                                {t.faces.join("")}
-                              </span>
-                            ))}
-                          </span>
-                        )}
-                      </td>
+                      {dental && (
+                        <td className="px-3 py-2 text-center">
+                          {item.teeth.length === 0 ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            <span className="inline-flex flex-wrap justify-center gap-1">
+                              {item.teeth.map((t) => (
+                                <span
+                                  key={t.tooth}
+                                  className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary"
+                                >
+                                  {t.tooth}
+                                  {t.faces.join("")}
+                                </span>
+                              ))}
+                            </span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-3 py-2 text-right tabular-nums">
                         {centsToBRL(item.priceCents)}
                       </td>

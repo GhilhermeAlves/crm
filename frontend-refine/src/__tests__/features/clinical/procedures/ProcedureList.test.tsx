@@ -165,4 +165,21 @@ describe("ProcedureList", () => {
     fireEvent.click(screen.getByRole("button", { name: "Excluir procedimento" }));
     expect(screen.getByText("O procedimento será removido do orçamento Plano.")).toBeTruthy();
   });
+
+  it("sem dentes (fora da odontologia) esconde a coluna Dente", () => {
+    render(
+      <ProcedureList
+        companyId="co1"
+        contactId="c1"
+        procedures={[makeProcedure()]}
+        canEdit
+        onEdit={vi.fn()}
+        onComplete={vi.fn()}
+        showTeeth={false}
+      />,
+    );
+    expect(screen.queryByText("Dente")).toBeNull();
+    expect(screen.queryByText("11 M")).toBeNull();
+    expect(screen.getByText("Restauração")).toBeTruthy();
+  });
 });

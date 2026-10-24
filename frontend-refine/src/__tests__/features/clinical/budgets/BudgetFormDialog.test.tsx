@@ -8,6 +8,10 @@ const { createMutate, procedures } = vi.hoisted(() => ({
   procedures: { value: [] as unknown[] },
 }));
 
+vi.mock("@/features/identity/modules/hooks/useIsDentalClinic", () => ({
+  useIsDentalClinic: () => true,
+}));
+
 vi.mock("@/features/clinical/procedures/hooks/useProcedures", () => ({
   useProcedures: () => ({ data: procedures.value }),
 }));
