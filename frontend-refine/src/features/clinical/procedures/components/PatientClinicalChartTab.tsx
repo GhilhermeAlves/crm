@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { BudgetDetailsDialog } from "@/features/clinical/budgets/components/BudgetDetailsDialog";
+import { BudgetFormDialog } from "@/features/clinical/budgets/components/BudgetFormDialog";
 import { useProcedures } from "../hooks/useProcedures";
 import type { Dentition, PatientProcedureResponse } from "../types/procedure.types";
 import { toothStates } from "../utils/teeth";
@@ -28,6 +30,8 @@ export function PatientClinicalChartTab({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<PatientProcedureResponse | null>(null);
   const [completing, setCompleting] = useState<PatientProcedureResponse | null>(null);
+  const [budgeting, setBudgeting] = useState<string | null>(null);
+  const [viewingBudget, setViewingBudget] = useState<string | null>(null);
   const summary = useMemo(() => toothStates(procedures, dentition), [procedures, dentition]);
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
@@ -75,6 +79,8 @@ export function PatientClinicalChartTab({
           setDrawerOpen(true);
         }}
         onComplete={setCompleting}
+        onBudget={(procedure) => setBudgeting(procedure.id)}
+        onViewBudget={setViewingBudget}
         canEdit={canEdit}
       />
       <ProcedureDrawer
@@ -85,6 +91,19 @@ export function PatientClinicalChartTab({
         procedure={editing}
         initialTooth={initialTooth}
         initialDentition={dentition}
+      />
+      <BudgetFormDialog
+        companyId={companyId}
+        contactId={contactId}
+        open={budgeting != null}
+        onOpenChange={(open) => !open && setBudgeting(null)}
+        initialProcedureId={budgeting}
+      />
+      <BudgetDetailsDialog
+        companyId={companyId}
+        contactId={contactId}
+        budgetId={viewingBudget}
+        onOpenChange={(open) => !open && setViewingBudget(null)}
       />
       <CompleteProcedureDialog
         companyId={companyId}

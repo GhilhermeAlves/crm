@@ -14,6 +14,18 @@ export function useCatalog(companyId: string | null, filters: CatalogFilters) {
   });
 }
 
+/** Catálogo inteiro (todas as páginas), para listas de seleção. */
+export function useAllCatalog(
+  companyId: string | null,
+  filters: Omit<CatalogFilters, "page" | "pageSize">,
+) {
+  return useQuery({
+    queryKey: ["catalog", companyId, "all", filters],
+    queryFn: () => CatalogService.listAll(companyId as string, filters),
+    enabled: !!companyId,
+  });
+}
+
 export function useCreateCatalogItem(companyId: string | null) {
   const { onSuccess, onError } = useMutationDefaults();
   return useMutation({

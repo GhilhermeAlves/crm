@@ -13,7 +13,7 @@ describe("Odontogram", () => {
       <Odontogram dentition="PERMANENT" summary={summary} selected={[]} onToothClick={onClick} />,
     );
     const tooth = screen.getByRole("button", { name: "Dente 11, A realizar" });
-    expect(tooth.querySelector(".fill-destructive")).toBeTruthy();
+    expect(tooth.querySelector(".fill-amber-400")).toBeTruthy();
     fireEvent.click(tooth);
     expect(onClick).toHaveBeenCalledWith(11);
     expect(screen.getByRole("button", { name: "Dente 48" })).toBeTruthy();
@@ -58,6 +58,6 @@ describe("Odontogram — dente inteiro", () => {
       <Odontogram dentition="PERMANENT" summary={summary} selected={[]} onToothClick={vi.fn()} />,
     );
     const tooth = screen.getByRole("button", { name: "Dente 36, Realizado" });
-    expect(tooth.querySelectorAll(".fill-primary").length).toBe(2);
+    expect(tooth.querySelectorAll(".fill-emerald-500").length).toBe(2);
   });
 });

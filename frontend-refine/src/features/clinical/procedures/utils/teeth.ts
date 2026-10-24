@@ -29,10 +29,25 @@ export const DENTITION_LABELS: Record<Dentition, string> = {
   DECIDUOUS: "Decídua",
 };
 
+/** Cores por estado (referência Capim): amarelo a realizar, verde realizado, azul pré-existente. */
 export const STATE_FILL: Record<ProcedureState, string> = {
-  PLANNED: "fill-destructive",
-  DONE: "fill-primary",
-  PRE_EXISTING: "fill-muted-foreground",
+  PLANNED: "fill-amber-400",
+  DONE: "fill-emerald-500",
+  PRE_EXISTING: "fill-sky-500",
+};
+
+/** Texto do número do dente conforme o estado. */
+export const STATE_TEXT: Record<ProcedureState, string> = {
+  PLANNED: "text-amber-600 dark:text-amber-400",
+  DONE: "text-emerald-600 dark:text-emerald-400",
+  PRE_EXISTING: "text-sky-600 dark:text-sky-400",
+};
+
+/** Pílula de estado usada nas listas. */
+export const STATE_PILL: Record<ProcedureState, string> = {
+  PLANNED: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  DONE: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
+  PRE_EXISTING: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300",
 };
 
 const PRIORITY: ProcedureState[] = ["PLANNED", "DONE", "PRE_EXISTING"];

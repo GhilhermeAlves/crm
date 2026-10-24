@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -18,7 +20,7 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
-import { useCatalog } from "@/features/masterdata/catalog/hooks/useCatalog";
+import { useAllCatalog } from "@/features/masterdata/catalog/hooks/useCatalog";
 import { useCreateProcedure, useUpdateProcedure } from "../hooks/useProcedures";
 import type {
   Dentition,
@@ -59,7 +61,7 @@ export function ProcedureDrawer({
 }: Props) {
   const uid = useId();
   const { can } = useAuthorization();
-  const { data: catalog } = useCatalog(companyId, { type: "SERVICE", active: true, pageSize: 200 });
+  const { data: catalog } = useAllCatalog(companyId, { type: "SERVICE", active: true });
   const { data: members } = useMembers(companyId);
   const create = useCreateProcedure(companyId, contactId);
   const update = useUpdateProcedure(companyId, contactId);
@@ -99,7 +101,7 @@ export function ProcedureDrawer({
   const canFinance = can("finance:create");
   // Procedimento de orçamento aprovado já é cobrado pelo orçamento.
   const budgetApproved = procedure?.budget?.status === "APPROVED";
-  const services = catalog?.content ?? [];
+  const services = catalog ?? [];
   const isPending = create.isPending || update.isPending;
 
   const chooseService = (id: string) => {
@@ -383,9 +385,10 @@ type ToothPickerProps = {
   onToggle: (tooth: number) => void;
 };
 
-/** Seletor de dentes em toggle, por quadrante (vista do profissional, FDI). */
+/** Dropdown com os números dos dentes em toggle, por quadrante (vista do profissional, FDI). */
 function ToothPicker({ dentition, selected, disabled, onToggle }: ToothPickerProps) {
   const [upperRight, upperLeft, lowerLeft, lowerRight] = QUADRANTS[dentition];
+  const sorted = [...selected].sort((a, b) => a - b);
   const group = (teeth: number[], className: string) => (
     <div className={`flex gap-1 ${className}`}>
       {teeth.map((tooth) => {
@@ -409,13 +412,44 @@ function ToothPicker({ dentition, selected, disabled, onToggle }: ToothPickerPro
     </div>
   );
   return (
-    <div className="overflow-x-auto">
-      <div className="mx-auto grid w-max grid-cols-2 gap-x-2 gap-y-2">
-        {group(upperRight, "justify-end border-b border-r pb-2 pr-2")}
-        {group(upperLeft, "border-b pb-2")}
-        {group(lowerRight.slice().reverse(), "justify-end border-r pr-2")}
-        {group(lowerLeft, "")}
-      </div>
-    </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled}
+          aria-label="Selecionar dentes"
+          className="h-auto min-h-10 w-full justify-between gap-2 font-normal"
+        >
+          {sorted.length === 0 ? (
+            <span className="text-muted-foreground">Boca toda (selecione os dentes)</span>
+          ) : (
+            <span className="flex flex-wrap gap-1">
+              {sorted.map((tooth) => (
+                <span
+                  key={tooth}
+                  className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary"
+                >
+                  {tooth}
+                </span>
+              ))}
+            </span>
+          )}
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto p-3">
+        <div className="mb-2 flex justify-between text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span>Direito</span>
+          <span>Esquerdo</span>
+        </div>
+        <div className="grid w-max grid-cols-2 gap-x-2 gap-y-2">
+          {group(upperRight, "justify-end border-b border-r pb-2 pr-2")}
+          {group(upperLeft, "border-b pb-2")}
+          {group(lowerRight.slice().reverse(), "justify-end border-r pr-2")}
+          {group(lowerLeft, "")}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
