@@ -52,4 +52,17 @@ describe("BudgetPrintView", () => {
     expect(screen.queryByText("Desconto")).toBeNull();
     expect(screen.queryByText("Retorno em 30 dias")).toBeNull();
   });
+
+  it("fora da odontologia não imprime a coluna de dentes", () => {
+    render(
+      <BudgetPrintView
+        budget={budget}
+        blocks={ALL_BLOCKS}
+        patientName="Maria Silva"
+        showTeeth={false}
+      />,
+    );
+    expect(screen.queryByText("Dentes")).toBeNull();
+    expect(screen.getByText("Profissional")).toBeTruthy();
+  });
 });

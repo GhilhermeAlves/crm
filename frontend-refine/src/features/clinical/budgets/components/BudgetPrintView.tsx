@@ -9,6 +9,8 @@ type Props = {
   budget: BudgetDetail;
   blocks: BudgetBlock[];
   patientName: string;
+  /** Coluna de dentes: só em clínicas de odontologia. */
+  showTeeth?: boolean;
 };
 
 const formatDay = (iso: string) => {
@@ -16,7 +18,7 @@ const formatDay = (iso: string) => {
   return `${day}/${month}/${year}`;
 };
 
-export function BudgetPrintView({ budget, blocks, patientName }: Props) {
+export function BudgetPrintView({ budget, blocks, patientName, showTeeth = true }: Props) {
   const has = (b: BudgetBlock) => blocks.includes(b);
   const showPrices = has("procedures");
   const showDentists = has("dentists");
@@ -35,8 +37,8 @@ export function BudgetPrintView({ budget, blocks, patientName }: Props) {
         <thead>
           <tr className="border-b text-left">
             <th className="py-2">Procedimento</th>
-            <th className="py-2">Dentes</th>
-            {showDentists && <th className="py-2">Dentista</th>}
+            {showTeeth && <th className="py-2">Dentes</th>}
+            {showDentists && <th className="py-2">{showTeeth ? "Dentista" : "Profissional"}</th>}
             {showPrices && <th className="py-2 text-right">Valor</th>}
           </tr>
         </thead>
@@ -44,7 +46,7 @@ export function BudgetPrintView({ budget, blocks, patientName }: Props) {
           {budget.items.map((item) => (
             <tr key={item.procedureId} className="border-b">
               <td className="py-2">{item.name}</td>
-              <td className="py-2">{formatTeeth(item.teeth)}</td>
+              {showTeeth && <td className="py-2">{formatTeeth(item.teeth)}</td>}
               {showDentists && <td className="py-2">{item.professionalName ?? "—"}</td>}
               {showPrices && <td className="py-2 text-right">{centsToBRL(item.priceCents)}</td>}
             </tr>

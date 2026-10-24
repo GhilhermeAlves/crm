@@ -179,4 +179,20 @@ describe("ProcedureDrawer", () => {
     expect(screen.getByRole("button", { name: "Dente 85" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Dente 18" })).toBeNull();
   });
+
+  it("fora da odontologia não mostra a seção de dentes", () => {
+    render(
+      <ProcedureDrawer
+        companyId="co1"
+        contactId="c1"
+        open
+        onOpenChange={vi.fn()}
+        procedure={null}
+        showTeeth={false}
+      />,
+    );
+    expect(screen.queryByText("Dentes")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Selecionar dentes" })).toBeNull();
+    expect(screen.getByText("Procedimentos")).toBeTruthy();
+  });
 });

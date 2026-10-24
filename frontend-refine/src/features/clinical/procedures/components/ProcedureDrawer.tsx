@@ -42,6 +42,8 @@ type Props = {
   /** Dente clicado no odontograma: abre "Novo procedimento" com ele já marcado. */
   initialTooth?: number | null;
   initialDentition?: Dentition;
+  /** Seção de dentes e faces: só em clínicas de odontologia. */
+  showTeeth?: boolean;
 };
 
 const NO_PROFESSIONAL = "none";
@@ -58,6 +60,7 @@ export function ProcedureDrawer({
   procedure,
   initialTooth,
   initialDentition,
+  showTeeth = true,
 }: Props) {
   const uid = useId();
   const { can } = useAuthorization();
@@ -262,47 +265,49 @@ export function ProcedureDrawer({
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label>Dentes</Label>
-            <div className="flex gap-2">
-              {(Object.keys(DENTITION_LABELS) as Dentition[]).map((value) => (
-                <Button
-                  key={value}
-                  type="button"
-                  size="sm"
-                  variant={value === dentition ? "default" : "outline"}
-                  disabled={locked}
-                  onClick={() => changeDentition(value)}
-                >
-                  {DENTITION_LABELS[value]}
-                </Button>
-              ))}
-            </div>
-            <ToothPicker
-              dentition={dentition}
-              selected={teeth.map((t) => t.tooth)}
-              disabled={locked}
-              onToggle={toggleTooth}
-            />
-            {teeth.map(({ tooth, faces }) => (
-              <div key={tooth} className="flex flex-wrap items-center gap-1">
-                <span className="w-16 text-sm font-medium">Dente {tooth}</span>
-                {FACES.map((face) => (
+          {showTeeth && (
+            <div className="space-y-2">
+              <Label>Dentes</Label>
+              <div className="flex gap-2">
+                {(Object.keys(DENTITION_LABELS) as Dentition[]).map((value) => (
                   <Button
-                    key={face}
+                    key={value}
                     type="button"
                     size="sm"
-                    variant={faces.includes(face) ? "default" : "outline"}
-                    aria-label={`Face ${face} do dente ${tooth}`}
+                    variant={value === dentition ? "default" : "outline"}
                     disabled={locked}
-                    onClick={() => toggleFace(tooth, face)}
+                    onClick={() => changeDentition(value)}
                   >
-                    {face}
+                    {DENTITION_LABELS[value]}
                   </Button>
                 ))}
               </div>
-            ))}
-          </div>
+              <ToothPicker
+                dentition={dentition}
+                selected={teeth.map((t) => t.tooth)}
+                disabled={locked}
+                onToggle={toggleTooth}
+              />
+              {teeth.map(({ tooth, faces }) => (
+                <div key={tooth} className="flex flex-wrap items-center gap-1">
+                  <span className="w-16 text-sm font-medium">Dente {tooth}</span>
+                  {FACES.map((face) => (
+                    <Button
+                      key={face}
+                      type="button"
+                      size="sm"
+                      variant={faces.includes(face) ? "default" : "outline"}
+                      aria-label={`Face ${face} do dente ${tooth}`}
+                      disabled={locked}
+                      onClick={() => toggleFace(tooth, face)}
+                    >
+                      {face}
+                    </Button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor={`${uid}-professional`}>Profissional</Label>

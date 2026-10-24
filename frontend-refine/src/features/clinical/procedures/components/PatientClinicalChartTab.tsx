@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { useIsDentalClinic } from "@/features/identity/modules/hooks/useIsDentalClinic";
 import { BudgetDetailsDialog } from "@/features/clinical/budgets/components/BudgetDetailsDialog";
 import { BudgetFormDialog } from "@/features/clinical/budgets/components/BudgetFormDialog";
 import { useProcedures } from "../hooks/useProcedures";
@@ -24,6 +25,8 @@ export function PatientClinicalChartTab({
 }) {
   const { can } = useAuthorization();
   const canEdit = can("contact:update");
+  // Odontograma, dentes e faces só para clínicas de odontologia.
+  const dental = useIsDentalClinic();
   const { data: procedures = [], isLoading } = useProcedures(companyId, contactId);
   const [dentition, setDentition] = useState<Dentition>("PERMANENT");
   const [initialTooth, setInitialTooth] = useState<number | null>(null);
@@ -40,7 +43,7 @@ export function PatientClinicalChartTab({
     <div className="space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Odontograma</CardTitle>
+          <CardTitle className="text-base">{dental ? "Odontograma" : "Procedimentos"}</CardTitle>
           {canEdit && (
             <Button
               size="sm"
@@ -54,20 +57,22 @@ export function PatientClinicalChartTab({
             </Button>
           )}
         </CardHeader>
-        <CardContent>
-          <Odontogram
-            dentition={dentition}
-            onDentitionChange={setDentition}
-            summary={summary}
-            selected={[]}
-            onToothClick={(tooth) => {
-              if (!canEdit) return;
-              setEditing(null);
-              setInitialTooth(tooth);
-              setDrawerOpen(true);
-            }}
-          />
-        </CardContent>
+        {dental && (
+          <CardContent>
+            <Odontogram
+              dentition={dentition}
+              onDentitionChange={setDentition}
+              summary={summary}
+              selected={[]}
+              onToothClick={(tooth) => {
+                if (!canEdit) return;
+                setEditing(null);
+                setInitialTooth(tooth);
+                setDrawerOpen(true);
+              }}
+            />
+          </CardContent>
+        )}
       </Card>
       <ProcedureList
         companyId={companyId}
@@ -82,6 +87,7 @@ export function PatientClinicalChartTab({
         onBudget={(procedure) => setBudgeting(procedure.id)}
         onViewBudget={setViewingBudget}
         canEdit={canEdit}
+        showTeeth={dental}
       />
       <ProcedureDrawer
         companyId={companyId}
@@ -91,6 +97,7 @@ export function PatientClinicalChartTab({
         procedure={editing}
         initialTooth={initialTooth}
         initialDentition={dentition}
+        showTeeth={dental}
       />
       <BudgetFormDialog
         companyId={companyId}

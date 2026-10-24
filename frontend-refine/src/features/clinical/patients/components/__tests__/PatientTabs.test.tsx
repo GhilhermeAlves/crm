@@ -84,4 +84,21 @@ describe("PatientTabs", () => {
     expect(screen.getByText("Arquivos").closest("a")?.getAttribute("aria-current")).toBe("page");
     expect(screen.getByText("Consultas").closest("a")?.getAttribute("aria-current")).toBeNull();
   });
+
+  it("names the procedures tab by segment", () => {
+    pathState.value = "/patients/c1";
+    permsState.value = ["contact:read"];
+
+    segmentState.value = "DENTAL";
+    const { unmount } = render(<PatientTabs contactId="c1" />);
+    expect(screen.getByText("Ficha clínica")).toBeTruthy();
+    unmount();
+
+    segmentState.value = "OCCUPATIONAL_SAFETY";
+    render(<PatientTabs contactId="c1" />);
+    expect(screen.queryByText("Ficha clínica")).toBeNull();
+    expect(screen.getByText("Procedimentos").closest("a")?.getAttribute("href")).toBe(
+      "/patients/c1/ficha-clinica",
+    );
+  });
 });

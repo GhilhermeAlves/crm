@@ -4,8 +4,14 @@ import { PatientClinicalChartTab } from "@/features/clinical/procedures/componen
 import type { PatientProcedureResponse } from "@/features/clinical/procedures/types/procedure.types";
 
 const can = vi.hoisted(() => ({ value: (() => true) as (permission: string) => boolean }));
+const dental = vi.hoisted(() => ({ value: true }));
 const drawer = vi.hoisted(() => ({
-  props: null as null | { open: boolean; initialTooth?: number | null; initialDentition?: string },
+  props: null as null | {
+    open: boolean;
+    initialTooth?: number | null;
+    initialDentition?: string;
+    showTeeth?: boolean;
+  },
 }));
 
 function makeProcedure(
@@ -45,6 +51,10 @@ vi.mock("@/features/clinical/procedures/hooks/useProcedures", () => ({
   useCompleteProcedure: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+vi.mock("@/features/identity/modules/hooks/useIsDentalClinic", () => ({
+  useIsDentalClinic: () => dental.value,
+}));
+
 vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
   useAuthorization: () => ({ can: (permission: string) => can.value(permission) }),
 }));
@@ -54,6 +64,7 @@ vi.mock("@/features/clinical/procedures/components/ProcedureDrawer", () => ({
     open: boolean;
     initialTooth?: number | null;
     initialDentition?: string;
+    showTeeth?: boolean;
   }) => {
     drawer.props = props;
     return null;
@@ -75,6 +86,7 @@ vi.mock("@/features/clinical/procedures/components/CompleteProcedureDialog", () 
 describe("PatientClinicalChartTab", () => {
   beforeEach(() => {
     can.value = () => true;
+    dental.value = true;
     drawer.props = null;
   });
 
@@ -101,5 +113,15 @@ describe("PatientClinicalChartTab", () => {
     can.value = () => false;
     render(<PatientClinicalChartTab companyId="co1" contactId="c1" />);
     expect(screen.queryByText("+ Novo procedimento")).toBeNull();
+  });
+
+  it("fora da odontologia mostra só os procedimentos, sem odontograma nem dentes", () => {
+    dental.value = false;
+    render(<PatientClinicalChartTab companyId="co1" contactId="c1" />);
+    expect(screen.getByText("Procedimentos")).toBeTruthy();
+    expect(screen.queryByText("Odontograma")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Dente 11/ })).toBeNull();
+    expect(screen.queryByText("Dente")).toBeNull();
+    expect(drawer.props?.showTeeth).toBe(false);
   });
 });
