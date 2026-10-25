@@ -38,6 +38,8 @@ export function mapCreateTenantRequest(data: CreateTenantRequest) {
     maxContacts: data.maxContacts,
     logoUrl: data.logoUrl ?? null,
     notes: data.notes ?? "",
+    ...(data.segment !== undefined && { segment: data.segment }),
+    ...(data.enabledModules !== undefined && { enabledModules: data.enabledModules }),
   };
 }
 
@@ -70,6 +72,8 @@ export function mapUpdateTenantRequest(data: UpdateTenantRequest) {
     ...(data.maxContacts !== undefined && { maxContacts: data.maxContacts }),
     ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl }),
     ...(data.notes !== undefined && { notes: data.notes }),
+    ...(data.segment !== undefined && { segment: data.segment }),
+    ...(data.enabledModules !== undefined && { enabledModules: data.enabledModules }),
   };
 }
 

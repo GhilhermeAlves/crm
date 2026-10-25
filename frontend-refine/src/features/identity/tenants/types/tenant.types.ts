@@ -1,3 +1,7 @@
+import type {
+  CompanyModuleName,
+  CompanySegment,
+} from "@/features/identity/modules/types/modules.types";
 export type TenantStatus = "active" | "suspended" | "onboarding" | "inactive";
 
 export type TenantPlan = "starter" | "professional" | "business" | "enterprise";
@@ -35,7 +39,10 @@ export type Tenant = {
   updatedAt: string;
 };
 
-export type CreateTenantRequest = Omit<Tenant, "id" | "createdAt" | "updatedAt">;
+export type CreateTenantRequest = Omit<Tenant, "id" | "createdAt" | "updatedAt"> & {
+  segment?: CompanySegment;
+  enabledModules?: CompanyModuleName[];
+};
 
 export type UpdateTenantRequest = Partial<CreateTenantRequest>;
 

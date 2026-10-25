@@ -7,7 +7,7 @@ import type { NavGroup } from "@/components/layout/navigation";
 let pathname = "/crm";
 vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
-  useAuth: () => ({ permissions: [] }),
+  useAuth: () => ({ permissions: [], roles: [] }),
 }));
 
 const modulesState = vi.hoisted(() => ({ enabled: null as string[] | null }));

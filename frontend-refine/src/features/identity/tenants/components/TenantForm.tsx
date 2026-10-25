@@ -12,6 +12,11 @@ import { AddressFields } from "./tenant-form/AddressFields";
 import { CompanyInfoFields } from "./tenant-form/CompanyInfoFields";
 import { SettingsFields } from "./tenant-form/SettingsFields";
 import { TenantFormSection } from "./tenant-form/TenantFormSection";
+import { ModulesFields } from "./tenant-form/ModulesFields";
+import {
+  SEGMENT_DEFAULT_MODULES,
+  type CompanyModuleName,
+} from "@/features/identity/modules/types/modules.types";
 
 type TenantFormProps = {
   initialData?: Tenant;
@@ -22,12 +27,14 @@ type TenantFormProps = {
 const STEPS = [
   { id: "company", title: "Dados da Empresa", description: "Informações básicas da empresa" },
   { id: "settings", title: "Configurações", description: "Plano, limites e status" },
+  { id: "modules", title: "Módulos", description: "Segmento e módulos habilitados" },
   { id: "address", title: "Endereço", description: "Endereço da empresa" },
 ] as const;
 
 const STEP_FIELDS: Record<(typeof STEPS)[number]["id"], string[]> = {
   company: ["legalName", "tradingName", "cnpj", "email", "phone"],
   settings: ["status", "plan", "maxUsers", "maxStorageMb", "maxContacts"],
+  modules: [],
   address: [
     "address.zipCode",
     "address.street",
@@ -43,7 +50,7 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
   const [currentStep, setCurrentStep] = useState(0);
   const lastStepIndex = STEPS.length - 1;
 
-  const { control, setValue, setError, clearErrors, handleSubmit, trigger } =
+  const { control, setValue, setError, clearErrors, handleSubmit, trigger, watch } =
     useForm<TenantFormData>({
       resolver: zodResolver(tenantSchema),
       defaultValues: {
@@ -72,10 +79,12 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
           state: initialData?.address?.state ?? "",
           country: initialData?.address?.country ?? "Brasil",
         },
+        segment: "GENERIC",
+        enabledModules: [...SEGMENT_DEFAULT_MODULES.GENERIC],
       },
     });
 
-  const handleFormSubmit = (data: TenantFormData) => {
+  const handleFormSubmit = ({ segment, enabledModules, ...data }: TenantFormData) => {
     onSubmit({
       ...data,
       logoUrl: data.logoUrl ?? null,
@@ -87,6 +96,11 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
         ...data.address,
         complement: data.address.complement ?? "",
       },
+      // Na edição, segmento e módulos ficam no cartão "Módulos" da página.
+      ...(!initialData && {
+        segment,
+        enabledModules: enabledModules as CompanyModuleName[],
+      }),
     });
   };
 
@@ -157,9 +171,22 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
         </TenantFormSection>
       )}
 
-      {/* Endereço */}
+      {/* Módulos */}
       {currentStep === 2 && (
         <TenantFormSection title={STEPS[2].title} description={STEPS[2].description}>
+          {initialData ? (
+            <p className="text-sm text-muted-foreground">
+              Segmento e módulos desta empresa são alterados no cartão &quot;Módulos&quot;, abaixo.
+            </p>
+          ) : (
+            <ModulesFields setValue={setValue} watch={watch} />
+          )}
+        </TenantFormSection>
+      )}
+
+      {/* Endereço */}
+      {currentStep === 3 && (
+        <TenantFormSection title={STEPS[3].title} description={STEPS[3].description}>
           <AddressFields
             control={control}
             setValue={setValue}

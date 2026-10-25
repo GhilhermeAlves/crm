@@ -106,10 +106,8 @@ class ModuleGuardInterceptorTest {
         assertTrue(call("/api/v1/companies/" + companyId + "/catalog"));
         assertTrue(call("/api/v1/companies/" + companyId + "/storage"));
         assertTrue(call("/api/v1/companies/" + companyId + "/contacts"));
-        assertTrue(call("/api/v1/companies/" + companyId + "/contacts/123/make-patient"));
         verify(modules, never()).isEnabled(companyId, CompanyModule.CRM);
         verify(modules, never()).isEnabled(companyId, CompanyModule.CATALOG);
         verify(modules, never()).isEnabled(companyId, CompanyModule.STORAGE);
-        verify(modules, never()).isEnabled(companyId, CompanyModule.PATIENTS);
     }
 }

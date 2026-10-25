@@ -96,3 +96,46 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
   ],
   OCCUPATIONAL_SAFETY: ["PATIENTS", "AGENDA", "FINANCE", "TASKS", "CATALOG", "REPORTS", "STORAGE"],
 };
+
+/** Todos os módulos, na ordem do enum do backend. */
+export const ALL_COMPANY_MODULES: CompanyModuleName[] = MODULE_OPTIONS.map(
+  (option) => option.value,
+);
+
+/** Módulos agrupados como no menu lateral (navigation.ts). */
+export const MODULE_GROUPS: { title: string; modules: CompanyModuleName[] }[] = [
+  { title: "Principal", modules: ["AGENDA", "PATIENTS", "FINANCE", "TASKS", "ASSISTANT"] },
+  { title: "Comercial", modules: ["CRM"] },
+  { title: "Atendimento", modules: ["INBOX", "FOLLOW_UPS", "CAMPAIGNS", "WORKFLOWS"] },
+  { title: "Operação", modules: ["CATALOG", "INVENTORY"] },
+  { title: "Análise", modules: ["REPORTS", "STORAGE"] },
+];
+
+/**
+ * Módulo de cada recurso de permissão (coluna permissions.resource). Recursos fora
+ * do mapa (contatos, empresa, perfis...) não dependem de módulo e aparecem sempre.
+ */
+export const PERMISSION_RESOURCE_MODULES: Record<string, CompanyModuleName> = {
+  lead: "CRM",
+  opportunity: "CRM",
+  pipeline: "CRM",
+  activity: "CRM",
+  patient: "PATIENTS",
+  appointment: "AGENDA",
+  finance: "FINANCE",
+  task: "TASKS",
+  assistant: "ASSISTANT",
+  suggestion: "ASSISTANT",
+  "agent-config": "ASSISTANT",
+  conversation: "INBOX",
+  omnichannel: "INBOX",
+  template: "INBOX",
+  followup: "FOLLOW_UPS",
+  "followup-sequence": "FOLLOW_UPS",
+  campaign: "CAMPAIGNS",
+  workflow: "WORKFLOWS",
+  catalog: "CATALOG",
+  inventory: "INVENTORY",
+  report: "REPORTS",
+  analytics: "REPORTS",
+};
