@@ -32,21 +32,21 @@ public class CompanyController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<CompanySummaryResponse>> list(@AuthenticationPrincipal CurrentUser principal) {
-        return ResponseEntity.ok(companyUseCase.listCompanies(principal.companyId(), isSuperAdmin(principal)));
+        return ResponseEntity.ok(companyUseCase.listCompanies(principal.companyId(), isCrmAdmin(principal)));
     }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CompanyResponse> getMe(@AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(companyUseCase.getCompanyById(
-                principal.companyId(), principal.companyId(), isSuperAdmin(principal)));
+                principal.companyId(), principal.companyId(), isCrmAdmin(principal)));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CompanyResponse> getById(@PathVariable UUID id,
                                                    @AuthenticationPrincipal CurrentUser principal) {
-        return ResponseEntity.ok(companyUseCase.getCompanyById(id, principal.companyId(), isSuperAdmin(principal)));
+        return ResponseEntity.ok(companyUseCase.getCompanyById(id, principal.companyId(), isCrmAdmin(principal)));
     }
 
     @GetMapping("/{id}/usage")
@@ -54,7 +54,7 @@ public class CompanyController {
     public ResponseEntity<CompanyUsageResponse> getUsage(@PathVariable UUID id,
                                                          @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(companyUseCase.getCompanyUsage(
-                id, principal.companyId(), isSuperAdmin(principal)));
+                id, principal.companyId(), isCrmAdmin(principal)));
     }
 
     @GetMapping("/{id}/settings")
@@ -82,7 +82,7 @@ public class CompanyController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('CRM_ADMIN')")
     public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CreateCompanyRequest request,
                                                   @AuthenticationPrincipal CurrentUser principal) {
         CompanyResponse response = companyUseCase.createCompany(request, principal.userId());
@@ -94,18 +94,18 @@ public class CompanyController {
     public ResponseEntity<CompanyResponse> update(@PathVariable UUID id,
                                                   @Valid @RequestBody UpdateCompanyRequest request,
                                                   @AuthenticationPrincipal CurrentUser principal) {
-        return ResponseEntity.ok(companyUseCase.updateCompany(id, request, principal.companyId(), isSuperAdmin(principal)));
+        return ResponseEntity.ok(companyUseCase.updateCompany(id, request, principal.companyId(), isCrmAdmin(principal)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('CRM_ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id,
                                        @AuthenticationPrincipal CurrentUser principal) {
-        companyUseCase.deleteCompany(id, principal.companyId(), isSuperAdmin(principal));
+        companyUseCase.deleteCompany(id, principal.companyId(), isCrmAdmin(principal));
         return ResponseEntity.noContent().build();
     }
 
-    private boolean isSuperAdmin(CurrentUser principal) {
-        return principal.roles().contains("SUPER_ADMIN");
+    private boolean isCrmAdmin(CurrentUser principal) {
+        return principal.isCrmAdmin();
     }
 }

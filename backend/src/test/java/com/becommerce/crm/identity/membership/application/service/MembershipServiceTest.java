@@ -176,6 +176,64 @@ class MembershipServiceTest {
     }
 
     @Test
+    void shouldRejectAssigningCrmAdminRole() {
+        Role crmAdminRole = Role.create("CRM_ADMIN", COMPANY_ID);
+        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY_ID))
+                .thenReturn(Optional.of(crmAdminRole));
+
+        assertThrows(CrmAccessDeniedException.class,
+                () -> service.updateMemberRole(COMPANY_ID, USER_ID, "CRM_ADMIN", COMPANY_ID, true));
+        verify(membershipRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldNotLetCompanyAdminChangeCrmAdminMember() {
+        Role crmAdminRole = Role.create("CRM_ADMIN", COMPANY_ID);
+        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), COMPANY_ID))
+                .thenReturn(Optional.of(role(RoleName.AGENT)));
+        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY_ID))
+                .thenReturn(Optional.of(crmAdminRole));
+        when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, crmAdminRole.getId())).thenReturn(true);
+
+        assertThrows(CrmAccessDeniedException.class,
+                () -> service.updateMemberRole(COMPANY_ID, USER_ID, "AGENT", COMPANY_ID, false));
+        verify(userRoleRepository, never()).deleteByUserIdAndCompanyId(any(), any());
+    }
+
+    @Test
+    void shouldNotLetCompanyAdminRemoveCrmAdminMember() {
+        Role crmAdminRole = Role.create("CRM_ADMIN", COMPANY_ID);
+        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY_ID))
+                .thenReturn(Optional.of(crmAdminRole));
+        when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, crmAdminRole.getId())).thenReturn(true);
+
+        assertThrows(CrmAccessDeniedException.class,
+                () -> service.removeMember(COMPANY_ID, USER_ID, COMPANY_ID, false));
+        verify(userRoleRepository, never()).deleteByUserIdAndCompanyId(any(), any());
+    }
+
+    @Test
+    void shouldKeepCrmAdminRoleWhenCompanyRoleChanges() {
+        Role agentRole = role(RoleName.AGENT);
+        Role crmAdminRole = Role.create("CRM_ADMIN", COMPANY_ID);
+        Membership membership = Membership.activate(USER_ID, COMPANY_ID, "MANAGER");
+        when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), COMPANY_ID))
+                .thenReturn(Optional.of(agentRole));
+        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY_ID))
+                .thenReturn(Optional.of(crmAdminRole));
+        when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, crmAdminRole.getId())).thenReturn(true);
+        when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, agentRole.getId())).thenReturn(false);
+        when(membershipRepository.findActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID))
+                .thenReturn(Optional.of(membership));
+        when(membershipRepository.save(any(Membership.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.updateMemberRole(COMPANY_ID, USER_ID, "AGENT", COMPANY_ID, true);
+
+        verify(userRoleRepository).deleteByUserIdAndCompanyId(USER_ID, COMPANY_ID);
+        verify(userRoleRepository, org.mockito.Mockito.times(2)).save(any());
+    }
+
+    @Test
     void shouldRejectInvalidRole() {
         assertThrows(RoleNotFoundException.class,
                 () -> service.updateMemberRole(COMPANY_ID, USER_ID, "NAO_EXISTE", COMPANY_ID, false));

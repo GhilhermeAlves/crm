@@ -42,8 +42,8 @@ export interface NavItem {
   permission?: string;
   /** Módulo da empresa exigido (V104); some do menu quando desligado. */
   module?: CompanyModuleName;
-  /** Visível só para o dono da plataforma (SUPER_ADMIN), nunca para as empresas clientes. */
-  superAdminOnly?: boolean;
+  /** Visível só para o dono da plataforma (CRM_ADMIN), nunca para as empresas clientes. */
+  crmAdminOnly?: boolean;
   children?: { label: string; href: string; permission?: string }[];
 }
 
@@ -297,7 +297,7 @@ export const NAVIGATION: NavGroup[] = [
     title: "Sistema",
     icon: ServerCog,
     items: [
-      { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, superAdminOnly: true },
+      { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, crmAdminOnly: true },
       {
         label: "Auditoria",
         href: ROUTES.AUDIT,

@@ -1,7 +1,7 @@
 package com.becommerce.crm.masterdata.company.domain;
 
 /**
- * Módulos que o SUPER_ADMIN liga/desliga por empresa (V104). Pacientes não
+ * Módulos que o CRM_ADMIN liga/desliga por empresa (V104). Pacientes não
  * depende de CRM: uma clínica pode desligar o comercial e manter a ficha.
  */
 public enum CompanyModule {

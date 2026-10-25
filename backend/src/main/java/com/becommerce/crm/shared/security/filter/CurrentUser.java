@@ -22,6 +22,13 @@ public record CurrentUser(
         String displayName,
         String membershipRole) {
 
+    /**
+     * Papel de plataforma, acima do SUPER_ADMIN: único que enxerga e administra
+     * todas as empresas. Não é criado por empresa nem concedível pela API —
+     * atribuído só por migration.
+     */
+    public static final String CRM_ADMIN_ROLE = "CRM_ADMIN";
+
     public CurrentUser {
         Objects.requireNonNull(userId, "userId");
         Objects.requireNonNull(roles, "roles");
@@ -34,6 +41,11 @@ public record CurrentUser(
         provider = provider == null || provider.isBlank() ? "keycloak" : provider;
         roles = List.copyOf(roles);
         permissions = List.copyOf(permissions);
+    }
+
+    /** True se o usuário pode cruzar empresas (papel {@link #CRM_ADMIN_ROLE}). */
+    public boolean isCrmAdmin() {
+        return roles.contains(CRM_ADMIN_ROLE);
     }
 
     public static CurrentUser fromKeycloak(UUID userId, String email, UUID companyId,

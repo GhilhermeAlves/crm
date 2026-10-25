@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Marca o parâmetro {@code UUID companyId} de um controller como o tenant da
  * request: o resolver central {@link CurrentCompanyIdArgumentResolver} extrai o
  * valor do path ({@code {companyId}}) e valida que a empresa pertence ao usuário
- * autenticado (com bypass para SUPER_ADMIN), à mesma semântica da checagem
+ * autenticado (com bypass para CRM_ADMIN), à mesma semântica da checagem
  * {@code requireCompanyAccess} que cada controller repetia.
  *
  * <p>{@code value()} é a mensagem pt-BR de negação exibida ao cliente

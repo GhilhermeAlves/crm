@@ -44,7 +44,7 @@ public class MembershipController {
             @Valid @RequestBody UpdateMemberRoleRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
         MemberResponse response = membershipUseCase.updateMemberRole(
-                id, userId, request.role(), principal.companyId(), isSuperAdmin(principal));
+                id, userId, request.role(), principal.companyId(), isCrmAdmin(principal));
         return ResponseEntity.ok(response);
     }
 
@@ -54,7 +54,7 @@ public class MembershipController {
             @PathVariable UUID id,
             @PathVariable UUID userId,
             @AuthenticationPrincipal CurrentUser principal) {
-        membershipUseCase.removeMember(id, userId, principal.companyId(), isSuperAdmin(principal));
+        membershipUseCase.removeMember(id, userId, principal.companyId(), isCrmAdmin(principal));
         return ResponseEntity.noContent().build();
     }
 
@@ -65,8 +65,8 @@ public class MembershipController {
         return ResponseEntity.ok(membershipUseCase.listMyMemberships(principal.userId()));
     }
 
-    private boolean isSuperAdmin(CurrentUser principal) {
-        return principal.roles().contains("SUPER_ADMIN");
+    private boolean isCrmAdmin(CurrentUser principal) {
+        return principal.isCrmAdmin();
     }
 
     /**

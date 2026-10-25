@@ -80,26 +80,26 @@ public class CompanyService implements CompanyUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public CompanyResponse getCompanyById(UUID id, UUID requesterCompanyId, boolean isSuperAdmin) {
+    public CompanyResponse getCompanyById(UUID id, UUID requesterCompanyId, boolean isCrmAdmin) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        assertCompanyAccess(id, requesterCompanyId, isSuperAdmin);
+        assertCompanyAccess(id, requesterCompanyId, isCrmAdmin);
         return mapToResponse(company);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public CompanyUsageResponse getCompanyUsage(UUID id, UUID requesterCompanyId, boolean isSuperAdmin) {
+    public CompanyUsageResponse getCompanyUsage(UUID id, UUID requesterCompanyId, boolean isCrmAdmin) {
         companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        assertCompanyAccess(id, requesterCompanyId, isSuperAdmin);
+        assertCompanyAccess(id, requesterCompanyId, isCrmAdmin);
         return quotaService.usage(id);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CompanySummaryResponse> listCompanies(UUID requesterCompanyId, boolean isSuperAdmin) {
-        if (isSuperAdmin) {
+    public List<CompanySummaryResponse> listCompanies(UUID requesterCompanyId, boolean isCrmAdmin) {
+        if (isCrmAdmin) {
             return companyRepository.findAll()
                     .stream()
                     .map(this::mapToSummary)
@@ -161,7 +161,7 @@ public class CompanyService implements CompanyUseCase {
         return mapToResponse(saved);
     }
 
-    /** Segmento e módulos escolhidos pelo SUPER_ADMIN; sem escolha, GENERIC com todos os módulos. */
+    /** Segmento e módulos escolhidos pelo CRM_ADMIN; sem escolha, GENERIC com todos os módulos. */
     private static CompanyModules initialModules(CreateCompanyRequest request) {
         CompanySegment segment = CompanySegment.GENERIC;
         if (request.segment() != null && !request.segment().isBlank()) {
@@ -225,10 +225,10 @@ public class CompanyService implements CompanyUseCase {
     @Override
     @Transactional
     public CompanyResponse updateCompany(UUID id, UpdateCompanyRequest request,
-                                         UUID requesterCompanyId, boolean isSuperAdmin) {
+                                         UUID requesterCompanyId, boolean isCrmAdmin) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        assertCompanyAccess(id, requesterCompanyId, isSuperAdmin);
+        assertCompanyAccess(id, requesterCompanyId, isCrmAdmin);
 
         String legalName = request.legalName() != null ? request.legalName() : company.getLegalName();
         String tradingName = request.tradingName() != null ? request.tradingName() : company.getTradingName();
@@ -267,7 +267,7 @@ public class CompanyService implements CompanyUseCase {
 
     @Override
     @Transactional
-    public void deleteCompany(UUID id, UUID requesterCompanyId, boolean isSuperAdmin) {
+    public void deleteCompany(UUID id, UUID requesterCompanyId, boolean isCrmAdmin) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
         // Salvaguarda: nunca permitir excluir a empresa em que o usuário está
@@ -276,7 +276,7 @@ public class CompanyService implements CompanyUseCase {
         if (requesterCompanyId != null && requesterCompanyId.equals(id)) {
             throw new CompanyDeletionForbiddenException(id);
         }
-        assertCompanyAccess(id, requesterCompanyId, isSuperAdmin);
+        assertCompanyAccess(id, requesterCompanyId, isCrmAdmin);
         companyRepository.deleteById(id);
         eventPublisher.publish(CompanyDeletedEvent.create(id, company.getLegalName(), company.getCnpj()));
     }
@@ -329,8 +329,8 @@ public class CompanyService implements CompanyUseCase {
         return mapToSettingsResponse(saved);
     }
 
-    private void assertCompanyAccess(UUID companyId, UUID requesterCompanyId, boolean isSuperAdmin) {
-        if (!isSuperAdmin && !companyId.equals(requesterCompanyId)) {
+    private void assertCompanyAccess(UUID companyId, UUID requesterCompanyId, boolean isCrmAdmin) {
+        if (!isCrmAdmin && !companyId.equals(requesterCompanyId)) {
             throw new CrmAccessDeniedException("Acesso a esta empresa não permitido.");
         }
     }

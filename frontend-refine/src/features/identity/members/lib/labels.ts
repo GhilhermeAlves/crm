@@ -3,6 +3,7 @@ export const INVITABLE_ROLES = ["ADMIN", "MANAGER", "AGENT", "VIEWER"] as const;
 
 /** Nome amigável dos papéis de membership. Chave = valor enviado ao backend. */
 export const ROLE_LABEL: Record<string, string> = {
+  CRM_ADMIN: "Administrador do CRM",
   SUPER_ADMIN: "Super administrador",
   OWNER: "Proprietário",
   ADMIN: "Administrador",

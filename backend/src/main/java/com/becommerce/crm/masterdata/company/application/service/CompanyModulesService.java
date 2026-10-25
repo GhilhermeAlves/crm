@@ -17,7 +17,7 @@ import java.util.UUID;
 
 /**
  * Segmento e módulos por empresa (V104). Qualquer usuário lê os módulos da
- * própria empresa (menu e telas); só o SUPER_ADMIN altera (garantido no
+ * própria empresa (menu e telas); só o CRM_ADMIN altera (garantido no
  * controller) ou lê de outra empresa.
  */
 @Service
@@ -30,8 +30,8 @@ public class CompanyModulesService {
     }
 
     @Transactional(readOnly = true)
-    public CompanyModulesResponse get(UUID companyId, UUID requesterCompanyId, boolean isSuperAdmin) {
-        if (!isSuperAdmin && !companyId.equals(requesterCompanyId)) {
+    public CompanyModulesResponse get(UUID companyId, UUID requesterCompanyId, boolean isCrmAdmin) {
+        if (!isCrmAdmin && !companyId.equals(requesterCompanyId)) {
             throw new CrmAccessDeniedException("Você só pode acessar os módulos da sua própria empresa.");
         }
         CompanyModules modules = repository.findByCompanyId(companyId)

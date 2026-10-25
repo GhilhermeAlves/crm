@@ -53,7 +53,7 @@ export function UserDetails({ user }: UserDetailsProps) {
   const [selectedRoleId, setSelectedRoleId] = useState("");
 
   const availableRoles = (rolesQuery.data ?? []).filter(
-    (r) => !userRolesQuery.data?.some((ur) => ur.id === r.id),
+    (r) => r.name !== "CRM_ADMIN" && !userRolesQuery.data?.some((ur) => ur.id === r.id),
   );
 
   const handleAssign = () => {

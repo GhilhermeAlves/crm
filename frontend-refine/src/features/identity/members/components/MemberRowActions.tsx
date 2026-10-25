@@ -201,7 +201,10 @@ function ChangeRoleDialog({
   const availableRoles = useMemo(() => {
     const base =
       roles.length > 0
-        ? roles.filter((role) => role.isActive).map((role) => role.name)
+        ? roles
+            // CRM_ADMIN é de plataforma: o backend recusa atribuí-lo pela API.
+            .filter((role) => role.isActive && role.name !== "CRM_ADMIN")
+            .map((role) => role.name)
         : [...FALLBACK_ROLES];
     if (member.role && !base.includes(member.role)) base.push(member.role);
     // Último ADMIN só pode continuar em papéis de nível administrador.
