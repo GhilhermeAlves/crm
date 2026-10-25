@@ -96,4 +96,18 @@ class ModuleGuardInterceptorTest {
         assertTrue(call("/api/v1/omnichannel/inbox"));
         verify(modules, never()).isEnabled(any(), any());
     }
+
+    @Test
+    void shouldNotBlockDashboardCatalogStorageAndContactsWhenModulesDisabled() {
+        login("ADMIN");
+        when(modules.isEnabled(any(), any())).thenReturn(false);
+
+        assertTrue(call("/api/v1/companies/" + companyId + "/dashboard/operational"));
+        assertTrue(call("/api/v1/companies/" + companyId + "/catalog"));
+        assertTrue(call("/api/v1/companies/" + companyId + "/storage"));
+        assertTrue(call("/api/v1/companies/" + companyId + "/contacts"));
+        verify(modules, never()).isEnabled(companyId, CompanyModule.CRM);
+        verify(modules, never()).isEnabled(companyId, CompanyModule.CATALOG);
+        verify(modules, never()).isEnabled(companyId, CompanyModule.STORAGE);
+    }
 }

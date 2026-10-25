@@ -2,6 +2,7 @@ package com.becommerce.crm.masterdata.company.application.service;
 
 import com.becommerce.crm.masterdata.company.application.dto.*;
 import com.becommerce.crm.masterdata.company.application.port.input.CompanyUseCase;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanyModulesRepository;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanySettingsRepository;
 import com.becommerce.crm.identity.application.port.output.EventPublisher;
@@ -25,7 +26,9 @@ import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -45,6 +48,7 @@ public class CompanyService implements CompanyUseCase {
     private final UserRepository userRepository;
     private final CompanyQuotaService quotaService;
     private final WorkflowTemplateSeeder workflowTemplateSeeder;
+    private final CompanyModulesRepository companyModulesRepository;
 
     public CompanyService(CompanyRepository companyRepository,
                           CompanySettingsRepository companySettingsRepository,
@@ -55,7 +59,8 @@ public class CompanyService implements CompanyUseCase {
                           UserRoleRepository userRoleRepository,
                           UserRepository userRepository,
                           CompanyQuotaService quotaService,
-                          WorkflowTemplateSeeder workflowTemplateSeeder) {
+                          WorkflowTemplateSeeder workflowTemplateSeeder,
+                          CompanyModulesRepository companyModulesRepository) {
         this.companyRepository = companyRepository;
         this.companySettingsRepository = companySettingsRepository;
         this.eventPublisher = eventPublisher;
@@ -66,6 +71,7 @@ public class CompanyService implements CompanyUseCase {
         this.userRepository = userRepository;
         this.quotaService = quotaService;
         this.workflowTemplateSeeder = workflowTemplateSeeder;
+        this.companyModulesRepository = companyModulesRepository;
     }
 
     @Override
@@ -141,7 +147,11 @@ public class CompanyService implements CompanyUseCase {
                 request.notes()
         );
 
+        CompanyModules modules = initialModules(request);
         Company saved = companyRepository.save(company);
+
+        companyModulesRepository.update(saved.getId(), modules);
+
         provisionNewCompany(saved.getId(), creatorUserId);
         eventPublisher.publish(CompanyCreatedEvent.create(saved));
         return mapToResponse(saved);
@@ -153,6 +163,22 @@ public class CompanyService implements CompanyUseCase {
      * atribuição do papel ADMIN e concessão de acesso ao CRM. Garante que uma
      * empresa nova NUNCA termine parcialmente provisionada (sem roles/membros).
      */
+    /** Segmento e módulos escolhidos pelo SUPER_ADMIN; sem escolha, GENERIC com todos os módulos. */
+    private static CompanyModules initialModules(CreateCompanyRequest request) {
+        CompanySegment segment = CompanySegment.GENERIC;
+        if (request.segment() != null && !request.segment().isBlank()) {
+            try {
+                segment = CompanySegment.valueOf(request.segment().trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                throw new InvalidCompanyModulesException("Segmento inválido: " + request.segment());
+            }
+        }
+        var modules = request.enabledModules() == null
+                ? EnumSet.allOf(CompanyModule.class)
+                : CompanyModules.parse(request.enabledModules());
+        return new CompanyModules(segment, modules);
+    }
+
     private void provisionNewCompany(UUID companyId, UUID creatorUserId) {
         try {
             TenantContext.setCompanyId(companyId);

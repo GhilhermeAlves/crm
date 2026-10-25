@@ -61,6 +61,8 @@ export const tenantSchema = z.object({
   logoUrl: z.string().nullable().optional().default(null),
   notes: z.string().max(2000).optional().default(""),
   address: tenantAddressSchema,
+  segment: z.enum(["GENERIC", "DENTAL", "OCCUPATIONAL_SAFETY", "TRICHOLOGY"]),
+  enabledModules: z.array(z.string()),
 });
 
 export type TenantFormData = z.infer<typeof tenantSchema>;

@@ -36,6 +36,7 @@ public class ModuleGuardInterceptor implements HandlerInterceptor {
             Map.entry("opportunities", CompanyModule.CRM),
             Map.entry("pipelines", CompanyModule.CRM),
             Map.entry("leads", CompanyModule.CRM),
+            Map.entry("activities", CompanyModule.CRM),
             Map.entry("appointments", CompanyModule.AGENDA),
             Map.entry("appointment-types", CompanyModule.AGENDA),
             Map.entry("blocks", CompanyModule.AGENDA),
@@ -43,7 +44,23 @@ public class ModuleGuardInterceptor implements HandlerInterceptor {
             Map.entry("chairs", CompanyModule.AGENDA),
             Map.entry("recalls", CompanyModule.AGENDA),
             Map.entry("holidays", CompanyModule.AGENDA),
-            Map.entry("finance", CompanyModule.FINANCE));
+            Map.entry("finance", CompanyModule.FINANCE),
+            Map.entry("tasks", CompanyModule.TASKS),
+            Map.entry("ai", CompanyModule.ASSISTANT),
+            Map.entry("assistant", CompanyModule.ASSISTANT),
+            Map.entry("omnichannel", CompanyModule.INBOX),
+            Map.entry("inbox", CompanyModule.INBOX),
+            Map.entry("templates", CompanyModule.INBOX),
+            Map.entry("follow-ups", CompanyModule.FOLLOW_UPS),
+            Map.entry("follow-up-sequences", CompanyModule.FOLLOW_UPS),
+            Map.entry("campaigns", CompanyModule.CAMPAIGNS),
+            Map.entry("workflows", CompanyModule.WORKFLOWS),
+            Map.entry("workflow-executions", CompanyModule.WORKFLOWS),
+            Map.entry("inventory", CompanyModule.INVENTORY),
+            Map.entry("analytics", CompanyModule.REPORTS),
+            Map.entry("reports", CompanyModule.REPORTS),
+            Map.entry("report-exports", CompanyModule.REPORTS),
+            Map.entry("report-suggestions", CompanyModule.REPORTS));
 
     private final CompanyModulesService modulesService;
 

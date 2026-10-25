@@ -27,6 +27,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useActiveCompanyModules } from "@/features/identity/modules/hooks/useCompanyModules";
+import { PERMISSION_RESOURCE_MODULES } from "@/features/identity/modules/types/modules.types";
 
 /**
  * Sprint 9 — Perfis de acesso & permissões da EMPRESA ATIVA.
@@ -37,6 +39,7 @@ import { cn } from "@/lib/utils";
  */
 export default function SettingsRolesPage() {
   const { can } = useAuthorization();
+  const { isEnabled } = useActiveCompanyModules();
 
   const rolesQuery = useRoles();
   const permissionsQuery = usePermissions();
@@ -59,6 +62,16 @@ export default function SettingsRolesPage() {
     [activeRole],
   );
 
+  // Permissões de módulos desligados para a empresa não aparecem para atribuição.
+  const filteredPermissions = useMemo(
+    () =>
+      (permissionsQuery.data ?? []).filter((permission) => {
+        const required = PERMISSION_RESOURCE_MODULES[permission.resource];
+        return !required || isEnabled(required);
+      }),
+    [permissionsQuery.data, isEnabled],
+  );
+
   function handleToggle(permissionId: string) {
     if (!activeRole) return;
     if (activePermissionIds.includes(permissionId)) {
@@ -73,9 +86,7 @@ export default function SettingsRolesPage() {
 
   function handleAssignAllUnselected() {
     if (!activeRole) return;
-    const missing = (permissionsQuery.data ?? []).filter(
-      (p) => !activePermissionIds.includes(p.id),
-    );
+    const missing = filteredPermissions.filter((p) => !activePermissionIds.includes(p.id));
     for (const permission of missing) {
       assignPermission.mutate({
         roleId: activeRole.id,
@@ -166,7 +177,7 @@ export default function SettingsRolesPage() {
                 <p className="text-muted-foreground">{activeRole.description || "Sem descrição"}</p>
               </div>
               <PermissionMatrix
-                permissions={permissionsQuery.data ?? []}
+                permissions={filteredPermissions}
                 selectedPermissionIds={activePermissionIds}
                 onToggle={handleToggle}
                 readOnly={!managePermissions}

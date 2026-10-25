@@ -12,5 +12,25 @@ public enum CompanyModule {
     /** Agenda, tipos de consulta, cadeiras, bloqueios, retornos e feriados. */
     AGENDA,
     /** Financeiro. */
-    FINANCE
+    FINANCE,
+    /** Tarefas. */
+    TASKS,
+    /** Léo · Assistente IA. */
+    ASSISTANT,
+    /** Inbox e Canais. */
+    INBOX,
+    /** Follow-ups. */
+    FOLLOW_UPS,
+    /** Campanhas. */
+    CAMPAIGNS,
+    /** Automações. */
+    WORKFLOWS,
+    /** Catálogo. */
+    CATALOG,
+    /** Estoque. */
+    INVENTORY,
+    /** Relatórios. */
+    REPORTS,
+    /** Arquivos. */
+    STORAGE
 }
