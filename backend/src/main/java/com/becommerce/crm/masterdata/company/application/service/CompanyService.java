@@ -11,6 +11,7 @@ import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
 import com.becommerce.crm.automation.workflow.application.service.WorkflowTemplateSeeder;
+import com.becommerce.crm.masterdata.catalog.application.service.CatalogTemplateSeeder;
 import com.becommerce.crm.masterdata.company.domain.*;
 import com.becommerce.crm.masterdata.company.domain.event.CompanyCreatedEvent;
 import com.becommerce.crm.masterdata.company.domain.event.CompanyDeletedEvent;
@@ -49,6 +50,7 @@ public class CompanyService implements CompanyUseCase {
     private final CompanyQuotaService quotaService;
     private final WorkflowTemplateSeeder workflowTemplateSeeder;
     private final CompanyModulesRepository companyModulesRepository;
+    private final CatalogTemplateSeeder catalogTemplateSeeder;
 
     public CompanyService(CompanyRepository companyRepository,
                           CompanySettingsRepository companySettingsRepository,
@@ -60,7 +62,8 @@ public class CompanyService implements CompanyUseCase {
                           UserRepository userRepository,
                           CompanyQuotaService quotaService,
                           WorkflowTemplateSeeder workflowTemplateSeeder,
-                          CompanyModulesRepository companyModulesRepository) {
+                          CompanyModulesRepository companyModulesRepository,
+                          CatalogTemplateSeeder catalogTemplateSeeder) {
         this.companyRepository = companyRepository;
         this.companySettingsRepository = companySettingsRepository;
         this.eventPublisher = eventPublisher;
@@ -72,6 +75,7 @@ public class CompanyService implements CompanyUseCase {
         this.quotaService = quotaService;
         this.workflowTemplateSeeder = workflowTemplateSeeder;
         this.companyModulesRepository = companyModulesRepository;
+        this.catalogTemplateSeeder = catalogTemplateSeeder;
     }
 
     @Override
@@ -152,17 +156,11 @@ public class CompanyService implements CompanyUseCase {
 
         companyModulesRepository.update(saved.getId(), modules);
 
-        provisionNewCompany(saved.getId(), creatorUserId);
+        provisionNewCompany(saved.getId(), creatorUserId, modules.segment());
         eventPublisher.publish(CompanyCreatedEvent.create(saved));
         return mapToResponse(saved);
     }
 
-    /**
-     * Provisionamento transacional de uma empresa recém-criada, espelhando o
-     * onboarding (8.3): seed dos papéis RBAC padrão, membership OWNER do criador,
-     * atribuição do papel ADMIN e concessão de acesso ao CRM. Garante que uma
-     * empresa nova NUNCA termine parcialmente provisionada (sem roles/membros).
-     */
     /** Segmento e módulos escolhidos pelo SUPER_ADMIN; sem escolha, GENERIC com todos os módulos. */
     private static CompanyModules initialModules(CreateCompanyRequest request) {
         CompanySegment segment = CompanySegment.GENERIC;
@@ -179,7 +177,13 @@ public class CompanyService implements CompanyUseCase {
         return new CompanyModules(segment, modules);
     }
 
-    private void provisionNewCompany(UUID companyId, UUID creatorUserId) {
+    /**
+     * Provisionamento transacional de uma empresa recém-criada, espelhando o
+     * onboarding (8.3): seed dos papéis RBAC padrão, membership OWNER do criador,
+     * atribuição do papel ADMIN e concessão de acesso ao CRM. Garante que uma
+     * empresa nova NUNCA termine parcialmente provisionada (sem roles/membros).
+     */
+    private void provisionNewCompany(UUID companyId, UUID creatorUserId, CompanySegment segment) {
         try {
             TenantContext.setCompanyId(companyId);
 
@@ -188,6 +192,9 @@ public class CompanyService implements CompanyUseCase {
 
             // 1b. Seed dos templates de workflow padrão (Sprint 14, Item 9).
             workflowTemplateSeeder.seedTemplates(companyId);
+
+            // 1c. Lista inicial de procedimentos do segmento no catálogo.
+            catalogTemplateSeeder.seedProcedures(companyId, segment);
 
             User creator = userRepository.findById(creatorUserId)
                     .orElseThrow(() -> new IllegalStateException(
