@@ -12,12 +12,12 @@ import java.util.List;
 import java.util.UUID;
 
 public interface CompanyUseCase {
-    CompanyResponse getCompanyById(UUID id, UUID requesterCompanyId, boolean isSuperAdmin);
-    CompanyUsageResponse getCompanyUsage(UUID id, UUID requesterCompanyId, boolean isSuperAdmin);
-    List<CompanySummaryResponse> listCompanies(UUID requesterCompanyId, boolean isSuperAdmin);
+    CompanyResponse getCompanyById(UUID id, UUID requesterCompanyId, boolean isCrmAdmin);
+    CompanyUsageResponse getCompanyUsage(UUID id, UUID requesterCompanyId, boolean isCrmAdmin);
+    List<CompanySummaryResponse> listCompanies(UUID requesterCompanyId, boolean isCrmAdmin);
     CompanyResponse createCompany(CreateCompanyRequest request, UUID creatorUserId);
-    CompanyResponse updateCompany(UUID id, UpdateCompanyRequest request, UUID requesterCompanyId, boolean isSuperAdmin);
-    void deleteCompany(UUID id, UUID requesterCompanyId, boolean isSuperAdmin);
+    CompanyResponse updateCompany(UUID id, UpdateCompanyRequest request, UUID requesterCompanyId, boolean isCrmAdmin);
+    void deleteCompany(UUID id, UUID requesterCompanyId, boolean isCrmAdmin);
     CompanySettingsResponse getCompanySettings(UUID companyId, UUID requesterCompanyId);
     CompanySettingsResponse updateCompanySettings(UUID companyId, UpdateCompanySettingsRequest request, UUID requesterCompanyId);
 }

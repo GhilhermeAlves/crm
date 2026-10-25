@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * Recusa com 403 ({@code MODULE_DISABLED}) as rotas de um módulo desligado para
  * a empresa (V104). Pacientes não exige CRM: {@code contacts} é armazenamento
  * compartilhado (inbox, agenda, IA) e por isso não é bloqueado; o comercial é
- * protegido pelas rotas de funil/oportunidades/leads. SUPER_ADMIN passa sempre.
+ * protegido pelas rotas de funil/oportunidades/leads. CRM_ADMIN passa sempre.
  */
 @Component
 public class ModuleGuardInterceptor implements HandlerInterceptor {
@@ -76,7 +76,7 @@ public class ModuleGuardInterceptor implements HandlerInterceptor {
             return true;
         }
         Optional<CompanyModule> required = requiredModule(matcher.group(2), matcher.group(3));
-        if (required.isEmpty() || isSuperAdmin()) {
+        if (required.isEmpty() || isCrmAdmin()) {
             return true;
         }
         UUID companyId;
@@ -100,9 +100,9 @@ public class ModuleGuardInterceptor implements HandlerInterceptor {
         return Optional.ofNullable(RESOURCE_MODULES.get(resource));
     }
 
-    private static boolean isSuperAdmin() {
+    private static boolean isCrmAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.getPrincipal() instanceof CurrentUser user
-                && user.roles().contains("SUPER_ADMIN");
+                && user.isCrmAdmin();
     }
 }

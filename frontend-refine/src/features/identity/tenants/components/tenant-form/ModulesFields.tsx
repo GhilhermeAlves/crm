@@ -28,7 +28,7 @@ type ModulesFieldsProps = {
 const MODULE_LABELS = new Map(MODULE_OPTIONS.map((option) => [option.value, option.label]));
 
 /**
- * Segmento e módulos na criação da empresa (só SUPER_ADMIN acessa /tenants).
+ * Segmento e módulos na criação da empresa (só CRM_ADMIN acessa /tenants).
  * Trocar o segmento marca a sugestão do segmento; depois cada caixa é livre.
  */
 export function ModulesFields({ setValue, watch }: ModulesFieldsProps) {

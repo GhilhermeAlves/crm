@@ -20,7 +20,7 @@ import org.springframework.web.servlet.HandlerMapping;
  * e centraliza a checagem de tenant da request: o valor do path é comparado ao
  * {@code companyId} do usuário autenticado {@link CurrentUser} (a mesma fonte que
  * o {@code TenantFilter} usa para popular o {@code TenantContext}), com bypass para
- * SUPER_ADMIN. Reproduz em um único lugar a antiga checagem
+ * CRM_ADMIN. Reproduz em um único lugar a antiga checagem
  * {@code requireCompanyAccess}, sem mudança de comportamento: 403
  * {@code CRM_ACCESS_DENIED} com a mensagem por recurso declarada na anotação
  * {@link CurrentCompanyId}.
@@ -49,8 +49,8 @@ public class CurrentCompanyIdArgumentResolver implements HandlerMethodArgumentRe
         if (!(authentication != null && authentication.getPrincipal() instanceof CurrentUser principal)) {
             throw new CrmAccessDeniedException(message);
         }
-        boolean superAdmin = principal.roles().contains("SUPER_ADMIN");
-        if (!superAdmin && !companyId.equals(principal.companyId())) {
+        boolean crmAdmin = principal.isCrmAdmin();
+        if (!crmAdmin && !companyId.equals(principal.companyId())) {
             throw new CrmAccessDeniedException(message);
         }
         return companyId;

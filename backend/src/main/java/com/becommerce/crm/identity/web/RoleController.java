@@ -56,6 +56,7 @@ public class RoleController {
             @Valid @RequestBody UpdateRoleRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
         requireCompanyAccess(id, principal);
+        requireNotPlatformRole(id, principal);
         return ResponseEntity.ok(roleUseCase.updateRole(id, request));
     }
 
@@ -65,6 +66,7 @@ public class RoleController {
             @PathVariable UUID id,
             @AuthenticationPrincipal CurrentUser principal) {
         requireCompanyAccess(id, principal);
+        requireNotPlatformRole(id, principal);
         roleUseCase.deleteRole(id);
         return ResponseEntity.noContent().build();
     }
@@ -76,6 +78,7 @@ public class RoleController {
             @Valid @RequestBody AssignPermissionRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
         requireCompanyAccess(roleId, principal);
+        requireNotPlatformRole(roleId, principal);
         roleUseCase.assignPermissionToRole(roleId, request.permissionId());
         return ResponseEntity.ok().build();
     }
@@ -87,6 +90,7 @@ public class RoleController {
             @PathVariable UUID permissionId,
             @AuthenticationPrincipal CurrentUser principal) {
         requireCompanyAccess(roleId, principal);
+        requireNotPlatformRole(roleId, principal);
         roleUseCase.removePermissionFromRole(roleId, permissionId.toString());
         return ResponseEntity.noContent().build();
     }
@@ -97,6 +101,10 @@ public class RoleController {
             @PathVariable UUID userId,
             @Valid @RequestBody AssignRoleRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
+        // CRM_ADMIN só é atribuído por migration — nunca pela API.
+        if (isPlatformRole(UUID.fromString(request.roleId()))) {
+            throw new CrmAccessDeniedException("O papel CRM_ADMIN não pode ser atribuído pela API.");
+        }
         roleUseCase.assignRoleToUser(userId, UUID.fromString(request.roleId()), principal.companyId());
         return ResponseEntity.ok().build();
     }
@@ -105,7 +113,9 @@ public class RoleController {
     @PreAuthorize("hasAuthority('role:assign')")
     public ResponseEntity<Void> removeRoleFromUser(
             @PathVariable UUID userId,
-            @PathVariable UUID roleId) {
+            @PathVariable UUID roleId,
+            @AuthenticationPrincipal CurrentUser principal) {
+        requireNotPlatformRole(roleId, principal);
         roleUseCase.removeRoleFromUser(userId, roleId);
         return ResponseEntity.noContent().build();
     }
@@ -118,9 +128,20 @@ public class RoleController {
         return ResponseEntity.ok(roleUseCase.getUserRoles(userId, principal.companyId()));
     }
 
+    /** Só o próprio CRM_ADMIN altera o papel de plataforma. */
+    private void requireNotPlatformRole(UUID roleId, CurrentUser principal) {
+        if (!principal.isCrmAdmin() && isPlatformRole(roleId)) {
+            throw new CrmAccessDeniedException("O papel CRM_ADMIN é exclusivo da plataforma.");
+        }
+    }
+
+    private boolean isPlatformRole(UUID roleId) {
+        return CurrentUser.CRM_ADMIN_ROLE.equals(roleUseCase.getRoleById(roleId).name());
+    }
+
     private void requireCompanyAccess(UUID roleId, CurrentUser principal) {
-        boolean superAdmin = principal.roles().contains("SUPER_ADMIN");
-        if (superAdmin) {
+        boolean crmAdmin = principal.isCrmAdmin();
+        if (crmAdmin) {
             return;
         }
         RoleResponse role = roleUseCase.getRoleById(roleId);

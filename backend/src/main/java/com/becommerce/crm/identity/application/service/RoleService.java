@@ -10,9 +10,11 @@ import com.becommerce.crm.identity.domain.Permission;
 import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.RolePermission;
 import com.becommerce.crm.identity.domain.UserRole;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.identity.domain.exception.DuplicateRoleException;
 import com.becommerce.crm.identity.domain.exception.PermissionNotFoundException;
 import com.becommerce.crm.identity.domain.exception.RoleNotFoundException;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -61,6 +63,9 @@ public class RoleService implements RoleUseCase {
     @Transactional
     public RoleResponse createRole(UUID companyId, CreateRoleRequest request) {
         String name = normalizeRoleName(request.name());
+        if (CurrentUser.CRM_ADMIN_ROLE.equals(name)) {
+            throw new CrmAccessDeniedException("O nome CRM_ADMIN é reservado à plataforma.");
+        }
         if (roleRepository.existsByNameAndCompanyId(name, companyId)) {
             throw new DuplicateRoleException("Já existe uma role com este nome: " + request.name());
         }
