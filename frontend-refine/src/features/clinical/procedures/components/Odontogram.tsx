@@ -21,7 +21,8 @@ type OdontogramProps = {
   showLegend?: boolean;
 };
 
-const OUTLINE = "stroke-slate-400 dark:stroke-slate-500";
+// Contorno lilás suave (crm-secondary-indigo do design system), como no modelo do odontograma.
+const OUTLINE = "stroke-crm-secondary-indigo/50 dark:stroke-crm-secondary-indigo/70";
 
 function ToothDrawing({
   tooth,
@@ -36,9 +37,9 @@ function ToothDrawing({
   // Procedimento sem faces (ex.: canal, extração) pinta o dente inteiro.
   const wholeTooth = summary && Object.keys(summary.faces).length === 0;
   const crownFill = wholeTooth ? STATE_FILL[summary.state] : "fill-white dark:fill-slate-200";
-  const rootFill = wholeTooth ? STATE_FILL[summary.state] : "fill-slate-100 dark:fill-slate-400";
+  const rootFill = wholeTooth ? STATE_FILL[summary.state] : "fill-white dark:fill-slate-200";
   return (
-    <svg viewBox="0 0 40 80" className="h-16 w-8 drop-shadow-sm" aria-hidden>
+    <svg viewBox="0 0 40 80" className="h-16 w-8" aria-hidden>
       <g transform={isUpper(tooth) ? undefined : "matrix(1 0 0 -1 0 80)"}>
         <path
           d={root}
@@ -51,13 +52,6 @@ function ToothDrawing({
           className={cn(OUTLINE, crownFill)}
           strokeWidth={1.2}
           strokeLinejoin="round"
-        />
-        {/* Brilho do esmalte */}
-        <path
-          d="M16 50 C15 56 15 62 16.5 67"
-          className="fill-none stroke-white/70"
-          strokeWidth={1.6}
-          strokeLinecap="round"
         />
       </g>
     </svg>
@@ -109,8 +103,10 @@ function Tooth({
   const number = (
     <span
       className={cn(
-        "text-[11px] font-semibold tabular-nums transition-colors",
-        summary ? STATE_TEXT[summary.state] : "text-muted-foreground group-hover:text-foreground",
+        "text-xs font-medium tabular-nums transition-colors",
+        summary
+          ? STATE_TEXT[summary.state]
+          : "text-crm-secondary-indigo/70 group-hover:text-crm-secondary-indigo",
       )}
     >
       {tooth}
@@ -132,15 +128,15 @@ function Tooth({
     >
       {upper ? (
         <>
-          {number}
           <ToothDrawing tooth={tooth} dentition={dentition} summary={summary} />
+          {number}
           <FaceDiagram tooth={tooth} summary={summary} />
         </>
       ) : (
         <>
           <FaceDiagram tooth={tooth} summary={summary} />
-          <ToothDrawing tooth={tooth} dentition={dentition} summary={summary} />
           {number}
+          <ToothDrawing tooth={tooth} dentition={dentition} summary={summary} />
         </>
       )}
     </button>
@@ -192,8 +188,8 @@ export function Odontogram({
           </div>
         </div>
       )}
-      <div className="overflow-x-auto rounded-xl bg-gradient-to-b from-muted/30 to-transparent p-3">
-        <div className="mx-auto grid w-max grid-cols-2 gap-x-3 gap-y-3">
+      <div className="overflow-x-auto rounded-xl bg-crm-surface-light p-4 dark:bg-muted/30">
+        <div className="mx-auto grid w-max grid-cols-2 gap-x-4 gap-y-6">
           <div className="flex justify-end border-b border-r border-dashed pb-3 pr-3">
             {row(upperRight)}
           </div>

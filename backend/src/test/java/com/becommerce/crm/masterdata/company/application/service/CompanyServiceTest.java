@@ -71,6 +71,9 @@ class CompanyServiceTest {
     private com.becommerce.crm.masterdata.company.application.port.output.CompanyModulesRepository companyModulesRepository;
 
     @Mock
+    private com.becommerce.crm.masterdata.catalog.application.service.CatalogTemplateSeeder catalogTemplateSeeder;
+
+    @Mock
     private TenantContext tenantContext;
 
     @InjectMocks
