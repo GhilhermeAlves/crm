@@ -155,6 +155,7 @@ export default function ServicesPage() {
       </section>
 
       <CatalogItemDialog
+        defaultType="SERVICE"
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         item={editingItem}
