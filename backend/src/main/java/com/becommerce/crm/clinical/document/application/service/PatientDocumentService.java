@@ -24,7 +24,9 @@ import com.becommerce.crm.masterdata.contact.application.port.out.ContactReposit
 import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
+import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +66,21 @@ public class PatientDocumentService implements PatientDocumentUseCase {
     private final UserRepository userRepository;
     private final PatientDocumentPdfRenderer pdfRenderer;
     private final TenantAuditRecorder auditor;
+
+
+    private PatientTimelineRecorder timeline;
+
+    /** Opcional: registra os eventos nas anotações do paciente. */
+    @Autowired(required = false)
+    public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
+        this.timeline = timeline;
+    }
+
+    private void note(UUID companyId, UUID contactId, String body, UUID actorId) {
+        if (timeline != null) {
+            timeline.record(companyId, contactId, body, actorId);
+        }
+    }
 
     public PatientDocumentService(PatientDocumentRepository documentRepository,
                                   ContactRepository contactRepository,
@@ -132,6 +149,9 @@ public class PatientDocumentService implements PatientDocumentUseCase {
                     request.professionalName(), request.professionalRegistry(), issuedBy);
             documentRepository.save(document);
 
+            note(companyId, contactId, "Documento emitido: " + document.getTitle()
+                    + " (" + document.getProfessionalName() + ")", issuedBy);
+
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
                     document.getId().toString(), "Documento emitido: " + document.getTitle() + ".",
                     issuedBy, null);
@@ -168,6 +188,8 @@ public class PatientDocumentService implements PatientDocumentUseCase {
                 throw new CrmAccessDeniedException("Só administradores podem excluir documentos emitidos.");
             }
             documentRepository.delete(document);
+
+            note(companyId, contactId, "Documento excluído: " + document.getTitle(), actorId);
 
             auditor.record(companyId, AuditAction.DELETE, AuditModule.CONTACTS, RESOURCE,
                     documentId.toString(), "Documento excluído.", actorId, null);

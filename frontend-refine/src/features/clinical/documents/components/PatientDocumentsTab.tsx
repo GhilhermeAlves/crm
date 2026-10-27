@@ -103,7 +103,7 @@ export function PatientDocumentsTab({
         title,
         body,
         professionalName,
-        professionalRegistry: professionalRegistry || null,
+        professionalRegistry: professionalRegistry.trim(),
       },
       {
         onSuccess: () => {
@@ -226,8 +226,12 @@ export function PatientDocumentsTab({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Registro (CRO)</Label>
+                <Label htmlFor="document-professional-registry">
+                  Registro profissional (CRO, CRM…) *
+                </Label>
                 <Input
+                  id="document-professional-registry"
+                  required
                   value={professionalRegistry}
                   onChange={(e) => setProfessionalRegistry(e.target.value)}
                 />
@@ -241,7 +245,11 @@ export function PatientDocumentsTab({
             <Button
               onClick={handleIssue}
               disabled={
-                issueMutation.isPending || !title.trim() || !body.trim() || !professionalName.trim()
+                issueMutation.isPending ||
+                !title.trim() ||
+                !body.trim() ||
+                !professionalName.trim() ||
+                !professionalRegistry.trim()
               }
             >
               Emitir

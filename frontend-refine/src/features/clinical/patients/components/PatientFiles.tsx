@@ -101,7 +101,17 @@ export function PatientFiles({ contact }: { contact: Contact }) {
             <tbody className="divide-y">
               {files.map((file) => (
                 <tr key={file.id}>
-                  <td className="max-w-[240px] truncate px-4 py-2 font-medium">{file.fileName}</td>
+                  <td className="max-w-[240px] truncate px-4 py-2 font-medium">
+                    <button
+                      type="button"
+                      className="max-w-full truncate text-left text-primary underline-offset-4 hover:underline disabled:opacity-60"
+                      title={`Baixar ${file.fileName}`}
+                      disabled={download.isPending}
+                      onClick={() => download.mutate(file)}
+                    >
+                      {file.fileName}
+                    </button>
+                  </td>
                   <td className="px-4 py-2 text-muted-foreground">{file.contentType}</td>
                   <td className="px-4 py-2 tabular-nums text-muted-foreground">
                     {formatBytes(file.sizeBytes)}

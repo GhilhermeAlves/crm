@@ -13,5 +13,5 @@ public record IssuePatientDocumentRequest(
         @NotBlank @Size(max = 160) String title,
         @NotBlank @Size(max = 20000) String body,
         @NotBlank @Size(max = 160) String professionalName,
-        @Size(max = 40) String professionalRegistry) {
+        @NotBlank @Size(max = 40) String professionalRegistry) {
 }

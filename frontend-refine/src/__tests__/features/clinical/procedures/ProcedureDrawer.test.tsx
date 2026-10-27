@@ -16,6 +16,7 @@ vi.mock("@/features/masterdata/catalog/hooks/useCatalog", () => ({
       { id: "s2", name: "Avaliação", category: "Clínica", price: null, active: true },
     ],
   }),
+  useCreateCatalogItem: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock("@/features/identity/members/hooks/useMembers", () => ({

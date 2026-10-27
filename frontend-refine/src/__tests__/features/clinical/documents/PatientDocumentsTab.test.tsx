@@ -64,6 +64,9 @@ describe("PatientDocumentsTab", () => {
     });
 
     fireEvent.change(textarea, { target: { value: "Paciente: Ana\nIbuprofeno 400mg" } });
+    fireEvent.change(screen.getByLabelText(/Registro profissional/), {
+      target: { value: "CRO-SP 12345" },
+    });
     fireEvent.click(screen.getByText("Emitir"));
 
     expect(issueMock).toHaveBeenCalledWith(
@@ -73,6 +76,7 @@ describe("PatientDocumentsTab", () => {
         title: "Receita",
         body: "Paciente: Ana\nIbuprofeno 400mg",
         professionalName: "Dra. Ana",
+        professionalRegistry: "CRO-SP 12345",
       }),
       expect.anything(),
     );

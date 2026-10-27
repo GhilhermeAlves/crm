@@ -16,8 +16,10 @@ import com.becommerce.crm.finance.transaction.domain.TransactionStatus;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionNotFoundException;
 import com.becommerce.crm.finance.transaction.domain.exception.FinancialTransactionValidationException;
+import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,30 @@ public class FinancialTransactionService {
 
     private final FinancialTransactionRepository repository;
     private final TenantAuditRecorder auditor;
+
+    private PatientTimelineRecorder timeline;
+
+    /** Opcional: registra os lançamentos do paciente nas anotações dele. */
+    @Autowired(required = false)
+    public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
+        this.timeline = timeline;
+    }
+
+    private void note(UUID companyId, FinancialTransaction transaction, String event, UUID actor) {
+        if (timeline == null || transaction.getContactId() == null) {
+            return;
+        }
+        String label = transaction.getType() == TransactionType.INCOME ? "Receita" : "Despesa";
+        timeline.record(companyId, transaction.getContactId(),
+                event + " — " + label + ": " + transaction.getDescription() + " ("
+                        + formatCents(transaction.getAmountCents()) + ")", actor);
+    }
+
+    private static String formatCents(long cents) {
+        java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(
+                java.util.Locale.forLanguageTag("pt-BR"));
+        return format.format(java.math.BigDecimal.valueOf(cents, 2));
+    }
 
     public FinancialTransactionService(FinancialTransactionRepository repository, TenantAuditRecorder auditor) {
         this.repository = repository;
@@ -111,6 +137,10 @@ public class FinancialTransactionService {
                     + (installments > 1 ? " (" + installments + " parcelas)" : "");
             auditor.record(companyId, AuditAction.CREATE, AuditModule.FINANCE, ENTITY, first.getId().toString(),
                     description, createdBy, Map.of("type", first.getType().name()));
+            note(companyId, first, installments > 1
+                    ? "Lançamento financeiro criado (" + installments + " parcelas)"
+                    : first.getPaidAt() != null ? "Pagamento registrado" : "Lançamento financeiro criado",
+                    createdBy);
             return toResponses(created);
         } finally {
             TenantContext.clear();
@@ -144,6 +174,7 @@ public class FinancialTransactionService {
             FinancialTransaction transaction = requireOwned(companyId, transactionId);
             transaction.pay(request.paidAt());
             FinancialTransaction saved = repository.save(transaction);
+            note(companyId, saved, "Pagamento registrado", actor);
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.FINANCE, ENTITY, saved.getId().toString(),
                     "Lançamento financeiro pago: " + saved.getDescription(), actor,
                     Map.of("paidAt", String.valueOf(saved.getPaidAt())));
@@ -160,6 +191,7 @@ public class FinancialTransactionService {
             FinancialTransaction transaction = requireOwned(companyId, transactionId);
             transaction.cancel();
             FinancialTransaction saved = repository.save(transaction);
+            note(companyId, saved, "Lançamento financeiro cancelado", actor);
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.FINANCE, ENTITY, saved.getId().toString(),
                     "Lançamento financeiro cancelado: " + saved.getDescription(), actor, null);
             return toResponse(saved);
@@ -174,6 +206,7 @@ public class FinancialTransactionService {
             TenantContext.setCompanyId(companyId);
             FinancialTransaction transaction = requireOwned(companyId, transactionId);
             repository.delete(transaction);
+            note(companyId, transaction, "Lançamento financeiro excluído", actor);
             auditor.record(companyId, AuditAction.DELETE, AuditModule.FINANCE, ENTITY, transactionId.toString(),
                     "Lançamento financeiro excluído: " + transaction.getDescription(), actor, null);
         } finally {

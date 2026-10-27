@@ -19,6 +19,7 @@ import { formatTeeth } from "@/features/clinical/procedures/utils/teeth";
 import { useIsDentalClinic } from "@/features/identity/modules/hooks/useIsDentalClinic";
 import { centsToBRL } from "@/features/finance/utils/money";
 import { useCreateBudget, useUpdateBudget } from "../hooks/useBudgets";
+import { BudgetTitleCombobox } from "./BudgetTitleCombobox";
 import type { BudgetDetail } from "../types/budget.types";
 
 type Props = {
@@ -132,7 +133,12 @@ export function BudgetFormDialog({
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor={`${uid}-title`}>Título</Label>
-            <Input id={`${uid}-title`} value={title} onChange={(e) => setTitle(e.target.value)} />
+            <BudgetTitleCombobox
+              id={`${uid}-title`}
+              companyId={companyId}
+              value={title}
+              onChange={setTitle}
+            />
           </div>
 
           {available.length === 0 ? (
