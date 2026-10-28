@@ -60,6 +60,8 @@ services:
       - OMNICHANNEL_WHATSAPP_WEBHOOK_TOKEN=${OMNICHANNEL_WHATSAPP_WEBHOOK_TOKEN:-}
       - EVOLUTION_BASE_URL=${EVOLUTION_BASE_URL:-http://evolution-api:8080}
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-}
+      # Webhook gravado na instância criada pela tela "Conectar WhatsApp" (QR code).
+      - EVOLUTION_WEBHOOK_URL=${EVOLUTION_WEBHOOK_URL:-http://backend:8080/api/v1/omnichannel/whatsapp/webhook?token=${OMNICHANNEL_WHATSAPP_WEBHOOK_TOKEN:-}}
       - META_WHATSAPP_ACCESS_TOKEN=${META_WHATSAPP_ACCESS_TOKEN:-}
       - META_WEBHOOK_VERIFY_TOKEN=${META_WEBHOOK_VERIFY_TOKEN:-}
       - META_APP_SECRET=${META_APP_SECRET:-}

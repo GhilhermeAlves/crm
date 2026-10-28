@@ -16,12 +16,12 @@ public final class PatientFormDtos {
     }
 
     /** {@code mode}: LINK (enviado ao paciente) ou RECEPTION (tablet na clínica). */
-    public record CreateFormRequest(@NotNull UUID modelId, String mode) {
+    public record CreateFormRequest(@NotNull UUID modelId, String mode, Boolean sendWhatsApp) {
     }
 
     /** Devolvido só na criação: o token em texto puro não é guardado. */
     public record CreatedFormRequest(UUID id, UUID anamnesisId, String url, String mode,
-                                     LocalDateTime expiresAt) {
+                                     LocalDateTime expiresAt, boolean whatsAppSent) {
     }
 
     /** {@code status}: PENDING, ANSWERED ou EXPIRED (pendente e vencido). */

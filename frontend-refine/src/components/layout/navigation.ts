@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Smartphone,
   Users,
   Contact,
   GitBranch,
@@ -274,6 +275,13 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Notificações", href: `${ROUTES.SETTINGS_AGENDA}/notifications` },
           { label: "Aniversários", href: `${ROUTES.SETTINGS_AGENDA}/birthday` },
         ],
+      },
+      {
+        label: "WhatsApp",
+        href: ROUTES.SETTINGS_WHATSAPP,
+        icon: Smartphone,
+        permission: "omnichannel:update",
+        module: "INBOX",
       },
       {
         label: "Agente de IA",

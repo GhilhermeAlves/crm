@@ -14,6 +14,7 @@ import com.becommerce.crm.clinical.anamnesis.formrequest.PatientFormDtos.SubmitP
 import com.becommerce.crm.communication.notification.application.dto.CreateNotificationRequest;
 import com.becommerce.crm.communication.notification.application.port.input.NotificationUseCase;
 import com.becommerce.crm.communication.notification.domain.NotificationType;
+import com.becommerce.crm.communication.omnichannel.application.service.WhatsAppConnectionService;
 import com.becommerce.crm.masterdata.anamnesis.application.dto.AnamnesisModelResponse;
 import com.becommerce.crm.masterdata.anamnesis.application.dto.AnamnesisQuestionResponse;
 import com.becommerce.crm.masterdata.anamnesis.application.dto.AnamnesisSectionResponse;
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,6 +104,14 @@ public class PatientFormRequestService {
         this.publicBaseUrl = publicBaseUrl;
     }
 
+    private WhatsAppConnectionService whatsApp;
+
+    /** Opcional: envia o link pelo WhatsApp conectado da clínica (Evolution). */
+    @Autowired(required = false)
+    public void setWhatsAppConnectionService(WhatsAppConnectionService whatsApp) {
+        this.whatsApp = whatsApp;
+    }
+
     // ------------------------------------------------------------------
     // Rotas autenticadas (ficha do paciente)
     // ------------------------------------------------------------------
@@ -120,10 +130,15 @@ public class PatientFormRequestService {
             String token = RegistrationLink.generateToken();
             PatientFormRequestJpaEntity saved = repository.save(new PatientFormRequestJpaEntity(companyId,
                     contactId, anamnesis.id(), RegistrationLink.hash(token), mode, expiresAt, actorId, now));
+            String url = buildUrl(token);
+            boolean sent = MODE_LINK.equals(mode) && Boolean.TRUE.equals(request.sendWhatsApp())
+                    && sendByWhatsApp(companyId, contactId, anamnesis.modelName(), url);
+            TenantContext.setCompanyId(companyId);
             timeline.record(companyId, contactId, (MODE_RECEPTION.equals(mode)
                     ? "Formulário aberto no modo recepção: "
-                    : "Formulário enviado ao paciente: ") + anamnesis.modelName(), actorId);
-            return new CreatedFormRequest(saved.getId(), anamnesis.id(), buildUrl(token), mode, expiresAt);
+                    : sent ? "Formulário enviado ao paciente pelo WhatsApp: "
+                    : "Formulário gerado para o paciente: ") + anamnesis.modelName(), actorId);
+            return new CreatedFormRequest(saved.getId(), anamnesis.id(), url, mode, expiresAt, sent);
         } finally {
             TenantContext.clear();
         }
@@ -219,6 +234,25 @@ public class PatientFormRequestService {
     }
 
     // ------------------------------------------------------------------
+
+    /** Falha no WhatsApp não impede o link: a tela oferece copiar/enviar manualmente. */
+    private boolean sendByWhatsApp(UUID companyId, UUID contactId, String formName, String url) {
+        if (whatsApp == null) {
+            return false;
+        }
+        var contact = contactUseCase.getById(companyId, contactId);
+        String phone = contact.mobile() != null ? contact.mobile() : contact.phone();
+        String clinic = companyRepository.findById(companyId).map(Company::getTradingName).orElse("a clínica");
+        try {
+            whatsApp.sendText(companyId, phone, "Olá, " + contact.firstName() + "! " + clinic
+                    + " pediu que você responda o formulário \"" + formName + "\" antes do atendimento: "
+                    + url + " (o link vale por " + LINK_DAYS + " dias).");
+            return true;
+        } catch (RuntimeException ex) {
+            log.warn("Formulário {} não enviado pelo WhatsApp: {}", formName, ex.getMessage());
+            return false;
+        }
+    }
 
     private PatientFormRequestJpaEntity findUsable(String hash) {
         PatientFormRequestJpaEntity request = repository.findByTokenHash(hash)
