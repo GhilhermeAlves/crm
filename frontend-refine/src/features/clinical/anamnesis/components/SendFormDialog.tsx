@@ -28,6 +28,7 @@ import {
   type CreatedFormRequest,
   type FormRequestMode,
   useCreateFormRequest,
+  useWhatsAppConnected,
 } from "../hooks/usePatientFormRequests";
 
 interface Props {
@@ -52,6 +53,8 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
   const [modelId, setModelId] = useState<string | undefined>(undefined);
   const [created, setCreated] = useState<CreatedFormRequest | null>(null);
   const create = useCreateFormRequest(companyId, patient.id);
+  const whatsAppConnected = useWhatsAppConnected();
+  const hasPhone = Boolean(patient.mobile || patient.phone);
   const effectiveModel = modelId ?? defaultModel?.id;
 
   const close = (value: boolean) => {
@@ -62,12 +65,12 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
     onOpenChange(value);
   };
 
-  const generate = (mode: FormRequestMode) => {
+  const generate = (mode: FormRequestMode, sendWhatsApp = false) => {
     if (!effectiveModel) return;
     // A aba precisa abrir no clique (antes da resposta), senão o navegador bloqueia.
     const tab = mode === "RECEPTION" ? window.open("about:blank", "_blank") : null;
     create.mutate(
-      { modelId: effectiveModel, mode },
+      { modelId: effectiveModel, mode, sendWhatsApp },
       {
         onSuccess: (result) => {
           if (mode === "RECEPTION") {
@@ -77,6 +80,14 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
             close(false);
           } else {
             setCreated(result);
+            if (sendWhatsApp) {
+              if (result.whatsAppSent)
+                toast.success(`Link enviado pelo WhatsApp para ${patient.firstName}.`);
+              else
+                toast.error(
+                  "Não foi possível enviar pelo WhatsApp. Copie o link e envie manualmente.",
+                );
+            }
           }
         },
         onError: () => tab?.close(),
@@ -176,6 +187,16 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
               >
                 <Tablet className="h-4 w-4" /> Modo recepção (tablet)
               </Button>
+              {whatsAppConnected && hasPhone && (
+                <Button
+                  variant="outline"
+                  className="gap-1.5"
+                  disabled={!effectiveModel || create.isPending}
+                  onClick={() => generate("LINK", true)}
+                >
+                  <MessageCircle className="h-4 w-4" /> Enviar pelo WhatsApp da clínica
+                </Button>
+              )}
               <Button
                 className="gap-1.5"
                 disabled={!effectiveModel || create.isPending}

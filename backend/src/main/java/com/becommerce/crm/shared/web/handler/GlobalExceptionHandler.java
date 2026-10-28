@@ -1061,6 +1061,35 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatusException(
+            org.springframework.web.server.ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        String reason = ex.getReason() != null ? ex.getReason()
+                : status != null ? status.getReasonPhrase() : "Erro";
+        return ResponseEntity.status(ex.getStatusCode())
+            .body(Map.of(
+                "status", ex.getStatusCode().value(),
+                "error", status != null ? status.getReasonPhrase() : "Error",
+                "message", reason,
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    /** Falha no provedor de WhatsApp (Evolution/Meta): 502 com a mensagem do provedor. */
+    @ExceptionHandler(com.becommerce.crm.communication.omnichannel.domain.OmnichannelProviderException.class)
+    public ResponseEntity<Map<String, Object>> handleOmnichannelProviderException(
+            com.becommerce.crm.communication.omnichannel.domain.OmnichannelProviderException ex) {
+        log.warn("Falha no provedor de WhatsApp: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+            .body(Map.of(
+                "status", 502,
+                "error", "Bad Gateway",
+                "message", ex.getMessage() != null ? ex.getMessage() : "Falha no provedor de WhatsApp.",
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
         log.error("Unhandled exception", ex);

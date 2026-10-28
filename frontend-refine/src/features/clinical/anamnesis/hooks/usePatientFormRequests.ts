@@ -24,6 +24,8 @@ export type CreatedFormRequest = {
   url: string;
   mode: FormRequestMode;
   expiresAt: string;
+  /** Link enviado automaticamente pelo WhatsApp conectado da clínica. */
+  whatsAppSent: boolean;
 };
 
 const base = (companyId: string, contactId: string) =>
@@ -46,11 +48,26 @@ export function usePatientFormRequests(companyId: string, contactId: string) {
   });
 }
 
+/** WhatsApp da clínica conectado (Evolution)? Sem permissão ou erro, trata como não. */
+export function useWhatsAppConnected() {
+  const { data } = useQuery({
+    queryKey: ["whatsapp-connection"],
+    queryFn: async () =>
+      (await api.get<{ state: string }>("/omnichannel/whatsapp/connection")).data,
+    retry: false,
+    staleTime: 60_000,
+  });
+  return data?.state === "CONNECTED";
+}
+
 export function useCreateFormRequest(companyId: string, contactId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { modelId: string; mode: FormRequestMode }) =>
-      (await api.post<CreatedFormRequest>(base(companyId, contactId), payload)).data,
+    mutationFn: async (payload: {
+      modelId: string;
+      mode: FormRequestMode;
+      sendWhatsApp?: boolean;
+    }) => (await api.post<CreatedFormRequest>(base(companyId, contactId), payload)).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: formRequestKeys.all(companyId, contactId) });
       void queryClient.invalidateQueries({
