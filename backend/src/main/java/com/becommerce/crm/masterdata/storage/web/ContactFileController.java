@@ -2,6 +2,7 @@ package com.becommerce.crm.masterdata.storage.web;
 
 import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
+import com.becommerce.crm.masterdata.storage.application.service.PatientFileNotifier;
 import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import org.springframework.http.HttpStatus;
@@ -26,9 +27,11 @@ import java.util.UUID;
 public class ContactFileController {
 
     private final StorageUseCase storageUseCase;
+    private final PatientFileNotifier fileNotifier;
 
-    public ContactFileController(StorageUseCase storageUseCase) {
+    public ContactFileController(StorageUseCase storageUseCase, PatientFileNotifier fileNotifier) {
         this.storageUseCase = storageUseCase;
+        this.fileNotifier = fileNotifier;
     }
 
     @GetMapping
@@ -49,6 +52,7 @@ public class ContactFileController {
         StorageResponse response = storageUseCase.uploadForContact(
                 companyId, contactId, file.getOriginalFilename(), file.getContentType(),
                 file.getBytes(), principal.userId());
+        fileNotifier.fileUploaded(companyId, contactId, response, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

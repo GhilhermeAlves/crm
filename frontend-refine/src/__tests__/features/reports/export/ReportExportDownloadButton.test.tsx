@@ -18,7 +18,7 @@ describe("ReportExportDownloadButton", () => {
     );
     expect(container.innerHTML).toBe("");
     render(<ReportExportDownloadButton companyId="c1" metadata={null} />);
-    expect(screen.queryByRole("button", { name: /Baixar/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Fazer download/ })).toBeNull();
   });
 
   it("baixa o arquivo e avisa para marcar como lida", async () => {
@@ -27,7 +27,7 @@ describe("ReportExportDownloadButton", () => {
       <ReportExportDownloadButton companyId="c1" metadata={METADATA} onDownloaded={onDownloaded} />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Baixar/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Fazer download/ }));
 
     await waitFor(() => expect(onDownloaded).toHaveBeenCalled());
     expect(downloadReportExport).toHaveBeenCalledWith("c1", "exp-1", "agenda.pdf");
