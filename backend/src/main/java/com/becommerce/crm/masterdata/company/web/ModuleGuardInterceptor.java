@@ -34,6 +34,7 @@ public class ModuleGuardInterceptor implements HandlerInterceptor {
             Map.entry("patients", CompanyModule.PATIENTS),
             Map.entry("document-templates", CompanyModule.PATIENTS),
             Map.entry("budget-titles", CompanyModule.PATIENTS),
+            Map.entry("form-requests", CompanyModule.PATIENTS),
             Map.entry("opportunities", CompanyModule.CRM),
             Map.entry("pipelines", CompanyModule.CRM),
             Map.entry("leads", CompanyModule.CRM),

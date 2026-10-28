@@ -26,6 +26,8 @@ export type CreatedFormRequest = {
   expiresAt: string;
   /** Link enviado automaticamente pelo WhatsApp conectado da clínica. */
   whatsAppSent: boolean;
+  /** Link enviado por e-mail (com o nome da clínica como remetente). */
+  emailSent: boolean;
 };
 
 const base = (companyId: string, contactId: string) =>
@@ -60,6 +62,19 @@ export function useWhatsAppConnected() {
   return data?.state === "CONNECTED";
 }
 
+/** O servidor envia e-mail de verdade (SMTP)? Em desenvolvimento ele só registra no log. */
+export function useFormEmailEnabled(companyId: string) {
+  const { data } = useQuery({
+    queryKey: ["form-request-options", companyId],
+    queryFn: async () =>
+      (await api.get<{ emailEnabled: boolean }>(`/companies/${companyId}/form-requests/options`))
+        .data,
+    enabled: Boolean(companyId),
+    staleTime: 5 * 60_000,
+  });
+  return data?.emailEnabled ?? false;
+}
+
 export function useCreateFormRequest(companyId: string, contactId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -67,6 +82,7 @@ export function useCreateFormRequest(companyId: string, contactId: string) {
       modelId: string;
       mode: FormRequestMode;
       sendWhatsApp?: boolean;
+      sendEmail?: boolean;
     }) => (await api.post<CreatedFormRequest>(base(companyId, contactId), payload)).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: formRequestKeys.all(companyId, contactId) });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
-import { Copy, ExternalLink, Loader2, MessageCircle, Send, Tablet } from "lucide-react";
+import { Copy, ExternalLink, Loader2, Mail, MessageCircle, Send, Tablet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,7 @@ import {
   type CreatedFormRequest,
   type FormRequestMode,
   useCreateFormRequest,
+  useFormEmailEnabled,
   useWhatsAppConnected,
 } from "../hooks/usePatientFormRequests";
 
@@ -54,6 +55,7 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
   const [created, setCreated] = useState<CreatedFormRequest | null>(null);
   const create = useCreateFormRequest(companyId, patient.id);
   const whatsAppConnected = useWhatsAppConnected();
+  const emailEnabled = useFormEmailEnabled(companyId);
   const hasPhone = Boolean(patient.mobile || patient.phone);
   const effectiveModel = modelId ?? defaultModel?.id;
 
@@ -65,12 +67,18 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
     onOpenChange(value);
   };
 
-  const generate = (mode: FormRequestMode, sendWhatsApp = false) => {
+  const generate = (
+    mode: FormRequestMode,
+    {
+      sendWhatsApp = false,
+      sendEmail = false,
+    }: { sendWhatsApp?: boolean; sendEmail?: boolean } = {},
+  ) => {
     if (!effectiveModel) return;
     // A aba precisa abrir no clique (antes da resposta), senão o navegador bloqueia.
     const tab = mode === "RECEPTION" ? window.open("about:blank", "_blank") : null;
     create.mutate(
-      { modelId: effectiveModel, mode, sendWhatsApp },
+      { modelId: effectiveModel, mode, sendWhatsApp, sendEmail },
       {
         onSuccess: (result) => {
           if (mode === "RECEPTION") {
@@ -80,6 +88,11 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
             close(false);
           } else {
             setCreated(result);
+            if (sendEmail) {
+              if (result.emailSent) toast.success(`Link enviado para ${patient.email}.`);
+              else
+                toast.error("Não foi possível enviar o e-mail. Copie o link e envie manualmente.");
+            }
             if (sendWhatsApp) {
               if (result.whatsAppSent)
                 toast.success(`Link enviado pelo WhatsApp para ${patient.firstName}.`);
@@ -172,7 +185,7 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
           </div>
         )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="flex-wrap gap-2">
           {created ? (
             <Button variant="outline" onClick={() => close(false)}>
               Fechar
@@ -187,12 +200,22 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
               >
                 <Tablet className="h-4 w-4" /> Modo recepção (tablet)
               </Button>
+              {emailEnabled && patient.email && (
+                <Button
+                  variant="outline"
+                  className="gap-1.5"
+                  disabled={!effectiveModel || create.isPending}
+                  onClick={() => generate("LINK", { sendEmail: true })}
+                >
+                  <Mail className="h-4 w-4" /> Enviar por e-mail
+                </Button>
+              )}
               {whatsAppConnected && hasPhone && (
                 <Button
                   variant="outline"
                   className="gap-1.5"
                   disabled={!effectiveModel || create.isPending}
-                  onClick={() => generate("LINK", true)}
+                  onClick={() => generate("LINK", { sendWhatsApp: true })}
                 >
                   <MessageCircle className="h-4 w-4" /> Enviar pelo WhatsApp da clínica
                 </Button>
