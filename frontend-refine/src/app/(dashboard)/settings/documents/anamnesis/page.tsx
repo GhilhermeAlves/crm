@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, Pencil, Plus, Trash2 } from "lucide-react";
+import { FileText, FileUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import { SkeletonTable } from "@/components/feedback/SkeletonTable";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { AnamnesisModelDialog } from "@/features/masterdata/anamnesis/components/AnamnesisModelDialog";
+import { ImportAnamnesisDialog } from "@/features/masterdata/anamnesis/components/ImportAnamnesisDialog";
 import {
   useAnamnesisModels,
   useCreateAnamnesisModel,
@@ -53,6 +54,7 @@ export default function AnamnesisListPage() {
   const deleteModel = useDeleteAnamnesisModel(companyId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
   const models = data ?? [];
@@ -68,10 +70,16 @@ export default function AnamnesisListPage() {
           </p>
         </div>
         {canManage && (
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Novo modelo
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              <FileUp className="mr-1.5 h-3.5 w-3.5" />
+              Importar HTML/JSON
+            </Button>
+            <Button size="sm" onClick={() => setDialogOpen(true)}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Novo modelo
+            </Button>
+          </div>
         )}
       </div>
 
@@ -193,6 +201,7 @@ export default function AnamnesisListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ImportAnamnesisDialog companyId={companyId} open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
