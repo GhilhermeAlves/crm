@@ -56,7 +56,7 @@ public class CompanyModulesService {
         try {
             segment = CompanySegment.valueOf(request.segment().trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            throw new InvalidCompanyModulesException("Segmento inválido: " + request.segment());
+            throw new InvalidCompanyModulesException("Especialidade inválida: " + request.segment());
         }
         CompanyModules modules = new CompanyModules(segment, CompanyModules.parse(request.enabledModules()));
         CompanySegment previous = repository.findByCompanyId(companyId)

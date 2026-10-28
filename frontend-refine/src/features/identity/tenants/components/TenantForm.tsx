@@ -27,7 +27,7 @@ type TenantFormProps = {
 const STEPS = [
   { id: "company", title: "Dados da Empresa", description: "Informações básicas da empresa" },
   { id: "settings", title: "Configurações", description: "Plano, limites e status" },
-  { id: "modules", title: "Módulos", description: "Segmento e módulos habilitados" },
+  { id: "modules", title: "Módulos", description: "Especialidade e módulos habilitados" },
   { id: "address", title: "Endereço", description: "Endereço da empresa" },
 ] as const;
 
@@ -176,7 +176,8 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
         <TenantFormSection title={STEPS[2].title} description={STEPS[2].description}>
           {initialData ? (
             <p className="text-sm text-muted-foreground">
-              Segmento e módulos desta empresa são alterados no cartão &quot;Módulos&quot;, abaixo.
+              Especialidade e módulos desta empresa são alterados no cartão &quot;Especialidade e
+              módulos&quot;, abaixo.
             </p>
           ) : (
             <ModulesFields setValue={setValue} watch={watch} />

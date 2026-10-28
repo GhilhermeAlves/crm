@@ -48,11 +48,15 @@ export const MODULE_OPTIONS: { value: CompanyModuleName; label: string; descript
   { value: "STORAGE", label: "Arquivos", description: "Arquivos e modelos" },
 ];
 
+/**
+ * Especialidade: a mesma lista nomeia a especialidade da empresa (Empresas,
+ * Módulos) e a do profissional convidado (Convites, Usuários).
+ */
 export const SEGMENT_OPTIONS: { value: CompanySegment; label: string }[] = [
-  { value: "GENERIC", label: "Genérico" },
-  { value: "DENTAL", label: "Odontologia / Saúde" },
-  { value: "OCCUPATIONAL_SAFETY", label: "Segurança do trabalho" },
-  { value: "TRICHOLOGY", label: "Tricologia / Medicina capilar" },
+  { value: "GENERIC", label: "Geral" },
+  { value: "DENTAL", label: "Odontologia" },
+  { value: "OCCUPATIONAL_SAFETY", label: "Tec. Segurança do Trabalho" },
+  { value: "TRICHOLOGY", label: "Tricologia" },
 ];
 
 export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]> = {

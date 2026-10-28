@@ -51,7 +51,7 @@ export function ModulesFields({ setValue, watch }: ModulesFieldsProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="tenant-segment">Segmento</Label>
+        <Label htmlFor="tenant-segment">Especialidade</Label>
         <Select value={segment} onValueChange={(v) => handleSegmentChange(v as CompanySegment)}>
           <SelectTrigger id="tenant-segment" className="max-w-sm">
             <SelectValue />
@@ -65,7 +65,7 @@ export function ModulesFields({ setValue, watch }: ModulesFieldsProps) {
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          Ao trocar o segmento, os módulos sugeridos são marcados. Você pode ajustar depois.
+          Ao trocar a especialidade, os módulos sugeridos são marcados. Você pode ajustar depois.
         </p>
       </div>
 
