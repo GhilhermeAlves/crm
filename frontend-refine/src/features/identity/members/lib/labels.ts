@@ -1,3 +1,5 @@
+import { SEGMENT_OPTIONS } from "@/features/identity/modules/types/modules.types";
+
 /** Papéis que o backend aceita em convites (InvitationService.ALLOWED_ROLES). */
 export const INVITABLE_ROLES = ["ADMIN", "MANAGER", "AGENT", "VIEWER"] as const;
 
@@ -18,11 +20,9 @@ export function roleLabel(role: string | null | undefined): string {
 }
 
 /** Especialidades aceitas no convite (ProfessionalSpecialty no backend). */
-export const SPECIALTY_LABEL: Record<string, string> = {
-  GENERIC: "Geral",
-  DENTAL: "Odontologia",
-  TRICHOLOGY: "Tricologia",
-};
+export const SPECIALTY_LABEL: Record<string, string> = Object.fromEntries(
+  SEGMENT_OPTIONS.map((option) => [option.value, option.label]),
+);
 
 export function specialtyLabel(specialty: string | null | undefined): string | null {
   if (!specialty) return null;

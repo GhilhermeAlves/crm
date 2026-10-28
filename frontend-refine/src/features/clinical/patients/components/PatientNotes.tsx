@@ -27,6 +27,7 @@ import {
   useUpdateContactNote,
 } from "../hooks/usePatient";
 import type { ContactNote } from "../types/patient.types";
+import { ExportPatientRecordButton } from "./ExportPatientRecordButton";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
 const MAX_LENGTH = 5000;
@@ -55,7 +56,9 @@ function NoteItem({
     <li className="rounded-lg border p-4">
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium">{note.createdByName || "Usuário"}</p>
+          <p className="text-sm font-medium">
+            {note.createdByName || (note.createdBy ? "Usuário" : "Sistema")}
+          </p>
           <p className="text-xs text-muted-foreground" title={absolute}>
             {relative}
           </p>
@@ -153,7 +156,10 @@ export function PatientNotes({ contact }: { contact: Contact }) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold">Anotações</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-lg font-semibold">Anotações</h1>
+        <ExportPatientRecordButton companyId={companyId} contact={contact} notes={notes} />
+      </div>
 
       {contact.notes && contact.notes.trim() !== "" && (
         <Card>

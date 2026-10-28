@@ -4,15 +4,28 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.LockModeType;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface CatalogItemJpaRepository extends JpaRepository<CatalogItemJpaEntity, UUID> {
+
+    @Modifying
+    @Query("UPDATE CatalogItemJpaEntity i SET i.active = :active "
+            + "WHERE i.companyId = :companyId AND i.itemType = 'SERVICE' AND i.category IN :categories")
+    int setActiveByCategories(@Param("companyId") UUID companyId,
+                              @Param("categories") Collection<String> categories,
+                              @Param("active") boolean active);
+
+    @Query("SELECT LOWER(i.name) FROM CatalogItemJpaEntity i WHERE i.companyId = :companyId")
+    List<String> findLowerCaseNames(@Param("companyId") UUID companyId);
 
     /** {@code pattern} já vem em minúsculas com {@code %...%} (ou nulo = sem busca textual). */
     @Query("SELECT i FROM CatalogItemJpaEntity i WHERE i.companyId = :companyId "

@@ -28,7 +28,9 @@ import com.becommerce.crm.masterdata.contact.application.port.out.ContactReposit
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactConflictException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
+import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +59,21 @@ public class BudgetService implements BudgetUseCase {
     private final FinancialTransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final TenantAuditRecorder auditor;
+
+
+    private PatientTimelineRecorder timeline;
+
+    /** Opcional: registra os eventos nas anotações do paciente. */
+    @Autowired(required = false)
+    public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
+        this.timeline = timeline;
+    }
+
+    private void note(UUID companyId, UUID contactId, String body, UUID actorId) {
+        if (timeline != null) {
+            timeline.record(companyId, contactId, body, actorId);
+        }
+    }
 
     public BudgetService(BudgetRepository repository,
                          PatientProcedureRepository procedureRepository,
@@ -111,6 +128,8 @@ public class BudgetService implements BudgetUseCase {
             Budget budget = Budget.create(companyId, contactId, request.title(), items, request.discountCents(),
                     request.notes(), actorId);
             repository.save(budget);
+
+            note(companyId, contactId, "Orçamento criado: " + budget.getTitle(), actorId);
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
                     budget.getId().toString(), "Orçamento criado.", actorId, null);
@@ -168,6 +187,8 @@ public class BudgetService implements BudgetUseCase {
             }
             repository.save(budget);
 
+            note(companyId, contactId, "Orçamento aprovado: " + budget.getTitle(), actorId);
+
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
                     budget.getId().toString(), "Orçamento aprovado.", actorId, null);
             return toResponse(budget);
@@ -199,6 +220,8 @@ public class BudgetService implements BudgetUseCase {
             budget.markLost(actorId);
             repository.save(budget);
 
+            note(companyId, contactId, "Orçamento marcado como perdido: " + budget.getTitle(), actorId);
+
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
                     budget.getId().toString(), "Orçamento marcado como perdido.", actorId, null);
             return toResponse(budget);
@@ -219,6 +242,8 @@ public class BudgetService implements BudgetUseCase {
                         "Orçamento aprovado não pode ser excluído. Marque como perdido antes.");
             }
             repository.delete(budget);
+
+            note(companyId, contactId, "Orçamento excluído: " + budget.getTitle(), actorId);
 
             auditor.record(companyId, AuditAction.DELETE, AuditModule.CONTACTS, RESOURCE,
                     budgetId.toString(), "Orçamento excluído.", actorId, null);

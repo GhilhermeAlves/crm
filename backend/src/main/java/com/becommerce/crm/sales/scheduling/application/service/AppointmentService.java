@@ -20,6 +20,7 @@ import com.becommerce.crm.sales.scheduling.domain.exception.SchedulingValidation
 import com.becommerce.crm.sales.scheduling.domain.exception.SlotUnavailableException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.becommerce.crm.masterdata.contact.application.service.PatientAutoMarker;
+import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,9 @@ public class AppointmentService implements AppointmentUseCase {
 
     private static final Duration MAX_RANGE = Duration.ofDays(62);
     private static final int CONTACT_HISTORY_LIMIT = 200;
+    private static final java.time.format.DateTimeFormatter NOTE_DATE =
+            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")
+                    .withZone(java.time.ZoneId.of("America/Sao_Paulo"));
 
     private final AppointmentRepository appointmentRepository;
     private final ScheduleBlockRepository blockRepository;
@@ -68,6 +72,22 @@ public class AppointmentService implements AppointmentUseCase {
     }
 
     private PatientAutoMarker patientAutoMarker;
+    private PatientTimelineRecorder timeline;
+
+    /** Opcional: registra cada evento da consulta nas anotações do paciente. */
+    @Autowired(required = false)
+    public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
+        this.timeline = timeline;
+    }
+
+    private void note(UUID companyId, Appointment appointment, String event, UUID actorId) {
+        if (timeline == null || appointment.getContactId() == null) {
+            return;
+        }
+        timeline.record(companyId, appointment.getContactId(),
+                event + ": " + NOTE_DATE.format(appointment.getStartAt()) + " — " + appointment.getTitle(),
+                actorId);
+    }
 
     /** Opcional: marca o contato como paciente ao agendar (módulo PATIENTS, V104). */
     @Autowired(required = false)
@@ -136,6 +156,10 @@ public class AppointmentService implements AppointmentUseCase {
                 // markAsPatientIfExists limpa o TenantContext no finally; reaplica para o audit.
                 TenantContext.setCompanyId(companyId);
             }
+
+            note(companyId, appointment, occurrences.size() > 1
+                    ? "Consultas agendadas (" + occurrences.size() + " ocorrências), a partir de"
+                    : "Consulta agendada", createdBy);
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SCHEDULING, "Appointment",
                     appointment.getId().toString(),
@@ -212,6 +236,7 @@ public class AppointmentService implements AppointmentUseCase {
 
             appointment.reschedule(request.startAt(), request.endAt());
             appointmentRepository.save(appointment);
+            note(companyId, appointment, "Consulta remarcada para", null);
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Appointment",
                     appointment.getId().toString(), "Agendamento remarcado: " + appointment.getTitle(),
@@ -236,6 +261,13 @@ public class AppointmentService implements AppointmentUseCase {
                 case SCHEDULED -> throw new SchedulingValidationException("Use a remarcação para voltar ao status agendado.");
             }
             appointmentRepository.save(appointment);
+            note(companyId, appointment, switch (status) {
+                case CONFIRMED -> "Consulta confirmada";
+                case CANCELED -> "Consulta cancelada";
+                case COMPLETED -> "Paciente compareceu à consulta";
+                case NO_SHOW -> "Paciente faltou à consulta";
+                case SCHEDULED -> "Consulta agendada";
+            }, null);
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Appointment",
                     appointment.getId().toString(),
@@ -259,6 +291,9 @@ public class AppointmentService implements AppointmentUseCase {
             }
             appointment.cancel(trimmed);
             appointmentRepository.save(appointment);
+            note(companyId, appointment, trimmed == null
+                    ? "Consulta cancelada"
+                    : "Consulta cancelada (motivo: " + trimmed + ")", null);
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.SCHEDULING, "Appointment",
                     appointment.getId().toString(), "Agendamento cancelado: " + appointment.getTitle(),
@@ -276,6 +311,7 @@ public class AppointmentService implements AppointmentUseCase {
             TenantContext.setCompanyId(companyId);
             Appointment appointment = requireOwned(companyId, appointmentId);
             appointmentRepository.delete(appointment);
+            note(companyId, appointment, "Consulta excluída da agenda", null);
 
             auditor.record(companyId, AuditAction.DELETE, AuditModule.SCHEDULING, "Appointment",
                     appointmentId.toString(), "Agendamento excluído: " + appointment.getTitle(),

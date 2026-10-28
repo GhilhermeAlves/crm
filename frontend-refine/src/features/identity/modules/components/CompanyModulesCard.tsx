@@ -24,7 +24,7 @@ import {
   type CompanySegment,
 } from "../types/modules.types";
 
-/** Segmento e módulos da empresa — exclusivo do CRM_ADMIN (dono da plataforma). */
+/** Especialidade e módulos da empresa — exclusivo do CRM_ADMIN (dono da plataforma). */
 export function CompanyModulesCard({ companyId }: { companyId: string }) {
   const { data, isLoading, isError } = useCompanyModules(companyId);
   const update = useUpdateCompanyModules(companyId);
@@ -63,7 +63,7 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Segmento e módulos</CardTitle>
+        <CardTitle className="text-base">Especialidade e módulos</CardTitle>
         <CardDescription>
           Define o que esta empresa enxerga no CRM. Pacientes funciona mesmo com o Comercial
           desligado.
@@ -79,7 +79,7 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
         ) : (
           <>
             <div className="space-y-2">
-              <Label htmlFor="company-segment">Segmento</Label>
+              <Label htmlFor="company-segment">Especialidade</Label>
               <Select
                 value={segment}
                 onValueChange={(v) => handleSegmentChange(v as CompanySegment)}
@@ -142,7 +142,7 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
             )}
             {!isCrmAdmin && (
               <p className="text-xs text-muted-foreground">
-                Somente o administrador do CRM pode alterar segmento e módulos.
+                Somente o administrador do CRM pode alterar especialidade e módulos.
               </p>
             )}
           </>

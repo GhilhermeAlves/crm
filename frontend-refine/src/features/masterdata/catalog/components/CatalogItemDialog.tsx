@@ -35,6 +35,8 @@ type Props = {
   item: CatalogItem | null;
   isSubmitting: boolean;
   onSubmit: (request: CatalogItemRequest) => void;
+  /** Tipo inicial de um item novo (ex.: "SERVICE" ao criar um procedimento). */
+  defaultType?: CatalogItemType;
 };
 
 type FormState = {
@@ -48,9 +50,9 @@ type FormState = {
   minStock: string;
 };
 
-function initialState(item: CatalogItem | null): FormState {
+function initialState(item: CatalogItem | null, defaultType: CatalogItemType): FormState {
   return {
-    type: item?.type ?? "PRODUCT",
+    type: item?.type ?? defaultType,
     name: item?.name ?? "",
     description: item?.description ?? "",
     category: item?.category ?? "",
@@ -70,12 +72,19 @@ function parsePrice(raw: string): number | null | "invalid" {
   return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : "invalid";
 }
 
-export function CatalogItemDialog({ open, onOpenChange, item, isSubmitting, onSubmit }: Props) {
-  const [form, setForm] = useState<FormState>(initialState(item));
+export function CatalogItemDialog({
+  open,
+  onOpenChange,
+  item,
+  isSubmitting,
+  onSubmit,
+  defaultType = "PRODUCT",
+}: Props) {
+  const [form, setForm] = useState<FormState>(initialState(item, defaultType));
 
   useEffect(() => {
-    if (open) setForm(initialState(item));
-  }, [open, item]);
+    if (open) setForm(initialState(item, defaultType));
+  }, [open, item, defaultType]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));

@@ -5,9 +5,29 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { CalendarPlus, Check, ChevronDown, ChevronUp, Loader2, X } from "lucide-react";
+import {
+  CalendarPlus,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
 import { AppointmentStatusBadge } from "@/features/sales/scheduling/components/AppointmentStatusBadge";
 import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/CreateAppointmentDialog";
@@ -15,6 +35,9 @@ import {
   useAppointmentTypes,
   useAgendaSettings,
   useChangeAppointmentStatus,
+  useDeleteAppointment,
+  useRescheduleAppointment,
+  useUpdateAppointment,
 } from "@/features/sales/scheduling/hooks/useScheduling";
 import { useSubmitNewAppointment } from "@/features/sales/scheduling/hooks/useSubmitNewAppointment";
 import { DEFAULT_AGENDA_SETTINGS } from "@/features/sales/scheduling/services/scheduling.service";
@@ -26,6 +49,7 @@ import type {
   AppointmentStatus,
 } from "@/features/sales/scheduling/types/scheduling.types";
 import { useContactAppointments } from "../hooks/usePatient";
+import { EditAppointmentDialog, type EditAppointmentValues } from "./EditAppointmentDialog";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
 const PAGE_SIZE = 10;
@@ -42,6 +66,8 @@ function AppointmentRow({
   index,
   onDecide,
   isUpdating,
+  onEdit,
+  onDelete,
 }: {
   appointment: Appointment;
   hostName?: string;
@@ -49,6 +75,8 @@ function AppointmentRow({
   index: number;
   onDecide: (id: string, status: AppointmentStatus) => void;
   isUpdating: boolean;
+  onEdit?: (appointment: Appointment) => void;
+  onDelete?: (appointment: Appointment) => void;
 }) {
   const [showNotes, setShowNotes] = useState(false);
   const isPastPending =
@@ -64,7 +92,33 @@ function AppointmentRow({
             {[typeName, hostName].filter(Boolean).join(" · ") || appointment.title}
           </p>
         </div>
-        <AppointmentStatusBadge status={appointment.status} />
+        <div className="flex items-center gap-1">
+          <AppointmentStatusBadge status={appointment.status} />
+          {onEdit && (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              aria-label="Editar consulta"
+              onClick={() => onEdit(appointment)}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-destructive hover:text-destructive"
+              aria-label="Excluir consulta"
+              onClick={() => onDelete(appointment)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {appointment.notes && (
@@ -131,6 +185,8 @@ function AppointmentSection({
   typeNameById,
   onDecide,
   isUpdating,
+  onEdit,
+  onDelete,
 }: {
   title: string;
   appointments: Appointment[];
@@ -139,6 +195,8 @@ function AppointmentSection({
   typeNameById: Map<string, string>;
   onDecide: (id: string, status: AppointmentStatus) => void;
   isUpdating: boolean;
+  onEdit?: (appointment: Appointment) => void;
+  onDelete?: (appointment: Appointment) => void;
 }) {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const shown = appointments.slice(0, visible);
@@ -166,6 +224,8 @@ function AppointmentSection({
                 index={index}
                 onDecide={onDecide}
                 isUpdating={isUpdating}
+                onEdit={onEdit}
+                onDelete={onDelete}
               />
             ))}
           </ul>
@@ -196,6 +256,14 @@ export function PatientAppointments({ contact }: { contact: Contact }) {
   const { data: tags = [] } = useTags(companyId);
   const activeChairs = useMemo(() => chairs.filter((c) => c.active), [chairs]);
   const changeStatus = useChangeAppointmentStatus(companyId);
+  const reschedule = useRescheduleAppointment(companyId);
+  const updateAppointment = useUpdateAppointment(companyId);
+  const deleteAppointment = useDeleteAppointment(companyId);
+  const { can } = useAuthorization();
+  const canEdit = can("appointment:update");
+  const canDelete = can("appointment:delete");
+  const [editing, setEditing] = useState<Appointment | null>(null);
+  const [deleting, setDeleting] = useState<Appointment | null>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -241,6 +309,37 @@ export function PatientAppointments({ contact }: { contact: Contact }) {
     );
   };
 
+  const refreshAppointments = () =>
+    queryClient.invalidateQueries({ queryKey: ["contact-appointments", companyId, contactId] });
+
+  const handleEdit = async (values: EditAppointmentValues) => {
+    if (!editing) return;
+    try {
+      if (values.startAt !== editing.startAt || values.endAt !== editing.endAt) {
+        await reschedule.mutateAsync({
+          id: editing.id,
+          data: { startAt: values.startAt, endAt: values.endAt },
+        });
+      }
+      if (values.notes !== (editing.notes ?? "")) {
+        await updateAppointment.mutateAsync({ id: editing.id, data: { notes: values.notes } });
+      }
+      setEditing(null);
+    } catch {
+      // As mutations já exibem o erro.
+    } finally {
+      void refreshAppointments();
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleting) return;
+    deleteAppointment.mutate(deleting.id, {
+      onSuccess: () => void refreshAppointments(),
+      onSettled: () => setDeleting(null),
+    });
+  };
+
   const handleCreate = (values: CreateAppointmentFormValues) => {
     void createAppointment.submit(values, () => {
       queryClient.invalidateQueries({ queryKey: ["contact-appointments", companyId, contactId] });
@@ -276,6 +375,8 @@ export function PatientAppointments({ contact }: { contact: Contact }) {
             typeNameById={typeNameById}
             onDecide={handleDecide}
             isUpdating={changeStatus.isPending}
+            onEdit={canEdit ? setEditing : undefined}
+            onDelete={canDelete ? setDeleting : undefined}
           />
           <AppointmentSection
             title="Histórico de consultas"
@@ -285,9 +386,41 @@ export function PatientAppointments({ contact }: { contact: Contact }) {
             typeNameById={typeNameById}
             onDecide={handleDecide}
             isUpdating={changeStatus.isPending}
+            onEdit={canEdit ? setEditing : undefined}
+            onDelete={canDelete ? setDeleting : undefined}
           />
         </div>
       )}
+
+      <EditAppointmentDialog
+        appointment={editing}
+        onOpenChange={(open) => !open && setEditing(null)}
+        onSubmit={(values) => void handleEdit(values)}
+        isLoading={reschedule.isPending || updateAppointment.isPending}
+      />
+
+      <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir consulta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting
+                ? `A consulta de ${formatLong(deleting.startAt)} será removida da agenda. Essa ação não pode ser desfeita.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleteAppointment.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CreateAppointmentDialog
         open={dialogOpen}

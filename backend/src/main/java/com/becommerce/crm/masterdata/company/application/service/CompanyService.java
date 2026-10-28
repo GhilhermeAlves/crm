@@ -168,7 +168,7 @@ public class CompanyService implements CompanyUseCase {
             try {
                 segment = CompanySegment.valueOf(request.segment().trim().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
-                throw new InvalidCompanyModulesException("Segmento inválido: " + request.segment());
+                throw new InvalidCompanyModulesException("Especialidade inválida: " + request.segment());
             }
         }
         var modules = request.enabledModules() == null

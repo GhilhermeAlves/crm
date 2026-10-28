@@ -18,6 +18,10 @@ vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
   useAuth: () => ({ user: { id: "u1", companyId: "co1" } }),
 }));
 
+vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
+  useAuthorization: () => ({ can: () => true }),
+}));
+
 vi.mock("@/features/clinical/patients/hooks/usePatient", () => ({
   useContactAppointments: () => ({ data: appointmentsState.value, isLoading: false }),
 }));
@@ -30,6 +34,9 @@ vi.mock("@/features/sales/scheduling/hooks/useScheduling", () => ({
   useAppointmentTypes: () => ({ data: typesState.value }),
   useAgendaSettings: () => ({ data: undefined }),
   useChangeAppointmentStatus: () => ({ mutate: changeStatusMock, isPending: false }),
+  useRescheduleAppointment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateAppointment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeleteAppointment: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock("@/features/sales/scheduling/hooks/useSubmitNewAppointment", () => ({

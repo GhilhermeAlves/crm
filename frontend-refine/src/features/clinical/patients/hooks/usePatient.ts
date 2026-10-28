@@ -149,6 +149,10 @@ export function useUploadContactFile(companyId: string | null, contactId: string
       invalidateKeys: [
         ["contact-files", companyId, contactId],
         ["storage", companyId],
+        // O upload gera notificação com download e uma anotação automática.
+        ["notifications", companyId],
+        ["notifications-unread", companyId],
+        ["contact-notes", companyId, contactId],
       ],
     }),
     onError: onError({ errorMessage: "Erro ao enviar arquivo" }),

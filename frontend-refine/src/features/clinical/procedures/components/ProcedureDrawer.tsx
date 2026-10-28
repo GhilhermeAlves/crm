@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,7 +20,12 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
-import { useAllCatalog } from "@/features/masterdata/catalog/hooks/useCatalog";
+import { CatalogItemDialog } from "@/features/masterdata/catalog/components/CatalogItemDialog";
+import {
+  useAllCatalog,
+  useCreateCatalogItem,
+} from "@/features/masterdata/catalog/hooks/useCatalog";
+import type { CatalogItemRequest } from "@/features/masterdata/catalog/types/catalog.types";
 import { useCreateProcedure, useUpdateProcedure } from "../hooks/useProcedures";
 import type {
   Dentition,
@@ -47,6 +52,7 @@ type Props = {
 };
 
 const NO_PROFESSIONAL = "none";
+const NEW_SERVICE = "__new__";
 const STATES: ProcedureState[] = ["PLANNED", "DONE", "PRE_EXISTING"];
 const today = () => format(new Date(), "yyyy-MM-dd");
 const formatBRL = (reais: number) =>
@@ -66,6 +72,9 @@ export function ProcedureDrawer({
   const { can } = useAuthorization();
   const { data: catalog } = useAllCatalog(companyId, { type: "SERVICE", active: true });
   const { data: members } = useMembers(companyId);
+  const createCatalogItem = useCreateCatalogItem(companyId);
+  const canCreateService = can("catalog:manage");
+  const [newServiceOpen, setNewServiceOpen] = useState(false);
   const create = useCreateProcedure(companyId, contactId);
   const update = useUpdateProcedure(companyId, contactId);
 
@@ -107,7 +116,24 @@ export function ProcedureDrawer({
   const services = catalog ?? [];
   const isPending = create.isPending || update.isPending;
 
+  const createService = (request: CatalogItemRequest) => {
+    createCatalogItem.mutate(
+      { ...request, type: "SERVICE" },
+      {
+        onSuccess: (item) => {
+          setNewServiceOpen(false);
+          setCatalogItemId(item.id);
+          setPriceCents(item.price != null ? Math.round(item.price * 100) : null);
+        },
+      },
+    );
+  };
+
   const chooseService = (id: string) => {
+    if (id === NEW_SERVICE) {
+      setNewServiceOpen(true);
+      return;
+    }
     setCatalogItemId(id);
     const item = services.find((s) => s.id === id);
     setPriceCents(item?.price != null ? Math.round(item.price * 100) : null);
@@ -185,201 +211,223 @@ export function ProcedureDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle>{editing ? "Editar procedimento" : "Novo procedimento"}</SheetTitle>
-        </SheetHeader>
-        <div className="space-y-4 py-4">
-          {locked && (
-            <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-              Procedimento realizado: só as observações podem ser alteradas.
-            </p>
-          )}
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>{editing ? "Editar procedimento" : "Novo procedimento"}</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 py-4">
+            {locked && (
+              <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+                Procedimento realizado: só as observações podem ser alteradas.
+              </p>
+            )}
 
-          <div className="space-y-2">
-            <Label id={`${uid}-state-label`}>Estado</Label>
-            <RadioGroup
-              aria-labelledby={`${uid}-state-label`}
-              value={state}
-              onValueChange={(v) => setState(v as ProcedureState)}
-              disabled={locked}
-              className="flex flex-wrap gap-4"
-            >
-              {STATES.map((s) => (
-                <div key={s} className="flex items-center gap-2">
-                  <RadioGroupItem
-                    id={`${uid}-state-${s}`}
-                    value={s}
-                    disabled={locked || (s === "DONE" && editing)}
-                  />
-                  <Label htmlFor={`${uid}-state-${s}`}>{STATE_LABELS[s]}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={`${uid}-service`}>Procedimentos</Label>
-            <Select
-              value={catalogItemId}
-              onValueChange={chooseService}
-              disabled={locked || editing}
-            >
-              <SelectTrigger id={`${uid}-service`}>
-                <SelectValue placeholder="Selecione um procedimento" />
-              </SelectTrigger>
-              <SelectContent>
-                {services.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.price != null ? `${s.name} — ${formatBRL(s.price)}` : s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={`${uid}-price`}>Valor (R$)</Label>
-            <Input
-              id={`${uid}-price`}
-              type="text"
-              inputMode="numeric"
-              placeholder="0,00"
-              disabled={locked}
-              value={centsToMask(priceCents)}
-              onChange={(e) => setPriceCents(maskToCents(e.target.value))}
-            />
-          </div>
-
-          {state === "DONE" && (
             <div className="space-y-2">
-              <Label htmlFor={`${uid}-performed-at`}>Data de realização</Label>
-              <Input
-                id={`${uid}-performed-at`}
-                type="date"
+              <Label id={`${uid}-state-label`}>Estado</Label>
+              <RadioGroup
+                aria-labelledby={`${uid}-state-label`}
+                value={state}
+                onValueChange={(v) => setState(v as ProcedureState)}
                 disabled={locked}
-                value={performedAt}
-                onChange={(e) => setPerformedAt(e.target.value)}
+                className="flex flex-wrap gap-4"
+              >
+                {STATES.map((s) => (
+                  <div key={s} className="flex items-center gap-2">
+                    <RadioGroupItem
+                      id={`${uid}-state-${s}`}
+                      value={s}
+                      disabled={locked || (s === "DONE" && editing)}
+                    />
+                    <Label htmlFor={`${uid}-state-${s}`}>{STATE_LABELS[s]}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`${uid}-service`}>Procedimentos</Label>
+              <Select
+                value={catalogItemId}
+                onValueChange={chooseService}
+                disabled={locked || editing}
+              >
+                <SelectTrigger id={`${uid}-service`}>
+                  <SelectValue placeholder="Selecione um procedimento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.length === 0 && (
+                    <p className="px-2 py-1.5 text-sm text-muted-foreground">
+                      Nenhum procedimento cadastrado.
+                    </p>
+                  )}
+                  {services.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.price != null ? `${s.name} — ${formatBRL(s.price)}` : s.name}
+                    </SelectItem>
+                  ))}
+                  {canCreateService && (
+                    <SelectItem value={NEW_SERVICE} className="font-medium text-primary">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Plus className="h-3.5 w-3.5" /> Criar procedimento
+                      </span>
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`${uid}-price`}>Valor (R$)</Label>
+              <Input
+                id={`${uid}-price`}
+                type="text"
+                inputMode="numeric"
+                placeholder="0,00"
+                disabled={locked}
+                value={centsToMask(priceCents)}
+                onChange={(e) => setPriceCents(maskToCents(e.target.value))}
               />
             </div>
-          )}
 
-          {showTeeth && (
-            <div className="space-y-2">
-              <Label>Dentes</Label>
-              <div className="flex gap-2">
-                {(Object.keys(DENTITION_LABELS) as Dentition[]).map((value) => (
-                  <Button
-                    key={value}
-                    type="button"
-                    size="sm"
-                    variant={value === dentition ? "default" : "outline"}
-                    disabled={locked}
-                    onClick={() => changeDentition(value)}
-                  >
-                    {DENTITION_LABELS[value]}
-                  </Button>
-                ))}
+            {state === "DONE" && (
+              <div className="space-y-2">
+                <Label htmlFor={`${uid}-performed-at`}>Data de realização</Label>
+                <Input
+                  id={`${uid}-performed-at`}
+                  type="date"
+                  disabled={locked}
+                  value={performedAt}
+                  onChange={(e) => setPerformedAt(e.target.value)}
+                />
               </div>
-              <ToothPicker
-                dentition={dentition}
-                selected={teeth.map((t) => t.tooth)}
-                disabled={locked}
-                onToggle={toggleTooth}
-              />
-              {teeth.map(({ tooth, faces }) => (
-                <div key={tooth} className="flex flex-wrap items-center gap-1">
-                  <span className="w-16 text-sm font-medium">Dente {tooth}</span>
-                  {FACES.map((face) => (
+            )}
+
+            {showTeeth && (
+              <div className="space-y-2">
+                <Label>Dentes</Label>
+                <div className="flex gap-2">
+                  {(Object.keys(DENTITION_LABELS) as Dentition[]).map((value) => (
                     <Button
-                      key={face}
+                      key={value}
                       type="button"
                       size="sm"
-                      variant={faces.includes(face) ? "default" : "outline"}
-                      aria-label={`Face ${face} do dente ${tooth}`}
+                      variant={value === dentition ? "default" : "outline"}
                       disabled={locked}
-                      onClick={() => toggleFace(tooth, face)}
+                      onClick={() => changeDentition(value)}
                     >
-                      {face}
+                      {DENTITION_LABELS[value]}
                     </Button>
                   ))}
                 </div>
-              ))}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor={`${uid}-professional`}>Profissional</Label>
-            <Select value={professionalId} onValueChange={setProfessionalId} disabled={locked}>
-              <SelectTrigger id={`${uid}-professional`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_PROFESSIONAL}>Não informado</SelectItem>
-                {(members ?? []).map((m) => (
-                  <SelectItem key={m.userId} value={m.userId}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor={`${uid}-notes`}>Observações</Label>
-            <Textarea
-              id={`${uid}-notes`}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-
-          {budgetApproved && procedure?.budget && (
-            <p className="text-sm text-muted-foreground">
-              Cobrado pelo orçamento {procedure.budget.title}.
-            </p>
-          )}
-          {canFinance && !locked && !budgetApproved && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id={`${uid}-generate`}
-                  checked={state !== "PRE_EXISTING" && generateTransaction}
-                  disabled={state === "PRE_EXISTING"}
-                  onCheckedChange={(v) => setGenerateTransaction(v === true)}
+                <ToothPicker
+                  dentition={dentition}
+                  selected={teeth.map((t) => t.tooth)}
+                  disabled={locked}
+                  onToggle={toggleTooth}
                 />
-                <Label htmlFor={`${uid}-generate`}>Gerar lançamento financeiro</Label>
+                {teeth.map(({ tooth, faces }) => (
+                  <div key={tooth} className="flex flex-wrap items-center gap-1">
+                    <span className="w-16 text-sm font-medium">Dente {tooth}</span>
+                    {FACES.map((face) => (
+                      <Button
+                        key={face}
+                        type="button"
+                        size="sm"
+                        variant={faces.includes(face) ? "default" : "outline"}
+                        aria-label={`Face ${face} do dente ${tooth}`}
+                        disabled={locked}
+                        onClick={() => toggleFace(tooth, face)}
+                      >
+                        {face}
+                      </Button>
+                    ))}
+                  </div>
+                ))}
               </div>
-              {state === "PLANNED" && (
-                <p className="text-xs text-muted-foreground">
-                  O lançamento será gerado quando o procedimento for marcado como realizado.
-                </p>
-              )}
-              {state === "DONE" && generateTransaction && (
-                <div className="space-y-2">
-                  <Label htmlFor={`${uid}-due`}>Vencimento</Label>
-                  <Input
-                    id={`${uid}-due`}
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                  />
-                </div>
-              )}
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor={`${uid}-professional`}>Profissional</Label>
+              <Select value={professionalId} onValueChange={setProfessionalId} disabled={locked}>
+                <SelectTrigger id={`${uid}-professional`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_PROFESSIONAL}>Não informado</SelectItem>
+                  {(members ?? []).map((m) => (
+                    <SelectItem key={m.userId} value={m.userId}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </div>
-        <SheetFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={save} disabled={isPending || !catalogItemId}>
-            Salvar
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+
+            <div className="space-y-2">
+              <Label htmlFor={`${uid}-notes`}>Observações</Label>
+              <Textarea
+                id={`${uid}-notes`}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+
+            {budgetApproved && procedure?.budget && (
+              <p className="text-sm text-muted-foreground">
+                Cobrado pelo orçamento {procedure.budget.title}.
+              </p>
+            )}
+            {canFinance && !locked && !budgetApproved && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id={`${uid}-generate`}
+                    checked={state !== "PRE_EXISTING" && generateTransaction}
+                    disabled={state === "PRE_EXISTING"}
+                    onCheckedChange={(v) => setGenerateTransaction(v === true)}
+                  />
+                  <Label htmlFor={`${uid}-generate`}>Gerar lançamento financeiro</Label>
+                </div>
+                {state === "PLANNED" && (
+                  <p className="text-xs text-muted-foreground">
+                    O lançamento será gerado quando o procedimento for marcado como realizado.
+                  </p>
+                )}
+                {state === "DONE" && generateTransaction && (
+                  <div className="space-y-2">
+                    <Label htmlFor={`${uid}-due`}>Vencimento</Label>
+                    <Input
+                      id={`${uid}-due`}
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <SheetFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={save} disabled={isPending || !catalogItemId}>
+              Salvar
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+      <CatalogItemDialog
+        open={newServiceOpen}
+        onOpenChange={setNewServiceOpen}
+        item={null}
+        defaultType="SERVICE"
+        isSubmitting={createCatalogItem.isPending}
+        onSubmit={createService}
+      />
+    </>
   );
 }
 

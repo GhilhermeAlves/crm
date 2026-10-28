@@ -3,8 +3,10 @@ package com.becommerce.crm.masterdata.catalog.application.port.output;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /** Porta de saída do catálogo ({@code catalog_items}, V078). RLS FORCE isola o tenant. */
@@ -13,6 +15,12 @@ public interface CatalogItemRepository {
     CatalogItem save(CatalogItem item);
 
     Optional<CatalogItem> findById(UUID id);
+
+    /** Ativa/desativa os serviços da empresa cujas categorias estão em {@code categories}. */
+    int setActiveByCategories(UUID companyId, Collection<String> categories, boolean active);
+
+    /** Nomes já cadastrados na empresa, em minúsculas (evita duplicar a lista inicial do segmento). */
+    Set<String> findLowerCaseNames(UUID companyId);
 
     boolean existsBySku(UUID companyId, String sku, UUID excludeId);
 

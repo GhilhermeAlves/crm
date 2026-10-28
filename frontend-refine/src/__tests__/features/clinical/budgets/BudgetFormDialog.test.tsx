@@ -16,6 +16,18 @@ vi.mock("@/features/clinical/procedures/hooks/useProcedures", () => ({
   useProcedures: () => ({ data: procedures.value }),
 }));
 
+vi.mock("@/features/clinical/budgets/components/BudgetTitleCombobox", () => ({
+  BudgetTitleCombobox: ({
+    id,
+    value,
+    onChange,
+  }: {
+    id: string;
+    value: string;
+    onChange: (value: string) => void;
+  }) => <input id={id} value={value} onChange={(e) => onChange(e.target.value)} />,
+}));
+
 vi.mock("@/features/clinical/budgets/hooks/useBudgets", () => ({
   useCreateBudget: () => ({ mutate: createMutate, isPending: false }),
   useUpdateBudget: () => ({ mutate: vi.fn(), isPending: false }),
