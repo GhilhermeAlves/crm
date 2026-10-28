@@ -14,6 +14,8 @@ import {
   useNotificationPermissions,
 } from "@/features/communication/notifications/hooks/useNotifications";
 import { formatRelativeTime } from "@/features/communication/notifications/lib/format";
+import { notificationHref } from "@/features/communication/notifications/lib/links";
+import { useRouter } from "next/navigation";
 import { ReportExportDownloadButton } from "@/features/reports/export/ReportExportDownloadButton";
 import type {
   Notification,
@@ -76,11 +78,14 @@ function NotificationContent({
   onRead: (id: string) => void;
   canUpdate: boolean;
 }) {
+  const router = useRouter();
   return (
     <button
       type="button"
       onClick={() => {
         if (!notification.read && canUpdate) onRead(notification.id);
+        const href = notificationHref(notification.metadata);
+        if (href) router.push(href);
       }}
       className={`flex w-full cursor-pointer flex-col gap-1 rounded-lg border p-4 text-left transition-colors hover:bg-accent ${
         notification.read ? "border-border" : "border-primary/30 bg-muted/40"

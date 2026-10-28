@@ -18,15 +18,16 @@ export function AnamnesisAnswerForm({
   companyId: string;
   contactId: string;
   anamnesis: PatientAnamnesisResponse;
-  complete: boolean;
+  /** Só um botão (rascunho ou concluir); sem o prop mostra os dois. */
+  complete?: boolean;
 }) {
   const saveMutation = useSavePatientAnamnesis(companyId, contactId);
   const [answers, setAnswers] = useState<PatientAnamnesisAnswers>(() => ({
     ...(anamnesis.answers ?? {}),
   }));
 
-  const handleSubmit = () => {
-    saveMutation.mutate({ anamnesisId: anamnesis.id, payload: { answers, complete } });
+  const submit = (finish: boolean) => {
+    saveMutation.mutate({ anamnesisId: anamnesis.id, payload: { answers, complete: finish } });
   };
 
   return (
@@ -36,9 +37,22 @@ export function AnamnesisAnswerForm({
         answers={answers}
         onChange={setAnswers}
       />
-      <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
-        {complete ? "Concluir" : "Salvar rascunho"}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        {complete !== true && (
+          <Button
+            variant={complete === undefined ? "outline" : "default"}
+            onClick={() => submit(false)}
+            disabled={saveMutation.isPending}
+          >
+            Salvar rascunho
+          </Button>
+        )}
+        {complete !== false && (
+          <Button onClick={() => submit(true)} disabled={saveMutation.isPending}>
+            Concluir
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

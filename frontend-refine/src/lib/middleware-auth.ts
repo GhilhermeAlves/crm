@@ -21,6 +21,8 @@ export const PUBLIC_PATHS = [
   "/convite",
   // Cadastro do paciente por link: o paciente preenche os próprios dados sem sessão.
   "/cadastro",
+  // Formulário (anamnese) que o paciente responde pelo link ou no tablet da recepção.
+  "/f",
 ] as const;
 
 /** Link legado de convite, redirecionado para /convite/{token}. */
