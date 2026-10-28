@@ -123,7 +123,7 @@ public class TrichoscopyService implements TrichoscopyUseCase {
 
     private TrichoscopyImageResponse toResponse(PatientTrichoscopyImage image) {
         String downloadUrl = "/api/v1/companies/" + image.getCompanyId() + "/storage/"
-                + image.getStorageObjectId() + "/download";
+                + image.getStorageObjectId() + "?inline=true";
         return new TrichoscopyImageResponse(
                 image.getId(),
                 image.getContactId(),
