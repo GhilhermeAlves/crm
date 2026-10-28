@@ -83,6 +83,9 @@ public class CompanyModulesService {
             if (segmentChanged || !catalogTemplateSeeder.hasSegmentProcedures(companyId, segment)) {
                 catalogTemplateSeeder.seedProcedures(companyId, segment);
             }
+            if (segmentChanged) {
+                catalogTemplateSeeder.applySegment(companyId, segment);
+            }
         } finally {
             TenantContext.setCompanyId(previousTenant);
         }

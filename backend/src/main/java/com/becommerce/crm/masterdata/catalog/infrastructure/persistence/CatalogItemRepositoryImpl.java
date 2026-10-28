@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Optional;
@@ -36,6 +37,11 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
     @Override
     public boolean existsBySku(UUID companyId, String sku, UUID excludeId) {
         return jpaRepository.existsBySku(companyId, sku, excludeId);
+    }
+
+    @Override
+    public int setActiveByCategories(UUID companyId, Collection<String> categories, boolean active) {
+        return categories.isEmpty() ? 0 : jpaRepository.setActiveByCategories(companyId, categories, active);
     }
 
     @Override

@@ -106,6 +106,23 @@ public class CatalogTemplateSeeder {
         return created;
     }
 
+    /**
+     * Liga o catálogo ao segmento: ativa os procedimentos da lista do segmento
+     * (pela categoria) e desativa os das listas dos outros segmentos. Itens
+     * criados à mão, com outra categoria, não são tocados.
+     */
+    public void applySegment(UUID companyId, CompanySegment segment) {
+        String current = CATEGORIES.get(segment);
+        List<String> others = CATEGORIES.entrySet().stream()
+                .filter(e -> e.getKey() != segment)
+                .map(Map.Entry::getValue)
+                .toList();
+        catalogItemRepository.setActiveByCategories(companyId, others, false);
+        if (current != null) {
+            catalogItemRepository.setActiveByCategories(companyId, List.of(current), true);
+        }
+    }
+
     /** True se a empresa já tem ao menos um procedimento da lista do segmento. */
     public boolean hasSegmentProcedures(UUID companyId, CompanySegment segment) {
         List<String> names = procedures(segment);
