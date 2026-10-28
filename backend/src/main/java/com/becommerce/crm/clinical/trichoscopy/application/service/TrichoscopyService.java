@@ -12,7 +12,9 @@ import com.becommerce.crm.masterdata.company.application.port.output.CompanyModu
 import com.becommerce.crm.masterdata.company.domain.CompanySegment;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
+import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,21 @@ public class TrichoscopyService implements TrichoscopyUseCase {
     private final StorageUseCase storageUseCase;
     private final CompanyModulesRepository companyModulesRepository;
     private final TenantAuditRecorder auditor;
+
+
+    private PatientTimelineRecorder timeline;
+
+    /** Opcional: registra os eventos nas anotações do paciente. */
+    @Autowired(required = false)
+    public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
+        this.timeline = timeline;
+    }
+
+    private void note(UUID companyId, UUID contactId, String body, UUID actorId) {
+        if (timeline != null) {
+            timeline.record(companyId, contactId, body, actorId);
+        }
+    }
 
     public TrichoscopyService(TrichoscopyRepository repository,
                               StorageUseCase storageUseCase,
@@ -70,6 +87,9 @@ public class TrichoscopyService implements TrichoscopyUseCase {
                     contentType, data, userId);
             PatientTrichoscopyImage saved = repository.save(
                     PatientTrichoscopyImage.create(companyId, contactId, stored.id(), userId, cleanNotes));
+            note(companyId, contactId, cleanNotes == null
+                    ? "Imagem de tricoscopia capturada."
+                    : "Imagem de tricoscopia capturada: " + cleanNotes, userId);
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, "PatientTrichoscopyImage",
                     saved.getId().toString(), "TRICHOSCOPY_CAPTURED", userId,
                     Map.of("contactId", contactId.toString(), "storageObjectId", stored.id().toString()));
@@ -104,6 +124,7 @@ public class TrichoscopyService implements TrichoscopyUseCase {
                     .orElseThrow(() -> new TrichoscopyImageNotFoundException(imageId));
             repository.delete(image);
             storageUseCase.delete(companyId, image.getStorageObjectId());
+            note(companyId, contactId, "Imagem de tricoscopia excluída.", userId);
             auditor.record(companyId, AuditAction.DELETE, AuditModule.CONTACTS, "PatientTrichoscopyImage",
                     imageId.toString(), "TRICHOSCOPY_DELETED", userId,
                     Map.of("contactId", contactId.toString()));

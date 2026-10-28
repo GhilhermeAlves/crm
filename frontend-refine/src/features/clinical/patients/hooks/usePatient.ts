@@ -85,6 +85,9 @@ export function useContactNotes(companyId: string | null, contactId: string | nu
     queryKey: ["contact-notes", companyId, contactId],
     queryFn: () => PatientService.listNotes(companyId as string, contactId as string),
     enabled: !!companyId && !!contactId,
+    // As outras abas gravam anotações automáticas no backend: sempre busca ao abrir.
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 }
 
@@ -156,6 +159,22 @@ export function useUploadContactFile(companyId: string | null, contactId: string
       ],
     }),
     onError: onError({ errorMessage: "Erro ao enviar arquivo" }),
+  });
+}
+
+export function useRequestFileDownload(companyId: string | null, contactId: string | null) {
+  const { onSuccess, onError } = useMutationDefaults<unknown, string>();
+  return useMutation({
+    mutationFn: (objectId: string) =>
+      PatientService.requestFileDownload(companyId as string, contactId as string, objectId),
+    onSuccess: onSuccess({
+      successMessage: "Link de download enviado para o sino de notificações",
+      invalidateKeys: [
+        ["notifications", companyId],
+        ["notifications-unread", companyId],
+      ],
+    }),
+    onError: onError({ errorMessage: "Erro ao preparar o download" }),
   });
 }
 

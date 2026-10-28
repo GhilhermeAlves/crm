@@ -96,6 +96,11 @@ export const PatientService = {
     return response.data;
   },
 
+  /** Pede o download: o link chega no sino de notificações. */
+  async requestFileDownload(companyId: string, contactId: string, objectId: string): Promise<void> {
+    await api.post(`${BASE}/${companyId}/patients/${contactId}/files/${objectId}/notify`);
+  },
+
   async uploadFile(companyId: string, contactId: string, file: File): Promise<StorageObject> {
     const formData = new FormData();
     formData.append("file", file);

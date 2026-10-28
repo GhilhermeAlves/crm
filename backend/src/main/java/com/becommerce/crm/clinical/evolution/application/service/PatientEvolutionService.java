@@ -17,7 +17,9 @@ import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundExc
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
 import com.becommerce.crm.sales.scheduling.application.port.out.AppointmentRepository;
 import com.becommerce.crm.sales.scheduling.domain.Appointment;
+import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +44,21 @@ public class PatientEvolutionService implements PatientEvolutionUseCase {
     private final AppointmentRepository appointmentRepository;
     private final UserRepository userRepository;
     private final TenantAuditRecorder auditor;
+
+
+    private PatientTimelineRecorder timeline;
+
+    /** Opcional: registra os eventos nas anotações do paciente. */
+    @Autowired(required = false)
+    public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
+        this.timeline = timeline;
+    }
+
+    private void note(UUID companyId, UUID contactId, String body, UUID actorId) {
+        if (timeline != null) {
+            timeline.record(companyId, contactId, body, actorId);
+        }
+    }
 
     public PatientEvolutionService(PatientEvolutionRepository evolutionRepository,
                                    ContactRepository contactRepository,
@@ -83,6 +100,7 @@ public class PatientEvolutionService implements PatientEvolutionUseCase {
                     request.appointmentId(), createdBy);
             evolutionRepository.save(evolution);
 
+            note(companyId, contactId, "Evolução registrada: " + evolution.getBody(), createdBy);
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
                     evolution.getId().toString(), "Evolução criada para o paciente.", createdBy, null);
             return toResponse(evolution, new HashMap<>());
@@ -126,6 +144,7 @@ public class PatientEvolutionService implements PatientEvolutionUseCase {
             evolution.finalizeBy(actorId);
             evolutionRepository.save(evolution);
 
+            note(companyId, contactId, "Evolução finalizada: " + evolution.getBody(), actorId);
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
                     evolution.getId().toString(), "Evolução finalizada.", actorId, null);
             return toResponse(evolution, new HashMap<>());
@@ -144,6 +163,7 @@ public class PatientEvolutionService implements PatientEvolutionUseCase {
             assertCanModify(evolution, actorId, admin);
             evolutionRepository.delete(evolution);
 
+            note(companyId, contactId, "Evolução excluída.", actorId);
             auditor.record(companyId, AuditAction.DELETE, AuditModule.CONTACTS, RESOURCE,
                     evolutionId.toString(), "Evolução excluída do paciente.", actorId, null);
         } finally {
