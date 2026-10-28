@@ -9,7 +9,7 @@ export function AnamnesisAnswerView({ anamnesis }: { anamnesis: PatientAnamnesis
   const professional = sections.filter((s) => s.professional);
   const general = sections.filter((s) => !s.professional);
   const ordered = [...general, ...professional];
-  const answers = new Map((anamnesis.answers || []).map((a) => [a.questionId, a]));
+  const answers = anamnesis.answers ?? {};
 
   return (
     <div className="space-y-6">
@@ -19,8 +19,8 @@ export function AnamnesisAnswerView({ anamnesis }: { anamnesis: PatientAnamnesis
           {[...(section.questions || [])]
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((question) => {
-              const ans = answers.get(question.id);
-              const value = ans?.valueJson ?? ans?.valueText;
+              const ans = answers[question.id];
+              const value = ans?.value;
               let display = value;
               if (Array.isArray(value)) {
                 display = value

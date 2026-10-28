@@ -35,7 +35,7 @@ function makeAnamnesis(questions: AnamnesisQuestion[]): PatientAnamnesisResponse
     modelName: "Padrão",
     modelVersion: 1,
     status: "DRAFT",
-    answers: [],
+    answers: {},
     snapshot: {
       id: "m1",
       companyId: "co1",
@@ -104,7 +104,7 @@ describe("AnamnesisAnswerForm", () => {
 
     const { payload } = saveMock.mock.calls[0][0];
     expect(payload.complete).toBe(false);
-    expect(payload.answers[0].questionId).toBe("q1");
-    expect(payload.answers[0].valueJson).toEqual(["DIABETES", "ASMA"]);
+    // Formato do backend: Map<idDaPergunta, { value, complement }>.
+    expect(payload.answers.q1.value).toEqual(["DIABETES", "ASMA"]);
   });
 });
