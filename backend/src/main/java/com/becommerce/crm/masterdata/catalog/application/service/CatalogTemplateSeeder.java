@@ -8,9 +8,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -59,7 +66,11 @@ public class CatalogTemplateSeeder {
                     "Investigação de acidentes",
                     "Plano de ação corretiva e preventiva"));
 
+    private static final String DENTAL_RESOURCE = "/catalog/procedures-dental.txt";
+    private static final List<String> DENTAL_PROCEDURES = loadDental();
+
     private static final Map<CompanySegment, String> CATEGORIES = Map.of(
+            CompanySegment.DENTAL, "Odontologia",
             CompanySegment.TRICHOLOGY, "Tricologia",
             CompanySegment.OCCUPATIONAL_SAFETY, "Segurança do trabalho");
 
@@ -69,15 +80,61 @@ public class CatalogTemplateSeeder {
         this.catalogItemRepository = catalogItemRepository;
     }
 
-    /** Cria os procedimentos do segmento; segmentos sem lista não recebem nada. */
-    public void seedProcedures(UUID companyId, CompanySegment segment) {
-        List<String> names = PROCEDURES.getOrDefault(segment, List.of());
+    /**
+     * Cria os procedimentos do segmento que a empresa ainda não tem (comparando o
+     * nome sem diferenciar maiúsculas). Roda na criação da empresa e quando o
+     * segmento muda; segmentos sem lista não recebem nada.
+     *
+     * @return quantos itens foram criados
+     */
+    public int seedProcedures(UUID companyId, CompanySegment segment) {
+        List<String> names = procedures(segment);
+        if (names.isEmpty()) {
+            return 0;
+        }
+        Set<String> existing = new HashSet<>(catalogItemRepository.findLowerCaseNames(companyId));
+        int created = 0;
         for (String name : names) {
+            if (!existing.add(name.toLowerCase(Locale.ROOT))) {
+                continue;
+            }
             catalogItemRepository.save(CatalogItem.create(companyId, CatalogItemType.SERVICE, name, null,
                     CATEGORIES.get(segment), BigDecimal.ZERO, "BRL", null, null, null));
+            created++;
         }
-        if (!names.isEmpty()) {
-            log.info("Catalog template seeded for company={} segment={}: {} items", companyId, segment, names.size());
+        log.info("Catalog template seeded for company={} segment={}: {} new items", companyId, segment, created);
+        return created;
+    }
+
+    /** True se a empresa já tem ao menos um procedimento da lista do segmento. */
+    public boolean hasSegmentProcedures(UUID companyId, CompanySegment segment) {
+        List<String> names = procedures(segment);
+        if (names.isEmpty()) {
+            return true;
+        }
+        Set<String> existing = catalogItemRepository.findLowerCaseNames(companyId);
+        return names.stream().anyMatch(name -> existing.contains(name.toLowerCase(Locale.ROOT)));
+    }
+
+    static List<String> procedures(CompanySegment segment) {
+        if (segment == CompanySegment.DENTAL) {
+            return DENTAL_PROCEDURES;
+        }
+        return PROCEDURES.getOrDefault(segment, List.of());
+    }
+
+    /** Lista odontológica (341 procedimentos) em {@code catalog/procedures-dental.txt}. */
+    private static List<String> loadDental() {
+        try (InputStream in = CatalogTemplateSeeder.class.getResourceAsStream(DENTAL_RESOURCE)) {
+            if (in == null) {
+                throw new IllegalStateException("Recurso ausente: " + DENTAL_RESOURCE);
+            }
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8).lines()
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .toList();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

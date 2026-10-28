@@ -8,8 +8,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -34,6 +36,11 @@ public class CatalogItemRepositoryImpl implements CatalogItemRepository {
     @Override
     public boolean existsBySku(UUID companyId, String sku, UUID excludeId) {
         return jpaRepository.existsBySku(companyId, sku, excludeId);
+    }
+
+    @Override
+    public Set<String> findLowerCaseNames(UUID companyId) {
+        return new HashSet<>(jpaRepository.findLowerCaseNames(companyId));
     }
 
     @Override

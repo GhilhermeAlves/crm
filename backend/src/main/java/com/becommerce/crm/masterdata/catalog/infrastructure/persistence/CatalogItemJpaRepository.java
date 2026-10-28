@@ -9,10 +9,14 @@ import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.LockModeType;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface CatalogItemJpaRepository extends JpaRepository<CatalogItemJpaEntity, UUID> {
+
+    @Query("SELECT LOWER(i.name) FROM CatalogItemJpaEntity i WHERE i.companyId = :companyId")
+    List<String> findLowerCaseNames(@Param("companyId") UUID companyId);
 
     /** {@code pattern} já vem em minúsculas com {@code %...%} (ou nulo = sem busca textual). */
     @Query("SELECT i FROM CatalogItemJpaEntity i WHERE i.companyId = :companyId "

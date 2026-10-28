@@ -5,6 +5,7 @@ import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /** Porta de saída do catálogo ({@code catalog_items}, V078). RLS FORCE isola o tenant. */
@@ -13,6 +14,9 @@ public interface CatalogItemRepository {
     CatalogItem save(CatalogItem item);
 
     Optional<CatalogItem> findById(UUID id);
+
+    /** Nomes já cadastrados na empresa, em minúsculas (evita duplicar a lista inicial do segmento). */
+    Set<String> findLowerCaseNames(UUID companyId);
 
     boolean existsBySku(UUID companyId, String sku, UUID excludeId);
 

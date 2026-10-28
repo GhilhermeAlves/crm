@@ -8,15 +8,18 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class CatalogTemplateSeederTest {
 
@@ -49,7 +52,26 @@ class CatalogTemplateSeederTest {
     @Test
     void shouldNotSeedSegmentsWithoutTemplate() {
         seeder.seedProcedures(companyId, CompanySegment.GENERIC);
-        seeder.seedProcedures(companyId, CompanySegment.DENTAL);
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    void shouldSeedDentalProceduresFromResource() {
+        int created = seeder.seedProcedures(companyId, CompanySegment.DENTAL);
+
+        assertEquals(341, created);
+        verify(repository, times(341)).save(any());
+    }
+
+    @Test
+    void shouldSkipProceduresTheCompanyAlreadyHas() {
+        when(repository.findLowerCaseNames(companyId)).thenReturn(Set.of("tricograma"));
+
+        int created = seeder.seedProcedures(companyId, CompanySegment.TRICHOLOGY);
+
+        int total = CatalogTemplateSeeder.PROCEDURES.get(CompanySegment.TRICHOLOGY).size();
+        assertEquals(total - 1, created);
+        assertTrue(seeder.hasSegmentProcedures(companyId, CompanySegment.TRICHOLOGY));
+        assertFalse(seeder.hasSegmentProcedures(companyId, CompanySegment.OCCUPATIONAL_SAFETY));
     }
 }
