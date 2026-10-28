@@ -13,6 +13,7 @@ import {
 } from "@/features/communication/notifications/hooks/useNotifications";
 import { formatRelativeTime } from "@/features/communication/notifications/lib/format";
 import { ReportExportDownloadButton } from "@/features/reports/export/ReportExportDownloadButton";
+import { notificationHref } from "../lib/links";
 import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -88,7 +89,9 @@ export function NotificationBell() {
                 className="flex cursor-pointer flex-col items-start gap-1 py-3"
                 onClick={() => {
                   if (!n.read && perms.canUpdate) markRead.mutate(n.id);
-                  if (n.type === "MESSAGE") router.push(ROUTES.INBOX);
+                  const href = notificationHref(n.metadata);
+                  if (href) router.push(href);
+                  else if (n.type === "MESSAGE") router.push(ROUTES.INBOX);
                 }}
               >
                 <div className="flex w-full items-center justify-between gap-2">

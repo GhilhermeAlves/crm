@@ -2,12 +2,17 @@ import type { AnamnesisModel } from "@/features/masterdata/anamnesis/types/anamn
 
 export type PatientAnamnesisStatus = "DRAFT" | "COMPLETED";
 
+/**
+ * Resposta de uma pergunta, no formato do backend: valor livre (texto, número,
+ * "YES"/"NO", lista de valores das opções) e complemento opcional.
+ */
 export type PatientAnamnesisAnswer = {
-  questionId: string;
-  valueText: string | null;
-  valueJson: unknown;
+  value: unknown;
   complement: string | null;
 };
+
+/** Respostas indexadas pelo id da pergunta (Map<UUID, ...> no backend). */
+export type PatientAnamnesisAnswers = Record<string, PatientAnamnesisAnswer>;
 
 export type PatientAnamnesisResponse = {
   id: string;
@@ -16,7 +21,7 @@ export type PatientAnamnesisResponse = {
   modelName: string;
   modelVersion: number;
   status: PatientAnamnesisStatus;
-  answers: PatientAnamnesisAnswer[];
+  answers: PatientAnamnesisAnswers | null;
   snapshot: AnamnesisModel;
   alerts: string[];
   createdBy: string | null;
@@ -33,6 +38,6 @@ export type StartPatientAnamnesisRequest = {
 };
 
 export type SavePatientAnamnesisRequest = {
-  answers: PatientAnamnesisAnswer[];
+  answers: PatientAnamnesisAnswers;
   complete: boolean;
 };
