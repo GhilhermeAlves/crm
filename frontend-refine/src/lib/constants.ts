@@ -32,6 +32,7 @@ export const ROUTES = {
   SETTINGS_AGENDA: "/settings/agenda",
   SETTINGS_AGENT_CONFIG: "/settings/agent-config",
   SETTINGS_WHATSAPP: "/settings/whatsapp",
+  SETTINGS_EMAIL: "/settings/email",
   SETTINGS_COMPANY: "/settings/company",
   SETTINGS_COMPANY_PREFERENCES: "/settings/company/preferences",
   SETTINGS_COMPANY_USERS_NEW: "/settings/company/users/new",

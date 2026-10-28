@@ -118,6 +118,7 @@ app:
     from: ${MAIL_FROM:}
     frontend-base-url: ${MAIL_FRONTEND_BASE_URL:http://localhost:3000}
     log-token: ${MAIL_LOG_TOKEN:false}
+    settings-key: ${MAIL_SETTINGS_KEY:}
   invitations:
     base-url: ${INVITATION_BASE_URL:${MAIL_FRONTEND_BASE_URL:}}
   ai:

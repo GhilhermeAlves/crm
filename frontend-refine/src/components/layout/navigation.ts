@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Smartphone,
+  Mail,
   Users,
   Contact,
   GitBranch,
@@ -282,6 +283,12 @@ export const NAVIGATION: NavGroup[] = [
         icon: Smartphone,
         permission: "omnichannel:update",
         module: "INBOX",
+      },
+      {
+        label: "E-mail",
+        href: ROUTES.SETTINGS_EMAIL,
+        icon: Mail,
+        permission: "company:update",
       },
       {
         label: "Agente de IA",
