@@ -440,7 +440,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
         </div>
       </div>
 
-      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+      <div className="relative mx-auto aspect-video w-full max-w-[calc(70vh*16/9)] overflow-hidden rounded-lg bg-black">
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:)
           <img
