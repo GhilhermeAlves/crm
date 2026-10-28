@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,5 +55,21 @@ public class ContactFileController {
                 file.getBytes(), principal.userId());
         fileNotifier.fileUploaded(companyId, contactId, response, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /** Pedido de download: o link vai para o sino de notificações de quem pediu. */
+    @PostMapping("/{objectId}/notify")
+    @PreAuthorize("hasAuthority('contact:read')")
+    public ResponseEntity<Void> notifyDownload(
+            @CurrentCompanyId("Você só pode acessar arquivos da sua própria empresa.") UUID companyId,
+            @PathVariable UUID contactId,
+            @PathVariable UUID objectId,
+            @AuthenticationPrincipal CurrentUser principal) {
+        StorageResponse file = storageUseCase.listForContact(companyId, contactId).stream()
+                .filter(f -> f.id().equals(objectId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Arquivo não encontrado."));
+        fileNotifier.downloadRequested(companyId, contactId, file, principal.userId());
+        return ResponseEntity.accepted().build();
     }
 }

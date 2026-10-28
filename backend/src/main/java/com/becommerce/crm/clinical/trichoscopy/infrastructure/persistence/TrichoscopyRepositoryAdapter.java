@@ -37,6 +37,9 @@ public class TrichoscopyRepositoryAdapter implements TrichoscopyRepository {
     @Override
     public void delete(PatientTrichoscopyImage image) {
         repository.deleteById(image.getId());
+        // A exclusão do arquivo (storage_objects) vem logo depois como DELETE em lote;
+        // sem o flush a FK da imagem ainda existe nesse momento e o banco recusa.
+        repository.flush();
     }
 
     private PatientTrichoscopyImageJpaEntity toEntity(PatientTrichoscopyImage image) {

@@ -7,8 +7,6 @@ import com.becommerce.crm.masterdata.contact.note.application.service.PatientTim
 import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -16,16 +14,14 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Depois do upload de um arquivo do paciente: cria a notificação com o botão de
- * download (metadata {@code kind = STORAGE_FILE}) e registra o envio nas
- * anotações do paciente. Falhas aqui não desfazem o upload.
+ * Arquivos do paciente: o upload é registrado nas anotações e o pedido de
+ * download cria a notificação com o botão "Fazer download" (metadata
+ * {@code kind = STORAGE_FILE}) em vez de baixar direto no navegador.
  */
 @Component
 public class PatientFileNotifier {
 
     public static final String NOTIFICATION_KIND = "STORAGE_FILE";
-
-    private static final Logger log = LoggerFactory.getLogger(PatientFileNotifier.class);
 
     private final NotificationUseCase notifications;
     private final PatientTimelineRecorder timeline;
@@ -40,12 +36,12 @@ public class PatientFileNotifier {
 
     public void fileUploaded(UUID companyId, UUID contactId, StorageResponse file, UUID userId) {
         timeline.record(companyId, contactId, "Arquivo enviado: " + file.fileName(), userId);
-        try {
-            notifications.create(companyId, new CreateNotificationRequest(userId, NotificationType.SYSTEM,
-                    "Arquivo disponível para download", file.fileName(), metadata(file, contactId)), userId);
-        } catch (RuntimeException ex) {
-            log.warn("Não foi possível notificar o upload do arquivo {}", file.id(), ex);
-        }
+    }
+
+    /** Clique em baixar na aba Arquivos: o download fica disponível no sino. */
+    public void downloadRequested(UUID companyId, UUID contactId, StorageResponse file, UUID userId) {
+        notifications.create(companyId, new CreateNotificationRequest(userId, NotificationType.SYSTEM,
+                "Arquivo pronto para download", file.fileName(), metadata(file, contactId)), userId);
     }
 
     private String metadata(StorageResponse file, UUID contactId) {

@@ -61,7 +61,8 @@ public class StorageController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> download(
             @CurrentCompanyId("Você só pode enviar arquivos para a sua própria empresa.") UUID companyId,
-            @PathVariable UUID objectId) {
+            @PathVariable UUID objectId,
+            @RequestParam(defaultValue = "false") boolean inline) {
         StorageDownload download = storageUseCase.download(companyId, objectId);
         String contentType = download.contentType() == null || download.contentType().isBlank()
                 ? "application/octet-stream"
@@ -69,7 +70,7 @@ public class StorageController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + download.fileName() + "\"")
+                        (inline ? "inline" : "attachment") + "; filename=\"" + download.fileName() + "\"")
                 .body(download.data());
     }
 

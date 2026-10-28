@@ -83,7 +83,7 @@ class TrichoscopyServiceTest {
         assertThat(response.storageObjectId()).isEqualTo(STORAGE_ID);
         assertThat(response.notes()).isEqualTo("couro cabeludo");
         assertThat(response.downloadUrl())
-                .isEqualTo("/api/v1/companies/" + COMPANY_ID + "/storage/" + STORAGE_ID + "/download");
+                .isEqualTo("/api/v1/companies/" + COMPANY_ID + "/storage/" + STORAGE_ID + "?inline=true");
     }
 
     @Test

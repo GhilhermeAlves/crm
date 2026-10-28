@@ -23,10 +23,12 @@ import com.becommerce.crm.masterdata.anamnesis.application.service.AnamnesisServ
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
+import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +58,21 @@ public class PatientAnamnesisService implements PatientAnamnesisUseCase {
     private final AnamnesisService modelService;
     private final UserRepository userRepository;
     private final TenantAuditRecorder auditor;
+
+
+    private PatientTimelineRecorder timeline;
+
+    /** Opcional: registra os eventos nas anotações do paciente. */
+    @Autowired(required = false)
+    public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
+        this.timeline = timeline;
+    }
+
+    private void note(UUID companyId, UUID contactId, String body, UUID actorId) {
+        if (timeline != null) {
+            timeline.record(companyId, contactId, body, actorId);
+        }
+    }
     private final ObjectMapper objectMapper;
 
     public PatientAnamnesisService(PatientAnamnesisRepository anamnesisRepository,
@@ -131,6 +148,7 @@ public class PatientAnamnesisService implements PatientAnamnesisUseCase {
                     model.name(), model.version(), writeJson(model), createdBy);
             anamnesisRepository.save(anamnesis);
 
+            note(companyId, contactId, "Anamnese iniciada: " + anamnesis.getModelName(), createdBy);
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
                     anamnesis.getId().toString(), "Anamnese iniciada para o paciente.", createdBy, null);
             return toResponse(anamnesis, new HashMap<>());
@@ -165,6 +183,9 @@ public class PatientAnamnesisService implements PatientAnamnesisUseCase {
             }
             anamnesisRepository.save(anamnesis);
 
+            if (complete) {
+                note(companyId, contactId, "Anamnese concluída: " + anamnesis.getModelName(), actorId);
+            }
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
                     anamnesis.getId().toString(),
                     complete ? "Anamnese concluída." : "Anamnese salva como rascunho.", actorId, null);
@@ -188,6 +209,7 @@ public class PatientAnamnesisService implements PatientAnamnesisUseCase {
             }
             anamnesisRepository.delete(anamnesis);
 
+            note(companyId, contactId, "Anamnese excluída: " + anamnesis.getModelName(), actorId);
             auditor.record(companyId, AuditAction.DELETE, AuditModule.CONTACTS, RESOURCE,
                     anamnesisId.toString(), "Anamnese excluída do paciente.", actorId, null);
         } finally {

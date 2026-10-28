@@ -32,7 +32,9 @@ import com.becommerce.crm.masterdata.contact.application.port.out.ContactReposit
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactConflictException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
+import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +66,21 @@ public class PatientProcedureService implements PatientProcedureUseCase {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final TenantAuditRecorder auditor;
+
+
+    private PatientTimelineRecorder timeline;
+
+    /** Opcional: registra os eventos nas anotações do paciente. */
+    @Autowired(required = false)
+    public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
+        this.timeline = timeline;
+    }
+
+    private void note(UUID companyId, UUID contactId, String body, UUID actorId) {
+        if (timeline != null) {
+            timeline.record(companyId, contactId, body, actorId);
+        }
+    }
     private final BudgetRepository budgetRepository;
 
     public PatientProcedureService(PatientProcedureRepository repository,
@@ -127,6 +144,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                     request.dueDate(), actorId, canCreateFinance);
             repository.save(procedure);
 
+            note(companyId, contactId, "Procedimento registrado: " + procedure.getNameSnapshot(), actorId);
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
                     procedure.getId().toString(), "Procedimento registrado na ficha clínica.", actorId, null);
             Map<UUID, String> categories = new HashMap<>();
@@ -188,6 +206,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                     request.dueDate(), actorId, canCreateFinance);
             repository.save(procedure);
 
+            note(companyId, contactId, "Procedimento realizado: " + procedure.getNameSnapshot(), actorId);
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
                     procedure.getId().toString(), "Procedimento marcado como realizado.", actorId, null);
             return toResponse(procedure, new HashMap<>(), new HashMap<>(), generated,
@@ -223,6 +242,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             detachFromDraftBudget(active, procedureId, actorId);
             repository.delete(procedure);
 
+            note(companyId, contactId, "Procedimento excluído: " + procedure.getNameSnapshot(), actorId);
             auditor.record(companyId, AuditAction.DELETE, AuditModule.CONTACTS, RESOURCE,
                     procedureId.toString(), "Procedimento excluído da ficha clínica.", actorId, null);
         } finally {

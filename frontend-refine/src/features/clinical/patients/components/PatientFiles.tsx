@@ -16,9 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { usePermission } from "@/features/identity/auth/hooks/useAuthorization";
-import { useDeleteFile, useDownloadFile } from "@/features/masterdata/storage/hooks/useStorage";
+import { useDeleteFile } from "@/features/masterdata/storage/hooks/useStorage";
 import { formatBytes, type StorageObject } from "@/features/masterdata/storage/types/storage.types";
-import { useContactFiles, useUploadContactFile } from "../hooks/usePatient";
+import { useContactFiles, useRequestFileDownload, useUploadContactFile } from "../hooks/usePatient";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
 export function PatientFiles({ contact }: { contact: Contact }) {
@@ -30,7 +30,8 @@ export function PatientFiles({ contact }: { contact: Contact }) {
 
   const { data: files = [], isLoading } = useContactFiles(companyId, contactId);
   const upload = useUploadContactFile(companyId, contactId);
-  const download = useDownloadFile(companyId);
+  // Baixar não abre o arquivo direto: o link vai para o sino de notificações.
+  const download = useRequestFileDownload(companyId, contact.id);
   const remove = useDeleteFile(companyId);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -107,7 +108,7 @@ export function PatientFiles({ contact }: { contact: Contact }) {
                       className="max-w-full truncate text-left text-primary underline-offset-4 hover:underline disabled:opacity-60"
                       title={`Baixar ${file.fileName}`}
                       disabled={download.isPending}
-                      onClick={() => download.mutate(file)}
+                      onClick={() => download.mutate(file.id)}
                     >
                       {file.fileName}
                     </button>
@@ -127,7 +128,7 @@ export function PatientFiles({ contact }: { contact: Contact }) {
                         size="icon"
                         className="h-8 w-8"
                         aria-label={`Baixar ${file.fileName}`}
-                        onClick={() => download.mutate(file)}
+                        onClick={() => download.mutate(file.id)}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
