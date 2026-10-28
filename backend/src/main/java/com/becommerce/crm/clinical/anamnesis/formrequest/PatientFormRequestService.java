@@ -11,6 +11,7 @@ import com.becommerce.crm.clinical.anamnesis.formrequest.PatientFormDtos.Created
 import com.becommerce.crm.clinical.anamnesis.formrequest.PatientFormDtos.FormRequestResponse;
 import com.becommerce.crm.clinical.anamnesis.formrequest.PatientFormDtos.PublicFormResponse;
 import com.becommerce.crm.clinical.anamnesis.formrequest.PatientFormDtos.SubmitPublicForm;
+import com.becommerce.crm.communication.notification.application.EmailSender;
 import com.becommerce.crm.communication.notification.application.dto.CreateNotificationRequest;
 import com.becommerce.crm.communication.notification.application.port.input.NotificationUseCase;
 import com.becommerce.crm.communication.notification.domain.NotificationType;
@@ -80,6 +81,7 @@ public class PatientFormRequestService {
     private final NotificationUseCase notifications;
     private final PatientTimelineRecorder timeline;
     private final ObjectMapper objectMapper;
+    private final EmailSender emailSender;
     private final String publicBaseUrl;
 
     public PatientFormRequestService(PatientFormRequestJpaRepository repository,
@@ -91,6 +93,7 @@ public class PatientFormRequestService {
                                      NotificationUseCase notifications,
                                      PatientTimelineRecorder timeline,
                                      ObjectMapper objectMapper,
+                                     EmailSender emailSender,
                                      @Value("${app.mail.frontend-base-url:}") String publicBaseUrl) {
         this.repository = repository;
         this.tokenContext = tokenContext;
@@ -101,6 +104,7 @@ public class PatientFormRequestService {
         this.notifications = notifications;
         this.timeline = timeline;
         this.objectMapper = objectMapper;
+        this.emailSender = emailSender;
         this.publicBaseUrl = publicBaseUrl;
     }
 
@@ -131,14 +135,19 @@ public class PatientFormRequestService {
             PatientFormRequestJpaEntity saved = repository.save(new PatientFormRequestJpaEntity(companyId,
                     contactId, anamnesis.id(), RegistrationLink.hash(token), mode, expiresAt, actorId, now));
             String url = buildUrl(token);
-            boolean sent = MODE_LINK.equals(mode) && Boolean.TRUE.equals(request.sendWhatsApp())
+            boolean link = MODE_LINK.equals(mode);
+            boolean sent = link && Boolean.TRUE.equals(request.sendWhatsApp())
                     && sendByWhatsApp(companyId, contactId, anamnesis.modelName(), url);
+            boolean mailed = link && Boolean.TRUE.equals(request.sendEmail())
+                    && sendByEmail(companyId, contactId, anamnesis.modelName(), url);
             TenantContext.setCompanyId(companyId);
+            String how = sent && mailed ? " pelo WhatsApp e por e-mail"
+                    : sent ? " pelo WhatsApp" : mailed ? " por e-mail" : "";
             timeline.record(companyId, contactId, (MODE_RECEPTION.equals(mode)
                     ? "Formulário aberto no modo recepção: "
-                    : sent ? "Formulário enviado ao paciente pelo WhatsApp: "
-                    : "Formulário gerado para o paciente: ") + anamnesis.modelName(), actorId);
-            return new CreatedFormRequest(saved.getId(), anamnesis.id(), url, mode, expiresAt, sent);
+                    : how.isEmpty() ? "Formulário gerado para o paciente: "
+                    : "Formulário enviado ao paciente" + how + ": ") + anamnesis.modelName(), actorId);
+            return new CreatedFormRequest(saved.getId(), anamnesis.id(), url, mode, expiresAt, sent, mailed);
         } finally {
             TenantContext.clear();
         }
@@ -234,6 +243,31 @@ public class PatientFormRequestService {
     }
 
     // ------------------------------------------------------------------
+
+    public PatientFormDtos.SendOptions sendOptions() {
+        return new PatientFormDtos.SendOptions(emailSender.deliversEmail());
+    }
+
+    /** E-mail com o nome da clínica; respostas vão para o e-mail cadastrado da clínica. */
+    private boolean sendByEmail(UUID companyId, UUID contactId, String formName, String url) {
+        if (!emailSender.deliversEmail()) {
+            return false;
+        }
+        var contact = contactUseCase.getById(companyId, contactId);
+        if (contact.email() == null || contact.email().isBlank()) {
+            return false;
+        }
+        Company company = companyRepository.findById(companyId).orElse(null);
+        String clinic = company == null ? "Clínica" : company.getTradingName();
+        String replyTo = company == null ? null : company.getEmail();
+        try {
+            emailSender.sendPatientForm(contact.email(), clinic, replyTo, contact.firstName(), formName, url);
+            return true;
+        } catch (RuntimeException ex) {
+            log.warn("Formulário {} não enviado por e-mail: {}", formName, ex.getMessage());
+            return false;
+        }
+    }
 
     /** Falha no WhatsApp não impede o link: a tela oferece copiar/enviar manualmente. */
     private boolean sendByWhatsApp(UUID companyId, UUID contactId, String formName, String url) {

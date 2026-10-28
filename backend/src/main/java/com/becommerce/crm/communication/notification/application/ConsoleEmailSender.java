@@ -23,4 +23,11 @@ public class ConsoleEmailSender implements EmailSender {
     public void sendInvitation(String to, String companyName, String role, String tokenUrl) {
         log.info("[ConsoleEmailSender] Convite para {} (empresa={}, role={}): {}", to, companyName, role, tokenUrl);
     }
+
+    @Override
+    public void sendPatientForm(String to, String clinicName, String replyTo, String patientName,
+                                String formName, String url) {
+        log.info("[ConsoleEmailSender] Formulário '{}' para {} (clínica={}, reply-to={}): {}",
+                formName, to, clinicName, replyTo, url);
+    }
 }

@@ -64,19 +64,53 @@ public class SmtpEmailSender implements EmailSender, EmailService {
         sendHtml(to, subject, body);
     }
 
+    @Override
+    public boolean deliversEmail() {
+        return true;
+    }
+
+    @Override
+    public void sendPatientForm(String to, String clinicName, String replyTo, String patientName,
+                                String formName, String url) {
+        String subject = clinicName + ": " + formName;
+        String body = """
+                <p>Olá, %s!</p>
+                <p><strong>%s</strong> pediu que você responda o formulário <strong>%s</strong>
+                antes do atendimento. Leva poucos minutos e você assina no final.</p>
+                <p><a href="%s">Responder o formulário</a></p>
+                <p>O link é pessoal e vale por 7 dias. Dúvidas? Basta responder este e-mail.</p>
+                """.formatted(escape(patientName), escape(clinicName), escape(formName), url);
+        sendHtml(to, subject, body, clinicName, replyTo);
+    }
+
+    private static String escape(String value) {
+        return value == null ? "" : value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
     private void sendHtml(String to, String subject, String html) {
+        sendHtml(to, subject, html, null, null);
+    }
+
+    private void sendHtml(String to, String subject, String html, String fromName, String replyTo) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             if (from != null && !from.isBlank()) {
-                helper.setFrom(from);
+                if (fromName != null && !fromName.isBlank()) {
+                    helper.setFrom(from, fromName);
+                } else {
+                    helper.setFrom(from);
+                }
+            }
+            if (replyTo != null && !replyTo.isBlank()) {
+                helper.setReplyTo(replyTo);
             }
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(message);
             log.info("E-mail enviado para {} (assunto: {})", to, subject);
-        } catch (MessagingException e) {
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
             log.error("Falha ao enviar e-mail para {}: {}", to, e.getMessage());
             throw new IllegalStateException("Falha ao enviar e-mail para " + to, e);
         }
