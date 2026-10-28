@@ -21,6 +21,7 @@ import com.becommerce.crm.masterdata.anamnesis.application.dto.AnamnesisQuestion
 import com.becommerce.crm.masterdata.anamnesis.application.dto.AnamnesisSectionResponse;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.masterdata.company.domain.Company;
+import com.becommerce.crm.masterdata.company.mail.CompanyMailService;
 import com.becommerce.crm.masterdata.contact.application.port.in.ContactUseCase;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
 import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
@@ -82,6 +83,7 @@ public class PatientFormRequestService {
     private final PatientTimelineRecorder timeline;
     private final ObjectMapper objectMapper;
     private final EmailSender emailSender;
+    private final CompanyMailService companyMail;
     private final String publicBaseUrl;
 
     public PatientFormRequestService(PatientFormRequestJpaRepository repository,
@@ -94,6 +96,7 @@ public class PatientFormRequestService {
                                      PatientTimelineRecorder timeline,
                                      ObjectMapper objectMapper,
                                      EmailSender emailSender,
+                                     CompanyMailService companyMail,
                                      @Value("${app.mail.frontend-base-url:}") String publicBaseUrl) {
         this.repository = repository;
         this.tokenContext = tokenContext;
@@ -105,6 +108,7 @@ public class PatientFormRequestService {
         this.timeline = timeline;
         this.objectMapper = objectMapper;
         this.emailSender = emailSender;
+        this.companyMail = companyMail;
         this.publicBaseUrl = publicBaseUrl;
     }
 
@@ -244,13 +248,17 @@ public class PatientFormRequestService {
 
     // ------------------------------------------------------------------
 
-    public PatientFormDtos.SendOptions sendOptions() {
-        return new PatientFormDtos.SendOptions(emailSender.deliversEmail());
+    public PatientFormDtos.SendOptions sendOptions(UUID companyId) {
+        return new PatientFormDtos.SendOptions(companyMail.isConfigured(companyId) || emailSender.deliversEmail());
     }
 
-    /** E-mail com o nome da clínica; respostas vão para o e-mail cadastrado da clínica. */
+    /**
+     * Sai da conta de e-mail da própria clínica (Configurações → E-mail); sem ela,
+     * do SMTP do servidor com o nome da clínica e resposta para o e-mail cadastrado.
+     */
     private boolean sendByEmail(UUID companyId, UUID contactId, String formName, String url) {
-        if (!emailSender.deliversEmail()) {
+        boolean ownMail = companyMail.isConfigured(companyId);
+        if (!ownMail && !emailSender.deliversEmail()) {
             return false;
         }
         var contact = contactUseCase.getById(companyId, contactId);
@@ -261,7 +269,11 @@ public class PatientFormRequestService {
         String clinic = company == null ? "Clínica" : company.getTradingName();
         String replyTo = company == null ? null : company.getEmail();
         try {
-            emailSender.sendPatientForm(contact.email(), clinic, replyTo, contact.firstName(), formName, url);
+            if (ownMail) {
+                companyMail.sendPatientForm(companyId, contact.email(), clinic, contact.firstName(), formName, url);
+            } else {
+                emailSender.sendPatientForm(contact.email(), clinic, replyTo, contact.firstName(), formName, url);
+            }
             return true;
         } catch (RuntimeException ex) {
             log.warn("Formulário {} não enviado por e-mail: {}", formName, ex.getMessage());

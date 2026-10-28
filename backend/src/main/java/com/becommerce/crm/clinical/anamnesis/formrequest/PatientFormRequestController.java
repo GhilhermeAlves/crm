@@ -59,7 +59,7 @@ public class PatientFormRequestController {
     @GetMapping("/companies/{companyId}/form-requests/options")
     @PreAuthorize("hasAuthority('contact:read')")
     public ResponseEntity<PatientFormDtos.SendOptions> options(@CurrentCompanyId(OWN_COMPANY) UUID companyId) {
-        return ResponseEntity.ok(service.sendOptions());
+        return ResponseEntity.ok(service.sendOptions(companyId));
     }
 
     @GetMapping("/companies/{companyId}/patients/{contactId}/form-requests")
