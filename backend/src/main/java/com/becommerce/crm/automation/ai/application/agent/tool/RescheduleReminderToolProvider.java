@@ -77,7 +77,7 @@ public class RescheduleReminderToolProvider implements AgentToolProvider {
                         "mensagem", Map.of("type", "string", "description",
                                 "Mensagem do lembrete, curta e calorosa, chamando o paciente pelo primeiro nome "
                                         + "e retomando o agendamento. Ex.: Oi, Maria! Passando para ver se "
-                                        + "conseguimos remarcar sua avaliação com a Dra. Raquel. Quer que eu "
+                                        + "conseguimos remarcar sua avaliação. Quer que eu "
                                         + "veja os horários desta semana?")),
                 "required", List.of("mensagem"));
         return List.of(new AiProvider.ToolDefinition(REMIND,
