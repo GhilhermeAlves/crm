@@ -138,6 +138,14 @@ export function PublicPatientForm({ token, reception }: { token: string; recepti
       <CardContent className="space-y-6 pt-5 sm:pt-6">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
+            {form.clinicLogoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- data URL do logo da clínica
+              <img
+                src={form.clinicLogoUrl}
+                alt={form.clinicName}
+                className="mb-2 max-h-20 w-auto max-w-[240px] object-contain"
+              />
+            )}
             <p className="text-sm font-medium text-primary">{form.clinicName}</p>
             <h1 className="text-xl font-semibold">{form.formName}</h1>
             <p className="text-sm text-muted-foreground">

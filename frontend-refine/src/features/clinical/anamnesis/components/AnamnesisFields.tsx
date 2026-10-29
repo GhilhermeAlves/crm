@@ -27,6 +27,21 @@ function shouldShowComplement(question: AnamnesisQuestion, value: unknown) {
   return false;
 }
 
+/** "38 anos e 4 meses" a partir de uma data ISO (yyyy-MM-dd); null se inválida/futura. */
+export function ageLabel(iso: string, today = new Date()): string | null {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  let months = (today.getFullYear() - y) * 12 + (today.getMonth() + 1 - m);
+  if (today.getDate() < d) months--;
+  if (months < 0) return null;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  const yearsText = `${years} ${years === 1 ? "ano" : "anos"}`;
+  return rest ? `${yearsText} e ${rest} ${rest === 1 ? "mês" : "meses"}` : yearsText;
+}
+
+const isBirthDate = (question: AnamnesisQuestion) => /nascimento/i.test(question.text);
+
 const bySortOrder = <T extends { sortOrder: number }>(a: T, b: T) => a.sortOrder - b.sortOrder;
 
 /** Seções na ordem de preenchimento: primeiro as do paciente, depois as do profissional. */
@@ -137,6 +152,11 @@ export function AnamnesisFields({
                     value={text || undefined}
                     onChange={(v) => update(question.id, { value: v })}
                   />
+                )}
+                {question.type === "DATE" && isBirthDate(question) && text && ageLabel(text) && (
+                  <p className="text-sm text-muted-foreground">
+                    Idade: <span className="font-medium text-foreground">{ageLabel(text)}</span>
+                  </p>
                 )}
                 {(question.type === "YES_NO" || question.type === "YES_NO_WITH_TEXT") && (
                   <RadioGroup

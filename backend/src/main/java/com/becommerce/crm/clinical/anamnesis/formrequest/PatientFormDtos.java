@@ -37,7 +37,8 @@ public final class PatientFormDtos {
     }
 
     /** O que a página pública mostra: só o formulário, nunca a ficha. */
-    public record PublicFormResponse(String clinicName, String patientFirstName, String formName,
+    public record PublicFormResponse(String clinicName, String clinicLogoUrl, String patientFirstName,
+                                     String formName,
                                      AnamnesisModelResponse form, String mode) {
     }
 

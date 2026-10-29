@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload } from "lucide-react";
+import { Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
@@ -30,6 +30,9 @@ const companySchema = z.object({
 
 type CompanyFormData = z.infer<typeof companySchema>;
 
+const LOGO_TYPES = ["image/png", "image/jpeg", "image/svg+xml"];
+const LOGO_MAX_BYTES = 500 * 1024;
+
 export default function CompanyDataPage() {
   const { user } = useAuth();
   const companyId = user?.companyId ?? "";
@@ -38,6 +41,29 @@ export default function CompanyDataPage() {
   const [editing, setEditing] = useState(false);
   const [fetchingCep, setFetchingCep] = useState(false);
   const lastCep = useRef("");
+  const logoInput = useRef<HTMLInputElement>(null);
+
+  // Logo vai como data URL (aparece no topo do formulário público do paciente).
+  const saveLogo = (logoUrl: string, message: string) =>
+    updateTenant.mutate(
+      { id: companyId, data: { logoUrl } },
+      { onSuccess: () => toast.success(message) },
+    );
+
+  const handleLogoFile = (file: File | undefined) => {
+    if (!file) return;
+    if (!LOGO_TYPES.includes(file.type)) {
+      toast.error("Formato não aceito. Use PNG, JPG ou SVG.");
+      return;
+    }
+    if (file.size > LOGO_MAX_BYTES) {
+      toast.error("O logo deve ter até 500 KB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => saveLogo(String(reader.result), "Logo atualizado");
+    reader.readAsDataURL(file);
+  };
 
   const {
     control,
@@ -156,21 +182,74 @@ export default function CompanyDataPage() {
 
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            O logo da empresa deverá ter um tamanho máximo de 10MB, nos formatos JPG ou PNG.
+            O logo da empresa aparece no formulário que o paciente responde. Tamanho máximo de 500
+            KB, nos formatos PNG, JPG ou SVG.
           </p>
-          <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed bg-muted/20">
-            <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
-              <Upload className="h-5 w-5" />
-              <span>
-                Arraste ou{" "}
-                <button type="button" className="font-medium text-primary underline">
-                  escolha o arquivo
-                </button>{" "}
-                para enviar
-              </span>
-              <span className="text-xs">Formatos aceitos: jpg, jpeg, png</span>
-            </div>
+          <input
+            ref={logoInput}
+            type="file"
+            accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+            className="hidden"
+            onChange={(e) => {
+              handleLogoFile(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          <div
+            className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed bg-muted/20"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              handleLogoFile(e.dataTransfer.files?.[0]);
+            }}
+          >
+            {tenant?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- data URL do logo
+              <img
+                src={tenant.logoUrl}
+                alt="Logo da empresa"
+                className="max-h-24 w-auto max-w-[240px] object-contain"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
+                <Upload className="h-5 w-5" />
+                <span>
+                  Arraste ou{" "}
+                  <button
+                    type="button"
+                    className="font-medium text-primary underline"
+                    onClick={() => logoInput.current?.click()}
+                  >
+                    escolha o arquivo
+                  </button>{" "}
+                  para enviar
+                </span>
+                <span className="text-xs">Formatos aceitos: png, jpg, svg</span>
+              </div>
+            )}
           </div>
+          {tenant?.logoUrl && (
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={updateTenant.isPending}
+                onClick={() => logoInput.current?.click()}
+              >
+                <Upload className="mr-1.5 h-4 w-4" /> Trocar logo
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={updateTenant.isPending}
+                onClick={() => saveLogo("", "Logo removido")}
+              >
+                <Trash2 className="mr-1.5 h-4 w-4" /> Remover
+              </Button>
+            </div>
+          )}
         </div>
 
         {!editing ? (

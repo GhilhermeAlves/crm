@@ -192,11 +192,11 @@ public class PatientFormRequestService {
             PatientFormRequestJpaEntity request = findUsable(hash);
             PatientAnamnesisResponse anamnesis = anamnesisUseCase.get(request.getCompanyId(),
                     request.getContactId(), request.getAnamnesisId());
-            String clinicName = companyRepository.findById(request.getCompanyId())
-                    .map(Company::getTradingName)
+            Company company = companyRepository.findById(request.getCompanyId())
                     .orElseThrow(RegistrationLinkNotFoundException::new);
             String firstName = contactUseCase.getById(request.getCompanyId(), request.getContactId()).firstName();
-            return new PublicFormResponse(clinicName, firstName, anamnesis.modelName(),
+            return new PublicFormResponse(company.getTradingName(), company.getLogoUrl(), firstName,
+                    anamnesis.modelName(),
                     patientView(anamnesis.snapshot()), request.getMode());
         } finally {
             tokenContext.clear();
