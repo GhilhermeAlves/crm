@@ -17,7 +17,7 @@ public class AnamnesisModel {
     private String name;
     private String description;
     private boolean active;
-    private final boolean isDefault;
+    private boolean isDefault;
     private int version;
     private final UUID createdBy;
     private final LocalDateTime createdAt;
@@ -70,6 +70,16 @@ public class AnamnesisModel {
 
     public void deactivate() {
         this.active = false;
+        touch();
+    }
+
+    public void markDefault() {
+        this.isDefault = true;
+        touch();
+    }
+
+    public void unmarkDefault() {
+        this.isDefault = false;
         touch();
     }
 

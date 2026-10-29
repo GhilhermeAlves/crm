@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, FileUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { FileText, FileUp, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import {
   useCreateAnamnesisModel,
   useDeleteAnamnesisModel,
   useSetAnamnesisModelActive,
+  useSetDefaultAnamnesisModel,
 } from "@/features/masterdata/anamnesis/hooks/useAnamnesis";
 import { ROUTES } from "@/lib/constants";
 
@@ -52,6 +53,7 @@ export default function AnamnesisListPage() {
   const createModel = useCreateAnamnesisModel(companyId);
   const setActive = useSetAnamnesisModelActive(companyId);
   const deleteModel = useDeleteAnamnesisModel(companyId);
+  const setDefault = useSetDefaultAnamnesisModel(companyId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -128,6 +130,19 @@ export default function AnamnesisListPage() {
                       {canManage && (
                         <TableCell className="text-right">
                           <div className="inline-flex gap-1">
+                            {!model.isDefault && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                disabled={!model.active || setDefault.isPending}
+                                onClick={() => setDefault.mutate(model.id)}
+                                title="Definir como padrão"
+                                aria-label={`Definir ${model.name} como padrão`}
+                              >
+                                <Star className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                             <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                               <Link
                                 href={`${ROUTES.SETTINGS_DOCUMENTS_ANAMNESIS}/${model.id}`}
@@ -143,7 +158,9 @@ export default function AnamnesisListPage() {
                               disabled={model.isDefault || deleteModel.isPending}
                               onClick={() => {
                                 if (model.isDefault) {
-                                  toast.error("O modelo padrão não pode ser excluído.");
+                                  toast.error(
+                                    "O modelo padrão não pode ser excluído. Defina outro como padrão antes.",
+                                  );
                                   return;
                                 }
                                 setPendingDelete({ id: model.id, name: model.name });

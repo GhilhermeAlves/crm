@@ -72,6 +72,18 @@ export function useSetAnamnesisModelActive(companyId: string | null) {
   });
 }
 
+export function useSetDefaultAnamnesisModel(companyId: string | null) {
+  const { onSuccess, onError } = useMutationDefaults();
+  return useMutation({
+    mutationFn: (modelId: string) => AnamnesisService.setDefault(companyId as string, modelId),
+    onSuccess: onSuccess({
+      successMessage: "Modelo definido como padrão",
+      invalidateKeys: [LIST_KEY(companyId)],
+    }),
+    onError: onError({ errorMessage: "Erro ao definir o modelo padrão" }),
+  });
+}
+
 export function useDeleteAnamnesisModel(companyId: string | null) {
   const { onSuccess, onError } = useMutationDefaults();
   return useMutation({
