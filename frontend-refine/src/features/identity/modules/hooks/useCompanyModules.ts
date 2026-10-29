@@ -42,7 +42,8 @@ export function useUpdateCompanyModules(companyId: string) {
       CompanyModulesService.update(companyId, data),
     onSuccess: onSuccess({
       successMessage: "Módulos da empresa atualizados",
-      invalidateKeys: [[QUERY_KEY]],
+      // Trocar a especialidade cria/ativa/desativa procedimentos no catálogo.
+      invalidateKeys: [[QUERY_KEY], ["catalog"]],
     }),
     onError: onError({ errorMessage: "Erro ao atualizar os módulos" }),
   });
