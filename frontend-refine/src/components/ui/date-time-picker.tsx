@@ -20,6 +20,10 @@ interface DateTimePickerProps {
   onChange: (value: string) => void;
   dateOnly?: boolean;
   placeholder?: string;
+  /** Bloqueia dias depois de hoje (ex.: data de nascimento). */
+  disableFuture?: boolean;
+  /** Primeiro ano do combobox de anos. */
+  fromYear?: number;
 }
 
 function generateTimeOptions() {
@@ -39,6 +43,8 @@ export function DateTimePicker({
   onChange,
   dateOnly = false,
   placeholder = "Selecione a data",
+  disableFuture = false,
+  fromYear,
 }: DateTimePickerProps) {
   // parseISO: "yyyy-MM-dd" vira meia-noite local; new Date() leria como UTC e voltaria um dia.
   const dateValue = value ? parseISO(value) : undefined;
@@ -97,6 +103,10 @@ export function DateTimePicker({
             captionLayout="dropdown"
             selected={dateValue}
             onSelect={handleDateSelect}
+            defaultMonth={dateValue}
+            startMonth={fromYear ? new Date(fromYear, 0) : undefined}
+            endMonth={disableFuture ? new Date() : undefined}
+            disabled={disableFuture ? { after: new Date() } : undefined}
             autoFocus
           />
         </PopoverContent>

@@ -5,7 +5,8 @@ export type AnamnesisQuestionType =
   | "YES_NO_WITH_TEXT"
   | "NUMBER"
   | "SINGLE_SELECT"
-  | "MULTI_SELECT";
+  | "MULTI_SELECT"
+  | "DATE";
 
 export type AnamnesisComplementTrigger = "YES" | "NO" | "ALWAYS" | "OPTION";
 
@@ -110,6 +111,7 @@ export const ANAMNESIS_QUESTION_TYPE_LABELS: Record<AnamnesisQuestionType, strin
   NUMBER: "Número",
   SINGLE_SELECT: "Seleção única",
   MULTI_SELECT: "Seleção múltipla",
+  DATE: "Data",
 };
 
 export const ANAMNESIS_COMPLEMENT_TRIGGER_LABELS: Record<AnamnesisComplementTrigger, string> = {

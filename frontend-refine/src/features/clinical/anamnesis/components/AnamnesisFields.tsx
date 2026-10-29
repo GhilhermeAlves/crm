@@ -1,5 +1,6 @@
 "use client";
 
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -125,6 +126,16 @@ export function AnamnesisFields({
                     inputMode="decimal"
                     value={text}
                     onChange={(e) => update(question.id, { value: e.target.value })}
+                  />
+                )}
+                {question.type === "DATE" && (
+                  <DateTimePicker
+                    dateOnly
+                    disableFuture
+                    fromYear={1920}
+                    placeholder="dd/mm/aaaa"
+                    value={text || undefined}
+                    onChange={(v) => update(question.id, { value: v })}
                   />
                 )}
                 {(question.type === "YES_NO" || question.type === "YES_NO_WITH_TEXT") && (

@@ -2,7 +2,7 @@ package com.becommerce.crm.masterdata.anamnesis.domain;
 
 /**
  * Tipo de resposta de uma pergunta de anamnese. Persistido como {@code String}
- * (coluna {@code question_type}) e validado pelo CHECK da V091.
+ * (coluna {@code question_type}) e validado pelo CHECK da V091 (V117).
  *
  * <p>{@link #YES_NO_WITH_TEXT} é o atalho de "Sim/Não com campo complementar"
  * (equivale a {@code YES_NO} + {@code allowComplement=true}); o campo
@@ -17,5 +17,7 @@ public enum AnamnesisQuestionType {
     YES_NO_WITH_TEXT,
     NUMBER,
     SINGLE_SELECT,
-    MULTI_SELECT
+    MULTI_SELECT,
+    /** Data (resposta em ISO {@code yyyy-MM-dd}), escolhida no calendário. V117. */
+    DATE
 }

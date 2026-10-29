@@ -19,6 +19,7 @@ const QUESTION_TYPES: AnamnesisQuestionType[] = [
   "NUMBER",
   "SINGLE_SELECT",
   "MULTI_SELECT",
+  "DATE",
 ];
 
 const IGNORED_INPUTS = new Set([
@@ -83,6 +84,7 @@ function jsonType(raw: string | undefined, hasOptions: boolean): AnamnesisQuesti
     RADIO: "SINGLE_SELECT",
     SELECT: "SINGLE_SELECT",
     CHECKBOX: "MULTI_SELECT",
+    DATA: "DATE",
   };
   return aliases[value] ?? (hasOptions ? "SINGLE_SELECT" : "SHORT_TEXT");
 }
@@ -285,7 +287,8 @@ export function parseAnamnesisHtml(raw: string, fallbackName: string): ImportedA
     } else if (tag === "textarea") {
       push(el, { text, type: "LONG_TEXT", required });
     } else {
-      push(el, { text, type: type === "number" ? "NUMBER" : "SHORT_TEXT", required });
+      const inputType = type === "number" ? "NUMBER" : type === "date" ? "DATE" : "SHORT_TEXT";
+      push(el, { text, type: inputType, required });
     }
   }
 
