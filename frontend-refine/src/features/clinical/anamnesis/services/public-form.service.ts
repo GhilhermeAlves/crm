@@ -4,6 +4,8 @@ import type { PatientAnamnesisAnswers } from "../types/patient-anamnesis.types";
 /** Formulário que o paciente vê pelo link (sem login): nunca a ficha. */
 export type PublicForm = {
   clinicName: string;
+  /** Data URL ou link do logo da empresa; null quando não cadastrado. */
+  clinicLogoUrl: string | null;
   patientFirstName: string;
   formName: string;
   form: AnamnesisModel;

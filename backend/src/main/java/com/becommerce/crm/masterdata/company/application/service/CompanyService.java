@@ -248,7 +248,7 @@ public class CompanyService implements CompanyUseCase {
         int maxUsers = request.maxUsers() != null ? request.maxUsers() : company.getMaxUsers();
         int maxStorageMb = request.maxStorageMb() != null ? request.maxStorageMb() : company.getMaxStorageMb();
         int maxContacts = request.maxContacts() != null ? request.maxContacts() : company.getMaxContacts();
-        String logoUrl = request.logoUrl() != null ? request.logoUrl() : company.getLogoUrl();
+        String logoUrl = request.logoUrl() != null ? validLogo(request.logoUrl()) : company.getLogoUrl();
         String notes = request.notes() != null ? request.notes() : company.getNotes();
 
         company.update(
@@ -404,5 +404,23 @@ public class CompanyService implements CompanyUseCase {
                 settings.isRequireContactCpf(),
                 settings.getUpdatedAt()
         );
+    }
+
+    /** Até ~500 KB de imagem embutida (data URL PNG/JPG/SVG) ou um link http(s); vazio remove. */
+    private static final int MAX_LOGO_CHARS = 700_000;
+
+    private static String validLogo(String logoUrl) {
+        if (logoUrl.isBlank()) {
+            return null;
+        }
+        boolean dataImage = logoUrl.startsWith("data:image/png;base64,")
+                || logoUrl.startsWith("data:image/jpeg;base64,")
+                || logoUrl.startsWith("data:image/svg+xml;base64,");
+        boolean link = logoUrl.startsWith("https://") || logoUrl.startsWith("http://");
+        if (!(dataImage || link) || logoUrl.length() > MAX_LOGO_CHARS) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Logo inválido: use PNG, JPG ou SVG de até 500 KB");
+        }
+        return logoUrl;
     }
 }

@@ -18,6 +18,7 @@ vi.mock("@/features/clinical/anamnesis/components/SignaturePad", () => ({
 
 const form = {
   clinicName: "Clínica Capilar",
+  clinicLogoUrl: null,
   patientFirstName: "Ana",
   formName: "Anamnese capilar",
   mode: "LINK" as const,
