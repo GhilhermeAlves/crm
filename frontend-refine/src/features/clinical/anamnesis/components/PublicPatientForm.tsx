@@ -4,8 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Loader2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { type PublicForm, PublicFormService } from "../services/public-form.service";
+import {
+  type OpenFormIdentity,
+  type PublicForm,
+  PublicFormService,
+} from "../services/public-form.service";
 import type { PatientAnamnesisAnswers } from "../types/patient-anamnesis.types";
 import { AnamnesisFields, missingRequired, orderedSections } from "./AnamnesisFields";
 import { SignaturePad } from "./SignaturePad";
@@ -33,19 +38,34 @@ type State =
 
 /**
  * Formulário que o paciente responde pelo link (sem login) ou no tablet da
- * recepção ({@code reception}): perguntas do paciente e assinatura no fim.
+ * recepção ({@code reception}): perguntas do paciente e assinatura no fim. No
+ * link aberto ({@code open}) quem responde informa nome e WhatsApp antes.
  */
-export function PublicPatientForm({ token, reception }: { token: string; reception: boolean }) {
+export function PublicPatientForm({
+  token,
+  reception,
+  open = false,
+}: {
+  token: string;
+  reception: boolean;
+  open?: boolean;
+}) {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [answers, setAnswers] = useState<PatientAnamnesisAnswers>({});
   const [signature, setSignature] = useState<string | null>(null);
   const [website, setWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [identity, setIdentity] = useState<OpenFormIdentity>({
+    firstName: "",
+    lastName: "",
+    phone: "",
+  });
 
   useEffect(() => {
     let active = true;
-    void PublicFormService.get(token).then((result) => {
+    const load = open ? PublicFormService.getOpen(token) : PublicFormService.get(token);
+    void load.then((result) => {
       if (!active) return;
       if (result.ok) {
         setState({ kind: "ready", form: result.data });
@@ -72,7 +92,7 @@ export function PublicPatientForm({ token, reception }: { token: string; recepti
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [token, open]);
 
   const onSignature = useCallback((value: string | null) => setSignature(value), []);
 
@@ -107,6 +127,14 @@ export function PublicPatientForm({ token, reception }: { token: string; recepti
 
   const submit = async () => {
     setError(null);
+    if (open && !identity.firstName.trim()) {
+      setError("Informe seu nome.");
+      return;
+    }
+    if (open && identity.phone.replace(/\D/g, "").length < 10) {
+      setError("Informe seu WhatsApp com DDD.");
+      return;
+    }
     const missing = missingRequired(sections, answers);
     if (missing.length > 0) {
       setError(`Responda as perguntas obrigatórias: ${missing.slice(0, 3).join("; ")}.`);
@@ -117,7 +145,9 @@ export function PublicPatientForm({ token, reception }: { token: string; recepti
       return;
     }
     setSubmitting(true);
-    const result = await PublicFormService.submit(token, { answers, signature, website });
+    const result = open
+      ? await PublicFormService.submitOpen(token, { ...identity, answers, signature, website })
+      : await PublicFormService.submit(token, { answers, signature, website });
     setSubmitting(false);
     if (result.ok) {
       setState({ kind: "done" });
@@ -149,7 +179,8 @@ export function PublicPatientForm({ token, reception }: { token: string; recepti
             <p className="text-sm font-medium text-primary">{form.clinicName}</p>
             <h1 className="text-xl font-semibold">{form.formName}</h1>
             <p className="text-sm text-muted-foreground">
-              Olá, {form.patientFirstName}! Responda com atenção. Campos com * são obrigatórios.
+              {form.patientFirstName ? `Olá, ${form.patientFirstName}! ` : ""}Responda com atenção.
+              Campos com * são obrigatórios.
             </p>
           </div>
           {reception && (
@@ -159,6 +190,50 @@ export function PublicPatientForm({ token, reception }: { token: string; recepti
             </Button>
           )}
         </div>
+
+        {open && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="open-first-name" className="text-base">
+                Nome <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="open-first-name"
+                autoComplete="given-name"
+                maxLength={100}
+                value={identity.firstName}
+                onChange={(e) => setIdentity((v) => ({ ...v, firstName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="open-last-name" className="text-base">
+                Sobrenome
+              </Label>
+              <Input
+                id="open-last-name"
+                autoComplete="family-name"
+                maxLength={100}
+                value={identity.lastName}
+                onChange={(e) => setIdentity((v) => ({ ...v, lastName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="open-phone" className="text-base">
+                WhatsApp com DDD <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="open-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={20}
+                placeholder="(11) 91234-5678"
+                value={identity.phone}
+                onChange={(e) => setIdentity((v) => ({ ...v, phone: e.target.value }))}
+              />
+            </div>
+          </div>
+        )}
 
         <AnamnesisFields sections={sections} answers={answers} onChange={setAnswers} size="large" />
 

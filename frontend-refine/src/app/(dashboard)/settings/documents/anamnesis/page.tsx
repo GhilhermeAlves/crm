@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, FileUp, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { FileText, FileUp, Link2, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ import {
   useSetAnamnesisModelActive,
   useSetDefaultAnamnesisModel,
 } from "@/features/masterdata/anamnesis/hooks/useAnamnesis";
+import { AnamnesisService } from "@/features/masterdata/anamnesis/services/anamnesis.service";
 import { ROUTES } from "@/lib/constants";
 
 export default function AnamnesisListPage() {
@@ -55,11 +56,27 @@ export default function AnamnesisListPage() {
   const deleteModel = useDeleteAnamnesisModel(companyId);
   const setDefault = useSetDefaultAnamnesisModel(companyId);
 
+  const [copyingLink, setCopyingLink] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
   const models = data ?? [];
+
+  const copyOpenLink = async (modelId: string) => {
+    if (!companyId) return;
+    setCopyingLink(modelId);
+    try {
+      const { url } = await AnamnesisService.openLink(companyId, modelId);
+      const absolute = url.startsWith("http") ? url : `${window.location.origin}${url}`;
+      await navigator.clipboard.writeText(absolute);
+      toast.success("Link aberto copiado. Envie para quem precisar responder.");
+    } catch {
+      toast.error("Não foi possível copiar o link aberto.");
+    } finally {
+      setCopyingLink(null);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -130,6 +147,17 @@ export default function AnamnesisListPage() {
                       {canManage && (
                         <TableCell className="text-right">
                           <div className="inline-flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              disabled={!model.active || copyingLink === model.id}
+                              onClick={() => void copyOpenLink(model.id)}
+                              title="Copiar link aberto"
+                              aria-label={`Copiar link aberto de ${model.name}`}
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                            </Button>
                             {!model.isDefault && (
                               <Button
                                 variant="ghost"
