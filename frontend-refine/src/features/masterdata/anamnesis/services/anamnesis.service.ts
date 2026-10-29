@@ -45,6 +45,14 @@ export const AnamnesisService = {
     return response.data;
   },
 
+  /** Link aberto do modelo (criado na primeira vez): qualquer pessoa responde. */
+  async openLink(companyId: string, modelId: string): Promise<{ modelId: string; url: string }> {
+    const response = await api.post<{ modelId: string; url: string }>(
+      `${base(companyId)}/${modelId}/open-link`,
+    );
+    return response.data;
+  },
+
   async remove(companyId: string, modelId: string): Promise<void> {
     await api.delete(`${base(companyId)}/${modelId}`);
   },

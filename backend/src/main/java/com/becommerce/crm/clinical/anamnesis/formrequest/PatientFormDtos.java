@@ -2,9 +2,11 @@ package com.becommerce.crm.clinical.anamnesis.formrequest;
 
 import com.becommerce.crm.clinical.anamnesis.application.dto.PatientAnamnesisAnswer;
 import com.becommerce.crm.masterdata.anamnesis.application.dto.AnamnesisModelResponse;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -49,5 +51,20 @@ public final class PatientFormDtos {
     public record SubmitPublicForm(@NotNull Map<UUID, PatientAnamnesisAnswer> answers,
                                    @NotNull @Size(max = 700_000) String signature,
                                    String website) {
+    }
+
+    /** Link aberto (fixo) de um modelo: qualquer pessoa responde informando quem é. */
+    public record OpenLinkResponse(UUID modelId, String url) {
+    }
+
+    /** Resposta pelo link aberto: identificação de quem responde + o formulário. */
+    public record SubmitOpenForm(@NotBlank @Size(max = 100) String firstName,
+                                 @Size(max = 100) String lastName,
+                                 @NotBlank @Size(max = 20) String phone,
+                                 LocalDate birthDate,
+                                 @Size(max = 14) String cpf,
+                                 @NotNull Map<UUID, PatientAnamnesisAnswer> answers,
+                                 @NotNull @Size(max = 700_000) String signature,
+                                 String website) {
     }
 }
