@@ -11,6 +11,9 @@ public interface AnamnesisModelRepository {
 
     AnamnesisModel save(AnamnesisModel model);
 
+    /** Grava já no banco: necessário antes de marcar outro padrão (índice único parcial). */
+    AnamnesisModel saveAndFlush(AnamnesisModel model);
+
     Optional<AnamnesisModel> findById(UUID id);
 
     List<AnamnesisModel> findByCompanyIdOrderByName(UUID companyId);

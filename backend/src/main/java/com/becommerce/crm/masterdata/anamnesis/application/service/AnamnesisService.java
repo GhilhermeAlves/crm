@@ -171,6 +171,35 @@ public class AnamnesisService {
         }
     }
 
+    /** Torna o modelo o padrão da empresa (usado ao enviar/iniciar anamnese sem escolha). */
+    @Transactional
+    public AnamnesisModelResponse setDefault(UUID companyId, UUID modelId, UUID createdBy) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            AnamnesisModel model = requireOwned(companyId, modelId);
+            if (!model.isActive()) {
+                throw new AnamnesisValidationException("Ative o modelo antes de defini-lo como padrão.");
+            }
+            if (model.isDefault()) {
+                return toResponse(model);
+            }
+            for (AnamnesisModel current : modelRepository.findByCompanyIdOrderByName(companyId)) {
+                if (current.isDefault()) {
+                    current.unmarkDefault();
+                    modelRepository.saveAndFlush(current);
+                }
+            }
+            model.markDefault();
+            AnamnesisModel saved = modelRepository.save(model);
+            auditor.record(companyId, AuditAction.UPDATE, AuditModule.ANAMNESIS, ENTITY,
+                    saved.getId().toString(), "Modelo de anamnese definido como padrão: " + saved.getName(),
+                    createdBy, null);
+            return toResponse(saved);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
     @Transactional
     public void delete(UUID companyId, UUID modelId, UUID createdBy) {
         try {
@@ -178,7 +207,7 @@ public class AnamnesisService {
             AnamnesisModel model = requireOwned(companyId, modelId);
             if (model.isDefault()) {
                 throw new AnamnesisValidationException(
-                        "O modelo padrão não pode ser excluído. Desative-o ou edite-o.");
+                        "O modelo padrão não pode ser excluído. Defina outro modelo como padrão antes.");
             }
             questionRepository.deleteByModelId(modelId);
             sectionRepository.deleteByModelId(modelId);

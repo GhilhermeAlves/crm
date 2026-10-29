@@ -23,6 +23,11 @@ public class AnamnesisModelRepositoryImpl implements AnamnesisModelRepository {
     }
 
     @Override
+    public AnamnesisModel saveAndFlush(AnamnesisModel model) {
+        return toDomain(jpaRepository.saveAndFlush(toEntity(model)));
+    }
+
+    @Override
     public Optional<AnamnesisModel> findById(UUID id) {
         return jpaRepository.findById(id).map(AnamnesisModelRepositoryImpl::toDomain);
     }

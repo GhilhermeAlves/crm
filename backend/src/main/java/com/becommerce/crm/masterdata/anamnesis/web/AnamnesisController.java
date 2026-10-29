@@ -90,6 +90,14 @@ public class AnamnesisController {
         return ResponseEntity.ok(anamnesisService.setActive(companyId, modelId, false, principal.userId()));
     }
 
+    @PostMapping("/{modelId}/default")
+    @PreAuthorize("hasAuthority('anamnesis:manage')")
+    public ResponseEntity<AnamnesisModelResponse> setDefault(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                             @PathVariable UUID modelId,
+                                                             @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(anamnesisService.setDefault(companyId, modelId, principal.userId()));
+    }
+
     @DeleteMapping("/{modelId}")
     @PreAuthorize("hasAuthority('anamnesis:manage')")
     public ResponseEntity<Void> delete(@CurrentCompanyId(OWN_COMPANY) UUID companyId,

@@ -40,6 +40,11 @@ export const AnamnesisService = {
     return response.data;
   },
 
+  async setDefault(companyId: string, modelId: string): Promise<AnamnesisModel> {
+    const response = await api.post<AnamnesisModel>(`${base(companyId)}/${modelId}/default`);
+    return response.data;
+  },
+
   async remove(companyId: string, modelId: string): Promise<void> {
     await api.delete(`${base(companyId)}/${modelId}`);
   },
