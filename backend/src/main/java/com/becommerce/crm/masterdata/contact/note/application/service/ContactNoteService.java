@@ -71,7 +71,7 @@ public class ContactNoteService implements ContactNoteUseCase {
         try {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
-            ContactNote note = ContactNote.create(companyId, contactId, request.body(), createdBy);
+            ContactNote note = ContactNote.create(companyId, contactId, request.body(), request.tooth(), createdBy);
             noteRepository.save(note);
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
@@ -91,7 +91,7 @@ public class ContactNoteService implements ContactNoteUseCase {
             requireOwnedContact(companyId, contactId);
             ContactNote note = requireOwned(companyId, contactId, noteId);
             assertCanModify(note, actorId, admin);
-            note.edit(request.body());
+            note.edit(request.body(), request.tooth());
             noteRepository.save(note);
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
@@ -157,7 +157,7 @@ public class ContactNoteService implements ContactNoteUseCase {
     }
 
     private static ContactNoteResponse toResponse(ContactNote note, String createdByName) {
-        return new ContactNoteResponse(note.getId(), note.getContactId(), note.getBody(),
+        return new ContactNoteResponse(note.getId(), note.getContactId(), note.getBody(), note.getTooth(),
                 note.getCreatedBy(), createdByName, note.getCreatedAt(), note.getUpdatedAt());
     }
 }

@@ -1,5 +1,6 @@
 package com.becommerce.crm.masterdata.contact.note.domain;
 
+import com.becommerce.crm.clinical.procedure.domain.Dentition;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
 
 import java.time.LocalDateTime;
@@ -21,34 +22,42 @@ public class ContactNote {
     private final UUID companyId;
     private final UUID contactId;
     private String body;
+    private Integer tooth;
     private final UUID createdBy;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private ContactNote(UUID id, UUID companyId, UUID contactId, String body, UUID createdBy,
+    private ContactNote(UUID id, UUID companyId, UUID contactId, String body, Integer tooth, UUID createdBy,
                         LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.companyId = companyId;
         this.contactId = contactId;
         this.body = body;
+        this.tooth = tooth;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
     public static ContactNote create(UUID companyId, UUID contactId, String body, UUID createdBy) {
+        return create(companyId, contactId, body, null, createdBy);
+    }
+
+    public static ContactNote create(UUID companyId, UUID contactId, String body, Integer tooth, UUID createdBy) {
         String normalized = normalize(body);
         LocalDateTime now = LocalDateTime.now();
-        return new ContactNote(UUID.randomUUID(), companyId, contactId, normalized, createdBy, now, now);
+        return new ContactNote(UUID.randomUUID(), companyId, contactId, normalized, validTooth(tooth),
+                createdBy, now, now);
     }
 
-    public static ContactNote reconstitute(UUID id, UUID companyId, UUID contactId, String body,
+    public static ContactNote reconstitute(UUID id, UUID companyId, UUID contactId, String body, Integer tooth,
                                            UUID createdBy, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new ContactNote(id, companyId, contactId, body, createdBy, createdAt, updatedAt);
+        return new ContactNote(id, companyId, contactId, body, tooth, createdBy, createdAt, updatedAt);
     }
 
-    public void edit(String newBody) {
+    public void edit(String newBody, Integer newTooth) {
         this.body = normalize(newBody);
+        this.tooth = validTooth(newTooth);
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -68,10 +77,21 @@ public class ContactNote {
         return trimmed;
     }
 
+    private static Integer validTooth(Integer tooth) {
+        if (tooth == null) {
+            return null;
+        }
+        if (!Dentition.PERMANENT.isValidTooth(tooth) && !Dentition.DECIDUOUS.isValidTooth(tooth)) {
+            throw new ContactValidationException("Dente inválido: " + tooth + ".");
+        }
+        return tooth;
+    }
+
     public UUID getId() { return id; }
     public UUID getCompanyId() { return companyId; }
     public UUID getContactId() { return contactId; }
     public String getBody() { return body; }
+    public Integer getTooth() { return tooth; }
     public UUID getCreatedBy() { return createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

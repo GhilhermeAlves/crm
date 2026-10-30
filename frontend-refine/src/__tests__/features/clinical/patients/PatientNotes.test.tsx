@@ -4,8 +4,9 @@ import { PatientNotes } from "@/features/clinical/patients/components/PatientNot
 import type { ContactNote } from "@/features/clinical/patients/types/patient.types";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
-const { notesState, createMock, updateMock, deleteMock } = vi.hoisted(() => ({
+const { notesState, segmentState, createMock, updateMock, deleteMock } = vi.hoisted(() => ({
   notesState: { value: [] as ContactNote[] },
+  segmentState: { value: "AESTHETICS" },
   createMock: vi.fn(),
   updateMock: vi.fn(),
   deleteMock: vi.fn(),
@@ -19,6 +20,10 @@ vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
 
 vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
   usePermission: () => (permission?: string) => permission === "contact:update",
+}));
+
+vi.mock("@/features/identity/modules/hooks/useCompanyModules", () => ({
+  useCompanyModules: () => ({ data: { segment: segmentState.value } }),
 }));
 
 vi.mock("@/features/clinical/patients/hooks/usePatient", () => ({
@@ -35,6 +40,7 @@ function makeNote(overrides: Partial<ContactNote>): ContactNote {
     id: "n1",
     contactId: "c1",
     body: "Anotação",
+    tooth: null,
     createdBy: "u1",
     createdByName: "Ana",
     createdAt: "2026-10-13T10:00:00",
@@ -47,6 +53,30 @@ describe("PatientNotes", () => {
   beforeEach(() => {
     createMock.mockClear();
     notesState.value = [];
+    segmentState.value = "AESTHETICS";
+  });
+
+  it("fora da Odontologia não mostra o campo de dente", () => {
+    notesState.value = [makeNote({ id: "n1", body: "Com dente", tooth: 36 })];
+
+    render(<PatientNotes contact={contact} />);
+
+    expect(screen.queryByLabelText("Dente")).toBeNull();
+    expect(screen.queryByText("Dente 36")).toBeNull();
+  });
+
+  it("na Odontologia mostra o dente da anotação e o campo de dente", () => {
+    segmentState.value = "DENTAL";
+    notesState.value = [
+      makeNote({ id: "n1", body: "Sensibilidade", tooth: 36 }),
+      makeNote({ id: "n2", body: "Geral" }),
+    ];
+
+    render(<PatientNotes contact={contact} />);
+
+    expect(screen.getByLabelText("Dente")).toBeTruthy();
+    expect(screen.getByText("Dente 36")).toBeTruthy();
+    expect(screen.getByLabelText("Filtrar por dente")).toBeTruthy();
   });
 
   it("renderiza a lista de anotações", () => {
@@ -69,7 +99,10 @@ describe("PatientNotes", () => {
     });
     fireEvent.click(screen.getByText("Adicionar anotação"));
 
-    expect(createMock).toHaveBeenCalledWith({ body: "Nova observação" }, expect.anything());
+    expect(createMock).toHaveBeenCalledWith(
+      { body: "Nova observação", tooth: null },
+      expect.anything(),
+    );
   });
 
   it("esconde o botão de editar de anotações de outro autor", () => {

@@ -14,12 +14,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { usePermission } from "@/features/identity/auth/hooks/useAuthorization";
 import { isAdminLevelRole } from "@/features/identity/members/lib/labels";
+import { useCompanyModules } from "@/features/identity/modules/hooks/useCompanyModules";
+import { QUADRANTS } from "@/features/clinical/procedures/utils/teeth";
 import {
   useContactNotes,
   useCreateContactNote,
@@ -31,22 +43,71 @@ import { ExportPatientRecordButton } from "./ExportPatientRecordButton";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
 const MAX_LENGTH = 5000;
+const GENERAL = "geral";
+
+const QUADRANT_LABELS = [
+  "Superior direito",
+  "Superior esquerdo",
+  "Inferior esquerdo",
+  "Inferior direito",
+];
+
+/** Dente (FDI) opcional da anotação; "Geral" = sem dente. Só aparece em Odontologia. */
+function ToothSelect({
+  value,
+  onChange,
+}: {
+  value: number | null;
+  onChange: (tooth: number | null) => void;
+}) {
+  return (
+    <Select
+      value={value ? String(value) : GENERAL}
+      onValueChange={(v) => onChange(v === GENERAL ? null : Number(v))}
+    >
+      <SelectTrigger className="h-8 w-[150px]" aria-label="Dente">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={GENERAL}>Geral (sem dente)</SelectItem>
+        {(["PERMANENT", "DECIDUOUS"] as const).map((dentition) =>
+          QUADRANTS[dentition].map((teeth, i) => (
+            <SelectGroup key={`${dentition}-${i}`}>
+              <SelectLabel>
+                {QUADRANT_LABELS[i]}
+                {dentition === "DECIDUOUS" ? " (decíduo)" : ""}
+              </SelectLabel>
+              {teeth.map((tooth) => (
+                <SelectItem key={tooth} value={String(tooth)}>
+                  Dente {tooth}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )),
+        )}
+      </SelectContent>
+    </Select>
+  );
+}
 
 function NoteItem({
   note,
   canEdit,
+  showTooth,
   onSave,
   onDelete,
   isSaving,
 }: {
   note: ContactNote;
   canEdit: boolean;
-  onSave: (body: string) => void;
+  showTooth: boolean;
+  onSave: (body: string, tooth: number | null) => void;
   onDelete: () => void;
   isSaving: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(note.body);
+  const [tooth, setTooth] = useState<number | null>(note.tooth ?? null);
 
   const createdAt = parseISO(note.createdAt);
   const relative = formatDistanceToNow(createdAt, { addSuffix: true, locale: ptBR });
@@ -62,6 +123,11 @@ function NoteItem({
           <p className="text-xs text-muted-foreground" title={absolute}>
             {relative}
           </p>
+          {showTooth && note.tooth && (
+            <Badge variant="secondary" className="mt-1">
+              Dente {note.tooth}
+            </Badge>
+          )}
         </div>
         {canEdit && !editing && (
           <div className="flex shrink-0 gap-1">
@@ -73,6 +139,7 @@ function NoteItem({
               aria-label="Editar anotação"
               onClick={() => {
                 setDraft(note.body);
+                setTooth(note.tooth ?? null);
                 setEditing(true);
               }}
             >
@@ -101,6 +168,7 @@ function NoteItem({
             onChange={(e) => setDraft(e.target.value)}
           />
           <div className="flex justify-end gap-2">
+            {showTooth && <ToothSelect value={tooth} onChange={setTooth} />}
             <Button type="button" variant="outline" size="sm" onClick={() => setEditing(false)}>
               Cancelar
             </Button>
@@ -109,7 +177,7 @@ function NoteItem({
               size="sm"
               disabled={isSaving || !draft.trim()}
               onClick={() => {
-                onSave(draft.trim());
+                onSave(draft.trim(), tooth);
                 setEditing(false);
               }}
             >
@@ -130,6 +198,8 @@ export function PatientNotes({ contact }: { contact: Contact }) {
   const contactId = contact.id;
   const can = usePermission();
   const canUpdate = can("contact:update");
+  const { data: modules } = useCompanyModules(companyId);
+  const isDental = modules?.segment === "DENTAL";
 
   const { data: notes = [], isLoading } = useContactNotes(companyId, contactId);
   const createNote = useCreateContactNote(companyId, contactId);
@@ -137,6 +207,8 @@ export function PatientNotes({ contact }: { contact: Contact }) {
   const deleteNote = useDeleteContactNote(companyId, contactId);
 
   const [draft, setDraft] = useState("");
+  const [tooth, setTooth] = useState<number | null>(null);
+  const [toothFilter, setToothFilter] = useState<string>("all");
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   const isAdmin =
@@ -148,10 +220,32 @@ export function PatientNotes({ contact }: { contact: Contact }) {
     [notes],
   );
 
+  const notedTeeth = useMemo(
+    () =>
+      Array.from(new Set(notes.map((n) => n.tooth).filter((t): t is number => !!t))).sort(
+        (a, b) => a - b,
+      ),
+    [notes],
+  );
+
+  const visible = useMemo(() => {
+    if (!isDental || toothFilter === "all") return sorted;
+    if (toothFilter === GENERAL) return sorted.filter((n) => !n.tooth);
+    return sorted.filter((n) => n.tooth === Number(toothFilter));
+  }, [sorted, isDental, toothFilter]);
+
   const handleAdd = () => {
     const body = draft.trim();
     if (!body) return;
-    createNote.mutate({ body }, { onSuccess: () => setDraft("") });
+    createNote.mutate(
+      { body, tooth: isDental ? tooth : null },
+      {
+        onSuccess: () => {
+          setDraft("");
+          setTooth(null);
+        },
+      },
+    );
   };
 
   return (
@@ -185,9 +279,12 @@ export function PatientNotes({ contact }: { contact: Contact }) {
             onChange={(e) => setDraft(e.target.value)}
           />
           <div className="flex items-center justify-between">
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {draft.length}/{MAX_LENGTH}
-            </span>
+            <div className="flex items-center gap-3">
+              {isDental && <ToothSelect value={tooth} onChange={setTooth} />}
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {draft.length}/{MAX_LENGTH}
+              </span>
+            </div>
             <Button
               size="sm"
               className="gap-1.5"
@@ -205,23 +302,49 @@ export function PatientNotes({ contact }: { contact: Contact }) {
         </div>
       )}
 
+      {isDental && notedTeeth.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Filtrar:</span>
+          <Select value={toothFilter} onValueChange={setToothFilter}>
+            <SelectTrigger className="h-8 w-[170px]" aria-label="Filtrar por dente">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as anotações</SelectItem>
+              <SelectItem value={GENERAL}>Somente gerais</SelectItem>
+              {notedTeeth.map((t) => (
+                <SelectItem key={t} value={String(t)}>
+                  Dente {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" /> Carregando anotações…
         </div>
-      ) : sorted.length === 0 ? (
+      ) : visible.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted-foreground">
           O paciente não possui anotações adicionadas.
         </p>
       ) : (
         <ul className="space-y-3">
-          {sorted.map((note) => (
+          {visible.map((note) => (
             <NoteItem
               key={note.id}
               note={note}
               canEdit={canUpdate && (note.createdBy === user?.id || isAdmin)}
+              showTooth={isDental}
               isSaving={updateNote.isPending}
-              onSave={(body) => updateNote.mutate({ noteId: note.id, data: { body } })}
+              onSave={(body, noteTooth) =>
+                updateNote.mutate({
+                  noteId: note.id,
+                  data: { body, tooth: isDental ? noteTooth : note.tooth },
+                })
+              }
               onDelete={() => setPendingDelete(note.id)}
             />
           ))}

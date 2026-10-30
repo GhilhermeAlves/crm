@@ -7,5 +7,11 @@ import jakarta.validation.constraints.Size;
 public record ContactNoteRequest(
         @NotBlank(message = "A anotação não pode ser vazia.")
         @Size(max = 5000, message = "A anotação deve ter no máximo 5000 caracteres.")
-        String body) {
+        String body,
+        /** Dente (FDI) ao qual a anotação se refere; null = anotação geral. */
+        Integer tooth) {
+
+    public ContactNoteRequest(String body) {
+        this(body, null);
+    }
 }

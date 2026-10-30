@@ -24,6 +24,9 @@ public class ContactNoteJpaEntity {
     @Column(name = "body")
     private String body;
 
+    @Column(name = "tooth")
+    private Integer tooth;
+
     @Column(name = "created_by")
     private UUID createdBy;
 
@@ -41,6 +44,8 @@ public class ContactNoteJpaEntity {
     public void setContactId(UUID contactId) { this.contactId = contactId; }
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
+    public Integer getTooth() { return tooth; }
+    public void setTooth(Integer tooth) { this.tooth = tooth; }
     public UUID getCreatedBy() { return createdBy; }
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }

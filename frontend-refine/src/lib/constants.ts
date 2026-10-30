@@ -56,8 +56,6 @@ export const ROUTES = {
   SETTINGS_DOCUMENTS_PRESCRIPTIONS: "/settings/documents/prescriptions",
   FINANCE: "/finance",
   FINANCE_CONTROL: "/finance/control",
-  FINANCE_RECONCILIATION: "/finance/reconciliation",
-  FINANCE_COMMISSIONS: "/finance/commissions",
   REPORTS_ANALYTICS: "/reports/analytics",
   REPORTS_OVERVIEW: "/reports/overview",
   REPORTS_AGENDA: "/reports/agenda",
