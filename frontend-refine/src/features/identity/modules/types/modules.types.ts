@@ -12,7 +12,15 @@ export type CompanyModuleName =
   | "CATALOG"
   | "INVENTORY"
   | "REPORTS"
-  | "STORAGE";
+  | "STORAGE"
+  | "AGENDA_SETTINGS"
+  | "EMAIL_SETTINGS"
+  | "AI_AGENT"
+  | "DOCUMENTS"
+  | "SERVICE_LIST"
+  | "DATA_MIGRATION"
+  | "ROLES"
+  | "AUDIT";
 
 export type CompanySegment = "GENERIC" | "DENTAL" | "OCCUPATIONAL_SAFETY" | "TRICHOLOGY";
 
@@ -46,6 +54,26 @@ export const MODULE_OPTIONS: { value: CompanyModuleName; label: string; descript
   { value: "INVENTORY", label: "Estoque", description: "Controle de estoque" },
   { value: "REPORTS", label: "Relatórios", description: "Relatórios e exportações" },
   { value: "STORAGE", label: "Arquivos", description: "Arquivos e modelos" },
+  {
+    value: "AGENDA_SETTINGS",
+    label: "Configurações da agenda",
+    description: "Ajustes, disponibilidade, cadeiras, feriados e notificações",
+  },
+  { value: "EMAIL_SETTINGS", label: "E-mail", description: "Conta de e-mail da clínica" },
+  {
+    value: "AI_AGENT",
+    label: "Agente de IA",
+    description: "Configuração do agente de atendimento",
+  },
+  {
+    value: "DOCUMENTS",
+    label: "Documentos",
+    description: "Modelos de documentos, anamnese e receituários",
+  },
+  { value: "SERVICE_LIST", label: "Lista de serviços", description: "Serviços da empresa" },
+  { value: "DATA_MIGRATION", label: "Migração de dados", description: "Importação de dados" },
+  { value: "ROLES", label: "Perfis e Permissões", description: "Perfis de acesso da equipe" },
+  { value: "AUDIT", label: "Auditoria", description: "Histórico de ações no sistema" },
 ];
 
 /**
@@ -75,6 +103,14 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "INVENTORY",
     "REPORTS",
     "STORAGE",
+    "AGENDA_SETTINGS",
+    "EMAIL_SETTINGS",
+    "AI_AGENT",
+    "DOCUMENTS",
+    "SERVICE_LIST",
+    "DATA_MIGRATION",
+    "ROLES",
+    "AUDIT",
   ],
   DENTAL: [
     "PATIENTS",
@@ -86,6 +122,14 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "CATALOG",
     "REPORTS",
     "STORAGE",
+    "AGENDA_SETTINGS",
+    "EMAIL_SETTINGS",
+    "AI_AGENT",
+    "DOCUMENTS",
+    "SERVICE_LIST",
+    "DATA_MIGRATION",
+    "ROLES",
+    "AUDIT",
   ],
   TRICHOLOGY: [
     "PATIENTS",
@@ -97,8 +141,31 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "CATALOG",
     "REPORTS",
     "STORAGE",
+    "AGENDA_SETTINGS",
+    "EMAIL_SETTINGS",
+    "AI_AGENT",
+    "DOCUMENTS",
+    "SERVICE_LIST",
+    "DATA_MIGRATION",
+    "ROLES",
+    "AUDIT",
   ],
-  OCCUPATIONAL_SAFETY: ["PATIENTS", "AGENDA", "FINANCE", "TASKS", "CATALOG", "REPORTS", "STORAGE"],
+  OCCUPATIONAL_SAFETY: [
+    "PATIENTS",
+    "AGENDA",
+    "FINANCE",
+    "TASKS",
+    "CATALOG",
+    "REPORTS",
+    "STORAGE",
+    "AGENDA_SETTINGS",
+    "EMAIL_SETTINGS",
+    "DOCUMENTS",
+    "SERVICE_LIST",
+    "DATA_MIGRATION",
+    "ROLES",
+    "AUDIT",
+  ],
 };
 
 /** Todos os módulos, na ordem do enum do backend. */
@@ -113,6 +180,19 @@ export const MODULE_GROUPS: { title: string; modules: CompanyModuleName[] }[] = 
   { title: "Atendimento", modules: ["INBOX", "FOLLOW_UPS", "CAMPAIGNS", "WORKFLOWS"] },
   { title: "Operação", modules: ["CATALOG", "INVENTORY"] },
   { title: "Análise", modules: ["REPORTS", "STORAGE"] },
+  {
+    title: "Configurações",
+    modules: [
+      "AGENDA_SETTINGS",
+      "EMAIL_SETTINGS",
+      "AI_AGENT",
+      "DOCUMENTS",
+      "SERVICE_LIST",
+      "DATA_MIGRATION",
+      "ROLES",
+    ],
+  },
+  { title: "Sistema", modules: ["AUDIT"] },
 ];
 
 /**

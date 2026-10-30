@@ -46,7 +46,7 @@ export interface NavItem {
   module?: CompanyModuleName;
   /** Visível só para o dono da plataforma (CRM_ADMIN), nunca para as empresas clientes. */
   crmAdminOnly?: boolean;
-  children?: { label: string; href: string; permission?: string }[];
+  children?: { label: string; href: string; permission?: string; module?: CompanyModuleName }[];
 }
 
 export interface NavGroup {
@@ -246,8 +246,16 @@ export const NAVIGATION: NavGroup[] = [
         children: [
           { label: "Dados da empresa", href: ROUTES.SETTINGS_COMPANY },
           { label: "Preferências", href: `${ROUTES.SETTINGS_COMPANY}/preferences` },
-          { label: "Lista de serviços", href: `${ROUTES.SETTINGS_COMPANY}/services` },
-          { label: "Migração de dados", href: `${ROUTES.SETTINGS_COMPANY}/migration` },
+          {
+            label: "Lista de serviços",
+            href: `${ROUTES.SETTINGS_COMPANY}/services`,
+            module: "SERVICE_LIST",
+          },
+          {
+            label: "Migração de dados",
+            href: `${ROUTES.SETTINGS_COMPANY}/migration`,
+            module: "DATA_MIGRATION",
+          },
         ],
       },
       {
@@ -261,12 +269,14 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.SETTINGS_ROLES,
         icon: Shield,
         permission: "security:page:view",
+        module: "ROLES",
       },
       {
         label: "Agenda",
         href: ROUTES.SETTINGS_AGENDA,
         icon: CalendarDays,
         permission: "scheduling:configure",
+        module: "AGENDA_SETTINGS",
         children: [
           { label: "Ajustes gerais", href: ROUTES.SETTINGS_AGENDA },
           { label: "Disponibilidade", href: `${ROUTES.SETTINGS_AGENDA}/availability` },
@@ -289,17 +299,20 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.SETTINGS_EMAIL,
         icon: Mail,
         permission: "company:update",
+        module: "EMAIL_SETTINGS",
       },
       {
         label: "Agente de IA",
         href: ROUTES.SETTINGS_AGENT_CONFIG,
         icon: Bot,
         permission: "ai:agent-config",
+        module: "AI_AGENT",
       },
       {
         label: "Documentos",
         href: ROUTES.SETTINGS_DOCUMENTS,
         icon: FileText,
+        module: "DOCUMENTS",
         children: [
           { label: "Modelos de documentos", href: ROUTES.SETTINGS_DOCUMENTS },
           { label: "Modelos de anamnese", href: `${ROUTES.SETTINGS_DOCUMENTS}/anamnesis` },
@@ -318,6 +331,7 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.AUDIT,
         icon: ClipboardList,
         permission: "audit:page:view",
+        module: "AUDIT",
       },
       // Ferramenta de desenvolvimento: fora do menu em produção.
       ...(process.env.NODE_ENV === "production"

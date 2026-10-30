@@ -46,6 +46,7 @@ public class ModuleGuardInterceptor implements HandlerInterceptor {
             Map.entry("chairs", CompanyModule.AGENDA),
             Map.entry("recalls", CompanyModule.AGENDA),
             Map.entry("holidays", CompanyModule.AGENDA),
+            Map.entry("mail-settings", CompanyModule.EMAIL_SETTINGS),
             Map.entry("finance", CompanyModule.FINANCE),
             Map.entry("tasks", CompanyModule.TASKS),
             Map.entry("ai", CompanyModule.ASSISTANT),

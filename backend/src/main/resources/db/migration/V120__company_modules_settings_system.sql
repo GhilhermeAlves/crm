@@ -1,0 +1,12 @@
+-- V120__company_modules_settings_system.sql
+-- Itens de Configurações e Sistema viram módulos por empresa (nem toda empresa
+-- usa todos). Empresas existentes recebem todos os novos, para não perder acesso.
+
+UPDATE companies
+SET enabled_modules = CASE
+    WHEN enabled_modules IS NULL OR TRIM(enabled_modules) = '' THEN 'AGENDA_SETTINGS,EMAIL_SETTINGS,AI_AGENT,DOCUMENTS,SERVICE_LIST,DATA_MIGRATION,ROLES,AUDIT'
+    ELSE TRIM(enabled_modules) || ',AGENDA_SETTINGS,EMAIL_SETTINGS,AI_AGENT,DOCUMENTS,SERVICE_LIST,DATA_MIGRATION,ROLES,AUDIT'
+    END;
+
+ALTER TABLE companies
+    ALTER COLUMN enabled_modules SET DEFAULT 'CRM,PATIENTS,AGENDA,FINANCE,TASKS,ASSISTANT,INBOX,FOLLOW_UPS,CAMPAIGNS,WORKFLOWS,CATALOG,INVENTORY,REPORTS,STORAGE,AGENDA_SETTINGS,EMAIL_SETTINGS,AI_AGENT,DOCUMENTS,SERVICE_LIST,DATA_MIGRATION,ROLES,AUDIT';

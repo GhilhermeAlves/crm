@@ -11,6 +11,13 @@ const matches = (pathname: string, href: string) =>
 
 /** Módulo exigido pela rota, a partir dos itens do menu (e seus submenus). */
 export function moduleForPath(pathname: string): CompanyModuleName | undefined {
+  // Submenu com módulo próprio (ex.: Lista de serviços em Minha Empresa) vence o item.
+  for (const group of NAVIGATION) {
+    for (const item of group.items) {
+      const child = item.children?.find((c) => c.module && matches(pathname, c.href));
+      if (child?.module) return child.module;
+    }
+  }
   for (const group of NAVIGATION) {
     for (const item of group.items) {
       if (!item.module) continue;

@@ -32,5 +32,21 @@ public enum CompanyModule {
     /** Relatórios. */
     REPORTS,
     /** Arquivos. */
-    STORAGE
+    STORAGE,
+    /** Configurações da agenda (ajustes, disponibilidade, cadeiras, feriados...). */
+    AGENDA_SETTINGS,
+    /** Conta de e-mail da clínica. */
+    EMAIL_SETTINGS,
+    /** Configuração do agente de IA do atendimento. */
+    AI_AGENT,
+    /** Modelos de documentos, anamnese e receituários. */
+    DOCUMENTS,
+    /** Lista de serviços da empresa. */
+    SERVICE_LIST,
+    /** Migração de dados (importação). */
+    DATA_MIGRATION,
+    /** Perfis e permissões. */
+    ROLES,
+    /** Auditoria. */
+    AUDIT
 }

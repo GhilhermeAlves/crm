@@ -49,7 +49,9 @@ export default function AnamnesisEditorPage() {
     <AnamnesisModelEditor
       model={data}
       isSaving={updateModel.isPending}
-      onSave={(request: UpdateAnamnesisModelRequest) => updateModel.mutate(request)}
+      onSave={(request: UpdateAnamnesisModelRequest) =>
+        updateModel.mutate(request, { onSuccess: handleBack })
+      }
       onBack={handleBack}
     />
   );
