@@ -44,6 +44,7 @@ public class ContactNoteRepositoryImpl implements ContactNoteRepository {
         e.setCompanyId(note.getCompanyId());
         e.setContactId(note.getContactId());
         e.setBody(note.getBody());
+        e.setTooth(note.getTooth());
         e.setCreatedBy(note.getCreatedBy());
         e.setCreatedAt(note.getCreatedAt());
         e.setUpdatedAt(note.getUpdatedAt());
@@ -51,7 +52,7 @@ public class ContactNoteRepositoryImpl implements ContactNoteRepository {
     }
 
     private static ContactNote toDomain(ContactNoteJpaEntity e) {
-        return ContactNote.reconstitute(e.getId(), e.getCompanyId(), e.getContactId(), e.getBody(),
+        return ContactNote.reconstitute(e.getId(), e.getCompanyId(), e.getContactId(), e.getBody(), e.getTooth(),
                 e.getCreatedBy(), e.getCreatedAt(), e.getUpdatedAt());
     }
 }

@@ -87,7 +87,16 @@ ${
 ${
   sortedNotes.length === 0
     ? "<p>Nenhuma anotação registrada.</p>"
-    : sortedNotes.map((n) => entry(n.createdAt, n.createdByName || "Sistema", n.body)).join("")
+    : sortedNotes
+        .map((n) =>
+          entry(
+            n.createdAt,
+            n.createdByName || "Sistema",
+            n.body,
+            n.tooth ? ` <span class="tag">(dente ${n.tooth})</span>` : "",
+          ),
+        )
+        .join("")
 }
 </body></html>`;
 }

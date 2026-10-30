@@ -42,7 +42,7 @@ export default function PatientTrichoscopyPage() {
       <TrichoscopyGallery companyId={companyId} contactId={contactId} canEdit={canEdit} />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[96vh] w-[96vw] max-w-[1600px] overflow-y-auto sm:max-w-[1600px]">
+        <DialogContent className="flex h-[96dvh] w-[96vw] max-w-[1600px] flex-col overflow-y-auto sm:max-w-[1600px]">
           <DialogHeader>
             <DialogTitle>Captura tricoscópica</DialogTitle>
             <DialogDescription>

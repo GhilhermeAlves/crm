@@ -6,6 +6,7 @@ import {
   Camera,
   Circle,
   Download,
+  FlipHorizontal,
   Keyboard,
   Loader2,
   RefreshCw,
@@ -78,13 +79,37 @@ function downloadBlob(blob: Blob, fileName: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** Recorte central do vídeo para o zoom digital. */
-function drawZoomed(ctx: CanvasRenderingContext2D, video: HTMLVideoElement, zoom: number) {
+const MIRROR_KEY = "trichoscopy.mirror";
+
+function readMirror(): boolean {
+  try {
+    return window.localStorage.getItem(MIRROR_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Recorte central do vídeo para o zoom digital. Com {@code mirror}, inverte o
+ * eixo horizontal para a imagem andar no mesmo sentido do aparelho.
+ */
+function drawZoomed(
+  ctx: CanvasRenderingContext2D,
+  video: HTMLVideoElement,
+  zoom: number,
+  mirror: boolean,
+) {
   const w = video.videoWidth;
   const h = video.videoHeight;
   const sw = w / zoom;
   const sh = h / zoom;
+  ctx.save();
+  if (mirror) {
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+  }
   ctx.drawImage(video, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, w, h);
+  ctx.restore();
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -123,11 +148,33 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
   const [notes, setNotes] = useState("");
   const [region, setRegion] = useState(NO_REGION);
   const [zoom, setZoom] = useState<number>(1);
+  const [mirror, setMirror] = useState(true);
+  const mirrorRef = useRef(true);
   const [recording, setRecording] = useState(false);
   const [recordStart, setRecordStart] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [saveTarget, setSaveTarget] = useState<SaveTarget>("system");
   const [captureKey, setCaptureKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMirror(readMirror());
+  }, []);
+
+  useEffect(() => {
+    mirrorRef.current = mirror;
+  }, [mirror]);
+
+  const toggleMirror = () => {
+    setMirror((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem(MIRROR_KEY, next ? "1" : "0");
+      } catch {
+        // preferência só desta sessão
+      }
+      return next;
+    });
+  };
   const [learningKey, setLearningKey] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -257,7 +304,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
     canvas.height = video.videoHeight || 1080;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    drawZoomed(ctx, video, zoom);
+    drawZoomed(ctx, video, zoom, mirror);
     canvas.toBlob(
       (result) => {
         if (!result) return;
@@ -270,7 +317,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
       "image/jpeg",
       0.92,
     );
-  }, [preview, stopStream, streaming, zoom]);
+  }, [mirror, preview, stopStream, streaming, zoom]);
 
   const startRecording = () => {
     const video = videoRef.current;
@@ -285,7 +332,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
     if (!ctx) return;
     // Grava o que aparece na tela (com o zoom), desenhando o vídeo no canvas.
     const draw = () => {
-      drawZoomed(ctx, video, zoomRef.current);
+      drawZoomed(ctx, video, zoomRef.current, mirrorRef.current);
       recordFrameRef.current = requestAnimationFrame(draw);
     };
     draw();
@@ -378,7 +425,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
   ).padStart(2, "0")}`;
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-56 flex-1 space-y-1">
           <Label htmlFor={`${uid}-device`}>Câmera / tricoscópio</Label>
@@ -440,7 +487,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
         </div>
       </div>
 
-      <div className="relative mx-auto aspect-video w-full max-w-[calc(70vh*16/9)] overflow-hidden rounded-lg bg-black">
+      <div className="relative min-h-[180px] w-full flex-1 overflow-hidden rounded-lg bg-black">
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:)
           <img
@@ -452,7 +499,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
           <video
             ref={videoRef}
             className="h-full w-full object-contain transition-transform"
-            style={{ transform: `scale(${zoom})` }}
+            style={{ transform: `scale(${mirror ? -zoom : zoom}, ${zoom})` }}
             playsInline
             muted
           />
@@ -478,6 +525,16 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
 
       {!preview && (
         <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant={mirror ? "secondary" : "outline"}
+            size="sm"
+            onClick={toggleMirror}
+            aria-pressed={mirror}
+            title="Inverte o lado esquerdo/direito da imagem"
+          >
+            <FlipHorizontal className="mr-2 h-4 w-4" /> Espelhar imagem
+          </Button>
           <div className="flex items-center gap-1" role="group" aria-label="Zoom digital">
             <ZoomIn className="mr-1 h-4 w-4 text-muted-foreground" />
             {ZOOM_LEVELS.map((level) => (

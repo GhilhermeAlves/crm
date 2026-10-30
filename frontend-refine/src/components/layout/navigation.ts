@@ -82,11 +82,6 @@ export const NAVIGATION: NavGroup[] = [
         icon: CircleDollarSign,
         permission: "finance:read",
         module: "FINANCE",
-        children: [
-          { label: "Controle financeiro", href: ROUTES.FINANCE_CONTROL },
-          { label: "Conciliação", href: ROUTES.FINANCE_RECONCILIATION },
-          { label: "Comissões", href: ROUTES.FINANCE_COMMISSIONS },
-        ],
       },
       {
         label: "Tarefas",

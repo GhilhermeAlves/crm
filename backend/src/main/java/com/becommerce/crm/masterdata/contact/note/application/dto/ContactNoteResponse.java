@@ -8,6 +8,7 @@ public record ContactNoteResponse(
         UUID id,
         UUID contactId,
         String body,
+        Integer tooth,
         UUID createdBy,
         String createdByName,
         LocalDateTime createdAt,

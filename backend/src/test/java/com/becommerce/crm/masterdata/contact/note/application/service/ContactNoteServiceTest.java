@@ -48,7 +48,7 @@ class ContactNoteServiceTest {
     }
 
     private ContactNote note(UUID id, UUID author, LocalDateTime createdAt) {
-        return ContactNote.reconstitute(id, companyId, contactId, "Anotação", author, createdAt, createdAt);
+        return ContactNote.reconstitute(id, companyId, contactId, "Anotação", null, author, createdAt, createdAt);
     }
 
     @Test
@@ -90,6 +90,31 @@ class ContactNoteServiceTest {
         assertEquals("Paciente relatou melhora.", response.body());
         assertEquals(contactId, response.contactId());
         verify(noteRepository).save(any(ContactNote.class));
+    }
+
+    @Test
+    void createsNoteLinkedToTooth() {
+        ownedContact();
+        when(noteRepository.save(any(ContactNote.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.findById(authorId)).thenReturn(Optional.empty());
+
+        ContactNoteResponse permanent = service.create(companyId, contactId,
+                new ContactNoteRequest("Sensibilidade ao frio.", 36), authorId);
+        ContactNoteResponse deciduous = service.create(companyId, contactId,
+                new ContactNoteRequest("Mobilidade.", 75), authorId);
+
+        assertEquals(36, permanent.tooth());
+        assertEquals(75, deciduous.tooth());
+    }
+
+    @Test
+    void rejectsInvalidTooth() {
+        ownedContact();
+
+        assertThrows(com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException.class,
+                () -> service.create(companyId, contactId, new ContactNoteRequest("x", 19), authorId));
+        assertThrows(com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException.class,
+                () -> service.create(companyId, contactId, new ContactNoteRequest("x", 56), authorId));
     }
 
     @Test
@@ -144,7 +169,7 @@ class ContactNoteServiceTest {
     void updateFailsWhenNoteBelongsToAnotherContact() {
         ownedContact();
         UUID noteId = UUID.randomUUID();
-        ContactNote other = ContactNote.reconstitute(noteId, companyId, UUID.randomUUID(), "x", authorId,
+        ContactNote other = ContactNote.reconstitute(noteId, companyId, UUID.randomUUID(), "x", null, authorId,
                 LocalDateTime.now(), LocalDateTime.now());
         when(noteRepository.findById(noteId)).thenReturn(Optional.of(other));
 
