@@ -27,6 +27,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useCaptureTrichoscopy } from "../hooks/useTrichoscopy";
+import { LiveViewPanel } from "./LiveViewPanel";
 
 type Props = {
   companyId: string;
@@ -98,6 +99,8 @@ function drawZoomed(
   video: HTMLVideoElement,
   zoom: number,
   mirror: boolean,
+  outWidth = video.videoWidth,
+  outHeight = video.videoHeight,
 ) {
   const w = video.videoWidth;
   const h = video.videoHeight;
@@ -105,10 +108,10 @@ function drawZoomed(
   const sh = h / zoom;
   ctx.save();
   if (mirror) {
-    ctx.translate(w, 0);
+    ctx.translate(outWidth, 0);
     ctx.scale(-1, 1);
   }
-  ctx.drawImage(video, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, w, h);
+  ctx.drawImage(video, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, outWidth, outHeight);
   ctx.restore();
 }
 
@@ -522,6 +525,17 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
         )}
       </div>
       <canvas ref={canvasRef} className="hidden" />
+
+      <LiveViewPanel
+        companyId={companyId}
+        videoRef={videoRef}
+        draw={(ctx, width, height) => {
+          const video = videoRef.current;
+          if (!video || video.videoWidth === 0) return false;
+          drawZoomed(ctx, video, zoomRef.current, mirrorRef.current, width, height);
+          return true;
+        }}
+      />
 
       {!preview && (
         <div className="flex flex-wrap items-center gap-3">
