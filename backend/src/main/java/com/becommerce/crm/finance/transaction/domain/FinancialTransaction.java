@@ -133,6 +133,35 @@ public class FinancialTransaction {
         return result;
     }
 
+    /**
+     * Lançamento recorrente (aluguel, salário...): {@code months} lançamentos irmãos
+     * com o valor cheio, vencimentos mensais a partir de {@code dueDate}. Só o 1º
+     * pode nascer pago; os seguintes ficam pendentes.
+     */
+    public static List<FinancialTransaction> createRecurring(UUID companyId, TransactionType type,
+                                                             String description, TransactionCategory category,
+                                                             long amountCents, long feeCents,
+                                                             PaymentMethod paymentMethod, LocalDate dueDate,
+                                                             UUID contactId, UUID professionalUserId,
+                                                             UUID catalogItemId, String notes, LocalDate paidAt,
+                                                             int months, UUID createdBy) {
+        if (months < 2 || months > INSTALLMENTS_MAX) {
+            throw new FinancialTransactionValidationException(
+                    "A recorrência deve ter entre 2 e " + INSTALLMENTS_MAX + " meses.");
+        }
+        if (amountCents <= 0) {
+            throw new FinancialTransactionValidationException("O valor do lançamento deve ser maior que zero.");
+        }
+        UUID groupId = UUID.randomUUID();
+        List<FinancialTransaction> result = new ArrayList<>();
+        for (int number = 1; number <= months; number++) {
+            result.add(create(UUID.randomUUID(), companyId, type, description, category, amountCents, feeCents,
+                    paymentMethod, dueDate.plusMonths(number - 1L), contactId, professionalUserId, catalogItemId,
+                    notes, number == 1 ? paidAt : null, createdBy, groupId, number, months));
+        }
+        return result;
+    }
+
     public static FinancialTransaction reconstitute(UUID id, UUID companyId, TransactionType type,
                                                     String description, TransactionCategory category,
                                                     long amountCents, long feeCents, PaymentMethod paymentMethod,

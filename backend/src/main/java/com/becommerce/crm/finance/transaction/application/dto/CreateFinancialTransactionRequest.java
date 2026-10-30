@@ -16,7 +16,8 @@ import java.util.UUID;
 
 /**
  * Criação de um lançamento. Quando {@code installments > 1}, a API gera N
- * lançamentos parcelados com vencimentos mensais a partir de {@code dueDate}.
+ * lançamentos parcelados com vencimentos mensais a partir de {@code dueDate};
+ * com {@code recurring}, repete o valor cheio a cada mês.
  */
 public record CreateFinancialTransactionRequest(
         @NotNull TransactionType type,
@@ -31,6 +32,8 @@ public record CreateFinancialTransactionRequest(
         UUID catalogItemId,
         @Size(max = 4000) String notes,
         LocalDate paidAt,
-        @Min(1) @Max(24) Integer installments
+        @Min(1) @Max(24) Integer installments,
+        /** true: repete o valor cheio por {@code installments} meses (em vez de dividir). */
+        Boolean recurring
 ) {
 }

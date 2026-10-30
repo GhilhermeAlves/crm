@@ -123,7 +123,8 @@ public class AiActionExecutor {
                             null,
                             null,
                             localDate(p.get("paidAt")),
-                            intValue(p.get("installments"))),
+                            intValue(p.get("installments")),
+                            null),
                     action.getUserId());
             case "pay_transaction" -> financialTransactionService.pay(
                     action.getCompanyId(), uuid(p.get("transactionId")),

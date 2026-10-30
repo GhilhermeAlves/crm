@@ -37,17 +37,24 @@ public class ReportDatasetBuilder {
 
     /** Grupos da DRE e as categorias de lançamento que compõem cada um. */
     private static final List<GroupSpec> DRE_GROUPS = List.of(
-            new GroupSpec("Receitas", true, List.of(TransactionCategory.PROCEDURE,
-                    TransactionCategory.CONSULTATION, TransactionCategory.PRODUCT_SALE,
-                    TransactionCategory.OTHER_INCOME)),
-            new GroupSpec("Deduções sobre receita", false, List.of(TransactionCategory.TAXES)),
-            new GroupSpec("Despesas com pessoal", false, List.of(TransactionCategory.PAYROLL)),
-            new GroupSpec("Despesas administrativas", false, List.of(TransactionCategory.RENT,
-                    TransactionCategory.UTILITIES, TransactionCategory.EQUIPMENT,
-                    TransactionCategory.OTHER_EXPENSE)),
+            new GroupSpec("Receitas", true, List.of(TransactionCategory.PROCEDURE, TransactionCategory.CONSULTATION, TransactionCategory.PRODUCT_SALE,
+                    TransactionCategory.INSURANCE_TRANSFER, TransactionCategory.FINANCIAL_INCOME, TransactionCategory.OTHER_INCOME)),
+            new GroupSpec("Deduções sobre receita", false, List.of(TransactionCategory.TAX_DAS, TransactionCategory.TAX_ISS, TransactionCategory.TAX_IRPJ,
+                    TransactionCategory.TAX_CSLL, TransactionCategory.TAX_INSS, TransactionCategory.TAX_PIS_COFINS,
+                    TransactionCategory.TAXES)),
+            new GroupSpec("Despesas financeiras", false, List.of(TransactionCategory.BANK_FEES, TransactionCategory.INTEREST_FINES, TransactionCategory.CARD_FEES,
+                    TransactionCategory.CREDIT_CHECK)),
+            new GroupSpec("Despesas com pessoal", false, List.of(TransactionCategory.PAYROLL, TransactionCategory.PRO_LABORE, TransactionCategory.COMMISSION,
+                    TransactionCategory.LABOR_CHARGES, TransactionCategory.MEAL_VOUCHER, TransactionCategory.TRANSPORT_VOUCHER,
+                    TransactionCategory.THIRTEENTH_SALARY, TransactionCategory.VACATION)),
+            new GroupSpec("Despesas administrativas", false, List.of(TransactionCategory.ACCOUNTING, TransactionCategory.RENT, TransactionCategory.CONDO_FEE,
+                    TransactionCategory.PROPERTY_TAX, TransactionCategory.ELECTRICITY, TransactionCategory.WATER,
+                    TransactionCategory.GAS, TransactionCategory.INTERNET, TransactionCategory.POSTAGE,
+                    TransactionCategory.SECURITY, TransactionCategory.INSURANCE, TransactionCategory.OFFICE_SUPPLIES,
+                    TransactionCategory.KITCHEN_SUPPLIES, TransactionCategory.CLEANING_SUPPLIES, TransactionCategory.EQUIPMENT,
+                    TransactionCategory.PROFESSIONAL_COUNCIL, TransactionCategory.UTILITIES, TransactionCategory.OTHER_EXPENSE)),
             new GroupSpec("Divulgação e marketing", false, List.of(TransactionCategory.MARKETING)),
-            new GroupSpec("Despesas clínicas", false, List.of(TransactionCategory.SUPPLIES,
-                    TransactionCategory.LAB)));
+            new GroupSpec("Despesas clínicas", false, List.of(TransactionCategory.SUPPLIES, TransactionCategory.LAB, TransactionCategory.PROSTHETIST)));
 
     static final String FINANCIAL_GROUP = "Resultado financeiro";
     static final String CARD_FEES = "Taxas de cartão/maquininha";
