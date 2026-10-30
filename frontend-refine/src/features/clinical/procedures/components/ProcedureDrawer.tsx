@@ -24,8 +24,12 @@ import { CatalogItemDialog } from "@/features/masterdata/catalog/components/Cata
 import {
   useAllCatalog,
   useCreateCatalogItem,
+  useRememberCatalogPrice,
 } from "@/features/masterdata/catalog/hooks/useCatalog";
-import type { CatalogItemRequest } from "@/features/masterdata/catalog/types/catalog.types";
+import type {
+  CatalogItem,
+  CatalogItemRequest,
+} from "@/features/masterdata/catalog/types/catalog.types";
 import { useCreateProcedure, useUpdateProcedure } from "../hooks/useProcedures";
 import type {
   Dentition,
@@ -55,6 +59,10 @@ const NO_PROFESSIONAL = "none";
 const NEW_SERVICE = "__new__";
 const STATES: ProcedureState[] = ["PLANNED", "DONE", "PRE_EXISTING"];
 const today = () => format(new Date(), "yyyy-MM-dd");
+/** Preço do catálogo em centavos; zero (procedimento sem preço) vira vazio. */
+const catalogCents = (item?: CatalogItem | null) =>
+  item?.price ? Math.round(item.price * 100) : null;
+
 const formatBRL = (reais: number) =>
   reais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -73,6 +81,7 @@ export function ProcedureDrawer({
   const { data: catalog } = useAllCatalog(companyId, { type: "SERVICE", active: true });
   const { data: members } = useMembers(companyId);
   const createCatalogItem = useCreateCatalogItem(companyId);
+  const rememberCatalogPrice = useRememberCatalogPrice(companyId);
   const canCreateService = can("catalog:manage");
   const [newServiceOpen, setNewServiceOpen] = useState(false);
   const create = useCreateProcedure(companyId, contactId);
@@ -123,7 +132,7 @@ export function ProcedureDrawer({
         onSuccess: (item) => {
           setNewServiceOpen(false);
           setCatalogItemId(item.id);
-          setPriceCents(item.price != null ? Math.round(item.price * 100) : null);
+          setPriceCents(catalogCents(item));
         },
       },
     );
@@ -136,7 +145,7 @@ export function ProcedureDrawer({
     }
     setCatalogItemId(id);
     const item = services.find((s) => s.id === id);
-    setPriceCents(item?.price != null ? Math.round(item.price * 100) : null);
+    setPriceCents(catalogCents(item));
   };
 
   const toggleTooth = (tooth: number) => {
@@ -167,6 +176,17 @@ export function ProcedureDrawer({
     if (locked || next === dentition) return;
     setDentition(next);
     setTeeth([]);
+  };
+
+  /**
+   * O valor digitado vira o preço do procedimento no catálogo: na próxima vez já
+   * vem preenchido; se mudar, basta alterar aqui. Só para quem gerencia o catálogo.
+   */
+  const rememberPrice = () => {
+    const item = services.find((s) => s.id === catalogItemId);
+    if (!item || !canCreateService || locked) return;
+    if (!priceCents || priceCents === catalogCents(item)) return;
+    rememberCatalogPrice.mutate({ item, priceCents });
   };
 
   const save = () => {
@@ -202,7 +222,12 @@ export function ProcedureDrawer({
             generateTransaction: withFinance || generateOnDone,
             dueDate: withFinance ? dueDate : null,
           };
-    const options = { onSuccess: () => onOpenChange(false) };
+    const options = {
+      onSuccess: () => {
+        rememberPrice();
+        onOpenChange(false);
+      },
+    };
     if (procedure) {
       update.mutate({ procedureId: procedure.id, payload }, options);
     } else {
@@ -264,7 +289,7 @@ export function ProcedureDrawer({
                   )}
                   {services.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.price != null ? `${s.name} — ${formatBRL(s.price)}` : s.name}
+                      {s.price ? `${s.name} — ${formatBRL(s.price)}` : s.name}
                     </SelectItem>
                   ))}
                   {canCreateService && (

@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMutationDefaults } from "@/lib/query/mutation-utils";
 import { CatalogService } from "../services/catalog.service";
 import type { CatalogFilters, CatalogItem, CatalogItemRequest } from "../types/catalog.types";
@@ -61,5 +61,29 @@ export function useSetCatalogItemActive(companyId: string | null) {
       invalidateKeys: [["catalog", companyId]],
     }),
     onError: onError({ errorMessage: "Erro ao alterar o status do item" }),
+  });
+}
+
+/**
+ * Grava em silêncio (sem toast) o preço de um item do catálogo a partir do valor
+ * digitado em outra tela (ex.: procedimento do paciente), para vir preenchido na
+ * próxima vez.
+ */
+export function useRememberCatalogPrice(companyId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ item, priceCents }: { item: CatalogItem; priceCents: number }) =>
+      CatalogService.update(companyId as string, item.id, {
+        type: item.type,
+        name: item.name,
+        description: item.description ?? undefined,
+        category: item.category ?? undefined,
+        price: priceCents / 100,
+        currency: item.currency,
+        sku: item.sku ?? undefined,
+        unit: item.unit,
+        minStock: item.minStock,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["catalog", companyId] }),
   });
 }

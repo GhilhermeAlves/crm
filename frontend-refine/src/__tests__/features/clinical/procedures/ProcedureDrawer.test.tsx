@@ -3,7 +3,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { ProcedureDrawer } from "@/features/clinical/procedures/components/ProcedureDrawer";
 import type { PatientProcedureResponse } from "@/features/clinical/procedures/types/procedure.types";
 
-const { permissions, createMutate, updateMutate } = vi.hoisted(() => ({
+const { permissions, createMutate, updateMutate, rememberPrice } = vi.hoisted(() => ({
+  rememberPrice: vi.fn(),
   permissions: { value: [] as string[] },
   createMutate: { fn: null as null | ((...args: unknown[]) => void) },
   updateMutate: { fn: null as null | ((...args: unknown[]) => void) },
@@ -17,6 +18,7 @@ vi.mock("@/features/masterdata/catalog/hooks/useCatalog", () => ({
     ],
   }),
   useCreateCatalogItem: () => ({ mutate: vi.fn(), isPending: false }),
+  useRememberCatalogPrice: () => ({ mutate: rememberPrice }),
 }));
 
 vi.mock("@/features/identity/members/hooks/useMembers", () => ({
@@ -123,6 +125,27 @@ describe("ProcedureDrawer", () => {
     renderDrawer(makeProcedure({ budget: { id: "b1", title: "Plano", status: "APPROVED" } }));
     expect(screen.queryByText("Gerar lançamento financeiro")).toBeNull();
     expect(screen.getByText("Cobrado pelo orçamento Plano.")).toBeTruthy();
+  });
+
+  it("valor digitado vira o preço do procedimento no catálogo", () => {
+    permissions.value = ["catalog:manage"];
+    rememberPrice.mockClear();
+    updateMutate.fn = (_vars, options) => (options as { onSuccess: () => void }).onSuccess();
+    renderDrawer(makeProcedure());
+    fireEvent.change(screen.getByLabelText("Valor (R$)"), { target: { value: "200,00" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+    expect(rememberPrice).toHaveBeenCalledWith(
+      expect.objectContaining({ item: expect.objectContaining({ id: "s1" }), priceCents: 20000 }),
+    );
+  });
+
+  it("valor igual ao do catálogo não regrava o preço", () => {
+    permissions.value = ["catalog:manage"];
+    rememberPrice.mockClear();
+    updateMutate.fn = (_vars, options) => (options as { onSuccess: () => void }).onSuccess();
+    renderDrawer(makeProcedure());
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+    expect(rememberPrice).not.toHaveBeenCalled();
   });
 
   it("rótulo Procedimentos e lista com valor ao lado do nome", () => {
