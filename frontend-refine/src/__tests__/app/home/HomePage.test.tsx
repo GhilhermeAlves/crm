@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import HomePage from "@/app/(dashboard)/crm/page";
 
 const { modulesState } = vi.hoisted(() => ({ modulesState: { value: [] as string[] } }));
@@ -35,6 +35,7 @@ vi.mock("@/features/sales/scheduling/hooks/useScheduling", () => ({
         id: "a1",
         title: "Consulta Ana",
         startAt: "2026-10-30T13:00:00Z",
+        endAt: "2026-10-30T14:00:00Z",
         status: "CONFIRMED",
       },
     ],
@@ -68,6 +69,20 @@ describe("HomePage", () => {
     expect(screen.getByText("Pacientes")).toBeTruthy();
     expect(screen.queryByText("Painel comercial")).toBeNull();
     expect(screen.queryByText("Pipeline")).toBeNull();
+  });
+
+  it("esconde a receita até clicar no olho e mostra só 4 atalhos", () => {
+    modulesState.value = ["AGENDA", "PATIENTS", "TASKS", "FINANCE", "CATALOG", "INVENTORY"];
+
+    render(<HomePage />);
+
+    expect(
+      screen.queryByText("R$ 1.500,00", { normalizer: (t) => t.replace(/\s/g, " ") }),
+    ).toBeNull();
+    fireEvent.click(screen.getByLabelText("Mostrar valor"));
+    expect(screen.getByText(/1\.500,00/)).toBeTruthy();
+    expect(screen.queryByText("Estoque")).toBeNull();
+    expect(screen.getByText("CA")).toBeTruthy();
   });
 
   it("com o módulo Comercial mostra o painel de vendas", () => {
