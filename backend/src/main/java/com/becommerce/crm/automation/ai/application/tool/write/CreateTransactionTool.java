@@ -92,9 +92,8 @@ public class CreateTransactionTool implements AiTool {
                         "description", "INCOME (receita) ou EXPENSE (despesa)"),
                 "description", Map.of("type", "string", "description", "Descricao do lancamento (max 255)"),
                 "category", Map.of("type", "string", "description",
-                        "Categoria compativel com o tipo. Receita: PROCEDURE, CONSULTATION, PRODUCT_SALE, "
-                                + "OTHER_INCOME. Despesa: RENT, PAYROLL, SUPPLIES, LAB, TAXES, MARKETING, "
-                                + "UTILITIES, EQUIPMENT, OTHER_EXPENSE"),
+                        "Categoria compativel com o tipo. Receita: " + categoriesOf(TransactionType.INCOME)
+                                + ". Despesa: " + categoriesOf(TransactionType.EXPENSE)),
                 "amount", Map.of("type", "number", "description", "Valor em reais (ex.: 150.50)"),
                 "paymentMethod", Map.of("type", "string", "description",
                         "Forma de pagamento (padrao PIX): BOLETO, CREDIT_CARD, DEBIT_CARD, PIX, CASH, "
@@ -269,5 +268,12 @@ public class CreateTransactionTool implements AiTool {
             sb.append(" em ").append(installments).append("x");
         }
         return sb.toString();
+    }
+
+    private static String categoriesOf(TransactionType type) {
+        return java.util.Arrays.stream(TransactionCategory.values())
+                .filter(c -> c.type() == type)
+                .map(Enum::name)
+                .collect(java.util.stream.Collectors.joining(", "));
     }
 }

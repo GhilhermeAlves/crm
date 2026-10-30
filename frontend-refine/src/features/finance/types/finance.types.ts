@@ -12,15 +12,49 @@ export type TransactionCategory =
   | "PROCEDURE"
   | "CONSULTATION"
   | "PRODUCT_SALE"
+  | "INSURANCE_TRANSFER"
+  | "FINANCIAL_INCOME"
   | "OTHER_INCOME"
-  | "RENT"
+  | "TAX_DAS"
+  | "TAX_ISS"
+  | "TAX_IRPJ"
+  | "TAX_CSLL"
+  | "TAX_INSS"
+  | "TAX_PIS_COFINS"
+  | "TAXES"
+  | "BANK_FEES"
+  | "INTEREST_FINES"
+  | "CARD_FEES"
+  | "CREDIT_CHECK"
   | "PAYROLL"
+  | "PRO_LABORE"
+  | "COMMISSION"
+  | "LABOR_CHARGES"
+  | "MEAL_VOUCHER"
+  | "TRANSPORT_VOUCHER"
+  | "THIRTEENTH_SALARY"
+  | "VACATION"
+  | "ACCOUNTING"
+  | "RENT"
+  | "CONDO_FEE"
+  | "PROPERTY_TAX"
+  | "ELECTRICITY"
+  | "WATER"
+  | "GAS"
+  | "INTERNET"
+  | "POSTAGE"
+  | "SECURITY"
+  | "INSURANCE"
+  | "OFFICE_SUPPLIES"
+  | "KITCHEN_SUPPLIES"
+  | "CLEANING_SUPPLIES"
+  | "EQUIPMENT"
+  | "PROFESSIONAL_COUNCIL"
+  | "UTILITIES"
+  | "MARKETING"
   | "SUPPLIES"
   | "LAB"
-  | "TAXES"
-  | "MARKETING"
-  | "UTILITIES"
-  | "EQUIPMENT"
+  | "PROSTHETIST"
   | "OTHER_EXPENSE";
 
 export type ReportGranularity = "DAY" | "WEEK" | "MONTH";
@@ -79,6 +113,8 @@ export type CreateFinancialTransactionRequest = {
   notes?: string | null;
   paidAt?: string | null;
   installments?: number;
+  /** Repete o valor cheio por `installments` meses (aluguel, salário...). */
+  recurring?: boolean;
 };
 
 export type UpdateFinancialTransactionRequest = {
@@ -300,46 +336,145 @@ export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
   EXPENSE: "Despesa",
 };
 
-export const INCOME_CATEGORY_LABELS: Record<
-  Extract<TransactionCategory, "PROCEDURE" | "CONSULTATION" | "PRODUCT_SALE" | "OTHER_INCOME">,
-  string
-> = {
+export const TRANSACTION_CATEGORY_LABELS: Record<TransactionCategory, string> = {
   PROCEDURE: "Procedimento",
   CONSULTATION: "Consulta",
   PRODUCT_SALE: "Venda de produto",
+  INSURANCE_TRANSFER: "Repasse do convênio",
+  FINANCIAL_INCOME: "Rendimento financeiro",
   OTHER_INCOME: "Outras receitas",
-};
-
-export const EXPENSE_CATEGORY_LABELS: Record<
-  Extract<
-    TransactionCategory,
-    | "RENT"
-    | "PAYROLL"
-    | "SUPPLIES"
-    | "LAB"
-    | "TAXES"
-    | "MARKETING"
-    | "UTILITIES"
-    | "EQUIPMENT"
-    | "OTHER_EXPENSE"
-  >,
-  string
-> = {
+  TAX_DAS: "Simples Nacional (DAS)",
+  TAX_ISS: "ISS",
+  TAX_IRPJ: "IRPJ",
+  TAX_CSLL: "CSLL",
+  TAX_INSS: "INSS / Previdência",
+  TAX_PIS_COFINS: "PIS/COFINS",
+  TAXES: "Outros impostos",
+  BANK_FEES: "Tarifas bancárias",
+  INTEREST_FINES: "Juros e multa",
+  CARD_FEES: "Taxas de cartão",
+  CREDIT_CHECK: "Consulta de crédito",
+  PAYROLL: "Salários",
+  PRO_LABORE: "Pró-labore",
+  COMMISSION: "Comissão",
+  LABOR_CHARGES: "Encargos trabalhistas",
+  MEAL_VOUCHER: "Vale-refeição (VR)",
+  TRANSPORT_VOUCHER: "Vale-transporte (VT)",
+  THIRTEENTH_SALARY: "13º salário",
+  VACATION: "Férias",
+  ACCOUNTING: "Contabilidade",
   RENT: "Aluguel",
-  PAYROLL: "Folha de pagamento",
-  SUPPLIES: "Materiais",
+  CONDO_FEE: "Condomínio",
+  PROPERTY_TAX: "IPTU",
+  ELECTRICITY: "Luz",
+  WATER: "Água",
+  GAS: "Gás",
+  INTERNET: "Internet e telefone",
+  POSTAGE: "Correio",
+  SECURITY: "Segurança",
+  INSURANCE: "Seguro",
+  OFFICE_SUPPLIES: "Material de escritório",
+  KITCHEN_SUPPLIES: "Material de cozinha",
+  CLEANING_SUPPLIES: "Material de limpeza",
+  EQUIPMENT: "Manutenção de equipamentos",
+  PROFESSIONAL_COUNCIL: "Conselho profissional (CRO, CRM...)",
+  UTILITIES: "Outras contas de consumo",
+  MARKETING: "Divulgação e marketing",
+  SUPPLIES: "Materiais clínicos",
   LAB: "Laboratório",
-  TAXES: "Taxas",
-  MARKETING: "Marketing",
-  UTILITIES: "Utilidades",
-  EQUIPMENT: "Equipamento",
+  PROSTHETIST: "Protético",
   OTHER_EXPENSE: "Outras despesas",
 };
 
-export const TRANSACTION_CATEGORY_LABELS: Record<TransactionCategory, string> = {
-  ...INCOME_CATEGORY_LABELS,
-  ...EXPENSE_CATEGORY_LABELS,
-};
+/** Categorias agrupadas como no plano de contas (formulário e filtros). */
+export const CATEGORY_GROUPS: {
+  type: TransactionType;
+  label: string;
+  categories: TransactionCategory[];
+}[] = [
+  {
+    type: "INCOME",
+    label: "Receitas",
+    categories: [
+      "PROCEDURE",
+      "CONSULTATION",
+      "PRODUCT_SALE",
+      "INSURANCE_TRANSFER",
+      "FINANCIAL_INCOME",
+      "OTHER_INCOME",
+    ],
+  },
+  {
+    type: "EXPENSE",
+    label: "Impostos e taxas",
+    categories: [
+      "TAX_DAS",
+      "TAX_ISS",
+      "TAX_IRPJ",
+      "TAX_CSLL",
+      "TAX_INSS",
+      "TAX_PIS_COFINS",
+      "TAXES",
+    ],
+  },
+  {
+    type: "EXPENSE",
+    label: "Financeiras",
+    categories: ["BANK_FEES", "INTEREST_FINES", "CARD_FEES", "CREDIT_CHECK"],
+  },
+  {
+    type: "EXPENSE",
+    label: "Pessoal",
+    categories: [
+      "PAYROLL",
+      "PRO_LABORE",
+      "COMMISSION",
+      "LABOR_CHARGES",
+      "MEAL_VOUCHER",
+      "TRANSPORT_VOUCHER",
+      "THIRTEENTH_SALARY",
+      "VACATION",
+    ],
+  },
+  {
+    type: "EXPENSE",
+    label: "Administrativas",
+    categories: [
+      "ACCOUNTING",
+      "RENT",
+      "CONDO_FEE",
+      "PROPERTY_TAX",
+      "ELECTRICITY",
+      "WATER",
+      "GAS",
+      "INTERNET",
+      "POSTAGE",
+      "SECURITY",
+      "INSURANCE",
+      "OFFICE_SUPPLIES",
+      "KITCHEN_SUPPLIES",
+      "CLEANING_SUPPLIES",
+      "EQUIPMENT",
+      "PROFESSIONAL_COUNCIL",
+      "UTILITIES",
+    ],
+  },
+  {
+    type: "EXPENSE",
+    label: "Divulgação e marketing",
+    categories: ["MARKETING"],
+  },
+  {
+    type: "EXPENSE",
+    label: "Despesas clínicas",
+    categories: ["SUPPLIES", "LAB", "PROSTHETIST"],
+  },
+  {
+    type: "EXPENSE",
+    label: "Outras",
+    categories: ["OTHER_EXPENSE"],
+  },
+];
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   BOLETO: "Boleto",
@@ -360,16 +495,6 @@ export const TRANSACTION_STATUS_LABELS: Record<TransactionStatusFilter, string> 
 };
 
 export const CATEGORIES_BY_TYPE: Record<TransactionType, TransactionCategory[]> = {
-  INCOME: ["PROCEDURE", "CONSULTATION", "PRODUCT_SALE", "OTHER_INCOME"],
-  EXPENSE: [
-    "RENT",
-    "PAYROLL",
-    "SUPPLIES",
-    "LAB",
-    "TAXES",
-    "MARKETING",
-    "UTILITIES",
-    "EQUIPMENT",
-    "OTHER_EXPENSE",
-  ],
+  INCOME: CATEGORY_GROUPS.filter((g) => g.type === "INCOME").flatMap((g) => g.categories),
+  EXPENSE: CATEGORY_GROUPS.filter((g) => g.type === "EXPENSE").flatMap((g) => g.categories),
 };

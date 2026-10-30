@@ -116,15 +116,49 @@ public final class FinanceLabels {
         labels.put(TransactionCategory.PROCEDURE, "Procedimento");
         labels.put(TransactionCategory.CONSULTATION, "Consulta");
         labels.put(TransactionCategory.PRODUCT_SALE, "Venda de produto");
+        labels.put(TransactionCategory.INSURANCE_TRANSFER, "Repasse do convênio");
+        labels.put(TransactionCategory.FINANCIAL_INCOME, "Rendimento financeiro");
         labels.put(TransactionCategory.OTHER_INCOME, "Outras receitas");
+        labels.put(TransactionCategory.TAX_DAS, "Simples Nacional (DAS)");
+        labels.put(TransactionCategory.TAX_ISS, "ISS");
+        labels.put(TransactionCategory.TAX_IRPJ, "IRPJ");
+        labels.put(TransactionCategory.TAX_CSLL, "CSLL");
+        labels.put(TransactionCategory.TAX_INSS, "INSS / Previdência");
+        labels.put(TransactionCategory.TAX_PIS_COFINS, "PIS/COFINS");
+        labels.put(TransactionCategory.TAXES, "Outros impostos");
+        labels.put(TransactionCategory.BANK_FEES, "Tarifas bancárias");
+        labels.put(TransactionCategory.INTEREST_FINES, "Juros e multa");
+        labels.put(TransactionCategory.CARD_FEES, "Taxas de cartão");
+        labels.put(TransactionCategory.CREDIT_CHECK, "Consulta de crédito");
+        labels.put(TransactionCategory.PAYROLL, "Salários");
+        labels.put(TransactionCategory.PRO_LABORE, "Pró-labore");
+        labels.put(TransactionCategory.COMMISSION, "Comissão");
+        labels.put(TransactionCategory.LABOR_CHARGES, "Encargos trabalhistas");
+        labels.put(TransactionCategory.MEAL_VOUCHER, "Vale-refeição (VR)");
+        labels.put(TransactionCategory.TRANSPORT_VOUCHER, "Vale-transporte (VT)");
+        labels.put(TransactionCategory.THIRTEENTH_SALARY, "13º salário");
+        labels.put(TransactionCategory.VACATION, "Férias");
+        labels.put(TransactionCategory.ACCOUNTING, "Contabilidade");
         labels.put(TransactionCategory.RENT, "Aluguel");
-        labels.put(TransactionCategory.PAYROLL, "Folha de pagamento");
-        labels.put(TransactionCategory.SUPPLIES, "Materiais");
+        labels.put(TransactionCategory.CONDO_FEE, "Condomínio");
+        labels.put(TransactionCategory.PROPERTY_TAX, "IPTU");
+        labels.put(TransactionCategory.ELECTRICITY, "Luz");
+        labels.put(TransactionCategory.WATER, "Água");
+        labels.put(TransactionCategory.GAS, "Gás");
+        labels.put(TransactionCategory.INTERNET, "Internet e telefone");
+        labels.put(TransactionCategory.POSTAGE, "Correio");
+        labels.put(TransactionCategory.SECURITY, "Segurança");
+        labels.put(TransactionCategory.INSURANCE, "Seguro");
+        labels.put(TransactionCategory.OFFICE_SUPPLIES, "Material de escritório");
+        labels.put(TransactionCategory.KITCHEN_SUPPLIES, "Material de cozinha");
+        labels.put(TransactionCategory.CLEANING_SUPPLIES, "Material de limpeza");
+        labels.put(TransactionCategory.EQUIPMENT, "Manutenção de equipamentos");
+        labels.put(TransactionCategory.PROFESSIONAL_COUNCIL, "Conselho profissional (CRO, CRM...)");
+        labels.put(TransactionCategory.UTILITIES, "Outras contas de consumo");
+        labels.put(TransactionCategory.MARKETING, "Divulgação e marketing");
+        labels.put(TransactionCategory.SUPPLIES, "Materiais clínicos");
         labels.put(TransactionCategory.LAB, "Laboratório");
-        labels.put(TransactionCategory.TAXES, "Impostos");
-        labels.put(TransactionCategory.MARKETING, "Marketing");
-        labels.put(TransactionCategory.UTILITIES, "Contas de consumo");
-        labels.put(TransactionCategory.EQUIPMENT, "Equipamentos");
+        labels.put(TransactionCategory.PROSTHETIST, "Protético");
         labels.put(TransactionCategory.OTHER_EXPENSE, "Outras despesas");
         return Map.copyOf(labels);
     }
@@ -148,6 +182,13 @@ public final class FinanceLabels {
             keys.put(normalize(category.name()), category);
             keys.put(normalize(CATEGORY_LABELS.get(category)), category);
         }
+        // Rótulos anteriores à V121, para planilhas antigas continuarem válidas.
+        keys.putIfAbsent(normalize("Folha de pagamento"), TransactionCategory.PAYROLL);
+        keys.putIfAbsent(normalize("Materiais"), TransactionCategory.SUPPLIES);
+        keys.putIfAbsent(normalize("Impostos"), TransactionCategory.TAXES);
+        keys.putIfAbsent(normalize("Marketing"), TransactionCategory.MARKETING);
+        keys.putIfAbsent(normalize("Contas de consumo"), TransactionCategory.UTILITIES);
+        keys.putIfAbsent(normalize("Equipamentos"), TransactionCategory.EQUIPMENT);
         return Map.copyOf(keys);
     }
 

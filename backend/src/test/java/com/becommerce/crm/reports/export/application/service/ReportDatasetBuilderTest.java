@@ -29,21 +29,22 @@ class ReportDatasetBuilderTest {
                 new CategoryTotalRow(TransactionCategory.SUPPLIES, 2, 10_000, 0, 0)));
 
         assertThat(dre.groups()).extracting(DreGroup::label).containsExactly("Receitas",
-                "Deduções sobre receita", "Despesas com pessoal", "Despesas administrativas",
-                "Divulgação e marketing", "Despesas clínicas", "Resultado financeiro");
+                "Deduções sobre receita", "Despesas financeiras", "Despesas com pessoal",
+                "Despesas administrativas", "Divulgação e marketing", "Despesas clínicas",
+                "Resultado financeiro");
 
         DreGroup revenue = dre.groups().get(0);
-        assertThat(revenue.lines()).hasSize(4);
+        assertThat(revenue.lines()).hasSize(6);
         assertThat(revenue.totalCents()).isEqualTo(350_000);
         assertThat(revenue.count()).isEqualTo(5);
 
-        DreGroup admin = dre.groups().get(3);
-        assertThat(admin.lines()).hasSize(4);
+        DreGroup admin = dre.groups().get(4);
+        assertThat(admin.lines()).hasSize(18);
         assertThat(admin.totalCents()).isEqualTo(100_000);
 
-        assertThat(dre.groups().get(2).totalCents()).isZero();
-        assertThat(dre.groups().get(6).totalCents()).isEqualTo(1_500);
-        assertThat(dre.groups().get(6).count()).isEqualTo(2);
+        assertThat(dre.groups().get(3).totalCents()).isZero();
+        assertThat(dre.groups().get(7).totalCents()).isEqualTo(1_500);
+        assertThat(dre.groups().get(7).count()).isEqualTo(2);
 
         // 350.000 - 20.000 - 100.000 - 10.000 - 1.500
         assertThat(dre.resultCents()).isEqualTo(218_500);

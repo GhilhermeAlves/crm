@@ -39,7 +39,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -60,13 +62,13 @@ import type {
   TransactionType,
 } from "../types/finance.types";
 import {
-  CATEGORIES_BY_TYPE,
+  CATEGORY_GROUPS,
   PAYMENT_METHOD_LABELS,
   TRANSACTION_CATEGORY_LABELS,
   TRANSACTION_TYPE_LABELS,
 } from "../types/finance.types";
 import { describeInstallments } from "../utils/installments";
-import { parseBRLToCents } from "../utils/money";
+import { centsToBRL, parseBRLToCents } from "../utils/money";
 
 type TransactionFormDialogProps = {
   open: boolean;
@@ -102,6 +104,7 @@ const emptyValues = (type: TransactionType = "INCOME"): TransactionFormValues =>
   paymentMethod: "",
   dueDate: today(),
   installments: 1,
+  recurring: false,
   contactId: undefined,
   professionalUserId: undefined,
   catalogItemId: undefined,
@@ -119,6 +122,7 @@ const fromTransaction = (transaction: FinancialTransaction): TransactionFormValu
   paymentMethod: transaction.paymentMethod,
   dueDate: transaction.dueDate,
   installments: 1,
+  recurring: false,
   contactId: transaction.contactId ?? undefined,
   professionalUserId: transaction.professionalUserId ?? undefined,
   catalogItemId: transaction.catalogItemId ?? undefined,
@@ -153,6 +157,7 @@ const buildBody = (values: TransactionFormValues): CreateFinancialTransactionReq
     notes: values.notes?.trim() ? values.notes.trim() : null,
     paidAt: values.paid ? (values.paidAt ?? null) : null,
     installments: values.installments ?? 1,
+    recurring: (values.installments ?? 1) > 1 && Boolean(values.recurring),
   };
 };
 
@@ -309,7 +314,13 @@ export function TransactionFormDialog({
   const isSaving = createTransaction.isPending || updateTransaction.isPending;
 
   const amountCents = parseBRLToCents(values.amount) ?? 0;
-  const installmentSummary = describeInstallments(amountCents, values.installments ?? 1);
+  const count = values.installments ?? 1;
+  const condition: "ONCE" | "INSTALLMENTS" | "RECURRING" =
+    count <= 1 ? "ONCE" : values.recurring ? "RECURRING" : "INSTALLMENTS";
+  const installmentSummary =
+    condition === "RECURRING"
+      ? `${count} lançamentos mensais de ${centsToBRL(amountCents)}`
+      : describeInstallments(amountCents, count);
 
   const handleTypeChange = (next: TransactionType) => {
     form.setValue("type", next);
@@ -396,11 +407,18 @@ export function TransactionFormDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {CATEGORIES_BY_TYPE[values.type].map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {TRANSACTION_CATEGORY_LABELS[category]}
-                          </SelectItem>
-                        ))}
+                        {CATEGORY_GROUPS.filter((group) => group.type === values.type).map(
+                          (group) => (
+                            <SelectGroup key={group.label}>
+                              <SelectLabel>{group.label}</SelectLabel>
+                              {group.categories.map((category) => (
+                                <SelectItem key={category} value={category}>
+                                  {TRANSACTION_CATEGORY_LABELS[category]}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          ),
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -475,14 +493,41 @@ export function TransactionFormDialog({
               />
 
               {!isEditing && (
+                <FormItem>
+                  <FormLabel>Condição de pagamento</FormLabel>
+                  <Select
+                    value={condition}
+                    onValueChange={(value) => {
+                      const next = value as typeof condition;
+                      form.setValue("recurring", next === "RECURRING");
+                      if (next === "ONCE") form.setValue("installments", 1);
+                      else if (count <= 1)
+                        form.setValue("installments", next === "RECURRING" ? 12 : 2);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ONCE">À vista</SelectItem>
+                      <SelectItem value="INSTALLMENTS">Parcelado</SelectItem>
+                      <SelectItem value="RECURRING">Recorrente (todo mês)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+
+              {!isEditing && condition !== "ONCE" && (
                 <FormField
                   control={form.control}
                   name="installments"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Parcelas</FormLabel>
+                      <FormLabel>
+                        {condition === "RECURRING" ? "Repetir por" : "Parcelas"}
+                      </FormLabel>
                       <Select
-                        value={String(field.value ?? 1)}
+                        value={String(field.value ?? 2)}
                         onValueChange={(value) => field.onChange(Number(value))}
                       >
                         <FormControl>
@@ -491,11 +536,11 @@ export function TransactionFormDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="max-h-60">
-                          {Array.from({ length: 24 }, (_, index) => {
-                            const count = index + 1;
+                          {Array.from({ length: 23 }, (_, index) => {
+                            const n = index + 2;
                             return (
-                              <SelectItem key={count} value={String(count)}>
-                                {count}x
+                              <SelectItem key={n} value={String(n)}>
+                                {condition === "RECURRING" ? `${n} meses` : `${n}x`}
                               </SelectItem>
                             );
                           })}
@@ -586,8 +631,8 @@ export function TransactionFormDialog({
 
               {isEditing && transaction?.installmentTotal && transaction.installmentTotal > 1 && (
                 <p className="text-xs text-muted-foreground sm:col-span-2">
-                  Esta é a parcela {transaction.installmentNumber} de {transaction.installmentTotal}
-                  ; a edição vale só para ela.
+                  Este é o lançamento {transaction.installmentNumber} de{" "}
+                  {transaction.installmentTotal} da série; a edição vale só para ele.
                 </p>
               )}
 

@@ -33,6 +33,7 @@ export const transactionFormSchema = z
     paymentMethod: z.string().min(1, "Forma de pagamento é obrigatória"),
     dueDate: z.string().min(1, "Vencimento é obrigatório"),
     installments: z.coerce.number().int().min(1).max(24).optional(),
+    recurring: z.boolean().optional(),
     contactId: z.string().optional(),
     professionalUserId: z.string().optional(),
     catalogItemId: z.string().optional(),

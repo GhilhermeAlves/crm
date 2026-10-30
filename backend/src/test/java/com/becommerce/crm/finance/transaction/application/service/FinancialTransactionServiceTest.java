@@ -57,7 +57,7 @@ class FinancialTransactionServiceTest {
     private static CreateFinancialTransactionRequest createRequest(long amountCents, Integer installments) {
         return new CreateFinancialTransactionRequest(TransactionType.INCOME, "Consulta", TransactionCategory.CONSULTATION,
                 amountCents, 0L, PaymentMethod.PIX, LocalDate.of(2026, 1, 15), null, null, null, null, null,
-                installments);
+                installments, null);
     }
 
     @Test
@@ -89,7 +89,7 @@ class FinancialTransactionServiceTest {
     void createRejectsCategoryIncompatibleWithType() {
         CreateFinancialTransactionRequest request = new CreateFinancialTransactionRequest(TransactionType.EXPENSE,
                 "Aluguel", TransactionCategory.CONSULTATION, 1000L, 0L, PaymentMethod.PIX,
-                LocalDate.of(2026, 1, 15), null, null, null, null, null, null);
+                LocalDate.of(2026, 1, 15), null, null, null, null, null, null, null);
 
         assertThrows(FinancialTransactionValidationException.class, () -> service.create(COMPANY, request, ACTOR));
     }

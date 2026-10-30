@@ -125,20 +125,27 @@ public class FinancialTransactionService {
     public List<FinancialTransactionResponse> create(UUID companyId, CreateFinancialTransactionRequest request,
                                                      UUID createdBy) {
         int installments = request.installments() == null ? 1 : request.installments();
+        boolean recurring = Boolean.TRUE.equals(request.recurring()) && installments > 1;
+        long feeCents = request.feeCents() == null ? 0L : request.feeCents();
         try {
             TenantContext.setCompanyId(companyId);
-            List<FinancialTransaction> created = repository.saveAll(FinancialTransaction.createSeries(companyId,
-                    request.type(), request.description(), request.category(), request.amountCents(),
-                    request.feeCents() == null ? 0L : request.feeCents(), request.paymentMethod(),
-                    request.dueDate(), request.contactId(), request.professionalUserId(), request.catalogItemId(),
-                    request.notes(), request.paidAt(), installments, createdBy));
+            List<FinancialTransaction> created = repository.saveAll(recurring
+                    ? FinancialTransaction.createRecurring(companyId, request.type(), request.description(),
+                            request.category(), request.amountCents(), feeCents, request.paymentMethod(),
+                            request.dueDate(), request.contactId(), request.professionalUserId(),
+                            request.catalogItemId(), request.notes(), request.paidAt(), installments, createdBy)
+                    : FinancialTransaction.createSeries(companyId, request.type(), request.description(),
+                            request.category(), request.amountCents(), feeCents, request.paymentMethod(),
+                            request.dueDate(), request.contactId(), request.professionalUserId(),
+                            request.catalogItemId(), request.notes(), request.paidAt(), installments, createdBy));
             FinancialTransaction first = created.get(0);
-            String description = "Lançamento financeiro criado: " + first.getDescription()
-                    + (installments > 1 ? " (" + installments + " parcelas)" : "");
+            String series = recurring ? " (recorrente por " + installments + " meses)"
+                    : installments > 1 ? " (" + installments + " parcelas)" : "";
+            String description = "Lançamento financeiro criado: " + first.getDescription() + series;
             auditor.record(companyId, AuditAction.CREATE, AuditModule.FINANCE, ENTITY, first.getId().toString(),
                     description, createdBy, Map.of("type", first.getType().name()));
             note(companyId, first, installments > 1
-                    ? "Lançamento financeiro criado (" + installments + " parcelas)"
+                    ? "Lançamento financeiro criado" + series
                     : first.getPaidAt() != null ? "Pagamento registrado" : "Lançamento financeiro criado",
                     createdBy);
             return toResponses(created);

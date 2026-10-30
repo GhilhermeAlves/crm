@@ -247,7 +247,7 @@ class FinanceWriteToolsTest {
         executor.execute(create);
         verify(transactions).create(companyId, new CreateFinancialTransactionRequest(
                 TransactionType.INCOME, "Consulta", TransactionCategory.CONSULTATION, 15050L, null,
-                PaymentMethod.PIX, LocalDate.parse("2026-10-12"), contactId, null, null, null, null, 1), userId);
+                PaymentMethod.PIX, LocalDate.parse("2026-10-12"), contactId, null, null, null, null, 1, null), userId);
 
         UUID id = UUID.randomUUID();
         AiAction pay = mock(AiAction.class);

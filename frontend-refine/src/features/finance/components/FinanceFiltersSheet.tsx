@@ -9,7 +9,6 @@ import {
   SelectGroup,
   SelectItem,
   SelectLabel,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -26,7 +25,7 @@ import type {
   TransactionStatusFilter,
 } from "../types/finance.types";
 import {
-  CATEGORIES_BY_TYPE,
+  CATEGORY_GROUPS,
   PAYMENT_METHOD_LABELS,
   TRANSACTION_CATEGORY_LABELS,
   TRANSACTION_STATUS_LABELS,
@@ -97,9 +96,6 @@ export function FinanceFiltersSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const incomeCategories = CATEGORIES_BY_TYPE.INCOME;
-  const expenseCategories = CATEGORIES_BY_TYPE.EXPENSE;
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex w-full flex-col gap-6 sm:max-w-sm">
@@ -165,40 +161,22 @@ export function FinanceFiltersSheet({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>Todas</SelectItem>
-                {tab === "income" &&
-                  incomeCategories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {TRANSACTION_CATEGORY_LABELS[category]}
-                    </SelectItem>
-                  ))}
-                {tab === "expense" &&
-                  expenseCategories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {TRANSACTION_CATEGORY_LABELS[category]}
-                    </SelectItem>
-                  ))}
-                {tab === "all" && (
-                  <>
-                    <SelectSeparator />
-                    <SelectGroup>
-                      <SelectLabel>Receitas</SelectLabel>
-                      {incomeCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {TRANSACTION_CATEGORY_LABELS[category]}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                    <SelectSeparator />
-                    <SelectGroup>
-                      <SelectLabel>Despesas</SelectLabel>
-                      {expenseCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {TRANSACTION_CATEGORY_LABELS[category]}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </>
-                )}
+                {CATEGORY_GROUPS.filter(
+                  (group) =>
+                    tab === "all" ||
+                    (tab === "income" ? group.type === "INCOME" : group.type === "EXPENSE"),
+                ).map((group) => (
+                  <SelectGroup key={`${group.type}-${group.label}`}>
+                    <SelectLabel>
+                      {tab === "all" && group.type === "INCOME" ? "Receitas" : group.label}
+                    </SelectLabel>
+                    {group.categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {TRANSACTION_CATEGORY_LABELS[category]}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
               </SelectContent>
             </Select>
           </div>
