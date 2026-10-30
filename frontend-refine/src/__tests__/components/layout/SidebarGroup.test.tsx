@@ -67,9 +67,18 @@ describe("SidebarGroup com a barra aberta", () => {
     expect(screen.getByText("Equipe")).toBeTruthy();
   });
 
-  it("já abre o grupo da página atual", () => {
+  it("ao entrar no portal começa fechado mesmo na página do grupo", () => {
     pathname = "/settings/agenda/chairs";
     render(<SidebarGroup group={group} collapsed={false} />);
+    expect(
+      screen.getByRole("button", { name: /Configurações/ }).getAttribute("aria-expanded"),
+    ).toBe("false");
+  });
+
+  it("abre o grupo ao navegar para uma página dele", () => {
+    const { rerender } = render(<SidebarGroup group={group} collapsed={false} />);
+    pathname = "/settings/agenda/chairs";
+    rerender(<SidebarGroup group={group} collapsed={false} />);
     expect(
       screen.getByRole("button", { name: /Configurações/ }).getAttribute("aria-expanded"),
     ).toBe("true");
@@ -99,6 +108,7 @@ describe("SidebarGroup e módulos da empresa", () => {
     modulesState.enabled = ["AGENDA", "PATIENTS"];
     pathname = "/agenda";
     render(<SidebarGroup group={clinicGroup} collapsed={false} />);
+    fireEvent.click(screen.getByRole("button", { name: /Principal/ }));
 
     expect(screen.getByText("Pacientes")).toBeTruthy();
     expect(screen.queryByText("Contatos")).toBeNull();
@@ -108,6 +118,7 @@ describe("SidebarGroup e módulos da empresa", () => {
     modulesState.enabled = null;
     pathname = "/agenda";
     render(<SidebarGroup group={clinicGroup} collapsed={false} />);
+    fireEvent.click(screen.getByRole("button", { name: /Principal/ }));
 
     expect(screen.getByText("Pacientes")).toBeTruthy();
     expect(screen.getByText("Contatos")).toBeTruthy();
