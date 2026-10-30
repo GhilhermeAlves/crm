@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, LayoutGrid } from "lucide-react";
@@ -72,11 +72,13 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
     .filter((item) => !item.children || item.children.length > 0);
 
   const containsActive = groupHasActive(visibleItems, pathname);
-  // O grupo da página aberta já começa expandido.
-  const [isExpanded, setIsExpanded] = useState(containsActive);
+  // Ao entrar no portal todos os grupos começam fechados; depois, ao navegar
+  // para outra página, o grupo dela se abre.
+  const [isExpanded, setIsExpanded] = useState(false);
+  const firstPathRef = useRef(pathname);
   useEffect(() => {
-    if (containsActive) setIsExpanded(true);
-  }, [containsActive]);
+    if (containsActive && pathname !== firstPathRef.current) setIsExpanded(true);
+  }, [containsActive, pathname]);
 
   if (visibleItems.length === 0) return null;
 

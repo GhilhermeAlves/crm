@@ -6,6 +6,7 @@ import { Header } from "./Header";
 import { AiAssistantLauncher } from "@/features/automation/ai/components/AiAssistantLauncher";
 import { useActiveCompanyModules } from "@/features/identity/modules/hooks/useCompanyModules";
 import { ModuleGate } from "./ModuleGate";
+import { useRecordRecentShortcut } from "./recentShortcuts";
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -13,6 +14,7 @@ type DashboardLayoutProps = {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isEnabled } = useActiveCompanyModules();
+  useRecordRecentShortcut();
   return (
     <div className="flex h-dvh overflow-hidden">
       <Sidebar />
