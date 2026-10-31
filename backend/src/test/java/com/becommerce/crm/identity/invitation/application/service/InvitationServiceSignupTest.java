@@ -383,10 +383,10 @@ class InvitationServiceSignupTest {
         when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of());
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
-        InvitationResponse response = service.create(companyId,
+        var response = service.create(companyId,
                 new CreateInvitationRequest(EMAIL, "AGENT", "Fulano"), invitedBy);
 
-        assertEquals("Fulano", response.inviteeName());
+        assertEquals("Fulano", response.invitation().inviteeName());
         ArgumentCaptor<String> url = ArgumentCaptor.forClass(String.class);
         verify(emailSender).sendInvitation(eq(EMAIL), eq("EmpresaX"), eq("AGENT"), url.capture());
         assertTrue(url.getValue().startsWith("https://crm.exemplo.com/convite/"), url.getValue());

@@ -1,6 +1,7 @@
 package com.becommerce.crm.identity.invitation.web;
 
 import com.becommerce.crm.identity.invitation.application.dto.CreateInvitationRequest;
+import com.becommerce.crm.identity.invitation.application.dto.CreateOwnerInvitationRequest;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationLinkResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationPreviewResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationRegisterRequest;
@@ -48,11 +49,27 @@ public class InvitationController {
 
     @PostMapping("/companies/{companyId}/invitations")
     @PreAuthorize("hasAuthority('membership:manage')")
-    public ResponseEntity<InvitationResponse> create(
+    public ResponseEntity<InvitationLinkResponse> create(
             @CurrentCompanyId("Você só pode administrar convites da sua própria empresa.") UUID companyId,
             @Valid @RequestBody CreateInvitationRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
-        InvitationResponse response = invitationUseCase.create(companyId, request, principal.userId());
+        InvitationLinkResponse response = invitationUseCase.create(companyId, request, principal.userId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Convite do dono de uma empresa pré-cadastrada. Exclusivo CRM_ADMIN e sem
+     * {@link CurrentCompanyId}: o administrador da plataforma pode convidar
+     * qualquer empresa.
+     */
+    @PostMapping("/companies/{companyId}/owner-invitation")
+    @PreAuthorize("hasRole('CRM_ADMIN')")
+    public ResponseEntity<InvitationLinkResponse> createOwnerInvitation(
+            @PathVariable UUID companyId,
+            @Valid @RequestBody CreateOwnerInvitationRequest request,
+            @AuthenticationPrincipal CurrentUser principal) {
+        InvitationLinkResponse response = invitationUseCase.createOwnerInvitation(
+                companyId, request, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

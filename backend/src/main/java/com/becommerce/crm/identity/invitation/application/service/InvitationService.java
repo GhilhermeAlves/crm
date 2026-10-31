@@ -8,6 +8,7 @@ import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.application.service.AuthService;
 import com.becommerce.crm.identity.domain.exception.DuplicateEmailException;
 import com.becommerce.crm.identity.invitation.application.dto.CreateInvitationRequest;
+import com.becommerce.crm.identity.invitation.application.dto.CreateOwnerInvitationRequest;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationLinkResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationPreviewResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse;
@@ -28,6 +29,7 @@ import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
 import com.becommerce.crm.identity.invitation.domain.ProfessionalSpecialty;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoundException;
+import com.becommerce.crm.identity.invitation.domain.exception.OwnerInvitationAlreadyPendingException;
 import com.becommerce.crm.identity.membership.domain.Membership;
 import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import com.becommerce.crm.identity.invitation.infrastructure.persistence.InvitationTokenContextHolder;
@@ -104,7 +106,7 @@ public class InvitationService implements InvitationUseCase {
 
     @Override
     @Transactional
-    public InvitationResponse create(UUID companyId, CreateInvitationRequest request, UUID invitedBy) {
+    public InvitationLinkResponse create(UUID companyId, CreateInvitationRequest request, UUID invitedBy) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyNotFoundException(companyId));
         if (company.getStatus() != CompanyStatus.ACTIVE) {
@@ -145,13 +147,79 @@ public class InvitationService implements InvitationUseCase {
                         InvitationTokenService.hash(token), invitedBy));
 
         String tokenUrl = buildTokenUrl(token);
-        emailSender.sendInvitation(email, company.getTradingName(), role, tokenUrl);
+        if (request.shouldSendEmail()) {
+            emailSender.sendInvitation(email, company.getTradingName(), role, tokenUrl);
+        }
 
         auditor.record(companyId, AuditAction.CREATE, AuditModule.INVITATIONS, "Invitation",
                 invitation.getId().toString(),
-                "Convite criado para " + email,
-                invitedBy, Map.of("email", email, "role", role, "specialty", specialty == null ? "" : specialty));
-        return toResponse(invitation);
+                (request.shouldSendEmail() ? "Convite criado para " : "Convite criado sem envio de e-mail para ") + email,
+                invitedBy, Map.of("email", email, "role", role, "specialty", specialty == null ? "" : specialty,
+                        "sent", String.valueOf(request.shouldSendEmail())));
+        return new InvitationLinkResponse(toResponse(invitation), tokenUrl);
+    }
+
+    @Override
+    @Transactional
+    public InvitationLinkResponse createOwnerInvitation(UUID companyId, CreateOwnerInvitationRequest request,
+                                                        UUID invitedBy) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new CompanyNotFoundException(companyId));
+        if (company.getStatus() != CompanyStatus.ACTIVE) {
+            throw new IllegalStateException("Empresa inativa: não é possível convidar.");
+        }
+        if (!rateLimiter.tryCreate(companyId.toString())) {
+            throw new IllegalStateException("Excesso de convites na janela atual. Tente novamente mais tarde.");
+        }
+
+        String email = normalize(request.email());
+        TenantContext.setCompanyId(companyId);
+
+        List<Invitation> pendingInvites = invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING);
+        if (pendingInvites.stream().anyMatch(i -> Membership.OWNER_ROLE.equals(i.getRole()))) {
+            throw new OwnerInvitationAlreadyPendingException(
+                    "Já existe um convite de dono pendente para esta empresa. "
+                            + "Revogue o convite anterior antes de criar outro.");
+        }
+        if (pendingInvites.stream().anyMatch(i -> i.getEmail().equalsIgnoreCase(email))) {
+            throw new IllegalArgumentException("Já existe convite pendente para " + email);
+        }
+
+        // O provisionamento cria uma membership OWNER para o CRM_ADMIN criador.
+        // Esse membro e os convites OWNER pendentes não entram na quota, para que
+        // o convite do dono não estoure empresas com limite 1 ou 2.
+        long activeUsers = membershipRepository.countActiveByCompanyId(companyId);
+        if (membershipRepository.existsActiveByUserIdAndCompanyId(invitedBy, companyId)) {
+            activeUsers--;
+        }
+        long pendingNonOwnerInvites = pendingInvites.stream()
+                .filter(i -> !Membership.OWNER_ROLE.equals(i.getRole()))
+                .count();
+        if (activeUsers + pendingNonOwnerInvites >= company.getMaxUsers()) {
+            throw new QuotaExceededException(
+                    "Limite de usuários da empresa atingido (" + company.getMaxUsers() + ").");
+        }
+
+        if (inviteeAlreadyMember(email, companyId)) {
+            throw new IllegalArgumentException("Este usuário já é membro desta empresa.");
+        }
+
+        String token = InvitationTokenService.generateToken();
+        Invitation invitation = invitationRepository.save(
+                Invitation.create(companyId, email, blankToNull(request.name()), Membership.OWNER_ROLE, null,
+                        InvitationTokenService.hash(token), invitedBy));
+
+        String tokenUrl = buildTokenUrl(token);
+        if (request.shouldSendEmail()) {
+            emailSender.sendInvitation(email, company.getTradingName(), Membership.OWNER_ROLE, tokenUrl);
+        }
+
+        auditor.record(companyId, AuditAction.CREATE, AuditModule.INVITATIONS, "Invitation",
+                invitation.getId().toString(),
+                (request.shouldSendEmail() ? "Convite de dono criado para " : "Convite de dono criado sem envio de e-mail para ") + email,
+                invitedBy, Map.of("email", email, "role", Membership.OWNER_ROLE,
+                        "sent", String.valueOf(request.shouldSendEmail())));
+        return new InvitationLinkResponse(toResponse(invitation), tokenUrl);
     }
 
     @Override
@@ -353,10 +421,18 @@ public class InvitationService implements InvitationUseCase {
         }
 
         // Enforcement max_users (Sprint 8.6): bloqueia aceite quando a empresa
-        // já atingiu o limite de usuários do plano.
+        // já atingiu o limite de usuários do plano. No convite de OWNER, o
+        // CRM_ADMIN criador (membro OWNER automático do provisionamento) não
+        // conta na quota, para não impedir a entrada do dono.
         Company target = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyNotFoundException(companyId));
-        if (membershipRepository.countActiveByCompanyId(companyId) >= target.getMaxUsers()) {
+        long activeUsers = membershipRepository.countActiveByCompanyId(companyId);
+        if (Membership.OWNER_ROLE.equals(invitation.getRole())
+                && invitation.getInvitedBy() != null
+                && membershipRepository.existsActiveByUserIdAndCompanyId(invitation.getInvitedBy(), companyId)) {
+            activeUsers--;
+        }
+        if (activeUsers >= target.getMaxUsers()) {
             throw new QuotaExceededException(
                     "Limite de usuários da empresa atingido (" + target.getMaxUsers() + ").");
         }
@@ -440,12 +516,27 @@ public class InvitationService implements InvitationUseCase {
                 null, Map.of("email", invitation.getEmail()));
     }
 
-    /** Vincula o papel RBAC (role_permissions) correspondente ao do convite. */
+    /**
+     * Vincula o papel RBAC (role_permissions) correspondente ao do convite.
+     * OWNER não existe no RBAC; o dono recebe SUPER_ADMIN. Se o papel não for
+     * encontrado, falha explicitamente (nunca ignora em silêncio).
+     */
     private void assignRole(User user, Invitation invitation) {
-        roleRepository.findByNameAndCompanyId(invitation.getRole(), invitation.getCompanyId())
-                .map(Role::getId)
-                .filter(roleId -> !userRoleRepository.existsByUserIdAndRoleId(user.getId(), roleId))
-                .ifPresent(roleId -> userRoleRepository.save(UserRole.assign(user.getId(), roleId, invitation.getCompanyId())));
+        boolean ownerInvitation = Membership.OWNER_ROLE.equals(invitation.getRole());
+        String rbacRole = ownerInvitation ? Membership.SUPER_ADMIN_ROLE : invitation.getRole();
+        Role role = roleRepository.findByNameAndCompanyId(rbacRole, invitation.getCompanyId())
+                .orElse(null);
+        if (role == null) {
+            if (ownerInvitation) {
+                throw new IllegalStateException(
+                        "Papel RBAC " + rbacRole + " não encontrado para a empresa "
+                                + invitation.getCompanyId() + ".");
+            }
+            return;
+        }
+        if (!userRoleRepository.existsByUserIdAndRoleId(user.getId(), role.getId())) {
+            userRoleRepository.save(UserRole.assign(user.getId(), role.getId(), invitation.getCompanyId()));
+        }
     }
 
     private boolean matchesEmail(Invitation invitation, User user) {
