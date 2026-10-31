@@ -19,6 +19,16 @@ export type CreateInvitationRequest = {
   specialty?: string;
   /** Opcional: aparece na lista de pendentes e pré-preenche o cadastro. */
   name?: string;
+  /** Default `true`. `false` = não envia e-mail; o link fica para cópia/WhatsApp. */
+  sendEmail?: boolean;
+};
+
+/** POST /companies/{id}/owner-invitation (exclusivo CRM_ADMIN). */
+export type CreateOwnerInvitationRequest = {
+  email: string;
+  name?: string;
+  /** Default `true`. `false` = não envia e-mail; o link fica para cópia/WhatsApp. */
+  sendEmail?: boolean;
 };
 
 /**

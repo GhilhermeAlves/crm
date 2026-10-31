@@ -5,8 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateInvitation } from "../hooks/useInvitations";
-import { INVITATION_ROLES } from "../types/invitation.types";
+import { INVITATION_ROLES, type InvitationLink } from "../types/invitation.types";
 import { roleLabel, SPECIALTY_LABEL } from "@/features/identity/members/lib/labels";
+import { InvitationLinkPanel } from "./InvitationLinkPanel";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -33,6 +35,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const inviteSchema = z.object({
   name: z.string().max(255, "Máximo de 255 caracteres").optional(),
@@ -50,6 +53,8 @@ const EMPTY: InviteFormValues = { name: "", email: "", role: "AGENT", specialty:
 
 type CreateInvitationDialogProps = {
   companyId: string;
+  /** Nome da empresa ativa, usado na mensagem do WhatsApp. */
+  companyName?: string | null;
   /** Botão que abre o dialog. Padrão: "Convidar membro". */
   trigger?: ReactNode;
   title?: string;
@@ -60,12 +65,15 @@ type CreateInvitationDialogProps = {
 
 export function CreateInvitationDialog({
   companyId,
+  companyName,
   trigger,
   title = "Convidar membro",
   description = "Envie um convite por e-mail com um papel de acesso definido. O membro aceitará pelo link recebido.",
   submitLabel = "Enviar convite",
 }: CreateInvitationDialogProps) {
   const [open, setOpen] = useState(false);
+  const [sendEmail, setSendEmail] = useState(true);
+  const [created, setCreated] = useState<InvitationLink | null>(null);
   const create = useCreateInvitation(companyId);
 
   const form = useForm<InviteFormValues>({
@@ -73,9 +81,15 @@ export function CreateInvitationDialog({
     defaultValues: EMPTY,
   });
 
+  function reset() {
+    setSendEmail(true);
+    setCreated(null);
+    form.reset(EMPTY);
+  }
+
   function close() {
     setOpen(false);
-    form.reset(EMPTY);
+    reset();
   }
 
   function onSubmit(values: InviteFormValues) {
@@ -85,8 +99,9 @@ export function CreateInvitationDialog({
         role: values.role,
         specialty: values.specialty === NO_SPECIALTY ? undefined : values.specialty,
         name: values.name?.trim() || undefined,
+        sendEmail,
       },
-      { onSuccess: close },
+      { onSuccess: (data) => setCreated(data) },
     );
   }
 
@@ -95,102 +110,129 @@ export function CreateInvitationDialog({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) form.reset(EMPTY);
+        if (!next) reset();
       }}
     >
       <DialogTrigger asChild>{trigger ?? <Button>Convidar membro</Button>}</DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome (opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome de quem será convidado" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>E-mail</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="membro@empresa.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Papel</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o papel" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {INVITATION_ROLES.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {roleLabel(role)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="specialty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Especialidade (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a especialidade" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={NO_SPECIALTY}>Não informar</SelectItem>
-                      {Object.entries(SPECIALTY_LABEL).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={close}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={create.isPending}>
-                {create.isPending ? "Enviando..." : submitLabel}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        {created ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>Convite criado</DialogTitle>
+              <DialogDescription>
+                Compartilhe o link com <strong>{created.invitation.email}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <InvitationLinkPanel link={created} companyName={companyName} onClose={close} />
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>{description}</DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome (opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome de quem será convidado" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>E-mail</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="membro@empresa.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Papel</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o papel" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {INVITATION_ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {roleLabel(role)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="specialty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Especialidade (opcional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a especialidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={NO_SPECIALTY}>Não informar</SelectItem>
+                          {Object.entries(SPECIALTY_LABEL).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="send-email"
+                    checked={sendEmail}
+                    onCheckedChange={(checked) => setSendEmail(checked === true)}
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="send-email">Enviar convite por e-mail</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Desmarque para gerar apenas o link e enviar por WhatsApp.
+                    </p>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={close}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={create.isPending}>
+                    {create.isPending ? "Enviando..." : submitLabel}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

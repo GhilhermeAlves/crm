@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { UserRoundPlus, UsersRound } from "lucide-react";
 
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useCompanyName } from "@/features/identity/auth/hooks/useAuthMutations";
 import { usePermission } from "@/features/identity/auth/hooks/useAuthorization";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
 import { useInvitations } from "@/features/identity/invitations/hooks/useInvitations";
@@ -68,6 +69,7 @@ function UsersManagement() {
 
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
+  const companyName = useCompanyName(companyId);
 
   const can = usePermission();
   const canView = can("user:read");
@@ -152,6 +154,7 @@ function UsersManagement() {
         {canInvite && (
           <CreateInvitationDialog
             companyId={companyId}
+            companyName={companyName}
             title="Novo usuário"
             description="Envie um convite por e-mail. O novo usuário define a senha ao aceitar o convite."
             submitLabel="Enviar convite"
@@ -180,6 +183,7 @@ function UsersManagement() {
             entries={allEntries}
             activeMembers={members}
             companyId={companyId}
+            companyName={companyName}
             loading={membersQuery.isLoading || invitationsQuery.isLoading}
             error={membersQuery.error ?? invitationsQuery.error}
             onRetryAll={() => {
@@ -193,6 +197,7 @@ function UsersManagement() {
           <ActiveMembersTable
             members={members}
             companyId={companyId}
+            companyName={companyName}
             loading={membersQuery.isLoading}
             error={membersQuery.error}
             onRetry={() => void membersQuery.refetch()}
@@ -203,6 +208,7 @@ function UsersManagement() {
           <PendingInvitationsTable
             invitations={pendingInvitations}
             companyId={companyId}
+            companyName={companyName}
             loading={invitationsQuery.isLoading}
             error={invitationsQuery.error}
             onRetry={() => void invitationsQuery.refetch()}
@@ -214,6 +220,7 @@ function UsersManagement() {
             entries={inactiveEntries}
             activeMembers={members}
             companyId={companyId}
+            companyName={companyName}
             loading={removedQuery.isLoading || invitationsQuery.isLoading}
             error={removedQuery.error ?? invitationsQuery.error}
             onRetryAll={() => {
@@ -252,6 +259,7 @@ type CombinedTableProps = {
   entries: Entry[];
   activeMembers: Member[];
   companyId: string;
+  companyName: string;
   loading: boolean;
   error: unknown;
   onRetryAll: () => void;
@@ -261,6 +269,7 @@ function CombinedTable({
   entries,
   activeMembers,
   companyId,
+  companyName,
   loading,
   error,
   onRetryAll,
@@ -303,6 +312,7 @@ function CombinedTable({
               key={entry.id}
               invitation={entry.invitation}
               companyId={companyId}
+              companyName={companyName}
             />
           ),
         )}
@@ -347,9 +357,11 @@ function MemberTableRow({
 function InvitationTableRow({
   invitation,
   companyId,
+  companyName,
 }: {
   invitation: Invitation;
   companyId: string;
+  companyName: string;
 }) {
   const status = invitationStatusMeta(invitation.status);
   return (
@@ -371,7 +383,11 @@ function InvitationTableRow({
         {formatDate(invitation.createdAt)}
       </TableCell>
       <TableCell>
-        <InvitationRowActions companyId={companyId} invitation={invitation} />
+        <InvitationRowActions
+          companyId={companyId}
+          companyName={companyName}
+          invitation={invitation}
+        />
       </TableCell>
     </TableRow>
   );
@@ -380,12 +396,14 @@ function InvitationTableRow({
 function ActiveMembersTable({
   members,
   companyId,
+  companyName,
   loading,
   error,
   onRetry,
 }: {
   members: Member[];
   companyId: string;
+  companyName: string;
   loading: boolean;
   error: unknown;
   onRetry: () => void;
@@ -403,6 +421,7 @@ function ActiveMembersTable({
         action={
           <CreateInvitationDialog
             companyId={companyId}
+            companyName={companyName}
             submitLabel="Enviar convite"
             trigger={<Button size="sm">Convidar membro</Button>}
           />
@@ -449,12 +468,14 @@ function ActiveMembersTable({
 function PendingInvitationsTable({
   invitations,
   companyId,
+  companyName,
   loading,
   error,
   onRetry,
 }: {
   invitations: Invitation[];
   companyId: string;
+  companyName: string;
   loading: boolean;
   error: unknown;
   onRetry: () => void;
@@ -501,7 +522,11 @@ function PendingInvitationsTable({
               {format(parseISO(invitation.expiresAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
             </TableCell>
             <TableCell>
-              <InvitationRowActions companyId={companyId} invitation={invitation} />
+              <InvitationRowActions
+                companyId={companyId}
+                companyName={companyName}
+                invitation={invitation}
+              />
             </TableCell>
           </TableRow>
         ))}

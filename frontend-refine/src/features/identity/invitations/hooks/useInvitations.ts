@@ -1,8 +1,12 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { InvitationService } from "../services/invitation.service";
+import { rememberInvitationLink } from "../lib/invitation-link-cache";
 import { describeManagementError } from "@/features/identity/lib/management-errors";
-import type { CreateInvitationRequest } from "../types/invitation.types";
+import type {
+  CreateInvitationRequest,
+  CreateOwnerInvitationRequest,
+} from "../types/invitation.types";
 
 /**
  * Lista de convites. `staleTime: 0` + `refetchOnWindowFocus` vencem o padrão
@@ -23,11 +27,34 @@ export function useCreateInvitation(companyId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateInvitationRequest) => InvitationService.create(companyId, data),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      rememberInvitationLink(data.invitation.id, data.url);
       queryClient.invalidateQueries({ queryKey: ["invitations", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["members", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
       toast.success("Convite criado com sucesso");
     },
     onError: handleInvitationError(queryClient, companyId),
+  });
+}
+
+/**
+ * Convite do dono de empresa pré-cadastrada (exclusivo CRM_ADMIN).
+ * Gera um convite OWNER; o aceite cria a membership OWNER com RBAC SUPER_ADMIN.
+ */
+export function useCreateOwnerInvitation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ companyId, data }: { companyId: string; data: CreateOwnerInvitationRequest }) =>
+      InvitationService.createOwner(companyId, data),
+    onSuccess: (data, variables) => {
+      rememberInvitationLink(data.invitation.id, data.url);
+      queryClient.invalidateQueries({ queryKey: ["invitations", variables.companyId] });
+      queryClient.invalidateQueries({ queryKey: ["members", variables.companyId] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+      toast.success("Convite de dono criado com sucesso");
+    },
+    onError: (error, variables) => handleInvitationError(queryClient, variables.companyId)(error),
   });
 }
 
@@ -56,7 +83,8 @@ export function useRegenerateInvitation(companyId: string) {
   return useMutation({
     mutationFn: ({ invitationId, send }: { invitationId: string; send: boolean }) =>
       InvitationService.regenerate(companyId, invitationId, send),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      rememberInvitationLink(data.invitation.id, data.url);
       queryClient.invalidateQueries({ queryKey: ["invitations", companyId] });
     },
     onError: handleInvitationError(queryClient, companyId),

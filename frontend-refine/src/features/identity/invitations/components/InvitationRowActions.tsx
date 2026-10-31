@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Copy, Mail, MoreHorizontal, XCircle } from "lucide-react";
+import { Copy, Mail, MessageCircle, MoreHorizontal, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { usePermission } from "@/features/identity/auth/hooks/useAuthorization";
@@ -15,7 +15,11 @@ import {
   isUsableInvitation,
   invitationStatusMeta,
 } from "@/features/identity/invitations/lib/invitation-status";
-import { resolveInviteUrl } from "@/features/identity/invitations/lib/invite-url";
+import { getInvitationLink } from "@/features/identity/invitations/lib/invitation-link-cache";
+import {
+  copyInvitationLink,
+  openInvitationWhatsApp,
+} from "@/features/identity/invitations/lib/invitation-share";
 import { roleLabel } from "@/features/identity/members/lib/labels";
 import type { Invitation } from "@/features/identity/invitations/types/invitation.types";
 import { Badge } from "@/components/ui/badge";
@@ -41,24 +45,17 @@ import {
 
 type RegenerateMode = "send" | "copy";
 
-async function copyToClipboard(url: string): Promise<void> {
-  try {
-    if (!url || typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-      throw new Error("clipboard unavailable");
-    }
-    await navigator.clipboard.writeText(url);
-    toast.success("Link do convite copiado.");
-  } catch {
-    toast.error("Não foi possível copiar o link automaticamente. Copie o link do e-mail.");
-  }
-}
-
 type InvitationRowActionsProps = {
   companyId: string;
+  companyName?: string | null;
   invitation: Invitation;
 };
 
-export function InvitationRowActions({ companyId, invitation }: InvitationRowActionsProps) {
+export function InvitationRowActions({
+  companyId,
+  companyName,
+  invitation,
+}: InvitationRowActionsProps) {
   const can = usePermission();
   const canInvite = can("user:invite");
   const canDelete = can("user:delete");
@@ -68,12 +65,23 @@ export function InvitationRowActions({ companyId, invitation }: InvitationRowAct
 
   const [mode, setMode] = useState<RegenerateMode | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState(false);
+  const [noLinkOpen, setNoLinkOpen] = useState(false);
+  const [whatsAppAfterCopy, setWhatsAppAfterCopy] = useState(false);
 
   const isExpired = invitation.status === "EXPIRED";
   const canRegenerate = canInvite && isUsableInvitation(invitation.status);
   const canRevoke = canDelete && invitation.status === "PENDING";
 
   if (!canRegenerate && !canRevoke) return null;
+
+  function sendByWhatsApp() {
+    const link = getInvitationLink(invitation.id);
+    if (!link) {
+      setNoLinkOpen(true);
+      return;
+    }
+    openInvitationWhatsApp(link, companyName);
+  }
 
   async function runRegenerate() {
     if (!mode) return;
@@ -87,7 +95,11 @@ export function InvitationRowActions({ companyId, invitation }: InvitationRowAct
       if (send) {
         toast.success(`Convite reenviado para ${invitation.email}.`);
       } else {
-        await copyToClipboard(resolveInviteUrl(link.url));
+        await copyInvitationLink(link.url);
+        if (whatsAppAfterCopy) {
+          setWhatsAppAfterCopy(false);
+          openInvitationWhatsApp(link.url, companyName);
+        }
       }
 
       if (wasExpired) {
@@ -101,6 +113,7 @@ export function InvitationRowActions({ companyId, invitation }: InvitationRowAct
       }
     } catch {
       // O onError do hook já exibiu a mensagem; o dialog permanece aberto.
+      setWhatsAppAfterCopy(false);
     }
   }
 
@@ -133,6 +146,10 @@ export function InvitationRowActions({ companyId, invitation }: InvitationRowAct
                 <Copy />
                 Copiar link
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={sendByWhatsApp}>
+                <MessageCircle />
+                Enviar por WhatsApp
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setMode("send")}>
                 <Mail />
                 Reenviar
@@ -151,7 +168,15 @@ export function InvitationRowActions({ companyId, invitation }: InvitationRowAct
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
+      <AlertDialog
+        open={mode !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setMode(null);
+            setWhatsAppAfterCopy(false);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -184,6 +209,32 @@ export function InvitationRowActions({ companyId, invitation }: InvitationRowAct
                 : mode === "send"
                   ? "Reenviar"
                   : "Gerar e copiar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={noLinkOpen} onOpenChange={setNoLinkOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Link indisponível</AlertDialogTitle>
+            <AlertDialogDescription>
+              O CRM não armazena o link do convite e ele não pode ser recuperado. Para enviar por
+              WhatsApp, use <strong>Copiar link</strong> — isso gera um novo link e invalida o link
+              enviado antes. Depois, envie o novo link pelo WhatsApp.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                setNoLinkOpen(false);
+                setWhatsAppAfterCopy(true);
+                setMode("copy");
+              }}
+            >
+              Gerar link e abrir WhatsApp
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
