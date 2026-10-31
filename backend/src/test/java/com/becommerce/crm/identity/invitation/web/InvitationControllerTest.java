@@ -9,6 +9,8 @@ import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse
 import com.becommerce.crm.identity.invitation.application.port.input.InvitationUseCase;
 import com.becommerce.crm.identity.invitation.application.service.InvitationSignupService;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationConflictException;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationRuleViolationException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import com.becommerce.crm.shared.web.handler.GlobalExceptionHandler;
@@ -126,6 +128,30 @@ class InvitationControllerTest {
         ArgumentCaptor<CreateInvitationRequest> captor = ArgumentCaptor.forClass(CreateInvitationRequest.class);
         verify(invitationUseCase).create(eq(companyId), captor.capture(), eq(userId));
         assertFalse(captor.getValue().shouldSendEmail());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenInvitationRuleIsViolated() throws Exception {
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId)))
+                .thenThrow(new InvitationRuleViolationException("Já existe convite pendente para novo@empresa.com"));
+
+        mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"novo@empresa.com\",\"role\":\"AGENT\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Já existe convite pendente para novo@empresa.com"));
+    }
+
+    @Test
+    void shouldReturnConflictWhenCompanyIsInactive() throws Exception {
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId)))
+                .thenThrow(new InvitationConflictException("Empresa inativa: não é possível convidar."));
+
+        mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"novo@empresa.com\",\"role\":\"AGENT\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Empresa inativa: não é possível convidar."));
     }
 
     @Test

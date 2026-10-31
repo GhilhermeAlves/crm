@@ -27,7 +27,9 @@ import com.becommerce.crm.identity.domain.UserRole;
 import com.becommerce.crm.identity.invitation.domain.Invitation;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
 import com.becommerce.crm.identity.invitation.domain.ProfessionalSpecialty;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationConflictException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationRuleViolationException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoundException;
 import com.becommerce.crm.identity.invitation.domain.exception.OwnerInvitationAlreadyPendingException;
 import com.becommerce.crm.identity.membership.domain.Membership;
@@ -110,15 +112,15 @@ public class InvitationService implements InvitationUseCase {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyNotFoundException(companyId));
         if (company.getStatus() != CompanyStatus.ACTIVE) {
-            throw new IllegalStateException("Empresa inativa: não é possível convidar.");
+            throw new InvitationConflictException("Empresa inativa: não é possível convidar.");
         }
         if (!rateLimiter.tryCreate(companyId.toString())) {
-            throw new IllegalStateException("Excesso de convites na janela atual. Tente novamente mais tarde.");
+            throw new InvitationConflictException("Excesso de convites na janela atual. Tente novamente mais tarde.");
         }
 
         String role = request.role().trim().toUpperCase(Locale.ROOT);
         if (!ALLOWED_ROLES.contains(role)) {
-            throw new IllegalArgumentException("Papel inválido para convite: " + role);
+            throw new InvitationRuleViolationException("Papel inválido para convite: " + role);
         }
         String specialty = ProfessionalSpecialty.normalize(request.specialty());
         String email = normalize(request.email());
@@ -135,10 +137,10 @@ public class InvitationService implements InvitationUseCase {
         }
 
         if (hasOtherPendingInvitation(companyId, email, null)) {
-            throw new IllegalArgumentException("Já existe convite pendente para " + email);
+            throw new InvitationRuleViolationException("Já existe convite pendente para " + email);
         }
         if (inviteeAlreadyMember(email, companyId)) {
-            throw new IllegalArgumentException("Este usuário já é membro desta empresa.");
+            throw new InvitationRuleViolationException("Este usuário já é membro desta empresa.");
         }
 
         String token = InvitationTokenService.generateToken();
@@ -166,10 +168,10 @@ public class InvitationService implements InvitationUseCase {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyNotFoundException(companyId));
         if (company.getStatus() != CompanyStatus.ACTIVE) {
-            throw new IllegalStateException("Empresa inativa: não é possível convidar.");
+            throw new InvitationConflictException("Empresa inativa: não é possível convidar.");
         }
         if (!rateLimiter.tryCreate(companyId.toString())) {
-            throw new IllegalStateException("Excesso de convites na janela atual. Tente novamente mais tarde.");
+            throw new InvitationConflictException("Excesso de convites na janela atual. Tente novamente mais tarde.");
         }
 
         String email = normalize(request.email());
@@ -182,7 +184,7 @@ public class InvitationService implements InvitationUseCase {
                             + "Revogue o convite anterior antes de criar outro.");
         }
         if (pendingInvites.stream().anyMatch(i -> i.getEmail().equalsIgnoreCase(email))) {
-            throw new IllegalArgumentException("Já existe convite pendente para " + email);
+            throw new InvitationRuleViolationException("Já existe convite pendente para " + email);
         }
 
         // O provisionamento cria uma membership OWNER para o CRM_ADMIN criador.
@@ -201,7 +203,7 @@ public class InvitationService implements InvitationUseCase {
         }
 
         if (inviteeAlreadyMember(email, companyId)) {
-            throw new IllegalArgumentException("Este usuário já é membro desta empresa.");
+            throw new InvitationRuleViolationException("Este usuário já é membro desta empresa.");
         }
 
         String token = InvitationTokenService.generateToken();
@@ -253,7 +255,7 @@ public class InvitationService implements InvitationUseCase {
         // Um convite EXPIRED que volta a PENDING não pode colidir com outro
         // pendente para o mesmo e-mail (índice uq_invitations_pending_company_email).
         if (wasExpired && hasOtherPendingInvitation(companyId, invitation.getEmail(), invitation.getId())) {
-            throw new IllegalArgumentException("Já existe outro convite pendente para " + invitation.getEmail());
+            throw new InvitationRuleViolationException("Já existe outro convite pendente para " + invitation.getEmail());
         }
         Invitation saved = invitationRepository.save(invitation);
 
@@ -356,7 +358,7 @@ public class InvitationService implements InvitationUseCase {
     @Transactional
     public InvitationResponse accept(String token, UUID userId) {
         if (!rateLimiter.tryAccept(userId.toString())) {
-            throw new IllegalStateException("Muitas tentativas de aceite. Tente novamente mais tarde.");
+            throw new InvitationConflictException("Muitas tentativas de aceite. Tente novamente mais tarde.");
         }
         String hash = InvitationTokenService.hash(token);
         tokenContext.setTokenHash(hash);
@@ -370,7 +372,7 @@ public class InvitationService implements InvitationUseCase {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new com.becommerce.crm.identity.domain.exception.UserNotFoundException());
             if (!matchesEmail(invitation, user)) {
-                throw new IllegalArgumentException(
+                throw new InvitationRuleViolationException(
                         "Este convite é destinado ao e-mail " + invitation.getEmail() + ".");
             }
 
@@ -417,7 +419,7 @@ public class InvitationService implements InvitationUseCase {
         UUID companyId = invitation.getCompanyId();
         TenantContext.setCompanyId(companyId);
         if (membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId)) {
-            throw new IllegalStateException("Você já é membro desta empresa.");
+            throw new InvitationConflictException("Você já é membro desta empresa.");
         }
 
         // Enforcement max_users (Sprint 8.6): bloqueia aceite quando a empresa
