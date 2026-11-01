@@ -32,6 +32,11 @@ import {
 import { tenantPlanLabels } from "@/features/identity/tenants/schemas/tenant.schema";
 import { InvitationLinkPanel } from "@/features/identity/invitations/components/InvitationLinkPanel";
 import { useCreateCompanyInvitation } from "../hooks";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import {
+  MailNotConfiguredNotice,
+  useCompanyMailStatus,
+} from "@/features/masterdata/company/mail/useCompanyMailStatus";
 import type { CompanyInvitationLink } from "../types";
 
 const MODULE_LABELS = new Map(MODULE_OPTIONS.map((option) => [option.value, option.label]));
@@ -54,6 +59,10 @@ export function CompanyInvitationDialog() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CompanyInvitationLink | null>(null);
   const create = useCreateCompanyInvitation();
+  const { user } = useAuth();
+  // O convite sai do e-mail da empresa de quem convida.
+  const mailStatus = useCompanyMailStatus(open ? user?.companyId : null);
+  const mailMissing = sendEmail && mailStatus.data === false;
 
   function reset() {
     setEmail("");
@@ -229,6 +238,8 @@ export function CompanyInvitationDialog() {
               <Label htmlFor="company-invite-send-email">Enviar convite por e-mail</Label>
             </div>
 
+            {mailMissing && <MailNotConfiguredNotice />}
+
             {error && (
               <p role="alert" className="text-sm text-destructive">
                 {error}
@@ -239,7 +250,7 @@ export function CompanyInvitationDialog() {
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="button" onClick={submit} disabled={create.isPending}>
+              <Button type="button" onClick={submit} disabled={create.isPending || mailMissing}>
                 {create.isPending ? "Criando..." : "Criar convite"}
               </Button>
             </div>

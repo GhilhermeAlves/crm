@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
 import java.util.UUID;
 
 /** E-mail da clínica (SMTP próprio) usado para enviar formulários aos pacientes. */
@@ -36,6 +37,13 @@ public class CompanyMailController {
     @PreAuthorize("hasAuthority('company:update')")
     public ResponseEntity<MailSettingsResponse> get(@CurrentCompanyId(OWN_COMPANY) UUID companyId) {
         return ResponseEntity.ok(service.get(companyId));
+    }
+
+    /** Só diz se há e-mail configurado: quem convida precisa saber antes de enviar. */
+    @GetMapping("/status")
+    @PreAuthorize("hasAuthority('company:update') or hasAuthority('membership:manage')")
+    public ResponseEntity<Map<String, Boolean>> status(@CurrentCompanyId(OWN_COMPANY) UUID companyId) {
+        return ResponseEntity.ok(Map.of("configured", service.isConfigured(companyId)));
     }
 
     @PutMapping

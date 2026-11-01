@@ -3,10 +3,18 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { CreateInvitationDialog } from "@/features/identity/invitations/components/CreateInvitationDialog";
 import { invitableRoles } from "@/features/identity/invitations/types/invitation.types";
 
-const { createMutate } = vi.hoisted(() => ({ createMutate: vi.fn() }));
+const { createMutate, mailConfigured } = vi.hoisted(() => ({
+  createMutate: vi.fn(),
+  mailConfigured: { value: true as boolean | undefined },
+}));
 
 vi.mock("@/features/identity/invitations/hooks/useInvitations", () => ({
   useCreateInvitation: () => ({ mutate: createMutate, isPending: false }),
+}));
+
+vi.mock("@/features/masterdata/company/mail/useCompanyMailStatus", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useCompanyMailStatus: () => ({ data: mailConfigured.value }),
 }));
 
 vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
@@ -24,7 +32,26 @@ describe("invitableRoles", () => {
 });
 
 describe("CreateInvitationDialog", () => {
-  beforeEach(() => createMutate.mockReset());
+  beforeEach(() => {
+    createMutate.mockReset();
+    mailConfigured.value = true;
+  });
+
+  it("pede para cadastrar o e-mail da empresa antes de enviar por e-mail", () => {
+    mailConfigured.value = false;
+    render(<CreateInvitationDialog companyId="co1" />);
+    fireEvent.click(screen.getByRole("button", { name: "Convidar membro" }));
+
+    expect(screen.getByText(/Cadastre o e-mail da empresa/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Enviar convite" })).toHaveProperty("disabled", true);
+
+    fireEvent.click(screen.getByLabelText("Enviar convite por e-mail"));
+    expect(screen.queryByText(/Cadastre o e-mail da empresa/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Enviar convite" })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
 
   it("envia o convite sem campo de especialidade", async () => {
     render(<CreateInvitationDialog companyId="co1" />);

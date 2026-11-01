@@ -133,6 +133,48 @@ public class CompanyMailService {
         send(settings, to, from + ": " + formName, body, from);
     }
 
+    /**
+     * Convite pela conta de e-mail da empresa. Devolve false quando a empresa
+     * não configurou e-mail (quem chama decide o que fazer). Sem @Transactional:
+     * uma falha de envio não pode marcar para rollback a transação de quem chama.
+     */
+    public boolean sendInvitation(UUID companyId, String to, String companyName, String role, String url) {
+        Optional<CompanyMailSettingsJpaEntity> settings = find(companyId);
+        if (settings.isEmpty()) {
+            return false;
+        }
+        String body = """
+                <p>Olá!</p>
+                <p>Você foi convidado para ingressar na empresa <strong>%s</strong>
+                com o papel <strong>%s</strong>.</p>
+                <p><a href="%s">Aceitar convite</a></p>
+                <p>Se não foi você, ignore este e-mail.</p>
+                """.formatted(escape(companyName), escape(role), url);
+        send(settings.get(), to, "Você foi convidado para " + companyName, body,
+                settings.get().getSenderName());
+        return true;
+    }
+
+    /** Redefinição de senha pela conta de e-mail da empresa; false quando não há configuração. */
+    public boolean sendPasswordReset(UUID companyId, String to, String link) {
+        Optional<CompanyMailSettingsJpaEntity> settings = find(companyId);
+        if (settings.isEmpty()) {
+            return false;
+        }
+        String body = """
+                <p>Olá!</p>
+                <p>Recebemos uma solicitação para redefinir sua senha.</p>
+                <p><a href="%s">Redefinir minha senha</a></p>
+                <p>Se não foi você, ignore este e-mail.</p>
+                """.formatted(link);
+        send(settings.get(), to, "Redefinição de senha", body, settings.get().getSenderName());
+        return true;
+    }
+
+    private Optional<CompanyMailSettingsJpaEntity> find(UUID companyId) {
+        return companyId == null ? Optional.empty() : inTenant(companyId, () -> repository.findById(companyId));
+    }
+
     private CompanyMailSettingsJpaEntity require(UUID companyId) {
         return inTenant(companyId, () -> repository.findById(companyId)).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.BAD_REQUEST, "Configure o e-mail da clínica primeiro."));
