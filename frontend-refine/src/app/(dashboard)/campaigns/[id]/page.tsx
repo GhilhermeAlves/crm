@@ -13,6 +13,11 @@ import {
   useExecuteCampaign,
 } from "@/features/automation/campaigns/hooks/useCampaigns";
 import { CampaignStatusBadge } from "@/features/automation/campaigns/components/CampaignStatusBadge";
+import {
+  AUDIENCE_SHORT_LABEL,
+  isCampaignEditable,
+} from "@/features/automation/campaigns/types/campaign.types";
+import { campaignEditPath } from "@/lib/constants";
 import { CancelCampaignDialog } from "@/features/automation/campaigns/components/CampaignDialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +55,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
   const executeMutation = useExecuteCampaign(companyId);
 
   const canExecute = can("campaign:execute");
+  const canEdit = can("campaign:update");
 
   if (isLoading) {
     return (
@@ -84,6 +90,11 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
           <Button variant="outline" asChild>
             <Link href="/campaigns">Voltar</Link>
           </Button>
+          {canEdit && isCampaignEditable(campaign.status) && (
+            <Button variant="outline" asChild>
+              <Link href={campaignEditPath(campaign.id)}>Editar</Link>
+            </Button>
+          )}
           {canExecute && campaign.status === "RUNNING" && (
             <Button variant="outline" onClick={() => pauseMutation.mutate(campaign.id)}>
               Pausar
@@ -116,7 +127,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
             </p>
             <p>
               <span className="font-medium">Público:</span>{" "}
-              {campaign.audienceType === "CONTACTS" ? "Contatos" : "Leads"}
+              {AUDIENCE_SHORT_LABEL[campaign.audienceType]}
             </p>
             <p>
               <span className="font-medium">Destinatários estimados:</span>{" "}

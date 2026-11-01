@@ -64,6 +64,7 @@ export default function CampaignsPage() {
   const canCreate = can("campaign:create");
   const canExecute = can("campaign:execute");
   const canDelete = can("campaign:delete");
+  const canEdit = can("campaign:update");
 
   const campaigns = (data?.content || []).filter((c) =>
     search ? c.name.toLowerCase().includes(search.toLowerCase()) : true,
@@ -133,6 +134,7 @@ export default function CampaignsPage() {
       <CampaignTable
         campaigns={campaigns}
         isLoading={isLoading}
+        canEdit={canEdit}
         onDelete={canDelete ? setDeleteTarget : undefined}
         onPause={canExecute ? (c) => pauseMutation.mutate(c.id) : undefined}
         onResume={canExecute ? (c) => resumeMutation.mutate(c.id) : undefined}
