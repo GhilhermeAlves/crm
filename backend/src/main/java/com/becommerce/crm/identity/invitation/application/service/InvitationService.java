@@ -134,7 +134,7 @@ public class InvitationService implements InvitationUseCase {
         // empresa-alvo (RLS) para contagem correta e sem bypass por company_id.
         TenantContext.setCompanyId(companyId);
         long activeUsers = membershipRepository.countActiveByCompanyId(companyId);
-        long pendingInvites = invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING).size();
+        long pendingInvites = livePendingInvitations(companyId).size();
         if (activeUsers + pendingInvites >= company.getMaxUsers()) {
             throw new QuotaExceededException(
                     "Limite de usuários da empresa atingido (" + company.getMaxUsers() + ").");
@@ -423,8 +423,15 @@ public class InvitationService implements InvitationUseCase {
                 .orElseThrow(() -> new InvitationNotFoundException("Convite não encontrado: " + invitationId));
     }
 
-    private boolean hasOtherPendingInvitation(UUID companyId, String email, UUID excludeId) {
+    /** Convites PENDING ainda válidos: os vencidos (EXPIRED na tela) não ocupam vaga. */
+    private List<Invitation> livePendingInvitations(UUID companyId) {
         return invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING).stream()
+                .filter(i -> i.effectiveStatus() == InvitationStatus.PENDING)
+                .toList();
+    }
+
+    private boolean hasOtherPendingInvitation(UUID companyId, String email, UUID excludeId) {
+        return livePendingInvitations(companyId).stream()
                 .filter(i -> !i.getId().equals(excludeId))
                 .anyMatch(i -> i.getEmail().equalsIgnoreCase(email));
     }
