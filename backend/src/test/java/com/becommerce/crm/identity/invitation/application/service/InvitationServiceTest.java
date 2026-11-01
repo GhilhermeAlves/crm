@@ -6,6 +6,7 @@ import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.invitation.application.dto.CreateInvitationRequest;
+import com.becommerce.crm.identity.invitation.application.dto.InvitationLinkResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse;
 import com.becommerce.crm.identity.invitation.application.port.output.InvitationRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
@@ -14,6 +15,7 @@ import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
 import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.User;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.identity.domain.valueobject.Email;
 import com.becommerce.crm.identity.invitation.domain.Invitation;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
@@ -71,13 +73,17 @@ class InvitationServiceTest {
     }
 
     private Company activeCompany() {
+        return activeCompany(5);
+    }
+
+    private Company activeCompany(int maxUsers) {
         return Company.create(
                 "Empresa LTDA", "EmpresaX", "12345678000190",
                 "123456789", "987654321",
                 "admin@empresa.com", "(11) 99999-0000", null,
                 "01001000", "Rua X", "1", null,
                 "Centro", "SP", "SP", "Brasil",
-                CompanyPlan.STARTER, 5, 1024, 500, null, null);
+                CompanyPlan.STARTER, maxUsers, 1024, 500, null, null);
     }
 
     @Test
@@ -89,20 +95,37 @@ class InvitationServiceTest {
         when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(0L);
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        InvitationResponse response = invitationService.create(
-                companyId, new CreateInvitationRequest("novo@empresa.com", "AGENT"), invitedBy);
+        InvitationLinkResponse response = invitationService.create(
+                companyId, new CreateInvitationRequest("novo@empresa.com", "AGENT"), invitedBy, false);
 
-        assertNotNull(response.id());
-        assertEquals("novo@empresa.com", response.email());
-        assertEquals("AGENT", response.role());
-        assertEquals(InvitationStatus.PENDING, response.status());
-        assertNotEquals(response.id(), pending == null ? null : pending.getId());
+        assertNotNull(response.invitation().id());
+        assertEquals("novo@empresa.com", response.invitation().email());
+        assertEquals("AGENT", response.invitation().role());
+        assertEquals(InvitationStatus.PENDING, response.invitation().status());
+        assertTrue(response.url().startsWith("/convite/"));
+        assertNotEquals(response.invitation().id(), pending == null ? null : pending.getId());
 
         ArgumentCaptor<Invitation> captor = ArgumentCaptor.forClass(Invitation.class);
         verify(invitationRepository).save(captor.capture());
         // token nunca é armazenado em claro
         assertTrue(captor.getValue().getTokenHash().length() == 64);
         verify(emailSender).sendInvitation(eq("novo@empresa.com"), eq("EmpresaX"), eq("AGENT"), anyString());
+    }
+
+    @Test
+    void shouldCreateInvitationWithoutSendingEmail() {
+        Company company = activeCompany();
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
+        when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(0L);
+        when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InvitationLinkResponse response = invitationService.create(
+                companyId, new CreateInvitationRequest("novo@empresa.com", "AGENT", null, null, false), invitedBy, false);
+
+        assertNotNull(response.url());
+        verify(emailSender, never()).sendInvitation(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -124,9 +147,9 @@ class InvitationServiceTest {
     void shouldRejectInvalidRole() {
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
         assertThrows(IllegalArgumentException.class,
-                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "SUPER_ADMIN"), invitedBy));
+                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "SUPER_ADMIN"), invitedBy, false));
         assertThrows(IllegalArgumentException.class,
-                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "OWNER"), invitedBy));
+                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "OWNER"), invitedBy, false));
     }
 
     @Test
@@ -136,14 +159,14 @@ class InvitationServiceTest {
         when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING))
                 .thenReturn(List.of(existing));
         assertThrows(IllegalArgumentException.class,
-                () -> invitationService.create(companyId, new CreateInvitationRequest("dup@empresa.com", "AGENT"), invitedBy));
+                () -> invitationService.create(companyId, new CreateInvitationRequest("dup@empresa.com", "AGENT"), invitedBy, false));
     }
 
     @Test
     void shouldRejectInactiveCompany() {
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
         assertThrows(com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException.class,
-                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "AGENT"), invitedBy));
+                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "AGENT"), invitedBy, false));
     }
 
     @Test
@@ -313,7 +336,7 @@ class InvitationServiceTest {
         when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(5L);
         when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of());
         assertThrows(QuotaExceededException.class,
-                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "AGENT"), invitedBy));
+                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "AGENT"), invitedBy, false));
     }
 
     @Test
@@ -323,7 +346,7 @@ class InvitationServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mock(User.class)));
         when(membershipRepository.existsActiveByUserIdAndCompanyId(any(), any())).thenReturn(true);
         assertThrows(IllegalArgumentException.class,
-                () -> invitationService.create(companyId, new CreateInvitationRequest("member@empresa.com", "AGENT"), invitedBy));
+                () -> invitationService.create(companyId, new CreateInvitationRequest("member@empresa.com", "AGENT"), invitedBy, false));
     }
 
     @Test
@@ -334,9 +357,9 @@ class InvitationServiceTest {
         when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(3L);
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        InvitationResponse response = invitationService.create(
-                companyId, new CreateInvitationRequest("novo@empresa.com", "AGENT"), invitedBy);
-        assertEquals(InvitationStatus.PENDING, response.status());
+        InvitationLinkResponse response = invitationService.create(
+                companyId, new CreateInvitationRequest("novo@empresa.com", "AGENT"), invitedBy, false);
+        assertEquals(InvitationStatus.PENDING, response.invitation().status());
     }
 
     @Test
@@ -354,6 +377,29 @@ class InvitationServiceTest {
 
         assertThrows(QuotaExceededException.class, () -> invitationService.accept("tok-abc", userId));
         verify(membershipRepository, never()).save(any(Membership.class));
+    }
+
+    @Test
+    void shouldRejectAdminInvitationFromAdmin() {
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+
+        assertThrows(CrmAccessDeniedException.class,
+                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "ADMIN"), invitedBy, false));
+        verify(invitationRepository, never()).save(any(Invitation.class));
+    }
+
+    @Test
+    void shouldAllowAdminInvitationFromSuperAdmin() {
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
+        when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(0L);
+        when(invitationRepository.save(any(Invitation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InvitationLinkResponse response = invitationService.create(
+                companyId, new CreateInvitationRequest("a@b.com", "ADMIN"), invitedBy, true);
+
+        assertEquals("ADMIN", response.invitation().role());
     }
 
     private void setExpired(Invitation invitation) {

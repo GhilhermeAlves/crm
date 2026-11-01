@@ -42,6 +42,8 @@ import com.becommerce.crm.identity.domain.exception.UserNotFoundException;
 import com.becommerce.crm.identity.domain.exception.UserProvisioningException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoundException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationConflictException;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationRuleViolationException;
 import com.becommerce.crm.sales.lead.domain.exception.DuplicateLeadException;
 import com.becommerce.crm.sales.lead.domain.exception.LeadNotFoundException;
 import com.becommerce.crm.automation.campaign.domain.exception.CampaignNotFoundException;
@@ -337,6 +339,29 @@ public class GlobalExceptionHandler {
                 "error", "Gone",
                 "message", ex.getMessage(),
                 "invitationStatus", ex.getStatus().name(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(InvitationRuleViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleInvitationRuleViolationException(
+            InvitationRuleViolationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(InvitationConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleInvitationConflictException(InvitationConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));
     }

@@ -12,7 +12,9 @@ import java.util.UUID;
 /** Casos de uso de convites (Sprint 8.5). */
 public interface InvitationUseCase {
 
-    InvitationResponse create(UUID companyId, CreateInvitationRequest request, UUID invitedBy);
+    /** {@code canInviteAdmin}: só SUPER_ADMIN/CRM_ADMIN convidam o papel ADMIN. */
+    InvitationLinkResponse create(UUID companyId, CreateInvitationRequest request, UUID invitedBy,
+                                  boolean canInviteAdmin);
 
     List<InvitationResponse> listByCompany(UUID companyId, InvitationStatus status);
 

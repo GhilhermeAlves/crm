@@ -14,6 +14,8 @@ import type { Tenant } from "@/features/identity/tenants/types/tenant.types";
 import { TenantTable } from "@/features/identity/tenants/components/TenantTable";
 import { TenantFilters } from "@/features/identity/tenants/components/TenantFilters";
 import { DeleteTenantDialog } from "@/features/identity/tenants/components/DeleteTenantDialog";
+import { CompanyInvitationDialog } from "@/features/identity/company-invitations/components/CompanyInvitationDialog";
+import { CompanyInvitationsList } from "@/features/identity/company-invitations/components/CompanyInvitationsList";
 
 export default function TenantsPage() {
   const [search, setSearch] = useState("");
@@ -54,13 +56,18 @@ export default function TenantsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <PageTitle>Empresas</PageTitle>
-        <Button asChild>
-          <Link href={ROUTES.TENANTS_NEW}>
-            <Plus className="mr-1 h-4 w-4" />
-            Nova Empresa
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <CompanyInvitationDialog />
+          <Button asChild>
+            <Link href={ROUTES.TENANTS_NEW}>
+              <Plus className="mr-1 h-4 w-4" />
+              Nova Empresa
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      <CompanyInvitationsList />
 
       <TenantFilters
         search={search}

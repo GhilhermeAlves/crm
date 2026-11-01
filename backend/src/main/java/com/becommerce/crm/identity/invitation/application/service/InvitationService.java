@@ -20,15 +20,17 @@ import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
 import com.becommerce.crm.masterdata.company.domain.CompanyStatus;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
-import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.UserRole;
 import com.becommerce.crm.identity.invitation.domain.Invitation;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
 import com.becommerce.crm.identity.invitation.domain.ProfessionalSpecialty;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationConflictException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationRuleViolationException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNotFoundException;
 import com.becommerce.crm.identity.membership.domain.Membership;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import com.becommerce.crm.identity.invitation.infrastructure.persistence.InvitationTokenContextHolder;
 import com.becommerce.crm.identity.invitation.infrastructure.rate.InvitationRateLimiter;
@@ -104,19 +106,24 @@ public class InvitationService implements InvitationUseCase {
 
     @Override
     @Transactional
-    public InvitationResponse create(UUID companyId, CreateInvitationRequest request, UUID invitedBy) {
+    public InvitationLinkResponse create(UUID companyId, CreateInvitationRequest request, UUID invitedBy,
+                                         boolean canInviteAdmin) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyNotFoundException(companyId));
         if (company.getStatus() != CompanyStatus.ACTIVE) {
-            throw new IllegalStateException("Empresa inativa: não é possível convidar.");
+            throw new InvitationConflictException("Empresa inativa: não é possível convidar.");
         }
         if (!rateLimiter.tryCreate(companyId.toString())) {
-            throw new IllegalStateException("Excesso de convites na janela atual. Tente novamente mais tarde.");
+            throw new InvitationConflictException("Excesso de convites na janela atual. Tente novamente mais tarde.");
         }
 
         String role = request.role().trim().toUpperCase(Locale.ROOT);
         if (!ALLOWED_ROLES.contains(role)) {
-            throw new IllegalArgumentException("Papel inválido para convite: " + role);
+            throw new InvitationRuleViolationException("Papel inválido para convite: " + role);
+        }
+        // ADMIN convida só papéis abaixo dele; convidar ADMIN é do SUPER_ADMIN/CRM_ADMIN.
+        if (Membership.ADMIN_ROLE.equals(role) && !canInviteAdmin) {
+            throw new CrmAccessDeniedException("Só o super administrador pode convidar um administrador.");
         }
         String specialty = ProfessionalSpecialty.normalize(request.specialty());
         String email = normalize(request.email());
@@ -133,10 +140,10 @@ public class InvitationService implements InvitationUseCase {
         }
 
         if (hasOtherPendingInvitation(companyId, email, null)) {
-            throw new IllegalArgumentException("Já existe convite pendente para " + email);
+            throw new InvitationRuleViolationException("Já existe convite pendente para " + email);
         }
         if (inviteeAlreadyMember(email, companyId)) {
-            throw new IllegalArgumentException("Este usuário já é membro desta empresa.");
+            throw new InvitationRuleViolationException("Este usuário já é membro desta empresa.");
         }
 
         String token = InvitationTokenService.generateToken();
@@ -145,13 +152,16 @@ public class InvitationService implements InvitationUseCase {
                         InvitationTokenService.hash(token), invitedBy));
 
         String tokenUrl = buildTokenUrl(token);
-        emailSender.sendInvitation(email, company.getTradingName(), role, tokenUrl);
+        if (request.shouldSendEmail()) {
+            emailSender.sendInvitation(email, company.getTradingName(), role, tokenUrl);
+        }
 
         auditor.record(companyId, AuditAction.CREATE, AuditModule.INVITATIONS, "Invitation",
                 invitation.getId().toString(),
-                "Convite criado para " + email,
-                invitedBy, Map.of("email", email, "role", role, "specialty", specialty == null ? "" : specialty));
-        return toResponse(invitation);
+                (request.shouldSendEmail() ? "Convite criado para " : "Convite criado sem envio de e-mail para ") + email,
+                invitedBy, Map.of("email", email, "role", role, "specialty", specialty == null ? "" : specialty,
+                        "sent", String.valueOf(request.shouldSendEmail())));
+        return new InvitationLinkResponse(toResponse(invitation), tokenUrl);
     }
 
     @Override
@@ -185,7 +195,7 @@ public class InvitationService implements InvitationUseCase {
         // Um convite EXPIRED que volta a PENDING não pode colidir com outro
         // pendente para o mesmo e-mail (índice uq_invitations_pending_company_email).
         if (wasExpired && hasOtherPendingInvitation(companyId, invitation.getEmail(), invitation.getId())) {
-            throw new IllegalArgumentException("Já existe outro convite pendente para " + invitation.getEmail());
+            throw new InvitationRuleViolationException("Já existe outro convite pendente para " + invitation.getEmail());
         }
         Invitation saved = invitationRepository.save(invitation);
 
@@ -288,7 +298,7 @@ public class InvitationService implements InvitationUseCase {
     @Transactional
     public InvitationResponse accept(String token, UUID userId) {
         if (!rateLimiter.tryAccept(userId.toString())) {
-            throw new IllegalStateException("Muitas tentativas de aceite. Tente novamente mais tarde.");
+            throw new InvitationConflictException("Muitas tentativas de aceite. Tente novamente mais tarde.");
         }
         String hash = InvitationTokenService.hash(token);
         tokenContext.setTokenHash(hash);
@@ -302,7 +312,7 @@ public class InvitationService implements InvitationUseCase {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new com.becommerce.crm.identity.domain.exception.UserNotFoundException());
             if (!matchesEmail(invitation, user)) {
-                throw new IllegalArgumentException(
+                throw new InvitationRuleViolationException(
                         "Este convite é destinado ao e-mail " + invitation.getEmail() + ".");
             }
 
@@ -349,14 +359,15 @@ public class InvitationService implements InvitationUseCase {
         UUID companyId = invitation.getCompanyId();
         TenantContext.setCompanyId(companyId);
         if (membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId)) {
-            throw new IllegalStateException("Você já é membro desta empresa.");
+            throw new InvitationConflictException("Você já é membro desta empresa.");
         }
 
         // Enforcement max_users (Sprint 8.6): bloqueia aceite quando a empresa
         // já atingiu o limite de usuários do plano.
         Company target = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CompanyNotFoundException(companyId));
-        if (membershipRepository.countActiveByCompanyId(companyId) >= target.getMaxUsers()) {
+        long activeUsers = membershipRepository.countActiveByCompanyId(companyId);
+        if (activeUsers >= target.getMaxUsers()) {
             throw new QuotaExceededException(
                     "Limite de usuários da empresa atingido (" + target.getMaxUsers() + ").");
         }
@@ -443,9 +454,9 @@ public class InvitationService implements InvitationUseCase {
     /** Vincula o papel RBAC (role_permissions) correspondente ao do convite. */
     private void assignRole(User user, Invitation invitation) {
         roleRepository.findByNameAndCompanyId(invitation.getRole(), invitation.getCompanyId())
-                .map(Role::getId)
-                .filter(roleId -> !userRoleRepository.existsByUserIdAndRoleId(user.getId(), roleId))
-                .ifPresent(roleId -> userRoleRepository.save(UserRole.assign(user.getId(), roleId, invitation.getCompanyId())));
+                .filter(role -> !userRoleRepository.existsByUserIdAndRoleId(user.getId(), role.getId()))
+                .ifPresent(role -> userRoleRepository.save(
+                        UserRole.assign(user.getId(), role.getId(), invitation.getCompanyId())));
     }
 
     private boolean matchesEmail(Invitation invitation, User user) {

@@ -84,6 +84,15 @@ export function useMyCompanies(enabled = true) {
 }
 
 /**
+ * Nome de exibição da empresa ativa, com fallback para "o CRM" enquanto a
+ * consulta não resolve ou quando o usuário não tem acesso à lista.
+ */
+export function useCompanyName(companyId: string | null | undefined): string {
+  const { data } = useMyCompanies(!!companyId);
+  return data?.find((company) => company.companyId === companyId)?.name?.trim() || "o CRM";
+}
+
+/**
  * Alterna a empresa ativa (Sprint 8.4). Sem logout/login: ao concluir, invalida
  * a identidade corrente /me (fonte de `user.companyId`) e as queries escopadas
  * por empresa (tenants/users/members/invitations/roles/permissions/audit), de

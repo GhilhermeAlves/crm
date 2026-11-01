@@ -16,8 +16,8 @@ export const InvitationService = {
     });
     return response.data;
   },
-  async create(companyId: string, data: CreateInvitationRequest): Promise<Invitation> {
-    const response = await api.post<Invitation>(`${BASE}/${companyId}/invitations`, data);
+  async create(companyId: string, data: CreateInvitationRequest): Promise<InvitationLink> {
+    const response = await api.post<InvitationLink>(`${BASE}/${companyId}/invitations`, data);
     return response.data;
   },
   async revoke(companyId: string, invitationId: string): Promise<void> {

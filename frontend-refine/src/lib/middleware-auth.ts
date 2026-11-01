@@ -19,6 +19,8 @@ export const PUBLIC_PATHS = [
   "/link-account",
   // Convite: prévia e cadastro sem sessão; quem já tem conta entra a partir dela.
   "/convite",
+  // Convite de criação de empresa: conta e empresa criadas a partir do link.
+  "/convite-empresa",
   // Cadastro do paciente por link: o paciente preenche os próprios dados sem sessão.
   "/cadastro",
   // Formulário (anamnese) que o paciente responde pelo link ou no tablet da recepção.

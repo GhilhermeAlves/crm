@@ -158,7 +158,7 @@ class MembershipServiceTest {
     }
 
     @Test
-    void shouldAllowPromotingLastAdminToSuperAdmin() {
+    void shouldLetCrmAdminPromoteLastAdminToSuperAdmin() {
         Role superAdminRole = role(RoleName.SUPER_ADMIN);
         Membership membership = Membership.activate(USER_ID, COMPANY_ID, "ADMIN");
         when(membershipRepository.findActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID))
@@ -168,11 +168,21 @@ class MembershipServiceTest {
         when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, superAdminRole.getId())).thenReturn(false);
         when(membershipRepository.save(any(Membership.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.updateMemberRole(COMPANY_ID, USER_ID, "SUPER_ADMIN", COMPANY_ID, false);
+        service.updateMemberRole(COMPANY_ID, USER_ID, "SUPER_ADMIN", COMPANY_ID, true);
 
         assertEquals("SUPER_ADMIN", membership.getRole());
         verify(userRoleRepository).deleteByUserIdAndCompanyId(USER_ID, COMPANY_ID);
         verify(userRoleRepository).save(any());
+    }
+
+    @Test
+    void shouldRejectSuperAdminPromotionByCompanyAdmin() {
+        when(roleRepository.findByNameAndCompanyId(RoleName.SUPER_ADMIN.name(), COMPANY_ID))
+                .thenReturn(Optional.of(role(RoleName.SUPER_ADMIN)));
+
+        assertThrows(CrmAccessDeniedException.class,
+                () -> service.updateMemberRole(COMPANY_ID, USER_ID, "SUPER_ADMIN", COMPANY_ID, false));
+        verify(membershipRepository, never()).save(any());
     }
 
     @Test

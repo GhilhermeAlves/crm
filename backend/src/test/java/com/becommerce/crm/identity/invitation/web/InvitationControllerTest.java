@@ -8,6 +8,8 @@ import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse
 import com.becommerce.crm.identity.invitation.application.port.input.InvitationUseCase;
 import com.becommerce.crm.identity.invitation.application.service.InvitationSignupService;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationConflictException;
+import com.becommerce.crm.identity.invitation.domain.exception.InvitationRuleViolationException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import com.becommerce.crm.shared.web.handler.GlobalExceptionHandler;
@@ -20,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authorization.method.AuthorizationAdvisorProxyFactory;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.becommerce.crm.shared.security.config.CurrentCompanyIdArgumentResolver;
@@ -28,13 +31,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -53,7 +59,9 @@ class InvitationControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(invitationController)
+        InvitationController secured = (InvitationController) AuthorizationAdvisorProxyFactory.withDefaults()
+                .proxy(invitationController);
+        mockMvc = MockMvcBuilders.standaloneSetup(secured)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setCustomArgumentResolvers(new CurrentCompanyIdArgumentResolver(), new AuthenticationPrincipalArgumentResolver())
                 .build();
@@ -66,10 +74,24 @@ class InvitationControllerTest {
                 List.of("ADMIN"),
                 List.of("membership:view", "membership:manage"),
                 "keycloak-sub", null, "keycloak", "Admin", "ADMIN");
+        authenticate(principal);
+    }
+
+    private void loginAsCrmAdmin() {
+        CurrentUser principal = new CurrentUser(
+                userId, "crm@plataforma.com", companyId, companyId,
+                List.of(CurrentUser.CRM_ADMIN_ROLE),
+                List.of("membership:view", "membership:manage"),
+                "keycloak-sub", null, "keycloak", "CRM Admin", "ADMIN");
+        authenticate(principal);
+    }
+
+    private void authenticate(CurrentUser principal) {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        principal.roles().forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
+        principal.permissions().forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission)));
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        principal, null,
-                        principal.permissions().stream().map(SimpleGrantedAuthority::new).toList()));
+                new UsernamePasswordAuthenticationToken(principal, null, authorities));
     }
 
     private InvitationResponse sample() {
@@ -80,13 +102,67 @@ class InvitationControllerTest {
     @Test
     void shouldCreateInvitation() throws Exception {
         InvitationResponse r = sample();
-        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId))).thenReturn(r);
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(false)))
+                .thenReturn(new InvitationLinkResponse(r, "/convite/tok-novo"));
 
         mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"novo@empresa.com\",\"role\":\"AGENT\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("novo@empresa.com"));
+                .andExpect(jsonPath("$.invitation.email").value("novo@empresa.com"))
+                .andExpect(jsonPath("$.url").value("/convite/tok-novo"));
+    }
+
+    @Test
+    void shouldCreateInvitationWithoutSendingEmail() throws Exception {
+        InvitationResponse r = sample();
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(false)))
+                .thenReturn(new InvitationLinkResponse(r, "/convite/tok-novo"));
+
+        mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"novo@empresa.com\",\"role\":\"AGENT\",\"sendEmail\":false}"))
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<CreateInvitationRequest> captor = ArgumentCaptor.forClass(CreateInvitationRequest.class);
+        verify(invitationUseCase).create(eq(companyId), captor.capture(), eq(userId), eq(false));
+        assertFalse(captor.getValue().shouldSendEmail());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenInvitationRuleIsViolated() throws Exception {
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(false)))
+                .thenThrow(new InvitationRuleViolationException("Já existe convite pendente para novo@empresa.com"));
+
+        mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"novo@empresa.com\",\"role\":\"AGENT\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Já existe convite pendente para novo@empresa.com"));
+    }
+
+    @Test
+    void shouldReturnConflictWhenCompanyIsInactive() throws Exception {
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(false)))
+                .thenThrow(new InvitationConflictException("Empresa inativa: não é possível convidar."));
+
+        mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"novo@empresa.com\",\"role\":\"AGENT\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Empresa inativa: não é possível convidar."));
+    }
+
+    @Test
+    void shouldLetCrmAdminInviteAdmin() throws Exception {
+        loginAsCrmAdmin();
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(true)))
+                .thenReturn(new InvitationLinkResponse(sample(), "/convite/tok-admin"));
+
+        mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"adm@empresa.com\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isCreated());
     }
 
     @Test

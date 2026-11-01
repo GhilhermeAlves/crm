@@ -82,3 +82,8 @@ export const AUTH_ROUTES = [
 export function invitationPath(token: string): string {
   return `/convite/${encodeURIComponent(token)}`;
 }
+
+/** Página do convite de criação de empresa (público). */
+export function companyInvitationPath(token: string): string {
+  return `/convite-empresa/${encodeURIComponent(token)}`;
+}

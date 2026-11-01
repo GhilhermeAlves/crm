@@ -8,6 +8,7 @@ import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse
 import com.becommerce.crm.identity.invitation.application.port.input.InvitationUseCase;
 import com.becommerce.crm.identity.invitation.application.service.InvitationSignupService;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
+import com.becommerce.crm.identity.membership.domain.Membership;
 import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
@@ -48,11 +49,12 @@ public class InvitationController {
 
     @PostMapping("/companies/{companyId}/invitations")
     @PreAuthorize("hasAuthority('membership:manage')")
-    public ResponseEntity<InvitationResponse> create(
+    public ResponseEntity<InvitationLinkResponse> create(
             @CurrentCompanyId("Você só pode administrar convites da sua própria empresa.") UUID companyId,
             @Valid @RequestBody CreateInvitationRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
-        InvitationResponse response = invitationUseCase.create(companyId, request, principal.userId());
+        InvitationLinkResponse response = invitationUseCase.create(companyId, request, principal.userId(),
+                principal.isCrmAdmin() || principal.roles().contains(Membership.SUPER_ADMIN_ROLE));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
