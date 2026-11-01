@@ -10,7 +10,7 @@ import { resolveInviteUrl } from "../lib/invite-url";
 import type { InvitationLink } from "../types/invitation.types";
 
 type InvitationLinkPanelProps = {
-  link: InvitationLink;
+  link: Pick<InvitationLink, "url">;
   companyName?: string | null;
   onClose: () => void;
 };
