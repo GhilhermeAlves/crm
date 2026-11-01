@@ -8,8 +8,18 @@ export const CAMPAIGN_STATUSES = [
 ] as const;
 export type CampaignStatus = (typeof CAMPAIGN_STATUSES)[number];
 
-export const AUDIENCE_TYPES = ["CONTACTS", "LEADS"] as const;
+export const AUDIENCE_TYPES = ["CONTACTS", "LEADS", "SELECTED"] as const;
 export type AudienceType = (typeof AUDIENCE_TYPES)[number];
+
+export const AUDIENCE_SHORT_LABEL: Record<AudienceType, string> = {
+  CONTACTS: "Contatos",
+  LEADS: "Leads",
+  SELECTED: "Contatos selecionados",
+};
+
+/** Edição permitida enquanto a campanha não começou a enviar. */
+export const isCampaignEditable = (status: CampaignStatus) =>
+  status === "DRAFT" || status === "SCHEDULED";
 
 export const CHANNEL_TYPES = ["WHATSAPP"] as const;
 export type ChannelType = (typeof CHANNEL_TYPES)[number];
@@ -97,6 +107,9 @@ export type CreateCampaignRequest = {
 export type UpdateCampaignRequest = {
   name?: string;
   description?: string;
+  /** Troca o público; SELECTED leva audienceCriteria = {"contactIds": [...]}. */
+  audienceType?: AudienceType;
+  audienceCriteria?: string;
 };
 
 export type AttachChannelRequest = {

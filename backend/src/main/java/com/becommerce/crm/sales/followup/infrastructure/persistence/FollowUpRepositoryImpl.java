@@ -49,33 +49,40 @@ public class FollowUpRepositoryImpl implements FollowUpRepository {
                 page, pageSize, result.getTotalElements());
     }
 
+    // UPDATEs com @Modifying exigem transação; o scheduler chama claim sem nenhuma.
     @Override
+    @Transactional
     public boolean claim(UUID companyId, UUID followUpId, LocalDateTime now, LocalDateTime staleProcessingCutoff) {
         return jpaRepository.claim(companyId, followUpId, now, staleProcessingCutoff) > 0;
     }
 
     @Override
+    @Transactional
     public boolean markSent(UUID companyId, UUID followUpId, String resultText, LocalDateTime now) {
         return jpaRepository.markSent(companyId, followUpId, resultText, now) > 0;
     }
 
     @Override
+    @Transactional
     public boolean scheduleRetry(UUID companyId, UUID followUpId, LocalDateTime nextExecuteAt,
                                  String error, LocalDateTime now) {
         return jpaRepository.scheduleRetry(companyId, followUpId, nextExecuteAt, error, now) > 0;
     }
 
     @Override
+    @Transactional
     public boolean markFailedTerminal(UUID companyId, UUID followUpId, String error, LocalDateTime now) {
         return jpaRepository.markFailedTerminal(companyId, followUpId, error, now) > 0;
     }
 
     @Override
+    @Transactional
     public boolean cancelPending(UUID companyId, UUID followUpId, LocalDateTime now) {
         return jpaRepository.cancelPending(companyId, followUpId, FollowUpCancellationReason.USER.name(), now) > 0;
     }
 
     @Override
+    @Transactional
     public boolean cancelProcessingByRule(UUID companyId, UUID followUpId,
                                           FollowUpCancellationReason reason, LocalDateTime now) {
         return jpaRepository.cancelProcessingByRule(companyId, followUpId, reason.name(), now) > 0;

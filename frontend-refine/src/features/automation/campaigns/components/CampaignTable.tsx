@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Eye, Megaphone, MoreHorizontal, Pause, Play, Trash2, XCircle } from "lucide-react";
-import type { Campaign } from "../types/campaign.types";
+import { Eye, Megaphone, MoreHorizontal, Pause, Pencil, Play, Trash2, XCircle } from "lucide-react";
+import { AUDIENCE_SHORT_LABEL, isCampaignEditable, type Campaign } from "../types/campaign.types";
 import { CampaignStatusBadge } from "./CampaignStatusBadge";
 import {
   Table,
@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ROUTES } from "@/lib/constants";
+import { campaignEditPath, ROUTES } from "@/lib/constants";
 
 interface CampaignTableProps {
   campaigns: Campaign[];
@@ -30,6 +30,8 @@ interface CampaignTableProps {
   onResume?: (campaign: Campaign) => void;
   onCancel?: (campaign: Campaign) => void;
   onExecute?: (campaign: Campaign) => void;
+  /** Mostra "Editar" para campanhas em rascunho ou agendadas. */
+  canEdit?: boolean;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -51,6 +53,7 @@ export function CampaignTable({
   onResume,
   onCancel,
   onExecute,
+  canEdit = false,
 }: CampaignTableProps) {
   const router = useRouter();
 
@@ -106,7 +109,7 @@ export function CampaignTable({
                 <CampaignStatusBadge status={campaign.status} />
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {campaign.audienceType === "CONTACTS" ? "Contatos" : "Leads"}
+                {AUDIENCE_SHORT_LABEL[campaign.audienceType]}
               </TableCell>
               <TableCell className="text-sm font-medium">{campaign.estimatedRecipients}</TableCell>
               <TableCell className="text-sm text-muted-foreground">
@@ -126,6 +129,12 @@ export function CampaignTable({
                       <Eye className="mr-2 h-4 w-4" />
                       Visualizar
                     </DropdownMenuItem>
+                    {canEdit && isCampaignEditable(campaign.status) && (
+                      <DropdownMenuItem onClick={() => router.push(campaignEditPath(campaign.id))}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                    )}
                     {campaign.status === "RUNNING" && onPause && (
                       <DropdownMenuItem onClick={() => onPause(campaign)}>
                         <Pause className="mr-2 h-4 w-4" />

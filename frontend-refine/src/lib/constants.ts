@@ -87,3 +87,7 @@ export function invitationPath(token: string): string {
 export function companyInvitationPath(token: string): string {
   return `/convite-empresa/${encodeURIComponent(token)}`;
 }
+
+export function campaignEditPath(id: string): string {
+  return `${ROUTES.CAMPAIGNS}/${id}/edit`;
+}

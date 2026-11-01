@@ -19,7 +19,7 @@ public class Campaign {
     private String name;
     private String description;
     private CampaignStatus status;
-    private final AudienceType audienceType;
+    private AudienceType audienceType;
     private String audienceCriteria;
     private int estimatedRecipients;
     private LocalDateTime scheduledAt;
@@ -109,13 +109,14 @@ public class Campaign {
         };
     }
 
+    /** Editável enquanto não começou a enviar: rascunho ou agendada. */
     public boolean isEditable() {
-        return status == CampaignStatus.DRAFT;
+        return status == CampaignStatus.DRAFT || status == CampaignStatus.SCHEDULED;
     }
 
     public void updateDetails(String name, String description) {
         if (!isEditable()) {
-            throw new IllegalStateException("Somente campanhas em DRAFT podem ser editadas.");
+            throw new IllegalStateException("Somente campanhas em rascunho ou agendadas podem ser editadas.");
         }
         if (name != null && !name.isBlank()) {
             this.name = name;
@@ -126,7 +127,10 @@ public class Campaign {
 
     public void updateAudience(AudienceType audienceType, String audienceCriteria) {
         if (!isEditable()) {
-            throw new IllegalStateException("Somente campanhas em DRAFT podem ter o público alterado.");
+            throw new IllegalStateException("Somente campanhas em rascunho ou agendadas podem ter o público alterado.");
+        }
+        if (audienceType != null) {
+            this.audienceType = audienceType;
         }
         this.audienceCriteria = audienceCriteria;
         touch();
