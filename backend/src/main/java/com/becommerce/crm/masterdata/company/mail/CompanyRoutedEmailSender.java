@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,7 +19,8 @@ import java.util.UUID;
 /**
  * Todo e-mail do sistema sai da conta configurada na página de e-mail da
  * empresa. Convites usam a empresa do contexto (quem convida); a redefinição de
- * senha usa a empresa do usuário. Sem configuração, cai no envio global
+ * senha usa a empresa do usuário. Convite exige a configuração (400 pedindo o
+ * cadastro); a redefinição de senha, anônima, cai no envio global
  * ({@code SmtpEmailSender}/console). Falha de envio não derruba a operação: o
  * convite continua salvo e o link fica disponível para copiar ou mandar por WhatsApp.
  */
@@ -26,6 +29,9 @@ import java.util.UUID;
 public class CompanyRoutedEmailSender implements EmailSender, EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyRoutedEmailSender.class);
+
+    static final String MAIL_NOT_CONFIGURED =
+            "Cadastre o e-mail da empresa em Configurações > E-mail antes de enviar convites por e-mail.";
 
     private final CompanyMailService companyMail;
     private final EmailSender fallbackSender;
@@ -50,10 +56,11 @@ public class CompanyRoutedEmailSender implements EmailSender, EmailService {
     @Override
     public void sendInvitation(String to, String companyName, String role, String tokenUrl) {
         UUID companyId = TenantContext.hasCompanyId() ? TenantContext.getCompanyId() : null;
+        if (companyId == null || !companyMail.isConfigured(companyId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, MAIL_NOT_CONFIGURED);
+        }
         try {
-            if (!companyMail.sendInvitation(companyId, to, companyName, role, tokenUrl)) {
-                fallbackSender.sendInvitation(to, companyName, role, tokenUrl);
-            }
+            companyMail.sendInvitation(companyId, to, companyName, role, tokenUrl);
         } catch (RuntimeException e) {
             log.error("Falha ao enviar convite para {} (empresa={}): {}", to, companyId, e.getMessage());
         }

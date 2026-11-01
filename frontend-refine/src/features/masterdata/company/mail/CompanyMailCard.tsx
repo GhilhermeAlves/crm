@@ -74,6 +74,7 @@ export function CompanyMailCard({ companyId }: { companyId: string }) {
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: key });
+    void queryClient.invalidateQueries({ queryKey: ["company-mail-status", companyId] });
     void queryClient.invalidateQueries({ queryKey: ["form-request-options", companyId] });
   };
 

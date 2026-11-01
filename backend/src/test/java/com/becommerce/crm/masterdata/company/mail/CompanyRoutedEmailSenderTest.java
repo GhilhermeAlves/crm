@@ -9,12 +9,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.MailAuthenticationException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
@@ -47,6 +49,7 @@ class CompanyRoutedEmailSenderTest {
 
     @Test
     void invitationGoesThroughCompanyMail() {
+        when(companyMail.isConfigured(companyId)).thenReturn(true);
         when(companyMail.sendInvitation(companyId, "a@b.com", "Clínica", "AGENT", "url")).thenReturn(true);
 
         sender.sendInvitation("a@b.com", "Clínica", "AGENT", "url");
@@ -55,14 +58,17 @@ class CompanyRoutedEmailSenderTest {
     }
 
     @Test
-    void invitationFallsBackWhenCompanyHasNoMail() {
-        sender.sendInvitation("a@b.com", "Clínica", "AGENT", "url");
+    void invitationAsksToConfigureMailFirst() {
+        assertThatThrownBy(() -> sender.sendInvitation("a@b.com", "Clínica", "AGENT", "url"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Cadastre o e-mail da empresa");
 
-        verify(fallbackSender).sendInvitation("a@b.com", "Clínica", "AGENT", "url");
+        verify(fallbackSender, never()).sendInvitation(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
     void sendFailureDoesNotBreakTheInvitation() {
+        when(companyMail.isConfigured(companyId)).thenReturn(true);
         when(companyMail.sendInvitation(any(), anyString(), anyString(), anyString(), anyString()))
                 .thenThrow(new MailAuthenticationException("Authentication failed"));
 

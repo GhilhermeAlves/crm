@@ -10,6 +10,10 @@ import { roleLabel } from "@/features/identity/members/lib/labels";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { InvitationLinkPanel } from "./InvitationLinkPanel";
 import {
+  MailNotConfiguredNotice,
+  useCompanyMailStatus,
+} from "@/features/masterdata/company/mail/useCompanyMailStatus";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -75,6 +79,8 @@ export function CreateInvitationDialog({
   const create = useCreateInvitation(companyId);
   const { isSuperAdmin, isCrmAdmin } = useAuthorization();
   const roles = invitableRoles(isSuperAdmin || isCrmAdmin);
+  const mailStatus = useCompanyMailStatus(open ? companyId : null);
+  const mailMissing = sendEmail && mailStatus.data === false;
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
@@ -195,11 +201,12 @@ export function CreateInvitationDialog({
                     </p>
                   </div>
                 </div>
+                {mailMissing && <MailNotConfiguredNotice />}
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={close}>
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={create.isPending}>
+                  <Button type="submit" disabled={create.isPending || mailMissing}>
                     {create.isPending ? "Enviando..." : submitLabel}
                   </Button>
                 </DialogFooter>
