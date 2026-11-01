@@ -99,6 +99,12 @@ public class CampaignService implements CampaignUseCase {
             TenantContext.setCompanyId(companyId);
             Campaign campaign = requireOwned(companyId, campaignId);
             campaign.updateDetails(request.name(), request.description());
+            if (request.audienceType() != null) {
+                AudienceType audienceType = AudienceType.valueOf(request.audienceType());
+                campaign.updateAudience(audienceType, request.audienceCriteria());
+                campaign.setEstimatedRecipients(audienceResolver.resolve(companyId, audienceType,
+                        request.audienceCriteria()).size());
+            }
             Campaign saved = campaignRepository.save(campaign);
 
             CampaignAudit.record(auditor, companyId, AuditAction.UPDATE, saved.getId(),

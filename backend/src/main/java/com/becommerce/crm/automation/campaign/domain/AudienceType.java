@@ -7,5 +7,7 @@ package com.becommerce.crm.automation.campaign.domain;
  */
 public enum AudienceType {
     CONTACTS,
-    LEADS
+    LEADS,
+    /** Contatos escolhidos um a um: audienceCriteria = {"contactIds": [...]}. */
+    SELECTED
 }

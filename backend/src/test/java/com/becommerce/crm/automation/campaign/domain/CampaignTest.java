@@ -57,14 +57,26 @@ class CampaignTest {
     }
 
     @Test
-    void editingAllowedOnlyInDraft() {
+    void editingAllowedUntilItStartsSending() {
         Campaign c = draft();
         c.updateDetails("Novo nome", "desc");
         assertEquals("Novo nome", c.getName());
 
         c.transitionTo(CampaignStatus.SCHEDULED);
+        c.updateDetails("Agendada", null);
+        assertEquals("Agendada", c.getName());
+
+        c.transitionTo(CampaignStatus.RUNNING);
         assertThrows(IllegalStateException.class,
                 () -> c.updateDetails("Outro", null));
+    }
+
+    @Test
+    void updateAudienceChangesTypeAndCriteria() {
+        Campaign c = draft();
+        c.updateAudience(AudienceType.SELECTED, "{\"contactIds\":[\"a\"]}");
+        assertEquals(AudienceType.SELECTED, c.getAudienceType());
+        assertEquals("{\"contactIds\":[\"a\"]}", c.getAudienceCriteria());
     }
 
     @Test
