@@ -1,7 +1,6 @@
 import api from "@/lib/api";
 import type {
   CreateInvitationRequest,
-  CreateOwnerInvitationRequest,
   Invitation,
   InvitationLink,
   InvitationPreview,
@@ -19,14 +18,6 @@ export const InvitationService = {
   },
   async create(companyId: string, data: CreateInvitationRequest): Promise<InvitationLink> {
     const response = await api.post<InvitationLink>(`${BASE}/${companyId}/invitations`, data);
-    return response.data;
-  },
-  /** Convite do dono de empresa pré-cadastrada (CRM_ADMIN). */
-  async createOwner(
-    companyId: string,
-    data: CreateOwnerInvitationRequest,
-  ): Promise<InvitationLink> {
-    const response = await api.post<InvitationLink>(`${BASE}/${companyId}/owner-invitation`, data);
     return response.data;
   },
   async revoke(companyId: string, invitationId: string): Promise<void> {

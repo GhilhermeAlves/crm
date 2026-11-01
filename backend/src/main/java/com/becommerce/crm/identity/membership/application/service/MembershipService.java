@@ -95,6 +95,9 @@ public class MembershipService implements MembershipUseCase {
         if (CurrentUser.CRM_ADMIN_ROLE.equals(targetRole.getName())) {
             throw new CrmAccessDeniedException("O papel CRM_ADMIN não pode ser atribuído pela API.");
         }
+        if (Membership.SUPER_ADMIN_ROLE.equals(targetRole.getName()) && !isCrmAdmin) {
+            throw new CrmAccessDeniedException("Só o administrador do CRM pode conceder o papel SUPER_ADMIN.");
+        }
         assertNotPlatformMember(userId, companyId, isCrmAdmin);
 
         Membership membership = membershipRepository.findActiveByUserIdAndCompanyId(userId, companyId)

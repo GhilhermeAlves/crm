@@ -384,7 +384,7 @@ class InvitationServiceSignupTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
         var response = service.create(companyId,
-                new CreateInvitationRequest(EMAIL, "AGENT", "Fulano"), invitedBy);
+                new CreateInvitationRequest(EMAIL, "AGENT", "Fulano"), invitedBy, false);
 
         assertEquals("Fulano", response.invitation().inviteeName());
         ArgumentCaptor<String> url = ArgumentCaptor.forClass(String.class);

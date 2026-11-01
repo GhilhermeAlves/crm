@@ -1,7 +1,6 @@
 package com.becommerce.crm.identity.invitation.web;
 
 import com.becommerce.crm.identity.invitation.application.dto.CreateInvitationRequest;
-import com.becommerce.crm.identity.invitation.application.dto.CreateOwnerInvitationRequest;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationLinkResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationPreviewResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationRegisterRequest;
@@ -9,6 +8,7 @@ import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse
 import com.becommerce.crm.identity.invitation.application.port.input.InvitationUseCase;
 import com.becommerce.crm.identity.invitation.application.service.InvitationSignupService;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
+import com.becommerce.crm.identity.membership.domain.Membership;
 import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
@@ -53,23 +53,8 @@ public class InvitationController {
             @CurrentCompanyId("Você só pode administrar convites da sua própria empresa.") UUID companyId,
             @Valid @RequestBody CreateInvitationRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
-        InvitationLinkResponse response = invitationUseCase.create(companyId, request, principal.userId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    /**
-     * Convite do dono de uma empresa pré-cadastrada. Exclusivo CRM_ADMIN e sem
-     * {@link CurrentCompanyId}: o administrador da plataforma pode convidar
-     * qualquer empresa.
-     */
-    @PostMapping("/companies/{companyId}/owner-invitation")
-    @PreAuthorize("hasRole('CRM_ADMIN')")
-    public ResponseEntity<InvitationLinkResponse> createOwnerInvitation(
-            @PathVariable UUID companyId,
-            @Valid @RequestBody CreateOwnerInvitationRequest request,
-            @AuthenticationPrincipal CurrentUser principal) {
-        InvitationLinkResponse response = invitationUseCase.createOwnerInvitation(
-                companyId, request, principal.userId());
+        InvitationLinkResponse response = invitationUseCase.create(companyId, request, principal.userId(),
+                principal.isCrmAdmin() || principal.roles().contains(Membership.SUPER_ADMIN_ROLE));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

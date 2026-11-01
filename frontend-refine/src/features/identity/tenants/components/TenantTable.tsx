@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Building2, Eye, History, Pencil, Trash2, UserRoundPlus } from "lucide-react";
+import { Building2, Eye, History, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { ROUTES } from "@/lib/constants";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
-import { OwnerInvitationDialog } from "@/features/identity/invitations/components/OwnerInvitationDialog";
 import type { Tenant } from "../types/tenant.types";
 import { TenantStatusBadge } from "./TenantStatusBadge";
 import { TenantPlanBadge } from "./TenantPlanBadge";
@@ -26,9 +25,8 @@ type TenantTableProps = {
 };
 
 export function TenantTable({ tenants, onDelete }: TenantTableProps) {
-  const { can, isCrmAdmin } = useAuthorization();
+  const { can } = useAuthorization();
   const [auditTenant, setAuditTenant] = useState<Tenant | null>(null);
-  const [ownerInviteTenant, setOwnerInviteTenant] = useState<Tenant | null>(null);
 
   const formatDate = useMemo(
     () => (dateStr: string) => {
@@ -107,17 +105,6 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>
-                    {isCrmAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        title="Convidar dono"
-                        onClick={() => setOwnerInviteTenant(tenant)}
-                      >
-                        <UserRoundPlus className="h-4 w-4" />
-                      </Button>
-                    )}
                     {can("audit:read") && (
                       <Button
                         variant="ghost"
@@ -152,17 +139,6 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
           if (!open) setAuditTenant(null);
         }}
       />
-
-      {ownerInviteTenant && (
-        <OwnerInvitationDialog
-          companyId={ownerInviteTenant.id}
-          companyName={ownerInviteTenant.tradingName}
-          open={!!ownerInviteTenant}
-          onOpenChange={(open) => {
-            if (!open) setOwnerInviteTenant(null);
-          }}
-        />
-      )}
     </>
   );
 }

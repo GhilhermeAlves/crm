@@ -5,8 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateInvitation } from "../hooks/useInvitations";
-import { INVITATION_ROLES, type InvitationLink } from "../types/invitation.types";
+import { invitableRoles, type InvitationLink } from "../types/invitation.types";
 import { roleLabel, SPECIALTY_LABEL } from "@/features/identity/members/lib/labels";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { InvitationLinkPanel } from "./InvitationLinkPanel";
 import {
   Dialog,
@@ -75,6 +76,8 @@ export function CreateInvitationDialog({
   const [sendEmail, setSendEmail] = useState(true);
   const [created, setCreated] = useState<InvitationLink | null>(null);
   const create = useCreateInvitation(companyId);
+  const { isSuperAdmin, isCrmAdmin } = useAuthorization();
+  const roles = invitableRoles(isSuperAdmin || isCrmAdmin);
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
@@ -172,7 +175,7 @@ export function CreateInvitationDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {INVITATION_ROLES.map((role) => (
+                          {roles.map((role) => (
                             <SelectItem key={role} value={role}>
                               {roleLabel(role)}
                             </SelectItem>

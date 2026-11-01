@@ -1,7 +1,6 @@
 package com.becommerce.crm.identity.invitation.web;
 
 import com.becommerce.crm.identity.invitation.application.dto.CreateInvitationRequest;
-import com.becommerce.crm.identity.invitation.application.dto.CreateOwnerInvitationRequest;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationLinkResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationPreviewResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationRegisterRequest;
@@ -103,7 +102,7 @@ class InvitationControllerTest {
     @Test
     void shouldCreateInvitation() throws Exception {
         InvitationResponse r = sample();
-        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId)))
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(false)))
                 .thenReturn(new InvitationLinkResponse(r, "/convite/tok-novo"));
 
         mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
@@ -117,7 +116,7 @@ class InvitationControllerTest {
     @Test
     void shouldCreateInvitationWithoutSendingEmail() throws Exception {
         InvitationResponse r = sample();
-        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId)))
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(false)))
                 .thenReturn(new InvitationLinkResponse(r, "/convite/tok-novo"));
 
         mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
@@ -126,13 +125,13 @@ class InvitationControllerTest {
                 .andExpect(status().isCreated());
 
         ArgumentCaptor<CreateInvitationRequest> captor = ArgumentCaptor.forClass(CreateInvitationRequest.class);
-        verify(invitationUseCase).create(eq(companyId), captor.capture(), eq(userId));
+        verify(invitationUseCase).create(eq(companyId), captor.capture(), eq(userId), eq(false));
         assertFalse(captor.getValue().shouldSendEmail());
     }
 
     @Test
     void shouldReturnBadRequestWhenInvitationRuleIsViolated() throws Exception {
-        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId)))
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(false)))
                 .thenThrow(new InvitationRuleViolationException("Já existe convite pendente para novo@empresa.com"));
 
         mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
@@ -144,7 +143,7 @@ class InvitationControllerTest {
 
     @Test
     void shouldReturnConflictWhenCompanyIsInactive() throws Exception {
-        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId)))
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(false)))
                 .thenThrow(new InvitationConflictException("Empresa inativa: não é possível convidar."));
 
         mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
@@ -155,34 +154,15 @@ class InvitationControllerTest {
     }
 
     @Test
-    void shouldCreateOwnerInvitationAsCrmAdmin() throws Exception {
+    void shouldLetCrmAdminInviteAdmin() throws Exception {
         loginAsCrmAdmin();
-        InvitationResponse r = new InvitationResponse(UUID.randomUUID(), companyId, "dono@empresa.com", "Dono",
-                "OWNER", InvitationStatus.PENDING, userId, LocalDateTime.now().plusDays(7), LocalDateTime.now());
-        when(invitationUseCase.createOwnerInvitation(eq(companyId), any(CreateOwnerInvitationRequest.class), eq(userId)))
-                .thenReturn(new InvitationLinkResponse(r, "/convite/dono"));
+        when(invitationUseCase.create(eq(companyId), any(CreateInvitationRequest.class), eq(userId), eq(true)))
+                .thenReturn(new InvitationLinkResponse(sample(), "/convite/tok-admin"));
 
-        mockMvc.perform(post("/api/v1/companies/{cid}/owner-invitation", companyId)
+        mockMvc.perform(post("/api/v1/companies/{cid}/invitations", companyId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"dono@empresa.com\",\"name\":\"Dono\",\"sendEmail\":false}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.invitation.role").value("OWNER"))
-                .andExpect(jsonPath("$.url").value("/convite/dono"));
-
-        ArgumentCaptor<CreateOwnerInvitationRequest> captor =
-                ArgumentCaptor.forClass(CreateOwnerInvitationRequest.class);
-        verify(invitationUseCase).createOwnerInvitation(eq(companyId), captor.capture(), eq(userId));
-        assertFalse(captor.getValue().shouldSendEmail());
-    }
-
-    @Test
-    void shouldRejectOwnerInvitationForNonCrmAdmin() throws Exception {
-        mockMvc.perform(post("/api/v1/companies/{cid}/owner-invitation", companyId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"dono@empresa.com\",\"name\":\"Dono\"}"))
-                .andExpect(status().isForbidden());
-        verify(invitationUseCase, never())
-                .createOwnerInvitation(any(), any(CreateOwnerInvitationRequest.class), any());
+                        .content("{\"email\":\"adm@empresa.com\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isCreated());
     }
 
     @Test

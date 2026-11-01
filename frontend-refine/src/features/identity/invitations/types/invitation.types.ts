@@ -23,14 +23,6 @@ export type CreateInvitationRequest = {
   sendEmail?: boolean;
 };
 
-/** POST /companies/{id}/owner-invitation (exclusivo CRM_ADMIN). */
-export type CreateOwnerInvitationRequest = {
-  email: string;
-  name?: string;
-  /** Default `true`. `false` = não envia e-mail; o link fica para cópia/WhatsApp. */
-  sendEmail?: boolean;
-};
-
 /**
  * POST /companies/{id}/invitations/{id}/regenerate → InvitationLinkResponse.
  * `url` é montada no backend; o token nunca é exposto em campo próprio.
@@ -64,3 +56,8 @@ export type InvitationRegisterRequest = {
 };
 
 export const INVITATION_ROLES = ["ADMIN", "MANAGER", "AGENT", "VIEWER"] as const;
+
+/** ADMIN convida só papéis abaixo dele; ADMIN é convidado pelo SUPER_ADMIN/CRM_ADMIN. */
+export function invitableRoles(canInviteAdmin: boolean) {
+  return INVITATION_ROLES.filter((role) => role !== "ADMIN" || canInviteAdmin);
+}

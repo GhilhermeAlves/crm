@@ -105,6 +105,9 @@ public class RoleController {
         if (isPlatformRole(UUID.fromString(request.roleId()))) {
             throw new CrmAccessDeniedException("O papel CRM_ADMIN não pode ser atribuído pela API.");
         }
+        if (!principal.isCrmAdmin() && isRole(UUID.fromString(request.roleId()), "SUPER_ADMIN")) {
+            throw new CrmAccessDeniedException("Só o administrador do CRM pode conceder o papel SUPER_ADMIN.");
+        }
         roleUseCase.assignRoleToUser(userId, UUID.fromString(request.roleId()), principal.companyId());
         return ResponseEntity.ok().build();
     }
@@ -136,7 +139,11 @@ public class RoleController {
     }
 
     private boolean isPlatformRole(UUID roleId) {
-        return CurrentUser.CRM_ADMIN_ROLE.equals(roleUseCase.getRoleById(roleId).name());
+        return isRole(roleId, CurrentUser.CRM_ADMIN_ROLE);
+    }
+
+    private boolean isRole(UUID roleId, String name) {
+        return name.equals(roleUseCase.getRoleById(roleId).name());
     }
 
     private void requireCompanyAccess(UUID roleId, CurrentUser principal) {

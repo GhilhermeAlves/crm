@@ -1,7 +1,6 @@
 package com.becommerce.crm.identity.invitation.application.port.input;
 
 import com.becommerce.crm.identity.invitation.application.dto.CreateInvitationRequest;
-import com.becommerce.crm.identity.invitation.application.dto.CreateOwnerInvitationRequest;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationLinkResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationPreviewResponse;
 import com.becommerce.crm.identity.invitation.application.dto.InvitationResponse;
@@ -13,10 +12,9 @@ import java.util.UUID;
 /** Casos de uso de convites (Sprint 8.5). */
 public interface InvitationUseCase {
 
-    InvitationLinkResponse create(UUID companyId, CreateInvitationRequest request, UUID invitedBy);
-
-    /** Convite do dono de uma empresa pré-cadastrada (exclusivo CRM_ADMIN). */
-    InvitationLinkResponse createOwnerInvitation(UUID companyId, CreateOwnerInvitationRequest request, UUID invitedBy);
+    /** {@code canInviteAdmin}: só SUPER_ADMIN/CRM_ADMIN convidam o papel ADMIN. */
+    InvitationLinkResponse create(UUID companyId, CreateInvitationRequest request, UUID invitedBy,
+                                  boolean canInviteAdmin);
 
     List<InvitationResponse> listByCompany(UUID companyId, InvitationStatus status);
 

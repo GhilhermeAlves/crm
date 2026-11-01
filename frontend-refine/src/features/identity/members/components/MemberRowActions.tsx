@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MoreHorizontal, Shield, ShieldAlert, UserMinus, UserRoundCog } from "lucide-react";
 
-import { usePermission } from "@/features/identity/auth/hooks/useAuthorization";
+import { useAuthorization, usePermission } from "@/features/identity/auth/hooks/useAuthorization";
 import { useRoles } from "@/features/identity/rbac/hooks/useRoles";
 import { UserPermissionsDialog } from "@/features/identity/rbac/components/UserPermissionsDialog";
 import { useRemoveMember, useUpdateMemberRole } from "@/features/identity/members/hooks/useMembers";
@@ -198,18 +198,23 @@ function ChangeRoleDialog({
     if (open) setSelected(member.role);
   }, [open, member.role]);
 
+  const { isCrmAdmin } = useAuthorization();
+
   const availableRoles = useMemo(() => {
-    const base =
+    const base = (
       roles.length > 0
         ? roles
             // CRM_ADMIN é de plataforma: o backend recusa atribuí-lo pela API.
             .filter((role) => role.isActive && role.name !== "CRM_ADMIN")
             .map((role) => role.name)
-        : [...FALLBACK_ROLES];
+        : [...FALLBACK_ROLES]
+    )
+      // Só o CRM_ADMIN concede SUPER_ADMIN.
+      .filter((role) => isCrmAdmin || role !== "SUPER_ADMIN");
     if (member.role && !base.includes(member.role)) base.push(member.role);
     // Último ADMIN só pode continuar em papéis de nível administrador.
     return isLastAdmin ? base.filter(isAdminLevelRole) : base;
-  }, [roles, member.role, isLastAdmin]);
+  }, [roles, member.role, isLastAdmin, isCrmAdmin]);
 
   const options = availableRoles.includes(selected)
     ? availableRoles

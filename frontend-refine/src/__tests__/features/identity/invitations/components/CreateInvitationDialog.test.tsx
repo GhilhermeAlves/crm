@@ -1,12 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { CreateInvitationDialog } from "@/features/identity/invitations/components/CreateInvitationDialog";
+import { invitableRoles } from "@/features/identity/invitations/types/invitation.types";
 
 const { createMutate } = vi.hoisted(() => ({ createMutate: vi.fn() }));
 
 vi.mock("@/features/identity/invitations/hooks/useInvitations", () => ({
   useCreateInvitation: () => ({ mutate: createMutate, isPending: false }),
 }));
+
+vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
+  useAuthorization: () => ({ isSuperAdmin: false, isCrmAdmin: false }),
+}));
+
+describe("invitableRoles", () => {
+  it("esconde ADMIN de quem não é super administrador", () => {
+    expect(invitableRoles(false)).toEqual(["MANAGER", "AGENT", "VIEWER"]);
+  });
+
+  it("mostra ADMIN para o super administrador e o administrador do CRM", () => {
+    expect(invitableRoles(true)).toContain("ADMIN");
+  });
+});
 
 describe("CreateInvitationDialog", () => {
   beforeEach(() => createMutate.mockReset());
