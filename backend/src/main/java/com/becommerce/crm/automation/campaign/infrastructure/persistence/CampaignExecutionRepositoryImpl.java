@@ -19,7 +19,9 @@ public class CampaignExecutionRepositoryImpl implements CampaignExecutionReposit
 
     @Override
     public CampaignExecution save(CampaignExecution execution) {
-        return toDomain(jpaRepository.save(toEntity(execution)));
+        // flush: os eventos são inseridos via JDBC logo em seguida e a FK
+        // execution_id precisa enxergar a linha já gravada.
+        return toDomain(jpaRepository.saveAndFlush(toEntity(execution)));
     }
 
     @Override
