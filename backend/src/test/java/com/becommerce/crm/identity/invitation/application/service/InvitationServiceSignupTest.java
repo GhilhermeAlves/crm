@@ -392,6 +392,19 @@ class InvitationServiceSignupTest {
         assertTrue(url.getValue().startsWith("https://crm.exemplo.com/convite/"), url.getValue());
     }
 
+    @Test
+    void create_expiredInvitationDoesNotCountTowardUserLimit() {
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany(2)));
+        when(membershipRepository.countActiveByCompanyId(companyId)).thenReturn(1L);
+        when(invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING)).thenReturn(List.of(expired()));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+
+        var response = service.create(companyId,
+                new CreateInvitationRequest("outro@empresa.com", "AGENT", "Outro"), invitedBy, false);
+
+        assertEquals(InvitationStatus.PENDING, response.invitation().status());
+    }
+
     // ------------------------------------------------------ regeneração
 
     @Test

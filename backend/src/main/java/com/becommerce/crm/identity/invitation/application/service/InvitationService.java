@@ -24,7 +24,6 @@ import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.UserRole;
 import com.becommerce.crm.identity.invitation.domain.Invitation;
 import com.becommerce.crm.identity.invitation.domain.InvitationStatus;
-import com.becommerce.crm.identity.invitation.domain.ProfessionalSpecialty;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationConflictException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationRuleViolationException;
@@ -125,7 +124,9 @@ public class InvitationService implements InvitationUseCase {
         if (Membership.ADMIN_ROLE.equals(role) && !canInviteAdmin) {
             throw new CrmAccessDeniedException("Só o super administrador pode convidar um administrador.");
         }
-        String specialty = ProfessionalSpecialty.normalize(request.specialty());
+        // Convite não altera especialidade, nem vinda de SUPER_ADMIN: o membro
+        // segue a especialidade da empresa (definida só pelo CRM_ADMIN).
+        String specialty = null;
         String email = normalize(request.email());
 
         // Enforcement max_users (Sprint 8.6): membros ativos + convites
@@ -133,7 +134,7 @@ public class InvitationService implements InvitationUseCase {
         // empresa-alvo (RLS) para contagem correta e sem bypass por company_id.
         TenantContext.setCompanyId(companyId);
         long activeUsers = membershipRepository.countActiveByCompanyId(companyId);
-        long pendingInvites = invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING).size();
+        long pendingInvites = livePendingInvitations(companyId).size();
         if (activeUsers + pendingInvites >= company.getMaxUsers()) {
             throw new QuotaExceededException(
                     "Limite de usuários da empresa atingido (" + company.getMaxUsers() + ").");
@@ -422,8 +423,15 @@ public class InvitationService implements InvitationUseCase {
                 .orElseThrow(() -> new InvitationNotFoundException("Convite não encontrado: " + invitationId));
     }
 
-    private boolean hasOtherPendingInvitation(UUID companyId, String email, UUID excludeId) {
+    /** Convites PENDING ainda válidos: os vencidos (EXPIRED na tela) não ocupam vaga. */
+    private List<Invitation> livePendingInvitations(UUID companyId) {
         return invitationRepository.findByCompanyId(companyId, InvitationStatus.PENDING).stream()
+                .filter(i -> i.effectiveStatus() == InvitationStatus.PENDING)
+                .toList();
+    }
+
+    private boolean hasOtherPendingInvitation(UUID companyId, String email, UUID excludeId) {
+        return livePendingInvitations(companyId).stream()
                 .filter(i -> !i.getId().equals(excludeId))
                 .anyMatch(i -> i.getEmail().equalsIgnoreCase(email));
     }

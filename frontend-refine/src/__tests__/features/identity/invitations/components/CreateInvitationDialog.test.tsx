@@ -26,10 +26,10 @@ describe("invitableRoles", () => {
 describe("CreateInvitationDialog", () => {
   beforeEach(() => createMutate.mockReset());
 
-  it("envia o convite sem especialidade quando ela não é informada", async () => {
+  it("envia o convite sem campo de especialidade", async () => {
     render(<CreateInvitationDialog companyId="co1" />);
     fireEvent.click(screen.getByRole("button", { name: "Convidar membro" }));
-    expect(screen.getByText("Especialidade (opcional)")).toBeTruthy();
+    expect(screen.queryByText(/Especialidade/)).toBeNull();
 
     fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "ana@clinica.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Enviar convite" }));
