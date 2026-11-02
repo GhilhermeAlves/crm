@@ -4,6 +4,8 @@ import com.becommerce.crm.identity.membership.application.dto.MemberResponse;
 import com.becommerce.crm.identity.membership.application.dto.MembershipResponse;
 import com.becommerce.crm.identity.membership.application.dto.UpdateMemberRoleRequest;
 import com.becommerce.crm.identity.membership.application.port.input.MembershipUseCase;
+import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
+import com.becommerce.crm.identity.membership.domain.Membership;
 import com.becommerce.crm.identity.membership.domain.MembershipStatus;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import jakarta.validation.Valid;
@@ -43,6 +45,14 @@ public class MembershipController {
             @PathVariable UUID userId,
             @Valid @RequestBody UpdateMemberRoleRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
+        // Mesma regra do convite: promover a ADMIN/OWNER é do SUPER_ADMIN/CRM_ADMIN.
+        String target = request.role() == null ? "" : request.role().trim().toUpperCase(Locale.ROOT);
+        boolean grantsAdmin = Membership.ADMIN_ROLE.equals(target) || Membership.OWNER_ROLE.equals(target);
+        if (grantsAdmin && !principal.isCrmAdmin()
+                && !principal.roles().contains(Membership.SUPER_ADMIN_ROLE)) {
+            throw new CrmAccessDeniedException(
+                    "Só o SUPER_ADMIN ou o administrador do CRM pode promover um membro a ADMIN.");
+        }
         MemberResponse response = membershipUseCase.updateMemberRole(
                 id, userId, request.role(), principal.companyId(), isCrmAdmin(principal));
         return ResponseEntity.ok(response);

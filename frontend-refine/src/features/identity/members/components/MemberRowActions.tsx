@@ -198,7 +198,8 @@ function ChangeRoleDialog({
     if (open) setSelected(member.role);
   }, [open, member.role]);
 
-  const { isCrmAdmin } = useAuthorization();
+  const { isCrmAdmin, isSuperAdmin } = useAuthorization();
+  const canGrantAdmin = isCrmAdmin || isSuperAdmin;
 
   const availableRoles = useMemo(() => {
     const base = (
@@ -210,11 +211,13 @@ function ChangeRoleDialog({
         : [...FALLBACK_ROLES]
     )
       // Só o CRM_ADMIN concede SUPER_ADMIN.
-      .filter((role) => isCrmAdmin || role !== "SUPER_ADMIN");
+      .filter((role) => isCrmAdmin || role !== "SUPER_ADMIN")
+      // Promover a ADMIN/OWNER é do SUPER_ADMIN/CRM_ADMIN (MembershipController).
+      .filter((role) => canGrantAdmin || (role !== "ADMIN" && role !== "OWNER"));
     if (member.role && !base.includes(member.role)) base.push(member.role);
     // Último ADMIN só pode continuar em papéis de nível administrador.
     return isLastAdmin ? base.filter(isAdminLevelRole) : base;
-  }, [roles, member.role, isLastAdmin, isCrmAdmin]);
+  }, [roles, member.role, isLastAdmin, isCrmAdmin, canGrantAdmin]);
 
   const options = availableRoles.includes(selected)
     ? availableRoles

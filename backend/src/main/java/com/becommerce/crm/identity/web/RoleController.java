@@ -108,6 +108,12 @@ public class RoleController {
         if (!principal.isCrmAdmin() && isRole(UUID.fromString(request.roleId()), "SUPER_ADMIN")) {
             throw new CrmAccessDeniedException("Só o administrador do CRM pode conceder o papel SUPER_ADMIN.");
         }
+        // Mesma regra do convite: conceder ADMIN/OWNER é do SUPER_ADMIN/CRM_ADMIN.
+        if (!principal.isCrmAdmin() && !principal.roles().contains("SUPER_ADMIN")
+                && (isRole(UUID.fromString(request.roleId()), "ADMIN")
+                    || isRole(UUID.fromString(request.roleId()), "OWNER"))) {
+            throw new CrmAccessDeniedException("Só o SUPER_ADMIN ou o administrador do CRM pode conceder o papel ADMIN.");
+        }
         roleUseCase.assignRoleToUser(userId, UUID.fromString(request.roleId()), principal.companyId());
         return ResponseEntity.ok().build();
     }
