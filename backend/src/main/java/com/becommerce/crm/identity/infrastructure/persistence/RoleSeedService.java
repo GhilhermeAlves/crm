@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -41,10 +42,28 @@ public class RoleSeedService {
         this.rolePermissionRepository = rolePermissionRepository;
     }
 
+    /**
+     * Acesso às páginas do menu (V066). A V066 só concedeu essas permissões às
+     * empresas que já existiam; sem elas aqui, empresas criadas depois ficavam
+     * sem Pipeline, Leads, Inbox etc. mesmo com as demais permissões ativas.
+     */
+    private static final List<String> MENU_PAGE_VIEWS = List.of(
+        "dashboard:page:view", "lead:page:view", "pipeline:page:view",
+        "task:page:view", "activity:page:view", "workflow:page:view",
+        "notification:page:view", "campaign:page:view", "omnichannel:page:view"
+    );
+
+    private static List<String> withPageViews(List<String> permissions, String... extraPageViews) {
+        List<String> all = new ArrayList<>(permissions);
+        all.addAll(MENU_PAGE_VIEWS);
+        all.addAll(List.of(extraPageViews));
+        return all;
+    }
+
     public void seedRoles(UUID companyId) {
         Map<RoleName, List<String>> rolePermissions = new EnumMap<>(RoleName.class);
         rolePermissions.put(RoleName.SUPER_ADMIN, List.of("*"));
-        rolePermissions.put(RoleName.ADMIN, List.of(
+        rolePermissions.put(RoleName.ADMIN, withPageViews(List.of(
             "user:create", "user:read", "user:update", "user:delete", "user:invite",
             "role:create", "role:read", "role:update", "role:delete", "role:assign",
             "role:manage", "permission:assign",
@@ -80,8 +99,8 @@ public class RoleSeedService {
             "omnichannel:followup", "omnichannel:followup:read",
             "contact:page:view", "contact:field:email:update", "contact:field:phone:update",
             "security:page:view"
-        ));
-        rolePermissions.put(RoleName.MANAGER, List.of(
+        ), "audit:page:view"));
+        rolePermissions.put(RoleName.MANAGER, withPageViews(List.of(
             "user:read", "user:update",
             "role:read",
             "dashboard:view",
@@ -111,8 +130,8 @@ public class RoleSeedService {
             "omnichannel:read", "omnichannel:update", "omnichannel:send", "omnichannel:takeover",
             "omnichannel:followup", "omnichannel:followup:read",
             "contact:page:view", "contact:field:email:update", "contact:field:phone:update"
-        ));
-        rolePermissions.put(RoleName.AGENT, List.of(
+        ), "audit:page:view"));
+        rolePermissions.put(RoleName.AGENT, withPageViews(List.of(
             "dashboard:view",
             "lead:create", "lead:read", "lead:update",
             "contact:create", "contact:read", "contact:update",
@@ -135,8 +154,8 @@ public class RoleSeedService {
             "omnichannel:read", "omnichannel:send", "omnichannel:takeover",
             "omnichannel:followup", "omnichannel:followup:read",
             "contact:page:view", "contact:field:email:update", "contact:field:phone:update"
-        ));
-        rolePermissions.put(RoleName.VIEWER, List.of(
+        )));
+        rolePermissions.put(RoleName.VIEWER, withPageViews(List.of(
             "dashboard:view",
             "lead:read",
             "contact:read",
@@ -158,7 +177,7 @@ public class RoleSeedService {
             "omnichannel:read",
             "omnichannel:followup:read",
             "contact:page:view"
-        ));
+        )));
 
         for (Map.Entry<RoleName, List<String>> entry : rolePermissions.entrySet()) {
             RoleName roleName = entry.getKey();

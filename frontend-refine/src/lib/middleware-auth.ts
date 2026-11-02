@@ -25,6 +25,8 @@ export const PUBLIC_PATHS = [
   "/cadastro",
   // Formulário (anamnese) que o paciente responde pelo link ou no tablet da recepção.
   "/f",
+  // Página de apresentação (marketing) do CRM.
+  "/apresentacao",
 ] as const;
 
 /** Link legado de convite, redirecionado para /convite/{token}. */

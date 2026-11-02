@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { ChevronsRight } from "lucide-react";
 
-import { VortexBackground } from "@/components/brand/VortexBackground";
+import { HorizonBackground } from "@/components/brand/HorizonBackground";
 import { ROUTES } from "@/lib/constants";
 
 export default function Home() {
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-black text-white">
-      <VortexBackground className="absolute inset-0 h-full w-full" />
+      <HorizonBackground className="absolute inset-0" />
 
       {/* moldura de linhas finas */}
       <div
