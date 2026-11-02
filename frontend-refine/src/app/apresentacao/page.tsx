@@ -176,7 +176,8 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle?: string })
 
 export default function PresentationPage() {
   return (
-    <main className="min-h-dvh bg-black text-white">
+    // html/body têm overflow hidden (shell do dashboard): a página rola por conta própria.
+    <main className="h-dvh overflow-y-auto scroll-smooth bg-black text-white">
       {/* HERO */}
       <section className="relative overflow-hidden">
         <HorizonBackground className="absolute inset-0" />

@@ -27,6 +27,8 @@ export const PUBLIC_PATHS = [
   "/f",
   // Página de apresentação (marketing) do CRM.
   "/apresentacao",
+  // Imagens estáticas usadas na apresentação (public/marketing).
+  "/marketing",
 ] as const;
 
 /** Link legado de convite, redirecionado para /convite/{token}. */
