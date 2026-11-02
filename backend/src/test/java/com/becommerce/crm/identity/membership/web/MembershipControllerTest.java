@@ -29,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -134,6 +135,37 @@ class MembershipControllerTest {
                         .content("{\"role\":\"MANAGER\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.role").value("MANAGER"));
+    }
+
+    @Test
+    void adminCannotPromoteMemberToAdmin() throws Exception {
+        login(List.of("membership:manage"));
+
+        mockMvc.perform(put("/api/v1/companies/{id}/members/{userId}", COMPANY_ID, USER_ID)
+                        .contentType("application/json")
+                        .content("{\"role\":\"admin\"}"))
+                .andExpect(status().isForbidden());
+        verify(membershipUseCase, never()).updateMemberRole(any(), any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void superAdminCanPromoteMemberToAdmin() throws Exception {
+        CurrentUser principal = new CurrentUser(
+                USER_ID, "dono@empresa.com", COMPANY_ID, COMPANY_ID,
+                List.of("SUPER_ADMIN"), List.of("membership:manage"),
+                "keycloak-sub", null, "keycloak", "Dono", "SUPER_ADMIN");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null,
+                        List.of(new SimpleGrantedAuthority("membership:manage"))));
+        when(membershipUseCase.updateMemberRole(eq(COMPANY_ID), eq(USER_ID), eq("ADMIN"),
+                eq(COMPANY_ID), anyBoolean()))
+                .thenReturn(new MemberResponse(
+                        USER_ID, "Fulano", "f@x.com", "ADMIN", "ACTIVE", LocalDateTime.now()));
+
+        mockMvc.perform(put("/api/v1/companies/{id}/members/{userId}", COMPANY_ID, USER_ID)
+                        .contentType("application/json")
+                        .content("{\"role\":\"ADMIN\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
