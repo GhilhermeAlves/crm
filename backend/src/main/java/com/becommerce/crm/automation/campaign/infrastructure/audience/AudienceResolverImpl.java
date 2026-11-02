@@ -9,7 +9,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import com.becommerce.crm.automation.campaign.domain.CampaignMessageRenderer;
+
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -75,6 +78,20 @@ public class AudienceResolverImpl implements AudienceResolver {
                                 rs.getString("recipient_type"), rs.getString("phone")));
             }
         };
+    }
+
+    @Override
+    public Optional<CampaignMessageRenderer.Profile> findProfile(UUID companyId, UUID contactId) {
+        List<CampaignMessageRenderer.Profile> rows = jdbc.query("""
+                SELECT c.first_name, c.last_name, c.email,
+                       COALESCE(NULLIF(c.mobile, ''), NULLIF(c.phone, '')) AS phone
+                  FROM contacts c
+                 WHERE c.company_id = :companyId AND c.id = :id
+                """,
+                new MapSqlParameterSource().addValue("companyId", companyId).addValue("id", contactId),
+                (rs, n) -> new CampaignMessageRenderer.Profile(rs.getString("first_name"),
+                        rs.getString("last_name"), rs.getString("email"), rs.getString("phone")));
+        return rows.stream().findFirst();
     }
 
     /** IDs inválidos ou JSON malformado são ignorados (público vazio barra a execução). */

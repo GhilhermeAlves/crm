@@ -13,6 +13,7 @@ import com.becommerce.crm.automation.campaign.domain.Campaign;
 import com.becommerce.crm.automation.campaign.domain.CampaignChannel;
 import com.becommerce.crm.automation.campaign.domain.CampaignExecution;
 import com.becommerce.crm.automation.campaign.domain.CampaignMessageEvent;
+import com.becommerce.crm.automation.campaign.domain.CampaignMessageRenderer;
 import com.becommerce.crm.automation.campaign.domain.MessageEventStatus;
 import com.becommerce.crm.automation.campaign.domain.exception.CampaignNotFoundException;
 import com.becommerce.crm.communication.template.domain.MessageTemplate;
@@ -236,21 +237,23 @@ public class CampaignExecutionService {
     }
 
     private String renderBodyFor(CampaignMessageEvent event) {
-        // O corpo renderizado é derivado do snapshot da execução; variáveis de
-        // contato já foram resolvidas na criação dos eventos nesta sprint.
-        var execution = executionRepository.findById(event.getExecutionId());
-        return execution.map(CampaignExecution::getTemplateSnapshot)
+        // Corpo vem do snapshot da execução; variáveis ({{nome}}, {{primeiroNome}}...)
+        // são resolvidas aqui, por destinatário, com os dados atuais do contato.
+        String body = executionRepository.findById(event.getExecutionId())
+                .map(CampaignExecution::getTemplateSnapshot)
                 .map(s -> s.startsWith("v") && s.contains(":") ? s.substring(s.indexOf(':') + 1) : s)
                 .orElse("");
+        CampaignMessageRenderer.Profile profile = audienceResolver
+                .findProfile(event.getCompanyId(), event.getRecipientId())
+                .orElse(null);
+        return CampaignMessageRenderer.render(body, profile);
     }
 
     private void persist(CampaignMessageEvent event) {
-        try {
-            TenantContext.setCompanyId(event.getCompanyId());
-            eventRepository.saveEvent(event);
-        } finally {
-            TenantContext.clear();
-        }
+        // Não limpa o contexto: os próximos eventos do lote (busca do contato,
+        // revalidação da execução) dependem dele; processEvents limpa no finally.
+        TenantContext.setCompanyId(event.getCompanyId());
+        eventRepository.saveEvent(event);
     }
 
     private void finishIfDone(UUID companyId, CampaignExecution execution) {
