@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 /** Prints do sistema ficam em public/marketing (capturados do CRM com dados de demonstração). */
 const SHOT = (name: string) => `/marketing/${name}.jpg`;
 /** Prints já capturados; recursos sem print mostram um painel com o ícone. */
-const AVAILABLE_SHOTS = new Set(["dashboard", "agenda", "patients", "reports"]);
+const AVAILABLE_SHOTS = new Set(["dashboard", "pipeline", "agenda", "patients", "reports"]);
 
 const PILLARS = [
   {
