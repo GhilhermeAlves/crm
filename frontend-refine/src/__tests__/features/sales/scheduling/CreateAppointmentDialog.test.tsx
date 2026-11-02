@@ -63,7 +63,8 @@ async function submit(onSubmit: ReturnType<typeof vi.fn>) {
   return onSubmit.mock.calls[0][0];
 }
 
-describe("CreateAppointmentDialog", () => {
+// O diálogo é pesado no jsdom (3–7 s por teste com recorrência); 5 s padrão estoura.
+describe("CreateAppointmentDialog", { timeout: 20000 }, () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("inicia como Pendente e envia status SCHEDULED", async () => {
