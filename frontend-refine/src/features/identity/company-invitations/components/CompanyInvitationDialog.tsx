@@ -37,10 +37,34 @@ import {
   MailNotConfiguredNotice,
   useCompanyMailStatus,
 } from "@/features/masterdata/company/mail/useCompanyMailStatus";
-import type { CompanyInvitationLink } from "../types";
+import type { CompanyInvitationLink, CompanyPrefill, InvitedCompanyDetails } from "../types";
 
 const MODULE_LABELS = new Map(MODULE_OPTIONS.map((option) => [option.value, option.label]));
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Campos que o admin pode adiantar; o convidado confere e completa ao aceitar. */
+const PREFILL_FIELDS: { key: keyof InvitedCompanyDetails; label: string }[] = [
+  { key: "legalName", label: "Razão social" },
+  { key: "tradingName", label: "Nome fantasia" },
+  { key: "cnpj", label: "CNPJ ou CPF" },
+  { key: "email", label: "E-mail da empresa" },
+  { key: "phone", label: "Telefone" },
+  { key: "addressZipCode", label: "CEP" },
+  { key: "addressStreet", label: "Rua" },
+  { key: "addressNumber", label: "Número" },
+  { key: "addressComplement", label: "Complemento" },
+  { key: "addressNeighborhood", label: "Bairro" },
+  { key: "addressCity", label: "Cidade" },
+  { key: "addressState", label: "Estado (UF)" },
+];
+
+/** Só os campos preenchidos; `undefined` quando nada foi adiantado. */
+function filledPrefill(prefill: CompanyPrefill): CompanyPrefill | undefined {
+  const entries = Object.entries(prefill)
+    .map(([key, value]) => [key, value?.trim() ?? ""] as const)
+    .filter(([, value]) => value);
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
 
 /**
  * Convite para criar uma empresa (só CRM_ADMIN). Especialidade, módulos, plano
@@ -56,6 +80,7 @@ export function CompanyInvitationDialog() {
   const [plan, setPlan] = useState("starter");
   const [maxUsers, setMaxUsers] = useState("5");
   const [sendEmail, setSendEmail] = useState(true);
+  const [prefill, setPrefill] = useState<CompanyPrefill>({});
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CompanyInvitationLink | null>(null);
   const create = useCreateCompanyInvitation();
@@ -72,6 +97,7 @@ export function CompanyInvitationDialog() {
     setPlan("starter");
     setMaxUsers("5");
     setSendEmail(true);
+    setPrefill({});
     setError(null);
     setCreated(null);
   }
@@ -104,6 +130,7 @@ export function CompanyInvitationDialog() {
         plan,
         maxUsers: users,
         sendEmail,
+        company: filledPrefill(prefill),
       },
       { onSuccess: setCreated },
     );
@@ -129,7 +156,7 @@ export function CompanyInvitationDialog() {
           <DialogDescription>
             {created
               ? `Envie o link para ${created.invitation.email}.`
-              : "O convidado cria a conta, preenche os dados da empresa e entra como administrador."}
+              : "O convidado cria a conta, confere os dados da empresa e entra como administrador."}
           </DialogDescription>
         </DialogHeader>
 
@@ -228,6 +255,28 @@ export function CompanyInvitationDialog() {
                 </div>
               ))}
             </fieldset>
+
+            <details className="rounded-md border border-border p-3">
+              <summary className="cursor-pointer text-sm font-medium">
+                Adiantar dados da empresa (opcional)
+              </summary>
+              <p className="mt-2 text-xs text-muted-foreground">
+                O convidado recebe estes campos já preenchidos e só confere. O documento pode ser
+                CNPJ ou CPF, e também pode ficar em branco.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {PREFILL_FIELDS.map((field) => (
+                  <div key={field.key} className="space-y-1">
+                    <Label htmlFor={`company-invite-prefill-${field.key}`}>{field.label}</Label>
+                    <Input
+                      id={`company-invite-prefill-${field.key}`}
+                      value={prefill[field.key] ?? ""}
+                      onChange={(e) => setPrefill({ ...prefill, [field.key]: e.target.value })}
+                    />
+                  </div>
+                ))}
+              </div>
+            </details>
 
             <div className="flex items-center gap-2">
               <Checkbox

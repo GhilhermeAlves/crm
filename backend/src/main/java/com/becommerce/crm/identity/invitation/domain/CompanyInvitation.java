@@ -3,6 +3,7 @@ package com.becommerce.crm.identity.invitation.domain;
 import com.becommerce.crm.identity.invitation.domain.exception.InvitationNoLongerValidException;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -24,6 +25,8 @@ public class CompanyInvitation {
     private String enabledModules;
     private String plan;
     private int maxUsers;
+    /** Dados da empresa adiantados pelo CRM_ADMIN (V126); o convidado confere ao aceitar. */
+    private Map<String, String> companyPrefill;
     private String tokenHash;
     private UUID invitedBy;
     private InvitationStatus status;
@@ -37,6 +40,7 @@ public class CompanyInvitation {
 
     public static CompanyInvitation create(UUID inviterCompanyId, String email, String inviteeName,
                                            String segment, String enabledModules, String plan, int maxUsers,
+                                           Map<String, String> companyPrefill,
                                            String tokenHash, UUID invitedBy) {
         LocalDateTime now = LocalDateTime.now();
         CompanyInvitation i = new CompanyInvitation();
@@ -48,6 +52,7 @@ public class CompanyInvitation {
         i.enabledModules = enabledModules;
         i.plan = plan;
         i.maxUsers = maxUsers;
+        i.companyPrefill = companyPrefill == null || companyPrefill.isEmpty() ? null : Map.copyOf(companyPrefill);
         i.tokenHash = tokenHash;
         i.invitedBy = invitedBy;
         i.status = InvitationStatus.PENDING;
@@ -123,6 +128,8 @@ public class CompanyInvitation {
     public void setPlan(String plan) { this.plan = plan; }
     public int getMaxUsers() { return maxUsers; }
     public void setMaxUsers(int maxUsers) { this.maxUsers = maxUsers; }
+    public Map<String, String> getCompanyPrefill() { return companyPrefill; }
+    public void setCompanyPrefill(Map<String, String> companyPrefill) { this.companyPrefill = companyPrefill; }
     public String getTokenHash() { return tokenHash; }
     public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
     public UUID getInvitedBy() { return invitedBy; }

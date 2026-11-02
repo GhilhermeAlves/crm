@@ -11,7 +11,7 @@ public record CreateCompanyRequest(
         @NotBlank(message = "Nome fantasia é obrigatório")
         String tradingName,
 
-        @NotBlank(message = "CNPJ é obrigatório")
+        /** CNPJ ou CPF; opcional (V126). */
         String cnpj,
 
         String stateRegistration,

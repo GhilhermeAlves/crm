@@ -10,7 +10,12 @@ export type CreateCompanyInvitationRequest = {
   maxUsers: number;
   /** Default `true`. `false` = não envia e-mail; o link fica para cópia/WhatsApp. */
   sendEmail?: boolean;
+  /** Dados da empresa adiantados pelo admin; o convidado confere ao aceitar. */
+  company?: CompanyPrefill;
 };
+
+/** Dados adiantados no convite: todos opcionais (só os preenchidos são enviados). */
+export type CompanyPrefill = Partial<InvitedCompanyDetails>;
 
 export type CompanyInvitation = {
   id: string;
@@ -25,6 +30,7 @@ export type CompanyInvitation = {
   invitedBy: string | null;
   expiresAt: string;
   createdAt: string;
+  company: CompanyPrefill | null;
 };
 
 export type CompanyInvitationLink = {
@@ -43,13 +49,15 @@ export type CompanyInvitationPreview = {
   status: InvitationStatus;
   expiresAt: string;
   hasAccount: boolean;
+  company: CompanyPrefill | null;
 };
 
 /** Dados da empresa preenchidos pelo convidado. */
 export type InvitedCompanyDetails = {
   legalName: string;
   tradingName: string;
-  cnpj: string;
+  /** CNPJ ou CPF; opcional. */
+  cnpj?: string;
   email: string;
   phone: string;
   addressZipCode: string;

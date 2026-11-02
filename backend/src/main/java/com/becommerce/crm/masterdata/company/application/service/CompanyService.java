@@ -113,8 +113,10 @@ public class CompanyService implements CompanyUseCase {
     @Override
     @Transactional
     public CompanyResponse createCompany(CreateCompanyRequest request, UUID creatorUserId) {
-        if (companyRepository.existsByCnpj(request.cnpj())) {
-            throw new CompanyAlreadyExistsException("CNPJ", request.cnpj());
+        // Documento opcional (CNPJ ou CPF): em branco vira NULL e não colide no índice único.
+        String cnpj = request.cnpj() == null || request.cnpj().isBlank() ? null : request.cnpj().trim();
+        if (cnpj != null && companyRepository.existsByCnpj(cnpj)) {
+            throw new CompanyAlreadyExistsException("CNPJ", cnpj);
         }
         if (companyRepository.existsByEmail(request.email())) {
             throw new CompanyAlreadyExistsException("email", request.email());
@@ -129,7 +131,7 @@ public class CompanyService implements CompanyUseCase {
         Company company = Company.create(
                 request.legalName(),
                 request.tradingName(),
-                request.cnpj(),
+                cnpj,
                 request.stateRegistration(),
                 request.municipalRegistration(),
                 request.email(),

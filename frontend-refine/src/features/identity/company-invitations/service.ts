@@ -23,8 +23,11 @@ export const CompanyInvitationService = {
     await api.delete(`${BASE}/${id}`);
   },
   /** Novo link; o anterior deixa de valer. */
-  async regenerate(id: string): Promise<CompanyInvitationLink> {
-    const response = await api.post<CompanyInvitationLink>(`${BASE}/${id}/regenerate`);
+  /** Novo link: o anterior deixa de valer. `send=true` reenvia por e-mail com o link novo. */
+  async regenerate(id: string, send = false): Promise<CompanyInvitationLink> {
+    const response = await api.post<CompanyInvitationLink>(`${BASE}/${id}/regenerate`, null, {
+      params: { send },
+    });
     return response.data;
   },
   async preview(token: string): Promise<CompanyInvitationPreview> {

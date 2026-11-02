@@ -47,8 +47,12 @@ export function useRevokeCompanyInvitation() {
 export function useRegenerateCompanyInvitation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => CompanyInvitationService.regenerate(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+    mutationFn: ({ id, send }: { id: string; send: boolean }) =>
+      CompanyInvitationService.regenerate(id, send),
+    onSuccess: (_data, { send }) => {
+      queryClient.invalidateQueries({ queryKey: KEY });
+      if (send) toast.success("Novo link enviado por e-mail");
+    },
     onError: showError,
   });
 }

@@ -59,7 +59,7 @@ describe("CompanyInvitationLanding", () => {
     fill("Confirmar senha", "Senha@1234");
     fill("Razão social", "Clínica Sorriso Ltda");
     fill("Nome fantasia", "Clínica Sorriso");
-    fill("CNPJ", "12345678000199");
+    fill("CNPJ ou CPF (opcional)", "12345678000199");
     fill("Telefone", "11999990000");
     fill("CEP", "01001000");
     fill("Rua", "Rua A");
@@ -89,6 +89,38 @@ describe("CompanyInvitationLanding", () => {
 
     expect(await screen.findByRole("alert")).toBeTruthy();
     expect(register).not.toHaveBeenCalled();
+  });
+
+  it("abre com os dados adiantados pelo admin e aceita empresa sem documento", async () => {
+    preview.mockResolvedValue({
+      ...PENDING,
+      company: {
+        legalName: "Ana Souza",
+        tradingName: "Ana Estética",
+        phone: "11999990000",
+        addressZipCode: "01001000",
+        addressStreet: "Rua A",
+        addressNumber: "10",
+        addressNeighborhood: "Centro",
+        addressCity: "São Paulo",
+        addressState: "SP",
+      },
+    });
+    register.mockResolvedValue({});
+    renderLanding();
+
+    await screen.findByText("Convite para criar sua empresa");
+    expect((screen.getByLabelText("Nome fantasia") as HTMLInputElement).value).toBe("Ana Estética");
+    expect((screen.getByLabelText("CNPJ ou CPF (opcional)") as HTMLInputElement).value).toBe("");
+    fill("Senha", "Senha@1234");
+    fill("Confirmar senha", "Senha@1234");
+    fireEvent.click(screen.getByRole("button", { name: "Criar conta e empresa" }));
+
+    await waitFor(() => expect(register).toHaveBeenCalled());
+    const body = register.mock.calls[0][0];
+    expect(body.company.tradingName).toBe("Ana Estética");
+    expect(body.company.email).toBe("dono@clinica.com");
+    expect(body.company.cnpj).toBe("");
   });
 
   it("explica quando o convite já foi usado", async () => {

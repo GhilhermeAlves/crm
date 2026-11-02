@@ -8,8 +8,11 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -39,6 +42,10 @@ public class JpaCompanyInvitation {
 
     @Column(name = "max_users")
     private int maxUsers;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "company_prefill", columnDefinition = "jsonb")
+    private Map<String, String> companyPrefill;
 
     @Column(name = "token_hash")
     private String tokenHash;
@@ -78,6 +85,8 @@ public class JpaCompanyInvitation {
     public void setPlan(String plan) { this.plan = plan; }
     public int getMaxUsers() { return maxUsers; }
     public void setMaxUsers(int maxUsers) { this.maxUsers = maxUsers; }
+    public Map<String, String> getCompanyPrefill() { return companyPrefill; }
+    public void setCompanyPrefill(Map<String, String> companyPrefill) { this.companyPrefill = companyPrefill; }
     public String getTokenHash() { return tokenHash; }
     public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
     public UUID getInvitedBy() { return invitedBy; }

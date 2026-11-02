@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link2, Trash2 } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import {
   useRegenerateCompanyInvitation,
   useRevokeCompanyInvitation,
 } from "../hooks";
-import type { CompanyInvitationLink } from "../types";
+import type { CompanyInvitation, CompanyInvitationLink } from "../types";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Pendente",
@@ -36,6 +36,21 @@ export function CompanyInvitationsList() {
   const regenerate = useRegenerateCompanyInvitation();
   const revoke = useRevokeCompanyInvitation();
   const [link, setLink] = useState<CompanyInvitationLink | null>(null);
+  // Gerar link novo invalida o anterior (inclusive o do e-mail): sempre confirma antes.
+  const [confirming, setConfirming] = useState<CompanyInvitation | null>(null);
+
+  function regenerateLink(send: boolean) {
+    if (!confirming) return;
+    regenerate.mutate(
+      { id: confirming.id, send },
+      {
+        onSuccess: (result) => {
+          setConfirming(null);
+          setLink(result);
+        },
+      },
+    );
+  }
 
   if (!invitations || invitations.length === 0) return null;
 
@@ -69,11 +84,12 @@ export function CompanyInvitationsList() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    title="Gerar novo link"
+                    title="Gerar novo link (o link atual deixa de valer)"
+                    aria-label="Gerar novo link"
                     disabled={regenerate.isPending}
-                    onClick={() => regenerate.mutate(invitation.id, { onSuccess: setLink })}
+                    onClick={() => setConfirming(invitation)}
                   >
-                    <Link2 className="h-4 w-4" />
+                    <RefreshCw className="h-4 w-4" />
                   </Button>
                 )}
                 {invitation.status === "PENDING" && (
@@ -93,6 +109,33 @@ export function CompanyInvitationsList() {
           );
         })}
       </CardContent>
+
+      <Dialog open={!!confirming} onOpenChange={(open) => !open && setConfirming(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerar novo link?</DialogTitle>
+            <DialogDescription>
+              O link atual de {confirming?.email} deixa de funcionar, inclusive o que já foi enviado
+              por e-mail. Use só se o convidado perdeu o link ou ele expirou.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={() => setConfirming(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="outline"
+              disabled={regenerate.isPending}
+              onClick={() => regenerateLink(false)}
+            >
+              Só gerar o link
+            </Button>
+            <Button disabled={regenerate.isPending} onClick={() => regenerateLink(true)}>
+              Gerar e reenviar por e-mail
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!link} onOpenChange={(open) => !open && setLink(null)}>
         <DialogContent>

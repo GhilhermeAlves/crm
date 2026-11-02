@@ -55,7 +55,8 @@ public class CompanyInvitationSignupService {
     private static Response accepted(Response pending) {
         return new Response(pending.id(), pending.email(), pending.inviteeName(), pending.segment(),
                 pending.enabledModules(), pending.plan(), pending.maxUsers(), InvitationStatus.ACCEPTED,
-                pending.companyId(), pending.invitedBy(), pending.expiresAt(), pending.createdAt());
+                pending.companyId(), pending.invitedBy(), pending.expiresAt(), pending.createdAt(),
+                pending.company());
     }
 
     private void checkRate(String clientKey) {
