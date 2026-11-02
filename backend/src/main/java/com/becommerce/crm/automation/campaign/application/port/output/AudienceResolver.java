@@ -2,7 +2,10 @@ package com.becommerce.crm.automation.campaign.application.port.output;
 
 import com.becommerce.crm.automation.campaign.domain.AudienceType;
 
+import com.becommerce.crm.automation.campaign.domain.CampaignMessageRenderer;
+
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -13,6 +16,9 @@ import java.util.UUID;
 public interface AudienceResolver {
 
     List<Recipient> resolve(UUID companyId, AudienceType audienceType, String audienceCriteriaJson);
+
+    /** Dados do contato para personalizar a mensagem; vazio se o contato não existir mais. */
+    Optional<CampaignMessageRenderer.Profile> findProfile(UUID companyId, UUID contactId);
 
     record Recipient(UUID id, String type, String phone) {}
 }
