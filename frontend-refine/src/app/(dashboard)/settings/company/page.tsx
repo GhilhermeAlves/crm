@@ -13,10 +13,15 @@ import { fetchAddressByCep } from "@/features/identity/tenants/services/cep.serv
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { maskCnpj, maskPhone, maskCep } from "@/lib/masks";
+import { isValidCpfCnpj, maskCpfCnpj, maskPhone, maskCep } from "@/lib/masks";
 
 const companySchema = z.object({
-  cnpj: z.string().min(1, "CNPJ/CPF é obrigatório"),
+  // CNPJ ou CPF; opcional. Se informado, precisa ser válido.
+  cnpj: z
+    .string()
+    .optional()
+    .default("")
+    .refine((val) => !val || isValidCpfCnpj(val), "CNPJ ou CPF inválido"),
   legalName: z.string().max(200).optional().default(""),
   phone: z.string().min(1, "Telefone é obrigatório"),
   zipCode: z.string().min(1, "CEP é obrigatório"),
@@ -293,15 +298,15 @@ export default function CompanyDataPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>CNPJ/CPF</Label>
+                <Label>CNPJ ou CPF (opcional)</Label>
                 <Controller
                   name="cnpj"
                   control={control}
                   render={({ field }) => (
                     <Input
                       inputMode="numeric"
-                      value={field.value}
-                      onChange={(e) => field.onChange(maskCnpj(e.target.value))}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(maskCpfCnpj(e.target.value))}
                       ref={field.ref}
                     />
                   )}

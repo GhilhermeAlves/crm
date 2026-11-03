@@ -216,6 +216,12 @@ public class Company {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /** Troca o documento (CNPJ ou CPF); em branco remove. Unicidade é checada no serviço. */
+    public void changeDocument(String document) {
+        this.cnpj = document == null || document.isBlank() ? null : document.trim();
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public UUID getId() { return id; }
     public String getLegalName() { return legalName; }
     public String getTradingName() { return tradingName; }

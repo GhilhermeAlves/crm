@@ -261,6 +261,17 @@ public class CompanyService implements CompanyUseCase {
                 plan, status, maxUsers, maxStorageMb, maxContacts,
                 logoUrl, notes
         );
+        if (request.cnpj() != null) {
+            String document = request.cnpj().isBlank() ? null : request.cnpj().trim();
+            if (document != null && !document.equals(company.getCnpj())) {
+                companyRepository.findByCnpj(document)
+                        .filter(other -> !other.getId().equals(company.getId()))
+                        .ifPresent(other -> {
+                            throw new CompanyAlreadyExistsException("CNPJ", document);
+                        });
+            }
+            company.changeDocument(document);
+        }
 
         Company saved = companyRepository.save(company);
         eventPublisher.publish(CompanyUpdatedEvent.create(saved));

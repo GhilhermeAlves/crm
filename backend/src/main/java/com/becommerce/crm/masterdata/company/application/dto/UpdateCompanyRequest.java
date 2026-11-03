@@ -20,6 +20,8 @@ public record UpdateCompanyRequest(
         Integer maxStorageMb,
         Integer maxContacts,
         String logoUrl,
-        String notes
+        String notes,
+        /** CNPJ ou CPF. {@code null} mantém o atual; vazio remove o documento. */
+        String cnpj
 ) {
 }

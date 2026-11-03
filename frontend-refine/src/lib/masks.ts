@@ -13,6 +13,20 @@ export function maskCnpj(value: string): string {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
 }
 
+/** Máscara de CPF: 123.456.789-09 — somente dígitos, máx. 11. */
+export function maskCpf(value: string): string {
+  const d = onlyDigits(value).slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+/** Documento da empresa: até 11 dígitos formata como CPF, acima disso como CNPJ. */
+export function maskCpfCnpj(value: string): string {
+  return onlyDigits(value).length <= 11 ? maskCpf(value) : maskCnpj(value);
+}
+
 /**
  * Máscara de telefone: fixo (11) 9999-9999 ou celular (11) 99999-9999.
  * Somente dígitos, máx. 11.
@@ -53,4 +67,25 @@ export function isValidCnpj(value: string): boolean {
   const check2 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
 
   return Number(digits[12]) === check1 && Number(digits[13]) === check2;
+}
+
+/** Validação dos dígitos verificadores de um CPF. Aceita valor mascarado ou só dígitos. */
+export function isValidCpf(value: string): boolean {
+  const digits = onlyDigits(value);
+  if (digits.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(digits)) return false;
+
+  const check = (length: number) => {
+    let sum = 0;
+    for (let i = 0; i < length; i++) sum += Number(digits[i]) * (length + 1 - i);
+    const rest = (sum * 10) % 11;
+    return rest === 10 ? 0 : rest;
+  };
+  return check(9) === Number(digits[9]) && check(10) === Number(digits[10]);
+}
+
+/** Documento da empresa: CPF (11 dígitos) ou CNPJ (14 dígitos) válido. */
+export function isValidCpfCnpj(value: string): boolean {
+  const length = onlyDigits(value).length;
+  return length === 11 ? isValidCpf(value) : isValidCnpj(value);
 }

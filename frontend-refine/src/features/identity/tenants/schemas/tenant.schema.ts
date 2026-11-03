@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { isValidCnpj } from "@/lib/masks";
+import { isValidCpfCnpj } from "@/lib/masks";
 
-const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
 const phoneRegex = /^\(\d{2}\)\s?\d{4,5}-\d{4}$/;
 const cepRegex = /^\d{5}-\d{3}$/;
 
@@ -25,11 +24,12 @@ export const tenantSchema = z.object({
     .string()
     .min(1, "Nome Fantasia é obrigatório")
     .max(200, "Nome Fantasia deve ter no máximo 200 caracteres"),
+  // CNPJ ou CPF; opcional (empresa pode operar com CPF). Se informado, precisa ser válido.
   cnpj: z
     .string()
-    .min(1, "CNPJ é obrigatório")
-    .regex(cnpjRegex, "CNPJ inválido (ex: 12.345.678/0001-90)")
-    .refine(isValidCnpj, "CNPJ inválido"),
+    .optional()
+    .default("")
+    .refine((val) => !val || isValidCpfCnpj(val), "CNPJ ou CPF inválido"),
   stateRegistration: z.string().max(30).optional().default(""),
   municipalRegistration: z.string().max(30).optional().default(""),
   email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
