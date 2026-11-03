@@ -2,6 +2,7 @@ package com.becommerce.crm.identity.infrastructure.email;
 
 import com.becommerce.crm.identity.application.port.output.EmailService;
 import com.becommerce.crm.communication.notification.application.EmailSender;
+import com.becommerce.crm.communication.notification.application.InvitationEmailTemplate;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -40,15 +41,8 @@ public class SmtpEmailSender implements EmailSender, EmailService {
 
     @Override
     public void sendInvitation(String to, String companyName, String role, String tokenUrl) {
-        String subject = "Você foi convidado para " + companyName;
-        String body = """
-                <p>Olá!</p>
-                <p>Você foi convidado para ingressar na empresa <strong>%s</strong>
-                com o papel <strong>%s</strong>.</p>
-                <p><a href="%s">Aceitar convite</a></p>
-                <p>Se não foi você, ignore este e-mail.</p>
-                """.formatted(companyName, role, tokenUrl);
-        sendHtml(to, subject, body);
+        sendHtml(to, InvitationEmailTemplate.subject(companyName),
+                InvitationEmailTemplate.html(frontendBaseUrl, companyName, role, tokenUrl));
     }
 
     @Override

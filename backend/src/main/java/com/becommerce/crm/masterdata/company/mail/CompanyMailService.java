@@ -1,5 +1,6 @@
 package com.becommerce.crm.masterdata.company.mail;
 
+import com.becommerce.crm.communication.notification.application.InvitationEmailTemplate;
 import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.MailSettingsResponse;
 import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.SaveMailSettings;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
@@ -46,10 +47,14 @@ public class CompanyMailService {
 
     private final CompanyMailSettingsJpaRepository repository;
     private final MailPasswordCipher cipher;
+    private final String frontendBaseUrl;
 
-    public CompanyMailService(CompanyMailSettingsJpaRepository repository, MailPasswordCipher cipher) {
+    public CompanyMailService(CompanyMailSettingsJpaRepository repository, MailPasswordCipher cipher,
+                              @org.springframework.beans.factory.annotation.Value(
+                                      "${app.mail.frontend-base-url:http://localhost:3000}") String frontendBaseUrl) {
         this.repository = repository;
         this.cipher = cipher;
+        this.frontendBaseUrl = frontendBaseUrl;
     }
 
     static Optional<Server> knownServer(String email) {
@@ -143,14 +148,8 @@ public class CompanyMailService {
         if (settings.isEmpty()) {
             return false;
         }
-        String body = """
-                <p>Olá!</p>
-                <p>Você foi convidado para ingressar na empresa <strong>%s</strong>
-                com o papel <strong>%s</strong>.</p>
-                <p><a href="%s">Aceitar convite</a></p>
-                <p>Se não foi você, ignore este e-mail.</p>
-                """.formatted(escape(companyName), escape(role), url);
-        send(settings.get(), to, "Você foi convidado para " + companyName, body,
+        send(settings.get(), to, InvitationEmailTemplate.subject(companyName),
+                InvitationEmailTemplate.html(frontendBaseUrl, companyName, role, url),
                 settings.get().getSenderName());
         return true;
     }

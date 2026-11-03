@@ -29,6 +29,8 @@ export const PUBLIC_PATHS = [
   "/apresentacao",
   // Imagens estáticas usadas na apresentação (public/marketing).
   "/marketing",
+  // Logo da marca usada nos e-mails (o leitor de e-mail baixa sem sessão).
+  "/brand",
 ] as const;
 
 /** Link legado de convite, redirecionado para /convite/{token}. */
