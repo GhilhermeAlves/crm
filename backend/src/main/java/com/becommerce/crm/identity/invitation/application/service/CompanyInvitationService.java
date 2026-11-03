@@ -112,7 +112,7 @@ public class CompanyInvitationService {
 
         String url = buildTokenUrl(token);
         if (request.shouldSendEmail()) {
-            emailSender.sendInvitation(email, "uma nova empresa no CRM", "ADMIN", url);
+            emailSender.sendInvitation(email, "" /* vazio = convite de abertura de empresa */, "ADMIN", url);
         }
         auditor.record(inviterCompanyId, AuditAction.CREATE, AuditModule.INVITATIONS, "CompanyInvitation",
                 invitation.getId().toString(), "Convite de criação de empresa para " + email, invitedBy,
@@ -145,7 +145,7 @@ public class CompanyInvitationService {
         CompanyInvitation saved = repository.save(invitation);
         String url = buildTokenUrl(token);
         if (sendEmail) {
-            emailSender.sendInvitation(saved.getEmail(), "uma nova empresa no CRM", "ADMIN", url);
+            emailSender.sendInvitation(saved.getEmail(), "" /* vazio = convite de abertura de empresa */, "ADMIN", url);
         }
         return new LinkResponse(toResponse(saved), url);
     }
