@@ -93,7 +93,14 @@ public final class InvitationEmailTemplate {
                 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Seu acesso ao CRM da PG Automação está pronto. Veja como começar em 4 passos.</div>
                 <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f4f9;">
                 <tr><td align="center" style="padding:32px 12px;">
-                  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%%;max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(10,14,23,0.08);font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+                  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+                    style="width:100%%;
+                      max-width:600px;
+                      background-color:#ffffff;
+                      border-radius:16px;
+                      overflow:hidden;
+                      box-shadow:0 4px 24px rgba(10,14,23,0.08);
+                      font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
                     <tr>
                       <td align="center" style="background-color:#080b12;padding:28px 24px 22px 24px;">
                         <img src="%1$s" width="200" alt="PG Automação" style="display:block;width:200px;max-width:60%%;height:auto;border:0;">
@@ -101,13 +108,27 @@ public final class InvitationEmailTemplate {
                     </tr>
                     <tr><td style="height:4px;line-height:4px;font-size:0;background-color:#1a73ff;background-image:linear-gradient(90deg,#0b5cff,#19b6ff);">&nbsp;</td></tr>
                     <tr>
-                      <td background="%2$s" style="background-color:#ffffff;background-image:url('%2$s');background-repeat:no-repeat;background-position:center 150px;background-size:360px auto;padding:40px 44px 8px 44px;color:#1f2937;">
+                      <td background="%2$s"
+                        style="background-color:#ffffff;
+                          background-image:url('%2$s');
+                          background-repeat:no-repeat;
+                          background-position:center 150px;
+                          background-size:360px auto;
+                          padding:40px 44px 8px 44px;
+                          color:#1f2937;">
                         <h1 style="margin:0 0 16px 0;font-size:26px;line-height:1.3;color:#080b12;font-weight:700;">Seja muito bem-vindo(a)! 🎉</h1>
                         <p style="margin:0 0 16px 0;font-size:16px;line-height:1.65;color:#374151;">Olá!</p>
                         <p style="margin:0 0 28px 0;font-size:16px;line-height:1.65;color:#374151;">%3$s</p>
                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 32px auto;">
                           <tr><td align="center" style="border-radius:10px;background-color:#0b5cff;">
-                            <a href="%4$s" target="_blank" style="display:inline-block;padding:15px 36px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;">Criar minha conta</a>
+                            <a href="%4$s" target="_blank"
+                              style="display:inline-block;
+                                padding:15px 36px;
+                                font-size:16px;
+                                font-weight:700;
+                                color:#ffffff;
+                                text-decoration:none;
+                                border-radius:10px;">Criar minha conta</a>
                           </td></tr>
                         </table>
                         <h2 style="margin:0 0 16px 0;font-size:18px;color:#080b12;font-weight:700;">Como começar em 4 passos</h2>
