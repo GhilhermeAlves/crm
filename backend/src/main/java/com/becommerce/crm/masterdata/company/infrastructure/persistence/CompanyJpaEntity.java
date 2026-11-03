@@ -18,7 +18,8 @@ public class CompanyJpaEntity {
     @Column(name = "trading_name", nullable = false)
     private String tradingName;
 
-    @Column(nullable = false, unique = true)
+    /** CNPJ ou CPF; opcional desde a V126. */
+    @Column(unique = true)
     private String cnpj;
 
     @Column(name = "state_registration")

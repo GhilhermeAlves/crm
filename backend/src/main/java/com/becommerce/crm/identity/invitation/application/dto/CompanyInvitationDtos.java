@@ -10,7 +10,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Contratos do convite de criação de empresa (V123). */
@@ -27,7 +29,9 @@ public final class CompanyInvitationDtos {
             @NotEmpty List<String> enabledModules,
             @NotBlank String plan,
             @NotNull @Min(1) Integer maxUsers,
-            Boolean sendEmail
+            Boolean sendEmail,
+            /** Dados da empresa adiantados pelo CRM_ADMIN (opcional). */
+            @Valid CompanyPrefill company
     ) {
         public boolean shouldSendEmail() {
             return sendEmail == null || sendEmail;
@@ -46,7 +50,8 @@ public final class CompanyInvitationDtos {
             UUID companyId,
             UUID invitedBy,
             LocalDateTime expiresAt,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            CompanyPrefill company
     ) {}
 
     /** Convite com link recém-gerado. O link anterior deixa de valer. */
@@ -62,14 +67,16 @@ public final class CompanyInvitationDtos {
             int maxUsers,
             InvitationStatus status,
             LocalDateTime expiresAt,
-            boolean hasAccount
+            boolean hasAccount,
+            CompanyPrefill company
     ) {}
 
     /** Dados da empresa preenchidos pelo convidado. */
     public record CompanyDetails(
             @NotBlank(message = "Razão social é obrigatória") String legalName,
             @NotBlank(message = "Nome fantasia é obrigatório") String tradingName,
-            @NotBlank(message = "CNPJ é obrigatório") String cnpj,
+            /** CNPJ ou CPF; opcional (empresas podem operar com CPF). */
+            @Size(max = 20, message = "Documento muito longo") String cnpj,
             @NotBlank(message = "Email é obrigatório") @Email(message = "Email inválido") String email,
             @NotBlank(message = "Telefone é obrigatório") String phone,
             @NotBlank(message = "CEP é obrigatório") String addressZipCode,
@@ -80,6 +87,59 @@ public final class CompanyInvitationDtos {
             @NotBlank(message = "Cidade é obrigatória") String addressCity,
             @NotBlank(message = "Estado é obrigatório") String addressState
     ) {}
+
+    /**
+     * Dados da empresa adiantados no convite. Todos opcionais: o convidado
+     * confere e completa ao aceitar. Persistido como JSON (V126).
+     */
+    public record CompanyPrefill(
+            @Size(max = 255) String legalName,
+            @Size(max = 255) String tradingName,
+            @Size(max = 20) String cnpj,
+            @Size(max = 255) String email,
+            @Size(max = 30) String phone,
+            @Size(max = 10) String addressZipCode,
+            @Size(max = 255) String addressStreet,
+            @Size(max = 20) String addressNumber,
+            @Size(max = 255) String addressComplement,
+            @Size(max = 120) String addressNeighborhood,
+            @Size(max = 120) String addressCity,
+            @Size(max = 2) String addressState
+    ) {
+        /** Só os campos preenchidos; vazio quando nada foi adiantado. */
+        public Map<String, String> toMap() {
+            Map<String, String> m = new LinkedHashMap<>();
+            put(m, "legalName", legalName);
+            put(m, "tradingName", tradingName);
+            put(m, "cnpj", cnpj);
+            put(m, "email", email);
+            put(m, "phone", phone);
+            put(m, "addressZipCode", addressZipCode);
+            put(m, "addressStreet", addressStreet);
+            put(m, "addressNumber", addressNumber);
+            put(m, "addressComplement", addressComplement);
+            put(m, "addressNeighborhood", addressNeighborhood);
+            put(m, "addressCity", addressCity);
+            put(m, "addressState", addressState);
+            return m;
+        }
+
+        public static CompanyPrefill fromMap(Map<String, String> m) {
+            if (m == null || m.isEmpty()) {
+                return null;
+            }
+            return new CompanyPrefill(m.get("legalName"), m.get("tradingName"), m.get("cnpj"), m.get("email"),
+                    m.get("phone"), m.get("addressZipCode"), m.get("addressStreet"), m.get("addressNumber"),
+                    m.get("addressComplement"), m.get("addressNeighborhood"), m.get("addressCity"),
+                    m.get("addressState"));
+        }
+
+        private static void put(Map<String, String> m, String key, String value) {
+            if (value != null && !value.isBlank()) {
+                m.put(key, value.trim());
+            }
+        }
+    }
 
     /** Quem já tem conta: entra e aceita informando os dados da empresa. */
     public record AcceptRequest(

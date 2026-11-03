@@ -7,8 +7,10 @@ import com.becommerce.crm.identity.application.service.AuthService;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.valueobject.Email;
 import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.CompanyDetails;
+import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.CompanyPrefill;
 import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.CreateRequest;
 import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.LinkResponse;
+import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.PreviewResponse;
 import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.Response;
 import com.becommerce.crm.identity.invitation.application.port.output.CompanyInvitationRepository;
 import com.becommerce.crm.identity.invitation.domain.CompanyInvitation;
@@ -30,10 +32,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -76,7 +80,8 @@ class CompanyInvitationServiceTest {
     }
 
     private static CreateRequest request(String segment, String plan, Boolean sendEmail) {
-        return new CreateRequest("Dono@Clinica.com", "Dono", segment, List.of("CRM", "AGENDA"), plan, 3, sendEmail);
+        return new CreateRequest("Dono@Clinica.com", "Dono", segment, List.of("CRM", "AGENDA"), plan, 3, sendEmail,
+                null);
     }
 
     private static CompanyDetails details() {
@@ -87,7 +92,7 @@ class CompanyInvitationServiceTest {
 
     private CompanyInvitation pendingInvitation() {
         return CompanyInvitation.create(adminCompanyId, "dono@clinica.com", "Dono", "DENTAL", "CRM,AGENDA",
-                "PROFESSIONAL", 3, InvitationTokenService.hash("tok"), crmAdminId);
+                "PROFESSIONAL", 3, null, InvitationTokenService.hash("tok"), crmAdminId);
     }
 
     @Test
@@ -152,6 +157,57 @@ class CompanyInvitationServiceTest {
         assertEquals(3, created.maxUsers());
         assertEquals(List.of("AGENDA", "CRM"), created.enabledModules());
         assertEquals("Clínica Sorriso", created.tradingName());
+    }
+
+    @Test
+    void createsInvitationWithPrefilledCompanyData() {
+        CompanyPrefill prefill = new CompanyPrefill("Clínica Sorriso Ltda", "Clínica Sorriso", " ", null,
+                "11999990000", null, null, null, null, null, "São Paulo", "SP");
+        CreateRequest withPrefill = new CreateRequest("dono@clinica.com", "Dono", "DENTAL", List.of("CRM"),
+                "STARTER", 3, false, prefill);
+
+        LinkResponse response = service.create(adminCompanyId, withPrefill, crmAdminId);
+
+        CompanyPrefill saved = response.invitation().company();
+        assertEquals("Clínica Sorriso", saved.tradingName());
+        assertEquals("São Paulo", saved.addressCity());
+        // Campos em branco não são guardados.
+        assertNull(saved.cnpj());
+        assertNull(saved.email());
+    }
+
+    @Test
+    void previewReturnsPrefilledCompanyData() {
+        CompanyInvitation invitation = CompanyInvitation.create(adminCompanyId, "dono@clinica.com", "Dono",
+                "DENTAL", "CRM", "STARTER", 3, Map.of("tradingName", "Clínica Sorriso"),
+                InvitationTokenService.hash("tok"), crmAdminId);
+        when(repository.findByTokenHash(anyString())).thenReturn(Optional.of(invitation));
+
+        PreviewResponse preview = service.preview("tok");
+
+        assertEquals("Clínica Sorriso", preview.company().tradingName());
+    }
+
+    @Test
+    void acceptWithoutDocumentCreatesCompanyWithNullCnpj() {
+        UUID userId = UUID.randomUUID();
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(userId);
+        when(user.getEmail()).thenReturn(new Email("dono@clinica.com"));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(repository.findByTokenHashForUpdate(anyString())).thenReturn(Optional.of(pendingInvitation()));
+        CompanyResponse company = mock(CompanyResponse.class);
+        when(company.id()).thenReturn(UUID.randomUUID().toString());
+        when(companyUseCase.createCompany(any(CreateCompanyRequest.class), eq(userId))).thenReturn(company);
+        CompanyDetails semDocumento = new CompanyDetails("Ana Souza", "Ana Estética", "  ",
+                "ana@estetica.com", "11999990000", "01001000", "Rua A", "10", null,
+                "Centro", "São Paulo", "SP");
+
+        service.accept("tok", semDocumento, userId);
+
+        ArgumentCaptor<CreateCompanyRequest> captor = ArgumentCaptor.forClass(CreateCompanyRequest.class);
+        verify(companyUseCase).createCompany(captor.capture(), eq(userId));
+        assertNull(captor.getValue().cnpj());
     }
 
     @Test

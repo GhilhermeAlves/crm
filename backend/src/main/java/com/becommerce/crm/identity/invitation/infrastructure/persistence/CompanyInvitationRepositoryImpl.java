@@ -53,6 +53,7 @@ public class CompanyInvitationRepositoryImpl implements CompanyInvitationReposit
         e.setEnabledModules(i.getEnabledModules());
         e.setPlan(i.getPlan());
         e.setMaxUsers(i.getMaxUsers());
+        e.setCompanyPrefill(i.getCompanyPrefill());
         e.setTokenHash(i.getTokenHash());
         e.setInvitedBy(i.getInvitedBy());
         e.setStatus(i.getStatus());
@@ -73,6 +74,7 @@ public class CompanyInvitationRepositoryImpl implements CompanyInvitationReposit
         i.setEnabledModules(e.getEnabledModules());
         i.setPlan(e.getPlan());
         i.setMaxUsers(e.getMaxUsers());
+        i.setCompanyPrefill(e.getCompanyPrefill());
         i.setTokenHash(e.getTokenHash());
         i.setInvitedBy(e.getInvitedBy());
         i.setStatus(e.getStatus());

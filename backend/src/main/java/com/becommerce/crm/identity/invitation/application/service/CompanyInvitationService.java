@@ -10,6 +10,7 @@ import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.exception.DuplicateEmailException;
 import com.becommerce.crm.identity.domain.exception.UserNotFoundException;
 import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.CompanyDetails;
+import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.CompanyPrefill;
 import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.CreateRequest;
 import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.LinkResponse;
 import com.becommerce.crm.identity.invitation.application.dto.CompanyInvitationDtos.PreviewResponse;
@@ -104,8 +105,9 @@ public class CompanyInvitationService {
         }
 
         String token = InvitationTokenService.generateToken();
+        Map<String, String> prefill = request.company() == null ? null : request.company().toMap();
         CompanyInvitation invitation = repository.save(CompanyInvitation.create(inviterCompanyId, email,
-                blankToNull(request.name()), segment, modules, plan, request.maxUsers(),
+                blankToNull(request.name()), segment, modules, plan, request.maxUsers(), prefill,
                 InvitationTokenService.hash(token), invitedBy));
 
         String url = buildTokenUrl(token);
@@ -156,7 +158,8 @@ public class CompanyInvitationService {
             InvitationStatus status = i.effectiveStatus();
             boolean hasAccount = status == InvitationStatus.PENDING && accountExists(i.getEmail());
             return new PreviewResponse(i.getEmail(), i.getInviteeName(), i.getSegment(), modules(i),
-                    i.getPlan(), i.getMaxUsers(), status, i.getExpiresAt(), hasAccount);
+                    i.getPlan(), i.getMaxUsers(), status, i.getExpiresAt(), hasAccount,
+                    status == InvitationStatus.PENDING ? CompanyPrefill.fromMap(i.getCompanyPrefill()) : null);
         });
     }
 
@@ -228,7 +231,7 @@ public class CompanyInvitationService {
         TenantContext.setIdentityEmail(identityEmail);
 
         CreateCompanyRequest request = new CreateCompanyRequest(
-                d.legalName().trim(), d.tradingName().trim(), d.cnpj().trim(), null, null,
+                d.legalName().trim(), d.tradingName().trim(), blankToNull(d.cnpj()), null, null,
                 normalize(d.email()), d.phone().trim(), null,
                 d.addressZipCode().trim(), d.addressStreet().trim(), d.addressNumber().trim(),
                 blankToNull(d.addressComplement()), d.addressNeighborhood().trim(),
@@ -361,6 +364,6 @@ public class CompanyInvitationService {
     private static Response toResponse(CompanyInvitation i) {
         return new Response(i.getId(), i.getEmail(), i.getInviteeName(), i.getSegment(), modules(i), i.getPlan(),
                 i.getMaxUsers(), i.effectiveStatus(), i.getCompanyId(), i.getInvitedBy(), i.getExpiresAt(),
-                i.getCreatedAt());
+                i.getCreatedAt(), CompanyPrefill.fromMap(i.getCompanyPrefill()));
     }
 }

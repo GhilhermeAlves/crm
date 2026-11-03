@@ -39,7 +39,7 @@ const EMPTY_COMPANY: InvitedCompanyDetails = {
 const COMPANY_FIELDS: { key: keyof InvitedCompanyDetails; label: string; optional?: boolean }[] = [
   { key: "legalName", label: "Razão social" },
   { key: "tradingName", label: "Nome fantasia" },
-  { key: "cnpj", label: "CNPJ" },
+  { key: "cnpj", label: "CNPJ ou CPF", optional: true },
   { key: "email", label: "E-mail da empresa" },
   { key: "phone", label: "Telefone" },
   { key: "addressZipCode", label: "CEP" },
@@ -50,6 +50,14 @@ const COMPANY_FIELDS: { key: keyof InvitedCompanyDetails; label: string; optiona
   { key: "addressCity", label: "Cidade" },
   { key: "addressState", label: "Estado (UF)" },
 ];
+
+/** Dados que o admin adiantou no convite, com o e-mail do convite como padrão. */
+function initialCompany(preview: CompanyInvitationPreview): InvitedCompanyDetails {
+  const prefill = Object.fromEntries(
+    Object.entries(preview.company ?? {}).filter(([, v]) => typeof v === "string" && v.trim()),
+  );
+  return { ...EMPTY_COMPANY, email: preview.email, ...prefill };
+}
 
 type HttpError = {
   response?: { status?: number; data?: { message?: unknown; invitationStatus?: unknown } };
@@ -175,6 +183,9 @@ function CompanyFields({
   return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium text-crm-text">Dados da empresa</legend>
+      <p className="text-xs text-crm-text-secondary">
+        Confira os dados e corrija o que for preciso.
+      </p>
       <div className="grid gap-3 sm:grid-cols-2">
         {COMPANY_FIELDS.map((field) => (
           <div key={field.key} className="space-y-1">
@@ -211,10 +222,7 @@ function SignupForm({
   const [name, setName] = useState(preview.inviteeName ?? "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [company, setCompany] = useState<InvitedCompanyDetails>({
-    ...EMPTY_COMPANY,
-    email: preview.email,
-  });
+  const [company, setCompany] = useState<InvitedCompanyDetails>(() => initialCompany(preview));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // Trava síncrona: dois cliques antes do re-render não geram dois POSTs.
@@ -292,10 +300,7 @@ function ExistingAccount({ token, preview }: { token: string; preview: CompanyIn
   const router = useRouter();
   const queryClient = useQueryClient();
   const me = useMe(true);
-  const [company, setCompany] = useState<InvitedCompanyDetails>({
-    ...EMPTY_COMPANY,
-    email: preview.email,
-  });
+  const [company, setCompany] = useState<InvitedCompanyDetails>(() => initialCompany(preview));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
