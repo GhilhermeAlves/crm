@@ -3,7 +3,11 @@ package com.becommerce.crm.communication.notification.application;
 import java.util.Map;
 
 /**
- * E-mail de convite com a identidade da PG Automação: fundo branco, cabeçalho
+ * Templates de convite. O visual da PG Automação ({@link #html}) é exclusivo da
+ * conta de envio dela ({@code app.mail.pg-branded-senders}); as demais empresas
+ * usam o convite simples ({@link #plainHtml}) até terem template próprio.
+ *
+ * <p>E-mail de convite com a identidade da PG Automação: fundo branco, cabeçalho
  * escuro com o logo, marca d'água suave no corpo e passo a passo para abrir a
  * conta. Usado pelo SMTP padrão e pela conta de e-mail da empresa.
  *
@@ -23,6 +27,27 @@ public final class InvitationEmailTemplate {
             "VIEWER", "Visualizador");
 
     private InvitationEmailTemplate() {
+    }
+
+    /**
+     * Convite simples (sem marca), usado pelas empresas que não têm template
+     * próprio. {@code companyName} vazio = convite para abrir uma nova empresa.
+     */
+    public static String plainSubject(String companyName) {
+        return isBlank(companyName) ? "Você foi convidado para abrir sua empresa no CRM"
+                : "Você foi convidado para " + companyName;
+    }
+
+    public static String plainHtml(String companyName, String role, String url) {
+        String target = isBlank(companyName) ? "abrir a conta da sua empresa no CRM"
+                : "ingressar na empresa <strong>" + escape(companyName) + "</strong>"
+                  + (isBlank(role) ? "" : " com o papel <strong>" + escape(role) + "</strong>");
+        return """
+                <p>Olá!</p>
+                <p>Você foi convidado para %s.</p>
+                <p><a href="%s">Aceitar convite</a></p>
+                <p>Se não foi você, ignore este e-mail.</p>
+                """.formatted(target, escape(url));
     }
 
     /**

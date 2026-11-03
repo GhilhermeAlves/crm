@@ -30,4 +30,15 @@ class InvitationEmailTemplateTest {
         assertTrue(InvitationEmailTemplate.subject("").contains("abra a conta da sua empresa"));
         assertTrue(InvitationEmailTemplate.subject("Clínica").endsWith("Clínica"));
     }
+
+    @Test
+    void plainInviteHasNoPgBranding() {
+        String member = InvitationEmailTemplate.plainHtml("Clínica", "AGENT", "https://crm/convite/a");
+        String company = InvitationEmailTemplate.plainHtml("", "ADMIN", "https://crm/convite-empresa/b");
+
+        assertFalse(member.contains("PG Automação"));
+        assertTrue(member.contains("<strong>Clínica</strong>"));
+        assertTrue(company.contains("abrir a conta da sua empresa"));
+        assertFalse(InvitationEmailTemplate.plainSubject("Clínica").contains("PG"));
+    }
 }

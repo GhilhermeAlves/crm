@@ -48,13 +48,20 @@ public class CompanyMailService {
     private final CompanyMailSettingsJpaRepository repository;
     private final MailPasswordCipher cipher;
     private final String frontendBaseUrl;
+    /** Contas de envio (e-mail SMTP da empresa) que usam o template da PG Automação. */
+    private final java.util.Set<String> pgBrandedSenders;
 
     public CompanyMailService(CompanyMailSettingsJpaRepository repository, MailPasswordCipher cipher,
                               @org.springframework.beans.factory.annotation.Value(
-                                      "${app.mail.frontend-base-url:http://localhost:3000}") String frontendBaseUrl) {
+                                      "${app.mail.frontend-base-url:http://localhost:3000}") String frontendBaseUrl,
+                              @org.springframework.beans.factory.annotation.Value(
+                                      "${app.mail.pg-branded-senders:ghilherme007@gmail.com}") String pgBrandedSenders) {
         this.repository = repository;
         this.cipher = cipher;
         this.frontendBaseUrl = frontendBaseUrl;
+        this.pgBrandedSenders = java.util.Arrays.stream(pgBrandedSenders.split(","))
+                .map(s -> s.trim().toLowerCase(Locale.ROOT)).filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     static Optional<Server> knownServer(String email) {
@@ -148,9 +155,14 @@ public class CompanyMailService {
         if (settings.isEmpty()) {
             return false;
         }
-        send(settings.get(), to, InvitationEmailTemplate.subject(companyName),
-                InvitationEmailTemplate.html(frontendBaseUrl, companyName, role, url),
-                settings.get().getSenderName());
+        // Template da PG Automação só para a conta de envio dela; demais empresas: convite simples.
+        boolean pgBranded = pgBrandedSenders.contains(
+                settings.get().getEmail() == null ? "" : settings.get().getEmail().trim().toLowerCase(Locale.ROOT));
+        String subject = pgBranded ? InvitationEmailTemplate.subject(companyName)
+                : InvitationEmailTemplate.plainSubject(companyName);
+        String body = pgBranded ? InvitationEmailTemplate.html(frontendBaseUrl, companyName, role, url)
+                : InvitationEmailTemplate.plainHtml(companyName, role, url);
+        send(settings.get(), to, subject, body, settings.get().getSenderName());
         return true;
     }
 

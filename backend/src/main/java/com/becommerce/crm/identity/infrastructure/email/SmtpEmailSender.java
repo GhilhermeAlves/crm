@@ -41,8 +41,9 @@ public class SmtpEmailSender implements EmailSender, EmailService {
 
     @Override
     public void sendInvitation(String to, String companyName, String role, String tokenUrl) {
-        sendHtml(to, InvitationEmailTemplate.subject(companyName),
-                InvitationEmailTemplate.html(frontendBaseUrl, companyName, role, tokenUrl));
+        // SMTP da plataforma: convite simples (o template da PG é só da conta dela).
+        sendHtml(to, InvitationEmailTemplate.plainSubject(companyName),
+                InvitationEmailTemplate.plainHtml(companyName, role, tokenUrl));
     }
 
     @Override
