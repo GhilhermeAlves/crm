@@ -31,12 +31,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -97,7 +99,8 @@ class OnboardingServiceTest {
      * empresa com o mesmo id, além de conceder look-up imediato pelo company id.
      */
     private AtomicReference<UUID> arrangeHappyPath() {
-        when(companyRepository.existsByCnpj(any())).thenReturn(false);
+        // lenient: sem documento o serviço nem consulta o CNPJ.
+        lenient().when(companyRepository.existsByCnpj(any())).thenReturn(false);
         when(companyRepository.existsByEmail(any())).thenReturn(false);
 
         AtomicReference<UUID> createdId = new AtomicReference<>();
@@ -170,6 +173,25 @@ class OnboardingServiceTest {
 
         assertThrows(IllegalStateException.class, () -> service.onboard(request(), owner()));
         verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldOnboardWithoutDocumentStoringNullCnpj() {
+        arrangeHappyPath();
+        CreateCompanyRequest base = request();
+        CreateCompanyRequest semDocumento = new CreateCompanyRequest(
+                base.legalName(), base.tradingName(), "  ",
+                null, null, base.email(), base.phone(),
+                null, "01001000", "Rua Teste", "100", null,
+                "Centro", "Sao Paulo", "SP", "Brasil",
+                "STARTER", null, null, null, null, null, null, null);
+
+        service.onboard(semDocumento, owner());
+
+        ArgumentCaptor<Company> captor = ArgumentCaptor.forClass(Company.class);
+        verify(companyRepository).save(captor.capture());
+        assertNull(captor.getValue().getCnpj());
+        verify(companyRepository, never()).existsByCnpj(any());
     }
 
     @Test

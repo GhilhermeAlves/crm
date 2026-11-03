@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { tenantAddressSchema } from "@/features/identity/tenants/schemas/tenant.schema";
+import { isValidCpfCnpj } from "@/lib/masks";
 
-const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
 const phoneRegex = /^\(\d{2}\)\s?\d{4,5}-\d{4}$/;
 
 /**
@@ -11,10 +11,12 @@ const phoneRegex = /^\(\d{2}\)\s?\d{4,5}-\d{4}$/;
 export const onboardingCompanySchema = z.object({
   legalName: z.string().min(1, "Razão Social é obrigatória").max(200),
   tradingName: z.string().min(1, "Nome Fantasia é obrigatório").max(200),
+  // CNPJ ou CPF; opcional. Se informado, precisa ser válido.
   cnpj: z
     .string()
-    .min(1, "CNPJ é obrigatório")
-    .regex(cnpjRegex, "CNPJ inválido (ex: 12.345.678/0001-90)"),
+    .optional()
+    .default("")
+    .refine((val) => !val || isValidCpfCnpj(val), "CNPJ ou CPF inválido"),
   email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
   phone: z
     .string()

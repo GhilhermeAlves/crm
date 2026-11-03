@@ -78,10 +78,11 @@ public class OnboardingService implements OnboardingUseCase {
     @Override
     @Transactional
     public CompanyResponse onboard(CreateCompanyRequest request, User owner) {
-        String cnpj = request.cnpj() != null ? request.cnpj() : request.legalName().toLowerCase().replaceAll("[^a-z0-9]", "") + "00";
+        // CNPJ ou CPF é opcional (V126): vazio vira NULL, sem checagem de duplicidade.
+        String cnpj = request.cnpj() != null && !request.cnpj().isBlank() ? request.cnpj().trim() : null;
         String email = request.email() != null ? request.email() : owner.getEmail().value();
 
-        if (companyRepository.existsByCnpj(cnpj)) {
+        if (cnpj != null && companyRepository.existsByCnpj(cnpj)) {
             throw new IllegalStateException("Uma empresa com este CNPJ já existe.");
         }
         if (companyRepository.existsByEmail(email)) {

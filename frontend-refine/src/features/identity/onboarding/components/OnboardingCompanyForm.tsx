@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import {
   type OnboardingCompanyFormData,
 } from "../schemas/onboarding.schema";
 import type { OnboardingCompanyRequest } from "../types/onboarding.types";
+import { maskCpfCnpj } from "@/lib/masks";
 
 type OnboardingCompanyFormProps = {
   onSubmit: (data: OnboardingCompanyRequest) => void;
@@ -20,6 +21,7 @@ type OnboardingCompanyFormProps = {
 export function OnboardingCompanyForm({ onSubmit, isLoading }: OnboardingCompanyFormProps) {
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<OnboardingCompanyFormData>({
@@ -83,8 +85,21 @@ export function OnboardingCompanyForm({ onSubmit, isLoading }: OnboardingCompany
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ *</Label>
-              <Input id="cnpj" placeholder="00.000.000/0000-00" {...register("cnpj")} />
+              <Label htmlFor="cnpj">CNPJ ou CPF (opcional)</Label>
+              <Controller
+                name="cnpj"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    id="cnpj"
+                    placeholder="CNPJ ou CPF"
+                    inputMode="numeric"
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(maskCpfCnpj(e.target.value))}
+                    ref={field.ref}
+                  />
+                )}
+              />
               {errors.cnpj && <p className="text-sm text-destructive">{errors.cnpj.message}</p>}
             </div>
             <div className="space-y-2">
