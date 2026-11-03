@@ -52,6 +52,8 @@ export function mapUpdateTenantRequest(data: UpdateTenantRequest) {
   return {
     ...(data.legalName !== undefined && { legalName: data.legalName }),
     ...(data.tradingName !== undefined && { tradingName: data.tradingName }),
+    // CNPJ ou CPF: vazio remove o documento (o backend grava NULL).
+    ...(data.cnpj !== undefined && { cnpj: data.cnpj }),
     ...(data.email !== undefined && { email: data.email }),
     ...(data.phone !== undefined && { phone: data.phone }),
     ...(data.website !== undefined && { website: data.website }),

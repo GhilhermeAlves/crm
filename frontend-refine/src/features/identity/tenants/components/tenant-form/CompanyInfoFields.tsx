@@ -3,7 +3,7 @@ import type { Control } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { maskCnpj, maskPhone } from "@/lib/masks";
+import { maskCpfCnpj, maskPhone } from "@/lib/masks";
 import type { TenantFormData } from "../../schemas/tenant.schema";
 
 type CompanyInfoFieldsProps = {
@@ -42,17 +42,17 @@ export function CompanyInfoFields({ control }: CompanyInfoFieldsProps) {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
-          <Label htmlFor="cnpj">CNPJ *</Label>
+          <Label htmlFor="cnpj">CNPJ ou CPF (opcional)</Label>
           <Controller
             name="cnpj"
             control={control}
             render={({ field }) => (
               <Input
                 id="cnpj"
-                placeholder="00.000.000/0000-00"
+                placeholder="CNPJ ou CPF"
                 inputMode="numeric"
-                value={field.value}
-                onChange={(e) => field.onChange(maskCnpj(e.target.value))}
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(maskCpfCnpj(e.target.value))}
                 ref={field.ref}
               />
             )}

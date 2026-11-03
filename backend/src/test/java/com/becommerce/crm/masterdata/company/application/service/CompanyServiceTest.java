@@ -256,7 +256,7 @@ class CompanyServiceTest {
         UpdateCompanyRequest request = new UpdateCompanyRequest(
                 "Updated LTDA", null, null, null, null,
                 null, null, null, null, null, null, null, null,
-                "PROFESSIONAL", null, 10, null, 1000, null, null
+                "PROFESSIONAL", null, 10, null, 1000, null, null, null
         );
 
         CompanyResponse response = companyService.updateCompany(
@@ -267,6 +267,39 @@ class CompanyServiceTest {
     }
 
     @Test
+    void shouldClearDocumentWhenUpdatedBlank() {
+        when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
+        when(companyRepository.save(any(Company.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateCompanyRequest request = new UpdateCompanyRequest(
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, "  "
+        );
+
+        companyService.updateCompany(sampleCompany.getId(), request, sampleCompany.getId(), false);
+
+        assertNull(sampleCompany.getCnpj());
+    }
+
+    @Test
+    void shouldRejectDocumentUsedByAnotherCompany() {
+        Company other = mock(Company.class);
+        when(other.getId()).thenReturn(UUID.randomUUID());
+        when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
+        when(companyRepository.findByCnpj("123.456.789-09")).thenReturn(Optional.of(other));
+
+        UpdateCompanyRequest request = new UpdateCompanyRequest(
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, "123.456.789-09"
+        );
+
+        assertThrows(CompanyAlreadyExistsException.class,
+                () -> companyService.updateCompany(sampleCompany.getId(), request, sampleCompany.getId(), false));
+    }
+
+    @Test
     void shouldThrowWhenUpdatingOtherCompanyAsMember() {
         UUID otherCompanyId = UUID.randomUUID();
         when(companyRepository.findById(otherCompanyId)).thenReturn(Optional.of(sampleCompany));
@@ -274,7 +307,7 @@ class CompanyServiceTest {
         UpdateCompanyRequest request = new UpdateCompanyRequest(
                 "Updated LTDA", null, null, null, null,
                 null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null
         );
 
         assertThrows(CrmAccessDeniedException.class,
