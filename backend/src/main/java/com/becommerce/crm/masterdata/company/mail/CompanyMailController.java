@@ -1,5 +1,7 @@
 package com.becommerce.crm.masterdata.company.mail;
 
+import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.InvitePreview;
+import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.InviteTemplate;
 import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.MailSettingsResponse;
 import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.SaveMailSettings;
 import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.TestMail;
@@ -66,6 +68,32 @@ public class CompanyMailController {
     public ResponseEntity<Void> test(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
                                      @Valid @RequestBody(required = false) TestMail request) {
         service.sendTest(companyId, request == null ? null : request.to());
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Modelo do e-mail de convite (logo, cor, título, mensagem e rodapé). */
+    @PutMapping("/invite-template")
+    @PreAuthorize("hasAuthority('company:update')")
+    public ResponseEntity<MailSettingsResponse> saveInviteTemplate(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                                   @Valid @RequestBody InviteTemplate request,
+                                                                   @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(service.saveInviteTemplate(companyId, request, principal.userId()));
+    }
+
+    /** Prévia com os valores da tela, sem salvar. */
+    @PostMapping("/invite-template/preview")
+    @PreAuthorize("hasAuthority('company:update')")
+    public ResponseEntity<InvitePreview> previewInviteTemplate(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                               @Valid @RequestBody InviteTemplate request) {
+        return ResponseEntity.ok(service.previewInvite(companyId, request));
+    }
+
+    /** Envia um convite de exemplo com o modelo salvo. */
+    @PostMapping("/invite-template/test")
+    @PreAuthorize("hasAuthority('company:update')")
+    public ResponseEntity<Void> testInviteTemplate(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                   @Valid @RequestBody(required = false) TestMail request) {
+        service.sendInviteTest(companyId, request == null ? null : request.to());
         return ResponseEntity.noContent().build();
     }
 }

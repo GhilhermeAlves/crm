@@ -15,7 +15,24 @@ public final class CompanyMailDtos {
 
     /** Sem senha na resposta: só se há uma salva. */
     public record MailSettingsResponse(boolean configured, String email, String senderName, String host,
-                                       Integer port, boolean hasPassword, LocalDateTime updatedAt) {
+                                       Integer port, boolean hasPassword, LocalDateTime updatedAt,
+                                       InviteTemplate inviteTemplate) {
+    }
+
+    /**
+     * Modelo do e-mail de convite. {@code logo} é data URL PNG/JPEG; vazio = sem
+     * logo. Na mensagem, {empresa} e {perfil} são substituídos no envio.
+     */
+    public record InviteTemplate(
+            boolean enabled,
+            @Size(max = 700_000) String logo,
+            @Size(max = 7) String color,
+            @Size(max = 150) String title,
+            @Size(max = 1500) String message,
+            @Size(max = 200) String footer) {
+    }
+
+    public record InvitePreview(String subject, String html) {
     }
 
     /** Senha em branco mantém a atual; host/porta em branco são deduzidos do e-mail. */

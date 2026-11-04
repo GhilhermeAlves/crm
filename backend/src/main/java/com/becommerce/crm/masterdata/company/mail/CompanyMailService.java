@@ -1,11 +1,15 @@
 package com.becommerce.crm.masterdata.company.mail;
 
 import com.becommerce.crm.communication.notification.application.InvitationEmailTemplate;
+import com.becommerce.crm.communication.notification.application.InvitationEmailTemplate.Custom;
+import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.InvitePreview;
+import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.InviteTemplate;
 import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.MailSettingsResponse;
 import com.becommerce.crm.masterdata.company.mail.CompanyMailDtos.SaveMailSettings;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -18,7 +22,10 @@ import java.io.UnsupportedEncodingException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Base64;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -32,6 +39,19 @@ public class CompanyMailService {
 
     record Server(String host, int port) {
     }
+
+    /** Imagem anexada ao e-mail e referenciada no HTML por {@code cid:}. */
+    record InlineImage(String contentId, byte[] bytes, String contentType) {
+    }
+
+    /** E-mail de convite montado (assunto, HTML e logo inline opcional). */
+    record InviteMail(String subject, String html, InlineImage logo) {
+    }
+
+    static final String INVITE_LOGO_CID = "invite-logo";
+    static final int INVITE_LOGO_MAX_BYTES = 500 * 1024;
+    private static final Pattern LOGO_DATA_URL =
+            Pattern.compile("^data:(image/(?:png|jpeg));base64,([A-Za-z0-9+/=\\s]+)$");
 
     private static final Map<String, Server> KNOWN = Map.of(
             "gmail.com", new Server("smtp.gmail.com", 587),
@@ -74,8 +94,50 @@ public class CompanyMailService {
     public MailSettingsResponse get(UUID companyId) {
         return inTenant(companyId, () -> repository.findById(companyId)
                 .map(s -> new MailSettingsResponse(true, s.getEmail(), s.getSenderName(), s.getHost(),
-                        s.getPort(), s.getPasswordCipher() != null, s.getUpdatedAt()))
-                .orElse(new MailSettingsResponse(false, null, null, null, null, false, null)));
+                        s.getPort(), s.getPasswordCipher() != null, s.getUpdatedAt(),
+                        new InviteTemplate(s.isInviteEnabled(), s.getInviteLogo(), s.getInviteColor(),
+                                s.getInviteTitle(), s.getInviteMessage(), s.getInviteFooter())))
+                .orElse(new MailSettingsResponse(false, null, null, null, null, false, null, null)));
+    }
+
+    /** Salva o modelo do convite; exige a conta de envio já configurada. */
+    @Transactional
+    public MailSettingsResponse saveInviteTemplate(UUID companyId, InviteTemplate request, UUID actorId) {
+        InviteTemplate clean = sanitize(request);
+        inTenant(companyId, () -> {
+            CompanyMailSettingsJpaEntity settings = repository.findById(companyId).orElseThrow(() ->
+                    new ResponseStatusException(HttpStatus.BAD_REQUEST, "Configure o e-mail de envio primeiro."));
+            settings.updateInviteTemplate(clean.enabled(), clean.logo(), clean.color(), clean.title(),
+                    clean.message(), clean.footer(), actorId);
+            return repository.save(settings);
+        });
+        return get(companyId);
+    }
+
+    /**
+     * Prévia do convite com os valores da tela (ainda não salvos). O logo vai como
+     * data URL, que o navegador mostra; no envio real ele segue anexado (cid).
+     */
+    @Transactional(readOnly = true)
+    public InvitePreview previewInvite(UUID companyId, InviteTemplate request) {
+        InviteTemplate clean = sanitize(request);
+        CompanyMailSettingsJpaEntity settings = require(companyId);
+        InviteMail mail = buildInvite(settings.getEmail(), settings.getSenderName(), clean,
+                sampleCompany(settings), "MANAGER", sampleUrl(), true);
+        return new InvitePreview(mail.subject(), mail.html());
+    }
+
+    /** Envia um convite de exemplo com o modelo salvo. */
+    @Transactional(readOnly = true)
+    public void sendInviteTest(UUID companyId, String to) {
+        CompanyMailSettingsJpaEntity settings = require(companyId);
+        String target = blank(to) ? settings.getEmail() : to.trim();
+        InviteMail mail = buildInvite(settings, sampleCompany(settings), "MANAGER", sampleUrl());
+        try {
+            send(settings, target, "[Teste] " + mail.subject(), mail.html(), settings.getSenderName(), mail.logo());
+        } catch (MailException | IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, explain(e));
+        }
     }
 
     @Transactional(readOnly = true)
@@ -155,14 +217,8 @@ public class CompanyMailService {
         if (settings.isEmpty()) {
             return false;
         }
-        // Template da PG Automação só para a conta de envio dela; demais empresas: convite simples.
-        boolean pgBranded = pgBrandedSenders.contains(
-                settings.get().getEmail() == null ? "" : settings.get().getEmail().trim().toLowerCase(Locale.ROOT));
-        String subject = pgBranded ? InvitationEmailTemplate.subject(companyName)
-                : InvitationEmailTemplate.plainSubject(companyName);
-        String body = pgBranded ? InvitationEmailTemplate.html(frontendBaseUrl, companyName, role, url)
-                : InvitationEmailTemplate.plainHtml(companyName, role, url);
-        send(settings.get(), to, subject, body, settings.get().getSenderName());
+        InviteMail mail = buildInvite(settings.get(), companyName, role, url);
+        send(settings.get(), to, mail.subject(), mail.html(), settings.get().getSenderName(), mail.logo());
         return true;
     }
 
@@ -193,6 +249,11 @@ public class CompanyMailService {
 
     private void send(CompanyMailSettingsJpaEntity settings, String to, String subject, String html,
                       String fromName) {
+        send(settings, to, subject, html, fromName, null);
+    }
+
+    private void send(CompanyMailSettingsJpaEntity settings, String to, String subject, String html,
+                      String fromName, InlineImage inline) {
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
         sender.setHost(settings.getHost());
         sender.setPort(settings.getPort());
@@ -221,10 +282,87 @@ public class CompanyMailService {
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(html, true);
+            if (inline != null) {
+                // Depois do setText: o anexo inline é referenciado no HTML por cid:.
+                helper.addInline(inline.contentId(), new ByteArrayResource(inline.bytes()), inline.contentType());
+            }
             sender.send(message);
         } catch (MessagingException | UnsupportedEncodingException e) {
             throw new IllegalStateException("Falha ao montar o e-mail: " + e.getMessage(), e);
         }
+    }
+
+    private InviteMail buildInvite(CompanyMailSettingsJpaEntity s, String companyName, String role, String url) {
+        InviteTemplate saved = new InviteTemplate(s.isInviteEnabled(), s.getInviteLogo(), s.getInviteColor(),
+                s.getInviteTitle(), s.getInviteMessage(), s.getInviteFooter());
+        return buildInvite(s.getEmail(), s.getSenderName(), saved, companyName, role, url, false);
+    }
+
+    /**
+     * Escolhe o modelo: personalizado (se ativo), PG Automação (conta de envio
+     * dela) ou simples. Na prévia o logo vai como data URL; no envio, como cid.
+     */
+    InviteMail buildInvite(String senderEmail, String senderName, InviteTemplate template, String companyName,
+                           String role, String url, boolean preview) {
+        if (template != null && template.enabled()) {
+            InlineImage logo = blank(template.logo()) ? null : decodeLogo(template.logo());
+            String logoSrc = logo == null ? null : preview ? template.logo() : "cid:" + INVITE_LOGO_CID;
+            Custom custom = new Custom(logoSrc, template.color(), template.title(), template.message(),
+                    template.footer());
+            return new InviteMail(InvitationEmailTemplate.customSubject(senderName, companyName),
+                    InvitationEmailTemplate.customHtml(custom, senderName, companyName, role, url),
+                    preview ? null : logo);
+        }
+        boolean pgBranded = pgBrandedSenders.contains(
+                senderEmail == null ? "" : senderEmail.trim().toLowerCase(Locale.ROOT));
+        return pgBranded
+                ? new InviteMail(InvitationEmailTemplate.subject(companyName),
+                        InvitationEmailTemplate.html(frontendBaseUrl, companyName, role, url), null)
+                : new InviteMail(InvitationEmailTemplate.plainSubject(companyName),
+                        InvitationEmailTemplate.plainHtml(companyName, role, url), null);
+    }
+
+    /** Normaliza e valida o modelo: textos aparados, vazio vira null, cor e logo conferidos. */
+    static InviteTemplate sanitize(InviteTemplate t) {
+        String color = trimToNull(t.color());
+        if (color != null && !InvitationEmailTemplate.isValidColor(color)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cor inválida. Use o formato #RRGGBB.");
+        }
+        String logo = trimToNull(t.logo());
+        if (logo != null) {
+            decodeLogo(logo);
+        }
+        return new InviteTemplate(t.enabled(), logo, color == null ? null : color.toLowerCase(Locale.ROOT),
+                trimToNull(t.title()), trimToNull(t.message()), trimToNull(t.footer()));
+    }
+
+    static InlineImage decodeLogo(String dataUrl) {
+        Matcher m = LOGO_DATA_URL.matcher(dataUrl);
+        if (!m.matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O logo deve ser uma imagem PNG ou JPEG.");
+        }
+        byte[] bytes;
+        try {
+            bytes = Base64.getMimeDecoder().decode(m.group(2));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não foi possível ler o logo.");
+        }
+        if (bytes.length > INVITE_LOGO_MAX_BYTES) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O logo deve ter até 500 KB.");
+        }
+        return new InlineImage(INVITE_LOGO_CID, bytes, m.group(1));
+    }
+
+    private static String sampleCompany(CompanyMailSettingsJpaEntity settings) {
+        return blank(settings.getSenderName()) ? "Sua Empresa" : settings.getSenderName();
+    }
+
+    private String sampleUrl() {
+        return frontendBaseUrl.replaceAll("/+$", "") + "/convite/exemplo";
+    }
+
+    private static String trimToNull(String value) {
+        return blank(value) ? null : value.trim();
     }
 
     static String explain(Exception e) {
