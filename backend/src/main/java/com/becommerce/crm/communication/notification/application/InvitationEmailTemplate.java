@@ -8,12 +8,12 @@ import java.util.Map;
  * usam o convite simples ({@link #plainHtml}) até terem template próprio.
  *
  * <p>E-mail de convite com a identidade da PG Automação: fundo branco, cabeçalho
- * escuro com o logo, marca d'água suave no corpo e passo a passo para abrir a
+ * escuro com o logo, logo suave antes do rodapé (sem ficar atrás do texto) e passo a passo para abrir a
  * conta. Usado pelo SMTP padrão e pela conta de e-mail da empresa.
  *
  * <p>HTML de e-mail: só tabelas e estilos inline (Gmail/Outlook ignoram
- * {@code <style>}). A marca d'água usa {@code background} na célula do corpo;
- * clientes que não suportam (Outlook desktop) apenas não a exibem.
+ * {@code <style>}). O logo suave é uma imagem própria, fora do texto, para não
+ * prejudicar a leitura.
  *
  * <p>As imagens ficam em {@code frontend-refine/public/brand} e são servidas
  * pelo frontend ({@code app.mail.frontend-base-url}).
@@ -108,14 +108,7 @@ public final class InvitationEmailTemplate {
                     </tr>
                     <tr><td style="height:4px;line-height:4px;font-size:0;background-color:#1a73ff;background-image:linear-gradient(90deg,#0b5cff,#19b6ff);">&nbsp;</td></tr>
                     <tr>
-                      <td background="%2$s"
-                        style="background-color:#ffffff;
-                          background-image:url('%2$s');
-                          background-repeat:no-repeat;
-                          background-position:center 150px;
-                          background-size:360px auto;
-                          padding:40px 44px 8px 44px;
-                          color:#1f2937;">
+                      <td style="background-color:#ffffff;padding:40px 44px 8px 44px;color:#1f2937;">
                         <h1 style="margin:0 0 16px 0;font-size:26px;line-height:1.3;color:#080b12;font-weight:700;">Seja muito bem-vindo(a)! 🎉</h1>
                         <p style="margin:0 0 16px 0;font-size:16px;line-height:1.65;color:#374151;">Olá!</p>
                         <p style="margin:0 0 28px 0;font-size:16px;line-height:1.65;color:#374151;">%3$s</p>
@@ -146,6 +139,11 @@ public final class InvitationEmailTemplate {
                         <p style="margin:0 0 8px 0;">O botão não funcionou? Copie e cole este endereço no navegador:</p>
                         <p style="margin:0 0 20px 0;word-break:break-all;"><a href="%4$s" style="color:#0b5cff;text-decoration:underline;">%4$s</a></p>
                         <p style="margin:0;">O convite é pessoal e tem prazo de validade. Se você não esperava este e-mail, pode ignorá-lo com segurança.</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="background-color:#ffffff;padding:0 24px 28px 24px;">
+                        <img src="%2$s" width="150" alt="" style="display:block;width:150px;height:auto;border:0;">
                       </td>
                     </tr>
                     <tr>
