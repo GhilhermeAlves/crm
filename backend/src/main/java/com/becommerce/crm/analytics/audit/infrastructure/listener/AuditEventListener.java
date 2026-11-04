@@ -96,11 +96,12 @@ public class AuditEventListener {
         auditLog.setEntityName("Company");
         auditLog.setEntityId(event.companyId().toString());
         auditLog.setDescription("Empresa criada: " + event.companyName());
-        auditLog.setNewValues(Map.of(
-            "companyName", event.companyName(),
-            "cnpj", event.cnpj(),
-            "email", event.email()
-        ));
+        // CNPJ/CPF é opcional (V126): Map.of não aceita null.
+        Map<String, Object> values = new java.util.LinkedHashMap<>();
+        values.put("companyName", event.companyName());
+        values.put("cnpj", event.cnpj());
+        values.put("email", event.email());
+        auditLog.setNewValues(values);
 
         if (context != null) {
             auditLog.setUserId(context.userId());

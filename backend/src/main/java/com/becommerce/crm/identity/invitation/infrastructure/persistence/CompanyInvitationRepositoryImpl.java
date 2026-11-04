@@ -19,7 +19,11 @@ public class CompanyInvitationRepositoryImpl implements CompanyInvitationReposit
 
     @Override
     public CompanyInvitation save(CompanyInvitation invitation) {
-        return toDomain(jpaRepository.save(toEntity(invitation)));
+        // saveAndFlush: o UPDATE do aceite depende do token do convite no RLS
+        // (app.invitation_token_hash, local à transação), que é limpo ao fim de
+        // withToken, ANTES do commit. Sem o flush aqui, o UPDATE sairia no commit
+        // sem o token, afetaria 0 linhas e o cadastro falharia (stale/500).
+        return toDomain(jpaRepository.saveAndFlush(toEntity(invitation)));
     }
 
     @Override
