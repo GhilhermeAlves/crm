@@ -10,7 +10,7 @@ export default function EmailSettingsPage() {
   const companyId = user?.companyId ?? null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div className="space-y-1">
         <PageTitle>E-mail</PageTitle>
         <p className="text-sm text-muted-foreground">

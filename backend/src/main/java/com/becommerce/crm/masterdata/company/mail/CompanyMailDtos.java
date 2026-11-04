@@ -35,6 +35,14 @@ public final class CompanyMailDtos {
     public record InvitePreview(String subject, String html) {
     }
 
+    /** Pedido ao Leo: tom (ACOLHEDOR, PROFISSIONAL, DESCONTRAIDO) e contexto livre. */
+    public record InviteSuggestionRequest(@Size(max = 20) String tone, @Size(max = 500) String notes) {
+    }
+
+    /** Textos sugeridos pelo Leo; a empresa revisa antes de salvar. */
+    public record InviteSuggestion(String title, String message, String footer) {
+    }
+
     /** Senha em branco mantém a atual; host/porta em branco são deduzidos do e-mail. */
     public record SaveMailSettings(
             @NotBlank @Email @Size(max = 255) String email,
