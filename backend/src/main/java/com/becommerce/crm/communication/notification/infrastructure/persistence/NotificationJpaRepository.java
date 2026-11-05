@@ -18,4 +18,8 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationJpa
     @Query("UPDATE NotificationJpaEntity n SET n.readAt = CURRENT_TIMESTAMP "
             + "WHERE n.companyId = :companyId AND n.userId = :userId AND n.readAt IS NULL")
     void markAllRead(@Param("companyId") UUID companyId, @Param("userId") UUID userId);
+
+    @Modifying
+    @Query("DELETE FROM NotificationJpaEntity n WHERE n.companyId = :companyId AND n.userId = :userId")
+    void deleteAllMine(@Param("companyId") UUID companyId, @Param("userId") UUID userId);
 }

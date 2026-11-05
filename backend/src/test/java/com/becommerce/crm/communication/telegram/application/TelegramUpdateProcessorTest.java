@@ -53,12 +53,13 @@ class TelegramUpdateProcessorTest {
     @Mock AiMediaProvider media;
     @Mock TelegramRateLimiter limiter;
     @Mock TenantAuditRecorder auditor;
+    @Mock TelegramActivityNotifier notifier;
     final ObjectMapper om = new ObjectMapper();
     TelegramUpdateProcessor p;
 
     @BeforeEach
     void setUp() {
-        p = new TelegramUpdateProcessor(bot, links, users, leo, actions, media, limiter, auditor);
+        p = new TelegramUpdateProcessor(bot, links, users, leo, actions, media, limiter, auditor, notifier);
         lenient().when(limiter.tryAcquire(any(), anyLong())).thenReturn(true);
     }
 
@@ -214,5 +215,44 @@ class TelegramUpdateProcessorTest {
                 + ACTION + "\",\"message\":{\"message_id\":9,\"chat\":{\"id\":555,\"type\":\"private\"}}}}");
         p.process(CO, "TOK", cb);
         verify(bot).editMessage("TOK", 555L, 9L, "⚠️ Não foi possível: erro inesperado");
+    }
+
+    @Test
+    void textMessageIsNotifiedWithReplyAndProposalCount() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        AiActionResponse a = new AiActionResponse(ACTION, CONV, "cancel_appointment", null, null,
+                "Cancelar consulta", "PROPOSED", Map.of(), null, null, null, null);
+        when(leo.chat(any(), any(), any(), any())).thenReturn(new AiChatResponse(CONV, "Confirma?", "openai", List.of(a)));
+        p.process(CO, "TOK", msg("\"text\":\"cancela a Maria\""));
+        verify(notifier).messageReceived(CO, USER, "cancela a Maria", false, "Confirma?", 1, CONV);
+    }
+
+    @Test
+    void voiceMessageIsNotifiedAsAudio() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        when(bot.downloadFile("TOK", "F1")).thenReturn(new byte[]{1});
+        when(media.transcribe(new byte[]{1}, "audio/ogg")).thenReturn("marca a Maria");
+        when(leo.chat(any(), any(), any(), any())).thenReturn(new AiChatResponse(CONV, "Certo.", "openai"));
+        p.process(CO, "TOK", msg("\"voice\":{\"file_id\":\"F1\",\"mime_type\":\"audio/ogg\"}"));
+        verify(notifier).messageReceived(CO, USER, "marca a Maria", true, "Certo.", 0, CONV);
+    }
+
+    @Test
+    void confirmedActionIsNotified() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        AiActionResponse done = new AiActionResponse(ACTION, CONV, "t", null, null, "Cancelar consulta", "EXECUTED",
+                Map.of(), null, null, null, null);
+        when(actions.confirm(any(), any(), any(), any())).thenReturn(done);
+        JsonNode cb = om.readTree("{\"update_id\":2,\"callback_query\":{\"id\":\"cb1\",\"from\":{\"id\":555},\"data\":\"c:"
+                + ACTION + "\",\"message\":{\"message_id\":9,\"chat\":{\"id\":555,\"type\":\"private\"}}}}");
+        p.process(CO, "TOK", cb);
+        verify(notifier).actionResult(CO, USER, ACTION, "EXECUTED", "Cancelar consulta", null);
+    }
+
+    @Test
+    void unlinkedSenderIsNotNotified() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.empty());
+        p.process(CO, "TOK", msg("\"text\":\"oi\""));
+        verifyNoInteractions(notifier);
     }
 }

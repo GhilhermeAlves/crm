@@ -7,9 +7,13 @@ import { ROUTES } from "@/lib/constants";
 export function notificationHref(metadata: string | null | undefined): string | null {
   if (!metadata) return null;
   try {
-    const data = JSON.parse(metadata) as { kind?: string; contactId?: string };
+    const data = JSON.parse(metadata) as { kind?: string; contactId?: string; channel?: string };
     if (data.kind === "PATIENT_FORM" && data.contactId) {
       return `${ROUTES.PATIENTS}/${data.contactId}/anamnese`;
+    }
+    // O que o Leo fez pelo Telegram: abre o assistente, onde fica a conversa.
+    if (data.channel === "telegram") {
+      return ROUTES.ASSISTANT;
     }
   } catch {
     return null;

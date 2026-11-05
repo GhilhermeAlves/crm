@@ -56,6 +56,31 @@ export function useMarkAllNotificationsRead(companyId: string | null) {
   });
 }
 
+export function useDeleteNotification(companyId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => NotificationService.remove(companyId as string, id),
+    onSuccess: () => invalidateNotifications(queryClient, companyId),
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao excluir notificação");
+    },
+  });
+}
+
+export function useDeleteAllNotifications(companyId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => NotificationService.removeAll(companyId as string),
+    onSuccess: () => {
+      invalidateNotifications(queryClient, companyId);
+      toast.success("Notificações excluídas");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao excluir notificações");
+    },
+  });
+}
+
 export function useNotificationPermissions() {
   const { can } = useAuthorization();
   return {

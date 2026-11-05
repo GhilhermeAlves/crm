@@ -64,6 +64,25 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/api/v1/companies/{companyId}/notifications/{notificationId}")
+    @PreAuthorize("hasAuthority('notification:update')")
+    public ResponseEntity<Void> delete(
+            @CurrentCompanyId("Você só pode acessar notificações da sua própria empresa.") UUID companyId,
+            @PathVariable UUID notificationId,
+            @AuthenticationPrincipal CurrentUser principal) {
+        notificationUseCase.delete(companyId, notificationId, principal.userId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/api/v1/companies/{companyId}/notifications")
+    @PreAuthorize("hasAuthority('notification:update')")
+    public ResponseEntity<Void> deleteAll(
+            @CurrentCompanyId("Você só pode acessar notificações da sua própria empresa.") UUID companyId,
+            @AuthenticationPrincipal CurrentUser principal) {
+        notificationUseCase.deleteAll(companyId, principal.userId());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/api/v1/companies/{companyId}/notifications")
     @PreAuthorize("hasAuthority('notification:create')")
     public ResponseEntity<NotificationResponse> create(

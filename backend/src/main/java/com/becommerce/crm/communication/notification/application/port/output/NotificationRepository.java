@@ -20,4 +20,10 @@ public interface NotificationRepository {
 
     /** Marca todas as notificações não lidas de um usuário numa empresa como lidas. */
     void markAllRead(UUID companyId, UUID userId);
+
+    /** Exclui uma notificação pelo id. */
+    void deleteById(UUID id);
+
+    /** Exclui todas as notificações do usuário na empresa. */
+    void deleteAllByCompanyIdAndUserId(UUID companyId, UUID userId);
 }

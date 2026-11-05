@@ -103,6 +103,29 @@ public class NotificationService implements NotificationUseCase {
         }
     }
 
+    @Override
+    @Transactional
+    public void delete(UUID companyId, UUID notificationId, UUID userId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            requireOwned(companyId, notificationId, userId);
+            notificationRepository.deleteById(notificationId);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteAll(UUID companyId, UUID userId) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            notificationRepository.deleteAllByCompanyIdAndUserId(companyId, userId);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
     private Notification requireOwned(UUID companyId, UUID notificationId, UUID userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotificationNotFoundException(notificationId));

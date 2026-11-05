@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
   Briefcase,
@@ -13,6 +13,7 @@ import {
   Mail,
   MessageCircle,
   Settings2,
+  Trash2,
   UserPlus,
   Workflow,
   X,
@@ -25,6 +26,8 @@ import {
   useUnreadCount,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
+  useDeleteNotification,
+  useDeleteAllNotifications,
   useNotificationPermissions,
 } from "@/features/communication/notifications/hooks/useNotifications";
 import { formatRelativeTime } from "@/features/communication/notifications/lib/format";
@@ -104,6 +107,15 @@ export function NotificationBell() {
   const { data: unread = 0 } = useUnreadCount(companyId);
   const markRead = useMarkNotificationRead(companyId);
   const markAllRead = useMarkAllNotificationsRead(companyId);
+  const deleteOne = useDeleteNotification(companyId);
+  const deleteAll = useDeleteAllNotifications(companyId);
+  // "Limpar todas" pede um segundo clique (sem diálogo dentro do popover).
+  const [confirmClear, setConfirmClear] = useState(false);
+  useEffect(() => {
+    if (!confirmClear) return;
+    const timer = setTimeout(() => setConfirmClear(false), 4000);
+    return () => clearTimeout(timer);
+  }, [confirmClear]);
 
   const groups = useMemo(() => {
     const result: { day: string; items: Notification[] }[] = [];
@@ -163,6 +175,28 @@ export function NotificationBell() {
               >
                 <CheckCheck className="mr-1 h-3.5 w-3.5" />
                 Marcar como lidas
+              </Button>
+            )}
+            {notifications.length > 0 && perms.canUpdate && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-8 px-2 text-xs",
+                  confirmClear ? "text-red-600" : "text-muted-foreground",
+                )}
+                disabled={deleteAll.isPending}
+                onClick={() => {
+                  if (confirmClear) {
+                    deleteAll.mutate();
+                    setConfirmClear(false);
+                  } else {
+                    setConfirmClear(true);
+                  }
+                }}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                {confirmClear ? "Confirmar" : "Limpar todas"}
               </Button>
             )}
             <Button
@@ -264,9 +298,23 @@ export function NotificationBell() {
                             >
                               {n.title}
                             </p>
-                            {!n.read && (
-                              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                            )}
+                            <div className="flex shrink-0 items-center gap-1">
+                              {!n.read && <span className="h-2 w-2 rounded-full bg-primary" />}
+                              {perms.canUpdate && (
+                                <button
+                                  type="button"
+                                  aria-label="Excluir notificação"
+                                  className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-red-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteOne.mutate(n.id);
+                                  }}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                           {n.body && (
                             <p className="line-clamp-3 text-xs text-muted-foreground">{n.body}</p>
