@@ -18,6 +18,7 @@ import com.becommerce.crm.sales.task.application.port.in.TaskUseCase;
 import com.becommerce.crm.sales.activity.domain.ActivityType;
 import com.becommerce.crm.automation.ai.domain.AiAction;
 import com.becommerce.crm.sales.task.domain.TaskPriority;
+import com.becommerce.crm.sales.scheduling.application.dto.CreateAppointmentRequest;
 import com.becommerce.crm.sales.scheduling.application.dto.RescheduleRequest;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
 import org.springframework.stereotype.Component;
@@ -104,6 +105,21 @@ public class AiActionExecutor {
                     action.getUserId());
             case "cancel_appointment" -> appointmentUseCase.cancel(
                     action.getCompanyId(), uuid(p.get("appointmentId")), str(p.get("reason")));
+            case "create_appointment" -> appointmentUseCase.create(
+                    action.getCompanyId(),
+                    new CreateAppointmentRequest(
+                            uuid(p.get("appointmentTypeId")),
+                            uuid(p.get("hostId")),
+                            uuid(p.get("contactId")),
+                            null,
+                            str(p.get("title")),
+                            Instant.parse(str(p.get("startAt"))),
+                            Instant.parse(str(p.get("endAt"))),
+                            null, null,
+                            str(p.get("notes")),
+                            false,
+                            null, null, null, null, null),
+                    action.getUserId());
             case "reschedule_appointment" -> appointmentUseCase.reschedule(
                     action.getCompanyId(), uuid(p.get("appointmentId")),
                     new RescheduleRequest(Instant.parse(str(p.get("startAt"))),
