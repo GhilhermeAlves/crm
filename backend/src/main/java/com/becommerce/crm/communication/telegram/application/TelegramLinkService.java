@@ -81,8 +81,8 @@ public class TelegramLinkService {
     @Transactional
     public LinkResult link(UUID companyId, String code, long telegramUserId, long chatId, String telegramName) {
         return TelegramConfigService.withTenant(companyId, () -> {
-            Optional<TelegramLinkCode> found = code == null
-                    ? Optional.empty() : codes.findById(hash(companyId, code.strip()));
+            String codeHash = code == null ? null : hash(companyId, code.strip());
+            Optional<TelegramLinkCode> found = codeHash == null ? Optional.empty() : codes.findById(codeHash);
             if (found.isEmpty() || found.get().getUsedAt() != null || found.get().getExpiresAt().isBefore(now())) {
                 return LinkResult.INVALID_CODE;
             }
@@ -92,7 +92,7 @@ public class TelegramLinkService {
                 return LinkResult.TELEGRAM_ALREADY_LINKED;
             }
             // Queima atômica: de duas resgates simultâneos, só um vê 1 linha atualizada.
-            if (codes.markUsed(c.getCodeHash(), now()) != 1) {
+            if (codes.markUsed(codeHash, now()) != 1) {
                 return LinkResult.INVALID_CODE;
             }
             // Resgatar o código a partir de outra conta do Telegram move o vínculo do usuário de propósito.
