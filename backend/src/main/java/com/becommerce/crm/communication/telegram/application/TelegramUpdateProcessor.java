@@ -203,9 +203,13 @@ public class TelegramUpdateProcessor {
         }
         UUID userId = user.get().userId();
         String result;
+        AiActionResponse executed = null;
         try {
             if (data.charAt(0) == 'c') {
                 AiActionResponse a = actions.confirm(companyId, userId, user.get().permissions(), actionId);
+                if ("EXECUTED".equals(a.status())) {
+                    executed = a;
+                }
                 result = "EXECUTED".equals(a.status()) ? "✅ Feito: " + a.description()
                         : "⚠️ Não foi possível: " + (a.errorMessage() != null ? a.errorMessage() : a.status());
                 auditChannel(companyId, userId, actionId, "AI_ACTION_CONFIRMED_VIA_TELEGRAM", a.description(),
@@ -227,6 +231,33 @@ public class TelegramUpdateProcessor {
         }
         String finalResult = result;
         safe(() -> bot.editMessage(token, chatId, messageId, finalResult));
+        if (executed != null) {
+            AiActionResponse done = executed;
+            safe(() -> continueAfterConfirmation(companyId, token, chatId, from, user.get(), done));
+        }
+    }
+
+    /**
+     * Após uma confirmação EXECUTED, chama o Leo na mesma conversa com uma mensagem
+     * de sistema para que ele siga com os passos pendentes do pedido anterior. A
+     * resposta e novas propostas chegam ao chat como em uma mensagem normal.
+     */
+    private void continueAfterConfirmation(UUID companyId, String token, long chatId, long from,
+                                           TelegramUserResolver.LinkedUser user, AiActionResponse done) {
+        if (!user.permissions().contains("ai:chat") && !user.roles().contains(CurrentUser.CRM_ADMIN_ROLE)) {
+            return;
+        }
+        UUID conversationId = done.conversationId() != null ? done.conversationId() : user.conversationId();
+        TelegramUserResolver.LinkedUser inConversation = new TelegramUserResolver.LinkedUser(user.userId(),
+                user.chatId(), conversationId, user.permissions(), user.roles());
+        askLeo(companyId, token, chatId, from, inConversation, continuationMessage(done), "");
+    }
+
+    static String continuationMessage(AiActionResponse done) {
+        return "[Sistema] Ação confirmada e executada: " + done.description()
+                + " (" + done.entityType() + " " + done.entityId() + "). "
+                + "Continue o pedido anterior do usuário, se ainda houver passos pendentes; "
+                + "se não houver, responda apenas 'Tudo certo.'";
     }
 
     private void auditChannel(UUID companyId, UUID userId, UUID actionId, String event, String description,

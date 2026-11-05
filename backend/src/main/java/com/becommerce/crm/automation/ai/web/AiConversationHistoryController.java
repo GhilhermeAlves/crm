@@ -16,11 +16,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Hist�rico de conversas do assistente de IA (AI-04). Permite listar as
- * conversas do usu�rio e retomar uma conversa exibindo suas mensagens. Exige a
- * permiss�o {@code ai:chat}. A propriedade � sempre resolvida do usu�rio
- * autenticado (empresa + usu�rio) - nunca do cliente; conversa de outro
- * usu�rio/empresa resulta em 404.
+ * Histórico de conversas do assistente de IA (AI-04). Permite listar as
+ * conversas do usuário e retomar uma conversa exibindo suas mensagens. Exige a
+ * permissão {@code ai:chat}. A propriedade é sempre resolvida do usuário
+ * autenticado (empresa + usuário) - nunca do cliente; conversa de outro
+ * usuário/empresa resulta em 404.
  */
 @RestController
 public class AiConversationHistoryController {
@@ -36,7 +36,7 @@ public class AiConversationHistoryController {
     public ResponseEntity<List<AiConversationResponse>> listConversations(
             @AuthenticationPrincipal CurrentUser principal) {
         if (principal.companyId() == null) {
-            throw new CrmAccessDeniedException("Voc� precisa de uma empresa ativa para usar a IA.");
+            throw new CrmAccessDeniedException("Você precisa de uma empresa ativa para usar a IA.");
         }
         List<AiConversationResponse> conversations =
                 aiAssistantUseCase.listConversations(principal.companyId(), principal.userId());
@@ -49,7 +49,7 @@ public class AiConversationHistoryController {
             @PathVariable UUID conversationId,
             @AuthenticationPrincipal CurrentUser principal) {
         if (principal.companyId() == null) {
-            throw new CrmAccessDeniedException("Voc� precisa de uma empresa ativa para usar a IA.");
+            throw new CrmAccessDeniedException("Você precisa de uma empresa ativa para usar a IA.");
         }
         List<AiMessageResponse> messages =
                 aiAssistantUseCase.getConversationMessages(principal.companyId(), principal.userId(), conversationId);

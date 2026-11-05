@@ -69,13 +69,13 @@ class AiConversationHistoryControllerTest {
         UUID convId = UUID.randomUUID();
         when(aiAssistantUseCase.listConversations(eq(COMPANY_ID), eq(USER_ID)))
                 .thenReturn(List.of(new AiConversationResponse(
-                        convId, "Como est� o cliente?", "customer360", UUID.randomUUID(),
+                        convId, "Como está o cliente?", "customer360", UUID.randomUUID(),
                         LocalDateTime.now(), LocalDateTime.now())));
 
         mockMvc.perform(get("/api/v1/ai/conversations"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(convId.toString()))
-                .andExpect(jsonPath("$[0].title").value("Como est� o cliente?"))
+                .andExpect(jsonPath("$[0].title").value("Como está o cliente?"))
                 .andExpect(jsonPath("$[0].screen").value("customer360"));
     }
 
@@ -86,13 +86,13 @@ class AiConversationHistoryControllerTest {
         UUID msgId = UUID.randomUUID();
         when(aiAssistantUseCase.getConversationMessages(eq(COMPANY_ID), eq(USER_ID), eq(convId)))
                 .thenReturn(List.of(new AiMessageResponse(
-                        msgId, convId, "user", "Como est� esse cliente?", LocalDateTime.now())));
+                        msgId, convId, "user", "Como está esse cliente?", LocalDateTime.now())));
 
         mockMvc.perform(get("/api/v1/ai/conversations/{conversationId}/messages", convId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(msgId.toString()))
                 .andExpect(jsonPath("$[0].role").value("user"))
-                .andExpect(jsonPath("$[0].content").value("Como est� esse cliente?"));
+                .andExpect(jsonPath("$[0].content").value("Como está esse cliente?"));
     }
 
     @Test

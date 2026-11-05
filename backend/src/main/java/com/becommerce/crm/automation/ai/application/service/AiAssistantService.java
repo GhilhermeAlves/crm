@@ -30,8 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -63,7 +65,13 @@ public class AiAssistantService implements AiAssistantUseCase {
     private static final int HISTORY_LIMIT = 20;
 
     /** Iterações máximas do loop de Tool Calling (evita laço infinito). */
-    private static final int MAX_TOOL_ITERATIONS = 5;
+    private static final int MAX_TOOL_ITERATIONS = 8;
+
+    static final String FINAL_SUMMARY_INSTRUCTION = "Você atingiu o limite de passos com ferramentas nesta "
+            + "resposta. Sem chamar ferramentas, resuma para o usuário o que já foi feito (incluindo propostas "
+            + "deixadas para confirmação) e o que ainda falta.";
+
+    static final String NO_FINAL_ANSWER = "Não consegui produzir uma resposta final.";
 
     private static final String ROLE_USER = "user";
     private static final String ROLE_ASSISTANT = "assistant";
@@ -115,7 +123,7 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
             ChatLoopResult loop = runToolLoop(companyId, userId, permissions, conversation.getId(), messages);
 
             // Tools chamam services que limpam o TenantContext em finally;
-            // re-estabelecemos antes das opera��es de persist�ncia do orquestrador.
+            // re-estabelecemos antes das operações de persistência do orquestrador.
             TenantContext.setCompanyId(companyId);
 
             chatRepository.saveMessage(AiMessage.create(companyId, conversation.getId(), ROLE_ASSISTANT, loop.content()));
@@ -151,9 +159,9 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
             TenantContext.setCompanyId(companyId);
             AiConversation conversation = chatRepository.findConversationById(conversationId)
                     .orElseThrow(() -> new AiConversationNotFoundException(
-                            "Conversa n�o encontrada ou sem acesso."));
+                            "Conversa não encontrada ou sem acesso."));
             if (!conversation.getCompanyId().equals(companyId) || !conversation.getUserId().equals(userId)) {
-                throw new AiConversationNotFoundException("Conversa n�o encontrada ou sem acesso.");
+                throw new AiConversationNotFoundException("Conversa não encontrada ou sem acesso.");
             }
             return chatRepository.findMessagesByConversation(conversationId).stream()
                     .filter(m -> ROLE_USER.equals(m.getRole()) || ROLE_ASSISTANT.equals(m.getRole()))
@@ -166,14 +174,14 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
 
 /**
      * Loop de Tool Calling (AI-03): envia o prompt ao modelo com as Tools
-     * registradas; se o modelo solicitar uma ou mais Tools, cada uma �
-     * executada pelo backend (via {@link AiToolRegistry}, com verifica��o de
-     * permiss�o) e o resultado estruturado retorna ao modelo. Repete at� o
-     * modelo produzir texto final ou atingir o limite de itera��es.
+     * registradas; se o modelo solicitar uma ou mais Tools, cada uma é
+     * executada pelo backend (via {@link AiToolRegistry}, com verificação de
+     * permissão) e o resultado estruturado retorna ao modelo. Repete até o
+     * modelo produzir texto final ou atingir o limite de iterações.
      *
-     * <p>AI-05: a conversa em curso � passada no {@link AiToolContext} para que
+     * <p>AI-05: a conversa em curso é passada no {@link AiToolContext} para que
      * write tools vinculem propostas a ela. Propostas criadas durante o loop
-     * s�o coletadas ({@code AiActionResponse}) e retornadas na resposta.</p>
+     * são coletadas ({@code AiActionResponse}) e retornadas na resposta.</p>
      */
     private ChatLoopResult runToolLoop(UUID companyId, UUID userId, List<String> permissions,
                                        UUID conversationId, List<AiProvider.ChatMessage> messages) {
@@ -185,6 +193,10 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
         AiProvider.ChatResult result = aiProvider.chatWithTools(new AiProvider.ChatRequest(
                 companyId, userId, working, toolRegistry.toolDefinitions()));
 
+        // Propostas já criadas neste turno, por ferramenta + parâmetros normalizados:
+        // uma repetição devolve a proposta existente em vez de criar outra AiAction.
+        Map<String, AiToolResult> proposalsThisTurn = new HashMap<>();
+
         int iterations = 0;
         while (result.hasToolCalls() && iterations < MAX_TOOL_ITERATIONS) {
             iterations++;
@@ -193,19 +205,56 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
             // referencia a chamada correspondente via tool_call_id.
             working.add(new AiProvider.ChatMessage(ROLE_ASSISTANT, result.content(), result.toolCalls(), null));
             for (AiProvider.ToolCall call : result.toolCalls()) {
-                AiToolResult toolResult = toolRegistry.execute(call.name(), toolCtx, call.arguments());
-                TenantContext.setCompanyId(companyId);
-                if (toolResult.success() && toolResult.data() instanceof AiActionResponse proposal) {
-                    actions.add(proposal);
+                String key = proposalKey(call);
+                AiToolResult toolResult = proposalsThisTurn.get(key);
+                if (toolResult == null) {
+                    toolResult = toolRegistry.execute(call.name(), toolCtx, call.arguments());
+                    TenantContext.setCompanyId(companyId);
+                    if (toolResult.success() && toolResult.data() instanceof AiActionResponse proposal) {
+                        actions.add(proposal);
+                        proposalsThisTurn.put(key, toolResult);
+                    }
+                    auditToolCall(companyId, userId, call.name(), toolResult);
                 }
-                auditToolCall(companyId, userId, call.name(), toolResult);
                 working.add(new AiProvider.ChatMessage(ROLE_TOOL, serialize(toolResult), null, call.id()));
             }
             result = aiProvider.chatWithTools(new AiProvider.ChatRequest(
                     companyId, userId, working, toolRegistry.toolDefinitions()));
         }
-        String content = result.content() != null ? result.content() : "N�o consegui produzir uma resposta final.";
+
+        if (result.hasToolCalls()) {
+            // Limite atingido com tools pendentes: uma última chamada SEM ferramentas
+            // pedindo o resumo do que foi feito e do que falta.
+            working.add(new AiProvider.ChatMessage("system", FINAL_SUMMARY_INSTRUCTION));
+            result = aiProvider.chatWithTools(new AiProvider.ChatRequest(
+                    companyId, userId, working, List.of()));
+        }
+
+        String content = result.content();
+        if (content == null || content.isBlank()) {
+            content = fallbackFromProposals(actions);
+        }
         return new ChatLoopResult(content, actions);
+    }
+
+    private String proposalKey(AiProvider.ToolCall call) {
+        Map<String, Object> args = call.arguments() == null ? Map.of() : new TreeMap<>(call.arguments());
+        return call.name() + "|" + args;
+    }
+
+    static String fallbackFromProposals(List<AiActionResponse> actions) {
+        if (actions.isEmpty()) {
+            return NO_FINAL_ANSWER;
+        }
+        StringBuilder sb = new StringBuilder("Preparei ").append(actions.size())
+                .append(actions.size() == 1 ? " ação" : " ações").append(" para você confirmar: ");
+        for (int i = 0; i < actions.size(); i++) {
+            if (i > 0) {
+                sb.append("; ");
+            }
+            sb.append(actions.get(i).description());
+        }
+        return sb.append('.').toString();
     }
 
     private record ChatLoopResult(String content, List<AiActionResponse> actions) {
@@ -308,7 +357,12 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
                 .append("possível, pergunte qual. Use SEMPRE o id exato devolvido pela busca — nunca ")
                 .append("invente ids. Se o usuário perguntar se algo já foi feito (ex.: \"a consulta foi ")
                 .append("desmarcada?\"), CONSULTE com a ferramenta de busca e informe o status; não repita a ")
-                .append("ação. Horários são sempre no fuso de Brasília.\n\n");
+                .append("ação. Horários são sempre no fuso de Brasília.\n\n")
+                .append("Limites: se não houver ferramenta para o que foi pedido, diga claramente \"isso eu ainda ")
+                .append("não consigo fazer\" — nunca dê a entender que fez. Pedidos com dependência (ex.: ")
+                .append("paciente novo e depois procedimento ou consulta para ele): proponha primeiro o cadastro e ")
+                .append("explique que os próximos passos vêm depois da confirmação. Não repita uma proposta ")
+                .append("idêntica já feita nesta resposta.\n\n");
 
         ZonedDateTime now = ZonedDateTime.now(clock.withZone(CLINIC_ZONE));
         sb.append("Agora é ").append(now.format(NOW_FORMAT)).append(" (horário de Brasília).\n");

@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -254,5 +255,57 @@ class TelegramUpdateProcessorTest {
         when(users.resolve(CO, TG)).thenReturn(Optional.empty());
         p.process(CO, "TOK", msg("\"text\":\"oi\""));
         verifyNoInteractions(notifier);
+    }
+
+    JsonNode callback(char kind) throws Exception {
+        return om.readTree("{\"update_id\":2,\"callback_query\":{\"id\":\"cb1\",\"from\":{\"id\":555},\"data\":\""
+                + kind + ":" + ACTION + "\",\"message\":{\"message_id\":9,\"chat\":{\"id\":555,\"type\":\"private\"}}}}");
+    }
+
+    @Test
+    void executedConfirmationContinuesConversationWithSystemMessage() throws Exception {
+        UUID patientId = UUID.randomUUID();
+        UUID next = UUID.randomUUID();
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        AiActionResponse done = new AiActionResponse(ACTION, CONV, "create_patient", "Patient", patientId,
+                "Cadastrar paciente Maria", "EXECUTED", Map.of(), null, null, null, null);
+        when(actions.confirm(any(), any(), any(), any())).thenReturn(done);
+        AiActionResponse proposal = new AiActionResponse(next, CONV, "create_appointment", null, null,
+                "Marcar consulta de Maria", "PROPOSED", Map.of(), null, null, null, null);
+        when(leo.chat(any(), any(), any(), any()))
+                .thenReturn(new AiChatResponse(CONV, "Agora a consulta:", "openai", List.of(proposal)));
+
+        p.process(CO, "TOK", callback('c'));
+
+        String expected = "[Sistema] Ação confirmada e executada: Cadastrar paciente Maria (Patient " + patientId
+                + "). Continue o pedido anterior do usuário, se ainda houver passos pendentes; "
+                + "se não houver, responda apenas 'Tudo certo.'";
+        ArgumentCaptor<AiChatRequest> req = ArgumentCaptor.forClass(AiChatRequest.class);
+        verify(leo).chat(eq(CO), eq(USER), eq(List.of("ai:chat")), req.capture());
+        assertEquals(expected, req.getValue().message());
+        assertEquals(CONV, req.getValue().conversationId());
+        verify(bot).editMessage("TOK", 555L, 9L, "✅ Feito: Cadastrar paciente Maria");
+        verify(bot).sendMessage("TOK", TG, "Agora a consulta:", null);
+        verify(bot).sendMessage("TOK", TG, "Marcar consulta de Maria",
+                List.of(List.of(new TelegramBotClient.Button("✅ Confirmar", "c:" + next),
+                        new TelegramBotClient.Button("❌ Cancelar", "x:" + next))));
+        verify(notifier).messageReceived(CO, USER, expected, false, "Agora a consulta:", 1, CONV);
+    }
+
+    @Test
+    void failedConfirmationDoesNotContinue() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        AiActionResponse failed = new AiActionResponse(ACTION, CONV, "t", null, null, "Cancelar consulta", "FAILED",
+                Map.of(), null, "erro", null, null);
+        when(actions.confirm(any(), any(), any(), any())).thenReturn(failed);
+        p.process(CO, "TOK", callback('c'));
+        verify(leo, never()).chat(any(), any(), any(), any());
+    }
+
+    @Test
+    void cancelledActionDoesNotContinue() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        p.process(CO, "TOK", callback('x'));
+        verify(leo, never()).chat(any(), any(), any(), any());
     }
 }
