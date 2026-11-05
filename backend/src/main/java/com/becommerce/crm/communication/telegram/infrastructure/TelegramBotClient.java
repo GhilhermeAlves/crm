@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -75,12 +76,15 @@ public class TelegramBotClient {
 
     public byte[] downloadFile(String token, String fileId) {
         try {
-            JsonNode r = rest.get().uri(baseUrl + "/bot" + token + "/getFile?file_id=" + fileId)
+            JsonNode r = rest.get().uri(baseUrl + "/bot" + token + "/getFile?file_id={fileId}", fileId)
                     .retrieve().body(JsonNode.class);
             String path = r == null ? "" : r.path("result").path("file_path").asText();
+            if (path.isBlank()) {
+                throw new TelegramApiException("Telegram não retornou o caminho do arquivo", null);
+            }
             return rest.get().uri(baseUrl + "/file/bot" + token + "/" + path).retrieve().body(byte[].class);
         } catch (RestClientException e) {
-            throw new TelegramApiException("Falha ao baixar arquivo do Telegram", e);
+            throw new TelegramApiException("Falha ao baixar arquivo do Telegram" + statusOf(e), null);
         }
     }
 
@@ -100,9 +104,13 @@ public class TelegramBotClient {
             }
             return r.path("result");
         } catch (RestClientException e) {
-            // Nunca inclua o token na mensagem.
-            throw new TelegramApiException("Falha ao chamar Telegram: " + method, e);
+            // Sem causa: a mensagem do RestClientException contém a URL, que carrega o token.
+            throw new TelegramApiException("Falha ao chamar Telegram: " + method + statusOf(e), null);
         }
+    }
+
+    private static String statusOf(RestClientException e) {
+        return e instanceof RestClientResponseException re ? " (HTTP " + re.getStatusCode().value() + ")" : "";
     }
 
     private static Map<String, Object> markup(List<List<Button>> keyboard) {

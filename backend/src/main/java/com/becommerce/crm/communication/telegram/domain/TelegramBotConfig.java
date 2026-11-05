@@ -45,7 +45,7 @@ public class TelegramBotConfig {
     public String getBotUsername() { return botUsername; }
     public void setBotUsername(String botUsername) { this.botUsername = botUsername; }
 
-    public boolean getEnabled() { return enabled; }
+    public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
     public UUID getUpdatedBy() { return updatedBy; }

@@ -12,6 +12,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -41,7 +43,23 @@ class TelegramBotClientTest {
     void getMeInvalidTokenThrows() {
         server.expect(requestTo("https://api.telegram.org/botBAD/getMe"))
               .andRespond(withStatus(HttpStatus.UNAUTHORIZED).body("{\"ok\":false}").contentType(MediaType.APPLICATION_JSON));
-        assertThrows(TelegramBotClient.TelegramApiException.class, () -> client.getMe("BAD"));
+        var ex = assertThrows(TelegramBotClient.TelegramApiException.class, () -> client.getMe("BAD"));
+        assertFalse(ex.toString().contains("BAD"));
+        assertNull(ex.getCause());
+    }
+
+    @Test
+    void sendMessageLongTextOnlyLastPartCarriesKeyboard() {
+        server.expect(requestTo("https://api.telegram.org/botTOK/sendMessage"))
+              .andExpect(jsonPath("$.reply_markup").doesNotExist())
+              .andRespond(withSuccess("{\"ok\":true,\"result\":{\"message_id\":1}}", MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://api.telegram.org/botTOK/sendMessage"))
+              .andExpect(jsonPath("$.reply_markup.inline_keyboard[0][0].callback_data").value("c:1"))
+              .andRespond(withSuccess("{\"ok\":true,\"result\":{\"message_id\":2}}", MediaType.APPLICATION_JSON));
+        long id = client.sendMessage("TOK", 1, "a".repeat(5000),
+                List.of(List.of(new TelegramBotClient.Button("OK", "c:1"))));
+        assertEquals(2, id);
+        server.verify();
     }
 
     @Test
