@@ -254,8 +254,9 @@ public class TelegramUpdateProcessor {
     }
 
     static String continuationMessage(AiActionResponse done) {
-        return "[Sistema] Ação confirmada e executada: " + done.description()
-                + " (" + done.entityType() + " " + done.entityId() + "). "
+        String entity = done.entityType() != null && done.entityId() != null
+                ? " (" + done.entityType() + " " + done.entityId() + ")" : "";
+        return "[Sistema] Ação confirmada e executada: " + done.description() + entity + ". "
                 + "Continue o pedido anterior do usuário, se ainda houver passos pendentes; "
                 + "se não houver, responda apenas 'Tudo certo.'";
     }

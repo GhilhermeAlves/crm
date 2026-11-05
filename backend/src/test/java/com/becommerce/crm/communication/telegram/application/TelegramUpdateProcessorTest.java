@@ -308,4 +308,13 @@ class TelegramUpdateProcessorTest {
         p.process(CO, "TOK", callback('x'));
         verify(leo, never()).chat(any(), any(), any(), any());
     }
+
+    @Test
+    void continuationMessageOmitsEntityWhenMissing() {
+        AiActionResponse done = new AiActionResponse(ACTION, CONV, "t", null, null, "Criar tarefa", "EXECUTED",
+                Map.of(), null, null, null, null);
+        assertEquals("[Sistema] Ação confirmada e executada: Criar tarefa. Continue o pedido anterior do usuário, "
+                + "se ainda houver passos pendentes; se não houver, responda apenas 'Tudo certo.'",
+                TelegramUpdateProcessor.continuationMessage(done));
+    }
 }
