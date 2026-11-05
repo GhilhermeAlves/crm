@@ -8,6 +8,8 @@ import com.becommerce.crm.finance.transaction.application.service.FinancialTrans
 import com.becommerce.crm.finance.transaction.domain.PaymentMethod;
 import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
+import com.becommerce.crm.masterdata.contact.application.dto.request.CreateContactRequest;
+import com.becommerce.crm.masterdata.contact.application.port.in.ContactUseCase;
 import com.becommerce.crm.masterdata.inventory.application.dto.RegisterMovementRequest;
 import com.becommerce.crm.masterdata.inventory.application.service.InventoryService;
 import com.becommerce.crm.masterdata.inventory.domain.StockMovementType;
@@ -21,6 +23,7 @@ import com.becommerce.crm.sales.task.domain.TaskPriority;
 import com.becommerce.crm.sales.scheduling.application.dto.CreateAppointmentRequest;
 import com.becommerce.crm.sales.scheduling.application.dto.RescheduleRequest;
 import com.becommerce.crm.sales.scheduling.application.port.in.AppointmentUseCase;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,19 +51,34 @@ public class AiActionExecutor {
     private final AppointmentUseCase appointmentUseCase;
     private final FinancialTransactionService financialTransactionService;
     private final InventoryService inventoryService;
+    private final ContactUseCase contactUseCase;
 
+    /** Sem cadastro de paciente (mantido para os testes existentes). */
     public AiActionExecutor(TaskUseCase taskUseCase,
                             ActivityUseCase activityUseCase,
                             OpportunityUseCase opportunityUseCase,
                             AppointmentUseCase appointmentUseCase,
                             FinancialTransactionService financialTransactionService,
                             InventoryService inventoryService) {
+        this(taskUseCase, activityUseCase, opportunityUseCase, appointmentUseCase,
+                financialTransactionService, inventoryService, null);
+    }
+
+    @Autowired
+    public AiActionExecutor(TaskUseCase taskUseCase,
+                            ActivityUseCase activityUseCase,
+                            OpportunityUseCase opportunityUseCase,
+                            AppointmentUseCase appointmentUseCase,
+                            FinancialTransactionService financialTransactionService,
+                            InventoryService inventoryService,
+                            ContactUseCase contactUseCase) {
         this.taskUseCase = taskUseCase;
         this.activityUseCase = activityUseCase;
         this.opportunityUseCase = opportunityUseCase;
         this.appointmentUseCase = appointmentUseCase;
         this.financialTransactionService = financialTransactionService;
         this.inventoryService = inventoryService;
+        this.contactUseCase = contactUseCase;
     }
 
     /**
@@ -149,9 +167,33 @@ public class AiActionExecutor {
                     action.getCompanyId(), uuid(p.get("itemId")),
                     new RegisterMovementRequest(enumOf(p.get("type"), StockMovementType.class),
                             intValue(p.get("quantity")), str(p.get("note"))));
+            case "create_patient" -> createPatient(action, p);
             default -> throw new IllegalArgumentException(
                     "Ferramenta de escrita nao suportada: " + action.getTool());
         };
+    }
+
+    /** Mesmo caminho da tela de pacientes (POST /patients): contato ja marcado como paciente. */
+    private Object createPatient(AiAction action, Map<String, Object> p) {
+        if (contactUseCase == null) {
+            throw new IllegalStateException("Cadastro de paciente indisponivel.");
+        }
+        return contactUseCase.createPatient(
+                action.getCompanyId(),
+                new CreateContactRequest(
+                        str(p.get("firstName")),
+                        str(p.get("lastName")),
+                        str(p.get("email")),
+                        null,
+                        str(p.get("mobile")),
+                        str(p.get("notes")),
+                        localDate(p.get("birthDate")),
+                        str(p.get("cpf")),
+                        null, null, null, null, null,
+                        null, null, null, null, null, null, null,
+                        null, null, null, null, null,
+                        null, null, null),
+                action.getUserId());
     }
 
     static UUID uuid(Object value) {
