@@ -2,6 +2,7 @@ package com.becommerce.crm.communication.telegram.web;
 
 import com.becommerce.crm.communication.telegram.application.TelegramConfigService;
 import com.becommerce.crm.communication.telegram.application.TelegramConfigService.TelegramConfigResponse;
+import com.becommerce.crm.communication.telegram.application.TelegramLinkService;
 import com.becommerce.crm.shared.security.config.CurrentCompanyIdArgumentResolver;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import com.becommerce.crm.shared.web.handler.GlobalExceptionHandler;
@@ -27,7 +28,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,12 +43,13 @@ class TelegramSettingsControllerTest {
     private static final String URL = "/api/v1/companies/" + COMPANY_ID + "/telegram";
 
     @Mock private TelegramConfigService config;
+    @Mock private TelegramLinkService links;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new TelegramSettingsController(config))
+        mockMvc = MockMvcBuilders.standaloneSetup(new TelegramSettingsController(config, links))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setCustomArgumentResolvers(new CurrentCompanyIdArgumentResolver(),
                         new AuthenticationPrincipalArgumentResolver())
@@ -91,5 +95,35 @@ class TelegramSettingsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.botUsername").value("leo_bot"))
                 .andExpect(jsonPath("$.token").doesNotExist());
+    }
+
+    @Test
+    void linkCodeReturnsCodeAndBotUsername() throws Exception {
+        when(config.get(COMPANY_ID))
+                .thenReturn(new TelegramConfigResponse(true, "leo_bot", true, LocalDateTime.now()));
+        when(links.generateCode(COMPANY_ID, USER_ID)).thenReturn("123456");
+
+        mockMvc.perform(post(URL + "/link-code"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("123456"))
+                .andExpect(jsonPath("$.botUsername").value("leo_bot"))
+                .andExpect(jsonPath("$.expiresInMinutes").value(10));
+    }
+
+    @Test
+    void linkCodeWithoutConfiguredBotReturns4xx() throws Exception {
+        when(config.get(COMPANY_ID))
+                .thenReturn(new TelegramConfigResponse(false, null, false, null));
+
+        mockMvc.perform(post(URL + "/link-code"))
+                .andExpect(status().is4xxClientError());
+        verify(links, never()).generateCode(any(), any());
+    }
+
+    @Test
+    void deleteMeUnlinksCurrentUser() throws Exception {
+        mockMvc.perform(delete(URL + "/me"))
+                .andExpect(status().isNoContent());
+        verify(links).unlinkUser(COMPANY_ID, USER_ID);
     }
 }
