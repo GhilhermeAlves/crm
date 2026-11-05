@@ -364,7 +364,11 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
                 .append("não consigo fazer\" — nunca dê a entender que fez. Pedidos com dependência (ex.: ")
                 .append("paciente novo e depois procedimento ou consulta para ele): proponha primeiro o cadastro e ")
                 .append("explique que os próximos passos vêm depois da confirmação. Não repita uma proposta ")
-                .append("idêntica já feita nesta resposta.\n\n");
+                .append("idêntica já feita nesta resposta. Tratamentos (procedimentos e exames) sempre começam ")
+                .append("pelo orçamento: use create_procedure, que cria os procedimentos planejados e o orçamento ")
+                .append("em rascunho. Não use create_transaction para cobrar tratamento; a receita é gerada ao ")
+                .append("aprovar o orçamento. Use create_transaction só se o usuário pedir explicitamente um ")
+                .append("lançamento financeiro avulso.\n\n");
 
         ZonedDateTime now = ZonedDateTime.now(clock.withZone(CLINIC_ZONE));
         sb.append("Agora é ").append(now.format(NOW_FORMAT)).append(" (horário de Brasília).\n");

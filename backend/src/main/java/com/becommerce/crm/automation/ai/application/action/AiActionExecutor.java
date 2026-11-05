@@ -8,7 +8,10 @@ import com.becommerce.crm.finance.transaction.application.service.FinancialTrans
 import com.becommerce.crm.finance.transaction.domain.PaymentMethod;
 import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
+import com.becommerce.crm.clinical.budget.application.dto.BudgetRequest;
+import com.becommerce.crm.clinical.budget.application.port.in.BudgetUseCase;
 import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureRequest;
+import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureResponse;
 import com.becommerce.crm.clinical.procedure.application.dto.ProcedureToothDto;
 import com.becommerce.crm.clinical.procedure.application.port.in.PatientProcedureUseCase;
 import com.becommerce.crm.clinical.procedure.domain.Dentition;
@@ -38,6 +41,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -60,6 +64,7 @@ public class AiActionExecutor {
     private final InventoryService inventoryService;
     private final ContactUseCase contactUseCase;
     private final PatientProcedureUseCase procedureUseCase;
+    private final BudgetUseCase budgetUseCase;
 
     /** Sem cadastro de paciente (mantido para os testes existentes). */
     public AiActionExecutor(TaskUseCase taskUseCase,
@@ -84,7 +89,7 @@ public class AiActionExecutor {
                 financialTransactionService, inventoryService, contactUseCase, null);
     }
 
-    @Autowired
+    /** Sem orcamento (mantido para os testes existentes). */
     public AiActionExecutor(TaskUseCase taskUseCase,
                             ActivityUseCase activityUseCase,
                             OpportunityUseCase opportunityUseCase,
@@ -93,6 +98,20 @@ public class AiActionExecutor {
                             InventoryService inventoryService,
                             ContactUseCase contactUseCase,
                             PatientProcedureUseCase procedureUseCase) {
+        this(taskUseCase, activityUseCase, opportunityUseCase, appointmentUseCase,
+                financialTransactionService, inventoryService, contactUseCase, procedureUseCase, null);
+    }
+
+    @Autowired
+    public AiActionExecutor(TaskUseCase taskUseCase,
+                            ActivityUseCase activityUseCase,
+                            OpportunityUseCase opportunityUseCase,
+                            AppointmentUseCase appointmentUseCase,
+                            FinancialTransactionService financialTransactionService,
+                            InventoryService inventoryService,
+                            ContactUseCase contactUseCase,
+                            PatientProcedureUseCase procedureUseCase,
+                            BudgetUseCase budgetUseCase) {
         this.taskUseCase = taskUseCase;
         this.activityUseCase = activityUseCase;
         this.opportunityUseCase = opportunityUseCase;
@@ -101,6 +120,7 @@ public class AiActionExecutor {
         this.inventoryService = inventoryService;
         this.contactUseCase = contactUseCase;
         this.procedureUseCase = procedureUseCase;
+        this.budgetUseCase = budgetUseCase;
     }
 
     /**
@@ -222,6 +242,8 @@ public class AiActionExecutor {
     /**
      * Mesmo caminho do odontograma (POST /procedures), sem financeiro. O preco
      * persistido e por dente: um procedimento por dente; sem dentes (exame), um so.
+     * Planejado (padrao): todo tratamento comeca pelo orcamento, entao cria tambem
+     * um orcamento em rascunho com todos os procedimentos criados.
      */
     private Object createProcedures(AiAction action, Map<String, Object> p) {
         if (procedureUseCase == null) {
@@ -238,13 +260,18 @@ public class AiActionExecutor {
         } else {
             teeth.forEach(t -> perProcedure.add(List.of(new ProcedureToothDto(t, null))));
         }
-        List<Object> created = new ArrayList<>();
+        ProcedureState state = enumOf(p.get("state"), ProcedureState.class);
+        boolean planned = state == null || state == ProcedureState.PLANNED;
+        if (planned && budgetUseCase == null) {
+            throw new IllegalStateException("Orcamento indisponivel.");
+        }
+        List<PatientProcedureResponse> created = new ArrayList<>();
         for (List<ProcedureToothDto> procedureTeeth : perProcedure) {
             com.becommerce.crm.shared.tenant.context.TenantContext.setCompanyId(action.getCompanyId());
             created.add(procedureUseCase.create(action.getCompanyId(), contactId,
                     new PatientProcedureRequest(
                             uuid(p.get("catalogItemId")),
-                            enumOf(p.get("state"), ProcedureState.class),
+                            state,
                             enumOf(p.get("dentition"), Dentition.class),
                             longValue(p.get("priceCents")),
                             null,
@@ -255,7 +282,28 @@ public class AiActionExecutor {
                             null),
                     action.getUserId(), false));
         }
-        return created;
+        if (!planned) {
+            return created;
+        }
+        String itemName = str(p.get("catalogItemName"));
+        if ((itemName == null || itemName.isBlank()) && !created.isEmpty() && created.get(0) != null) {
+            itemName = created.get(0).name();
+        }
+        String title = "Orçamento - " + (itemName == null || itemName.isBlank() ? "procedimento" : itemName.trim());
+        if (title.length() > 160) {
+            title = title.substring(0, 160);
+        }
+        List<UUID> procedureIds = created.stream().filter(java.util.Objects::nonNull)
+                .map(PatientProcedureResponse::id).toList();
+        String notes = str(p.get("notes"));
+        com.becommerce.crm.shared.tenant.context.TenantContext.setCompanyId(action.getCompanyId());
+        Object budget = budgetUseCase.create(action.getCompanyId(), contactId,
+                new BudgetRequest(title, procedureIds, 0L, notes == null || notes.isBlank() ? null : notes, null),
+                action.getUserId());
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("procedures", created);
+        result.put("budget", budget);
+        return result;
     }
 
     static UUID uuid(Object value) {

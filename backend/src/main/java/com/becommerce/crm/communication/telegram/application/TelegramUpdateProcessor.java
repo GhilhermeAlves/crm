@@ -272,7 +272,20 @@ public class TelegramUpdateProcessor {
         }
         try {
             List<String> ids = new java.util.ArrayList<>();
-            if (result instanceof java.util.Collection<?> items) {
+            if (result instanceof Map<?, ?> map && (map.containsKey("budget") || map.containsKey("procedures"))) {
+                String budgetId = idOf(map.get("budget"));
+                if (budgetId != null) {
+                    ids.add(budgetId);
+                }
+                if (map.get("procedures") instanceof java.util.Collection<?> procedures) {
+                    for (Object item : procedures) {
+                        String id = idOf(item);
+                        if (id != null) {
+                            ids.add(id);
+                        }
+                    }
+                }
+            } else if (result instanceof java.util.Collection<?> items) {
                 for (Object item : items) {
                     String id = idOf(item);
                     if (id != null) {
