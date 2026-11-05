@@ -147,7 +147,7 @@ public class TelegramConfigService {
     }
 
     /** Executa com o tenant definido, para as consultas sob RLS FORCE. */
-    static <T> T withTenant(UUID companyId, Supplier<T> body) {
+    public static <T> T withTenant(UUID companyId, Supplier<T> body) {
         UUID previous = TenantContext.getCompanyId();
         try {
             TenantContext.setCompanyId(companyId);
