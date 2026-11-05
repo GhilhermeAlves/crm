@@ -142,6 +142,15 @@ class CreateProcedureToolTest {
     }
 
     @Test
+    void fractionalPriceRejectedAskingForCents() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> tool.execute(ctx,
+                Map.of("contactId", contactId.toString(), "catalogItemId", facetaId.toString(),
+                        "priceCents", 750.5)));
+        org.junit.jupiter.api.Assertions.assertTrue(e.getMessage().contains("centavos"));
+        verifyNoProposal();
+    }
+
+    @Test
     void unknownCatalogItemRejected() {
         UUID unknown = UUID.randomUUID();
         when(catalog.getById(companyId, unknown)).thenThrow(new CatalogItemNotFoundException(unknown));

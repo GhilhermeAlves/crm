@@ -312,9 +312,11 @@ public class CreateProcedureTool implements AiTool {
         }
         long cents;
         try {
-            cents = raw instanceof Number n ? n.longValue()
-                    : new BigDecimal(String.valueOf(raw).trim()).longValueExact();
-        } catch (NumberFormatException | ArithmeticException e) {
+            cents = new BigDecimal(String.valueOf(raw).trim()).longValueExact();
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException(
+                    "Valor com casas decimais: informe o preco em centavos, como inteiro (priceCents, ex.: 75000).");
+        } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Valor invalido: informe em centavos (ex.: 75000).");
         }
         if (cents < 0) {

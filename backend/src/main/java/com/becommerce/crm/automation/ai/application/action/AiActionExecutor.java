@@ -240,6 +240,7 @@ public class AiActionExecutor {
         }
         List<Object> created = new ArrayList<>();
         for (List<ProcedureToothDto> procedureTeeth : perProcedure) {
+            com.becommerce.crm.shared.tenant.context.TenantContext.setCompanyId(action.getCompanyId());
             created.add(procedureUseCase.create(action.getCompanyId(), contactId,
                     new PatientProcedureRequest(
                             uuid(p.get("catalogItemId")),

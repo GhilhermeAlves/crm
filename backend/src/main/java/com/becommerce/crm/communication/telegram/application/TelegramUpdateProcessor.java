@@ -253,12 +253,51 @@ public class TelegramUpdateProcessor {
         askLeo(companyId, token, chatId, from, inConversation, continuationMessage(done), "");
     }
 
+    private static final com.fasterxml.jackson.databind.ObjectMapper ID_MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+
     static String continuationMessage(AiActionResponse done) {
-        String entity = done.entityType() != null && done.entityId() != null
-                ? " (" + done.entityType() + " " + done.entityId() + ")" : "";
+        String ids = done.entityId() != null ? done.entityId().toString() : idsFromResult(done.result());
+        String entity = done.entityType() != null && ids != null && !ids.isBlank()
+                ? " (" + done.entityType() + " " + ids + ")" : "";
         return "[Sistema] Ação confirmada e executada: " + done.description() + entity + ". "
                 + "Continue o pedido anterior do usuário, se ainda houver passos pendentes; "
                 + "se não houver, responda apenas 'Tudo certo.'";
+    }
+
+    /** Ids do registro criado, lidos do resultado (objeto, Map ou lista); null se nao houver. */
+    private static String idsFromResult(Object result) {
+        if (result == null) {
+            return null;
+        }
+        try {
+            List<String> ids = new java.util.ArrayList<>();
+            if (result instanceof java.util.Collection<?> items) {
+                for (Object item : items) {
+                    String id = idOf(item);
+                    if (id != null) {
+                        ids.add(id);
+                    }
+                }
+            } else {
+                String id = idOf(result);
+                if (id != null) {
+                    ids.add(id);
+                }
+            }
+            return ids.isEmpty() ? null : String.join(", ", ids);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private static String idOf(Object item) {
+        if (item == null) {
+            return null;
+        }
+        Object id = item instanceof Map<?, ?> m ? m.get("id")
+                : ID_MAPPER.convertValue(item, Map.class).get("id");
+        return id == null ? null : id.toString();
     }
 
     private void auditChannel(UUID companyId, UUID userId, UUID actionId, String event, String description,

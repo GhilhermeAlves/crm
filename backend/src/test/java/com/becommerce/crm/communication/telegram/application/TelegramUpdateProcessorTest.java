@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -316,5 +317,25 @@ class TelegramUpdateProcessorTest {
         assertEquals("[Sistema] Ação confirmada e executada: Criar tarefa. Continue o pedido anterior do usuário, "
                 + "se ainda houver passos pendentes; se não houver, responda apenas 'Tudo certo.'",
                 TelegramUpdateProcessor.continuationMessage(done));
+    }
+
+    @Test
+    void continuationDerivesEntityIdFromResultMap() {
+        UUID id = UUID.randomUUID();
+        AiActionResponse done = new AiActionResponse(ACTION, CONV, "create_patient", "CONTACT", null,
+                "Cadastrar paciente", "EXECUTED", Map.of(), Map.of("id", id.toString()), null, null, null);
+        assertTrue(TelegramUpdateProcessor.continuationMessage(done)
+                .contains("Cadastrar paciente (CONTACT " + id + ")."));
+    }
+
+    @Test
+    void continuationDerivesEntityIdsFromResultList() {
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        AiActionResponse done = new AiActionResponse(ACTION, CONV, "create_procedure", "PROCEDURE", null,
+                "Lançar procedimento", "EXECUTED", Map.of(), List.of(Map.of("id", a), Map.of("id", b)),
+                null, null, null);
+        assertTrue(TelegramUpdateProcessor.continuationMessage(done)
+                .contains("(PROCEDURE " + a + ", " + b + ")"));
     }
 }
