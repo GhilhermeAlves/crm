@@ -8,6 +8,11 @@ import com.becommerce.crm.finance.transaction.application.service.FinancialTrans
 import com.becommerce.crm.finance.transaction.domain.PaymentMethod;
 import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
+import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureRequest;
+import com.becommerce.crm.clinical.procedure.application.dto.ProcedureToothDto;
+import com.becommerce.crm.clinical.procedure.application.port.in.PatientProcedureUseCase;
+import com.becommerce.crm.clinical.procedure.domain.Dentition;
+import com.becommerce.crm.clinical.procedure.domain.ProcedureState;
 import com.becommerce.crm.masterdata.contact.application.dto.request.CreateContactRequest;
 import com.becommerce.crm.masterdata.contact.application.port.in.ContactUseCase;
 import com.becommerce.crm.masterdata.inventory.application.dto.RegisterMovementRequest;
@@ -32,6 +37,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -52,6 +59,7 @@ public class AiActionExecutor {
     private final FinancialTransactionService financialTransactionService;
     private final InventoryService inventoryService;
     private final ContactUseCase contactUseCase;
+    private final PatientProcedureUseCase procedureUseCase;
 
     /** Sem cadastro de paciente (mantido para os testes existentes). */
     public AiActionExecutor(TaskUseCase taskUseCase,
@@ -64,7 +72,7 @@ public class AiActionExecutor {
                 financialTransactionService, inventoryService, null);
     }
 
-    @Autowired
+    /** Sem lancamento de procedimentos (mantido para os testes existentes). */
     public AiActionExecutor(TaskUseCase taskUseCase,
                             ActivityUseCase activityUseCase,
                             OpportunityUseCase opportunityUseCase,
@@ -72,6 +80,19 @@ public class AiActionExecutor {
                             FinancialTransactionService financialTransactionService,
                             InventoryService inventoryService,
                             ContactUseCase contactUseCase) {
+        this(taskUseCase, activityUseCase, opportunityUseCase, appointmentUseCase,
+                financialTransactionService, inventoryService, contactUseCase, null);
+    }
+
+    @Autowired
+    public AiActionExecutor(TaskUseCase taskUseCase,
+                            ActivityUseCase activityUseCase,
+                            OpportunityUseCase opportunityUseCase,
+                            AppointmentUseCase appointmentUseCase,
+                            FinancialTransactionService financialTransactionService,
+                            InventoryService inventoryService,
+                            ContactUseCase contactUseCase,
+                            PatientProcedureUseCase procedureUseCase) {
         this.taskUseCase = taskUseCase;
         this.activityUseCase = activityUseCase;
         this.opportunityUseCase = opportunityUseCase;
@@ -79,6 +100,7 @@ public class AiActionExecutor {
         this.financialTransactionService = financialTransactionService;
         this.inventoryService = inventoryService;
         this.contactUseCase = contactUseCase;
+        this.procedureUseCase = procedureUseCase;
     }
 
     /**
@@ -168,6 +190,7 @@ public class AiActionExecutor {
                     new RegisterMovementRequest(enumOf(p.get("type"), StockMovementType.class),
                             intValue(p.get("quantity")), str(p.get("note"))));
             case "create_patient" -> createPatient(action, p);
+            case "create_procedure" -> createProcedures(action, p);
             default -> throw new IllegalArgumentException(
                     "Ferramenta de escrita nao suportada: " + action.getTool());
         };
@@ -194,6 +217,44 @@ public class AiActionExecutor {
                         null, null, null, null, null,
                         null, null, null),
                 action.getUserId());
+    }
+
+    /**
+     * Mesmo caminho do odontograma (POST /procedures), sem financeiro. O preco
+     * persistido e por dente: um procedimento por dente; sem dentes (exame), um so.
+     */
+    private Object createProcedures(AiAction action, Map<String, Object> p) {
+        if (procedureUseCase == null) {
+            throw new IllegalStateException("Lancamento de procedimentos indisponivel.");
+        }
+        UUID contactId = uuid(p.get("contactId"));
+        List<Integer> teeth = new ArrayList<>();
+        if (p.get("teeth") instanceof List<?> raw) {
+            raw.forEach(t -> teeth.add(intValue(t)));
+        }
+        List<List<ProcedureToothDto>> perProcedure = new ArrayList<>();
+        if (teeth.isEmpty()) {
+            perProcedure.add(List.of());
+        } else {
+            teeth.forEach(t -> perProcedure.add(List.of(new ProcedureToothDto(t, null))));
+        }
+        List<Object> created = new ArrayList<>();
+        for (List<ProcedureToothDto> procedureTeeth : perProcedure) {
+            created.add(procedureUseCase.create(action.getCompanyId(), contactId,
+                    new PatientProcedureRequest(
+                            uuid(p.get("catalogItemId")),
+                            enumOf(p.get("state"), ProcedureState.class),
+                            enumOf(p.get("dentition"), Dentition.class),
+                            longValue(p.get("priceCents")),
+                            null,
+                            str(p.get("notes")),
+                            localDate(p.get("performedAt")),
+                            procedureTeeth,
+                            false,
+                            null),
+                    action.getUserId(), false));
+        }
+        return created;
     }
 
     static UUID uuid(Object value) {

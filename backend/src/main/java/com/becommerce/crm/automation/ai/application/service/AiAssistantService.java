@@ -350,6 +350,7 @@ List<AiProvider.ChatMessage> messages = buildPrompt(conversation, crmContext, re
                 .append("Nunca mencione que recebeu um bloco de contexto técnico.\n\n")
                 .append("Ações: você consulta dados com as ferramentas. Para marcar consultas (create_appointment), ")
                 .append("cadastrar pacientes (create_patient), desmarcar ou remarcar consultas, ")
+                .append("lançar procedimentos e exames (create_procedure), ")
                 .append("criar tarefas/atividades, alterar oportunidades, lançar receitas/despesas, dar baixa ")
                 .append("em lançamentos e registrar movimentações de estoque, use a ferramenta correspondente: ")
                 .append("ela cria uma PROPOSTA que o usuário confirma no card exibido no chat. Nunca diga que ")
