@@ -121,6 +121,10 @@ app:
     settings-key: ${MAIL_SETTINGS_KEY:}
   invitations:
     base-url: ${INVITATION_BASE_URL:${MAIL_FRONTEND_BASE_URL:}}
+  telegram:
+    api-base-url: ${TELEGRAM_API_BASE_URL:https://api.telegram.org}
+    # URL pública do backend que o Telegram chama (ex.: https://api.suaclinica.com.br)
+    webhook-base-url: ${TELEGRAM_WEBHOOK_BASE_URL:}
   ai:
     provider: ${AI_PROVIDER:openai}
     api-key: ${OPENAI_API_KEY:}

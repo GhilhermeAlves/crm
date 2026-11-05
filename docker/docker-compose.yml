@@ -78,6 +78,8 @@ services:
       - AI_PROVIDER=${AI_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      # Telegram (Leo) — URL pública do backend, ex.: https://api.suaclinica.com.br
+      - TELEGRAM_WEBHOOK_BASE_URL=${TELEGRAM_WEBHOOK_BASE_URL:-}
       # Sprint 6.10 (Task 1.8) — healthcheck do backend para docker compose.
       - ACTUATOR_HEALTH_PATH=/actuator/health
     healthcheck:
