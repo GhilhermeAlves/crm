@@ -5,12 +5,25 @@ import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { PageTitle } from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCheck, Inbox } from "lucide-react";
+import { CheckCheck, Inbox, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   useNotifications,
   useUnreadCount,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
+  useDeleteNotification,
+  useDeleteAllNotifications,
   useNotificationPermissions,
 } from "@/features/communication/notifications/hooks/useNotifications";
 import { formatRelativeTime } from "@/features/communication/notifications/lib/format";
@@ -47,17 +60,34 @@ const TYPE_LABEL: Record<NotificationType, string> = {
 function NotificationRow({
   notification,
   onRead,
+  onDelete,
   canUpdate,
   companyId,
 }: {
   notification: Notification;
   onRead: (id: string) => void;
+  onDelete: (id: string) => void;
   canUpdate: boolean;
   companyId: string | null;
 }) {
   return (
     <div className="space-y-2">
-      <NotificationContent notification={notification} onRead={onRead} canUpdate={canUpdate} />
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <NotificationContent notification={notification} onRead={onRead} canUpdate={canUpdate} />
+        </div>
+        {canUpdate && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mt-2 h-8 w-8 shrink-0 text-muted-foreground hover:text-red-600"
+            aria-label="Excluir notificação"
+            onClick={() => onDelete(notification.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
       <ReportExportDownloadButton
         companyId={companyId}
         metadata={notification.metadata}
@@ -120,6 +150,8 @@ export default function NotificationsPage() {
   const { data: unread = 0 } = useUnreadCount(companyId);
   const markRead = useMarkNotificationRead(companyId);
   const markAllRead = useMarkAllNotificationsRead(companyId);
+  const deleteOne = useDeleteNotification(companyId);
+  const deleteAll = useDeleteAllNotifications(companyId);
 
   const visible = onlyUnread ? notifications.filter((n) => !n.read) : notifications;
 
@@ -127,12 +159,36 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <PageTitle>Notificações</PageTitle>
-        {perms.canUpdate && unread > 0 && (
-          <Button variant="outline" onClick={() => markAllRead.mutate()}>
-            <CheckCheck className="mr-2 h-4 w-4" />
-            Marcar todas como lidas
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {perms.canUpdate && unread > 0 && (
+            <Button variant="outline" onClick={() => markAllRead.mutate()}>
+              <CheckCheck className="mr-2 h-4 w-4" />
+              Marcar todas como lidas
+            </Button>
+          )}
+          {perms.canUpdate && notifications.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={deleteAll.isPending}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir todas
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir todas as notificações?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Todas as suas notificações serão apagadas. Essa ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => deleteAll.mutate()}>Excluir</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </div>
 
       {perms.canUpdate && (
@@ -180,6 +236,7 @@ export default function NotificationsPage() {
                   notification={n}
                   canUpdate={perms.canUpdate}
                   onRead={(id) => markRead.mutate(id)}
+                  onDelete={(id) => deleteOne.mutate(id)}
                   companyId={companyId}
                 />
               ))}

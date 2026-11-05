@@ -22,4 +22,12 @@ export const NotificationService = {
   async markAllRead(companyId: string): Promise<void> {
     await api.post(`${BASE}/${companyId}/notifications/read-all`);
   },
+
+  async remove(companyId: string, id: string): Promise<void> {
+    await api.delete(`${BASE}/${companyId}/notifications/${id}`);
+  },
+
+  async removeAll(companyId: string): Promise<void> {
+    await api.delete(`${BASE}/${companyId}/notifications`);
+  },
 };
