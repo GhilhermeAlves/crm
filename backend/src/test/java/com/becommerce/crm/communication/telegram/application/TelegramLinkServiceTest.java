@@ -12,6 +12,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.web.server.ResponseStatusException;
+
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -20,11 +22,13 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,10 +65,36 @@ class TelegramLinkServiceTest {
         when(codes.findById(TelegramConfigService.sha256(CO + ":123456"))).thenReturn(Optional.of(c));
         when(links.findByCompanyIdAndTelegramUserId(CO, 99L)).thenReturn(Optional.empty());
         when(links.findByCompanyIdAndUserId(CO, USER)).thenReturn(Optional.empty());
+        when(codes.markUsed(eq(TelegramConfigService.sha256(CO + ":123456")), any())).thenReturn(1);
 
         assertEquals(TelegramLinkService.LinkResult.LINKED, service.link(CO, "123456", 99L, 99L, "Gui"));
-        assertNotNull(c.getUsedAt());
         verify(links).save(argThat(l -> l.getUserId().equals(USER) && l.getTelegramUserId() == 99L));
+    }
+
+    @Test
+    void concurrentRedemptionLosingTheRaceIsRejected() {
+        TelegramLinkCode c = code(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(5), null);
+        when(codes.findById(TelegramConfigService.sha256(CO + ":123456"))).thenReturn(Optional.of(c));
+        when(links.findByCompanyIdAndTelegramUserId(CO, 99L)).thenReturn(Optional.empty());
+        when(codes.markUsed(any(), any())).thenReturn(0);
+        assertEquals(TelegramLinkService.LinkResult.INVALID_CODE, service.link(CO, "123456", 99L, 99L, "x"));
+        verify(links, never()).save(any());
+    }
+
+    @Test
+    void generateCodeRetriesOnHashCollision() {
+        when(codes.existsById(any())).thenReturn(true, false);
+        String code = service.generateCode(CO, USER);
+        assertTrue(code.matches("\d{6}"));
+        verify(codes, times(2)).existsById(any());
+        verify(codes).save(any());
+    }
+
+    @Test
+    void generateCodeFailsAfterTooManyCollisions() {
+        when(codes.existsById(any())).thenReturn(true);
+        assertThrows(ResponseStatusException.class, () -> service.generateCode(CO, USER));
+        verify(codes, never()).save(any());
     }
 
     @Test

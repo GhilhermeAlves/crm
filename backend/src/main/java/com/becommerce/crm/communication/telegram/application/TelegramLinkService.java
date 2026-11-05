@@ -7,8 +7,10 @@ import com.becommerce.crm.communication.telegram.domain.TelegramLink;
 import com.becommerce.crm.communication.telegram.domain.TelegramLinkCode;
 import com.becommerce.crm.communication.telegram.infrastructure.TelegramLinkCodeJpaRepository;
 import com.becommerce.crm.communication.telegram.infrastructure.TelegramLinkJpaRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
 import java.time.Clock;
@@ -16,6 +18,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +28,7 @@ import java.util.UUID;
 public class TelegramLinkService {
 
     private static final Duration TTL = Duration.ofMinutes(10);
+    private static final int MAX_CODE_ATTEMPTS = 5;
 
     private final TelegramLinkJpaRepository links;
     private final TelegramLinkCodeJpaRepository codes;
@@ -48,9 +52,24 @@ public class TelegramLinkService {
     public String generateCode(UUID companyId, UUID userId) {
         return TelegramConfigService.withTenant(companyId, () -> {
             codes.deleteByCompanyIdAndUserId(companyId, userId);
-            String code = String.format("%06d", random.nextInt(1_000_000));
+            String code = null;
+            String codeHash = null;
+            for (int attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
+                String candidate = String.format(Locale.ROOT, "%06d", random.nextInt(1_000_000));
+                String candidateHash = hash(companyId, candidate);
+                // O hash é o @Id: colisão com o código de outro usuário sobrescreveria a linha.
+                if (!codes.existsById(candidateHash)) {
+                    code = candidate;
+                    codeHash = candidateHash;
+                    break;
+                }
+            }
+            if (code == null) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                        "Não foi possível gerar o código agora. Tente novamente.");
+            }
             TelegramLinkCode c = new TelegramLinkCode();
-            c.setCodeHash(hash(companyId, code));
+            c.setCodeHash(codeHash);
             c.setCompanyId(companyId);
             c.setUserId(userId);
             c.setExpiresAt(now().plus(TTL));
@@ -72,7 +91,11 @@ public class TelegramLinkService {
             if (byTelegram.isPresent() && !byTelegram.get().getUserId().equals(c.getUserId())) {
                 return LinkResult.TELEGRAM_ALREADY_LINKED;
             }
-            c.setUsedAt(now());
+            // Queima atômica: de duas resgates simultâneos, só um vê 1 linha atualizada.
+            if (codes.markUsed(c.getCodeHash(), now()) != 1) {
+                return LinkResult.INVALID_CODE;
+            }
+            // Resgatar o código a partir de outra conta do Telegram move o vínculo do usuário de propósito.
             TelegramLink link = links.findByCompanyIdAndUserId(companyId, c.getUserId()).orElseGet(TelegramLink::new);
             link.setCompanyId(companyId);
             link.setUserId(c.getUserId());
