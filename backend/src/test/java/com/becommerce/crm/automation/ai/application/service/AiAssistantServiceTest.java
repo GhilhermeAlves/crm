@@ -5,6 +5,7 @@ import com.becommerce.crm.automation.ai.application.context.AiCompanyContext;
 import com.becommerce.crm.automation.ai.application.context.AiPermissionContext;
 import com.becommerce.crm.automation.ai.application.context.AiUserContext;
 import com.becommerce.crm.automation.ai.application.context.ResolvedAiContext;
+import com.becommerce.crm.automation.ai.application.dto.AiActionResponse;
 import com.becommerce.crm.automation.ai.application.dto.AiChatRequest;
 import com.becommerce.crm.automation.ai.application.dto.AiContextPayload;
 import com.becommerce.crm.automation.ai.application.port.output.AiChatRepository;
@@ -227,7 +228,7 @@ class AiAssistantServiceTest {
                 .thenReturn(AiProvider.ChatResult.content("Sem acesso a oportunidades."));
         when(aiProvider.providerName()).thenReturn("FAKE");
 
-        AiToolResult denied = AiToolResult.fail("get_opportunity", "Sem permiss�o de leitura");
+        AiToolResult denied = AiToolResult.fail("get_opportunity", "Sem permissão de leitura");
         when(toolRegistry.execute(eq("get_opportunity"), any(), any())).thenReturn(denied);
 
         when(contextResolver.resolve(eq(companyId), eq(userId), eq(permissions), any()))
@@ -235,7 +236,7 @@ class AiAssistantServiceTest {
         when(chatRepository.saveConversation(any())).thenAnswer(inv -> inv.getArgument(0));
         when(chatRepository.findMessagesByConversation(any())).thenReturn(List.of());
 
-        var request = new AiChatRequest("Quais oportunidades est�o abertas?", null, null);
+        var request = new AiChatRequest("Quais oportunidades estão abertas?", null, null);
 
         var response = aiAssistantService.chat(companyId, userId, permissions, request);
         assertEquals("Sem acesso a oportunidades.", response.message());
@@ -246,10 +247,10 @@ class AiAssistantServiceTest {
     @Test
     void shouldListConversationsScopedToUser() {
         AiConversation c1 = AiConversation.reconstitute(UUID.randomUUID(), companyId, userId,
-                "customer360", UUID.randomUUID(), "Como est� o cliente?",
+                "customer360", UUID.randomUUID(), "Como está o cliente?",
                 LocalDateTime.now(), LocalDateTime.now());
         AiConversation c2 = AiConversation.reconstitute(UUID.randomUUID(), companyId, userId,
-                "opportunity", UUID.randomUUID(), "Quem � o cliente?",
+                "opportunity", UUID.randomUUID(), "Quem é o cliente?",
                 LocalDateTime.now(), LocalDateTime.now());
         when(chatRepository.findConversationsByUser(companyId, userId)).thenReturn(List.of(c1, c2));
 
@@ -257,7 +258,7 @@ class AiAssistantServiceTest {
 
         assertEquals(2, result.size());
         assertEquals(c1.getId(), result.get(0).id());
-        assertEquals("Como est� o cliente?", result.get(0).title());
+        assertEquals("Como está o cliente?", result.get(0).title());
         verify(chatRepository).findConversationsByUser(companyId, userId);
         assertNull(TenantContext.getCompanyId(), "contexto deve ser limpo");
     }
@@ -268,9 +269,9 @@ class AiAssistantServiceTest {
         AiConversation owned = AiConversation.reconstitute(conversationId, companyId, userId,
                 "customer360", UUID.randomUUID(), "titulo", LocalDateTime.now(), LocalDateTime.now());
         AiMessage userMsg = AiMessage.reconstitute(UUID.randomUUID(), companyId, conversationId,
-                "user", "Como est� esse cliente?", LocalDateTime.now());
+                "user", "Como está esse cliente?", LocalDateTime.now());
         AiMessage assistantMsg = AiMessage.reconstitute(UUID.randomUUID(), companyId, conversationId,
-                "assistant", "O cliente est� ativo.", LocalDateTime.now());
+                "assistant", "O cliente está ativo.", LocalDateTime.now());
         AiMessage toolMsg = AiMessage.reconstitute(UUID.randomUUID(), companyId, conversationId,
                 "tool", "{\"success\":true}", LocalDateTime.now());
         when(chatRepository.findConversationById(conversationId)).thenReturn(Optional.of(owned));
@@ -279,7 +280,7 @@ class AiAssistantServiceTest {
 
         var result = aiAssistantService.getConversationMessages(companyId, userId, conversationId);
 
-        // mensagens "system"/"tool" internas n�o s�o expostas ao frontend
+        // mensagens "system"/"tool" internas não são expostas ao frontend
         assertEquals(2, result.size());
         assertEquals("user", result.get(0).role());
         assertEquals("assistant", result.get(1).role());
@@ -346,5 +347,108 @@ class AiAssistantServiceTest {
         String prompt = aiAssistantService.systemPrompt(null);
 
         assertFalse(prompt.contains("O usuário está na tela"));
+    }
+
+    private void stubNewConversation() {
+        when(aiProvider.providerName()).thenReturn("FAKE");
+        when(contextResolver.resolve(eq(companyId), eq(userId), eq(permissions), any()))
+                .thenReturn(resolved(null));
+        when(chatRepository.saveConversation(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(chatRepository.findMessagesByConversation(any())).thenReturn(List.of());
+    }
+
+    private AiActionResponse proposal(String description) {
+        return new AiActionResponse(UUID.randomUUID(), UUID.randomUUID(), "create_task", "Task", null,
+                description, "PROPOSED", Map.of(), null, null, LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    @Test
+    void shouldMakeFinalCallWithoutToolsWhenIterationLimitIsHit() {
+        AiProvider.ChatResult loopForever = AiProvider.ChatResult.withToolCalls(List.of(
+                new AiProvider.ToolCall("call_1", "get_opportunity", Map.of("opportunityId", "abc"))));
+        when(aiProvider.chatWithTools(any())).thenAnswer(inv -> {
+            AiProvider.ChatRequest req = inv.getArgument(0);
+            return req.tools().isEmpty() ? AiProvider.ChatResult.content("Resumo: consultei a oportunidade.")
+                    : loopForever;
+        });
+        when(toolRegistry.toolDefinitions()).thenReturn(List.of(
+                new AiProvider.ToolDefinition("get_opportunity", "d", Map.of())));
+        when(toolRegistry.execute(eq("get_opportunity"), any(), any()))
+                .thenReturn(AiToolResult.ok("get_opportunity", Map.of("title", "A")));
+        stubNewConversation();
+
+        var response = aiAssistantService.chat(companyId, userId, permissions,
+                new AiChatRequest("faça tudo", null, null));
+
+        assertEquals("Resumo: consultei a oportunidade.", response.message());
+        ArgumentCaptor<AiProvider.ChatRequest> captor = ArgumentCaptor.forClass(AiProvider.ChatRequest.class);
+        // 1 inicial + 8 iterações + 1 chamada final sem ferramentas
+        verify(aiProvider, times(10)).chatWithTools(captor.capture());
+        AiProvider.ChatRequest last = captor.getAllValues().get(9);
+        assertTrue(last.tools().isEmpty());
+        assertEquals(AiAssistantService.FINAL_SUMMARY_INSTRUCTION,
+                last.messages().get(last.messages().size() - 1).content());
+        verify(toolRegistry, times(8)).execute(eq("get_opportunity"), any(), any());
+    }
+
+    @Test
+    void shouldBuildAnswerFromProposalsWhenFinalContentIsEmpty() {
+        AiActionResponse p1 = proposal("Criar tarefa: ligar para João");
+        AiActionResponse p2 = proposal("Criar tarefa: enviar orçamento");
+        when(aiProvider.chatWithTools(any()))
+                .thenReturn(AiProvider.ChatResult.withToolCalls(List.of(
+                        new AiProvider.ToolCall("c1", "create_task", Map.of("title", "ligar")),
+                        new AiProvider.ToolCall("c2", "create_task", Map.of("title", "orçamento")))))
+                .thenReturn(AiProvider.ChatResult.content(null));
+        when(toolRegistry.execute(eq("create_task"), any(), eq(Map.of("title", "ligar"))))
+                .thenReturn(AiToolResult.ok("create_task", p1));
+        when(toolRegistry.execute(eq("create_task"), any(), eq(Map.of("title", "orçamento"))))
+                .thenReturn(AiToolResult.ok("create_task", p2));
+        stubNewConversation();
+
+        var response = aiAssistantService.chat(companyId, userId, permissions,
+                new AiChatRequest("crie as tarefas", null, null));
+
+        assertEquals("Preparei 2 ações para você confirmar: Criar tarefa: ligar para João; "
+                + "Criar tarefa: enviar orçamento.", response.message());
+        assertEquals(2, response.actions().size());
+    }
+
+    @Test
+    void shouldFallBackToFixedTextWithoutProposals() {
+        assertEquals("Não consegui produzir uma resposta final.",
+                AiAssistantService.fallbackFromProposals(List.of()));
+    }
+
+    @Test
+    void shouldReuseExistingProposalForDuplicateToolCallInSameTurn() {
+        AiActionResponse p = proposal("Criar tarefa: ligar para João");
+        when(aiProvider.chatWithTools(any()))
+                .thenReturn(AiProvider.ChatResult.withToolCalls(List.of(
+                        new AiProvider.ToolCall("c1", "create_task", Map.of("title", "ligar", "due", "amanhã")))))
+                .thenReturn(AiProvider.ChatResult.withToolCalls(List.of(
+                        new AiProvider.ToolCall("c2", "create_task", Map.of("due", "amanhã", "title", "ligar")))))
+                .thenReturn(AiProvider.ChatResult.content("Deixei pronto para confirmação."));
+        when(toolRegistry.execute(eq("create_task"), any(), any())).thenReturn(AiToolResult.ok("create_task", p));
+        stubNewConversation();
+
+        var response = aiAssistantService.chat(companyId, userId, permissions,
+                new AiChatRequest("crie a tarefa", null, null));
+
+        verify(toolRegistry, times(1)).execute(eq("create_task"), any(), any());
+        assertEquals(1, response.actions().size());
+        assertEquals(p.id(), response.actions().get(0).id());
+        ArgumentCaptor<AiProvider.ChatRequest> captor = ArgumentCaptor.forClass(AiProvider.ChatRequest.class);
+        verify(aiProvider, times(3)).chatWithTools(captor.capture());
+        // a segunda chamada recebe de volta a mesma proposta (mesmo id)
+        var msgs = captor.getAllValues().get(2).messages();
+        assertTrue(msgs.get(msgs.size() - 1).content().contains(p.id().toString()));
+    }
+
+    @Test
+    void systemPromptShouldStateLimitsAndDependencies() {
+        String prompt = aiAssistantService.systemPrompt(null);
+        assertTrue(prompt.contains("isso eu ainda não consigo fazer"));
+        assertTrue(prompt.contains("proponha primeiro o cadastro"));
     }
 }
