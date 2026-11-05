@@ -1432,6 +1432,22 @@ public class TelegramUpdateProcessor {
 }
 ```
 
+**Auditoria com origem telegram.** O processador recebe também `TenantAuditRecorder auditor` no construtor (adicione `@Mock TenantAuditRecorder auditor` no teste e passe-o ao construtor). Depois de cada `confirm` ou `cancel` bem-sucedido em `handleCallback`, registre:
+
+```java
+private void auditChannel(UUID companyId, UUID userId, UUID actionId, String event, String description) {
+    try {
+        auditor.record(companyId, AuditAction.CUSTOM, AuditModule.AI, "AiAction", actionId.toString(),
+                description + " (via Telegram)", userId,
+                Map.of("event", event, "channel", "telegram", "actionId", actionId.toString()));
+    } catch (RuntimeException ignored) { }
+}
+// confirm: auditChannel(companyId, userId, actionId, "AI_ACTION_CONFIRMED_VIA_TELEGRAM", a.description());
+// cancel:  auditChannel(companyId, userId, actionId, "AI_ACTION_CANCELLED_VIA_TELEGRAM", "Ação cancelada");
+```
+
+Copie os argumentos de `record` do `AiActionService.audit`, porque a assinatura real manda. Adicione ao `confirmCallbackUsesClickerIdentity` a verificação `verify(auditor).record(eq(CO), any(), any(), eq("AiAction"), eq(ACTION.toString()), contains("via Telegram"), eq(USER), argThat(m -> "telegram".equals(m.get("channel"))))`, ajustada à assinatura real.
+
 Use o `CurrentUser.CRM_ADMIN_ROLE` que já existe. Se o `AiAssistantService.chat` validar `ai:chat` por conta própria, a checagem aqui é só para dar uma mensagem amigável.
 
 - [ ] **Step 5: Peça ao usuário para rodar o mesmo comando.** O esperado é PASS.
