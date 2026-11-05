@@ -124,4 +124,35 @@ class NotificationServiceTest {
         verify(notificationRepository).markAllRead(companyId, userId);
         assertNull(TenantContext.getCompanyId());
     }
+
+    @Test
+    void shouldDeleteOwnNotification() {
+        Notification n = Notification.reconstitute(UUID.randomUUID(), companyId, userId,
+                NotificationType.SYSTEM, "t", null, null, null, userId, LocalDateTime.now());
+        when(notificationRepository.findById(n.getId())).thenReturn(Optional.of(n));
+
+        notificationService.delete(companyId, n.getId(), userId);
+
+        verify(notificationRepository).deleteById(n.getId());
+        assertNull(TenantContext.getCompanyId());
+    }
+
+    @Test
+    void shouldRejectDeletingAnotherUsersNotification() {
+        Notification n = Notification.reconstitute(UUID.randomUUID(), companyId, UUID.randomUUID(),
+                NotificationType.SYSTEM, "t", null, null, null, userId, LocalDateTime.now());
+        when(notificationRepository.findById(n.getId())).thenReturn(Optional.of(n));
+
+        assertThrows(NotificationNotFoundException.class,
+                () -> notificationService.delete(companyId, n.getId(), userId));
+        verify(notificationRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void shouldDeleteAllOwnNotifications() {
+        notificationService.deleteAll(companyId, userId);
+
+        verify(notificationRepository).deleteAllByCompanyIdAndUserId(companyId, userId);
+        assertNull(TenantContext.getCompanyId());
+    }
 }

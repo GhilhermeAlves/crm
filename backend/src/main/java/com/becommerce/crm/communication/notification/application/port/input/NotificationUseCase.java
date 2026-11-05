@@ -26,4 +26,10 @@ public interface NotificationUseCase {
 
     /** Marca todas as notificações do usuário na empresa como lidas. */
     void markAllRead(UUID companyId, UUID userId);
+
+    /** Exclui uma notificação do próprio usuário. */
+    void delete(UUID companyId, UUID notificationId, UUID userId);
+
+    /** Exclui todas as notificações do usuário na empresa. */
+    void deleteAll(UUID companyId, UUID userId);
 }

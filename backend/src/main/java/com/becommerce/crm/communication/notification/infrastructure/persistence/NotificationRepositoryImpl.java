@@ -44,6 +44,16 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         jpaRepository.markAllRead(companyId, userId);
     }
 
+    @Override
+    public void deleteById(UUID id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteAllByCompanyIdAndUserId(UUID companyId, UUID userId) {
+        jpaRepository.deleteAllMine(companyId, userId);
+    }
+
     private static NotificationJpaEntity toEntity(Notification n) {
         NotificationJpaEntity e = new NotificationJpaEntity();
         e.setId(n.getId());
