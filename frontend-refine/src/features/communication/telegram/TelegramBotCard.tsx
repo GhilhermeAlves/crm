@@ -44,6 +44,7 @@ export function TelegramBotCard({ companyId }: { companyId: string }) {
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: configKey });
     void queryClient.invalidateQueries({ queryKey: linksKey });
+    void queryClient.invalidateQueries({ queryKey: ["telegram-me", companyId] });
   };
 
   const save = useMutation({

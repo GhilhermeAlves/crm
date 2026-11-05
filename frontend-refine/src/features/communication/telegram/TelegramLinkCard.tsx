@@ -30,9 +30,10 @@ export function TelegramLinkCard({ companyId }: { companyId: string }) {
     if (me && code) {
       setCode(null);
       setPollUntil(0);
+      void queryClient.invalidateQueries({ queryKey: ["telegram-links", companyId] });
       toast.success("Telegram vinculado");
     }
-  }, [me, code]);
+  }, [me, code, queryClient, companyId]);
 
   // Fim da janela de 10 minutos: esconde o código vencido.
   useEffect(() => {

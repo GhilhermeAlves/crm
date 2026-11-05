@@ -113,8 +113,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {user.companyId && canChat && <TelegramLinkCard companyId={user.companyId} />}
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
@@ -198,6 +196,8 @@ export default function ProfilePage() {
           </Button>
         </div>
       </form>
+
+      {user.companyId && canChat && <TelegramLinkCard companyId={user.companyId} />}
     </div>
   );
 }
