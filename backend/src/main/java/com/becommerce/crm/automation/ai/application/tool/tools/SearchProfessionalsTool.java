@@ -43,6 +43,6 @@ public class SearchProfessionalsTool extends AbstractAiReadTool {
         if (s == null) {
             return null;
         }
-        return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\p{M}", "").toLowerCase(Locale.ROOT);
+        return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT);
     }
 }
