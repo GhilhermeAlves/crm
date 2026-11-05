@@ -70,7 +70,10 @@ public class CreateTransactionTool implements AiTool {
     @Override
     public String description() {
         return "Propoe LANCAR uma receita ou despesa no financeiro. Nao executa: cria uma proposta "
-                + "que o usuario deve confirmar. Informe o valor em reais (ex.: 150.50).";
+                + "que o usuario deve confirmar. Informe o valor em reais (ex.: 150.50). "
+                + "Nao use para cobrar tratamento (procedimentos e exames): tratamentos comecam pelo orcamento "
+                + "(create_procedure) e a receita e gerada ao aprovar o orcamento. Use so se o usuario pedir "
+                + "explicitamente um lancamento financeiro avulso.";
     }
 
     @Override

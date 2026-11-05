@@ -338,4 +338,17 @@ class TelegramUpdateProcessorTest {
         assertTrue(TelegramUpdateProcessor.continuationMessage(done)
                 .contains("(PROCEDURE " + a + ", " + b + ")"));
     }
+
+    @Test
+    void continuationDerivesBudgetAndProcedureIdsFromResultMap() {
+        UUID budget = UUID.randomUUID();
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        AiActionResponse done = new AiActionResponse(ACTION, CONV, "create_procedure", "PROCEDURE", null,
+                "Lançar procedimento", "EXECUTED", Map.of(),
+                Map.of("budget", Map.of("id", budget), "procedures", List.of(Map.of("id", a), Map.of("id", b))),
+                null, null, null);
+        assertTrue(TelegramUpdateProcessor.continuationMessage(done)
+                .contains("(PROCEDURE " + budget + ", " + a + ", " + b + ")"));
+    }
 }

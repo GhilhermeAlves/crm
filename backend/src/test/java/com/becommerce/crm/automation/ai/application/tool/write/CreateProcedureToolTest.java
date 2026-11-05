@@ -7,7 +7,11 @@ import com.becommerce.crm.automation.ai.application.tool.AiToolContext;
 import com.becommerce.crm.automation.ai.application.tool.AiToolResult;
 import com.becommerce.crm.automation.ai.application.tool.tools.SearchCatalogTool;
 import com.becommerce.crm.automation.ai.domain.AiAction;
+import com.becommerce.crm.clinical.budget.application.dto.BudgetRequest;
+import com.becommerce.crm.clinical.budget.application.dto.BudgetResponse;
+import com.becommerce.crm.clinical.budget.application.port.in.BudgetUseCase;
 import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureRequest;
+import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureResponse;
 import com.becommerce.crm.clinical.procedure.application.port.in.PatientProcedureUseCase;
 import com.becommerce.crm.clinical.procedure.domain.Dentition;
 import com.becommerce.crm.clinical.procedure.domain.ProcedureState;
@@ -98,7 +102,7 @@ class CreateProcedureToolTest {
                 eq("CONTACT"), eq(contactId), params.capture(), description.capture());
         assertEquals("Lançar procedimento para Lúcia Silva: 10 × Faceta em resina composta "
                 + "(dentes 11–15, 21–25) — R$ 750,00 cada, total R$ 7.500,00. A realizar. "
-                + "Sem lançamento financeiro.", description.getValue());
+                + "Sem lançamento financeiro, com orçamento em rascunho de R$ 7.500,00", description.getValue());
         assertEquals(75000L, params.getValue().get("priceCents"));
         assertEquals("PERMANENT", params.getValue().get("dentition"));
         assertEquals("PLANNED", params.getValue().get("state"));
@@ -115,7 +119,7 @@ class CreateProcedureToolTest {
         verify(actionService).propose(any(), any(), any(), anyString(), anyString(), any(), params.capture(),
                 description.capture());
         assertEquals("Lançar exame para Lúcia Silva: 1 × Radiografia panorâmica — R$ 120,00. A realizar. "
-                + "Sem lançamento financeiro.", description.getValue());
+                + "Sem lançamento financeiro, com orçamento em rascunho de R$ 120,00", description.getValue());
         assertEquals(List.of(), params.getValue().get("teeth"));
         assertEquals(12000L, params.getValue().get("priceCents"));
     }
@@ -173,9 +177,11 @@ class CreateProcedureToolTest {
     @Test
     void executorCreatesOneProcedurePerToothWithoutFinance() {
         PatientProcedureUseCase procedures = mock(PatientProcedureUseCase.class);
+        BudgetUseCase budgets = mock(BudgetUseCase.class);
         AiActionExecutor executor = new AiActionExecutor(mock(TaskUseCase.class), mock(ActivityUseCase.class),
                 mock(OpportunityUseCase.class), mock(AppointmentUseCase.class),
-                mock(FinancialTransactionService.class), mock(InventoryService.class), contacts, procedures);
+                mock(FinancialTransactionService.class), mock(InventoryService.class), contacts, procedures,
+                budgets);
         AiAction action = mock(AiAction.class);
         when(action.getTool()).thenReturn("create_procedure");
         when(action.getCompanyId()).thenReturn(companyId);
@@ -200,6 +206,69 @@ class CreateProcedureToolTest {
             assertEquals(1, r.teeth().size());
             assertFalse(r.generateTransaction());
         }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void executorCreatesDraftBudgetWithCreatedProceduresWhenPlanned() {
+        PatientProcedureUseCase procedures = mock(PatientProcedureUseCase.class);
+        BudgetUseCase budgets = mock(BudgetUseCase.class);
+        UUID p1 = UUID.randomUUID();
+        UUID p2 = UUID.randomUUID();
+        PatientProcedureResponse r1 = mock(PatientProcedureResponse.class);
+        PatientProcedureResponse r2 = mock(PatientProcedureResponse.class);
+        when(r1.id()).thenReturn(p1);
+        when(r2.id()).thenReturn(p2);
+        when(procedures.create(eq(companyId), eq(contactId), any(), eq(userId), eq(false)))
+                .thenReturn(r1, r2);
+        BudgetResponse budget = mock(BudgetResponse.class);
+        when(budgets.create(eq(companyId), eq(contactId), any(), eq(userId))).thenReturn(budget);
+        AiActionExecutor executor = new AiActionExecutor(mock(TaskUseCase.class), mock(ActivityUseCase.class),
+                mock(OpportunityUseCase.class), mock(AppointmentUseCase.class),
+                mock(FinancialTransactionService.class), mock(InventoryService.class), contacts, procedures,
+                budgets);
+        AiAction action = mock(AiAction.class);
+        when(action.getTool()).thenReturn("create_procedure");
+        when(action.getCompanyId()).thenReturn(companyId);
+        when(action.getUserId()).thenReturn(userId);
+        when(action.getParameters()).thenReturn(Map.of("contactId", contactId.toString(),
+                "catalogItemId", facetaId.toString(), "catalogItemName", "Faceta em resina composta",
+                "dentition", "PERMANENT", "teeth", List.of(11, 12), "priceCents", 75000, "state", "PLANNED",
+                "notes", "Paciente ansioso"));
+
+        Map<String, Object> result = (Map<String, Object>) executor.execute(action);
+
+        ArgumentCaptor<BudgetRequest> request = ArgumentCaptor.forClass(BudgetRequest.class);
+        verify(budgets).create(eq(companyId), eq(contactId), request.capture(), eq(userId));
+        assertEquals("Orçamento - Faceta em resina composta", request.getValue().title());
+        assertEquals(List.of(p1, p2), request.getValue().procedureIds());
+        assertEquals(0L, request.getValue().discountCents());
+        assertEquals("Paciente ansioso", request.getValue().notes());
+        assertEquals(null, request.getValue().itemPrices());
+        assertEquals(budget, result.get("budget"));
+        assertEquals(List.of(r1, r2), result.get("procedures"));
+    }
+
+    @Test
+    void executorDoesNotCreateBudgetWhenDone() {
+        PatientProcedureUseCase procedures = mock(PatientProcedureUseCase.class);
+        BudgetUseCase budgets = mock(BudgetUseCase.class);
+        AiActionExecutor executor = new AiActionExecutor(mock(TaskUseCase.class), mock(ActivityUseCase.class),
+                mock(OpportunityUseCase.class), mock(AppointmentUseCase.class),
+                mock(FinancialTransactionService.class), mock(InventoryService.class), contacts, procedures,
+                budgets);
+        AiAction action = mock(AiAction.class);
+        when(action.getTool()).thenReturn("create_procedure");
+        when(action.getCompanyId()).thenReturn(companyId);
+        when(action.getUserId()).thenReturn(userId);
+        when(action.getParameters()).thenReturn(Map.of("contactId", contactId.toString(),
+                "catalogItemId", facetaId.toString(), "dentition", "PERMANENT", "teeth", List.of(11),
+                "priceCents", 75000, "state", "DONE", "performedAt", "2026-11-01"));
+
+        executor.execute(action);
+
+        verify(procedures).create(eq(companyId), eq(contactId), any(), eq(userId), eq(false));
+        verify(budgets, never()).create(any(), any(), any(), any());
     }
 
     @Test

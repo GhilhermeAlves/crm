@@ -85,7 +85,9 @@ public class CreateProcedureTool implements AiTool {
         return "Propoe LANCAR um procedimento ou exame na ficha do paciente. Nao executa: cria uma proposta que "
                 + "o usuario confirma. Use search_contacts para o contactId e search_catalog para o "
                 + "catalogItemId. Exames nao levam dentes. Se o item nao existir no catalogo, avise que "
-                + "precisa ser cadastrado no catalogo primeiro. Nao gera lancamento financeiro.";
+                + "precisa ser cadastrado no catalogo primeiro. Nao gera lancamento financeiro. Planejado (PLANNED) "
+                + "cria tambem um orcamento em rascunho com os procedimentos; a receita so e gerada ao aprovar "
+                + "o orcamento na tela. Tratamentos sempre comecam por aqui, nunca por create_transaction.";
     }
 
     @Override
@@ -173,6 +175,7 @@ public class CreateProcedureTool implements AiTool {
         put(parameters, "state", state.name());
         put(parameters, "performedAt", performedAt == null ? null : performedAt.toString());
         put(parameters, "notes", notes);
+        put(parameters, "catalogItemName", item.name());
 
         AiActionResponse proposal = actionService.propose(ctx.companyId(), ctx.userId(), ctx.conversationId(),
                 NAME, "CONTACT", contactId, parameters,
@@ -197,10 +200,11 @@ public class CreateProcedureTool implements AiTool {
         }
         if (state == ProcedureState.DONE) {
             d.append(". Já realizado em ").append(performedAt.format(BR_DATE));
+            d.append(". Sem lançamento financeiro.");
         } else {
-            d.append(". A realizar");
+            d.append(". A realizar. Sem lançamento financeiro, com orçamento em rascunho de ")
+                    .append(MoneyFormat.brl(priceCents * count));
         }
-        d.append(". Sem lançamento financeiro.");
         return d.toString();
     }
 
