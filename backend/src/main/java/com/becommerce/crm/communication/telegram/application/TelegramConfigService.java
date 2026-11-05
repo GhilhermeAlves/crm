@@ -58,7 +58,7 @@ public class TelegramConfigService {
     @Transactional(readOnly = true)
     public TelegramConfigResponse get(UUID companyId) {
         return withTenant(companyId, () -> repo.findById(companyId)
-                .map(c -> new TelegramConfigResponse(true, c.getBotUsername(), c.getEnabled(), c.getUpdatedAt()))
+                .map(c -> new TelegramConfigResponse(true, c.getBotUsername(), c.isEnabled(), c.getUpdatedAt()))
                 .orElse(TelegramConfigResponse.empty()));
     }
 
@@ -117,7 +117,7 @@ public class TelegramConfigService {
     public Optional<String> tokenIfValidSecret(UUID companyId, String providedSecret) {
         if (providedSecret == null || providedSecret.isBlank()) return Optional.empty();
         return withTenant(companyId, () -> repo.findById(companyId)
-                .filter(TelegramBotConfig::getEnabled)
+                .filter(TelegramBotConfig::isEnabled)
                 .filter(c -> MessageDigest.isEqual(
                         c.getWebhookSecretHash().getBytes(StandardCharsets.UTF_8),
                         sha256(providedSecret).getBytes(StandardCharsets.UTF_8)))
@@ -127,7 +127,7 @@ public class TelegramConfigService {
     @Transactional(readOnly = true)
     public Optional<String> token(UUID companyId) {
         return withTenant(companyId, () -> repo.findById(companyId)
-                .filter(TelegramBotConfig::getEnabled)
+                .filter(TelegramBotConfig::isEnabled)
                 .map(c -> cipher.decrypt(c.getBotTokenCipher())));
     }
 
