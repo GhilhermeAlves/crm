@@ -22,7 +22,10 @@ public class TelegramUpdateDispatcher {
     @Async
     public void dispatch(UUID companyId, String token, JsonNode update) {
         try {
-            processor.process(companyId, token, update);
+            TelegramConfigService.withTenant(companyId, () -> {
+                processor.process(companyId, token, update);
+                return null;
+            });
         } catch (RuntimeException e) {
             log.error("[TELEGRAM] falha ao processar update (company={})", companyId, e);
         }

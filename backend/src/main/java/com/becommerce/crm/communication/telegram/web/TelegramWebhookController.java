@@ -41,7 +41,12 @@ public class TelegramWebhookController {
                                         @RequestBody String body) throws JsonProcessingException {
         Optional<String> token = config.tokenIfValidSecret(companyId, secret);
         if (token.isEmpty()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        JsonNode update = mapper.readTree(body);
+        JsonNode update;
+        try {
+            update = mapper.readTree(body);
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.ok().build();
+        }
         long updateId = update.path("update_id").asLong(-1);
         if (updateId < 0) return ResponseEntity.ok().build();
         int fresh = TelegramConfigService.withTenant(companyId, () -> seen.markSeen(companyId, updateId));

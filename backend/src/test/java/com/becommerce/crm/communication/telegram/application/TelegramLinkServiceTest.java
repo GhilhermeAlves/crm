@@ -85,7 +85,7 @@ class TelegramLinkServiceTest {
     void generateCodeRetriesOnHashCollision() {
         when(codes.existsById(any())).thenReturn(true, false);
         String code = service.generateCode(CO, USER);
-        assertTrue(code.matches("\d{6}"));
+        assertTrue(code.matches("\\d{6}"));
         verify(codes, times(2)).existsById(any());
         verify(codes).save(any());
     }

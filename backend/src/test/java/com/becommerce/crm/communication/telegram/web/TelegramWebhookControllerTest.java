@@ -59,6 +59,15 @@ class TelegramWebhookControllerTest {
     }
 
     @Test
+    void invalidJsonWithValidSecretIs200AndNotProcessed() throws Exception {
+        when(config.tokenIfValidSecret(CO, "S")).thenReturn(Optional.of("TOK"));
+        mvc.perform(post("/api/v1/telegram/webhook/" + CO).header("X-Telegram-Bot-Api-Secret-Token", "S")
+                        .contentType(APPLICATION_JSON).content("{not json"))
+                .andExpect(status().isOk());
+        verifyNoInteractions(dispatcher, seen);
+    }
+
+    @Test
     void repeatedUpdateIsIgnored() throws Exception {
         when(config.tokenIfValidSecret(CO, "S")).thenReturn(Optional.of("TOK"));
         when(seen.markSeen(CO, 1L)).thenReturn(0);
