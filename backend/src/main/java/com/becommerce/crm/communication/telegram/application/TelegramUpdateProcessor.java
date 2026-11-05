@@ -39,10 +39,12 @@ public class TelegramUpdateProcessor {
     private final AiMediaProvider media;
     private final TelegramRateLimiter limiter;
     private final TenantAuditRecorder auditor;
+    private final TelegramActivityNotifier notifier;
 
     public TelegramUpdateProcessor(TelegramBotClient bot, TelegramLinkService links, TelegramUserResolver users,
                                    AiAssistantUseCase leo, AiActionUseCase actions, AiMediaProvider media,
-                                   TelegramRateLimiter limiter, TenantAuditRecorder auditor) {
+                                   TelegramRateLimiter limiter, TenantAuditRecorder auditor,
+                                   TelegramActivityNotifier notifier) {
         this.bot = bot;
         this.links = links;
         this.users = users;
@@ -51,6 +53,7 @@ public class TelegramUpdateProcessor {
         this.media = media;
         this.limiter = limiter;
         this.auditor = auditor;
+        this.notifier = notifier;
     }
 
     public void process(UUID companyId, String token, JsonNode update) {
@@ -155,20 +158,26 @@ public class TelegramUpdateProcessor {
         } catch (RuntimeException e) {
             log.error("[TELEGRAM] falha no Leo (company={})", companyId, e);
             send(token, chatId, prefix + "Não consegui processar agora, tente de novo.");
+            notifier.messageReceived(companyId, user.userId(), text, !prefix.isEmpty(),
+                    "Não consegui processar agora.", 0, user.conversationId());
             return;
         }
         if (r.conversationId() != null && !r.conversationId().equals(user.conversationId())) {
             links.setConversation(companyId, from, r.conversationId());
         }
         send(token, chatId, prefix + (r.message() == null ? "" : r.message()));
+        int proposed = 0;
         for (AiActionResponse a : r.actions() == null ? List.<AiActionResponse>of() : r.actions()) {
             if (!"PROPOSED".equals(a.status())) {
                 continue;
             }
+            proposed++;
             send(token, chatId, a.description(), List.of(List.of(
                     new TelegramBotClient.Button("✅ Confirmar", "c:" + a.id()),
                     new TelegramBotClient.Button("❌ Cancelar", "x:" + a.id()))));
         }
+        notifier.messageReceived(companyId, user.userId(), text, !prefix.isEmpty(), r.message(), proposed,
+                r.conversationId());
     }
 
     private void handleCallback(UUID companyId, String token, JsonNode cb) {
@@ -201,9 +210,12 @@ public class TelegramUpdateProcessor {
                         : "⚠️ Não foi possível: " + (a.errorMessage() != null ? a.errorMessage() : a.status());
                 auditChannel(companyId, userId, actionId, "AI_ACTION_CONFIRMED_VIA_TELEGRAM", a.description(),
                         a.status());
+                notifier.actionResult(companyId, userId, actionId, a.status(), a.description(), a.errorMessage());
             } else {
-                actions.cancel(companyId, userId, actionId);
+                AiActionResponse cancelled = actions.cancel(companyId, userId, actionId);
                 result = "❌ Cancelado.";
+                notifier.actionResult(companyId, userId, actionId, "CANCELLED",
+                        cancelled != null ? cancelled.description() : "ação", null);
                 auditChannel(companyId, userId, actionId, "AI_ACTION_CANCELLED_VIA_TELEGRAM", "Ação cancelada",
                         "CANCELLED");
             }
