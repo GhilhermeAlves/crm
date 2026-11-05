@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Smartphone,
+  Send,
   Mail,
   Users,
   Contact,
@@ -295,6 +296,13 @@ export const NAVIGATION: NavGroup[] = [
         icon: Mail,
         permission: "company:update",
         module: "EMAIL_SETTINGS",
+      },
+      {
+        label: "Telegram (Leo)",
+        href: ROUTES.SETTINGS_TELEGRAM,
+        icon: Send,
+        permission: "company:update",
+        module: "AI_AGENT",
       },
       {
         label: "Agente de IA",

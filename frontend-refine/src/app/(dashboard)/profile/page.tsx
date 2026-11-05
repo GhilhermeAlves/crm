@@ -20,6 +20,8 @@ import { PageTitle } from "@/components/common/PageTitle";
 import { SkeletonCard } from "@/components/feedback/SkeletonCard";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
+import { useAiPermissions } from "@/features/automation/ai/hooks/useAi";
+import { TelegramLinkCard } from "@/features/communication/telegram/TelegramLinkCard";
 
 const timezones = [
   { value: "America/Sao_Paulo", label: "Horário de Brasília (GMT-3)" },
@@ -37,6 +39,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { data: user, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
+  const { canChat } = useAiPermissions();
 
   const { register, handleSubmit, setValue, watch, reset } = useForm({
     defaultValues: {
@@ -109,6 +112,8 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {user.companyId && canChat && <TelegramLinkCard companyId={user.companyId} />}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card>
