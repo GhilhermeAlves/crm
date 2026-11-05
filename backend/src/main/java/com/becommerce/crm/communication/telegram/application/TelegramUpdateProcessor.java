@@ -9,6 +9,8 @@ import com.becommerce.crm.automation.ai.application.dto.AiChatResponse;
 import com.becommerce.crm.automation.ai.application.port.input.AiActionUseCase;
 import com.becommerce.crm.automation.ai.application.port.input.AiAssistantUseCase;
 import com.becommerce.crm.automation.ai.application.port.output.AiMediaProvider;
+import com.becommerce.crm.automation.ai.domain.AiActionInvalidStateException;
+import com.becommerce.crm.automation.ai.domain.AiActionNotFoundException;
 import com.becommerce.crm.communication.telegram.infrastructure.TelegramBotClient;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -152,7 +154,7 @@ public class TelegramUpdateProcessor {
                     new AiChatRequest(text, user.conversationId(), null));
         } catch (RuntimeException e) {
             log.error("[TELEGRAM] falha no Leo (company={})", companyId, e);
-            send(token, chatId, "Não consegui processar agora, tente de novo.");
+            send(token, chatId, prefix + "Não consegui processar agora, tente de novo.");
             return;
         }
         if (r.conversationId() != null && !r.conversationId().equals(user.conversationId())) {
@@ -163,7 +165,7 @@ public class TelegramUpdateProcessor {
             if (!"PROPOSED".equals(a.status())) {
                 continue;
             }
-            bot.sendMessage(token, chatId, a.description(), List.of(List.of(
+            send(token, chatId, a.description(), List.of(List.of(
                     new TelegramBotClient.Button("✅ Confirmar", "c:" + a.id()),
                     new TelegramBotClient.Button("❌ Cancelar", "x:" + a.id()))));
         }
@@ -197,33 +199,44 @@ public class TelegramUpdateProcessor {
                 AiActionResponse a = actions.confirm(companyId, userId, user.get().permissions(), actionId);
                 result = "EXECUTED".equals(a.status()) ? "✅ Feito: " + a.description()
                         : "⚠️ Não foi possível: " + (a.errorMessage() != null ? a.errorMessage() : a.status());
-                auditChannel(companyId, userId, actionId, "AI_ACTION_CONFIRMED_VIA_TELEGRAM", a.description());
+                auditChannel(companyId, userId, actionId, "AI_ACTION_CONFIRMED_VIA_TELEGRAM", a.description(),
+                        a.status());
             } else {
                 actions.cancel(companyId, userId, actionId);
                 result = "❌ Cancelado.";
-                auditChannel(companyId, userId, actionId, "AI_ACTION_CANCELLED_VIA_TELEGRAM", "Ação cancelada");
+                auditChannel(companyId, userId, actionId, "AI_ACTION_CANCELLED_VIA_TELEGRAM", "Ação cancelada",
+                        "CANCELLED");
             }
-        } catch (RuntimeException e) {
+        } catch (AiActionNotFoundException | AiActionInvalidStateException e) {
             result = "⚠️ Não foi possível: " + (e.getMessage() != null ? e.getMessage() : "erro inesperado");
+        } catch (RuntimeException e) {
+            log.error("[TELEGRAM] falha ao processar ação {} (company={})", actionId, companyId, e);
+            result = "⚠️ Não foi possível: erro inesperado";
         }
         String finalResult = result;
         safe(() -> bot.editMessage(token, chatId, messageId, finalResult));
     }
 
-    private void auditChannel(UUID companyId, UUID userId, UUID actionId, String event, String description) {
+    private void auditChannel(UUID companyId, UUID userId, UUID actionId, String event, String description,
+                              String status) {
         try {
             auditor.record(companyId, AuditAction.CUSTOM, AuditModule.AI, "AiAction", actionId.toString(),
                     description + " (via Telegram)", userId,
-                    Map.of("event", event, "channel", "telegram", "actionId", actionId.toString()));
+                    Map.of("event", event, "channel", "telegram", "actionId", actionId.toString(),
+                            "status", status == null ? "" : status));
         } catch (RuntimeException ignored) {
             // auditoria nunca derruba o fluxo
         }
     }
 
     private void send(String token, long chatId, String text) {
+        send(token, chatId, text, null);
+    }
+
+    private void send(String token, long chatId, String text, List<List<TelegramBotClient.Button>> keyboard) {
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
-                bot.sendMessage(token, chatId, text, null);
+                bot.sendMessage(token, chatId, text, keyboard);
                 return;
             } catch (TelegramBotClient.TelegramApiException e) {
                 if (attempt == 3) {

@@ -173,4 +173,46 @@ class TelegramUpdateProcessorTest {
         verifyNoInteractions(leo);
         verify(bot).sendMessage(eq("TOK"), eq(TG), contains("Muitas mensagens"), isNull());
     }
+
+    @Test
+    void cancelCallbackAuditsAndEdits() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        JsonNode cb = om.readTree("{\"update_id\":2,\"callback_query\":{\"id\":\"cb1\",\"from\":{\"id\":555},\"data\":\"x:"
+                + ACTION + "\",\"message\":{\"message_id\":9,\"chat\":{\"id\":555,\"type\":\"private\"}}}}");
+        p.process(CO, "TOK", cb);
+        verify(actions).cancel(CO, USER, ACTION);
+        verify(bot).editMessage("TOK", 555L, 9L, "❌ Cancelado.");
+        verify(auditor).record(eq(CO), any(), any(), eq("AiAction"), eq(ACTION.toString()),
+                contains("via Telegram"), eq(USER),
+                argThat(m -> "AI_ACTION_CANCELLED_VIA_TELEGRAM".equals(m.get("event"))));
+    }
+
+    @Test
+    void transcriptionFailureAsksToRepeat() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        when(bot.downloadFile("TOK", "F1")).thenReturn(new byte[]{1});
+        when(media.transcribe(any(), any())).thenThrow(new RuntimeException("boom"));
+        p.process(CO, "TOK", msg("\"voice\":{\"file_id\":\"F1\",\"mime_type\":\"audio/ogg\"}"));
+        verifyNoInteractions(leo);
+        verify(bot).sendMessage(eq("TOK"), eq(TG), contains("Não entendi o áudio"), isNull());
+    }
+
+    @Test
+    void crmAdminWithoutAiChatPermissionReachesLeo() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(
+                new TelegramUserResolver.LinkedUser(USER, TG, CONV, List.of(), List.of("CRM_ADMIN"))));
+        when(leo.chat(any(), any(), any(), any())).thenReturn(new AiChatResponse(CONV, "ok", "openai"));
+        p.process(CO, "TOK", msg("\"text\":\"oi\""));
+        verify(leo).chat(any(), any(), any(), any());
+    }
+
+    @Test
+    void unexpectedCallbackErrorIsNotEchoed() throws Exception {
+        when(users.resolve(CO, TG)).thenReturn(Optional.of(linked(List.of("ai:chat"))));
+        when(actions.confirm(any(), any(), any(), any())).thenThrow(new RuntimeException("jdbc secret"));
+        JsonNode cb = om.readTree("{\"update_id\":2,\"callback_query\":{\"id\":\"cb1\",\"from\":{\"id\":555},\"data\":\"c:"
+                + ACTION + "\",\"message\":{\"message_id\":9,\"chat\":{\"id\":555,\"type\":\"private\"}}}}");
+        p.process(CO, "TOK", cb);
+        verify(bot).editMessage("TOK", 555L, 9L, "⚠️ Não foi possível: erro inesperado");
+    }
 }
