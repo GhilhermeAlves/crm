@@ -31,6 +31,8 @@ class SchedulingProfessionalsTest {
 
     @BeforeEach
     void typesClearTenantLikeTheRealService() {
+        // Outras classes de teste podem deixar tenant na mesma thread.
+        TenantContext.clear();
         when(types.listByCompany(companyId)).thenAnswer(inv -> {
             TenantContext.clear();
             return List.<AppointmentTypeResponse>of();
@@ -76,12 +78,23 @@ class SchedulingProfessionalsTest {
     }
 
     @Test
-    void restoresPreviousTenantState() {
+    void leavesTenantEmptyWhenThereWasNone() {
         when(memberships.findMembersByCompanyIdAndStatus(companyId, "ACTIVE")).thenReturn(List.of());
 
         professionals.list(companyId);
 
         assertNull(TenantContext.getCompanyId());
+    }
+
+    @Test
+    void restoresPreviousTenant() {
+        UUID previous = UUID.randomUUID();
+        TenantContext.setCompanyId(previous);
+        when(memberships.findMembersByCompanyIdAndStatus(companyId, "ACTIVE")).thenReturn(List.of());
+
+        professionals.list(companyId);
+
+        assertEquals(previous, TenantContext.getCompanyId());
     }
 
     private static MemberProjection member(UUID id) {
