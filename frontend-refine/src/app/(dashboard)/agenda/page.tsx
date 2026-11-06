@@ -41,6 +41,7 @@ import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useMembers } from "@/features/identity/members/hooks/useMembers";
 import { useContacts } from "@/features/masterdata/contacts/hooks/useContacts";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,8 @@ import { buildHolidayLookup } from "@/features/sales/holiday/utils/holidayLookup
 import { isWeekend } from "date-fns";
 import { RecallsTab } from "@/features/sales/recall/components/RecallsTab";
 
-type CalendarView = "day" | "week" | "month" | "list" | "professionals" | "chairs";
+const CALENDAR_VIEWS = ["day", "week", "month", "list", "professionals", "chairs"] as const;
+type CalendarView = (typeof CALENDAR_VIEWS)[number];
 type AgendaTab = "agenda" | "retornos";
 
 export default function AgendaPage() {
@@ -104,7 +106,12 @@ export default function AgendaPage() {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [miniMonth, setMiniMonth] = useState(new Date());
-  const [view, setView] = useState<CalendarView>("week");
+  // Por usuário: o computador da recepção costuma ser compartilhado.
+  const [storedView, setView] = useLocalStorage<CalendarView>(
+    `agenda-view:${user?.id ?? "anon"}`,
+    "week",
+  );
+  const view: CalendarView = CALENDAR_VIEWS.includes(storedView) ? storedView : "week";
   const [activeTab, setActiveTab] = useState<AgendaTab>("agenda");
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
