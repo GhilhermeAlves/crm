@@ -9,9 +9,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000,
+            // Dados também mudam fora desta aba (Leo, Telegram, outros usuários):
+            // revalida ao abrir a tela ou voltar para a aba, sem precisar de F5.
+            staleTime: 30 * 1000,
             retry: 2,
-            refetchOnWindowFocus: false,
+            refetchOnWindowFocus: true,
           },
         },
       }),
