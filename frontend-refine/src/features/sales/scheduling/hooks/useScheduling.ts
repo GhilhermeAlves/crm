@@ -133,6 +133,9 @@ export function useDeleteAppointmentType(companyId: string | null) {
 
 // --- Appointments ---
 
+// A agenda fica aberta na recepção e recebe consultas de outras origens (Leo, outros usuários).
+const AGENDA_POLL_INTERVAL_MS = 30_000;
+
 export function useAppointments(
   companyId: string | null,
   from: string | null,
@@ -144,6 +147,7 @@ export function useAppointments(
     queryFn: () =>
       AppointmentService.list(companyId as string, from as string, to as string, hostIds),
     enabled: !!companyId && !!from && !!to,
+    refetchInterval: AGENDA_POLL_INTERVAL_MS,
   });
 }
 
@@ -222,6 +226,7 @@ export function useBlocks(
     queryKey: ["blocks", companyId, from, to, hostIds],
     queryFn: () => BlockService.list(companyId as string, from as string, to as string, hostIds),
     enabled: !!companyId && !!from && !!to,
+    refetchInterval: AGENDA_POLL_INTERVAL_MS,
   });
 }
 
