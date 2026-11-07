@@ -1,5 +1,5 @@
-import { Controller, useFormState } from "react-hook-form";
-import type { Control } from "react-hook-form";
+import { Controller, useFormState, useWatch } from "react-hook-form";
+import type { Control, UseFormSetValue } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,15 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { tenantPlanLabels, tenantStatusLabels } from "../../schemas/tenant.schema";
+import {
+  tenantPlanDefaults,
+  tenantPlanLabels,
+  tenantStatusLabels,
+} from "../../schemas/tenant.schema";
 import type { TenantFormData } from "../../schemas/tenant.schema";
 
 type SettingsFieldsProps = {
   control: Control<TenantFormData>;
+  setValue: UseFormSetValue<TenantFormData>;
 };
 
-export function SettingsFields({ control }: SettingsFieldsProps) {
+export function SettingsFields({ control, setValue }: SettingsFieldsProps) {
   const { errors } = useFormState({ control });
+  const plan = useWatch({ control, name: "plan" });
 
   return (
     <>
@@ -52,7 +58,17 @@ export function SettingsFields({ control }: SettingsFieldsProps) {
             name="plan"
             control={control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select
+                value={field.value}
+                onValueChange={(value) => {
+                  const plan = value as TenantFormData["plan"];
+                  const { maxUsers, maxStorageMb, maxContacts } = tenantPlanDefaults[plan];
+                  field.onChange(plan);
+                  setValue("maxUsers", maxUsers, { shouldValidate: true });
+                  setValue("maxStorageMb", maxStorageMb, { shouldValidate: true });
+                  setValue("maxContacts", maxContacts, { shouldValidate: true });
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -66,6 +82,7 @@ export function SettingsFields({ control }: SettingsFieldsProps) {
               </Select>
             )}
           />
+          <p className="text-xs text-muted-foreground">{tenantPlanDefaults[plan].price}</p>
           {errors.plan && <p className="text-sm text-destructive">{errors.plan.message}</p>}
         </div>
         <div className="space-y-2">

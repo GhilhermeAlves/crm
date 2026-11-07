@@ -35,9 +35,6 @@ import java.util.UUID;
 @Service
 public class CompanyService implements CompanyUseCase {
 
-    public static final int DEFAULT_MAX_USERS = 5;
-    public static final int DEFAULT_MAX_STORAGE_MB = 1024;
-    public static final int DEFAULT_MAX_CONTACTS = 500;
 
     private final CompanyRepository companyRepository;
     private final CompanySettingsRepository companySettingsRepository;
@@ -123,9 +120,9 @@ public class CompanyService implements CompanyUseCase {
         }
 
         CompanyPlan plan = CompanyPlan.valueOf(request.plan().toUpperCase());
-        int maxUsers = request.maxUsers() != null ? request.maxUsers() : DEFAULT_MAX_USERS;
-        int maxStorageMb = request.maxStorageMb() != null ? request.maxStorageMb() : DEFAULT_MAX_STORAGE_MB;
-        int maxContacts = request.maxContacts() != null ? request.maxContacts() : DEFAULT_MAX_CONTACTS;
+        int maxUsers = request.maxUsers() != null ? request.maxUsers() : plan.defaultMaxUsers();
+        int maxStorageMb = request.maxStorageMb() != null ? request.maxStorageMb() : plan.defaultMaxStorageMb();
+        int maxContacts = request.maxContacts() != null ? request.maxContacts() : plan.defaultMaxContacts();
         String addressCountry = request.addressCountry() != null ? request.addressCountry() : "Brasil";
 
         Company company = Company.create(
@@ -246,10 +243,11 @@ public class CompanyService implements CompanyUseCase {
         String addressState = request.addressState() != null ? request.addressState() : company.getAddressState();
         String addressCountry = request.addressCountry() != null ? request.addressCountry() : company.getAddressCountry();
         CompanyPlan plan = request.plan() != null ? CompanyPlan.valueOf(request.plan().toUpperCase()) : company.getPlan();
+        boolean planChanged = plan != company.getPlan();
         CompanyStatus status = request.status() != null ? CompanyStatus.valueOf(request.status().toUpperCase()) : company.getStatus();
-        int maxUsers = request.maxUsers() != null ? request.maxUsers() : company.getMaxUsers();
-        int maxStorageMb = request.maxStorageMb() != null ? request.maxStorageMb() : company.getMaxStorageMb();
-        int maxContacts = request.maxContacts() != null ? request.maxContacts() : company.getMaxContacts();
+        int maxUsers = request.maxUsers() != null ? request.maxUsers() : planChanged ? plan.defaultMaxUsers() : company.getMaxUsers();
+        int maxStorageMb = request.maxStorageMb() != null ? request.maxStorageMb() : planChanged ? plan.defaultMaxStorageMb() : company.getMaxStorageMb();
+        int maxContacts = request.maxContacts() != null ? request.maxContacts() : planChanged ? plan.defaultMaxContacts() : company.getMaxContacts();
         String logoUrl = request.logoUrl() != null ? validLogo(request.logoUrl()) : company.getLogoUrl();
         String notes = request.notes() != null ? request.notes() : company.getNotes();
 

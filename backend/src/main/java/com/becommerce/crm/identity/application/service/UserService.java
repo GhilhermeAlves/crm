@@ -187,6 +187,13 @@ public class UserService implements UserUseCase {
                     .DuplicateEmailException("Já existe um usuário com este email: " + request.email());
         }
 
+        companyRepository.findById(companyId).ifPresent(company -> {
+            if (membershipRepository.countActiveByCompanyId(companyId) >= company.getMaxUsers()) {
+                throw new com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException(
+                        "Limite de usuários da empresa atingido (" + company.getMaxUsers() + ").");
+            }
+        });
+
         User user = User.createInvited(
                 new com.becommerce.crm.identity.domain.valueobject.Email(request.email()),
                 request.firstName(),

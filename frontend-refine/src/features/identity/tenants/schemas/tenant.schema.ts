@@ -81,3 +81,21 @@ export const tenantPlanLabels: Record<string, string> = {
   business: "Business",
   enterprise: "Enterprise",
 };
+
+type TenantPlanName = TenantFormData["plan"];
+
+/** Limites padrão e preço de cada plano; os limites seguem CompanyPlan no backend. */
+export const tenantPlanDefaults: Record<
+  TenantPlanName,
+  { maxUsers: number; maxStorageMb: number; maxContacts: number; price: string }
+> = {
+  starter: { maxUsers: 2, maxStorageMb: 5120, maxContacts: 2000, price: "R$ 197/mês" },
+  professional: { maxUsers: 5, maxStorageMb: 25600, maxContacts: 10000, price: "R$ 397/mês" },
+  business: { maxUsers: 15, maxStorageMb: 51200, maxContacts: 50000, price: "R$ 797/mês" },
+  enterprise: {
+    maxUsers: 50,
+    maxStorageMb: 512000,
+    maxContacts: 200000,
+    price: "a partir de R$ 1.500/mês",
+  },
+};

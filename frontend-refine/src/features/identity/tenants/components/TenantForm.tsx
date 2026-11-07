@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
-import { tenantSchema, type TenantFormData } from "../schemas/tenant.schema";
+import { tenantPlanDefaults, tenantSchema, type TenantFormData } from "../schemas/tenant.schema";
 import type { Tenant, CreateTenantRequest } from "../types/tenant.types";
 import { AddressFields } from "./tenant-form/AddressFields";
 import { CompanyInfoFields } from "./tenant-form/CompanyInfoFields";
@@ -64,9 +64,9 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
         website: initialData?.website ?? "",
         status: initialData?.status ?? "onboarding",
         plan: initialData?.plan ?? "starter",
-        maxUsers: initialData?.maxUsers ?? 5,
-        maxStorageMb: initialData?.maxStorageMb ?? 1024,
-        maxContacts: initialData?.maxContacts ?? 500,
+        maxUsers: initialData?.maxUsers ?? tenantPlanDefaults.starter.maxUsers,
+        maxStorageMb: initialData?.maxStorageMb ?? tenantPlanDefaults.starter.maxStorageMb,
+        maxContacts: initialData?.maxContacts ?? tenantPlanDefaults.starter.maxContacts,
         logoUrl: initialData?.logoUrl ?? null,
         notes: initialData?.notes ?? "",
         address: {
@@ -167,7 +167,7 @@ export function TenantForm({ initialData, onSubmit, isLoading }: TenantFormProps
       {/* Configurações */}
       {currentStep === 1 && (
         <TenantFormSection title={STEPS[1].title} description={STEPS[1].description}>
-          <SettingsFields control={control} />
+          <SettingsFields control={control} setValue={setValue} />
         </TenantFormSection>
       )}
 
