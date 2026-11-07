@@ -89,6 +89,7 @@ public class OnboardingService implements OnboardingUseCase {
             throw new IllegalStateException("Uma empresa com este e-mail já existe.");
         }
 
+        CompanyPlan plan = request.plan() != null ? CompanyPlan.valueOf(request.plan().toUpperCase()) : CompanyPlan.STARTER;
         Company company = Company.create(
                 request.legalName(),
                 request.tradingName() != null ? request.tradingName() : request.legalName(),
@@ -106,10 +107,10 @@ public class OnboardingService implements OnboardingUseCase {
                 request.addressCity() != null ? request.addressCity() : "",
                 request.addressState() != null ? request.addressState() : "",
                 request.addressCountry() != null ? request.addressCountry() : "Brasil",
-                request.plan() != null ? CompanyPlan.valueOf(request.plan().toUpperCase()) : CompanyPlan.STARTER,
-                CompanyService.DEFAULT_MAX_USERS,
-                CompanyService.DEFAULT_MAX_STORAGE_MB,
-                CompanyService.DEFAULT_MAX_CONTACTS,
+                plan,
+                plan.defaultMaxUsers(),
+                plan.defaultMaxStorageMb(),
+                plan.defaultMaxContacts(),
                 request.logoUrl(),
                 request.notes());
 

@@ -27,40 +27,14 @@ Definir o modelo de cobrança do CRM SaaS Omnichannel, incluindo planos, limites
 
 ### Planos e Limites
 
-```mermaid
-mindmap
-  root((Billing Model))
-    Free
-      1 Usuário
-      500 Contatos
-      1.000 Mensagens/mês
-      1 GB Armazenamento
-      Suporte por email
-    Starter
-      5 Usuários
-      5.000 Contatos
-      25.000 Mensagens/mês
-      5 GB Armazenamento
-      Suporte por chat
-      Relatórios básicos
-    Professional
-      25 Usuários
-      50.000 Contatos
-      200.000 Mensagens/mês
-      50 GB Armazenamento
-      Suporte prioritário
-      API access
-      Automações
-    Enterprise
-      Usuários ilimitados
-      Contatos ilimitados
-      Mensagens ilimitadas
-      500 GB Armazenamento
-      Suporte 24/7 dedicado
-      SLA garantido
-      SSO/SAML
-      Auditoria avançada
-```
+| Plano | Preço mensal | Usuários | Contatos | Armazenamento |
+|---|---|---|---|---|
+| Starter | R$ 197 | 2 | 2.000 | 5 GB |
+| Professional | R$ 397 | 5 | 10.000 | 25 GB |
+| Business | R$ 797 | 15 | 50.000 | 50 GB |
+| Enterprise | a partir de R$ 1.500 | 50 (negociável) | 200.000 (negociável) | 500 GB (negociável) |
+
+Os limites padrão ficam em `CompanyPlan`. Na troca de plano, limites não informados assumem o padrão do novo plano; empresas sem troca mantêm os limites atuais. Usuário extra: R$ 29/mês (ajuste manual do limite).
 
 ### Ciclo de Vida da Assinatura
 

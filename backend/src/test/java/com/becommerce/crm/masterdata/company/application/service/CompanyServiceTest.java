@@ -206,7 +206,7 @@ class CompanyServiceTest {
         verify(companyRepository).save(captor.capture());
         assertEquals(CompanyPlan.STARTER, captor.getValue().getPlan());
         assertEquals(CompanyStatus.ACTIVE, captor.getValue().getStatus());
-        assertEquals(500, captor.getValue().getMaxContacts());
+        assertEquals(2000, captor.getValue().getMaxContacts());
 
         verify(roleSeedService).seedRoles(any(UUID.class));
         verify(membershipRepository).save(any());
@@ -264,6 +264,41 @@ class CompanyServiceTest {
 
         assertEquals("Updated LTDA", response.legalName());
         verify(eventPublisher).publish(any(CompanyUpdatedEvent.class));
+    }
+
+    @Test
+    void shouldApplyPlanLimitsWhenPlanChangesWithoutExplicitLimits() {
+        when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
+        when(companyRepository.save(any(Company.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateCompanyRequest request = new UpdateCompanyRequest(
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                "ENTERPRISE", null, null, 600000, null, null, null, null
+        );
+
+        companyService.updateCompany(sampleCompany.getId(), request, sampleCompany.getId(), false);
+
+        assertEquals(50, sampleCompany.getMaxUsers());
+        assertEquals(600000, sampleCompany.getMaxStorageMb());
+        assertEquals(200000, sampleCompany.getMaxContacts());
+    }
+
+    @Test
+    void shouldKeepNegotiatedLimitsWhenPlanDoesNotChange() {
+        when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
+        when(companyRepository.save(any(Company.class))).thenAnswer(inv -> inv.getArgument(0));
+        int maxUsers = sampleCompany.getMaxUsers();
+
+        UpdateCompanyRequest request = new UpdateCompanyRequest(
+                "Novo Nome", null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                sampleCompany.getPlan().name(), null, null, null, null, null, null, null
+        );
+
+        companyService.updateCompany(sampleCompany.getId(), request, sampleCompany.getId(), false);
+
+        assertEquals(maxUsers, sampleCompany.getMaxUsers());
     }
 
     @Test

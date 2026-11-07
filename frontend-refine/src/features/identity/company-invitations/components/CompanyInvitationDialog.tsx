@@ -29,7 +29,11 @@ import {
   type CompanyModuleName,
   type CompanySegment,
 } from "@/features/identity/modules/types/modules.types";
-import { tenantPlanLabels } from "@/features/identity/tenants/schemas/tenant.schema";
+import {
+  tenantPlanDefaults,
+  tenantPlanLabels,
+  type TenantFormData,
+} from "@/features/identity/tenants/schemas/tenant.schema";
 import { InvitationLinkPanel } from "@/features/identity/invitations/components/InvitationLinkPanel";
 import { useCreateCompanyInvitation } from "../hooks";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
@@ -77,8 +81,8 @@ export function CompanyInvitationDialog() {
   const [name, setName] = useState("");
   const [segment, setSegment] = useState<CompanySegment>("GENERIC");
   const [modules, setModules] = useState<CompanyModuleName[]>([...SEGMENT_DEFAULT_MODULES.GENERIC]);
-  const [plan, setPlan] = useState("starter");
-  const [maxUsers, setMaxUsers] = useState("5");
+  const [plan, setPlan] = useState<TenantFormData["plan"]>("starter");
+  const [maxUsers, setMaxUsers] = useState(String(tenantPlanDefaults.starter.maxUsers));
   const [sendEmail, setSendEmail] = useState(true);
   const [prefill, setPrefill] = useState<CompanyPrefill>({});
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +99,7 @@ export function CompanyInvitationDialog() {
     setSegment("GENERIC");
     setModules([...SEGMENT_DEFAULT_MODULES.GENERIC]);
     setPlan("starter");
-    setMaxUsers("5");
+    setMaxUsers(String(tenantPlanDefaults.starter.maxUsers));
     setSendEmail(true);
     setPrefill({});
     setError(null);
@@ -205,7 +209,14 @@ export function CompanyInvitationDialog() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="company-invite-plan">Plano</Label>
-                  <Select value={plan} onValueChange={setPlan}>
+                  <Select
+                    value={plan}
+                    onValueChange={(value) => {
+                      const next = value as TenantFormData["plan"];
+                      setPlan(next);
+                      setMaxUsers(String(tenantPlanDefaults[next].maxUsers));
+                    }}
+                  >
                     <SelectTrigger id="company-invite-plan">
                       <SelectValue />
                     </SelectTrigger>
@@ -217,6 +228,7 @@ export function CompanyInvitationDialog() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">{tenantPlanDefaults[plan].price}</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company-invite-max-users">Usuários</Label>
