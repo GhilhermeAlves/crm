@@ -33,6 +33,7 @@ import {
   Settings,
   ServerCog,
   HeartPulse,
+  CreditCard,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import type { CompanyModuleName } from "@/features/identity/modules/types/modules.types";
@@ -296,6 +297,12 @@ export const NAVIGATION: NavGroup[] = [
         icon: Mail,
         permission: "company:update",
         module: "EMAIL_SETTINGS",
+      },
+      {
+        label: "Plano e cobrança",
+        href: ROUTES.SETTINGS_BILLING,
+        icon: CreditCard,
+        permission: "company:update",
       },
       {
         label: "Telegram (Leo)",

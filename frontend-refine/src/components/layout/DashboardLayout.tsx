@@ -7,6 +7,7 @@ import { AiAssistantLauncher } from "@/features/automation/ai/components/AiAssis
 import { useActiveCompanyModules } from "@/features/identity/modules/hooks/useCompanyModules";
 import { ModuleGate } from "./ModuleGate";
 import { useRecordRecentShortcut } from "./recentShortcuts";
+import { PastDueBanner } from "@/features/billing/components/PastDueBanner";
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -20,6 +21,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
+        <PastDueBanner />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <ModuleGate>{children}</ModuleGate>
         </main>

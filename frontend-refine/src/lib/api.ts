@@ -15,9 +15,25 @@ const api = axios.create({
   },
 });
 
+export function isBillingBlocked(error: unknown): boolean {
+  const response = (error as { response?: { status?: number; data?: { code?: string } } })
+    ?.response;
+  return response?.status === 402 && response.data?.code === "BILLING_BLOCKED";
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // 402 BILLING_BLOCKED: mensalidade em atraso — leva à tela de pagamento (sem loop).
+    if (isBillingBlocked(error)) {
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.startsWith("/pagamento-pendente")
+      ) {
+        window.location.assign("/pagamento-pendente");
+      }
+      return Promise.reject(error);
+    }
     // 403 (CRM_ACCESS_DENIED/CSRF) NUNCA vira login — é decisão de autorização.
     if (error.response?.status !== 401) {
       return Promise.reject(error);

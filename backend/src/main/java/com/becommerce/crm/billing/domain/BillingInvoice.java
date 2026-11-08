@@ -21,6 +21,30 @@ public class BillingInvoice {
 
     protected BillingInvoice() {}
 
+    public static BillingInvoice fromAsaas(UUID companyId, String asaasPaymentId, LocalDate dueDate, int valueCents,
+                                           InvoiceStatus status, String invoiceUrl, LocalDateTime paidAt) {
+        BillingInvoice i = new BillingInvoice();
+        i.id = UUID.randomUUID();
+        i.companyId = companyId;
+        i.asaasPaymentId = asaasPaymentId;
+        i.refresh(dueDate, valueCents, status, invoiceUrl, paidAt);
+        return i;
+    }
+
+    public void refresh(LocalDate dueDate, int valueCents, InvoiceStatus status, String invoiceUrl,
+                        LocalDateTime paidAt) {
+        this.dueDate = dueDate;
+        this.valueCents = valueCents;
+        this.status = status;
+        this.invoiceUrl = invoiceUrl;
+        this.paidAt = paidAt;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isOpen() {
+        return status == InvoiceStatus.PENDING || status == InvoiceStatus.OVERDUE;
+    }
+
     public UUID getId() { return id; }
     public UUID getCompanyId() { return companyId; }
     public String getAsaasPaymentId() { return asaasPaymentId; }

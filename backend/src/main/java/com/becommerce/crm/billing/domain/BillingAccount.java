@@ -24,6 +24,7 @@ public class BillingAccount {
     @Column(name = "sync_error") private String syncError;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt = LocalDateTime.now();
     @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt = LocalDateTime.now();
+    @Version @Column(nullable = false) private long version;
 
     protected BillingAccount() {}
 
@@ -81,6 +82,68 @@ public class BillingAccount {
         touch();
     }
 
+    public static final int BLOCK_AFTER_DAYS = 10;
+
+    public void onOverdue(LocalDate since) {
+        if (status == BillingStatus.EXEMPT) return;
+        if (status == BillingStatus.ACTIVE) status = BillingStatus.PAST_DUE;
+        // A fatura que bloqueou foi paga e outra, mais nova, é a mais antiga em aberto: volta a PAST_DUE
+        // (o job diário bloqueia de novo ao completar BLOCK_AFTER_DAYS).
+        else if (status == BillingStatus.BLOCKED && overdueSince != null && since != null
+                && since.isAfter(overdueSince)) {
+            status = BillingStatus.PAST_DUE;
+        }
+        this.overdueSince = since;
+        touch();
+    }
+
+    public void onPaid() {
+        if (status == BillingStatus.PAST_DUE || status == BillingStatus.BLOCKED) {
+            status = BillingStatus.ACTIVE;
+            this.graceUntil = null;
+        }
+        this.overdueSince = null;
+        touch();
+    }
+
+    public boolean shouldBlock(LocalDate today) {
+        return status == BillingStatus.PAST_DUE
+                && overdueSince != null
+                && !overdueSince.isAfter(today.minusDays(BLOCK_AFTER_DAYS))
+                && (graceUntil == null || graceUntil.isBefore(today));
+    }
+
+    public void block() {
+        if (status != BillingStatus.PAST_DUE) return;
+        status = BillingStatus.BLOCKED;
+        touch();
+    }
+
+    public void grant(LocalDate until) {
+        if (until == null) throw new IllegalArgumentException("Informe até quando liberar.");
+        this.graceUntil = until;
+        if (status == BillingStatus.BLOCKED) status = BillingStatus.PAST_DUE;
+        touch();
+    }
+
+    public void expireGrace(LocalDate today) {
+        if (graceUntil != null && graceUntil.isBefore(today)) {
+            graceUntil = null;
+            touch();
+        }
+    }
+
+    public void nextDueAt(LocalDate due) {
+        if (due != null && (nextDueDate == null || due.isAfter(nextDueDate))) {
+            nextDueDate = due;
+            touch();
+        }
+    }
+
+    public boolean isPriceSyncPending() {
+        return hasSubscription() && syncError != null && status != BillingStatus.SYNC_PENDING;
+    }
+
     public boolean isChargeable() { return status != BillingStatus.EXEMPT; }
 
     public boolean hasSubscription() { return asaasSubscriptionId != null; }
@@ -104,4 +167,5 @@ public class BillingAccount {
     public String getSyncError() { return syncError; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public long getVersion() { return version; }
 }

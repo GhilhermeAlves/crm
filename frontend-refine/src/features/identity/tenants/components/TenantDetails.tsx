@@ -17,6 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ROUTES } from "@/lib/constants";
+import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
+import { AdminBillingCard } from "@/features/billing/components/AdminBillingCard";
 import type { Tenant } from "../types/tenant.types";
 import { TenantStatusBadge } from "./TenantStatusBadge";
 import { TenantPlanBadge } from "./TenantPlanBadge";
@@ -26,6 +28,7 @@ type TenantDetailsProps = {
 };
 
 export function TenantDetails({ tenant }: TenantDetailsProps) {
+  const { isCrmAdmin } = useAuthorization();
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -164,6 +167,8 @@ export function TenantDetails({ tenant }: TenantDetailsProps) {
             <InfoRow label="ID" value={tenant.id} className="font-mono text-xs" />
           </CardContent>
         </Card>
+
+        {isCrmAdmin && <AdminBillingCard companyId={tenant.id} />}
       </div>
     </div>
   );

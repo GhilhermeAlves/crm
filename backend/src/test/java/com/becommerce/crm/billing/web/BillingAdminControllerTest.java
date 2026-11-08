@@ -48,7 +48,7 @@ class BillingAdminControllerTest {
     void crmAdminActivates() throws Exception {
         loginAs("CRM_ADMIN");
         when(service.activate(TARGET)).thenReturn(
-                new BillingView("ACTIVE", "STARTER", 19700, LocalDate.of(2026, 11, 15), null, true));
+                new BillingView("ACTIVE", "STARTER", 19700, LocalDate.of(2026, 11, 15), null, true, null, null, null));
         mvc.perform(post(URL + "/activate"))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.status").value("ACTIVE"));
@@ -57,7 +57,7 @@ class BillingAdminControllerTest {
     @Test
     void crmAdminExemptsAndIsAudited() throws Exception {
         loginAs("CRM_ADMIN");
-        when(service.markExempt(TARGET)).thenReturn(new BillingView("EXEMPT", "STARTER", 19700, null, null, false));
+        when(service.markExempt(TARGET)).thenReturn(new BillingView("EXEMPT", "STARTER", 19700, null, null, false, null, null, null));
         mvc.perform(post(URL + "/exempt"))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.status").value("EXEMPT"));
@@ -83,7 +83,7 @@ class BillingAdminControllerTest {
     void changePrice() throws Exception {
         loginAs("CRM_ADMIN");
         when(service.changePrice(TARGET, 17000)).thenReturn(
-                new BillingView("ACTIVE", "STARTER", 17000, null, null, true));
+                new BillingView("ACTIVE", "STARTER", 17000, null, null, true, null, null, null));
         mvc.perform(put(URL + "/price").contentType("application/json").content("{\"monthlyPriceCents\":17000}"))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.monthlyPriceCents").value(17000));
@@ -92,7 +92,7 @@ class BillingAdminControllerTest {
     @Test
     void changePriceIsAudited() throws Exception {
         loginAs("CRM_ADMIN");
-        when(service.changePrice(TARGET, 17000)).thenReturn(new BillingView("ACTIVE", "STARTER", 17000, null, null, true));
+        when(service.changePrice(TARGET, 17000)).thenReturn(new BillingView("ACTIVE", "STARTER", 17000, null, null, true, null, null, null));
         mvc.perform(put(URL + "/price").contentType("application/json").content("{\"monthlyPriceCents\":17000}"))
            .andExpect(status().isOk());
         verify(auditor).record(eq(TARGET), eq(AuditAction.UPDATE), eq(AuditModule.SETTINGS), eq("Billing"),
@@ -108,7 +108,7 @@ class BillingAdminControllerTest {
             AtomicReference<UUID> seen = new AtomicReference<>();
             doAnswer(inv -> { seen.set(TenantContext.getCompanyId()); return null; })
                     .when(auditor).record(any(), any(), any(), any(), any(), any(), any(), any());
-            when(service.changePrice(TARGET, 17000)).thenReturn(new BillingView("ACTIVE", "STARTER", 17000, null, null, true));
+            when(service.changePrice(TARGET, 17000)).thenReturn(new BillingView("ACTIVE", "STARTER", 17000, null, null, true, null, null, null));
             mvc.perform(put(URL + "/price").contentType("application/json").content("{\"monthlyPriceCents\":17000}"))
                .andExpect(status().isOk());
             org.junit.jupiter.api.Assertions.assertEquals(TARGET, seen.get());
@@ -116,5 +116,24 @@ class BillingAdminControllerTest {
         } finally {
             TenantContext.clear();
         }
+    }
+
+    @Test
+    void grantIsAudited() throws Exception {
+        loginAs("CRM_ADMIN");
+        when(service.grant(TARGET, 7)).thenReturn(
+                new BillingView("PAST_DUE", "STARTER", 19700, null, null, true, null, null, null));
+        mvc.perform(post(URL + "/grant").contentType("application/json").content("{\"days\":7}"))
+           .andExpect(status().isOk());
+        verify(auditor).record(eq(TARGET), eq(AuditAction.UPDATE), eq(AuditModule.SETTINGS), eq("Billing"),
+                eq(TARGET.toString()), eq("Cobrança: liberada por 7 dias"), any(), any());
+    }
+
+    @Test
+    void grantNonAdminForbidden() throws Exception {
+        loginAs("ADMIN");
+        mvc.perform(post(URL + "/grant").contentType("application/json").content("{\"days\":7}"))
+           .andExpect(status().isForbidden());
+        verifyNoInteractions(service);
     }
 }

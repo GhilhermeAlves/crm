@@ -115,6 +115,7 @@ export function useSwitchCompany() {
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
         queryClient.invalidateQueries({ queryKey: ["permissions"] }),
         queryClient.invalidateQueries({ queryKey: ["audit"] }),
+        queryClient.invalidateQueries({ queryKey: ["billing"] }),
       ]);
       toast.success("Empresa ativa alterada.");
     },
