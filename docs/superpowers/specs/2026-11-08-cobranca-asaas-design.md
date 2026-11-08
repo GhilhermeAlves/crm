@@ -26,6 +26,7 @@ Preço padrão por plano (centavos), editável por empresa:
 
 | Plano | Mensal |
 |---|---|
+| ESSENTIAL | 4990 |
 | STARTER | 19700 |
 | PROFESSIONAL | 39700 |
 | BUSINESS | 79700 |
