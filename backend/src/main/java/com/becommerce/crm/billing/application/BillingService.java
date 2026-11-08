@@ -8,7 +8,6 @@ import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepo
 import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
 import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
-import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -162,15 +161,6 @@ public class BillingService {
     }
 
     private <T> T inTenant(UUID companyId, Supplier<T> work) {
-        UUID previous = TenantContext.getCompanyId();
-        boolean swap = previous == null || !previous.equals(companyId);
-        try {
-            if (swap) TenantContext.setCompanyId(companyId);
-            return work.get();
-        } finally {
-            if (swap) {
-                if (previous == null) TenantContext.clear(); else TenantContext.setCompanyId(previous);
-            }
-        }
+        return BillingTenant.run(companyId, work);
     }
 }
