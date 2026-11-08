@@ -18,6 +18,8 @@ import type { Tenant } from "../types/tenant.types";
 import { TenantStatusBadge } from "./TenantStatusBadge";
 import { TenantPlanBadge } from "./TenantPlanBadge";
 import { TenantAuditDialog } from "./TenantAuditDialog";
+import { useBillingStatuses } from "@/features/billing/hooks";
+import { BillingStatusBadge } from "@/features/billing/components/BillingStatusBadge";
 
 type TenantTableProps = {
   tenants: Tenant[];
@@ -25,7 +27,12 @@ type TenantTableProps = {
 };
 
 export function TenantTable({ tenants, onDelete }: TenantTableProps) {
-  const { can } = useAuthorization();
+  const { can, isCrmAdmin } = useAuthorization();
+  const statuses = useBillingStatuses(isCrmAdmin);
+  const billingByCompany = useMemo(
+    () => new Map((statuses.data ?? []).map((s) => [s.companyId, s.status])),
+    [statuses.data],
+  );
   const [auditTenant, setAuditTenant] = useState<Tenant | null>(null);
 
   const formatDate = useMemo(
@@ -48,6 +55,7 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
               <TableHead className="w-[300px]">Empresa</TableHead>
               <TableHead>Plano</TableHead>
               <TableHead>Status</TableHead>
+              {isCrmAdmin && <TableHead>Cobrança</TableHead>}
               <TableHead className="text-center">Usuários</TableHead>
               <TableHead className="text-center">Contatos</TableHead>
               <TableHead>Criado em</TableHead>
@@ -82,6 +90,15 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
                 <TableCell>
                   <TenantStatusBadge status={tenant.status} />
                 </TableCell>
+                {isCrmAdmin && (
+                  <TableCell>
+                    {billingByCompany.get(tenant.id) ? (
+                      <BillingStatusBadge status={billingByCompany.get(tenant.id)!} />
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                )}
                 <TableCell className="text-center">
                   <span className="text-sm">{tenant.maxUsers}</span>
                 </TableCell>
