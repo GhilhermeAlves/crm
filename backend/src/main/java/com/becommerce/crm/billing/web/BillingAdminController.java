@@ -1,0 +1,81 @@
+package com.becommerce.crm.billing.web;
+
+import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
+import com.becommerce.crm.analytics.audit.domain.AuditAction;
+import com.becommerce.crm.analytics.audit.domain.AuditModule;
+import com.becommerce.crm.billing.application.BillingRuleException;
+import com.becommerce.crm.billing.application.BillingService;
+import com.becommerce.crm.billing.application.BillingService.BillingView;
+import com.becommerce.crm.shared.security.filter.CurrentUser;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import java.util.Map;
+import java.util.UUID;
+
+/** Cobrança das empresas — só o administrador do CRM. */
+@RestController
+@RequestMapping("/api/v1/admin/billing/companies/{companyId}")
+public class BillingAdminController {
+
+    private final BillingService service;
+    private final TenantAuditRecorder auditor;
+
+    public BillingAdminController(BillingService service, TenantAuditRecorder auditor) {
+        this.service = service;
+        this.auditor = auditor;
+    }
+
+    public record PriceRequest(@Positive int monthlyPriceCents) {}
+
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
+    public BillingView get(@PathVariable UUID companyId, @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        return service.view(companyId);
+    }
+
+    @PostMapping("/activate")
+    @PreAuthorize("isAuthenticated()")
+    public BillingView activate(@PathVariable UUID companyId, @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        return service.activate(companyId);
+    }
+
+    @PostMapping("/exempt")
+    @PreAuthorize("isAuthenticated()")
+    public BillingView exempt(@PathVariable UUID companyId, @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        BillingView view = service.markExempt(companyId);
+        auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing", companyId.toString(),
+                "Cobrança: empresa marcada como isenta", user.userId(), null);
+        return view;
+    }
+
+    @PutMapping("/price")
+    @PreAuthorize("isAuthenticated()")
+    public BillingView price(@PathVariable UUID companyId, @Valid @RequestBody PriceRequest body,
+                             @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        BillingView view = service.changePrice(companyId, body.monthlyPriceCents());
+        auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing", companyId.toString(),
+                "Cobrança: valor mensal alterado", user.userId(), Map.of("monthlyPriceCents", body.monthlyPriceCents()));
+        return view;
+    }
+
+    @ExceptionHandler(BillingRuleException.class)
+    public ResponseEntity<Map<String, String>> rule(BillingRuleException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+
+    private static void requireCrmAdmin(CurrentUser user) {
+        if (user == null || !user.isCrmAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Só o administrador do CRM gerencia a cobrança.");
+        }
+    }
+}
