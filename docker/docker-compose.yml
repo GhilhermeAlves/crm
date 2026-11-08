@@ -80,6 +80,12 @@ services:
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
       # Telegram (Leo) — URL pública do backend, ex.: https://api.suaclinica.com.br
       - TELEGRAM_WEBHOOK_BASE_URL=${TELEGRAM_WEBHOOK_BASE_URL:-}
+      # Cobrança (Asaas) — desligada por padrão; sandbox até a troca para produção.
+      - BILLING_ENABLED=${BILLING_ENABLED:-false}
+      - ASAAS_BASE_URL=${ASAAS_BASE_URL:-https://api-sandbox.asaas.com/v3}
+      - ASAAS_API_KEY=${ASAAS_API_KEY:-}
+      - ASAAS_WEBHOOK_TOKEN=${ASAAS_WEBHOOK_TOKEN:-}
+      - BILLING_DAILY_CRON=${BILLING_DAILY_CRON:-0 30 3 * * *}
       # Sprint 6.10 (Task 1.8) — healthcheck do backend para docker compose.
       - ACTUATOR_HEALTH_PATH=/actuator/health
     healthcheck:
