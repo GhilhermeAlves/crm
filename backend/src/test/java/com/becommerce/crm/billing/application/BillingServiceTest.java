@@ -183,4 +183,30 @@ class BillingServiceTest {
         assertEquals(17000, view.monthlyPriceCents());
         assertEquals("Asaas indisponível.", view.syncError());
     }
+
+    @Test
+    void retrySyncReactivatesPendingAccount() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.customerCreated("cus_1");
+        acc.syncFailed("timeout");
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+        when(asaas.createSubscription(eq("cus_1"), anyInt(), any(), anyString(), anyString())).thenReturn("sub_1");
+
+        service.retrySync(companyId);
+
+        assertEquals(BillingStatus.ACTIVE, acc.getStatus());
+    }
+
+    @Test
+    void retrySyncResendsPendingPrice() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        acc.priceSyncFailed("timeout");
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+
+        service.retrySync(companyId);
+
+        verify(asaas).updateSubscriptionValue(eq("sub_1"), eq(19700), anyString());
+        assertNull(acc.getSyncError());
+    }
 }

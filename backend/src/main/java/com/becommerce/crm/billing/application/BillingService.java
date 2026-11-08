@@ -140,6 +140,26 @@ public class BillingService {
         });
     }
 
+    @Transactional
+    public void retrySync(UUID companyId) {
+        BillingAccount acc = inTenant(companyId, () -> accounts.findById(companyId).orElse(null));
+        if (acc == null) return;
+        if (acc.getStatus() == BillingStatus.SYNC_PENDING) {
+            try {
+                activate(companyId);
+            } catch (BillingRuleException e) {
+                log.info("Reenvio da cobrança de {} não feito: {}", companyId, e.getMessage());
+            }
+            return;
+        }
+        if (acc.isPriceSyncPending()) {
+            inTenant(companyId, () -> {
+                pushPrice(acc);
+                return accounts.saveAndFlush(acc);
+            });
+        }
+    }
+
     private void pushPrice(BillingAccount acc) {
         if (!acc.hasSubscription()) return;
         try {

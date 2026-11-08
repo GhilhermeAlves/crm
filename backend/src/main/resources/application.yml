@@ -130,6 +130,7 @@ app:
     base-url: ${ASAAS_BASE_URL:https://api-sandbox.asaas.com/v3}
     api-key: ${ASAAS_API_KEY:}
     webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
+    daily-cron: ${BILLING_DAILY_CRON:0 30 3 * * *}
   ai:
     provider: ${AI_PROVIDER:openai}
     api-key: ${OPENAI_API_KEY:}
