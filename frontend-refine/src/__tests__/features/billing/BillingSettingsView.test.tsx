@@ -5,11 +5,17 @@ import { BillingSettingsView } from "@/features/billing/components/BillingSettin
 const state = vi.hoisted(() => ({
   billing: null as null | Record<string, unknown>,
   invoices: [] as Record<string, unknown>[],
+  billingError: false,
+  invoicesError: false,
 }));
 
 vi.mock("@/features/billing/hooks", () => ({
-  useMyBilling: () => ({ data: state.billing, isLoading: false }),
-  useMyInvoices: () => ({ data: state.invoices, isLoading: false }),
+  useMyBilling: () => ({
+    data: state.billingError ? undefined : state.billing,
+    isLoading: false,
+    isError: state.billingError,
+  }),
+  useMyInvoices: () => ({ data: state.invoices, isLoading: false, isError: state.invoicesError }),
 }));
 
 const active = {
@@ -27,6 +33,8 @@ const active = {
 describe("BillingSettingsView", () => {
   beforeEach(() => {
     state.billing = active;
+    state.billingError = false;
+    state.invoicesError = false;
     state.invoices = [
       {
         id: "i1",
@@ -61,6 +69,19 @@ describe("BillingSettingsView", () => {
     const links = screen.getAllByRole("link", { name: "Abrir" });
     expect(links).toHaveLength(1);
     expect(links[0].getAttribute("href")).toBe("https://pix/2");
+  });
+
+  it("erro ao carregar cobrança", () => {
+    state.billingError = true;
+    render(<BillingSettingsView />);
+    expect(screen.getByText("Não foi possível carregar os dados de cobrança.")).toBeTruthy();
+  });
+
+  it("erro ao carregar faturas", () => {
+    state.invoicesError = true;
+    render(<BillingSettingsView />);
+    expect(screen.getByText("Não foi possível carregar as faturas.")).toBeTruthy();
+    expect(screen.queryByText("Nenhuma fatura ainda.")).toBeNull();
   });
 
   it("sem cobrança ativa", () => {

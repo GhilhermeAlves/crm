@@ -4,6 +4,7 @@ import { AdminBillingCard } from "@/features/billing/components/AdminBillingCard
 
 const state = vi.hoisted(() => ({
   billing: null as null | Record<string, unknown>,
+  error: false,
   activate: vi.fn(),
   exempt: vi.fn(),
   price: vi.fn(),
@@ -11,7 +12,11 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("@/features/billing/hooks", () => ({
-  useAdminBilling: () => ({ data: state.billing, isLoading: false }),
+  useAdminBilling: () => ({
+    data: state.error ? undefined : state.billing,
+    isLoading: false,
+    isError: state.error,
+  }),
   useAdminInvoices: () => ({ data: [], isLoading: false }),
   useActivateBilling: () => ({ mutate: state.activate, isPending: false }),
   useExemptBilling: () => ({ mutate: state.exempt, isPending: false }),
@@ -32,8 +37,15 @@ const base = {
 };
 
 describe("AdminBillingCard", () => {
+  it("erro ao carregar mostra aviso", () => {
+    state.error = true;
+    render(<AdminBillingCard companyId="co1" />);
+    expect(screen.getByText("Não foi possível carregar a cobrança desta empresa.")).toBeTruthy();
+  });
+
   beforeEach(() => {
     state.billing = base;
+    state.error = false;
     Object.values(state).forEach(
       (v) => typeof v === "function" && (v as ReturnType<typeof vi.fn>).mockReset(),
     );

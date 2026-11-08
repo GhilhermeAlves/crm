@@ -8,9 +8,24 @@ import { useCheckPayment, useMyBilling } from "../hooks";
 import { formatCents, formatLocalDate } from "../format";
 
 export function PaymentPendingView() {
-  const { data, isLoading } = useMyBilling();
+  const { data, isLoading, isError, refetch } = useMyBilling();
+
   const check = useCheckPayment();
   const [notFound, setNotFound] = useState(false);
+  const [checkFailed, setCheckFailed] = useState(false);
+
+  if (isError) {
+    return (
+      <div className="space-y-3 text-center">
+        <p className="text-sm text-muted-foreground">
+          Não foi possível carregar os dados de cobrança.
+        </p>
+        <Button variant="outline" onClick={() => refetch()}>
+          Tentar de novo
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return <p className="text-sm text-muted-foreground">Carregando…</p>;
@@ -29,11 +44,13 @@ export function PaymentPendingView() {
 
   const onCheck = () => {
     setNotFound(false);
+    setCheckFailed(false);
     check.mutate(undefined, {
       onSuccess: (view) => {
         if (view.status !== "BLOCKED") window.location.assign("/");
         else setNotFound(true);
       },
+      onError: () => setCheckFailed(true),
     });
   };
 
@@ -64,6 +81,11 @@ export function PaymentPendingView() {
         {notFound && (
           <p className="text-sm text-muted-foreground">
             Ainda não identificamos o pagamento. Pode levar alguns minutos depois do Pix.
+          </p>
+        )}
+        {checkFailed && (
+          <p className="text-sm text-muted-foreground">
+            Não foi possível verificar agora. Tente de novo em instantes.
           </p>
         )}
         <p className="text-xs text-muted-foreground">Dúvidas? Fale com o suporte do CRM.</p>

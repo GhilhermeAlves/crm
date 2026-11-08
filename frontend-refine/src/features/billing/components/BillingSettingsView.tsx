@@ -12,9 +12,16 @@ export function planLabel(plan: string): string {
 }
 
 export function BillingSettingsView() {
-  const { data, isLoading } = useMyBilling();
+  const { data, isLoading, isError } = useMyBilling();
   const invoices = useMyInvoices();
 
+  if (isError) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Não foi possível carregar os dados de cobrança.
+      </p>
+    );
+  }
   if (isLoading || !data) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   const inactive = data.status === "NOT_STARTED" || data.status === "EXEMPT";
@@ -54,7 +61,11 @@ export function BillingSettingsView() {
             <CardTitle className="text-base">Histórico</CardTitle>
           </CardHeader>
           <CardContent>
-            <InvoiceTable invoices={invoices.data} isLoading={invoices.isLoading} />
+            <InvoiceTable
+              invoices={invoices.data}
+              isLoading={invoices.isLoading}
+              isError={invoices.isError}
+            />
           </CardContent>
         </Card>
       )}

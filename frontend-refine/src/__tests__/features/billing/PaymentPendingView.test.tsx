@@ -5,10 +5,17 @@ import { PaymentPendingView } from "@/features/billing/components/PaymentPending
 const state = vi.hoisted(() => ({
   billing: null as null | Record<string, unknown>,
   mutate: vi.fn(),
+  refetch: vi.fn(),
+  error: false,
 }));
 
 vi.mock("@/features/billing/hooks", () => ({
-  useMyBilling: () => ({ data: state.billing, isLoading: false }),
+  useMyBilling: () => ({
+    data: state.error ? undefined : state.billing,
+    isLoading: false,
+    isError: state.error,
+    refetch: state.refetch,
+  }),
   useCheckPayment: () => ({ mutate: state.mutate, isPending: false }),
 }));
 
@@ -28,6 +35,8 @@ describe("PaymentPendingView", () => {
   beforeEach(() => {
     state.billing = blocked;
     state.mutate.mockReset();
+    state.refetch.mockReset();
+    state.error = false;
   });
 
   it("mostra valor, atraso e o Pix", () => {
@@ -44,6 +53,23 @@ describe("PaymentPendingView", () => {
     render(<PaymentPendingView />);
     fireEvent.click(screen.getByRole("button", { name: /Já paguei/ }));
     expect(state.mutate).toHaveBeenCalled();
+  });
+
+  it("erro ao carregar permite tentar de novo", () => {
+    state.error = true;
+    render(<PaymentPendingView />);
+    expect(screen.getByText("Não foi possível carregar os dados de cobrança.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Tentar de novo" }));
+    expect(state.refetch).toHaveBeenCalled();
+  });
+
+  it("falha ao verificar pagamento mostra aviso", () => {
+    state.mutate.mockImplementation((_v: unknown, opts: { onError: () => void }) => opts.onError());
+    render(<PaymentPendingView />);
+    fireEvent.click(screen.getByRole("button", { name: /Já paguei/ }));
+    expect(
+      screen.getByText("Não foi possível verificar agora. Tente de novo em instantes."),
+    ).toBeTruthy();
   });
 
   it("empresa liberada vê o caminho de volta", () => {

@@ -31,7 +31,7 @@ import { InvoiceTable } from "./InvoiceTable";
 import { planLabel } from "./BillingSettingsView";
 
 export function AdminBillingCard({ companyId }: { companyId: string }) {
-  const { data, isLoading } = useAdminBilling(companyId);
+  const { data, isLoading, isError } = useAdminBilling(companyId);
   const invoices = useAdminInvoices(companyId);
   const activate = useActivateBilling(companyId);
   const exempt = useExemptBilling(companyId);
@@ -40,6 +40,19 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
   const [editing, setEditing] = useState(false);
   const [reais, setReais] = useState("");
   const [days, setDays] = useState("7");
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Cobrança</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Não foi possível carregar a cobrança desta empresa.
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading || !data) {
     return (
@@ -180,7 +193,11 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
 
         <Separator />
         <p className="font-medium">Histórico</p>
-        <InvoiceTable invoices={invoices.data} isLoading={invoices.isLoading} />
+        <InvoiceTable
+          invoices={invoices.data}
+          isLoading={invoices.isLoading}
+          isError={invoices.isError}
+        />
       </CardContent>
     </Card>
   );
