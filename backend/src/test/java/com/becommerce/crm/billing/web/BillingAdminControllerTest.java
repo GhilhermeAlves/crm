@@ -7,6 +7,7 @@ import com.becommerce.crm.billing.application.BillingRuleException;
 import com.becommerce.crm.billing.application.BillingService;
 import com.becommerce.crm.billing.application.BillingService.BillingView;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.becommerce.crm.shared.web.handler.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -84,5 +86,24 @@ class BillingAdminControllerTest {
            .andExpect(status().isOk());
         verify(auditor).record(eq(TARGET), eq(AuditAction.UPDATE), eq(AuditModule.SETTINGS), eq("Billing"),
                 eq(TARGET.toString()), anyString(), any(), any());
+    }
+
+    @Test
+    void auditRunsUnderTargetTenantAndRestoresContext() throws Exception {
+        loginAs("CRM_ADMIN");
+        UUID own = UUID.randomUUID();
+        TenantContext.setCompanyId(own);
+        try {
+            AtomicReference<UUID> seen = new AtomicReference<>();
+            doAnswer(inv -> { seen.set(TenantContext.getCompanyId()); return null; })
+                    .when(auditor).record(any(), any(), any(), any(), any(), any(), any(), any());
+            when(service.changePrice(TARGET, 17000)).thenReturn(new BillingView("ACTIVE", "STARTER", 17000, null, null, true));
+            mvc.perform(put(URL + "/price").contentType("application/json").content("{\"monthlyPriceCents\":17000}"))
+               .andExpect(status().isOk());
+            org.junit.jupiter.api.Assertions.assertEquals(TARGET, seen.get());
+            org.junit.jupiter.api.Assertions.assertEquals(own, TenantContext.getCompanyId());
+        } finally {
+            TenantContext.clear();
+        }
     }
 }

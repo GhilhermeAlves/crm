@@ -7,6 +7,7 @@ import com.becommerce.crm.billing.application.BillingRuleException;
 import com.becommerce.crm.billing.application.BillingService;
 import com.becommerce.crm.billing.application.BillingService.BillingView;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
@@ -52,8 +53,8 @@ public class BillingAdminController {
     public BillingView exempt(@PathVariable UUID companyId, @AuthenticationPrincipal CurrentUser user) {
         requireCrmAdmin(user);
         BillingView view = service.markExempt(companyId);
-        auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing", companyId.toString(),
-                "Cobrança: empresa marcada como isenta", user.userId(), null);
+        inTenant(companyId, () -> auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing",
+                companyId.toString(), "Cobrança: empresa marcada como isenta", user.userId(), null));
         return view;
     }
 
@@ -63,14 +64,32 @@ public class BillingAdminController {
                              @AuthenticationPrincipal CurrentUser user) {
         requireCrmAdmin(user);
         BillingView view = service.changePrice(companyId, body.monthlyPriceCents());
-        auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing", companyId.toString(),
-                "Cobrança: valor mensal alterado", user.userId(), Map.of("monthlyPriceCents", body.monthlyPriceCents()));
+        inTenant(companyId, () -> auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing",
+                companyId.toString(), "Cobrança: valor mensal alterado", user.userId(),
+                Map.of("monthlyPriceCents", body.monthlyPriceCents())));
         return view;
     }
 
     @ExceptionHandler(BillingRuleException.class)
     public ResponseEntity<Map<String, String>> rule(BillingRuleException e) {
         return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+
+    /**
+     * A auditoria grava em audit_logs (RLS por tenant): o tenant precisa ser o da empresa alvo,
+     * não o da empresa do CRM_ADMIN. Troca temporariamente e restaura em finally.
+     */
+    private static void inTenant(UUID companyId, Runnable work) {
+        UUID previous = TenantContext.getCompanyId();
+        boolean swap = previous == null || !previous.equals(companyId);
+        try {
+            if (swap) TenantContext.setCompanyId(companyId);
+            work.run();
+        } finally {
+            if (swap) {
+                if (previous == null) TenantContext.clear(); else TenantContext.setCompanyId(previous);
+            }
+        }
     }
 
     private static void requireCrmAdmin(CurrentUser user) {
