@@ -147,6 +147,22 @@ class BillingServiceTest {
     }
 
     @Test
+    void exemptWithoutAccountBecomesExempt() {
+        when(accounts.findById(companyId)).thenReturn(Optional.empty());
+        assertEquals("EXEMPT", service.markExempt(companyId).status());
+    }
+
+    @Test
+    void exemptWithSubscriptionIsRejectedWithoutSaving() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+        assertThrows(BillingRuleException.class, () -> service.markExempt(companyId));
+        verifyNoInteractions(asaas);
+        verify(accounts, never()).saveAndFlush(any());
+    }
+
+    @Test
     void exemptCompanyCannotBeActivated() {
         BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
         acc.markExempt();

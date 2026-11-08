@@ -37,6 +37,14 @@ class AsaasClientTest {
     }
 
     @Test
+    void missingIdInResponseIsRejected() {
+        server.expect(requestTo(BASE + "/customers"))
+              .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+        assertThrows(AsaasClient.AsaasException.class,
+                () -> client.createCustomer("Clínica", "123.456.789-09", "a@b.com", "co-1"));
+    }
+
+    @Test
     void createSubscriptionIsMonthlyPixWithDecimalValue() {
         server.expect(requestTo(BASE + "/subscriptions"))
               .andExpect(jsonPath("$.customer").value("cus_1"))

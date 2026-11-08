@@ -55,6 +55,17 @@ class BillingAdminControllerTest {
     }
 
     @Test
+    void crmAdminExemptsAndIsAudited() throws Exception {
+        loginAs("CRM_ADMIN");
+        when(service.markExempt(TARGET)).thenReturn(new BillingView("EXEMPT", "STARTER", 19700, null, null, false));
+        mvc.perform(post(URL + "/exempt"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.status").value("EXEMPT"));
+        verify(auditor).record(eq(TARGET), eq(AuditAction.UPDATE), eq(AuditModule.SETTINGS), eq("Billing"),
+                eq(TARGET.toString()), anyString(), any(), any());
+    }
+
+    @Test
     void nonAdminIsForbidden() throws Exception {
         loginAs("ADMIN");
         mvc.perform(post(URL + "/activate")).andExpect(status().isForbidden());

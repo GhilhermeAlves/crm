@@ -101,6 +101,10 @@ public class BillingService {
         return inTenant(companyId, () -> {
             BillingAccount acc = accounts.findById(companyId).orElseGet(() -> BillingAccount.start(
                     companyId, company.getPlan(), company.getPlan().defaultMonthlyPriceCents()));
+            if (acc.hasSubscription()) {
+                throw new BillingRuleException(
+                        "Empresa com assinatura ativa no Asaas: cancele a assinatura antes de isentar.");
+            }
             acc.markExempt();
             return BillingView.of(accounts.saveAndFlush(acc));
         });

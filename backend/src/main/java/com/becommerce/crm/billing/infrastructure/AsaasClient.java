@@ -49,7 +49,7 @@ public class AsaasClient {
         body.put("cpfCnpj", cpfCnpj.replaceAll("\\D", ""));
         body.put("email", email);
         body.put("externalReference", externalReference);
-        return post("/customers", body).path("id").asText();
+        return requireId(post("/customers", body));
     }
 
     public String createSubscription(String customerId, int valueCents, LocalDate nextDueDate,
@@ -62,7 +62,13 @@ public class AsaasClient {
         body.put("nextDueDate", nextDueDate.toString());
         body.put("description", description);
         body.put("externalReference", externalReference);
-        return post("/subscriptions", body).path("id").asText();
+        return requireId(post("/subscriptions", body));
+    }
+
+    private static String requireId(com.fasterxml.jackson.databind.JsonNode node) {
+        String id = node.path("id").asText("");
+        if (id.isBlank()) throw new AsaasException("Asaas não devolveu o id.");
+        return id;
     }
 
     public void updateSubscriptionValue(String subscriptionId, int valueCents, String description) {
