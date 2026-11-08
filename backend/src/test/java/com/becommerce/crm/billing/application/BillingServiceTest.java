@@ -4,6 +4,7 @@ import com.becommerce.crm.billing.domain.BillingAccount;
 import com.becommerce.crm.billing.domain.BillingStatus;
 import com.becommerce.crm.billing.infrastructure.AsaasClient;
 import com.becommerce.crm.billing.infrastructure.BillingAccountJpaRepository;
+import com.becommerce.crm.billing.infrastructure.BillingInvoiceJpaRepository;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
@@ -27,6 +28,9 @@ class BillingServiceTest {
     private final UUID companyId = UUID.randomUUID();
 
     @Mock BillingAccountJpaRepository accounts;
+    @Mock BillingInvoiceJpaRepository invoices;
+    @Mock BillingPaymentService payments;
+    @Mock BillingAccessService access;
     @Mock CompanyRepository companies;
     @Mock AsaasClient asaas;
     @Mock Company company;
@@ -34,7 +38,7 @@ class BillingServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new BillingService(accounts, companies, asaas,
+        service = new BillingService(accounts, invoices, companies, asaas, payments, access,
                 new BillingProperties(true, "https://x", "KEY", "WH"), CLOCK);
         lenient().when(companies.findById(companyId)).thenReturn(Optional.of(company));
         lenient().when(company.getPlan()).thenReturn(CompanyPlan.STARTER);
@@ -84,7 +88,7 @@ class BillingServiceTest {
 
     @Test
     void activateWhenDisabledIsRejected() {
-        service = new BillingService(accounts, companies, asaas, new BillingProperties(false, "https://x", "", ""), CLOCK);
+        service = new BillingService(accounts, invoices, companies, asaas, payments, access, new BillingProperties(false, "https://x", "", ""), CLOCK);
         assertThrows(BillingRuleException.class, () -> service.activate(companyId));
         verifyNoInteractions(asaas);
     }
@@ -208,5 +212,38 @@ class BillingServiceTest {
 
         verify(asaas).updateSubscriptionValue(eq("sub_1"), eq(19700), anyString());
         assertNull(acc.getSyncError());
+    }
+
+    @Test
+    void grantUnblocksForNDays() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 10, 15));
+        acc.onOverdue(LocalDate.of(2026, 10, 15));
+        acc.block();
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+
+        var view = service.grant(companyId, 7);
+
+        assertEquals("PAST_DUE", view.status());
+        assertEquals(LocalDate.of(2026, 11, 15), view.graceUntil());
+        verify(access).evict(companyId);
+    }
+
+    @Test
+    void grantOutOfRangeIsRejected() {
+        assertThrows(BillingRuleException.class, () -> service.grant(companyId, 0));
+        assertThrows(BillingRuleException.class, () -> service.grant(companyId, 31));
+    }
+
+    @Test
+    void checkPaymentRefreshesOpenInvoices() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+
+        service.checkPayment(companyId);
+
+        verify(payments).refreshOpen(companyId, null);
+        verify(access).evict(companyId);
     }
 }

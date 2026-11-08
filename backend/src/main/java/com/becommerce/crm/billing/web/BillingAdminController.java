@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -68,6 +69,28 @@ public class BillingAdminController {
                 companyId.toString(), "Cobrança: valor mensal alterado", user.userId(),
                 Map.of("monthlyPriceCents", body.monthlyPriceCents())));
         return view;
+    }
+
+    public record GrantRequest(@jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(30) int days) {}
+
+    @PostMapping("/grant")
+    @PreAuthorize("isAuthenticated()")
+    public BillingView grant(@PathVariable UUID companyId, @Valid @RequestBody GrantRequest body,
+                             @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        BillingView view = service.grant(companyId, body.days());
+        inTenant(companyId, () -> auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing",
+                companyId.toString(), "Cobrança: liberada por " + body.days() + " dias", user.userId(),
+                Map.of("days", body.days())));
+        return view;
+    }
+
+    @GetMapping("/invoices")
+    @PreAuthorize("isAuthenticated()")
+    public List<BillingService.InvoiceView> invoices(@PathVariable UUID companyId,
+                                                     @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        return service.invoices(companyId);
     }
 
     @ExceptionHandler(BillingRuleException.class)

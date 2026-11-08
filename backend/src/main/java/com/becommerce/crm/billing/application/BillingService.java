@@ -1,9 +1,11 @@
 package com.becommerce.crm.billing.application;
 
 import com.becommerce.crm.billing.domain.BillingAccount;
+import com.becommerce.crm.billing.domain.BillingInvoice;
 import com.becommerce.crm.billing.domain.BillingStatus;
 import com.becommerce.crm.billing.infrastructure.AsaasClient;
 import com.becommerce.crm.billing.infrastructure.BillingAccountJpaRepository;
+import com.becommerce.crm.billing.infrastructure.BillingInvoiceJpaRepository;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -24,29 +28,38 @@ public class BillingService {
     static final int FIRST_DUE_DAYS = 7;
 
     private final BillingAccountJpaRepository accounts;
+    private final BillingInvoiceJpaRepository invoices;
     private final CompanyRepository companies;
     private final AsaasClient asaas;
+    private final BillingPaymentService payments;
+    private final BillingAccessService access;
     private final BillingProperties props;
     private final Clock clock;
 
-    public BillingService(BillingAccountJpaRepository accounts, CompanyRepository companies,
-                          AsaasClient asaas, BillingProperties props, Clock clock) {
+    public BillingService(BillingAccountJpaRepository accounts, BillingInvoiceJpaRepository invoices,
+                          CompanyRepository companies, AsaasClient asaas, BillingPaymentService payments,
+                          BillingAccessService access, BillingProperties props, Clock clock) {
         this.accounts = accounts;
+        this.invoices = invoices;
         this.companies = companies;
         this.asaas = asaas;
+        this.payments = payments;
+        this.access = access;
         this.props = props;
         this.clock = clock;
     }
 
     public record BillingView(String status, String plan, int monthlyPriceCents, LocalDate nextDueDate,
-                              String syncError, boolean hasSubscription) {
-        static BillingView of(BillingAccount a) {
+                              String syncError, boolean hasSubscription, LocalDate overdueSince,
+                              LocalDate graceUntil, String openInvoiceUrl) {
+        static BillingView of(BillingAccount a, String openInvoiceUrl) {
             return new BillingView(a.getStatus().name(), a.getPlan().name(), a.getMonthlyPriceCents(),
-                    a.getNextDueDate(), a.getSyncError(), a.hasSubscription());
+                    a.getNextDueDate(), a.getSyncError(), a.hasSubscription(), a.getOverdueSince(),
+                    a.getGraceUntil(), openInvoiceUrl);
         }
         static BillingView notStarted(CompanyPlan plan) {
             return new BillingView(BillingStatus.NOT_STARTED.name(), plan.name(),
-                    plan.defaultMonthlyPriceCents(), null, null, false);
+                    plan.defaultMonthlyPriceCents(), null, null, false, null, null, null);
         }
     }
 
@@ -54,7 +67,7 @@ public class BillingService {
     public BillingView view(UUID companyId) {
         Company company = requireCompany(companyId);
         return inTenant(companyId, () -> accounts.findById(companyId)
-                .map(BillingView::of)
+                .map(this::viewOf)
                 .orElseGet(() -> BillingView.notStarted(company.getPlan())));
     }
 
@@ -74,7 +87,7 @@ public class BillingService {
                 throw new BillingRuleException("Empresa isenta não é cobrada.");
             }
             if (acc.hasSubscription()) {
-                return BillingView.of(acc);
+                return viewOf(acc);
             }
             String ref = companyId.toString();
             try {
@@ -90,7 +103,7 @@ public class BillingService {
                 log.warn("Falha ao ativar cobrança da empresa {}: {}", companyId, e.getMessage());
                 acc.syncFailed(e.getMessage());
             }
-            return BillingView.of(accounts.saveAndFlush(acc));
+            return viewOf(accounts.saveAndFlush(acc));
         });
     }
 
@@ -105,7 +118,7 @@ public class BillingService {
                         "Empresa com assinatura ativa no Asaas: cancele a assinatura antes de isentar.");
             }
             acc.markExempt();
-            return BillingView.of(accounts.saveAndFlush(acc));
+            return viewOf(accounts.saveAndFlush(acc));
         });
     }
 
@@ -121,7 +134,7 @@ public class BillingService {
                 throw new BillingRuleException(e.getMessage());
             }
             pushPrice(acc);
-            return BillingView.of(accounts.saveAndFlush(acc));
+            return viewOf(accounts.saveAndFlush(acc));
         });
     }
 
@@ -158,6 +171,51 @@ public class BillingService {
                 return accounts.saveAndFlush(acc);
             });
         }
+    }
+
+    public record InvoiceView(UUID id, LocalDate dueDate, int valueCents, String status, String invoiceUrl,
+                              LocalDateTime paidAt) {
+        static InvoiceView of(BillingInvoice i) {
+            return new InvoiceView(i.getId(), i.getDueDate(), i.getValueCents(), i.getStatus().name(),
+                    i.getInvoiceUrl(), i.getPaidAt());
+        }
+    }
+
+    static final int MAX_GRANT_DAYS = 30;
+
+    @Transactional
+    public BillingView grant(UUID companyId, int days) {
+        if (days < 1 || days > MAX_GRANT_DAYS) throw new BillingRuleException("Libere entre 1 e 30 dias.");
+        BillingView view = inTenant(companyId, () -> {
+            BillingAccount acc = accounts.findById(companyId)
+                    .orElseThrow(() -> new BillingRuleException("Empresa sem cobrança ativa."));
+            acc.grant(LocalDate.now(clock).plusDays(days));
+            return viewOf(accounts.saveAndFlush(acc));
+        });
+        access.evict(companyId);
+        return view;
+    }
+
+    @Transactional(readOnly = true)
+    public List<InvoiceView> invoices(UUID companyId) {
+        return inTenant(companyId, () -> invoices.findTop24ByCompanyIdOrderByDueDateDesc(companyId).stream()
+                .map(InvoiceView::of).toList());
+    }
+
+    public BillingView checkPayment(UUID companyId) {
+        if (props.configured()) {
+            payments.refreshOpen(companyId, null);
+            access.evict(companyId);
+        }
+        return view(companyId);
+    }
+
+    /** View com a URL Pix da fatura aberta mais antiga (para a faixa e a tela de pagamento pendente). */
+    private BillingView viewOf(BillingAccount a) {
+        String url = invoices.findByCompanyIdAndStatusIn(a.getCompanyId(), BillingPaymentService.OPEN).stream()
+                .min(java.util.Comparator.comparing(BillingInvoice::getDueDate))
+                .map(BillingInvoice::getInvoiceUrl).orElse(null);
+        return BillingView.of(a, url);
     }
 
     private void pushPrice(BillingAccount acc) {
