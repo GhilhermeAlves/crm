@@ -60,4 +60,14 @@ class BillingControllerTest {
         mvc.perform(get("/api/v1/billing")).andExpect(status().isForbidden());
         verifyNoInteractions(service);
     }
+
+    @Test
+    void hidesInternalSyncError() throws Exception {
+        login(company);
+        when(service.view(company)).thenReturn(
+                new BillingView("SYNC_PENDING", "STARTER", 19700, null, "x", false, null, null, null));
+        mvc.perform(get("/api/v1/billing"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.syncError").isEmpty());
+    }
 }

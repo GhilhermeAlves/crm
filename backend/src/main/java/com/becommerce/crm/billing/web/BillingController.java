@@ -24,7 +24,7 @@ public class BillingController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public BillingView view(@AuthenticationPrincipal CurrentUser user) {
-        return service.view(companyOf(user));
+        return withoutInternalError(service.view(companyOf(user)));
     }
 
     @GetMapping("/invoices")
@@ -36,7 +36,13 @@ public class BillingController {
     @PostMapping("/check-payment")
     @PreAuthorize("isAuthenticated()")
     public BillingView checkPayment(@AuthenticationPrincipal CurrentUser user) {
-        return service.checkPayment(companyOf(user));
+        return withoutInternalError(service.checkPayment(companyOf(user)));
+    }
+
+    /** O texto de erro do Asaas é interno (só o CRM_ADMIN vê). */
+    private static BillingView withoutInternalError(BillingView v) {
+        return new BillingView(v.status(), v.plan(), v.monthlyPriceCents(), v.nextDueDate(), null,
+                v.hasSubscription(), v.overdueSince(), v.graceUntil(), v.openInvoiceUrl());
     }
 
     private static UUID companyOf(CurrentUser user) {

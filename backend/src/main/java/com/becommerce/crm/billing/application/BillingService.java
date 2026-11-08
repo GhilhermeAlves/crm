@@ -183,7 +183,7 @@ public class BillingService {
 
     static final int MAX_GRANT_DAYS = 30;
 
-    @Transactional
+    // Sem @Transactional: o evict precisa rodar depois do commit do saveAndFlush.
     public BillingView grant(UUID companyId, int days) {
         if (days < 1 || days > MAX_GRANT_DAYS) throw new BillingRuleException("Libere entre 1 e 30 dias.");
         BillingView view = inTenant(companyId, () -> {
