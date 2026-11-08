@@ -15,7 +15,11 @@ vi.mock("@/features/billing/hooks", () => ({
     isLoading: false,
     isError: state.billingError,
   }),
-  useMyInvoices: () => ({ data: state.invoices, isLoading: false, isError: state.invoicesError }),
+  useMyInvoices: () => ({
+    data: state.invoicesError ? undefined : state.invoices,
+    isLoading: false,
+    isError: state.invoicesError,
+  }),
 }));
 
 const active = {

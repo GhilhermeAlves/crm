@@ -4,8 +4,47 @@ import { useState } from "react";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useMyCompanies, useSwitchCompany } from "@/features/identity/auth/hooks/useAuthMutations";
 import { useCheckPayment, useMyBilling } from "../hooks";
 import { formatCents, formatLocalDate } from "../format";
+
+/** Saída e troca de empresa: só usam /auth/** e /me/**, liberados mesmo com a empresa bloqueada. */
+function BlockedActions() {
+  const { user, logout } = useAuth();
+  const { data: companies = [] } = useMyCompanies(!!user?.companyId);
+  const switchCompany = useSwitchCompany();
+  const others = companies.filter((company) => company.companyId !== user?.companyId);
+
+  return (
+    <div className="space-y-2">
+      {companies.length > 1 && others.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">Trocar de empresa</p>
+          {others.map((company) => (
+            <Button
+              key={company.companyId}
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              disabled={switchCompany.isPending}
+              onClick={() =>
+                switchCompany.mutate(company.companyId, {
+                  onSuccess: () => window.location.assign("/"),
+                })
+              }
+            >
+              {company.name}
+            </Button>
+          ))}
+        </div>
+      )}
+      <Button variant="ghost" size="sm" onClick={logout}>
+        Sair
+      </Button>
+    </div>
+  );
+}
 
 export function PaymentPendingView() {
   const { data, isLoading, isError, refetch } = useMyBilling();
@@ -14,7 +53,7 @@ export function PaymentPendingView() {
   const [notFound, setNotFound] = useState(false);
   const [checkFailed, setCheckFailed] = useState(false);
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <div className="space-y-3 text-center">
         <p className="text-sm text-muted-foreground">
@@ -23,6 +62,7 @@ export function PaymentPendingView() {
         <Button variant="outline" onClick={() => refetch()}>
           Tentar de novo
         </Button>
+        <BlockedActions />
       </div>
     );
   }
@@ -89,6 +129,7 @@ export function PaymentPendingView() {
           </p>
         )}
         <p className="text-xs text-muted-foreground">Dúvidas? Fale com o suporte do CRM.</p>
+        <BlockedActions />
       </CardContent>
     </Card>
   );

@@ -41,7 +41,7 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
   const [reais, setReais] = useState("");
   const [days, setDays] = useState("7");
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <Card>
         <CardHeader>
@@ -95,13 +95,14 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
                   type="number"
                   step="0.01"
                   min="0.01"
+                  max={100000}
                   className="h-8 w-28"
                   value={reais}
                   onChange={(e) => setReais(e.target.value)}
                 />
                 <Button
                   size="sm"
-                  disabled={!(cents > 0) || price.isPending}
+                  disabled={!(cents > 0) || cents > 10_000_000 || price.isPending}
                   onClick={() => price.mutate(cents, { onSuccess: () => setEditing(false) })}
                 >
                   Salvar
@@ -150,7 +151,9 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
           {data.status !== "EXEMPT" && !data.hasSubscription && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline">Marcar como isenta</Button>
+                <Button variant="outline" disabled={exempt.isPending}>
+                  Marcar como isenta
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -196,7 +199,7 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
         <InvoiceTable
           invoices={invoices.data}
           isLoading={invoices.isLoading}
-          isError={invoices.isError}
+          isError={invoices.isError && !invoices.data}
         />
       </CardContent>
     </Card>

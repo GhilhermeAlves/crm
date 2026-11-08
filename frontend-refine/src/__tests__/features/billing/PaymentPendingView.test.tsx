@@ -7,6 +7,18 @@ const state = vi.hoisted(() => ({
   mutate: vi.fn(),
   refetch: vi.fn(),
   error: false,
+  logout: vi.fn(),
+  companies: [] as { companyId: string; name: string }[],
+  switchMutate: vi.fn(),
+}));
+
+vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
+  useAuth: () => ({ user: { companyId: "c1" }, logout: state.logout }),
+}));
+
+vi.mock("@/features/identity/auth/hooks/useAuthMutations", () => ({
+  useMyCompanies: () => ({ data: state.companies }),
+  useSwitchCompany: () => ({ mutate: state.switchMutate, isPending: false }),
 }));
 
 vi.mock("@/features/billing/hooks", () => ({
@@ -37,6 +49,31 @@ describe("PaymentPendingView", () => {
     state.mutate.mockReset();
     state.refetch.mockReset();
     state.error = false;
+    state.logout.mockReset();
+    state.switchMutate.mockReset();
+    state.companies = [];
+  });
+
+  it("Sair chama o logout", () => {
+    render(<PaymentPendingView />);
+    fireEvent.click(screen.getByRole("button", { name: "Sair" }));
+    expect(state.logout).toHaveBeenCalled();
+  });
+
+  it("Sair também aparece no estado de erro", () => {
+    state.error = true;
+    render(<PaymentPendingView />);
+    expect(screen.getByRole("button", { name: "Sair" })).toBeTruthy();
+  });
+
+  it("com mais de uma empresa permite trocar", () => {
+    state.companies = [
+      { companyId: "c1", name: "Clínica A" },
+      { companyId: "c2", name: "Clínica B" },
+    ];
+    render(<PaymentPendingView />);
+    fireEvent.click(screen.getByRole("button", { name: "Clínica B" }));
+    expect(state.switchMutate.mock.calls[0][0]).toBe("c2");
   });
 
   it("mostra valor, atraso e o Pix", () => {

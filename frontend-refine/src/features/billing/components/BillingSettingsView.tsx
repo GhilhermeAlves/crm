@@ -15,7 +15,7 @@ export function BillingSettingsView() {
   const { data, isLoading, isError } = useMyBilling();
   const invoices = useMyInvoices();
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <p className="text-sm text-muted-foreground">
         Não foi possível carregar os dados de cobrança.
@@ -64,7 +64,7 @@ export function BillingSettingsView() {
             <InvoiceTable
               invoices={invoices.data}
               isLoading={invoices.isLoading}
-              isError={invoices.isError}
+              isError={invoices.isError && !invoices.data}
             />
           </CardContent>
         </Card>

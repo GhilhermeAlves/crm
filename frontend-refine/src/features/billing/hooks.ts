@@ -27,7 +27,7 @@ export function useMyInvoices() {
   return useQuery({ queryKey: BILLING_KEYS.myInvoices, queryFn: BillingService.myInvoices });
 }
 
-/** "Já paguei": consulta o Asaas na hora; se liberou, recarrega a aplicação no início. */
+/** "Já paguei": consulta o Asaas na hora e atualiza o cache; o redirecionamento é feito por quem chama. */
 export function useCheckPayment() {
   const queryClient = useQueryClient();
   return useMutation({
