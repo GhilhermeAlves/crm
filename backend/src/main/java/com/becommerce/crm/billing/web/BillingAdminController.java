@@ -98,6 +98,12 @@ public class BillingAdminController {
         return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
     }
 
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, String>> concurrentChange() {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "A cobrança mudou ao mesmo tempo; tente de novo."));
+    }
+
     /**
      * A auditoria grava em audit_logs (RLS por tenant): o tenant precisa ser o da empresa alvo,
      * não o da empresa do CRM_ADMIN. Troca temporariamente e restaura em finally.

@@ -143,4 +143,28 @@ class BillingAccountTest {
         a.priceSyncFailed("timeout");
         assertTrue(a.isPriceSyncPending());
     }
+
+    private BillingAccount blockedSince(LocalDate since) {
+        BillingAccount a = BillingAccount.start(company, CompanyPlan.STARTER, 19700);
+        a.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        a.onOverdue(since);
+        a.block();
+        assertEquals(BillingStatus.BLOCKED, a.getStatus());
+        return a;
+    }
+
+    @Test
+    void blockedGoesBackToPastDueWhenOldestOverdueIsNewer() {
+        BillingAccount a = blockedSince(LocalDate.of(2026, 11, 1));
+        a.onOverdue(LocalDate.of(2026, 11, 20));
+        assertEquals(BillingStatus.PAST_DUE, a.getStatus());
+        assertEquals(LocalDate.of(2026, 11, 20), a.getOverdueSince());
+    }
+
+    @Test
+    void blockedStaysBlockedWhenOverdueDateIsTheSame() {
+        BillingAccount a = blockedSince(LocalDate.of(2026, 11, 1));
+        a.onOverdue(LocalDate.of(2026, 11, 1));
+        assertEquals(BillingStatus.BLOCKED, a.getStatus());
+    }
 }

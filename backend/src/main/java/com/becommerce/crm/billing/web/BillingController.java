@@ -5,11 +5,13 @@ import com.becommerce.crm.billing.application.BillingService.BillingView;
 import com.becommerce.crm.billing.application.BillingService.InvoiceView;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Cobrança da empresa logada. Liberado pelo BillingGuardInterceptor mesmo com a empresa bloqueada. */
@@ -50,5 +52,11 @@ public class BillingController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário sem empresa.");
         }
         return user.companyId();
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, String>> concurrentChange() {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "A cobrança mudou ao mesmo tempo; tente de novo."));
     }
 }

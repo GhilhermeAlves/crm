@@ -24,6 +24,7 @@ public class BillingAccount {
     @Column(name = "sync_error") private String syncError;
     @Column(name = "created_at", nullable = false) private LocalDateTime createdAt = LocalDateTime.now();
     @Column(name = "updated_at", nullable = false) private LocalDateTime updatedAt = LocalDateTime.now();
+    @Version @Column(nullable = false) private long version;
 
     protected BillingAccount() {}
 
@@ -86,6 +87,12 @@ public class BillingAccount {
     public void onOverdue(LocalDate since) {
         if (status == BillingStatus.EXEMPT) return;
         if (status == BillingStatus.ACTIVE) status = BillingStatus.PAST_DUE;
+        // A fatura que bloqueou foi paga e outra, mais nova, é a mais antiga em aberto: volta a PAST_DUE
+        // (o job diário bloqueia de novo ao completar BLOCK_AFTER_DAYS).
+        else if (status == BillingStatus.BLOCKED && overdueSince != null && since != null
+                && since.isAfter(overdueSince)) {
+            status = BillingStatus.PAST_DUE;
+        }
         this.overdueSince = since;
         touch();
     }
@@ -160,4 +167,5 @@ public class BillingAccount {
     public String getSyncError() { return syncError; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public long getVersion() { return version; }
 }
