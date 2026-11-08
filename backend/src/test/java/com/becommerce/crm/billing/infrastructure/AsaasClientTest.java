@@ -68,6 +68,41 @@ class AsaasClientTest {
     }
 
     @Test
+    void getPaymentMapsFieldsAndCents() {
+        server.expect(requestTo(BASE + "/payments/pay_1"))
+              .andExpect(method(HttpMethod.GET))
+              .andExpect(header("access_token", "KEY123"))
+              .andRespond(withSuccess("""
+                      {"id":"pay_1","subscription":"sub_1","externalReference":"co-1","status":"RECEIVED",
+                       "dueDate":"2026-11-15","value":197.00,"invoiceUrl":"https://pix/1","paymentDate":"2026-11-14"}
+                      """, MediaType.APPLICATION_JSON));
+        AsaasClient.AsaasPayment p = client.getPayment("pay_1");
+        assertEquals("sub_1", p.subscription());
+        assertEquals("co-1", p.externalReference());
+        assertEquals("RECEIVED", p.status());
+        assertFalse(p.deleted());
+        assertEquals(LocalDate.of(2026, 11, 15), p.dueDate());
+        assertEquals(19700, p.valueCents());
+        assertEquals("https://pix/1", p.invoiceUrl());
+        assertEquals(LocalDate.of(2026, 11, 14), p.paymentDate());
+    }
+
+    @Test
+    void getPaymentWithoutBodyIsAsaasError() {
+        server.expect(requestTo(BASE + "/payments/pay_1"))
+              .andRespond(withSuccess("", MediaType.APPLICATION_JSON));
+        assertThrows(AsaasClient.AsaasException.class, () -> client.getPayment("pay_1"));
+    }
+
+    @Test
+    void subscriptionReference() {
+        server.expect(requestTo(BASE + "/subscriptions/sub_1"))
+              .andExpect(method(HttpMethod.GET))
+              .andRespond(withSuccess("{\"id\":\"sub_1\",\"externalReference\":\"co-1\"}", MediaType.APPLICATION_JSON));
+        assertEquals("co-1", client.getSubscriptionReference("sub_1"));
+    }
+
+    @Test
     void errorNeverLeaksApiKey() {
         server.expect(requestTo(BASE + "/customers"))
               .andRespond(withStatus(HttpStatus.BAD_REQUEST)

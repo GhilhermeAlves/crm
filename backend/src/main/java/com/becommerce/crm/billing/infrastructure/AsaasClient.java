@@ -65,10 +65,48 @@ public class AsaasClient {
         return requireId(post("/subscriptions", body));
     }
 
-    private static String requireId(com.fasterxml.jackson.databind.JsonNode node) {
-        String id = node.path("id").asText("");
+    private static String requireId(JsonNode node) {
+        String id = node == null ? "" : node.path("id").asText("");
         if (id.isBlank()) throw new AsaasException("Asaas não devolveu o id.");
         return id;
+    }
+
+    public record AsaasPayment(String id, String subscription, String externalReference, String status,
+                               boolean deleted, LocalDate dueDate, int valueCents, String invoiceUrl,
+                               LocalDate paymentDate) {}
+
+    public AsaasPayment getPayment(String paymentId) {
+        JsonNode n = get("/payments/{id}", paymentId);
+        String id = requireId(n);
+        String paid = text(n, "paymentDate");
+        if (paid == null) paid = text(n, "clientPaymentDate");
+        return new AsaasPayment(
+                id,
+                text(n, "subscription"),
+                text(n, "externalReference"),
+                text(n, "status"),
+                n.path("deleted").asBoolean(false),
+                LocalDate.parse(n.path("dueDate").asText()),
+                n.path("value").decimalValue().movePointRight(2).setScale(0, java.math.RoundingMode.HALF_UP).intValueExact(),
+                text(n, "invoiceUrl"),
+                paid == null ? null : LocalDate.parse(paid));
+    }
+
+    public String getSubscriptionReference(String subscriptionId) {
+        JsonNode n = get("/subscriptions/{id}", subscriptionId);
+        requireId(n);
+        return text(n, "externalReference");
+    }
+
+    private JsonNode get(String path, String id) {
+        return call(() -> rest.get().uri(props.baseUrl() + path, id)
+                .headers(h -> { h.set("access_token", props.apiKey()); h.set("User-Agent", "clin3dpro-crm"); })
+                .retrieve().body(JsonNode.class));
+    }
+
+    private static String text(JsonNode n, String field) {
+        JsonNode v = n.path(field);
+        return v.isMissingNode() || v.isNull() || v.asText().isBlank() ? null : v.asText();
     }
 
     public void updateSubscriptionValue(String subscriptionId, int valueCents, String description) {
