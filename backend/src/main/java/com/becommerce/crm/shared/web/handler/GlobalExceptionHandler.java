@@ -16,6 +16,7 @@ import com.becommerce.crm.analytics.audit.application.service.AuditLogNotFoundEx
 import com.becommerce.crm.masterdata.company.domain.CompanyAlreadyExistsException;
 import com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException;
 import com.becommerce.crm.masterdata.company.domain.InvalidCompanyModulesException;
+import com.becommerce.crm.billing.web.BillingBlockedException;
 import com.becommerce.crm.masterdata.company.domain.ModuleDisabledException;
 import com.becommerce.crm.masterdata.company.domain.CompanyDeletionForbiddenException;
 import com.becommerce.crm.identity.domain.exception.DuplicateEmailException;
@@ -255,6 +256,18 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 400,
                 "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(BillingBlockedException.class)
+    public ResponseEntity<Map<String, Object>> handleBillingBlocked(BillingBlockedException ex) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+            .body(Map.of(
+                "status", 402,
+                "code", "BILLING_BLOCKED",
+                "error", "Payment Required",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));
