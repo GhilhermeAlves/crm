@@ -81,6 +81,62 @@ public class BillingAccount {
         touch();
     }
 
+    public static final int BLOCK_AFTER_DAYS = 10;
+
+    public void onOverdue(LocalDate since) {
+        if (status == BillingStatus.EXEMPT) return;
+        if (status == BillingStatus.ACTIVE) status = BillingStatus.PAST_DUE;
+        this.overdueSince = since;
+        touch();
+    }
+
+    public void onPaid() {
+        if (status == BillingStatus.PAST_DUE || status == BillingStatus.BLOCKED) {
+            status = BillingStatus.ACTIVE;
+            this.graceUntil = null;
+        }
+        this.overdueSince = null;
+        touch();
+    }
+
+    public boolean shouldBlock(LocalDate today) {
+        return status == BillingStatus.PAST_DUE
+                && overdueSince != null
+                && !overdueSince.isAfter(today.minusDays(BLOCK_AFTER_DAYS))
+                && (graceUntil == null || graceUntil.isBefore(today));
+    }
+
+    public void block() {
+        if (status != BillingStatus.PAST_DUE) return;
+        status = BillingStatus.BLOCKED;
+        touch();
+    }
+
+    public void grant(LocalDate until) {
+        if (until == null) throw new IllegalArgumentException("Informe até quando liberar.");
+        this.graceUntil = until;
+        if (status == BillingStatus.BLOCKED) status = BillingStatus.PAST_DUE;
+        touch();
+    }
+
+    public void expireGrace(LocalDate today) {
+        if (graceUntil != null && graceUntil.isBefore(today)) {
+            graceUntil = null;
+            touch();
+        }
+    }
+
+    public void nextDueAt(LocalDate due) {
+        if (due != null && (nextDueDate == null || due.isAfter(nextDueDate))) {
+            nextDueDate = due;
+            touch();
+        }
+    }
+
+    public boolean isPriceSyncPending() {
+        return hasSubscription() && syncError != null && status != BillingStatus.SYNC_PENDING;
+    }
+
     public boolean isChargeable() { return status != BillingStatus.EXEMPT; }
 
     public boolean hasSubscription() { return asaasSubscriptionId != null; }
