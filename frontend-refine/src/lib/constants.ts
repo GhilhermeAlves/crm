@@ -27,6 +27,8 @@ export const ROUTES = {
   CAMPAIGNS: "/campaigns",
   CAMPAIGNS_NEW: "/campaigns/new",
   REPORTS: "/reports",
+  PAYMENT_PENDING: "/pagamento-pendente",
+  SETTINGS_BILLING: "/settings/billing",
   SETTINGS_USERS: "/settings/users",
   SETTINGS_ROLES: "/settings/roles",
   SETTINGS_AGENDA: "/settings/agenda",
