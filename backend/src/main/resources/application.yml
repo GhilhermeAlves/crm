@@ -125,6 +125,11 @@ app:
     api-base-url: ${TELEGRAM_API_BASE_URL:https://api.telegram.org}
     # URL pública do backend que o Telegram chama (ex.: https://api.suaclinica.com.br)
     webhook-base-url: ${TELEGRAM_WEBHOOK_BASE_URL:}
+  billing:
+    enabled: ${BILLING_ENABLED:false}
+    base-url: ${ASAAS_BASE_URL:https://api-sandbox.asaas.com/v3}
+    api-key: ${ASAAS_API_KEY:}
+    webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
   ai:
     provider: ${AI_PROVIDER:openai}
     api-key: ${OPENAI_API_KEY:}
