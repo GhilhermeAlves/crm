@@ -4,7 +4,7 @@ import type {
 } from "@/features/identity/modules/types/modules.types";
 export type TenantStatus = "active" | "suspended" | "onboarding" | "inactive";
 
-export type TenantPlan = "starter" | "professional" | "business" | "enterprise";
+export type TenantPlan = "essential" | "starter" | "professional" | "business" | "enterprise";
 
 export type TenantAddress = {
   zipCode: string;

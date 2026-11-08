@@ -3,6 +3,7 @@ import type { TenantPlan } from "../types/tenant.types";
 import { tenantPlanLabels } from "../schemas/tenant.schema";
 
 const planVariantMap: Record<TenantPlan, "default" | "secondary" | "outline"> = {
+  essential: "outline",
   starter: "secondary",
   professional: "default",
   business: "outline",

@@ -29,12 +29,13 @@ Definir o modelo de cobrança do CRM SaaS Omnichannel, incluindo planos, limites
 
 | Plano | Preço mensal | Usuários | Contatos | Armazenamento |
 |---|---|---|---|---|
+| Essencial | R$ 49,90 | 1 | 500 | 1 GB |
 | Starter | R$ 197 | 2 | 2.000 | 5 GB |
 | Professional | R$ 397 | 5 | 10.000 | 25 GB |
 | Business | R$ 797 | 15 | 50.000 | 50 GB |
 | Enterprise | a partir de R$ 1.500 | 50 (negociável) | 200.000 (negociável) | 500 GB (negociável) |
 
-Os limites padrão ficam em `CompanyPlan`. Na troca de plano, limites não informados assumem o padrão do novo plano; empresas sem troca mantêm os limites atuais. Usuário extra: R$ 29/mês (ajuste manual do limite).
+Os limites padrão ficam em `CompanyPlan`. Na troca de plano, limites não informados assumem o padrão do novo plano; empresas sem troca mantêm os limites atuais. Usuário extra: R$ 29/mês (ajuste manual do limite). O Essencial é só a parte comercial (CRM, tarefas e follow-ups), sem especialidade.
 
 ### Ciclo de Vida da Assinatura
 

@@ -2,6 +2,7 @@ package com.becommerce.crm.masterdata.company.domain;
 
 /** Planos comerciais e seus limites padrão; a empresa pode ter limites negociados. */
 public enum CompanyPlan {
+    ESSENTIAL(1, 1_024, 500),
     STARTER(2, 5_120, 2_000),
     PROFESSIONAL(5, 25_600, 10_000),
     BUSINESS(15, 51_200, 50_000),

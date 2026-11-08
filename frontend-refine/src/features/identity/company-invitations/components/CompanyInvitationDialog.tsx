@@ -30,6 +30,8 @@ import {
   type CompanySegment,
 } from "@/features/identity/modules/types/modules.types";
 import {
+  ESSENTIAL_PLAN_MODULES,
+  ESSENTIAL_PLAN_SEGMENT,
   tenantPlanDefaults,
   tenantPlanLabels,
   type TenantFormData,
@@ -215,6 +217,10 @@ export function CompanyInvitationDialog() {
                       const next = value as TenantFormData["plan"];
                       setPlan(next);
                       setMaxUsers(String(tenantPlanDefaults[next].maxUsers));
+                      if (next === "essential") {
+                        setSegment(ESSENTIAL_PLAN_SEGMENT);
+                        setModules([...ESSENTIAL_PLAN_MODULES]);
+                      }
                     }}
                   >
                     <SelectTrigger id="company-invite-plan">

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidCpfCnpj } from "@/lib/masks";
+import type { CompanyModuleName } from "@/features/identity/modules/types/modules.types";
 
 const phoneRegex = /^\(\d{2}\)\s?\d{4,5}-\d{4}$/;
 const cepRegex = /^\d{5}-\d{3}$/;
@@ -45,7 +46,7 @@ export const tenantSchema = z.object({
       message: "Website deve começar com http:// ou https://",
     }),
   status: z.enum(["active", "suspended", "onboarding", "inactive"]),
-  plan: z.enum(["starter", "professional", "business", "enterprise"]),
+  plan: z.enum(["essential", "starter", "professional", "business", "enterprise"]),
   maxUsers: z
     .number({ invalid_type_error: "Limite de usuários é obrigatório" })
     .min(1, "Mínimo 1 usuário")
@@ -76,6 +77,7 @@ export const tenantStatusLabels: Record<string, string> = {
 };
 
 export const tenantPlanLabels: Record<string, string> = {
+  essential: "Essencial",
   starter: "Starter",
   professional: "Professional",
   business: "Business",
@@ -89,6 +91,7 @@ export const tenantPlanDefaults: Record<
   TenantPlanName,
   { maxUsers: number; maxStorageMb: number; maxContacts: number; price: string }
 > = {
+  essential: { maxUsers: 1, maxStorageMb: 1024, maxContacts: 500, price: "R$ 49,90/mês" },
   starter: { maxUsers: 2, maxStorageMb: 5120, maxContacts: 2000, price: "R$ 197/mês" },
   professional: { maxUsers: 5, maxStorageMb: 25600, maxContacts: 10000, price: "R$ 397/mês" },
   business: { maxUsers: 15, maxStorageMb: 51200, maxContacts: 50000, price: "R$ 797/mês" },
@@ -99,3 +102,7 @@ export const tenantPlanDefaults: Record<
     price: "a partir de R$ 1.500/mês",
   },
 };
+
+/** Plano Essencial: só a parte comercial, sem especialidade. */
+export const ESSENTIAL_PLAN_SEGMENT = "GENERIC" as const;
+export const ESSENTIAL_PLAN_MODULES: CompanyModuleName[] = ["CRM", "TASKS", "FOLLOW_UPS"];
