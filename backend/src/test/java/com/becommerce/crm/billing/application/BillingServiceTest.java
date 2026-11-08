@@ -7,6 +7,8 @@ import com.becommerce.crm.billing.infrastructure.BillingAccountJpaRepository;
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
+import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +41,25 @@ class BillingServiceTest {
         lenient().when(company.getTradingName()).thenReturn("Clínica Sorriso");
         lenient().when(company.getEmail()).thenReturn("c@s.com");
         lenient().when(company.getCnpj()).thenReturn("123.456.789-09");
-        lenient().when(accounts.save(any())).thenAnswer(i -> i.getArgument(0));
+        lenient().when(accounts.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
+    }
+
+    @AfterEach
+    void tearDown() {
+        TenantContext.clear();
+    }
+
+    @Test
+    void activateRestoresCallerTenantContext() {
+        UUID other = UUID.randomUUID();
+        TenantContext.setCompanyId(other);
+        when(accounts.findById(companyId)).thenReturn(Optional.empty());
+        when(asaas.createCustomer(any(), any(), any(), any())).thenReturn("cus_1");
+        when(asaas.createSubscription(any(), anyInt(), any(), anyString(), anyString())).thenReturn("sub_1");
+
+        service.activate(companyId);
+
+        assertEquals(other, TenantContext.getCompanyId());
     }
 
     @Test

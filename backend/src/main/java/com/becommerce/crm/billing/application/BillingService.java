@@ -91,7 +91,7 @@ public class BillingService {
                 log.warn("Falha ao ativar cobrança da empresa {}: {}", companyId, e.getMessage());
                 acc.syncFailed(e.getMessage());
             }
-            return BillingView.of(accounts.save(acc));
+            return BillingView.of(accounts.saveAndFlush(acc));
         });
     }
 
@@ -102,7 +102,7 @@ public class BillingService {
             BillingAccount acc = accounts.findById(companyId).orElseGet(() -> BillingAccount.start(
                     companyId, company.getPlan(), company.getPlan().defaultMonthlyPriceCents()));
             acc.markExempt();
-            return BillingView.of(accounts.save(acc));
+            return BillingView.of(accounts.saveAndFlush(acc));
         });
     }
 
@@ -118,7 +118,7 @@ public class BillingService {
                 throw new BillingRuleException(e.getMessage());
             }
             pushPrice(acc);
-            return BillingView.of(accounts.save(acc));
+            return BillingView.of(accounts.saveAndFlush(acc));
         });
     }
 
@@ -131,7 +131,7 @@ public class BillingService {
                 int cents = defaultPrice ? newPlan.defaultMonthlyPriceCents() : acc.getMonthlyPriceCents();
                 acc.changePrice(newPlan, cents);
                 if (defaultPrice) pushPrice(acc);
-                accounts.save(acc);
+                accounts.saveAndFlush(acc);
             });
             return null;
         });
