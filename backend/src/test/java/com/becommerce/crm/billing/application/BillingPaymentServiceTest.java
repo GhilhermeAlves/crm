@@ -135,4 +135,31 @@ class BillingPaymentServiceTest {
 
         assertEquals(1, service.refreshOpen(companyId, LocalDate.of(2026, 11, 20)));
     }
+
+    @Test
+    void paymentWithoutSubscriptionIsIgnoredForAccountWithoutSubscription() {
+        BillingAccount bare = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        when(accounts.findById(companyId)).thenReturn(Optional.of(bare));
+        when(asaas.getPayment("pay_1")).thenReturn(new AsaasPayment("pay_1", null, companyId.toString(),
+                "RECEIVED", false, LocalDate.of(2026, 11, 15), 19700, null, LocalDate.of(2026, 11, 20)));
+
+        assertTrue(service.apply("pay_1").isEmpty());
+        verify(invoices, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void refreshOpenContinuesAfterFailure() {
+        BillingInvoice first = BillingInvoice.fromAsaas(companyId, "pay_1", LocalDate.of(2026, 11, 15), 19700,
+                InvoiceStatus.PENDING, null, null);
+        BillingInvoice second = BillingInvoice.fromAsaas(companyId, "pay_2", LocalDate.of(2026, 11, 16), 19700,
+                InvoiceStatus.PENDING, null, null);
+        when(invoices.findByCompanyIdAndStatusIn(eq(companyId), anyCollection())).thenReturn(List.of(first, second));
+        when(asaas.getPayment("pay_1")).thenThrow(new RuntimeException("falha"));
+        when(asaas.getPayment("pay_2")).thenReturn(new AsaasPayment("pay_2", "sub_1", companyId.toString(),
+                "RECEIVED", false, LocalDate.of(2026, 11, 16), 19700, null, LocalDate.of(2026, 11, 20)));
+        when(invoices.findFirstByCompanyIdAndStatusOrderByDueDateAsc(companyId, InvoiceStatus.OVERDUE))
+                .thenReturn(Optional.empty());
+
+        assertEquals(1, service.refreshOpen(companyId, null));
+    }
 }

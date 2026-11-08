@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -61,14 +60,19 @@ public class BillingPaymentService {
                 : invoices.findByCompanyIdAndStatusInAndDueDateBefore(companyId, OPEN, before));
         int applied = 0;
         for (BillingInvoice i : open) {
-            if (apply(i.getAsaasPaymentId()).isPresent()) applied++;
+            try {
+                if (apply(i.getAsaasPaymentId()).isPresent()) applied++;
+            } catch (RuntimeException e) {
+                log.warn("[BILLING] falha ao reconsultar pagamento {}: {}", i.getAsaasPaymentId(), e.getMessage());
+            }
         }
         return applied;
     }
 
     private boolean applyInTenant(UUID companyId, AsaasPayment p) {
         Optional<BillingAccount> found = accounts.findById(companyId);
-        if (found.isEmpty() || !Objects.equals(p.subscription(), found.get().getAsaasSubscriptionId())) {
+        if (found.isEmpty() || p.subscription() == null
+                || !p.subscription().equals(found.get().getAsaasSubscriptionId())) {
             return false;
         }
         BillingAccount acc = found.get();
