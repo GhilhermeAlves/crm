@@ -135,9 +135,16 @@ describe("CreateAppointmentDialog", { timeout: 20000 }, () => {
 
   it("envia os procedimentos escolhidos", async () => {
     const { onSubmit } = renderDialog();
-    fireEvent.click(screen.getByRole("button", { name: "Limpeza" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Selecionar procedimentos" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Limpeza" }));
+    expect(screen.getByRole("button", { name: "Remover Limpeza" })).toBeTruthy();
     const values = await submit(onSubmit);
     expect(values.catalogItemIds).toEqual([PROC_ID]);
+  });
+
+  it("não lista os procedimentos antes de abrir a busca", () => {
+    renderDialog();
+    expect(screen.queryByText("Limpeza")).toBeNull();
   });
 
   it("envia contactPhone só quando o celular muda", async () => {
