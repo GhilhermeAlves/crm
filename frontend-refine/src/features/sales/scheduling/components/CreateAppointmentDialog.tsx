@@ -37,6 +37,7 @@ import {
 } from "../schemas/scheduling.schema";
 import { RegistrationLinkActions } from "@/features/masterdata/contacts/registration/components/RegistrationLinkActions";
 import { ContactCombobox } from "./ContactCombobox";
+import { ProcedureCombobox } from "./ProcedureCombobox";
 import { RecurrenceDialog, describeRecurrence } from "./RecurrenceDialog";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useCatalog } from "@/features/masterdata/catalog/hooks/useCatalog";
@@ -653,33 +654,11 @@ export function CreateAppointmentDialog({
               {procedures.length === 0 ? (
                 <p className="text-xs text-muted-foreground">Nenhum serviço ativo no catálogo.</p>
               ) : (
-                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Procedimentos">
-                  {procedures.map((p) => {
-                    const selected = (form.watch("catalogItemIds") ?? []).includes(p.id);
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => {
-                          const current = form.getValues("catalogItemIds") ?? [];
-                          form.setValue(
-                            "catalogItemIds",
-                            selected ? current.filter((id) => id !== p.id) : [...current, p.id],
-                          );
-                        }}
-                        className={cn(
-                          "rounded-full border px-2.5 py-1 text-xs transition-colors",
-                          selected
-                            ? "border-primary bg-primary/10 font-medium"
-                            : "text-muted-foreground hover:bg-muted",
-                        )}
-                      >
-                        {p.name}
-                      </button>
-                    );
-                  })}
-                </div>
+                <ProcedureCombobox
+                  procedures={procedures}
+                  value={form.watch("catalogItemIds") ?? []}
+                  onChange={(ids) => form.setValue("catalogItemIds", ids)}
+                />
               )}
             </div>
 
