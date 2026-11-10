@@ -84,7 +84,7 @@ export const tenantPlanLabels: Record<string, string> = {
   enterprise: "Enterprise",
 };
 
-type TenantPlanName = TenantFormData["plan"];
+export type TenantPlanName = TenantFormData["plan"];
 
 /** Limites padrão e preço de cada plano; os limites seguem CompanyPlan no backend. */
 export const tenantPlanDefaults: Record<
