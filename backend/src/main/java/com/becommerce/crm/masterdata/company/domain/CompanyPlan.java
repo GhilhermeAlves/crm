@@ -5,7 +5,7 @@ import java.util.Set;
 
 /** Planos comerciais e seus limites padrão; a empresa pode ter limites negociados. */
 public enum CompanyPlan {
-    ESSENTIAL(1, 1_024, 500, 4_990),
+    ESSENTIAL(1, 1_024, 500, 12_900),
     STARTER(2, 5_120, 2_000, 19_700),
     PROFESSIONAL(5, 25_600, 10_000, 39_700),
     BUSINESS(15, 51_200, 50_000, 79_700),

@@ -17,6 +17,11 @@ import {
 
 import { HorizonBackground } from "@/components/brand/HorizonBackground";
 import { ROUTES } from "@/lib/constants";
+import {
+  tenantPlanDefaults,
+  tenantPlanLabels,
+  type TenantPlanName,
+} from "@/features/identity/tenants/schemas/tenant.schema";
 
 export const metadata: Metadata = {
   title: "CRM Omnichannel — atendimento, agenda e vendas com IA",
@@ -111,6 +116,77 @@ const BENEFITS = [
   "Dados isolados e seguros por empresa",
 ];
 
+/** Limites vêm do mesmo preset usado no cadastro da empresa; o texto de venda fica aqui. */
+const PLANS: {
+  key: TenantPlanName;
+  price: string;
+  suffix: string;
+  pitch: string;
+  includes?: string;
+  features: string[];
+  highlight?: boolean;
+}[] = [
+  {
+    key: "essential",
+    price: "R$ 129",
+    suffix: "/mês",
+    pitch: "Para o profissional que atende sozinho.",
+    features: [
+      "Pacientes e anamnese por link",
+      "Agenda",
+      "Serviços e procedimentos",
+      "Documentos e tarefas",
+    ],
+  },
+  {
+    key: "starter",
+    price: "R$ 197",
+    suffix: "/mês",
+    pitch: "Para organizar a clínica e as vendas.",
+    includes: "Tudo do Essencial, mais:",
+    features: ["Funil de vendas", "Financeiro", "Relatórios", "Estoque", "Importação de dados"],
+  },
+  {
+    key: "professional",
+    price: "R$ 397",
+    suffix: "/mês",
+    pitch: "Para a equipe que atende pelo WhatsApp.",
+    includes: "Tudo do Starter, mais:",
+    features: [
+      "WhatsApp na caixa de entrada",
+      "Follow-ups",
+      "Campanhas",
+      "Papéis e permissões",
+      "Auditoria",
+    ],
+    highlight: true,
+  },
+  {
+    key: "business",
+    price: "R$ 797",
+    suffix: "/mês",
+    pitch: "Para crescer com automação e IA.",
+    includes: "Tudo do Professional, mais:",
+    features: ["Agente de IA que atende e agenda", "Assistente de IA", "Automações"],
+  },
+  {
+    key: "enterprise",
+    price: "R$ 1.500",
+    suffix: "/mês",
+    pitch: "Para redes e operações maiores. Valor a partir de.",
+    includes: "Tudo do Business, mais:",
+    features: ["Todos os módulos liberados", "Limites ampliados"],
+  },
+];
+
+function formatLimit(n: number) {
+  return n.toLocaleString("pt-BR");
+}
+
+function formatStorage(mb: number) {
+  return `${formatLimit(Math.round(mb / 1024))} GB`;
+}
+
 const FAQ = [
   {
     q: "Preciso instalar alguma coisa?",
@@ -127,6 +203,10 @@ const FAQ = [
   {
     q: "Posso controlar o que cada pessoa vê?",
     a: "Sim. Cada usuário tem um papel com permissões por módulo, e os dados de cada empresa ficam isolados.",
+  },
+  {
+    q: "Como funciona o pagamento?",
+    a: "A mensalidade é cobrada por Pix, com o link enviado por e-mail antes do vencimento. Você pode trocar de plano quando quiser.",
   },
   {
     q: "Serve para qual tipo de negócio?",
@@ -190,6 +270,9 @@ export default function PresentationPage() {
             </a>
             <a href="#como-funciona" className="hover:text-white">
               Como funciona
+            </a>
+            <a href="#planos" className="hover:text-white">
+              Planos
             </a>
             <a href="#duvidas" className="hover:text-white">
               Dúvidas
@@ -358,6 +441,66 @@ export default function PresentationPage() {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      {/* PLANOS */}
+      <section id="planos" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-24">
+        <SectionTitle
+          title="Planos para cada fase da sua clínica"
+          subtitle="Pagamento mensal por Pix. Troque de plano quando precisar."
+        />
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          {PLANS.map(({ key, price, suffix, pitch, includes, features, highlight }) => {
+            const limits = tenantPlanDefaults[key];
+            return (
+              <div
+                key={key}
+                data-testid={`plan-${key}`}
+                className={`relative flex flex-col rounded-2xl border p-6 ${
+                  highlight
+                    ? "border-white bg-white/[0.06] shadow-[0_20px_80px_-20px_rgba(255,255,255,.25)]"
+                    : "border-white/10 bg-white/[0.02]"
+                }`}
+              >
+                {highlight && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-white px-3 py-0.5 text-[11px] font-semibold uppercase text-black">
+                    Mais escolhido
+                  </span>
+                )}
+                <h3 className="text-lg font-medium">{tenantPlanLabels[key]}</h3>
+                <p className="mt-1 min-h-10 text-xs text-white/55">{pitch}</p>
+                <p className="mt-5">
+                  <span className="text-3xl font-semibold tracking-tight">{price}</span>
+                  <span className="text-sm text-white/55">{suffix}</span>
+                </p>
+                <ul className="mt-5 space-y-1 border-y border-white/10 py-4 text-xs text-white/70">
+                  <li>
+                    {limits.maxUsers} {limits.maxUsers === 1 ? "usuário" : "usuários"}
+                  </li>
+                  <li>{formatLimit(limits.maxContacts)} contatos</li>
+                  <li>{formatStorage(limits.maxStorageMb)} de arquivos</li>
+                </ul>
+                {includes && <p className="mt-4 text-xs font-medium text-white/60">{includes}</p>}
+                <ul className="mt-3 flex-1 space-y-2">
+                  {features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-white/85">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-white/70" aria-hidden="true" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href={ROUTES.LOGIN}
+                  className={`mt-6 rounded-full px-4 py-2.5 text-center text-xs font-semibold uppercase transition-opacity hover:opacity-90 ${
+                    highlight ? "bg-white text-black" : "border border-white/30 text-white"
+                  }`}
+                >
+                  Começar
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </section>
 

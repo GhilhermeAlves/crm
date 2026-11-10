@@ -84,14 +84,14 @@ export const tenantPlanLabels: Record<string, string> = {
   enterprise: "Enterprise",
 };
 
-type TenantPlanName = TenantFormData["plan"];
+export type TenantPlanName = TenantFormData["plan"];
 
 /** Limites padrão e preço de cada plano; os limites seguem CompanyPlan no backend. */
 export const tenantPlanDefaults: Record<
   TenantPlanName,
   { maxUsers: number; maxStorageMb: number; maxContacts: number; price: string }
 > = {
-  essential: { maxUsers: 1, maxStorageMb: 1024, maxContacts: 500, price: "R$ 49,90/mês" },
+  essential: { maxUsers: 1, maxStorageMb: 1024, maxContacts: 500, price: "R$ 129/mês" },
   starter: { maxUsers: 2, maxStorageMb: 5120, maxContacts: 2000, price: "R$ 197/mês" },
   professional: { maxUsers: 5, maxStorageMb: 25600, maxContacts: 10000, price: "R$ 397/mês" },
   business: { maxUsers: 15, maxStorageMb: 51200, maxContacts: 50000, price: "R$ 797/mês" },
@@ -103,6 +103,45 @@ export const tenantPlanDefaults: Record<
   },
 };
 
-/** Plano Essencial: só a parte comercial, sem especialidade. */
-export const ESSENTIAL_PLAN_SEGMENT = "GENERIC" as const;
-export const ESSENTIAL_PLAN_MODULES: CompanyModuleName[] = ["CRM", "TASKS", "FOLLOW_UPS"];
+const ESSENTIAL_MODULES: CompanyModuleName[] = [
+  "PATIENTS",
+  "AGENDA",
+  "AGENDA_SETTINGS",
+  "CATALOG",
+  "SERVICE_LIST",
+  "DOCUMENTS",
+  "TASKS",
+  "STORAGE",
+];
+const STARTER_MODULES: CompanyModuleName[] = [
+  ...ESSENTIAL_MODULES,
+  "FINANCE",
+  "CRM",
+  "REPORTS",
+  "EMAIL_SETTINGS",
+  "INVENTORY",
+  "DATA_MIGRATION",
+];
+const PROFESSIONAL_MODULES: CompanyModuleName[] = [
+  ...STARTER_MODULES,
+  "INBOX",
+  "FOLLOW_UPS",
+  "CAMPAIGNS",
+  "ROLES",
+  "AUDIT",
+];
+const BUSINESS_MODULES: CompanyModuleName[] = [
+  ...PROFESSIONAL_MODULES,
+  "WORKFLOWS",
+  "ASSISTANT",
+  "AI_AGENT",
+];
+
+/** Módulos que cada plano libera — espelho de CompanyPlan.defaultModules() no backend. */
+export const tenantPlanModules: Record<TenantPlanName, CompanyModuleName[]> = {
+  essential: ESSENTIAL_MODULES,
+  starter: STARTER_MODULES,
+  professional: PROFESSIONAL_MODULES,
+  business: BUSINESS_MODULES,
+  enterprise: [...BUSINESS_MODULES],
+};
