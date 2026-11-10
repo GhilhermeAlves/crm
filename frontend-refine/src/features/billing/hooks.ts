@@ -90,6 +90,15 @@ export function useExemptBilling(companyId: string) {
   );
 }
 
+export function useCancelBilling(companyId: string) {
+  return useAdminMutation<void>(
+    companyId,
+    () => BillingService.cancel(companyId),
+    "Cobrança encerrada",
+    "Não foi possível encerrar a cobrança",
+  );
+}
+
 export function useChangeBillingPrice(companyId: string) {
   return useAdminMutation<number>(
     companyId,

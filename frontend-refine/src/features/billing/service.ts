@@ -15,6 +15,8 @@ export const BillingService = {
     (await api.post<BillingView>(`${admin(companyId)}/activate`)).data,
   exempt: async (companyId: string) =>
     (await api.post<BillingView>(`${admin(companyId)}/exempt`)).data,
+  cancel: async (companyId: string) =>
+    (await api.post<BillingView>(`${admin(companyId)}/cancel`)).data,
   changePrice: async (companyId: string, monthlyPriceCents: number) =>
     (await api.put<BillingView>(`${admin(companyId)}/price`, { monthlyPriceCents })).data,
   grant: async (companyId: string, days: number) =>

@@ -116,7 +116,7 @@ public class BillingService {
                     companyId, company.getPlan(), company.getPlan().defaultMonthlyPriceCents()));
             if (acc.hasSubscription()) {
                 throw new BillingRuleException(
-                        "Empresa com assinatura ativa no Asaas: cancele a assinatura antes de isentar.");
+                        "Empresa com assinatura ativa no Asaas: encerre a cobrança antes de isentar.");
             }
             acc.markExempt();
             return viewOf(accounts.saveAndFlush(acc));
@@ -192,6 +192,37 @@ public class BillingService {
             BillingAccount acc = accounts.findById(companyId)
                     .orElseThrow(() -> new BillingRuleException("Empresa sem cobrança ativa."));
             acc.grant(LocalDate.now(clock).plusDays(days));
+            return viewOf(accounts.saveAndFlush(acc));
+        });
+        access.evict(companyId);
+        return view;
+    }
+
+    /**
+     * Encerra a cobrança: remove a assinatura no Asaas e volta a conta para "não iniciada".
+     * O histórico de faturas é mantido; as em aberto viram canceladas. Se o Asaas recusar, nada muda.
+     * Sem @Transactional: o evict precisa rodar depois do commit.
+     */
+    public BillingView cancel(UUID companyId) {
+        requireCompany(companyId);
+        BillingView view = inTenant(companyId, () -> {
+            BillingAccount acc = accounts.findById(companyId)
+                    .orElseThrow(() -> new BillingRuleException("Empresa sem cobrança ativa."));
+            if (!acc.hasSubscription() && acc.getStatus() != BillingStatus.SYNC_PENDING) {
+                throw new BillingRuleException("Empresa sem cobrança ativa.");
+            }
+            if (acc.hasSubscription()) {
+                try {
+                    asaas.deleteSubscription(acc.getAsaasSubscriptionId());
+                } catch (AsaasClient.AsaasException e) {
+                    log.warn("Falha ao encerrar cobrança da empresa {}: {}", companyId, e.getMessage());
+                    throw new BillingRuleException("Não foi possível encerrar no Asaas: " + e.getMessage());
+                }
+            }
+            List<BillingInvoice> open = invoices.findByCompanyIdAndStatusIn(companyId, BillingPaymentService.OPEN);
+            open.forEach(BillingInvoice::cancel);
+            invoices.saveAllAndFlush(open);
+            acc.cancelled();
             return viewOf(accounts.saveAndFlush(acc));
         });
         access.evict(companyId);

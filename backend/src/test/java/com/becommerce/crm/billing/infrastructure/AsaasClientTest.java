@@ -68,6 +68,33 @@ class AsaasClientTest {
     }
 
     @Test
+    void deleteSubscriptionSendsDelete() {
+        server.expect(requestTo(BASE + "/subscriptions/sub_1"))
+              .andExpect(method(HttpMethod.DELETE))
+              .andExpect(header("access_token", "KEY123"))
+              .andRespond(withSuccess("{\"deleted\":true,\"id\":\"sub_1\"}", MediaType.APPLICATION_JSON));
+        client.deleteSubscription("sub_1");
+        server.verify();
+    }
+
+    @Test
+    void deleteSubscriptionAlreadyGoneIsOk() {
+        server.expect(requestTo(BASE + "/subscriptions/sub_1"))
+              .andRespond(withStatus(HttpStatus.NOT_FOUND));
+        assertDoesNotThrow(() -> client.deleteSubscription("sub_1"));
+    }
+
+    @Test
+    void deleteSubscriptionErrorIsAsaasError() {
+        server.expect(requestTo(BASE + "/subscriptions/sub_1"))
+              .andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                      .body("{\"errors\":[{\"description\":\"Não permitido\"}]}")
+                      .contentType(MediaType.APPLICATION_JSON));
+        var ex = assertThrows(AsaasClient.AsaasException.class, () -> client.deleteSubscription("sub_1"));
+        assertTrue(ex.getMessage().contains("Não permitido"));
+    }
+
+    @Test
     void getPaymentMapsFieldsAndCents() {
         server.expect(requestTo(BASE + "/payments/pay_1"))
               .andExpect(method(HttpMethod.GET))

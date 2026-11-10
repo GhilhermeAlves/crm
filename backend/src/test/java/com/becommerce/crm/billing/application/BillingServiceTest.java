@@ -1,7 +1,9 @@
 package com.becommerce.crm.billing.application;
 
 import com.becommerce.crm.billing.domain.BillingAccount;
+import com.becommerce.crm.billing.domain.BillingInvoice;
 import com.becommerce.crm.billing.domain.BillingStatus;
+import com.becommerce.crm.billing.domain.InvoiceStatus;
 import com.becommerce.crm.billing.infrastructure.AsaasClient;
 import com.becommerce.crm.billing.infrastructure.BillingAccountJpaRepository;
 import com.becommerce.crm.billing.infrastructure.BillingInvoiceJpaRepository;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.*;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -245,6 +248,60 @@ class BillingServiceTest {
     void grantOutOfRangeIsRejected() {
         assertThrows(BillingRuleException.class, () -> service.grant(companyId, 0));
         assertThrows(BillingRuleException.class, () -> service.grant(companyId, 31));
+    }
+
+    @Test
+    void cancelDeletesSubscriptionCancelsOpenInvoicesAndResets() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 10, 15));
+        acc.onOverdue(LocalDate.of(2026, 10, 15));
+        acc.block();
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+        BillingInvoice open = BillingInvoice.fromAsaas(companyId, "pay_1", LocalDate.of(2026, 10, 15), 19700,
+                InvoiceStatus.OVERDUE, "https://pix/1", null);
+        when(invoices.findByCompanyIdAndStatusIn(eq(companyId), any())).thenReturn(List.of(open), List.of());
+
+        var view = service.cancel(companyId);
+
+        verify(asaas).deleteSubscription("sub_1");
+        assertEquals(InvoiceStatus.CANCELLED, open.getStatus());
+        assertEquals("NOT_STARTED", view.status());
+        assertFalse(view.hasSubscription());
+        assertNull(view.overdueSince());
+        assertNull(view.nextDueDate());
+        assertEquals("cus_1", acc.getAsaasCustomerId());
+        verify(access).evict(companyId);
+    }
+
+    @Test
+    void cancelFailureInAsaasChangesNothing() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+        doThrow(new AsaasClient.AsaasException("Asaas indisponível.")).when(asaas).deleteSubscription("sub_1");
+
+        assertThrows(BillingRuleException.class, () -> service.cancel(companyId));
+
+        assertEquals(BillingStatus.ACTIVE, acc.getStatus());
+        assertEquals("sub_1", acc.getAsaasSubscriptionId());
+        verify(accounts, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void cancelWithoutSubscriptionIsRejected() {
+        when(accounts.findById(companyId)).thenReturn(Optional.of(BillingAccount.start(companyId, CompanyPlan.STARTER, 19700)));
+        assertThrows(BillingRuleException.class, () -> service.cancel(companyId));
+        verifyNoInteractions(asaas);
+    }
+
+    @Test
+    void cancelSyncPendingResetsWithoutCallingAsaas() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.syncFailed("timeout");
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+
+        assertEquals("NOT_STARTED", service.cancel(companyId).status());
+        verifyNoInteractions(asaas);
     }
 
     @Test

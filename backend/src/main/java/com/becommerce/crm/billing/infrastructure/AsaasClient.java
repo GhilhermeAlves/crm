@@ -120,6 +120,23 @@ public class AsaasClient {
                 .retrieve().body(JsonNode.class));
     }
 
+    /**
+     * Remove a assinatura no Asaas (ele também remove as cobranças pendentes dela).
+     * Assinatura já inexistente (404) conta como removida.
+     */
+    public void deleteSubscription(String subscriptionId) {
+        try {
+            rest.delete().uri(props.baseUrl() + "/subscriptions/{id}", subscriptionId)
+                    .headers(h -> { h.set("access_token", props.apiKey()); h.set("User-Agent", "clin3dpro-crm"); })
+                    .retrieve().toBodilessEntity();
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == 404) return;
+            throw new AsaasException("Asaas recusou (" + e.getStatusCode().value() + "): " + describe(e));
+        } catch (RestClientException e) {
+            throw new AsaasException("Asaas indisponível.");
+        }
+    }
+
     private JsonNode post(String path, Map<String, Object> body) {
         return call(() -> rest.post().uri(props.baseUrl() + path)
                 .headers(h -> { h.set("access_token", props.apiKey()); h.set("User-Agent", "clin3dpro-crm"); })
