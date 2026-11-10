@@ -139,14 +139,26 @@ class BillingServiceTest {
     }
 
     @Test
-    void planChangeKeepsNegotiatedPrice() {
+    void planChangeReplacesNegotiatedPriceWithNewPlanPrice() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 15000);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+
+        service.onPlanChanged(companyId, CompanyPlan.BUSINESS);
+
+        assertEquals(79700, acc.getMonthlyPriceCents());
+        assertEquals(CompanyPlan.BUSINESS, acc.getPlan());
+        verify(asaas).updateSubscriptionValue(eq("sub_1"), eq(79700), anyString());
+    }
+
+    @Test
+    void planChangeWithoutSubscriptionOnlyUpdatesLocally() {
         BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 15000);
         when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
 
         service.onPlanChanged(companyId, CompanyPlan.BUSINESS);
 
-        assertEquals(15000, acc.getMonthlyPriceCents());
-        assertEquals(CompanyPlan.BUSINESS, acc.getPlan());
+        assertEquals(79700, acc.getMonthlyPriceCents());
         verifyNoInteractions(asaas);
     }
 

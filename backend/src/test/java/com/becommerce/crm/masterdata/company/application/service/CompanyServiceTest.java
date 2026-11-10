@@ -277,11 +277,74 @@ class CompanyServiceTest {
                 "ENTERPRISE", null, null, 600000, null, null, null, null
         );
 
-        companyService.updateCompany(sampleCompany.getId(), request, sampleCompany.getId(), false);
+        companyService.updateCompany(sampleCompany.getId(), request, sampleCompany.getId(), true);
 
         assertEquals(50, sampleCompany.getMaxUsers());
         assertEquals(600000, sampleCompany.getMaxStorageMb());
         assertEquals(200000, sampleCompany.getMaxContacts());
+    }
+
+    @Test
+    void planChangeAppliesPlanModulesKeepingSegment() {
+        when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
+        when(companyRepository.save(any(Company.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(companyModulesRepository.findByCompanyId(sampleCompany.getId())).thenReturn(Optional.of(
+                new CompanyModules(CompanySegment.DENTAL, java.util.EnumSet.allOf(CompanyModule.class))));
+        CompanyPlan newPlan = sampleCompany.getPlan() == CompanyPlan.ESSENTIAL
+                ? CompanyPlan.STARTER : CompanyPlan.ESSENTIAL;
+
+        UpdateCompanyRequest request = new UpdateCompanyRequest(
+                null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                newPlan.name(), null, null, null, null, null, null, null
+        );
+
+        companyService.updateCompany(sampleCompany.getId(), request, null, true);
+
+        org.mockito.ArgumentCaptor<CompanyModules> captor = org.mockito.ArgumentCaptor.forClass(CompanyModules.class);
+        verify(companyModulesRepository).update(eq(sampleCompany.getId()), captor.capture());
+        assertEquals(CompanySegment.DENTAL, captor.getValue().segment());
+        assertEquals(newPlan.defaultModules(), captor.getValue().enabledModules());
+    }
+
+    @Test
+    void samePlanDoesNotTouchModules() {
+        when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
+        when(companyRepository.save(any(Company.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateCompanyRequest request = new UpdateCompanyRequest(
+                "Novo Nome", null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                sampleCompany.getPlan().name(), null, null, null, null, null, null, null
+        );
+
+        companyService.updateCompany(sampleCompany.getId(), request, null, true);
+
+        verify(companyModulesRepository, never()).update(any(), any());
+    }
+
+    @Test
+    void companyAdminCannotChangePlanStatusOrLimits() {
+        when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
+        when(companyRepository.save(any(Company.class))).thenAnswer(inv -> inv.getArgument(0));
+        CompanyPlan plan = sampleCompany.getPlan();
+        CompanyStatus status = sampleCompany.getStatus();
+        int maxUsers = sampleCompany.getMaxUsers();
+        CompanyPlan other = plan == CompanyPlan.ENTERPRISE ? CompanyPlan.ESSENTIAL : CompanyPlan.ENTERPRISE;
+
+        UpdateCompanyRequest request = new UpdateCompanyRequest(
+                "Nome da Clínica", null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                other.name(), "SUSPENDED", 999, 999999, 999999, null, null, null
+        );
+
+        companyService.updateCompany(sampleCompany.getId(), request, sampleCompany.getId(), false);
+
+        assertEquals("Nome da Clínica", sampleCompany.getLegalName());
+        assertEquals(plan, sampleCompany.getPlan());
+        assertEquals(status, sampleCompany.getStatus());
+        assertEquals(maxUsers, sampleCompany.getMaxUsers());
+        verify(companyModulesRepository, never()).update(any(), any());
     }
 
     @Test

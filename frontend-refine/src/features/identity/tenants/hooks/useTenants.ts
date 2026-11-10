@@ -49,7 +49,8 @@ export function useUpdateTenant() {
       TenantService.update(id, data),
     onSuccess: onSuccess({
       successMessage: "Empresa atualizada com sucesso",
-      invalidateKeys: [[QUERY_KEY]],
+      // Trocar o plano muda os módulos e o valor da cobrança no backend.
+      invalidateKeys: [[QUERY_KEY], ["company-modules"], ["billing"]],
     }),
     onError: onError({ errorMessage: "Erro ao atualizar empresa" }),
   });
