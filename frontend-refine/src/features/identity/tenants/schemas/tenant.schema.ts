@@ -91,7 +91,7 @@ export const tenantPlanDefaults: Record<
   TenantPlanName,
   { maxUsers: number; maxStorageMb: number; maxContacts: number; price: string }
 > = {
-  essential: { maxUsers: 1, maxStorageMb: 1024, maxContacts: 500, price: "R$ 49,90/mês" },
+  essential: { maxUsers: 1, maxStorageMb: 1024, maxContacts: 500, price: "R$ 129/mês" },
   starter: { maxUsers: 2, maxStorageMb: 5120, maxContacts: 2000, price: "R$ 197/mês" },
   professional: { maxUsers: 5, maxStorageMb: 25600, maxContacts: 10000, price: "R$ 397/mês" },
   business: { maxUsers: 15, maxStorageMb: 51200, maxContacts: 50000, price: "R$ 797/mês" },

@@ -10,7 +10,7 @@ describe("Apresentação — planos", () => {
     plans.forEach((p) => expect(screen.getByTestId(`plan-${p}`)).toBeTruthy());
 
     const essential = within(screen.getByTestId("plan-essential"));
-    expect(essential.getByText("R$ 49,90")).toBeTruthy();
+    expect(essential.getByText("R$ 129")).toBeTruthy();
     expect(essential.getByText("1 usuário")).toBeTruthy();
     expect(essential.getByText("500 contatos")).toBeTruthy();
 

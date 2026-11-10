@@ -29,7 +29,7 @@ Definir o modelo de cobrança do CRM SaaS Omnichannel, incluindo planos, limites
 
 | Plano | Preço mensal | Usuários | Contatos | Armazenamento |
 |---|---|---|---|---|
-| Essencial | R$ 49,90 | 1 | 500 | 1 GB |
+| Essencial | R$ 129,00 | 1 | 500 | 1 GB |
 | Starter | R$ 197 | 2 | 2.000 | 5 GB |
 | Professional | R$ 397 | 5 | 10.000 | 25 GB |
 | Business | R$ 797 | 15 | 50.000 | 50 GB |

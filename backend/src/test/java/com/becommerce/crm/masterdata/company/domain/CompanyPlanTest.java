@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class CompanyPlanTest {
     @Test
     void defaultPricesInCents() {
-        assertEquals(4990, CompanyPlan.ESSENTIAL.defaultMonthlyPriceCents());
+        assertEquals(12900, CompanyPlan.ESSENTIAL.defaultMonthlyPriceCents());
         assertEquals(19700, CompanyPlan.STARTER.defaultMonthlyPriceCents());
         assertEquals(39700, CompanyPlan.PROFESSIONAL.defaultMonthlyPriceCents());
         assertEquals(79700, CompanyPlan.BUSINESS.defaultMonthlyPriceCents());

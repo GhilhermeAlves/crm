@@ -128,7 +128,7 @@ const PLANS: {
 }[] = [
   {
     key: "essential",
-    price: "R$ 49,90",
+    price: "R$ 129",
     suffix: "/mês",
     pitch: "Para o profissional que atende sozinho.",
     features: [
