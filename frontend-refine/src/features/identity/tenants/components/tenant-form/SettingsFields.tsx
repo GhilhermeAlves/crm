@@ -12,9 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ESSENTIAL_PLAN_MODULES,
-  ESSENTIAL_PLAN_SEGMENT,
   tenantPlanDefaults,
+  tenantPlanModules,
   tenantPlanLabels,
   tenantStatusLabels,
 } from "../../schemas/tenant.schema";
@@ -69,10 +68,7 @@ export function SettingsFields({ control, setValue }: SettingsFieldsProps) {
                   setValue("maxUsers", maxUsers, { shouldValidate: true });
                   setValue("maxStorageMb", maxStorageMb, { shouldValidate: true });
                   setValue("maxContacts", maxContacts, { shouldValidate: true });
-                  if (plan === "essential") {
-                    setValue("segment", ESSENTIAL_PLAN_SEGMENT);
-                    setValue("enabledModules", [...ESSENTIAL_PLAN_MODULES]);
-                  }
+                  setValue("enabledModules", [...tenantPlanModules[plan]]);
                 }}
               >
                 <SelectTrigger>

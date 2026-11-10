@@ -30,9 +30,8 @@ import {
   type CompanySegment,
 } from "@/features/identity/modules/types/modules.types";
 import {
-  ESSENTIAL_PLAN_MODULES,
-  ESSENTIAL_PLAN_SEGMENT,
   tenantPlanDefaults,
+  tenantPlanModules,
   tenantPlanLabels,
   type TenantFormData,
 } from "@/features/identity/tenants/schemas/tenant.schema";
@@ -82,7 +81,7 @@ export function CompanyInvitationDialog() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [segment, setSegment] = useState<CompanySegment>("GENERIC");
-  const [modules, setModules] = useState<CompanyModuleName[]>([...SEGMENT_DEFAULT_MODULES.GENERIC]);
+  const [modules, setModules] = useState<CompanyModuleName[]>([...tenantPlanModules.starter]);
   const [plan, setPlan] = useState<TenantFormData["plan"]>("starter");
   const [maxUsers, setMaxUsers] = useState(String(tenantPlanDefaults.starter.maxUsers));
   const [sendEmail, setSendEmail] = useState(true);
@@ -217,10 +216,7 @@ export function CompanyInvitationDialog() {
                       const next = value as TenantFormData["plan"];
                       setPlan(next);
                       setMaxUsers(String(tenantPlanDefaults[next].maxUsers));
-                      if (next === "essential") {
-                        setSegment(ESSENTIAL_PLAN_SEGMENT);
-                        setModules([...ESSENTIAL_PLAN_MODULES]);
-                      }
+                      setModules([...tenantPlanModules[next]]);
                     }}
                   >
                     <SelectTrigger id="company-invite-plan">

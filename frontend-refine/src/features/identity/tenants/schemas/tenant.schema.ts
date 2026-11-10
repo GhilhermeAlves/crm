@@ -103,6 +103,45 @@ export const tenantPlanDefaults: Record<
   },
 };
 
-/** Plano Essencial: só a parte comercial, sem especialidade. */
-export const ESSENTIAL_PLAN_SEGMENT = "GENERIC" as const;
-export const ESSENTIAL_PLAN_MODULES: CompanyModuleName[] = ["CRM", "TASKS", "FOLLOW_UPS"];
+const ESSENTIAL_MODULES: CompanyModuleName[] = [
+  "PATIENTS",
+  "AGENDA",
+  "AGENDA_SETTINGS",
+  "CATALOG",
+  "SERVICE_LIST",
+  "DOCUMENTS",
+  "TASKS",
+  "STORAGE",
+];
+const STARTER_MODULES: CompanyModuleName[] = [
+  ...ESSENTIAL_MODULES,
+  "FINANCE",
+  "CRM",
+  "REPORTS",
+  "EMAIL_SETTINGS",
+  "INVENTORY",
+  "DATA_MIGRATION",
+];
+const PROFESSIONAL_MODULES: CompanyModuleName[] = [
+  ...STARTER_MODULES,
+  "INBOX",
+  "FOLLOW_UPS",
+  "CAMPAIGNS",
+  "ROLES",
+  "AUDIT",
+];
+const BUSINESS_MODULES: CompanyModuleName[] = [
+  ...PROFESSIONAL_MODULES,
+  "WORKFLOWS",
+  "ASSISTANT",
+  "AI_AGENT",
+];
+
+/** Módulos que cada plano libera — espelho de CompanyPlan.defaultModules() no backend. */
+export const tenantPlanModules: Record<TenantPlanName, CompanyModuleName[]> = {
+  essential: ESSENTIAL_MODULES,
+  starter: STARTER_MODULES,
+  professional: PROFESSIONAL_MODULES,
+  business: BUSINESS_MODULES,
+  enterprise: [...BUSINESS_MODULES],
+};
