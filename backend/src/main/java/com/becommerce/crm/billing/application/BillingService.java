@@ -13,6 +13,7 @@ import com.becommerce.crm.masterdata.company.domain.CompanyPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -138,7 +139,8 @@ public class BillingService {
         });
     }
 
-    @Transactional
+    // REQUIRES_NEW: é chamado no AFTER_COMMIT da edição da empresa, onde a transação original já terminou.
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onPlanChanged(UUID companyId, CompanyPlan newPlan) {
         inTenant(companyId, () -> {
             accounts.findById(companyId).ifPresent(acc -> {

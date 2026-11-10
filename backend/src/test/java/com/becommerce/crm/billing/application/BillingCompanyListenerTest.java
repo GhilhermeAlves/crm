@@ -40,4 +40,12 @@ class BillingCompanyListenerTest {
                 .onUpdated(new CompanyUpdatedEvent(id, "C", "1", CompanyPlan.BUSINESS, LocalDateTime.now()));
         verify(service).onPlanChanged(id, CompanyPlan.BUSINESS);
     }
+
+    @Test
+    void updatedSwallowsFailuresSoTheEditStillSucceeds() {
+        doThrow(new IllegalStateException("db")).when(service).onPlanChanged(id, CompanyPlan.STARTER);
+        new BillingCompanyListener(service, new BillingProperties(true, "u", "KEY", "W"))
+                .onUpdated(new CompanyUpdatedEvent(id, "C", "1", CompanyPlan.STARTER, LocalDateTime.now()));
+        verify(service).onPlanChanged(id, CompanyPlan.STARTER);
+    }
 }

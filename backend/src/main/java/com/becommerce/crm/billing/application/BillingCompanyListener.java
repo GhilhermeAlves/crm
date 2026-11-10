@@ -34,11 +34,15 @@ public class BillingCompanyListener {
         }
     }
 
-    @Async
+    // Síncrono (sem @Async): a resposta da edição só volta com o valor do plano novo já gravado,
+    // assim a tela recarrega com o valor certo. Falha aqui não derruba a edição (já commitada).
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onUpdated(CompanyUpdatedEvent event) {
-        if (event.plan() != null) {
+        if (event.plan() == null) return;
+        try {
             service.onPlanChanged(event.companyId(), event.plan());
+        } catch (RuntimeException e) {
+            log.warn("Falha ao aplicar o valor do plano novo da empresa {}: {}", event.companyId(), e.getMessage());
         }
     }
 }
