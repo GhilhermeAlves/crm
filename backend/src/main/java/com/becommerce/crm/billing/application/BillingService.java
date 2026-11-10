@@ -143,10 +143,10 @@ public class BillingService {
         inTenant(companyId, () -> {
             accounts.findById(companyId).ifPresent(acc -> {
                 if (acc.getPlan() == newPlan) return;
-                boolean defaultPrice = acc.getMonthlyPriceCents() == acc.getPlan().defaultMonthlyPriceCents();
-                int cents = defaultPrice ? newPlan.defaultMonthlyPriceCents() : acc.getMonthlyPriceCents();
-                acc.changePrice(newPlan, cents);
-                if (defaultPrice) pushPrice(acc);
+                // Regra comercial: trocar de plano sempre aplica o preço do plano novo
+                // (um valor negociado pode ser definido de novo no cartão depois).
+                acc.changePrice(newPlan, newPlan.defaultMonthlyPriceCents());
+                pushPrice(acc);
                 accounts.saveAndFlush(acc);
             });
             return null;

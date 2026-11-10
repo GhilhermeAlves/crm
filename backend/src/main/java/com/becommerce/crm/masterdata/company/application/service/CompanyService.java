@@ -242,12 +242,13 @@ public class CompanyService implements CompanyUseCase {
         String addressCity = request.addressCity() != null ? request.addressCity() : company.getAddressCity();
         String addressState = request.addressState() != null ? request.addressState() : company.getAddressState();
         String addressCountry = request.addressCountry() != null ? request.addressCountry() : company.getAddressCountry();
-        CompanyPlan plan = request.plan() != null ? CompanyPlan.valueOf(request.plan().toUpperCase()) : company.getPlan();
+        // Plano, status e limites são comerciais (mudam cobrança e módulos): só o CRM_ADMIN altera.
+        CompanyPlan plan = isCrmAdmin && request.plan() != null ? CompanyPlan.valueOf(request.plan().toUpperCase()) : company.getPlan();
         boolean planChanged = plan != company.getPlan();
-        CompanyStatus status = request.status() != null ? CompanyStatus.valueOf(request.status().toUpperCase()) : company.getStatus();
-        int maxUsers = request.maxUsers() != null ? request.maxUsers() : planChanged ? plan.defaultMaxUsers() : company.getMaxUsers();
-        int maxStorageMb = request.maxStorageMb() != null ? request.maxStorageMb() : planChanged ? plan.defaultMaxStorageMb() : company.getMaxStorageMb();
-        int maxContacts = request.maxContacts() != null ? request.maxContacts() : planChanged ? plan.defaultMaxContacts() : company.getMaxContacts();
+        CompanyStatus status = isCrmAdmin && request.status() != null ? CompanyStatus.valueOf(request.status().toUpperCase()) : company.getStatus();
+        int maxUsers = isCrmAdmin && request.maxUsers() != null ? request.maxUsers() : planChanged ? plan.defaultMaxUsers() : company.getMaxUsers();
+        int maxStorageMb = isCrmAdmin && request.maxStorageMb() != null ? request.maxStorageMb() : planChanged ? plan.defaultMaxStorageMb() : company.getMaxStorageMb();
+        int maxContacts = isCrmAdmin && request.maxContacts() != null ? request.maxContacts() : planChanged ? plan.defaultMaxContacts() : company.getMaxContacts();
         String logoUrl = request.logoUrl() != null ? validLogo(request.logoUrl()) : company.getLogoUrl();
         String notes = request.notes() != null ? request.notes() : company.getNotes();
 
@@ -272,8 +273,19 @@ public class CompanyService implements CompanyUseCase {
         }
 
         Company saved = companyRepository.save(company);
+        if (planChanged) {
+            applyPlanModules(saved.getId(), plan);
+        }
         eventPublisher.publish(CompanyUpdatedEvent.create(saved));
         return mapToResponse(saved);
+    }
+
+    /** Troca de plano redefine os módulos para os do plano novo (mantém a especialidade). */
+    private void applyPlanModules(UUID companyId, CompanyPlan plan) {
+        CompanySegment segment = companyModulesRepository.findByCompanyId(companyId)
+                .map(CompanyModules::segment)
+                .orElse(CompanySegment.GENERIC);
+        companyModulesRepository.update(companyId, new CompanyModules(segment, plan.defaultModules()));
     }
 
     @Override

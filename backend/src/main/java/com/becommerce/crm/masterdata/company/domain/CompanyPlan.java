@@ -1,5 +1,8 @@
 package com.becommerce.crm.masterdata.company.domain;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /** Planos comerciais e seus limites padrão; a empresa pode ter limites negociados. */
 public enum CompanyPlan {
     ESSENTIAL(1, 1_024, 500, 4_990),
@@ -25,6 +28,31 @@ public enum CompanyPlan {
     public int defaultMaxStorageMb() { return defaultMaxStorageMb; }
     public int defaultMaxContacts() { return defaultMaxContacts; }
     public int defaultMonthlyPriceCents() { return defaultMonthlyPriceCents; }
+
+    /**
+     * Módulos que o plano libera; cada plano inclui os do anterior. Aplicados
+     * quando o plano da empresa muda — depois o CRM_ADMIN ainda pode ligar ou
+     * desligar módulos à mão.
+     */
+    public Set<CompanyModule> defaultModules() {
+        EnumSet<CompanyModule> modules = EnumSet.of(
+                CompanyModule.PATIENTS, CompanyModule.AGENDA, CompanyModule.AGENDA_SETTINGS,
+                CompanyModule.CATALOG, CompanyModule.SERVICE_LIST, CompanyModule.DOCUMENTS,
+                CompanyModule.TASKS, CompanyModule.STORAGE);
+        if (this == ESSENTIAL) return modules;
+        modules.addAll(EnumSet.of(
+                CompanyModule.FINANCE, CompanyModule.CRM, CompanyModule.REPORTS,
+                CompanyModule.EMAIL_SETTINGS, CompanyModule.INVENTORY, CompanyModule.DATA_MIGRATION));
+        if (this == STARTER) return modules;
+        modules.addAll(EnumSet.of(
+                CompanyModule.INBOX, CompanyModule.FOLLOW_UPS, CompanyModule.CAMPAIGNS,
+                CompanyModule.ROLES, CompanyModule.AUDIT));
+        if (this == PROFESSIONAL) return modules;
+        modules.addAll(EnumSet.of(
+                CompanyModule.WORKFLOWS, CompanyModule.ASSISTANT, CompanyModule.AI_AGENT));
+        if (this == BUSINESS) return modules;
+        return EnumSet.allOf(CompanyModule.class);
+    }
 
     public boolean canAccessAdvancedFeatures() {
         return this == PROFESSIONAL || this == BUSINESS || this == ENTERPRISE;
