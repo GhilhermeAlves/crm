@@ -8,6 +8,7 @@ import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useMyCompanies, useSwitchCompany } from "@/features/identity/auth/hooks/useAuthMutations";
 import { useCheckPayment, useMyBilling } from "../hooks";
 import { formatCents, formatLocalDate } from "../format";
+import { ROUTES } from "@/lib/constants";
 
 /** Saída e troca de empresa: só usam /auth/** e /me/**, liberados mesmo com a empresa bloqueada. */
 function BlockedActions() {
@@ -30,7 +31,7 @@ function BlockedActions() {
               disabled={switchCompany.isPending}
               onClick={() =>
                 switchCompany.mutate(company.companyId, {
-                  onSuccess: () => window.location.assign("/"),
+                  onSuccess: () => window.location.assign(ROUTES.CRM),
                 })
               }
             >
@@ -76,7 +77,7 @@ export function PaymentPendingView() {
       <Card className="w-full max-w-md">
         <CardContent className="space-y-4 pt-6 text-center">
           <p>Sua empresa está liberada.</p>
-          <Button onClick={() => window.location.assign("/")}>Voltar ao sistema</Button>
+          <Button onClick={() => window.location.assign(ROUTES.CRM)}>Voltar ao sistema</Button>
         </CardContent>
       </Card>
     );
@@ -87,7 +88,7 @@ export function PaymentPendingView() {
     setCheckFailed(false);
     check.mutate(undefined, {
       onSuccess: (view) => {
-        if (view.status !== "BLOCKED") window.location.assign("/");
+        if (view.status !== "BLOCKED") window.location.assign(ROUTES.CRM);
         else setNotFound(true);
       },
       onError: () => setCheckFailed(true),
