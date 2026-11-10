@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { PaymentPendingView } from "@/features/billing/components/PaymentPendingView";
 
@@ -113,5 +113,50 @@ describe("PaymentPendingView", () => {
     state.billing = { ...blocked, status: "ACTIVE" };
     render(<PaymentPendingView />);
     expect(screen.getByText("Sua empresa está liberada.")).toBeTruthy();
+  });
+
+  describe("volta direto ao sistema (/crm), sem passar pela apresentação", () => {
+    const assign = vi.fn();
+    const original = window.location;
+
+    beforeEach(() => {
+      assign.mockReset();
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: { ...original, assign },
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    it("Já paguei com pagamento confirmado", () => {
+      state.mutate.mockImplementation(
+        (_v: unknown, opts: { onSuccess: (v: { status: string }) => void }) =>
+          opts.onSuccess({ status: "ACTIVE" }),
+      );
+      render(<PaymentPendingView />);
+      fireEvent.click(screen.getByRole("button", { name: /Já paguei/ }));
+      expect(assign).toHaveBeenCalledWith("/crm");
+    });
+
+    it("Já paguei sem pagamento continua na tela", () => {
+      state.mutate.mockImplementation(
+        (_v: unknown, opts: { onSuccess: (v: { status: string }) => void }) =>
+          opts.onSuccess({ status: "BLOCKED" }),
+      );
+      render(<PaymentPendingView />);
+      fireEvent.click(screen.getByRole("button", { name: /Já paguei/ }));
+      expect(assign).not.toHaveBeenCalled();
+      expect(screen.getByText(/Ainda não identificamos o pagamento/)).toBeTruthy();
+    });
+
+    it("Voltar ao sistema", () => {
+      state.billing = { ...blocked, status: "ACTIVE" };
+      render(<PaymentPendingView />);
+      fireEvent.click(screen.getByRole("button", { name: "Voltar ao sistema" }));
+      expect(assign).toHaveBeenCalledWith("/crm");
+    });
   });
 });
