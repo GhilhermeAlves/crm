@@ -28,7 +28,7 @@ type TenantDetailsProps = {
 };
 
 export function TenantDetails({ tenant }: TenantDetailsProps) {
-  const { isCrmAdmin } = useAuthorization();
+  const { isPlatformAdmin } = useAuthorization();
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -168,7 +168,7 @@ export function TenantDetails({ tenant }: TenantDetailsProps) {
           </CardContent>
         </Card>
 
-        {isCrmAdmin && <AdminBillingCard companyId={tenant.id} />}
+        {isPlatformAdmin && <AdminBillingCard companyId={tenant.id} />}
       </div>
     </div>
   );

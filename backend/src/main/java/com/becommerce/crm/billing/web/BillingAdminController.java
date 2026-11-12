@@ -106,7 +106,7 @@ public class BillingAdminController {
 
     /**
      * A auditoria grava em audit_logs (RLS por tenant): o tenant precisa ser o da empresa alvo,
-     * não o da empresa do CRM_ADMIN. Troca temporariamente e restaura em finally.
+     * não o da empresa do SUPER_ADMIN. Troca temporariamente e restaura em finally.
      */
     private static void inTenant(UUID companyId, Runnable work) {
         UUID previous = TenantContext.getCompanyId();
@@ -122,8 +122,8 @@ public class BillingAdminController {
     }
 
     private static void requireCrmAdmin(CurrentUser user) {
-        if (user == null || !user.isCrmAdmin()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Só o administrador do CRM gerencia a cobrança.");
+        if (user == null || !user.isPlatformAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Só o dono do CRM gerencia a cobrança.");
         }
     }
 }

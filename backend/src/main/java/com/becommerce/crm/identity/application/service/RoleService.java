@@ -1,5 +1,6 @@
 package com.becommerce.crm.identity.application.service;
 
+import com.becommerce.crm.identity.membership.domain.Membership;
 import com.becommerce.crm.identity.application.dto.*;
 import com.becommerce.crm.identity.application.port.input.RoleUseCase;
 import com.becommerce.crm.identity.application.port.output.PermissionRepository;
@@ -63,8 +64,8 @@ public class RoleService implements RoleUseCase {
     @Transactional
     public RoleResponse createRole(UUID companyId, CreateRoleRequest request) {
         String name = normalizeRoleName(request.name());
-        if (CurrentUser.CRM_ADMIN_ROLE.equals(name)) {
-            throw new CrmAccessDeniedException("O nome CRM_ADMIN é reservado à plataforma.");
+        if (CurrentUser.PLATFORM_ADMIN_ROLE.equals(name)) {
+            throw new CrmAccessDeniedException("O nome SUPER_ADMIN é reservado ao dono do CRM.");
         }
         if (roleRepository.existsByNameAndCompanyId(name, companyId)) {
             throw new DuplicateRoleException("Já existe uma role com este nome: " + request.name());
@@ -115,8 +116,8 @@ public class RoleService implements RoleUseCase {
         Role saved = roleRepository.save(role);
 
         if (request.permissionIds() != null) {
-            if (role.isSystem() && "SUPER_ADMIN".equals(role.getName()) && request.permissionIds().isEmpty()) {
-                throw new IllegalStateException("Não é possível remover todas as permissões da role SUPER_ADMIN");
+            if (role.isSystem() && Membership.COMPANY_ADMIN_ROLE.equals(role.getName()) && request.permissionIds().isEmpty()) {
+                throw new IllegalStateException("Não é possível remover todas as permissões da role CRM_ADMIN");
             }
             List<RolePermission> existing = rolePermissionRepository.findByRoleId(id);
             for (RolePermission rp : existing) {
@@ -177,10 +178,10 @@ public class RoleService implements RoleUseCase {
     public void removePermissionFromRole(UUID roleId, String permissionId) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RoleNotFoundException("Role não encontrada"));
-        if (role.isSystem() && "SUPER_ADMIN".equals(role.getName())) {
+        if (role.isSystem() && Membership.COMPANY_ADMIN_ROLE.equals(role.getName())) {
             long currentCount = rolePermissionRepository.findByRoleId(roleId).size();
             if (currentCount <= 1) {
-                throw new IllegalStateException("Não é possível remover a última permissão da role SUPER_ADMIN");
+                throw new IllegalStateException("Não é possível remover a última permissão da role CRM_ADMIN");
             }
         }
         UUID permId = UUID.fromString(permissionId);

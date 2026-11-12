@@ -19,4 +19,9 @@ public class PermissionRepositoryImpl implements PermissionRepository {
     public List<String> findPermissionNamesByUserIdAndCompanyId(UUID userId, UUID companyId) {
         return springData.findPermissionNamesByUserIdAndCompanyId(userId, companyId);
     }
+
+    @Override
+    public List<String> findAllPermissionNames() {
+        return springData.findAllPermissionNames();
+    }
 }

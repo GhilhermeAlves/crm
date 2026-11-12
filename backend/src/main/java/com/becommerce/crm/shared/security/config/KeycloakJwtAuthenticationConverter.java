@@ -12,12 +12,16 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, UsernamePasswordAuthenticationToken> {
 
     private static final Logger log = LoggerFactory.getLogger(KeycloakJwtAuthenticationConverter.class);
+
+    private static final Set<String> RESERVED_CRM_ROLES = Set.of(
+            CurrentUser.PLATFORM_ADMIN_ROLE, "CRM_ADMIN");
 
     private final CurrentUserResolver currentUserResolver;
 
@@ -38,6 +42,11 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Userna
 
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         for (String role : allRoles) {
+            // V132: SUPER_ADMIN (dono do CRM) e CRM_ADMIN (admin da empresa) só
+            // valem quando vêm do RBAC do CRM — nunca de um papel do Keycloak.
+            if (RESERVED_CRM_ROLES.contains(role)) {
+                continue;
+            }
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
         }
         for (String role : currentUser.roles()) {

@@ -16,4 +16,11 @@ public interface UserRoleRepository {
     void deleteByUserIdAndCompanyId(UUID userId, UUID companyId);
     boolean existsByUserIdAndRoleId(UUID userId, UUID roleId);
     void deleteByUserId(UUID userId);
+
+    /**
+     * True se o usuário é o dono do CRM (papel SUPER_ADMIN, V132) — independe da
+     * empresa ativa: usa app.is_platform_admin_user(), que lê user_roles sem o
+     * filtro de RLS por empresa.
+     */
+    boolean isPlatformAdmin(UUID userId);
 }

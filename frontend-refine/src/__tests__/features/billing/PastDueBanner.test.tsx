@@ -5,7 +5,7 @@ import { PastDueBanner } from "@/features/billing/components/PastDueBanner";
 const state = vi.hoisted(() => ({
   billing: null as null | Record<string, unknown>,
   canUpdate: true,
-  isCrmAdmin: false,
+  isPlatformAdmin: false,
   enabledArg: undefined as undefined | boolean,
 }));
 
@@ -17,7 +17,7 @@ vi.mock("@/features/billing/hooks", () => ({
 }));
 
 vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
-  useAuthorization: () => ({ can: () => state.canUpdate, isCrmAdmin: state.isCrmAdmin }),
+  useAuthorization: () => ({ can: () => state.canUpdate, isPlatformAdmin: state.isPlatformAdmin }),
 }));
 
 const pastDue = {
@@ -36,7 +36,7 @@ describe("PastDueBanner", () => {
   beforeEach(() => {
     state.billing = pastDue;
     state.canUpdate = true;
-    state.isCrmAdmin = false;
+    state.isPlatformAdmin = false;
   });
 
   it("admin da clínica vê o aviso e o Pix", () => {
@@ -60,8 +60,8 @@ describe("PastDueBanner", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("CRM_ADMIN não consulta nem vê", () => {
-    state.isCrmAdmin = true;
+  it("SUPER_ADMIN não consulta nem vê", () => {
+    state.isPlatformAdmin = true;
     const { container } = render(<PastDueBanner />);
     expect(state.enabledArg).toBe(false);
     expect(container.innerHTML).toBe("");

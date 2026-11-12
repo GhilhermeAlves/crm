@@ -59,14 +59,14 @@ describe("useAuthorization (Sprint 9 — permissões da empresa ativa)", () => {
     expect(result.current.can()).toBe(true);
   });
 
-  it("expõe permissions/roles do usuário e os helpers hasRole/isSuperAdmin", () => {
+  it("expõe permissions/roles do usuário e os helpers hasRole/isCompanyAdmin", () => {
     mockAuth({ roles: ["VIEWER"], permissions: ["user:read"] });
     const { result } = renderAuthorization();
 
     expect(result.current.permissions).toEqual(["user:read"]);
     expect(result.current.roles).toEqual(["VIEWER"]);
     expect(result.current.hasRole("VIEWER")).toBe(true);
-    expect(result.current.isSuperAdmin).toBe(false);
+    expect(result.current.isCompanyAdmin).toBe(false);
     expect(result.current.can("user:read")).toBe(true);
     expect(result.current.can("role:manage")).toBe(false);
   });

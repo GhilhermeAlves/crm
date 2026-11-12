@@ -104,6 +104,32 @@ class KeycloakJwtAuthenticationConverterTest {
     }
 
     @Test
+    void shouldIgnoreReservedCrmRolesComingFromKeycloak() {
+        CurrentUser currentUser = CurrentUser.fromKeycloak(
+                UUID.randomUUID(), EMAIL, UUID.randomUUID(), List.of("AGENT"),
+                List.of(), SUB, "Ana Lima");
+        when(currentUserResolver.resolve(any(Jwt.class))).thenReturn(currentUser);
+
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .issuer("http://keycloak")
+                .subject(SUB)
+                .claim("email", EMAIL)
+                .claim("realm_access", java.util.Map.of("roles", List.of("super_admin", "crm_admin", "user")))
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+
+        UsernamePasswordAuthenticationToken authentication = converter.convert(jwt);
+
+        assertTrue(authentication.getAuthorities().stream()
+                .noneMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN")
+                        || a.getAuthority().equals("ROLE_CRM_ADMIN")));
+        assertTrue(authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
+    }
+
+    @Test
     void shouldPropagateAuthenticationServiceExceptionFromResolver() {
         when(currentUserResolver.resolve(any(Jwt.class)))
                 .thenThrow(new AuthenticationServiceException("Auto-provisioning indisponível"));

@@ -25,12 +25,12 @@ describe("membership-limits (condições espelhadas do backend)", () => {
     });
   });
 
-  it("OWNER e SUPER_ADMIN contam como nível admin", () => {
+  it("OWNER e CRM_ADMIN contam como nível admin", () => {
     expect(limits("OWNER", [member("OWNER")])).toEqual({
       isLastAdmin: true,
       isLastMember: true,
     });
-    expect(limits("SUPER_ADMIN", [member("SUPER_ADMIN"), member("VIEWER")])).toEqual({
+    expect(limits("CRM_ADMIN", [member("CRM_ADMIN"), member("VIEWER")])).toEqual({
       isLastAdmin: true,
       isLastMember: false,
     });

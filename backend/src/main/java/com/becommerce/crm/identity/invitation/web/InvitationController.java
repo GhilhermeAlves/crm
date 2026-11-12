@@ -54,7 +54,7 @@ public class InvitationController {
             @Valid @RequestBody CreateInvitationRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
         InvitationLinkResponse response = invitationUseCase.create(companyId, request, principal.userId(),
-                principal.isCrmAdmin() || principal.roles().contains(Membership.SUPER_ADMIN_ROLE));
+                principal.isPlatformAdmin() || principal.roles().contains(Membership.COMPANY_ADMIN_ROLE));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

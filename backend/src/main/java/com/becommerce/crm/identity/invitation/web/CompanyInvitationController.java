@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Convite de criação de empresa (V123). Administração exclusiva do CRM_ADMIN;
+ * Convite de criação de empresa (V123). Administração exclusiva do SUPER_ADMIN;
  * prévia e cadastro são públicos (token) e o aceite exige login com o e-mail
  * do convite.
  */
@@ -46,7 +46,7 @@ public class CompanyInvitationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('CRM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<LinkResponse> create(@Valid @RequestBody CreateRequest request,
                                                @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -54,13 +54,13 @@ public class CompanyInvitationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('CRM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<List<Response>> list(@AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(invitationService.list(principal.companyId()));
     }
 
     @DeleteMapping("/{invitationId}")
-    @PreAuthorize("hasRole('CRM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> revoke(@PathVariable UUID invitationId,
                                        @AuthenticationPrincipal CurrentUser principal) {
         invitationService.revoke(principal.companyId(), invitationId);
@@ -69,7 +69,7 @@ public class CompanyInvitationController {
 
     /** Novo link (o anterior deixa de valer). {@code send=true}: reenviar por e-mail. */
     @PostMapping("/{invitationId}/regenerate")
-    @PreAuthorize("hasRole('CRM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<LinkResponse> regenerate(@PathVariable UUID invitationId,
                                                    @RequestParam(defaultValue = "false") boolean send,
                                                    @AuthenticationPrincipal CurrentUser principal) {

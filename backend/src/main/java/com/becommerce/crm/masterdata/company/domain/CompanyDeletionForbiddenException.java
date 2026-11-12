@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /**
  * Lançada ao tentar excluir a empresa em que o usuário está autenticado/logado.
- * Evita que usuários (incluindo SUPER_ADMIN) fiquem órfãos do próprio tenant.
+ * Evita que usuários (incluindo CRM_ADMIN) fiquem órfãos do próprio tenant.
  */
 public class CompanyDeletionForbiddenException extends RuntimeException {
 

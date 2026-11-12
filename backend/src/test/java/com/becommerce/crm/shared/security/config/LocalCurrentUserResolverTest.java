@@ -6,6 +6,7 @@ import com.becommerce.crm.identity.application.port.output.RolePermissionReposit
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
+import com.becommerce.crm.identity.domain.Permission;
 import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.UserRole;
@@ -29,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -218,5 +220,77 @@ class LocalCurrentUserResolverTest {
 
         // Perfis diferem por empresa: nada da empresa anterior "vaza" para a B.
         assertTrue(!asCompanyB.roles().contains(RoleName.ADMIN.name()));
+    }
+    private Jwt jwt() {
+        return Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .issuer("http://keycloak")
+                .subject(SUB)
+                .claim("email", EMAIL)
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+    }
+
+    @Test
+    void platformAdminEntersClientCompanyWithoutMembershipWithAllPermissions() {
+        UUID clientCompany = UUID.randomUUID();
+        User user = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ghilherme", "Santos", clientCompany);
+        user.linkKeycloak(SUB);
+
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
+        when(userRoleRepository.isPlatformAdmin(user.getId())).thenReturn(true);
+        when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), clientCompany)).thenReturn(List.of());
+        when(permissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId(user.getId(), clientCompany))
+                .thenReturn(List.of());
+        when(permissionRepository.findAll()).thenReturn(List.of(
+                Permission.create("finance:read", "d", "finance", "finance", "read"),
+                Permission.create("role:assign", "d", "role", "role", "assign")));
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(user.getId(), clientCompany))
+                .thenReturn(Optional.empty());
+
+        CurrentUser currentUser = resolver.resolve(jwt());
+
+        assertEquals(clientCompany, currentUser.companyId());
+        assertTrue(currentUser.isPlatformAdmin());
+        assertEquals(List.of(CurrentUser.PLATFORM_ADMIN_ROLE), currentUser.roles());
+        assertEquals(List.of("finance:read", "role:assign"), currentUser.permissions());
+    }
+
+    @Test
+    void companyAdminWithoutMembershipIsStillDenied() {
+        UUID companyId = UUID.randomUUID();
+        User user = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ana", "Lima", companyId);
+        user.linkKeycloak(SUB);
+
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
+        when(userRoleRepository.isPlatformAdmin(user.getId())).thenReturn(false);
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId)).thenReturn(false);
+
+        assertThrows(CrmAccessDeniedException.class, () -> resolver.resolve(jwt()));
+    }
+
+    @Test
+    void companyAdminRoleIsNotPlatformAdmin() {
+        UUID companyId = UUID.randomUUID();
+        User user = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ana", "Lima", companyId);
+        user.linkKeycloak(SUB);
+        Role companyAdmin = Role.createSystem(RoleName.CRM_ADMIN.name());
+
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
+        when(userRoleRepository.isPlatformAdmin(user.getId())).thenReturn(false);
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId)).thenReturn(true);
+        when(userRoleRepository.findByUserIdAndCompanyId(user.getId(), companyId))
+                .thenReturn(List.of(UserRole.assign(user.getId(), companyAdmin.getId(), companyId)));
+        when(roleRepository.findById(companyAdmin.getId())).thenReturn(Optional.of(companyAdmin));
+        when(permissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId(user.getId(), companyId))
+                .thenReturn(List.of("role:assign"));
+        when(membershipRepository.findMembershipRoleByUserIdAndCompanyId(user.getId(), companyId))
+                .thenReturn(Optional.of("CRM_ADMIN"));
+
+        CurrentUser currentUser = resolver.resolve(jwt());
+
+        assertTrue(currentUser.roles().contains("CRM_ADMIN"));
+        assertFalse(currentUser.isPlatformAdmin(), "CRM_ADMIN administra só a própria empresa");
     }
 }

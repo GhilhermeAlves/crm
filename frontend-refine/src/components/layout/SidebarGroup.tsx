@@ -39,7 +39,7 @@ export function groupHasActive(items: NavItem[], pathname: string): boolean {
 
 export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps) {
   const { permissions, roles } = useAuth();
-  const isCrmAdmin = roles.includes("CRM_ADMIN");
+  const isPlatformAdmin = roles.includes("SUPER_ADMIN");
   const { isEnabled: isModuleEnabled } = useActiveCompanyModules();
   const pathname = usePathname();
 
@@ -53,7 +53,7 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
   };
 
   const visibleItems = group.items
-    .filter((item) => !item.crmAdminOnly || isCrmAdmin)
+    .filter((item) => !item.crmAdminOnly || isPlatformAdmin)
     .filter((item) => hasPermission(item.permission))
     // Módulos da empresa (V104): enquanto carregam, tudo aparece.
     .filter((item) => !item.module || isModuleEnabled(item.module))

@@ -72,7 +72,7 @@ function filledPrefill(prefill: CompanyPrefill): CompanyPrefill | undefined {
 }
 
 /**
- * Convite para criar uma empresa (só CRM_ADMIN). Especialidade, módulos, plano
+ * Convite para criar uma empresa (só SUPER_ADMIN). Especialidade, módulos, plano
  * e limite de usuários ficam fixos no convite; o convidado só preenche a conta
  * e os dados da empresa.
  */

@@ -7,10 +7,10 @@ import { formatLocalDate } from "../format";
 
 /** Aviso de mensalidade vencida (uso normal). Só quem administra a clínica vê o botão de Pix. */
 export function PastDueBanner() {
-  const { can, isCrmAdmin } = useAuthorization();
-  const { data } = useMyBilling(!isCrmAdmin);
+  const { can, isPlatformAdmin } = useAuthorization();
+  const { data } = useMyBilling(!isPlatformAdmin);
 
-  if (isCrmAdmin || !data || data.status !== "PAST_DUE") return null;
+  if (isPlatformAdmin || !data || data.status !== "PAST_DUE") return null;
 
   return (
     <div

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Status de cobrança de todas as empresas (coluna da lista do CRM_ADMIN). */
+/** Status de cobrança de todas as empresas (coluna da lista do SUPER_ADMIN). */
 @Service
 public class BillingOverviewService {
 

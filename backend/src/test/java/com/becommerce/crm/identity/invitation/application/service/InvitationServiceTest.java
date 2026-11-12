@@ -147,7 +147,7 @@ class InvitationServiceTest {
     void shouldRejectInvalidRole() {
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(activeCompany()));
         assertThrows(IllegalArgumentException.class,
-                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "SUPER_ADMIN"), invitedBy, false));
+                () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "CRM_ADMIN"), invitedBy, false));
         assertThrows(IllegalArgumentException.class,
                 () -> invitationService.create(companyId, new CreateInvitationRequest("a@b.com", "OWNER"), invitedBy, false));
     }

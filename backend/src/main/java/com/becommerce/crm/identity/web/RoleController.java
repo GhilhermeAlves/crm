@@ -1,5 +1,6 @@
 package com.becommerce.crm.identity.web;
 
+import com.becommerce.crm.identity.membership.domain.Membership;
 import com.becommerce.crm.identity.application.dto.*;
 import com.becommerce.crm.identity.application.port.input.RoleUseCase;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
@@ -101,18 +102,18 @@ public class RoleController {
             @PathVariable UUID userId,
             @Valid @RequestBody AssignRoleRequest request,
             @AuthenticationPrincipal CurrentUser principal) {
-        // CRM_ADMIN só é atribuído por migration — nunca pela API.
+        // SUPER_ADMIN só é atribuído por migration — nunca pela API.
         if (isPlatformRole(UUID.fromString(request.roleId()))) {
-            throw new CrmAccessDeniedException("O papel CRM_ADMIN não pode ser atribuído pela API.");
+            throw new CrmAccessDeniedException("O papel SUPER_ADMIN não pode ser atribuído pela API.");
         }
-        if (!principal.isCrmAdmin() && isRole(UUID.fromString(request.roleId()), "SUPER_ADMIN")) {
-            throw new CrmAccessDeniedException("Só o administrador do CRM pode conceder o papel SUPER_ADMIN.");
+        if (!principal.isPlatformAdmin() && isRole(UUID.fromString(request.roleId()), Membership.COMPANY_ADMIN_ROLE)) {
+            throw new CrmAccessDeniedException("Só o dono do CRM pode conceder o papel CRM_ADMIN.");
         }
-        // Mesma regra do convite: conceder ADMIN/OWNER é do SUPER_ADMIN/CRM_ADMIN.
-        if (!principal.isCrmAdmin() && !principal.roles().contains("SUPER_ADMIN")
+        // Mesma regra do convite: conceder ADMIN/OWNER é do CRM_ADMIN/SUPER_ADMIN.
+        if (!principal.isPlatformAdmin() && !principal.roles().contains(Membership.COMPANY_ADMIN_ROLE)
                 && (isRole(UUID.fromString(request.roleId()), "ADMIN")
                     || isRole(UUID.fromString(request.roleId()), "OWNER"))) {
-            throw new CrmAccessDeniedException("Só o SUPER_ADMIN ou o administrador do CRM pode conceder o papel ADMIN.");
+            throw new CrmAccessDeniedException("Só o CRM_ADMIN da empresa ou o dono do CRM pode conceder o papel ADMIN.");
         }
         roleUseCase.assignRoleToUser(userId, UUID.fromString(request.roleId()), principal.companyId());
         return ResponseEntity.ok().build();
@@ -137,15 +138,15 @@ public class RoleController {
         return ResponseEntity.ok(roleUseCase.getUserRoles(userId, principal.companyId()));
     }
 
-    /** Só o próprio CRM_ADMIN altera o papel de plataforma. */
+    /** Só o próprio SUPER_ADMIN altera o papel de plataforma. */
     private void requireNotPlatformRole(UUID roleId, CurrentUser principal) {
-        if (!principal.isCrmAdmin() && isPlatformRole(roleId)) {
-            throw new CrmAccessDeniedException("O papel CRM_ADMIN é exclusivo da plataforma.");
+        if (!principal.isPlatformAdmin() && isPlatformRole(roleId)) {
+            throw new CrmAccessDeniedException("O papel SUPER_ADMIN é exclusivo do dono do CRM.");
         }
     }
 
     private boolean isPlatformRole(UUID roleId) {
-        return isRole(roleId, CurrentUser.CRM_ADMIN_ROLE);
+        return isRole(roleId, CurrentUser.PLATFORM_ADMIN_ROLE);
     }
 
     private boolean isRole(UUID roleId, String name) {
@@ -153,8 +154,8 @@ public class RoleController {
     }
 
     private void requireCompanyAccess(UUID roleId, CurrentUser principal) {
-        boolean crmAdmin = principal.isCrmAdmin();
-        if (crmAdmin) {
+        boolean platformAdmin = principal.isPlatformAdmin();
+        if (platformAdmin) {
             return;
         }
         RoleResponse role = roleUseCase.getRoleById(roleId);

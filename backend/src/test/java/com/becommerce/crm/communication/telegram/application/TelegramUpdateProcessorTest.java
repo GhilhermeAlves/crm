@@ -203,7 +203,7 @@ class TelegramUpdateProcessorTest {
     @Test
     void crmAdminWithoutAiChatPermissionReachesLeo() throws Exception {
         when(users.resolve(CO, TG)).thenReturn(Optional.of(
-                new TelegramUserResolver.LinkedUser(USER, TG, CONV, List.of(), List.of("CRM_ADMIN"))));
+                new TelegramUserResolver.LinkedUser(USER, TG, CONV, List.of(), List.of("SUPER_ADMIN"))));
         when(leo.chat(any(), any(), any(), any())).thenReturn(new AiChatResponse(CONV, "ok", "openai"));
         p.process(CO, "TOK", msg("\"text\":\"oi\""));
         verify(leo).chat(any(), any(), any(), any());

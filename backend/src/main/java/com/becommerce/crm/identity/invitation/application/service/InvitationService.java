@@ -49,7 +49,7 @@ import java.util.function.Supplier;
  * <p>Toda escrita ocorre em transação. O aceite/recusa primeiro resolve o
  * convite por token (policy RLS por token), com lock da linha, e só então troca
  * o tenant para a empresa-alvo para criar a membership. ADMIN/OWNER
- * administram convites; SUPER_ADMIN e OWNER não são roles concedíveis por
+ * administram convites; CRM_ADMIN e OWNER não são roles concedíveis por
  * convite (OWNER é exclusivo do onboarding).
  *
  * <p>Cadastro por convite (quem ainda não tem conta): {@link #prepareSignup}
@@ -120,12 +120,12 @@ public class InvitationService implements InvitationUseCase {
         if (!ALLOWED_ROLES.contains(role)) {
             throw new InvitationRuleViolationException("Papel inválido para convite: " + role);
         }
-        // ADMIN convida só papéis abaixo dele; convidar ADMIN é do SUPER_ADMIN/CRM_ADMIN.
+        // ADMIN convida só papéis abaixo dele; convidar ADMIN é do CRM_ADMIN/SUPER_ADMIN.
         if (Membership.ADMIN_ROLE.equals(role) && !canInviteAdmin) {
             throw new CrmAccessDeniedException("Só o super administrador pode convidar um administrador.");
         }
-        // Convite não altera especialidade, nem vinda de SUPER_ADMIN: o membro
-        // segue a especialidade da empresa (definida só pelo CRM_ADMIN).
+        // Convite não altera especialidade, nem vinda de CRM_ADMIN: o membro
+        // segue a especialidade da empresa (definida só pelo SUPER_ADMIN).
         String specialty = null;
         String email = normalize(request.email());
 

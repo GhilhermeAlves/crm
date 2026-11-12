@@ -183,6 +183,40 @@ class CurrentUserResolutionServiceTest {
     }
 
     @Test
+    void platformAdminEntersCompanyWithoutMembershipWithAllPermissions() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        allowActiveCompany();
+        when(roleRepository.isPlatformAdmin(USER_ID)).thenReturn(true);
+        when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
+        when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
+        when(permissionRepository.findAllPermissionNames()).thenReturn(List.of("finance:read", "role:assign"));
+
+        CurrentUserResolution resolution = service.resolve(identity());
+
+        CurrentUser currentUser = ((CurrentUserResolution.Resolved) resolution).currentUser();
+        assertEquals(List.of("SUPER_ADMIN"), currentUser.roles());
+        assertEquals(List.of("finance:read", "role:assign"), currentUser.permissions());
+        verify(membershipRepository, never()).existsActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID);
+    }
+
+    @Test
+    void companyAdminDoesNotGetPlatformRole() {
+        when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
+        allowActiveCompany();
+        when(roleRepository.isPlatformAdmin(USER_ID)).thenReturn(false);
+        when(membershipRepository.existsActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(true);
+        when(roleRepository.findRoleNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of("CRM_ADMIN"));
+        when(permissionRepository.findPermissionNamesByUserIdAndCompanyId(USER_ID, COMPANY_ID))
+                .thenReturn(List.of("role:assign"));
+
+        CurrentUserResolution resolution = service.resolve(identity());
+
+        CurrentUser currentUser = ((CurrentUserResolution.Resolved) resolution).currentUser();
+        assertEquals(List.of("CRM_ADMIN"), currentUser.roles());
+        verify(permissionRepository, never()).findAllPermissionNames();
+    }
+
+    @Test
     void shouldResolveRolesAndPermissionsFromCrm() {
         when(userRepository.findByKeycloakSub(SUB)).thenReturn(Optional.of(activeUser()));
         allowActiveCompany();

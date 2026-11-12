@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Convite de criação de empresa (V123). Só o CRM_ADMIN cria; ele fixa
+ * Convite de criação de empresa (V123). Só o SUPER_ADMIN cria; ele fixa
  * segmento, módulos, plano e limite de usuários. No aceite, {@code companyId}
  * passa a apontar a empresa criada pelo convidado.
  *
@@ -25,7 +25,7 @@ public class CompanyInvitation {
     private String enabledModules;
     private String plan;
     private int maxUsers;
-    /** Dados da empresa adiantados pelo CRM_ADMIN (V126); o convidado confere ao aceitar. */
+    /** Dados da empresa adiantados pelo SUPER_ADMIN (V126); o convidado confere ao aceitar. */
     private Map<String, String> companyPrefill;
     private String tokenHash;
     private UUID invitedBy;

@@ -27,8 +27,8 @@ type TenantTableProps = {
 };
 
 export function TenantTable({ tenants, onDelete }: TenantTableProps) {
-  const { can, isCrmAdmin } = useAuthorization();
-  const statuses = useBillingStatuses(isCrmAdmin);
+  const { can, isPlatformAdmin } = useAuthorization();
+  const statuses = useBillingStatuses(isPlatformAdmin);
   const billingByCompany = useMemo(
     () => new Map((statuses.data ?? []).map((s) => [s.companyId, s.status])),
     [statuses.data],
@@ -55,7 +55,7 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
               <TableHead className="w-[300px]">Empresa</TableHead>
               <TableHead>Plano</TableHead>
               <TableHead>Status</TableHead>
-              {isCrmAdmin && <TableHead>Cobrança</TableHead>}
+              {isPlatformAdmin && <TableHead>Cobrança</TableHead>}
               <TableHead className="text-center">Usuários</TableHead>
               <TableHead className="text-center">Contatos</TableHead>
               <TableHead>Criado em</TableHead>
@@ -90,7 +90,7 @@ export function TenantTable({ tenants, onDelete }: TenantTableProps) {
                 <TableCell>
                   <TenantStatusBadge status={tenant.status} />
                 </TableCell>
-                {isCrmAdmin && (
+                {isPlatformAdmin && (
                   <TableCell>
                     {billingByCompany.get(tenant.id) ? (
                       <BillingStatusBadge status={billingByCompany.get(tenant.id)!} />

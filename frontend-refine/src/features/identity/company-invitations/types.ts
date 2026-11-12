@@ -1,6 +1,6 @@
 import type { InvitationStatus } from "@/features/identity/invitations/types/invitation.types";
 
-/** POST /company-invitations (exclusivo CRM_ADMIN). */
+/** POST /company-invitations (exclusivo SUPER_ADMIN). */
 export type CreateCompanyInvitationRequest = {
   email: string;
   name?: string;

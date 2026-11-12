@@ -31,7 +31,7 @@ public enum CompanyPlan {
 
     /**
      * Módulos que o plano libera; cada plano inclui os do anterior. Aplicados
-     * quando o plano da empresa muda — depois o CRM_ADMIN ainda pode ligar ou
+     * quando o plano da empresa muda — depois o SUPER_ADMIN ainda pode ligar ou
      * desligar módulos à mão.
      */
     public Set<CompanyModule> defaultModules() {

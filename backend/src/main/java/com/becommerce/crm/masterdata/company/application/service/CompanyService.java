@@ -77,26 +77,26 @@ public class CompanyService implements CompanyUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public CompanyResponse getCompanyById(UUID id, UUID requesterCompanyId, boolean isCrmAdmin) {
+    public CompanyResponse getCompanyById(UUID id, UUID requesterCompanyId, boolean isPlatformAdmin) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        assertCompanyAccess(id, requesterCompanyId, isCrmAdmin);
+        assertCompanyAccess(id, requesterCompanyId, isPlatformAdmin);
         return mapToResponse(company);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public CompanyUsageResponse getCompanyUsage(UUID id, UUID requesterCompanyId, boolean isCrmAdmin) {
+    public CompanyUsageResponse getCompanyUsage(UUID id, UUID requesterCompanyId, boolean isPlatformAdmin) {
         companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        assertCompanyAccess(id, requesterCompanyId, isCrmAdmin);
+        assertCompanyAccess(id, requesterCompanyId, isPlatformAdmin);
         return quotaService.usage(id);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CompanySummaryResponse> listCompanies(UUID requesterCompanyId, boolean isCrmAdmin) {
-        if (isCrmAdmin) {
+    public List<CompanySummaryResponse> listCompanies(UUID requesterCompanyId, boolean isPlatformAdmin) {
+        if (isPlatformAdmin) {
             return companyRepository.findAll()
                     .stream()
                     .map(this::mapToSummary)
@@ -160,7 +160,7 @@ public class CompanyService implements CompanyUseCase {
         return mapToResponse(saved);
     }
 
-    /** Segmento e módulos escolhidos pelo CRM_ADMIN; sem escolha, GENERIC com todos os módulos. */
+    /** Segmento e módulos escolhidos pelo SUPER_ADMIN; sem escolha, GENERIC com todos os módulos. */
     private static CompanyModules initialModules(CreateCompanyRequest request) {
         CompanySegment segment = CompanySegment.GENERIC;
         if (request.segment() != null && !request.segment().isBlank()) {
@@ -179,14 +179,14 @@ public class CompanyService implements CompanyUseCase {
     /**
      * Provisionamento transacional de uma empresa recém-criada, espelhando o
      * onboarding (8.3): seed dos papéis RBAC padrão, membership OWNER do criador,
-     * atribuição do papel ADMIN e concessão de acesso ao CRM. Garante que uma
+     * atribuição do papel CRM_ADMIN e concessão de acesso ao CRM. Garante que uma
      * empresa nova NUNCA termine parcialmente provisionada (sem roles/membros).
      */
     private void provisionNewCompany(UUID companyId, UUID creatorUserId, CompanySegment segment) {
         try {
             TenantContext.setCompanyId(companyId);
 
-            // 1. Seed dos papéis padrão (SUPER_ADMIN, ADMIN, MANAGER, AGENT, VIEWER).
+            // 1. Seed dos papéis padrão (CRM_ADMIN, ADMIN, MANAGER, AGENT, VIEWER).
             roleSeedService.seedRoles(companyId);
 
             // 1b. Seed dos templates de workflow padrão (Sprint 14, Item 9).
@@ -205,10 +205,10 @@ public class CompanyService implements CompanyUseCase {
                 membershipRepository.save(Membership.activate(creator.getId(), companyId, Membership.OWNER_ROLE));
             }
 
-            // 3. RBAC: o criador recebe o papel ADMIN (permite operar os módulos).
-            Role admin = roleRepository.findByNameAndCompanyId(RoleName.ADMIN.name(), companyId)
+            // 3. RBAC: o criador recebe o papel CRM_ADMIN (administrador da empresa, V132).
+            Role admin = roleRepository.findByNameAndCompanyId(RoleName.CRM_ADMIN.name(), companyId)
                     .orElseThrow(() -> new IllegalStateException(
-                            "Papel ADMIN não encontrado após o seed da nova empresa."));
+                            "Papel CRM_ADMIN não encontrado após o seed da nova empresa."));
             if (!userRoleRepository.existsByUserIdAndRoleId(creator.getId(), admin.getId())) {
                 userRoleRepository.save(UserRole.assign(creator.getId(), admin.getId(), companyId));
             }
@@ -224,10 +224,10 @@ public class CompanyService implements CompanyUseCase {
     @Override
     @Transactional
     public CompanyResponse updateCompany(UUID id, UpdateCompanyRequest request,
-                                         UUID requesterCompanyId, boolean isCrmAdmin) {
+                                         UUID requesterCompanyId, boolean isPlatformAdmin) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        assertCompanyAccess(id, requesterCompanyId, isCrmAdmin);
+        assertCompanyAccess(id, requesterCompanyId, isPlatformAdmin);
 
         String legalName = request.legalName() != null ? request.legalName() : company.getLegalName();
         String tradingName = request.tradingName() != null ? request.tradingName() : company.getTradingName();
@@ -242,13 +242,13 @@ public class CompanyService implements CompanyUseCase {
         String addressCity = request.addressCity() != null ? request.addressCity() : company.getAddressCity();
         String addressState = request.addressState() != null ? request.addressState() : company.getAddressState();
         String addressCountry = request.addressCountry() != null ? request.addressCountry() : company.getAddressCountry();
-        // Plano, status e limites são comerciais (mudam cobrança e módulos): só o CRM_ADMIN altera.
-        CompanyPlan plan = isCrmAdmin && request.plan() != null ? CompanyPlan.valueOf(request.plan().toUpperCase()) : company.getPlan();
+        // Plano, status e limites são comerciais (mudam cobrança e módulos): só o SUPER_ADMIN altera.
+        CompanyPlan plan = isPlatformAdmin && request.plan() != null ? CompanyPlan.valueOf(request.plan().toUpperCase()) : company.getPlan();
         boolean planChanged = plan != company.getPlan();
-        CompanyStatus status = isCrmAdmin && request.status() != null ? CompanyStatus.valueOf(request.status().toUpperCase()) : company.getStatus();
-        int maxUsers = isCrmAdmin && request.maxUsers() != null ? request.maxUsers() : planChanged ? plan.defaultMaxUsers() : company.getMaxUsers();
-        int maxStorageMb = isCrmAdmin && request.maxStorageMb() != null ? request.maxStorageMb() : planChanged ? plan.defaultMaxStorageMb() : company.getMaxStorageMb();
-        int maxContacts = isCrmAdmin && request.maxContacts() != null ? request.maxContacts() : planChanged ? plan.defaultMaxContacts() : company.getMaxContacts();
+        CompanyStatus status = isPlatformAdmin && request.status() != null ? CompanyStatus.valueOf(request.status().toUpperCase()) : company.getStatus();
+        int maxUsers = isPlatformAdmin && request.maxUsers() != null ? request.maxUsers() : planChanged ? plan.defaultMaxUsers() : company.getMaxUsers();
+        int maxStorageMb = isPlatformAdmin && request.maxStorageMb() != null ? request.maxStorageMb() : planChanged ? plan.defaultMaxStorageMb() : company.getMaxStorageMb();
+        int maxContacts = isPlatformAdmin && request.maxContacts() != null ? request.maxContacts() : planChanged ? plan.defaultMaxContacts() : company.getMaxContacts();
         String logoUrl = request.logoUrl() != null ? validLogo(request.logoUrl()) : company.getLogoUrl();
         String notes = request.notes() != null ? request.notes() : company.getNotes();
 
@@ -290,7 +290,7 @@ public class CompanyService implements CompanyUseCase {
 
     @Override
     @Transactional
-    public void deleteCompany(UUID id, UUID requesterCompanyId, boolean isCrmAdmin) {
+    public void deleteCompany(UUID id, UUID requesterCompanyId, boolean isPlatformAdmin) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
         // Salvaguarda: nunca permitir excluir a empresa em que o usuário está
@@ -299,7 +299,7 @@ public class CompanyService implements CompanyUseCase {
         if (requesterCompanyId != null && requesterCompanyId.equals(id)) {
             throw new CompanyDeletionForbiddenException(id);
         }
-        assertCompanyAccess(id, requesterCompanyId, isCrmAdmin);
+        assertCompanyAccess(id, requesterCompanyId, isPlatformAdmin);
         companyRepository.deleteById(id);
         eventPublisher.publish(CompanyDeletedEvent.create(id, company.getLegalName(), company.getCnpj()));
     }
@@ -352,8 +352,8 @@ public class CompanyService implements CompanyUseCase {
         return mapToSettingsResponse(saved);
     }
 
-    private void assertCompanyAccess(UUID companyId, UUID requesterCompanyId, boolean isCrmAdmin) {
-        if (!isCrmAdmin && !companyId.equals(requesterCompanyId)) {
+    private void assertCompanyAccess(UUID companyId, UUID requesterCompanyId, boolean isPlatformAdmin) {
+        if (!isPlatformAdmin && !companyId.equals(requesterCompanyId)) {
             throw new CrmAccessDeniedException("Acesso a esta empresa não permitido.");
         }
     }

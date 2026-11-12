@@ -77,8 +77,8 @@ export function CreateInvitationDialog({
   const [sendEmail, setSendEmail] = useState(true);
   const [created, setCreated] = useState<InvitationLink | null>(null);
   const create = useCreateInvitation(companyId);
-  const { isSuperAdmin, isCrmAdmin } = useAuthorization();
-  const roles = invitableRoles(isSuperAdmin || isCrmAdmin);
+  const { isCompanyAdmin, isPlatformAdmin } = useAuthorization();
+  const roles = invitableRoles(isCompanyAdmin || isPlatformAdmin);
   const mailStatus = useCompanyMailStatus(open ? companyId : null);
   const mailMissing = sendEmail && mailStatus.data === false;
 

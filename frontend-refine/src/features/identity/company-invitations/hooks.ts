@@ -10,7 +10,7 @@ function showError(error: unknown) {
   toast.error(describeManagementError(error).message);
 }
 
-/** Convites de criação de empresa enviados pelo CRM_ADMIN. */
+/** Convites de criação de empresa enviados pelo SUPER_ADMIN. */
 export function useCompanyInvitations(enabled: boolean) {
   return useQuery({
     queryKey: KEY,

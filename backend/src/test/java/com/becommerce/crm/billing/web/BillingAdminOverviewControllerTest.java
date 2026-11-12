@@ -36,7 +36,7 @@ class BillingAdminOverviewControllerTest {
 
     @Test
     void crmAdminListsStatuses() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         UUID id = UUID.randomUUID();
         when(service.statuses()).thenReturn(List.of(new CompanyBillingStatus(id, "PAST_DUE")));
         mvc.perform(get("/api/v1/admin/billing/companies"))

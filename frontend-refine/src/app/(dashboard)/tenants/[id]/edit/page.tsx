@@ -17,7 +17,7 @@ export default function EditTenantPage() {
   const { data: tenant, isLoading, error } = useTenant(id);
   const updateMutation = useUpdateTenant();
   const { roles } = useAuth();
-  const isCrmAdmin = roles.includes("CRM_ADMIN");
+  const isPlatformAdmin = roles.includes("SUPER_ADMIN");
 
   const handleSubmit = (data: CreateTenantRequest) => {
     updateMutation.mutate(
@@ -56,7 +56,7 @@ export default function EditTenantPage() {
         onSubmit={handleSubmit}
         isLoading={updateMutation.isPending}
       />
-      {isCrmAdmin && <CompanyModulesCard companyId={id} />}
+      {isPlatformAdmin && <CompanyModulesCard companyId={id} />}
     </div>
   );
 }

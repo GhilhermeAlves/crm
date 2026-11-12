@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Empresa com cobrança BLOCKED recebe 402 (BILLING_BLOCKED) em tudo, menos cobrança, identidade e rotas
- * públicas — assim a tela de pagamento pendente continua funcionando. CRM_ADMIN passa sempre.
+ * públicas — assim a tela de pagamento pendente continua funcionando. SUPER_ADMIN passa sempre.
  */
 @Component
 public class BillingGuardInterceptor implements HandlerInterceptor {
@@ -29,7 +29,7 @@ public class BillingGuardInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof CurrentUser user)) return true;
-        if (user.isCrmAdmin()) return true;
+        if (user.isPlatformAdmin()) return true;
         String path = request.getRequestURI().substring(request.getContextPath().length());
         if (isOpen(request.getMethod(), path)) return true;
         if (user.companyId() == null) return true;

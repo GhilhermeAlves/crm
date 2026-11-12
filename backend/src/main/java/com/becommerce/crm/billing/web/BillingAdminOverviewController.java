@@ -21,8 +21,8 @@ public class BillingAdminOverviewController {
     @GetMapping("/api/v1/admin/billing/companies")
     @PreAuthorize("isAuthenticated()")
     public List<CompanyBillingStatus> statuses(@AuthenticationPrincipal CurrentUser user) {
-        if (user == null || !user.isCrmAdmin()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Só o administrador do CRM gerencia a cobrança.");
+        if (user == null || !user.isPlatformAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Só o dono do CRM gerencia a cobrança.");
         }
         return service.statuses();
     }

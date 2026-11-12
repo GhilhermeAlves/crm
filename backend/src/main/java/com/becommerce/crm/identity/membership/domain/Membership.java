@@ -14,7 +14,7 @@ public class Membership {
 
     public static final String ADMIN_ROLE = "ADMIN";
     public static final String OWNER_ROLE = "OWNER";
-    public static final String SUPER_ADMIN_ROLE = "SUPER_ADMIN";
+    public static final String COMPANY_ADMIN_ROLE = "CRM_ADMIN";
 
     private UUID id;
     private UUID userId;
@@ -66,9 +66,9 @@ public class Membership {
         return isAdminLevelRole(role);
     }
 
-    /** True se o nome do papel é de nível administrador (ex.: ADMIN, OWNER, SUPER_ADMIN). */
+    /** True se o nome do papel é de nível administrador (ex.: ADMIN, OWNER, CRM_ADMIN). */
     public static boolean isAdminLevelRole(String role) {
-        return ADMIN_ROLE.equals(role) || OWNER_ROLE.equals(role) || SUPER_ADMIN_ROLE.equals(role);
+        return ADMIN_ROLE.equals(role) || OWNER_ROLE.equals(role) || COMPANY_ADMIN_ROLE.equals(role);
     }
 
     public void changeRole(String newRole) {

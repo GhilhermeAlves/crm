@@ -111,7 +111,7 @@ export function CompanyInvitationLanding({ token }: { token: string }) {
       <Centered
         icon={<AlertTriangle className="h-8 w-8 text-crm-warning" />}
         title={INVITATION_STATUS_MESSAGE[data.status]}
-        text="Se precisar de um novo convite, fale com o administrador do CRM."
+        text="Se precisar de um novo convite, fale com quem enviou este convite."
       >
         {data.status === "ACCEPTED" && (
           <Button className="w-full" onClick={() => loginWithGateway(ROUTES.DASHBOARD)}>

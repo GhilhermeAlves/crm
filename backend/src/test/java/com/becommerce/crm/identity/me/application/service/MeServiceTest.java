@@ -2,6 +2,7 @@ package com.becommerce.crm.identity.me.application.service;
 
 import com.becommerce.crm.masterdata.company.application.port.output.CompanyRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
+import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.identity.me.application.dto.CompanyOptionResponse;
 import com.becommerce.crm.identity.me.application.port.output.MyCompanyProjection;
@@ -39,13 +40,14 @@ class MeServiceTest {
     @Mock private MembershipRepository membershipRepository;
     @Mock private UserRepository userRepository;
     @Mock private CompanyRepository companyRepository;
+    @Mock private UserRoleRepository userRoleRepository;
     @Mock private TenantAuditRecorder auditor;
 
     private MeService service;
 
     @BeforeEach
     void setUp() {
-        service = new MeService(membershipRepository, userRepository, companyRepository, auditor);
+        service = new MeService(membershipRepository, userRepository, companyRepository, userRoleRepository, auditor);
     }
 
     private User userWithCompany(UUID companyId) {
@@ -139,6 +141,45 @@ class MeServiceTest {
 
         assertEquals(COMPANY_A, result.companyId());
         assertTrue(result.active());
+        verify(userRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void platformAdminShouldListAllCompaniesWithoutMemberships() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userWithCompany(COMPANY_A)));
+        when(userRoleRepository.isPlatformAdmin(USER_ID)).thenReturn(true);
+        Company zeta = company(COMPANY_B, "Zeta Clínica");
+        Company alfa = company(COMPANY_X, "Alfa Odonto");
+        when(companyRepository.findAll()).thenReturn(List.of(zeta, alfa));
+
+        List<CompanyOptionResponse> result = service.listMyCompanies(USER_ID);
+
+        assertEquals(List.of("Alfa Odonto", "Zeta Clínica"),
+                result.stream().map(CompanyOptionResponse::name).toList());
+        verify(membershipRepository, never()).findActiveCompanyOptionsByUserId(USER_ID);
+    }
+
+    @Test
+    void platformAdminShouldSwitchToCompanyWithoutMembership() {
+        when(userRoleRepository.isPlatformAdmin(USER_ID)).thenReturn(true);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userWithCompany(COMPANY_A)));
+        when(companyRepository.findById(COMPANY_B)).thenReturn(Optional.of(company(COMPANY_B, "Empresa B")));
+
+        CompanyOptionResponse result = service.switchCompany(USER_ID, COMPANY_B);
+
+        assertEquals(COMPANY_B, result.companyId());
+        verify(membershipRepository, never()).existsActiveByUserIdAndCompanyId(USER_ID, COMPANY_B);
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(
+                u -> COMPANY_B.equals(u.getCompanyId())));
+    }
+
+    @Test
+    void platformAdminShouldNotSwitchToInexistentCompany() {
+        when(userRoleRepository.isPlatformAdmin(USER_ID)).thenReturn(true);
+        when(companyRepository.findById(COMPANY_X)).thenReturn(Optional.empty());
+
+        assertThrows(com.becommerce.crm.masterdata.company.domain.CompanyNotFoundException.class,
+                () -> service.switchCompany(USER_ID, COMPANY_X));
         verify(userRepository, never()).save(org.mockito.ArgumentMatchers.any());
     }
 }
