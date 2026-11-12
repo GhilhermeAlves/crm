@@ -35,18 +35,18 @@ public class CompanyRepositoryImpl implements CompanyRepository {
     }
 
     @Override
-    public Optional<Company> findByCnpj(String cnpj) {
-        return repository.findByCnpj(cnpj).map(mapper::toDomainEntity);
+    public Optional<UUID> findIdByCnpj(String cnpj) {
+        return cnpj == null ? Optional.empty() : Optional.ofNullable(repository.findIdByCnpj(cnpj));
     }
 
     @Override
     public boolean existsByCnpj(String cnpj) {
-        return repository.existsByCnpj(cnpj);
+        return findIdByCnpj(cnpj).isPresent();
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return repository.existsByEmail(email);
+        return email != null && repository.existsByEmail(email);
     }
 
     @Override
@@ -54,6 +54,11 @@ public class CompanyRepositoryImpl implements CompanyRepository {
         return repository.findAll().stream()
                 .map(mapper::toDomainEntity)
                 .toList();
+    }
+
+    @Override
+    public List<UUID> findAllIds() {
+        return repository.findAllIds();
     }
 
     @Override

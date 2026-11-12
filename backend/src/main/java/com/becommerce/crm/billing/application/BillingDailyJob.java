@@ -47,7 +47,7 @@ public class BillingDailyJob {
     @Scheduled(cron = "${app.billing.daily-cron:0 30 3 * * *}", zone = "America/Sao_Paulo")
     public void run() {
         LocalDate today = LocalDate.now(clock.withZone(ZONE));
-        List<UUID> companyIds = jdbc.queryForList("SELECT id FROM companies", UUID.class);
+        List<UUID> companyIds = jdbc.queryForList("SELECT id FROM app.all_company_ids()", UUID.class);
         int blocked = 0;
         for (UUID companyId : companyIds) {
             try {

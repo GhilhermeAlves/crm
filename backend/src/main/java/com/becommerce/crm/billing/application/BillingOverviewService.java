@@ -26,7 +26,7 @@ public class BillingOverviewService {
     }
 
     public List<CompanyBillingStatus> statuses() {
-        List<UUID> ids = jdbc.queryForList("SELECT id FROM companies ORDER BY created_at", UUID.class);
+        List<UUID> ids = jdbc.queryForList("SELECT id FROM app.all_company_ids()", UUID.class);
         List<CompanyBillingStatus> result = new ArrayList<>(ids.size());
         for (UUID id : ids) {
             String status;

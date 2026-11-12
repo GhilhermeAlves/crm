@@ -237,7 +237,8 @@ public class BillingService {
     }
 
     private Company requireCompany(UUID companyId) {
-        return companies.findById(companyId).orElseThrow(() -> new CompanyNotFoundException(companyId));
+        return BillingTenant.run(companyId, () -> companies.findById(companyId))
+                .orElseThrow(() -> new CompanyNotFoundException(companyId));
     }
 
     private <T> T inTenant(UUID companyId, Supplier<T> work) {

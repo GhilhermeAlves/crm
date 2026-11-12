@@ -35,7 +35,7 @@ public class TelegramCleanupScheduler {
     @Scheduled(cron = "${app.telegram.cleanup-cron:0 30 4 * * *}")
     public void purge() {
         LocalDateTime before = LocalDateTime.now().minusDays(2);
-        List<UUID> companyIds = jdbc.queryForList("SELECT id FROM companies", UUID.class);
+        List<UUID> companyIds = jdbc.queryForList("SELECT id FROM app.all_company_ids()", UUID.class);
         int removed = 0;
         for (UUID companyId : companyIds) {
             try {

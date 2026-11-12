@@ -382,10 +382,8 @@ class CompanyServiceTest {
 
     @Test
     void shouldRejectDocumentUsedByAnotherCompany() {
-        Company other = mock(Company.class);
-        when(other.getId()).thenReturn(UUID.randomUUID());
         when(companyRepository.findById(sampleCompany.getId())).thenReturn(Optional.of(sampleCompany));
-        when(companyRepository.findByCnpj("123.456.789-09")).thenReturn(Optional.of(other));
+        when(companyRepository.findIdByCnpj("123.456.789-09")).thenReturn(Optional.of(UUID.randomUUID()));
 
         UpdateCompanyRequest request = new UpdateCompanyRequest(
                 null, null, null, null, null,

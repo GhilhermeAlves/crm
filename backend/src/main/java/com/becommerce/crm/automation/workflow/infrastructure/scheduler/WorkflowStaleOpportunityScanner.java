@@ -63,7 +63,7 @@ public class WorkflowStaleOpportunityScanner {
     @Scheduled(cron = "${workflow.stale.cron:0 0 7 * * *}")
     public void scan() {
         LocalDateTime now = LocalDateTime.now();
-        for (UUID companyId : companyRepository.findAll().stream().map(c -> c.getId()).toList()) {
+        for (UUID companyId : companyRepository.findAllIds()) {
             scanCompany(companyId, now);
         }
     }
