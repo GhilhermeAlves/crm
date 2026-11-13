@@ -50,4 +50,10 @@ public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, U
             ORDER BY name
             """, nativeQuery = true)
     List<String> findPermissionNamesByUserIdAndCompanyId(@Param("userId") UUID userId, @Param("companyId") UUID companyId);
+
+    @Query(value = "SELECT app.is_platform_admin_user(:userId)", nativeQuery = true)
+    boolean isPlatformAdmin(@Param("userId") UUID userId);
+
+    @Query(value = "SELECT name FROM permissions ORDER BY name", nativeQuery = true)
+    List<String> findAllPermissionNames();
 }

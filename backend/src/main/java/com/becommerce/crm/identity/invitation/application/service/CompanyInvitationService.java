@@ -43,13 +43,13 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Convite de criação de empresa (V123). Só o CRM_ADMIN cria (garantido no
+ * Convite de criação de empresa (V123). Só o SUPER_ADMIN cria (garantido no
  * controller); ele fixa segmento, módulos, plano e limite de usuários — o
  * convidado não escolhe nada disso.
  *
  * <p>No aceite, a empresa é criada pelo mesmo provisionamento do cadastro de
  * empresa ({@link CompanyUseCase#createCompany}): o convidado vira dono
- * (membership OWNER, papel RBAC ADMIN) e o CRM_ADMIN não entra como membro.
+ * (membership OWNER, papel RBAC ADMIN) e o SUPER_ADMIN não entra como membro.
  * O cadastro de quem ainda não tem conta é orquestrado por
  * {@link CompanyInvitationSignupService} (Keycloak + compensação).
  */
@@ -222,7 +222,7 @@ public class CompanyInvitationService {
     }
 
     /**
-     * Cria a empresa com o que o CRM_ADMIN fixou no convite e os dados do
+     * Cria a empresa com o que o SUPER_ADMIN fixou no convite e os dados do
      * convidado; o convidado vira dono (OWNER + RBAC ADMIN).
      */
     private Response createCompanyFor(CompanyInvitation invitation, CompanyDetails d, User user) {

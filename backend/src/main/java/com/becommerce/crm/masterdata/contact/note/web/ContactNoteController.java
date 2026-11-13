@@ -19,7 +19,7 @@ import java.util.UUID;
 /**
  * Anotações do paciente (ficha do paciente, Fase 1). Scoped à empresa ativa via
  * {@link CurrentCompanyId}; edição/exclusão permitida ao autor ou a
- * administradores (ADMIN/OWNER/SUPER_ADMIN).
+ * administradores (ADMIN/OWNER/CRM_ADMIN).
  */
 @RestController
 public class ContactNoteController {

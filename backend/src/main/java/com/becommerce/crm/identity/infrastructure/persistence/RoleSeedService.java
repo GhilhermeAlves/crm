@@ -62,7 +62,7 @@ public class RoleSeedService {
 
     public void seedRoles(UUID companyId) {
         Map<RoleName, List<String>> rolePermissions = new EnumMap<>(RoleName.class);
-        rolePermissions.put(RoleName.SUPER_ADMIN, List.of("*"));
+        rolePermissions.put(RoleName.CRM_ADMIN, List.of("*"));
         rolePermissions.put(RoleName.ADMIN, withPageViews(List.of(
             "user:create", "user:read", "user:update", "user:delete", "user:invite",
             "role:create", "role:read", "role:update", "role:delete", "role:assign",

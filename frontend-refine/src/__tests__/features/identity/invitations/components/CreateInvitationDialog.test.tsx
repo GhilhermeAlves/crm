@@ -18,7 +18,7 @@ vi.mock("@/features/masterdata/company/mail/useCompanyMailStatus", async (import
 }));
 
 vi.mock("@/features/identity/auth/hooks/useAuthorization", () => ({
-  useAuthorization: () => ({ isSuperAdmin: false, isCrmAdmin: false }),
+  useAuthorization: () => ({ isCompanyAdmin: false, isPlatformAdmin: false }),
 }));
 
 describe("invitableRoles", () => {
@@ -26,7 +26,7 @@ describe("invitableRoles", () => {
     expect(invitableRoles(false)).toEqual(["MANAGER", "AGENT", "VIEWER"]);
   });
 
-  it("mostra ADMIN para o super administrador e o administrador do CRM", () => {
+  it("mostra ADMIN para o administrador da empresa e o dono do CRM", () => {
     expect(invitableRoles(true)).toContain("ADMIN");
   });
 });

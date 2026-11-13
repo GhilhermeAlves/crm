@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/select";
 
 /** Catálogo fixo usado apenas enquanto /roles ainda não respondeu. */
-const FALLBACK_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGER", "AGENT", "VIEWER"];
+const FALLBACK_ROLES = ["CRM_ADMIN", "ADMIN", "MANAGER", "AGENT", "VIEWER"];
 
 type MemberRowActionsProps = {
   companyId: string;
@@ -198,26 +198,26 @@ function ChangeRoleDialog({
     if (open) setSelected(member.role);
   }, [open, member.role]);
 
-  const { isCrmAdmin, isSuperAdmin } = useAuthorization();
-  const canGrantAdmin = isCrmAdmin || isSuperAdmin;
+  const { isPlatformAdmin, isCompanyAdmin } = useAuthorization();
+  const canGrantAdmin = isPlatformAdmin || isCompanyAdmin;
 
   const availableRoles = useMemo(() => {
     const base = (
       roles.length > 0
         ? roles
-            // CRM_ADMIN é de plataforma: o backend recusa atribuí-lo pela API.
-            .filter((role) => role.isActive && role.name !== "CRM_ADMIN")
+            // SUPER_ADMIN é de plataforma: o backend recusa atribuí-lo pela API.
+            .filter((role) => role.isActive && role.name !== "SUPER_ADMIN")
             .map((role) => role.name)
         : [...FALLBACK_ROLES]
     )
-      // Só o CRM_ADMIN concede SUPER_ADMIN.
-      .filter((role) => isCrmAdmin || role !== "SUPER_ADMIN")
-      // Promover a ADMIN/OWNER é do SUPER_ADMIN/CRM_ADMIN (MembershipController).
+      // Só o SUPER_ADMIN concede CRM_ADMIN.
+      .filter((role) => isPlatformAdmin || role !== "CRM_ADMIN")
+      // Promover a ADMIN/OWNER é do CRM_ADMIN/SUPER_ADMIN (MembershipController).
       .filter((role) => canGrantAdmin || (role !== "ADMIN" && role !== "OWNER"));
     if (member.role && !base.includes(member.role)) base.push(member.role);
     // Último ADMIN só pode continuar em papéis de nível administrador.
     return isLastAdmin ? base.filter(isAdminLevelRole) : base;
-  }, [roles, member.role, isLastAdmin, isCrmAdmin, canGrantAdmin]);
+  }, [roles, member.role, isLastAdmin, isPlatformAdmin, canGrantAdmin]);
 
   const options = availableRoles.includes(selected)
     ? availableRoles

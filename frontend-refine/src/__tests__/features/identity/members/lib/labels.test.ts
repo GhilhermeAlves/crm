@@ -20,10 +20,10 @@ describe("members-labels (papéis e status de membro)", () => {
     expect(roleLabel(undefined)).toBe("—");
   });
 
-  it("trata ADMIN/OWNER/SUPER_ADMIN como nível administrador", () => {
+  it("trata ADMIN/OWNER/CRM_ADMIN como nível administrador", () => {
     expect(isAdminLevelRole("ADMIN")).toBe(true);
     expect(isAdminLevelRole("OWNER")).toBe(true);
-    expect(isAdminLevelRole("SUPER_ADMIN")).toBe(true);
+    expect(isAdminLevelRole("CRM_ADMIN")).toBe(true);
     expect(isAdminLevelRole("MANAGER")).toBe(false);
     expect(isAdminLevelRole("AGENT")).toBe(false);
     expect(isAdminLevelRole(null)).toBe(false);

@@ -58,13 +58,13 @@ class CompanyControllerTest {
         SecurityContextHolder.clearContext();
     }
 
-    private void login(boolean crmAdmin) {
+    private void login(boolean platformAdmin) {
         CurrentUser principal = new CurrentUser(
                 UUID.randomUUID(),
                 "admin@empresa.com",
                 companyId,
                 companyId,
-                List.of(crmAdmin ? "CRM_ADMIN" : "ADMIN"),
+                List.of(platformAdmin ? "SUPER_ADMIN" : "ADMIN"),
                 List.of("company:create", "company:view", "company:update", "settings:view", "settings:update"),
                 "keycloak-sub",
                 null,

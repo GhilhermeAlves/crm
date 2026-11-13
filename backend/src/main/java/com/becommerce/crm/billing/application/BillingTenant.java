@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 /**
  * As tabelas billing_* têm RLS FORCE e o TenantAwareDataSource aplica o tenant por statement.
  * Toda leitura/escrita da cobrança roda aqui dentro, com saveAndFlush, para que o SQL saia com o
- * tenant da empresa alvo — mesmo vindo do webhook, do job ou de um CRM_ADMIN logado em outra empresa.
+ * tenant da empresa alvo — mesmo vindo do webhook, do job ou de um SUPER_ADMIN logado em outra empresa.
  */
 public final class BillingTenant {
     private BillingTenant() {}

@@ -57,7 +57,7 @@ export type InvitationRegisterRequest = {
 
 export const INVITATION_ROLES = ["ADMIN", "MANAGER", "AGENT", "VIEWER"] as const;
 
-/** ADMIN convida só papéis abaixo dele; ADMIN é convidado pelo SUPER_ADMIN/CRM_ADMIN. */
+/** ADMIN convida só papéis abaixo dele; ADMIN é convidado pelo CRM_ADMIN/SUPER_ADMIN. */
 export function invitableRoles(canInviteAdmin: boolean) {
   return INVITATION_ROLES.filter((role) => role !== "ADMIN" || canInviteAdmin);
 }

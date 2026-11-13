@@ -46,7 +46,7 @@ export interface NavItem {
   permission?: string;
   /** Módulo da empresa exigido (V104); some do menu quando desligado. */
   module?: CompanyModuleName;
-  /** Visível só para o dono da plataforma (CRM_ADMIN), nunca para as empresas clientes. */
+  /** Visível só para o dono da plataforma (SUPER_ADMIN), nunca para as empresas clientes. */
   crmAdminOnly?: boolean;
   children?: { label: string; href: string; permission?: string; module?: CompanyModuleName }[];
 }

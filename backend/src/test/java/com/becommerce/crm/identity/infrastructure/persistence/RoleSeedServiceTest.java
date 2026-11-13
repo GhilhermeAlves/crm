@@ -23,9 +23,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Verifica o comportamento do wildcard "*" no {@link RoleSeedService}: SUPER_ADMIN
+ * Verifica o comportamento do wildcard "*" no {@link RoleSeedService}: CRM_ADMIN
  * deve receber TODAS as permissões existentes (não apenas um subconjunto fixo).
- * Regressão do bug em que "*" era um no-op e o SUPER_ADMIN ficava sem ai:chat /
+ * Regressão do bug em que "*" era um no-op e o CRM_ADMIN ficava sem ai:chat /
  * ai:suggest (403 em /api/v1/ai/*).
  */
 @ExtendWith(MockitoExtension.class)
@@ -46,12 +46,12 @@ class RoleSeedServiceTest {
 
     @BeforeEach
     void setUp() {
-        superAdminRole = Role.createSystem("SUPER_ADMIN", COMPANY);
+        superAdminRole = Role.createSystem("CRM_ADMIN", COMPANY);
     }
 
     @Test
     void wildcardSuperAdminGrantsEveryExistingPermission() {
-        when(roleRepository.findByNameAndCompanyId("SUPER_ADMIN", COMPANY))
+        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY))
                 .thenReturn(Optional.of(superAdminRole));
         when(permissionRepository.findAll())
                 .thenReturn(List.of(contactRead, aiChat, aiSuggest));
@@ -68,7 +68,7 @@ class RoleSeedServiceTest {
 
     @Test
     void wildcardSuperAdminSkipsAlreadyGrantedPermissions() {
-        when(roleRepository.findByNameAndCompanyId("SUPER_ADMIN", COMPANY))
+        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY))
                 .thenReturn(Optional.of(superAdminRole));
         when(permissionRepository.findAll()).thenReturn(List.of(aiChat));
         when(aiChat.getId()).thenReturn(UUID.randomUUID());

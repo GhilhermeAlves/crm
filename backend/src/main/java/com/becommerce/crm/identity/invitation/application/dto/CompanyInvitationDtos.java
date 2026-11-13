@@ -21,7 +21,7 @@ public final class CompanyInvitationDtos {
     private CompanyInvitationDtos() {
     }
 
-    /** CRM_ADMIN: e-mail do convidado e o que a empresa terá. */
+    /** SUPER_ADMIN: e-mail do convidado e o que a empresa terá. */
     public record CreateRequest(
             @NotBlank @Email String email,
             @Size(max = 255) String name,
@@ -30,7 +30,7 @@ public final class CompanyInvitationDtos {
             @NotBlank String plan,
             @NotNull @Min(1) Integer maxUsers,
             Boolean sendEmail,
-            /** Dados da empresa adiantados pelo CRM_ADMIN (opcional). */
+            /** Dados da empresa adiantados pelo SUPER_ADMIN (opcional). */
             @Valid CompanyPrefill company
     ) {
         public boolean shouldSendEmail() {

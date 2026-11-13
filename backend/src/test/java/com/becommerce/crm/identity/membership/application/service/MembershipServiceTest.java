@@ -159,49 +159,49 @@ class MembershipServiceTest {
 
     @Test
     void shouldLetCrmAdminPromoteLastAdminToSuperAdmin() {
-        Role superAdminRole = role(RoleName.SUPER_ADMIN);
+        Role superAdminRole = role(RoleName.CRM_ADMIN);
         Membership membership = Membership.activate(USER_ID, COMPANY_ID, "ADMIN");
         when(membershipRepository.findActiveByUserIdAndCompanyId(USER_ID, COMPANY_ID))
                 .thenReturn(Optional.of(membership));
-        when(roleRepository.findByNameAndCompanyId(RoleName.SUPER_ADMIN.name(), COMPANY_ID))
+        when(roleRepository.findByNameAndCompanyId(RoleName.CRM_ADMIN.name(), COMPANY_ID))
                 .thenReturn(Optional.of(superAdminRole));
         when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, superAdminRole.getId())).thenReturn(false);
         when(membershipRepository.save(any(Membership.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.updateMemberRole(COMPANY_ID, USER_ID, "SUPER_ADMIN", COMPANY_ID, true);
+        service.updateMemberRole(COMPANY_ID, USER_ID, "CRM_ADMIN", COMPANY_ID, true);
 
-        assertEquals("SUPER_ADMIN", membership.getRole());
+        assertEquals("CRM_ADMIN", membership.getRole());
         verify(userRoleRepository).deleteByUserIdAndCompanyId(USER_ID, COMPANY_ID);
         verify(userRoleRepository).save(any());
     }
 
     @Test
     void shouldRejectSuperAdminPromotionByCompanyAdmin() {
-        when(roleRepository.findByNameAndCompanyId(RoleName.SUPER_ADMIN.name(), COMPANY_ID))
-                .thenReturn(Optional.of(role(RoleName.SUPER_ADMIN)));
+        when(roleRepository.findByNameAndCompanyId(RoleName.CRM_ADMIN.name(), COMPANY_ID))
+                .thenReturn(Optional.of(role(RoleName.CRM_ADMIN)));
 
         assertThrows(CrmAccessDeniedException.class,
-                () -> service.updateMemberRole(COMPANY_ID, USER_ID, "SUPER_ADMIN", COMPANY_ID, false));
+                () -> service.updateMemberRole(COMPANY_ID, USER_ID, "CRM_ADMIN", COMPANY_ID, false));
         verify(membershipRepository, never()).save(any());
     }
 
     @Test
     void shouldRejectAssigningCrmAdminRole() {
-        Role crmAdminRole = Role.create("CRM_ADMIN", COMPANY_ID);
-        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY_ID))
+        Role crmAdminRole = Role.create("SUPER_ADMIN", COMPANY_ID);
+        when(roleRepository.findByNameAndCompanyId("SUPER_ADMIN", COMPANY_ID))
                 .thenReturn(Optional.of(crmAdminRole));
 
         assertThrows(CrmAccessDeniedException.class,
-                () -> service.updateMemberRole(COMPANY_ID, USER_ID, "CRM_ADMIN", COMPANY_ID, true));
+                () -> service.updateMemberRole(COMPANY_ID, USER_ID, "SUPER_ADMIN", COMPANY_ID, true));
         verify(membershipRepository, never()).save(any());
     }
 
     @Test
     void shouldNotLetCompanyAdminChangeCrmAdminMember() {
-        Role crmAdminRole = Role.create("CRM_ADMIN", COMPANY_ID);
+        Role crmAdminRole = Role.create("SUPER_ADMIN", COMPANY_ID);
         when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), COMPANY_ID))
                 .thenReturn(Optional.of(role(RoleName.AGENT)));
-        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY_ID))
+        when(roleRepository.findByNameAndCompanyId("SUPER_ADMIN", COMPANY_ID))
                 .thenReturn(Optional.of(crmAdminRole));
         when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, crmAdminRole.getId())).thenReturn(true);
 
@@ -212,8 +212,8 @@ class MembershipServiceTest {
 
     @Test
     void shouldNotLetCompanyAdminRemoveCrmAdminMember() {
-        Role crmAdminRole = Role.create("CRM_ADMIN", COMPANY_ID);
-        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY_ID))
+        Role crmAdminRole = Role.create("SUPER_ADMIN", COMPANY_ID);
+        when(roleRepository.findByNameAndCompanyId("SUPER_ADMIN", COMPANY_ID))
                 .thenReturn(Optional.of(crmAdminRole));
         when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, crmAdminRole.getId())).thenReturn(true);
 
@@ -225,11 +225,11 @@ class MembershipServiceTest {
     @Test
     void shouldKeepCrmAdminRoleWhenCompanyRoleChanges() {
         Role agentRole = role(RoleName.AGENT);
-        Role crmAdminRole = Role.create("CRM_ADMIN", COMPANY_ID);
+        Role crmAdminRole = Role.create("SUPER_ADMIN", COMPANY_ID);
         Membership membership = Membership.activate(USER_ID, COMPANY_ID, "MANAGER");
         when(roleRepository.findByNameAndCompanyId(RoleName.AGENT.name(), COMPANY_ID))
                 .thenReturn(Optional.of(agentRole));
-        when(roleRepository.findByNameAndCompanyId("CRM_ADMIN", COMPANY_ID))
+        when(roleRepository.findByNameAndCompanyId("SUPER_ADMIN", COMPANY_ID))
                 .thenReturn(Optional.of(crmAdminRole));
         when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, crmAdminRole.getId())).thenReturn(true);
         when(userRoleRepository.existsByUserIdAndRoleId(USER_ID, agentRole.getId())).thenReturn(false);

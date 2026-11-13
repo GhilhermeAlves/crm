@@ -23,11 +23,13 @@ public record CurrentUser(
         String membershipRole) {
 
     /**
-     * Papel de plataforma, acima do SUPER_ADMIN: único que enxerga e administra
-     * todas as empresas. Não é criado por empresa nem concedível pela API —
-     * atribuído só por migration.
+     * Dono do CRM (V132), acima do CRM_ADMIN de cada empresa: único que enxerga
+     * e administra todas as empresas. Não é criado por empresa nem concedível
+     * pela API — atribuído só por migration. Vale em qualquer empresa ativa: os
+     * resolvers do {@code CurrentUser} o acrescentam via
+     * {@code app.is_platform_admin_user()} mesmo sem membership na empresa.
      */
-    public static final String CRM_ADMIN_ROLE = "CRM_ADMIN";
+    public static final String PLATFORM_ADMIN_ROLE = "SUPER_ADMIN";
 
     public CurrentUser {
         Objects.requireNonNull(userId, "userId");
@@ -43,9 +45,9 @@ public record CurrentUser(
         permissions = List.copyOf(permissions);
     }
 
-    /** True se o usuário pode cruzar empresas (papel {@link #CRM_ADMIN_ROLE}). */
-    public boolean isCrmAdmin() {
-        return roles.contains(CRM_ADMIN_ROLE);
+    /** True se o usuário pode cruzar empresas (papel {@link #PLATFORM_ADMIN_ROLE}). */
+    public boolean isPlatformAdmin() {
+        return roles.contains(PLATFORM_ADMIN_ROLE);
     }
 
     public static CurrentUser fromKeycloak(UUID userId, String email, UUID companyId,

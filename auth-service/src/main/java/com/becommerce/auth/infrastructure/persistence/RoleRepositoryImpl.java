@@ -19,4 +19,9 @@ public class RoleRepositoryImpl implements RoleRepository {
     public List<String> findRoleNamesByUserIdAndCompanyId(UUID userId, UUID companyId) {
         return springData.findRoleNamesByUserIdAndCompanyId(userId, companyId);
     }
+
+    @Override
+    public boolean isPlatformAdmin(UUID userId) {
+        return userId != null && springData.isPlatformAdmin(userId);
+    }
 }

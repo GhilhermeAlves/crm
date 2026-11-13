@@ -10,4 +10,7 @@ import java.util.UUID;
 public interface PermissionRepository {
 
     List<String> findPermissionNamesByUserIdAndCompanyId(UUID userId, UUID companyId);
+
+    /** Todas as permissões do catálogo — concedidas ao dono do CRM em qualquer empresa. */
+    List<String> findAllPermissionNames();
 }

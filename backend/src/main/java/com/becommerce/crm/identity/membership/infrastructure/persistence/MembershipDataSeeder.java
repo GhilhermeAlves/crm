@@ -30,7 +30,7 @@ import java.util.UUID;
  * ganhe sua membership ativa, iterando empresa por empresa com
  * {@link TenantContext} definido (mesmo padrão do RoleDataSeeder).
  *
- * <p>Papel: prioridade SUPER_ADMIN &gt; OWNER &gt; ADMIN &gt; MANAGER &gt; AGENT
+ * <p>Papel: prioridade CRM_ADMIN &gt; OWNER &gt; ADMIN &gt; MANAGER &gt; AGENT
  * &gt; VIEWER (maior privilégio); sem roles → AGENT. Idempotente.
  */
 @Component
@@ -113,7 +113,7 @@ public class MembershipDataSeeder implements CommandLineRunner {
 
     private int rolePriority(String roleName) {
         return switch (roleName) {
-            case "SUPER_ADMIN" -> 6;
+            case "CRM_ADMIN" -> 6;
             case "OWNER" -> 5;
             case "ADMIN" -> 4;
             case "MANAGER" -> 3;

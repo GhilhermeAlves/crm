@@ -46,7 +46,7 @@ class BillingAdminControllerTest {
 
     @Test
     void crmAdminActivates() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         when(service.activate(TARGET)).thenReturn(
                 new BillingView("ACTIVE", "STARTER", 19700, LocalDate.of(2026, 11, 15), null, true, null, null, null));
         mvc.perform(post(URL + "/activate"))
@@ -56,7 +56,7 @@ class BillingAdminControllerTest {
 
     @Test
     void crmAdminExemptsAndIsAudited() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         when(service.markExempt(TARGET)).thenReturn(new BillingView("EXEMPT", "STARTER", 19700, null, null, false, null, null, null));
         mvc.perform(post(URL + "/exempt"))
            .andExpect(status().isOk())
@@ -74,14 +74,14 @@ class BillingAdminControllerTest {
 
     @Test
     void ruleErrorIs400() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         when(service.activate(TARGET)).thenThrow(new BillingRuleException("Cadastre o CPF ou CNPJ"));
         mvc.perform(post(URL + "/activate")).andExpect(status().isBadRequest());
     }
 
     @Test
     void changePrice() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         when(service.changePrice(TARGET, 17000)).thenReturn(
                 new BillingView("ACTIVE", "STARTER", 17000, null, null, true, null, null, null));
         mvc.perform(put(URL + "/price").contentType("application/json").content("{\"monthlyPriceCents\":17000}"))
@@ -91,7 +91,7 @@ class BillingAdminControllerTest {
 
     @Test
     void changePriceIsAudited() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         when(service.changePrice(TARGET, 17000)).thenReturn(new BillingView("ACTIVE", "STARTER", 17000, null, null, true, null, null, null));
         mvc.perform(put(URL + "/price").contentType("application/json").content("{\"monthlyPriceCents\":17000}"))
            .andExpect(status().isOk());
@@ -101,7 +101,7 @@ class BillingAdminControllerTest {
 
     @Test
     void auditRunsUnderTargetTenantAndRestoresContext() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         UUID own = UUID.randomUUID();
         TenantContext.setCompanyId(own);
         try {
@@ -120,7 +120,7 @@ class BillingAdminControllerTest {
 
     @Test
     void grantIsAudited() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         when(service.grant(TARGET, 7)).thenReturn(
                 new BillingView("PAST_DUE", "STARTER", 19700, null, null, true, null, null, null));
         mvc.perform(post(URL + "/grant").contentType("application/json").content("{\"days\":7}"))

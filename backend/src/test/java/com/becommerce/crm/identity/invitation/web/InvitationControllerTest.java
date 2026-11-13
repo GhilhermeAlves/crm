@@ -80,7 +80,7 @@ class InvitationControllerTest {
     private void loginAsCrmAdmin() {
         CurrentUser principal = new CurrentUser(
                 userId, "crm@plataforma.com", companyId, companyId,
-                List.of(CurrentUser.CRM_ADMIN_ROLE),
+                List.of(CurrentUser.PLATFORM_ADMIN_ROLE),
                 List.of("membership:view", "membership:manage"),
                 "keycloak-sub", null, "keycloak", "CRM Admin", "ADMIN");
         authenticate(principal);

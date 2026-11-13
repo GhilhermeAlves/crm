@@ -85,7 +85,7 @@ public class TelegramUpdateProcessor {
             return;
         }
         if (!user.get().permissions().contains("ai:chat")
-                && !user.get().roles().contains(CurrentUser.CRM_ADMIN_ROLE)) {
+                && !user.get().roles().contains(CurrentUser.PLATFORM_ADMIN_ROLE)) {
             send(token, chatId, "Seu usuário não tem acesso ao assistente.");
             return;
         }
@@ -244,7 +244,7 @@ public class TelegramUpdateProcessor {
      */
     private void continueAfterConfirmation(UUID companyId, String token, long chatId, long from,
                                            TelegramUserResolver.LinkedUser user, AiActionResponse done) {
-        if (!user.permissions().contains("ai:chat") && !user.roles().contains(CurrentUser.CRM_ADMIN_ROLE)) {
+        if (!user.permissions().contains("ai:chat") && !user.roles().contains(CurrentUser.PLATFORM_ADMIN_ROLE)) {
             return;
         }
         UUID conversationId = done.conversationId() != null ? done.conversationId() : user.conversationId();

@@ -5,6 +5,7 @@ import com.becommerce.crm.identity.application.port.output.PermissionRepository;
 import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
+import com.becommerce.crm.identity.domain.Permission;
 import com.becommerce.crm.identity.domain.User;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.identity.domain.exception.LinkingRequiredException;
@@ -14,6 +15,7 @@ import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -103,8 +105,12 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
             }
             TenantContext.setCompanyId(companyId);
 
+            // V132: o dono do CRM (SUPER_ADMIN) entra em qualquer empresa, mesmo
+            // sem membership nela, e leva o papel de plataforma junto.
+            boolean platformAdmin = userRoleRepository.isPlatformAdmin(userId);
+
             // Sprint 8.2: membro desligado (sem membership ACTIVE) perde acesso.
-            if (!membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)) {
+            if (!platformAdmin && !membershipRepository.existsActiveByUserIdAndCompanyId(userId, companyId)) {
                 throw new CrmAccessDeniedException(
                         "Usuário sem membership ativa nesta empresa: acesso ao CRM negado.");
             }
@@ -121,6 +127,13 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
             List<String> permissions = permissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId(
                     userId, companyId);
 
+            if (platformAdmin) {
+                roleNames = withPlatformRole(roleNames);
+                permissions = permissionRepository.findAll().stream()
+                        .map(Permission::getName)
+                        .collect(Collectors.toList());
+            }
+
             String membershipRole = membershipRepository
                     .findMembershipRoleByUserIdAndCompanyId(userId, companyId)
                     .orElse(null);
@@ -131,6 +144,15 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
         } finally {
             TenantContext.clear();
         }
+    }
+
+    private static List<String> withPlatformRole(List<String> roleNames) {
+        if (roleNames.contains(CurrentUser.PLATFORM_ADMIN_ROLE)) {
+            return roleNames;
+        }
+        List<String> all = new ArrayList<>(roleNames);
+        all.add(CurrentUser.PLATFORM_ADMIN_ROLE);
+        return all;
     }
 
     private String buildDisplayName(String name, String givenName, String familyName, String email) {

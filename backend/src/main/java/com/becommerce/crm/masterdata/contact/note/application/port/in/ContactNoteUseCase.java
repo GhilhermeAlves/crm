@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Caso de uso das anotações do paciente (ficha do paciente, Fase 1).
  * {@code admin} indica se o ator possui papel de administrador (ADMIN/OWNER/
- * SUPER_ADMIN); edição/exclusão é permitida ao autor ou a administradores.
+ * CRM_ADMIN); edição/exclusão é permitida ao autor ou a administradores.
  */
 public interface ContactNoteUseCase {
 

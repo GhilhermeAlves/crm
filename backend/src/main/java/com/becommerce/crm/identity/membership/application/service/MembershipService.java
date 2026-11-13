@@ -88,17 +88,17 @@ public class MembershipService implements MembershipUseCase {
     @Override
     @Transactional
     public MemberResponse updateMemberRole(UUID companyId, UUID userId, String role,
-                                           UUID requesterCompanyId, boolean isCrmAdmin) {
-        assertCompanyAccess(companyId, requesterCompanyId, isCrmAdmin);
+                                           UUID requesterCompanyId, boolean isPlatformAdmin) {
+        assertCompanyAccess(companyId, requesterCompanyId, isPlatformAdmin);
 
         Role targetRole = resolveRoleForCompany(role, companyId);
-        if (CurrentUser.CRM_ADMIN_ROLE.equals(targetRole.getName())) {
-            throw new CrmAccessDeniedException("O papel CRM_ADMIN não pode ser atribuído pela API.");
+        if (CurrentUser.PLATFORM_ADMIN_ROLE.equals(targetRole.getName())) {
+            throw new CrmAccessDeniedException("O papel SUPER_ADMIN não pode ser atribuído pela API.");
         }
-        if (Membership.SUPER_ADMIN_ROLE.equals(targetRole.getName()) && !isCrmAdmin) {
-            throw new CrmAccessDeniedException("Só o administrador do CRM pode conceder o papel SUPER_ADMIN.");
+        if (Membership.COMPANY_ADMIN_ROLE.equals(targetRole.getName()) && !isPlatformAdmin) {
+            throw new CrmAccessDeniedException("Só o dono do CRM pode conceder o papel CRM_ADMIN.");
         }
-        assertNotPlatformMember(userId, companyId, isCrmAdmin);
+        assertNotPlatformMember(userId, companyId, isPlatformAdmin);
 
         Membership membership = membershipRepository.findActiveByUserIdAndCompanyId(userId, companyId)
                 .orElseThrow(() -> new MembershipNotFoundException(
@@ -121,9 +121,9 @@ public class MembershipService implements MembershipUseCase {
     @Override
     @Transactional
     public void removeMember(UUID companyId, UUID userId,
-                             UUID requesterCompanyId, boolean isCrmAdmin) {
-        assertCompanyAccess(companyId, requesterCompanyId, isCrmAdmin);
-        assertNotPlatformMember(userId, companyId, isCrmAdmin);
+                             UUID requesterCompanyId, boolean isPlatformAdmin) {
+        assertCompanyAccess(companyId, requesterCompanyId, isPlatformAdmin);
+        assertNotPlatformMember(userId, companyId, isPlatformAdmin);
 
         Membership membership = membershipRepository.findActiveByUserIdAndCompanyId(userId, companyId)
                 .orElseThrow(() -> new MembershipNotFoundException(
@@ -161,19 +161,19 @@ public class MembershipService implements MembershipUseCase {
         if (!userRoleRepository.existsByUserIdAndRoleId(userId, targetRole.getId())) {
             userRoleRepository.save(UserRole.assign(userId, targetRole.getId(), companyId));
         }
-        // Trocar o papel da empresa não tira o CRM_ADMIN de quem o tem.
+        // Trocar o papel da empresa não tira o SUPER_ADMIN de quem o tem.
         platformRole.ifPresent(r -> userRoleRepository.save(UserRole.assign(userId, r.getId(), companyId)));
     }
 
-    /** Só o CRM_ADMIN altera ou desliga um membro que tem o papel de plataforma. */
-    private void assertNotPlatformMember(UUID userId, UUID companyId, boolean isCrmAdmin) {
-        if (!isCrmAdmin && platformRoleHeldBy(userId, companyId).isPresent()) {
-            throw new CrmAccessDeniedException("Este membro é administrador do CRM e não pode ser alterado.");
+    /** Só o SUPER_ADMIN altera ou desliga um membro que tem o papel de plataforma. */
+    private void assertNotPlatformMember(UUID userId, UUID companyId, boolean isPlatformAdmin) {
+        if (!isPlatformAdmin && platformRoleHeldBy(userId, companyId).isPresent()) {
+            throw new CrmAccessDeniedException("Este membro é o dono do CRM e não pode ser alterado.");
         }
     }
 
     private Optional<Role> platformRoleHeldBy(UUID userId, UUID companyId) {
-        return roleRepository.findByNameAndCompanyId(CurrentUser.CRM_ADMIN_ROLE, companyId)
+        return roleRepository.findByNameAndCompanyId(CurrentUser.PLATFORM_ADMIN_ROLE, companyId)
                 .filter(r -> userRoleRepository.existsByUserIdAndRoleId(userId, r.getId()));
     }
 
@@ -199,8 +199,8 @@ public class MembershipService implements MembershipUseCase {
         }
     }
 
-    private void assertCompanyAccess(UUID companyId, UUID requesterCompanyId, boolean isCrmAdmin) {
-        if (!isCrmAdmin && !companyId.equals(requesterCompanyId)) {
+    private void assertCompanyAccess(UUID companyId, UUID requesterCompanyId, boolean isPlatformAdmin) {
+        if (!isPlatformAdmin && !companyId.equals(requesterCompanyId)) {
             throw new CrmAccessDeniedException("Acesso a membros desta empresa não permitido.");
         }
     }

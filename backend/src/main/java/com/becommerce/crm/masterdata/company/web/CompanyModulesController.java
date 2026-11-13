@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-/** Segmento e módulos habilitados da empresa (V104). Alteração exclusiva do CRM_ADMIN. */
+/** Segmento e módulos habilitados da empresa (V104). Alteração exclusiva do SUPER_ADMIN. */
 @RestController
 @RequestMapping({"/api/v1/companies/{id}/modules", "/api/v1/tenants/{id}/modules"})
 public class CompanyModulesController {
@@ -32,12 +32,12 @@ public class CompanyModulesController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CompanyModulesResponse> get(@PathVariable UUID id,
                                                       @AuthenticationPrincipal CurrentUser principal) {
-        boolean crmAdmin = principal.isCrmAdmin();
-        return ResponseEntity.ok(service.get(id, principal.companyId(), crmAdmin));
+        boolean platformAdmin = principal.isPlatformAdmin();
+        return ResponseEntity.ok(service.get(id, principal.companyId(), platformAdmin));
     }
 
     @PutMapping
-    @PreAuthorize("hasRole('CRM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<CompanyModulesResponse> update(@PathVariable UUID id,
                                                          @Valid @RequestBody UpdateCompanyModulesRequest request) {
         return ResponseEntity.ok(service.update(id, request));

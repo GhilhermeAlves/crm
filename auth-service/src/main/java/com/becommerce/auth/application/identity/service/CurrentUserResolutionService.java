@@ -15,6 +15,7 @@ import com.becommerce.auth.domain.identity.exception.CrmAccessDeniedException;
 import com.becommerce.auth.infrastructure.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,6 +57,9 @@ import java.util.Optional;
  */
 @Service
 public class CurrentUserResolutionService implements CurrentUserResolutionUseCase {
+
+    /** Dono do CRM (V132): acesso a todas as empresas. Mesmo nome do backend. */
+    static final String PLATFORM_ADMIN_ROLE = "SUPER_ADMIN";
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -122,14 +126,26 @@ public class CurrentUserResolutionService implements CurrentUserResolutionUseCas
             assertCrmAccess(user);
             TenantContext.setCompanyId(user.companyId());
 
+            // V132: o dono do CRM (SUPER_ADMIN) entra em qualquer empresa, mesmo
+            // sem membership nela, e leva o papel de plataforma junto.
+            boolean platformAdmin = roleRepository.isPlatformAdmin(user.id());
+
             // Sprint 8.2: membro desligado (sem membership ACTIVE) perde acesso.
-            if (!membershipRepository.existsActiveByUserIdAndCompanyId(user.id(), user.companyId())) {
+            if (!platformAdmin
+                    && !membershipRepository.existsActiveByUserIdAndCompanyId(user.id(), user.companyId())) {
                 throw new CrmAccessDeniedException(
                     "Usuário sem membership ativa nesta empresa: acesso ao CRM negado.");
             }
 
             List<String> roles = roleRepository.findRoleNamesByUserIdAndCompanyId(user.id(), user.companyId());
             List<String> permissions = permissionRepository.findPermissionNamesByUserIdAndCompanyId(user.id(), user.companyId());
+            if (platformAdmin) {
+                if (!roles.contains(PLATFORM_ADMIN_ROLE)) {
+                    roles = new ArrayList<>(roles);
+                    roles.add(PLATFORM_ADMIN_ROLE);
+                }
+                permissions = permissionRepository.findAllPermissionNames();
+            }
             String membershipRole = membershipRepository.findMembershipRoleByUserIdAndCompanyId(user.id(), user.companyId()).orElse(null);
 
             CurrentUser currentUser = new CurrentUser(

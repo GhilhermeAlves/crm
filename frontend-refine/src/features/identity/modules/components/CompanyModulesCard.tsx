@@ -24,12 +24,12 @@ import {
   type CompanySegment,
 } from "../types/modules.types";
 
-/** Especialidade e módulos da empresa — exclusivo do CRM_ADMIN (dono da plataforma). */
+/** Especialidade e módulos da empresa — exclusivo do SUPER_ADMIN (dono da plataforma). */
 export function CompanyModulesCard({ companyId }: { companyId: string }) {
   const { data, isLoading, isError } = useCompanyModules(companyId);
   const update = useUpdateCompanyModules(companyId);
   const { roles } = useAuth();
-  const isCrmAdmin = roles.includes("CRM_ADMIN");
+  const isPlatformAdmin = roles.includes("SUPER_ADMIN");
   const [segment, setSegment] = useState<CompanySegment>("GENERIC");
   const [modules, setModules] = useState<CompanyModuleName[]>([]);
 
@@ -41,7 +41,7 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
   }, [data]);
 
   const toggle = (module: CompanyModuleName, checked: boolean) => {
-    if (!isCrmAdmin) return;
+    if (!isPlatformAdmin) return;
     setModules((current) =>
       checked
         ? [...current.filter((m) => m !== module), module]
@@ -50,7 +50,7 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
   };
 
   const handleSegmentChange = (value: CompanySegment) => {
-    if (!isCrmAdmin) return;
+    if (!isPlatformAdmin) return;
     setSegment(value);
     setModules(SEGMENT_DEFAULT_MODULES[value] ?? []);
   };
@@ -83,7 +83,7 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
               <Select
                 value={segment}
                 onValueChange={(v) => handleSegmentChange(v as CompanySegment)}
-                disabled={!isCrmAdmin}
+                disabled={!isPlatformAdmin}
               >
                 <SelectTrigger id="company-segment" className="max-w-sm">
                   <SelectValue />
@@ -114,7 +114,7 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
                         <Checkbox
                           id={`module-${option.value}`}
                           checked={checked}
-                          disabled={!isCrmAdmin}
+                          disabled={!isPlatformAdmin}
                           onCheckedChange={(checkedState) =>
                             toggle(option.value, checkedState === true)
                           }
@@ -130,7 +130,7 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
               ))}
             </fieldset>
 
-            {isCrmAdmin && (
+            {isPlatformAdmin && (
               <Button
                 type="button"
                 disabled={update.isPending}
@@ -140,9 +140,9 @@ export function CompanyModulesCard({ companyId }: { companyId: string }) {
                 Salvar módulos
               </Button>
             )}
-            {!isCrmAdmin && (
+            {!isPlatformAdmin && (
               <p className="text-xs text-muted-foreground">
-                Somente o administrador do CRM pode alterar especialidade e módulos.
+                Somente o dono do CRM pode alterar especialidade e módulos.
               </p>
             )}
           </>

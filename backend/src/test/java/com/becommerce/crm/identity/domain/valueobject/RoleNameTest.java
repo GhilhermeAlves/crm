@@ -8,7 +8,7 @@ class RoleNameTest {
 
     @Test
     void shouldExposeDisplayNamesForAllRoles() {
-        assertEquals("SUPER ADMIN", RoleName.SUPER_ADMIN.getDisplayName());
+        assertEquals("CRM ADMIN", RoleName.CRM_ADMIN.getDisplayName());
         assertEquals("ADMIN", RoleName.ADMIN.getDisplayName());
         assertEquals("MANAGER", RoleName.MANAGER.getDisplayName());
         assertEquals("AGENT", RoleName.AGENT.getDisplayName());

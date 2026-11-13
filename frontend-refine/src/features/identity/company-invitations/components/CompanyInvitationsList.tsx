@@ -30,7 +30,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const SEGMENT_LABEL = new Map(SEGMENT_OPTIONS.map((option) => [option.value, option.label]));
 
-/** Convites de criação de empresa enviados pelo CRM_ADMIN (tela de Empresas). */
+/** Convites de criação de empresa enviados pelo SUPER_ADMIN (tela de Empresas). */
 export function CompanyInvitationsList() {
   const { data: invitations } = useCompanyInvitations(true);
   const regenerate = useRegenerateCompanyInvitation();

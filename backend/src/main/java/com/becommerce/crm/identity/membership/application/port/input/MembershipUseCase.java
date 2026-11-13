@@ -19,8 +19,8 @@ public interface MembershipUseCase {
     List<MembershipResponse> listMyMemberships(UUID userId);
 
     MemberResponse updateMemberRole(UUID companyId, UUID userId, String role,
-                                    UUID requesterCompanyId, boolean isCrmAdmin);
+                                    UUID requesterCompanyId, boolean isPlatformAdmin);
 
     void removeMember(UUID companyId, UUID userId,
-                      UUID requesterCompanyId, boolean isCrmAdmin);
+                      UUID requesterCompanyId, boolean isPlatformAdmin);
 }

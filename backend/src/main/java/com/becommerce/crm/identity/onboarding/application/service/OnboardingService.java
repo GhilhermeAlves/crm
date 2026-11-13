@@ -127,10 +127,10 @@ public class OnboardingService implements OnboardingUseCase {
                 membershipRepository.save(Membership.activate(owner.getId(), saved.getId(), Membership.OWNER_ROLE));
             }
 
-            // RBAC: o dono recebe o papel ADMIN (permite operar os módulos).
-            Role admin = roleRepository.findByNameAndCompanyId(RoleName.ADMIN.name(), saved.getId())
+            // RBAC: o dono recebe o papel CRM_ADMIN (administrador da empresa, V132).
+            Role admin = roleRepository.findByNameAndCompanyId(RoleName.CRM_ADMIN.name(), saved.getId())
                     .orElseThrow(() -> new IllegalStateException(
-                            "Papel ADMIN não encontrado após o seed da nova empresa."));
+                            "Papel CRM_ADMIN não encontrado após o seed da nova empresa."));
             if (!userRoleRepository.existsByUserIdAndRoleId(owner.getId(), admin.getId())) {
                 userRoleRepository.save(UserRole.assign(owner.getId(), admin.getId(), saved.getId()));
             }

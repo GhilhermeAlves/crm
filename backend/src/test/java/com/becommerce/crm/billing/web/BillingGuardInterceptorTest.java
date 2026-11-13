@@ -61,7 +61,7 @@ class BillingGuardInterceptorTest {
 
     @Test
     void crmAdminAlwaysPasses() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         assertTrue(call("GET", "/api/v1/companies/" + company + "/patients"));
         verifyNoInteractions(access);
     }

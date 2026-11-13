@@ -5,8 +5,8 @@ export const INVITABLE_ROLES = ["ADMIN", "MANAGER", "AGENT", "VIEWER"] as const;
 
 /** Nome amigável dos papéis de membership. Chave = valor enviado ao backend. */
 export const ROLE_LABEL: Record<string, string> = {
-  CRM_ADMIN: "Administrador do CRM",
-  SUPER_ADMIN: "Super administrador",
+  SUPER_ADMIN: "Dono do CRM",
+  CRM_ADMIN: "Administrador da empresa",
   OWNER: "Proprietário",
   ADMIN: "Administrador",
   MANAGER: "Gerente",
@@ -40,7 +40,7 @@ export function memberStatusLabel(status: string): string {
 }
 
 /** Perfis com nível administrativo (espelha Membership.isAdminLevelRole). */
-const ADMIN_LEVEL_ROLES = new Set(["ADMIN", "OWNER", "SUPER_ADMIN"]);
+const ADMIN_LEVEL_ROLES = new Set(["ADMIN", "OWNER", "CRM_ADMIN"]);
 
 export function isAdminLevelRole(role: string | null | undefined): boolean {
   return !!role && ADMIN_LEVEL_ROLES.has(role);

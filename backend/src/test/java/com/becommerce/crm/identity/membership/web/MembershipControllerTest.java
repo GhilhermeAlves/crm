@@ -152,8 +152,8 @@ class MembershipControllerTest {
     void superAdminCanPromoteMemberToAdmin() throws Exception {
         CurrentUser principal = new CurrentUser(
                 USER_ID, "dono@empresa.com", COMPANY_ID, COMPANY_ID,
-                List.of("SUPER_ADMIN"), List.of("membership:manage"),
-                "keycloak-sub", null, "keycloak", "Dono", "SUPER_ADMIN");
+                List.of("CRM_ADMIN"), List.of("membership:manage"),
+                "keycloak-sub", null, "keycloak", "Dono", "CRM_ADMIN");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null,
                         List.of(new SimpleGrantedAuthority("membership:manage"))));

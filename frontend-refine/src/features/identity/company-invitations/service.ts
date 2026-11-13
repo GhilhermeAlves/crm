@@ -9,7 +9,7 @@ import type {
 
 const BASE = "/company-invitations";
 
-/** Convite de criação de empresa: administração (CRM_ADMIN) e fluxo público. */
+/** Convite de criação de empresa: administração (SUPER_ADMIN) e fluxo público. */
 export const CompanyInvitationService = {
   async list(): Promise<CompanyInvitation[]> {
     const response = await api.get<CompanyInvitation[]>(BASE);

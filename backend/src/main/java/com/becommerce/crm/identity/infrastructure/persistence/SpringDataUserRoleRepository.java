@@ -29,4 +29,7 @@ public interface SpringDataUserRoleRepository extends JpaRepository<UserRoleJpaE
     @Modifying
     @Query("DELETE FROM UserRoleJpaEntity ur WHERE ur.userId = :userId")
     void deleteByUserId(@Param("userId") UUID userId);
+
+    @Query(value = "SELECT app.is_platform_admin_user(:userId)", nativeQuery = true)
+    boolean isPlatformAdmin(@Param("userId") UUID userId);
 }

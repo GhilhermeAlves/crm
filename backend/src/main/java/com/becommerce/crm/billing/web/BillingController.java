@@ -41,7 +41,7 @@ public class BillingController {
         return withoutInternalError(service.checkPayment(companyOf(user)));
     }
 
-    /** O texto de erro do Asaas é interno (só o CRM_ADMIN vê). */
+    /** O texto de erro do Asaas é interno (só o SUPER_ADMIN vê). */
     private static BillingView withoutInternalError(BillingView v) {
         return new BillingView(v.status(), v.plan(), v.monthlyPriceCents(), v.nextDueDate(), null,
                 v.hasSubscription(), v.overdueSince(), v.graceUntil(), v.openInvoiceUrl());

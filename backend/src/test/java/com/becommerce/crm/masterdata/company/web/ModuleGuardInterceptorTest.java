@@ -82,7 +82,7 @@ class ModuleGuardInterceptorTest {
 
     @Test
     void crmAdminShouldAlwaysPass() {
-        login("CRM_ADMIN");
+        login("SUPER_ADMIN");
 
         assertTrue(call("/api/v1/companies/" + companyId + "/finance/transactions"));
         verify(modules, never()).isEnabled(any(), any());
@@ -90,7 +90,7 @@ class ModuleGuardInterceptorTest {
 
     @Test
     void superAdminShouldRespectDisabledModule() {
-        login("SUPER_ADMIN");
+        login("CRM_ADMIN");
         when(modules.isEnabled(companyId, CompanyModule.FINANCE)).thenReturn(false);
 
         assertThrows(ModuleDisabledException.class,

@@ -87,4 +87,9 @@ public class UserRoleRepositoryImpl implements UserRoleRepository {
     public void deleteByUserId(UUID userId) {
         repository.deleteByUserId(userId);
     }
+
+    @Override
+    public boolean isPlatformAdmin(UUID userId) {
+        return userId != null && repository.isPlatformAdmin(userId);
+    }
 }

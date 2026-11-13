@@ -35,10 +35,10 @@ export function useAuthorization() {
 
   const hasRole = useCallback((role?: string) => !role || roles.includes(role), [roles]);
 
-  const isSuperAdmin = roles.includes("SUPER_ADMIN");
-  const isCrmAdmin = roles.includes("CRM_ADMIN");
+  const isCompanyAdmin = roles.includes("CRM_ADMIN");
+  const isPlatformAdmin = roles.includes("SUPER_ADMIN");
 
-  return { can, cannot, hasRole, isSuperAdmin, isCrmAdmin, permissions, roles };
+  return { can, cannot, hasRole, isCompanyAdmin, isPlatformAdmin, permissions, roles };
 }
 
 export function usePermission() {
