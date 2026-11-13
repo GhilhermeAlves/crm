@@ -267,14 +267,21 @@ public class WhatsAppInboundAutoReplyProcessor {
                 return;
             }
 
-            // Outro robô do outro lado (resposta automática, menu): o Leo ignora o
-            // número em vez de a IA ficar conversando/agendando com ele.
+            // Outro robô do outro lado: com sinal forte (menu, "mensagem automática",
+            // template) o Leo ignora o número; com indício fraco (mensagem repetida)
+            // só deixa a conversa com a equipe — pessoas também repetem.
             if (automatedSenderGuard != null) {
-                Optional<String> automated = AutomatedSenderDetector.detect(currentText,
-                        messageRepository.findRecentByConversation(conversationId, BOT_CHECK_WINDOW));
+                List<Message> recent = messageRepository.findRecentByConversation(conversationId, BOT_CHECK_WINDOW);
+                Optional<String> automated = AutomatedSenderDetector.detect(currentText, recent);
                 if (automated.isPresent()) {
                     automatedSenderGuard.ignore(companyId, conversationId, conversation.getExternalPhone(),
                             automated.get());
+                    return;
+                }
+                Optional<String> repeated = AutomatedSenderDetector.detectRepeated(currentText, recent);
+                if (repeated.isPresent()) {
+                    automatedSenderGuard.handToTeam(companyId, conversationId, conversation.getExternalPhone(),
+                            repeated.get());
                     return;
                 }
             }
@@ -286,7 +293,7 @@ public class WhatsAppInboundAutoReplyProcessor {
             if (reply == null) {
                 return;
             }
-            // O agente chamou marcar_como_robo: nada é enviado.
+            // O agente chamou deixar_com_equipe: nada é enviado.
             if (reply.contains(BotDetectionToolProvider.SILENCE)) {
                 log.info("Auto-resposta suprimida: robô identificado pelo agente (company={}, conversation={})",
                         companyId, conversationId);

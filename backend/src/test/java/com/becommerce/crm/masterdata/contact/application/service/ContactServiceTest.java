@@ -118,6 +118,30 @@ class ContactServiceTest {
         verify(contactRepository, never()).save(any(Contact.class));
     }
 
+    @Test
+    void shouldStoreBlankEmailAsNullSoContactsWithoutEmailDoNotCollide() {
+        doNothing().when(quotaService).assertCanAddContact(companyId);
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ContactResponse response = contactService.createPatient(
+                companyId, createRequest("Ana", "Souza", "  ", null, null), UUID.randomUUID());
+
+        assertNull(response.email());
+        verify(contactRepository, never()).existsActiveByEmail(any(), any(), any());
+    }
+
+    @Test
+    void shouldRejectDuplicateEmailWithConflictInsteadOfDatabaseError() {
+        doNothing().when(quotaService).assertCanAddContact(companyId);
+        when(contactRepository.existsActiveByEmail(companyId, "ana@empresa.com", null)).thenReturn(true);
+
+        ContactConflictException ex = assertThrows(ContactConflictException.class,
+                () -> contactService.create(companyId,
+                        createRequest("Ana", "Souza", "ana@empresa.com", null, null), UUID.randomUUID()));
+        assertEquals("Já existe um contato com este e-mail.", ex.getMessage());
+        verify(contactRepository, never()).save(any(Contact.class));
+    }
+
     // ===== ficha do paciente (V097) — cadastro, responsável e prontuário =====
 
     @Test

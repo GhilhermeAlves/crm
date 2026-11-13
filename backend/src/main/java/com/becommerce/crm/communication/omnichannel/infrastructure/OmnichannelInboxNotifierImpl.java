@@ -71,6 +71,25 @@ public class OmnichannelInboxNotifierImpl implements OmnichannelInboxNotifier {
                 companyId, conversationId, reason);
     }
 
+    @Override
+    public void notifyHandedToTeam(UUID companyId, UUID conversationId, String phone, String reason,
+                                   long pauseDays) {
+        String title = "Leo: conversa deixada com a equipe";
+        String text = formatPhone(phone) + " não parece ser um paciente (" + reason + "). O Leo parou de "
+                + "responder nesta conversa por " + pauseDays + " dias; responda pela caixa de entrada se precisar.";
+        String metadata = "{\"conversationId\":\"" + conversationId + "\"}";
+        for (User user : userRepository.findAllByCompanyId(companyId)) {
+            if (user.getStatus() == null || !user.getStatus().isActive()) {
+                continue;
+            }
+            notificationUseCase.create(companyId,
+                    new CreateNotificationRequest(user.getId(), NotificationType.MESSAGE, title, text, metadata),
+                    SYSTEM_ACTOR);
+        }
+        log.info("[WHATSAPP][HANDOFF] companyId={} conversationId={} conversa deixada com a equipe ({})",
+                companyId, conversationId, reason);
+    }
+
     private static String preview(String body) {
         if (body == null || body.isBlank()) {
             return "(sem texto)";

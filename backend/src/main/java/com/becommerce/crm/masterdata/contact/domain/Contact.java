@@ -68,7 +68,7 @@ public class Contact {
         this.photoStorageId = photoStorageId;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
+        this.email = normalizeEmail(email);
         this.phone = phone;
         this.mobile = mobile;
         this.notes = notes;
@@ -216,7 +216,15 @@ public class Contact {
 
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) { this.email = normalizeEmail(email); }
+
+    /**
+     * E-mail vazio vira NULL: o índice único (email, company_id) trata '' como
+     * valor, então dois contatos sem e-mail colidiam.
+     */
+    private static String normalizeEmail(String email) {
+        return email == null || email.isBlank() ? null : email.trim();
+    }
     public void setPhone(String phone) { this.phone = phone; }
     public void setMobile(String mobile) { this.mobile = mobile; }
     public void setNotes(String notes) { this.notes = notes; }

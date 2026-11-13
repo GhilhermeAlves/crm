@@ -33,4 +33,7 @@ public interface ContactRepository {
      * {@code excludeContactId} (opcional) ignora o próprio contato na edição.
      */
     boolean existsByRecordNumber(UUID companyId, String recordNumber, UUID excludeContactId);
+
+    /** Já existe contato ativo (não excluído) com este e-mail na empresa? */
+    boolean existsActiveByEmail(UUID companyId, String email, UUID excludeContactId);
 }

@@ -76,6 +76,7 @@ public class ContactService implements ContactUseCase {
                     request.email(), request.phone(), request.mobile(), request.notes(),
                     request.birthDate(), request.cpf(), request.rg(), request.rgIssuer(),
                     request.gender(), request.maritalStatus(), request.professionalStatus());
+            assertEmailAvailable(companyId, contact.getEmail(), null);
             applyPatientFieldsCreate(companyId, contact, request.zipCode(), request.street(),
                     request.addressNumber(), request.addressComplement(), request.neighborhood(),
                     request.city(), request.state(), request.healthPlan(), request.healthPlanNumber(),
@@ -304,7 +305,10 @@ public class ContactService implements ContactUseCase {
 
             if (request.firstName() != null) contact.setFirstName(request.firstName());
             if (request.lastName() != null) contact.setLastName(blankToNull(request.lastName()));
-            if (request.email() != null) contact.setEmail(blankToNull(request.email()));
+            if (request.email() != null) {
+                contact.setEmail(request.email());
+                assertEmailAvailable(companyId, contact.getEmail(), contact.getId());
+            }
             if (request.phone() != null) contact.setPhone(blankToNull(request.phone()));
             if (request.mobile() != null) contact.setMobile(blankToNull(request.mobile()));
             if (request.notes() != null) contact.setNotes(blankToNull(request.notes()));
@@ -467,6 +471,12 @@ public class ContactService implements ContactUseCase {
         contact.setGuardianName(guardianName);
         contact.setGuardianCpf(guardianCpf);
         contact.setGuardianPhone(guardianPhone);
+    }
+
+    private void assertEmailAvailable(UUID companyId, String email, UUID excludeContactId) {
+        if (email != null && contactRepository.existsActiveByEmail(companyId, email, excludeContactId)) {
+            throw new ContactConflictException("Já existe um contato com este e-mail.");
+        }
     }
 
     private void assertRecordNumberAvailable(UUID companyId, String recordNumber, UUID excludeContactId) {

@@ -22,9 +22,13 @@ interface DateTimePickerProps {
   placeholder?: string;
   /** Bloqueia dias depois de hoje (ex.: data de nascimento). */
   disableFuture?: boolean;
-  /** Primeiro ano do combobox de anos. */
+  /** Primeiro ano do combobox de anos (padrão: 1900). */
   fromYear?: number;
 }
+
+/** Faixa do combobox de anos. */
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2100;
 
 function generateTimeOptions() {
   const options: string[] = [];
@@ -104,8 +108,8 @@ export function DateTimePicker({
             selected={dateValue}
             onSelect={handleDateSelect}
             defaultMonth={dateValue}
-            startMonth={fromYear ? new Date(fromYear, 0) : undefined}
-            endMonth={disableFuture ? new Date() : undefined}
+            startMonth={new Date(fromYear ?? MIN_YEAR, 0)}
+            endMonth={disableFuture ? new Date() : new Date(MAX_YEAR, 11)}
             disabled={disableFuture ? { after: new Date() } : undefined}
             autoFocus
           />
