@@ -802,6 +802,25 @@ class WhatsAppInboundAutoReplyProcessorTest {
     }
 
     @Test
+    void repeatedMessageShouldHandConversationToTeamInsteadOfIgnoringNumber() {
+        config(true, true);
+        AutomatedSenderGuard guard = mock(AutomatedSenderGuard.class);
+        processor.setAutomatedSenderGuard(guard);
+        String hymn = "Enche-me, até transbordar, derrama sua glória";
+        when(messageRepository.findRecentByConversation(eq(conversationId), anyInt())).thenReturn(List.of(
+                message(MessageDirection.INBOUND, hymn, "w1"),
+                message(MessageDirection.OUTBOUND, "Olá! Quer agendar?", "w2"),
+                message(MessageDirection.INBOUND, hymn, "w3")));
+
+        processor.processInbound(companyId, conversationId, inboundMessageId, from, hymn);
+
+        verify(guard).handToTeam(eq(companyId), eq(conversationId), eq(from), any());
+        verify(guard, never()).ignore(any(), any(), any(), any());
+        verify(aiProvider, never()).chatWithTools(any());
+        verify(messagePersister, never()).persistPending(any());
+    }
+
+    @Test
     void shouldNotSendWhenAgentMarkedSenderAsBot() {
         config(true, true);
         when(aiProvider.chatWithTools(any())).thenReturn(AiProvider.ChatResult.content(BotDetectionToolProvider.SILENCE));

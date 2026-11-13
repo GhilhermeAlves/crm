@@ -12,4 +12,10 @@ public interface OmnichannelInboxNotifier {
 
     /** O Leo identificou um robô/resposta automática e colocou o número na lista de ignorados. */
     void notifyAutomatedSenderIgnored(UUID companyId, UUID conversationId, String phone, String reason);
+
+    /**
+     * O Leo deixou a conversa com a equipe (não parece paciente ou pode ser um
+     * robô) e parou de responder nela por {@code pauseDays} dias.
+     */
+    void notifyHandedToTeam(UUID companyId, UUID conversationId, String phone, String reason, long pauseDays);
 }

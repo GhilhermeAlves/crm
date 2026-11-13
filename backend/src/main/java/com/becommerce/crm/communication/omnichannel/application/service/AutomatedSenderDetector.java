@@ -12,8 +12,11 @@ import java.util.regex.Pattern;
 /**
  * Reconhece quando quem escreve é outro robô (resposta automática, menu de
  * atendimento, assistente virtual) para o agente não ficar conversando com ele.
- * Heurística conservadora: na dúvida, trata como pessoa — o próprio agente
- * ainda pode sinalizar o robô pela ferramenta {@code marcar_como_robo}.
+ *
+ * <p>{@link #detect} só aceita sinais fortes (frases de robô, menu numerado,
+ * mensagem de template) — o número vai para a lista de ignorados.
+ * {@link #detectRepeated} é um indício fraco (pessoas também repetem, ex.: letra
+ * de hino): a conversa só fica com a equipe, sem ignorar o número.
  */
 public final class AutomatedSenderDetector {
 
@@ -45,7 +48,10 @@ public final class AutomatedSenderDetector {
     /** Emoji de número: 1️⃣ = "1" + U+FE0F + U+20E3. */
     private static final char KEYCAP = '⃣';
 
-    /** Mensagem idêntica repetida com resposta nossa no meio: ninguém digita igual duas vezes. */
+    /** Mensagem de template da API do WhatsApp: só empresas enviam. */
+    private static final String TEMPLATE_PLACEHOLDER = "[templatemessage]";
+
+    /** Mensagem idêntica repetida com resposta nossa no meio. */
     private static final int MIN_REPEATED_LENGTH = 15;
 
     private AutomatedSenderDetector() {
@@ -55,13 +61,16 @@ public final class AutomatedSenderDetector {
      * @param current texto da mensagem que acabou de chegar
      * @param recent  histórico recente da conversa em ordem cronológica (pode
      *                incluir a própria mensagem atual)
-     * @return o motivo, quando a mensagem parece vir de um robô
+     * @return o motivo, quando a mensagem com certeza vem de um robô
      */
     public static Optional<String> detect(String current, List<Message> recent) {
         if (current == null || current.isBlank()) {
             return Optional.empty();
         }
         String normalized = normalize(current);
+        if (normalized.equals(TEMPLATE_PLACEHOLDER)) {
+            return Optional.of("mensagem de template (envio automático de empresa)");
+        }
         for (String phrase : AUTOMATED_PHRASES) {
             if (normalized.contains(phrase)) {
                 return Optional.of("frase de mensagem automática (\"" + phrase + "\")");
@@ -73,6 +82,18 @@ public final class AutomatedSenderDetector {
         if (menuLines >= 2 || keycaps >= 2) {
             return Optional.of("menu numerado de atendimento automático");
         }
+        return Optional.empty();
+    }
+
+    /**
+     * Indício fraco de robô: a mesma mensagem já tinha chegado e nós respondemos
+     * entre as duas. Não basta para ignorar o número.
+     */
+    public static Optional<String> detectRepeated(String current, List<Message> recent) {
+        if (current == null || current.isBlank()) {
+            return Optional.empty();
+        }
+        String normalized = normalize(current);
         if (normalized.length() >= MIN_REPEATED_LENGTH && repeatedAfterOurReply(normalized, recent)) {
             return Optional.of("mesma mensagem repetida após a nossa resposta");
         }
