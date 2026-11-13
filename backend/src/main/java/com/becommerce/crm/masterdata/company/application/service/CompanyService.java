@@ -263,8 +263,8 @@ public class CompanyService implements CompanyUseCase {
         if (request.cnpj() != null) {
             String document = request.cnpj().isBlank() ? null : request.cnpj().trim();
             if (document != null && !document.equals(company.getCnpj())) {
-                companyRepository.findByCnpj(document)
-                        .filter(other -> !other.getId().equals(company.getId()))
+                companyRepository.findIdByCnpj(document)
+                        .filter(otherId -> !otherId.equals(company.getId()))
                         .ifPresent(other -> {
                             throw new CompanyAlreadyExistsException("CNPJ", document);
                         });

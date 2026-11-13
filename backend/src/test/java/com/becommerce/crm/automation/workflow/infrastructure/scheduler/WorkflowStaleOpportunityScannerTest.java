@@ -45,7 +45,7 @@ class WorkflowStaleOpportunityScannerTest {
         Opportunity stale = Opportunity.reconstitute(oppId, companyId, "Parada", new BigDecimal("1000"),
                 contactId, null, null, null, null, OpportunityStatus.OPEN,
                 null, null, null, null, LocalDateTime.now().minusDays(10), LocalDateTime.now());
-        when(companyRepository.findAll()).thenReturn(List.of(mockCompany()));
+        when(companyRepository.findAllIds()).thenReturn(List.of(companyId));
         when(opportunityRepository.findByCompanyId(companyId)).thenReturn(List.of(stale));
         when(stageRepository.findByCompanyId(companyId)).thenReturn(List.of());
         when(activityRepository.findLatestActivityAtByOpportunityId(oppId)).thenReturn(Optional.empty());
@@ -68,7 +68,7 @@ class WorkflowStaleOpportunityScannerTest {
         Opportunity fresh = Opportunity.reconstitute(oppId, companyId, "Nova", new BigDecimal("1000"),
                 contactId, null, null, null, null, OpportunityStatus.OPEN,
                 null, null, null, null, LocalDateTime.now().minusDays(1), LocalDateTime.now());
-        when(companyRepository.findAll()).thenReturn(List.of(mockCompany()));
+        when(companyRepository.findAllIds()).thenReturn(List.of(companyId));
         when(opportunityRepository.findByCompanyId(companyId)).thenReturn(List.of(fresh));
         when(stageRepository.findByCompanyId(companyId)).thenReturn(List.of());
         when(activityRepository.findLatestActivityAtByOpportunityId(oppId)).thenReturn(Optional.empty());
@@ -85,7 +85,7 @@ class WorkflowStaleOpportunityScannerTest {
                 contactId, null, null, null, null, OpportunityStatus.WON,
                 LocalDateTime.now().minusDays(10), null, null, null,
                 LocalDateTime.now().minusDays(15), LocalDateTime.now());
-        when(companyRepository.findAll()).thenReturn(List.of(mockCompany()));
+        when(companyRepository.findAllIds()).thenReturn(List.of(companyId));
         when(opportunityRepository.findByCompanyId(companyId)).thenReturn(List.of(won));
         when(stageRepository.findByCompanyId(companyId)).thenReturn(List.of());
 

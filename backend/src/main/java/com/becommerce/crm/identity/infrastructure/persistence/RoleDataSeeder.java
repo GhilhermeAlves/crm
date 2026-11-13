@@ -10,6 +10,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @Order(1)
@@ -28,26 +29,32 @@ public class RoleDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        List<Company> activeCompanies = companyRepository.findAll().stream()
-                .filter(company -> company.getStatus() != null && company.getStatus().isActive())
-                .toList();
-
-        if (activeCompanies.isEmpty()) {
+        // V134: companies tem RLS — lista os ids e lê cada empresa com o tenant dela.
+        List<UUID> companyIds = companyRepository.findAllIds();
+        if (companyIds.isEmpty()) {
             log.warn("Nenhuma empresa disponível para o seed de roles de sistema; pulando.");
             return;
         }
 
-        for (Company company : activeCompanies) {
-            TenantContext.setCompanyId(company.getId());
+        int seeded = 0;
+        for (UUID companyId : companyIds) {
+            TenantContext.setCompanyId(companyId);
             try {
-                roleSeedService.seedRoles(company.getId());
+                boolean active = companyRepository.findById(companyId)
+                        .map(Company::getStatus)
+                        .map(status -> status.isActive())
+                        .orElse(false);
+                if (active) {
+                    roleSeedService.seedRoles(companyId);
+                    seeded++;
+                }
             } catch (Exception e) {
-                log.error("Erro ao seedar roles para empresa {}: {}", company.getId(), e.getMessage(), e);
+                log.error("Erro ao seedar roles para empresa {}: {}", companyId, e.getMessage(), e);
             } finally {
                 TenantContext.clear();
             }
         }
 
-        log.info("Role seeding completed for {} companies", activeCompanies.size());
+        log.info("Role seeding completed for {} companies", seeded);
     }
 }

@@ -9,9 +9,21 @@ import java.util.UUID;
 public interface CompanyRepository {
     Company save(Company company);
     Optional<Company> findById(UUID id);
-    Optional<Company> findByCnpj(String cnpj);
+    /**
+     * Id da empresa com o CNPJ/CPF, entre TODAS as empresas (V134: ignora o RLS
+     * de companies, para a checagem de duplicidade enxergar as demais).
+     */
+    Optional<UUID> findIdByCnpj(String cnpj);
+    /** Checagem de duplicidade entre todas as empresas (V134, ignora o RLS). */
     boolean existsByCnpj(String cnpj);
+    /** Checagem de duplicidade entre todas as empresas (V134, ignora o RLS). */
     boolean existsByEmail(String email);
+    /** Empresas visíveis pelo RLS de companies (V134) na sessão atual. */
     List<Company> findAll();
+    /**
+     * Ids de todas as empresas, para jobs e seeders sem usuário (V134). Os dados
+     * de cada empresa devem ser lidos já com o tenant dela.
+     */
+    List<UUID> findAllIds();
     void deleteById(UUID id);
 }

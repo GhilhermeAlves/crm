@@ -5,7 +5,6 @@ import com.becommerce.crm.identity.application.port.output.RoleRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
 import com.becommerce.crm.identity.membership.application.port.output.MembershipRepository;
-import com.becommerce.crm.masterdata.company.domain.Company;
 import com.becommerce.crm.identity.domain.Role;
 import com.becommerce.crm.identity.domain.UserRole;
 import com.becommerce.crm.identity.domain.valueobject.RoleName;
@@ -59,16 +58,17 @@ public class MembershipDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        List<Company> companies = companyRepository.findAll();
-        if (companies.isEmpty()) {
+        // V134: companies tem RLS — sem usuário, só os ids estão disponíveis.
+        List<UUID> companyIds = companyRepository.findAllIds();
+        if (companyIds.isEmpty()) {
             log.info("Membership seed: nenhuma empresa disponível; pulando.");
             return;
         }
         int created = 0;
-        for (Company company : companies) {
-            created += seedCompany(company.getId());
+        for (UUID companyId : companyIds) {
+            created += seedCompany(companyId);
         }
-        log.info("Membership seeding completed: {} membership(s) criada(s) em {} empresa(s)", created, companies.size());
+        log.info("Membership seeding completed: {} membership(s) criada(s) em {} empresa(s)", created, companyIds.size());
     }
 
     private int seedCompany(UUID companyId) {
