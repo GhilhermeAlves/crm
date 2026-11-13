@@ -21,4 +21,8 @@ public interface ContactJpaRepository extends JpaRepository<ContactJpaEntity, UU
     boolean existsByCompanyIdAndRecordNumber(UUID companyId, String recordNumber);
 
     boolean existsByCompanyIdAndRecordNumberAndIdNot(UUID companyId, String recordNumber, UUID id);
+
+    boolean existsByCompanyIdAndEmailAndDeletedAtIsNull(UUID companyId, String email);
+
+    boolean existsByCompanyIdAndEmailAndDeletedAtIsNullAndIdNot(UUID companyId, String email, UUID id);
 }

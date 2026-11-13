@@ -63,6 +63,14 @@ public class ContactRepositoryImpl implements ContactRepository {
         return jpaRepository.existsByCompanyIdAndRecordNumberAndIdNot(companyId, recordNumber, excludeContactId);
     }
 
+    @Override
+    public boolean existsActiveByEmail(UUID companyId, String email, UUID excludeContactId) {
+        if (excludeContactId == null) {
+            return jpaRepository.existsByCompanyIdAndEmailAndDeletedAtIsNull(companyId, email);
+        }
+        return jpaRepository.existsByCompanyIdAndEmailAndDeletedAtIsNullAndIdNot(companyId, email, excludeContactId);
+    }
+
     private static ContactJpaEntity toEntity(Contact c) {
         ContactJpaEntity e = new ContactJpaEntity();
         e.setId(c.getId());

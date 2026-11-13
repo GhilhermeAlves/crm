@@ -147,7 +147,6 @@ export function AnamnesisFields({
                   <DateTimePicker
                     dateOnly
                     disableFuture
-                    fromYear={1920}
                     placeholder="dd/mm/aaaa"
                     value={text || undefined}
                     onChange={(v) => update(question.id, { value: v })}
