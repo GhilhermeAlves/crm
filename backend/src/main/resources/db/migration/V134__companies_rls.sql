@@ -1,4 +1,4 @@
--- V133__companies_rls.sql
+-- V134__companies_rls.sql
 -- RLS em companies. Até a V132 a tabela não tinha RLS: qualquer consulta do
 -- crm_app enxergava e alterava todas as empresas. A partir daqui:
 --

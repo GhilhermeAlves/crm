@@ -29,7 +29,7 @@ public class RoleDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // V133: companies tem RLS — lista os ids e lê cada empresa com o tenant dela.
+        // V134: companies tem RLS — lista os ids e lê cada empresa com o tenant dela.
         List<UUID> companyIds = companyRepository.findAllIds();
         if (companyIds.isEmpty()) {
             log.warn("Nenhuma empresa disponível para o seed de roles de sistema; pulando.");

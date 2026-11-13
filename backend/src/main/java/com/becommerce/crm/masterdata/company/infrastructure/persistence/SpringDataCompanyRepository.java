@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface SpringDataCompanyRepository extends JpaRepository<CompanyJpaEntity, UUID> {
-    // V133: companies tem RLS; estas consultas precisam de todas as empresas.
+    // V134: companies tem RLS; estas consultas precisam de todas as empresas.
     @Query(value = "SELECT app.company_id_by_cnpj(:cnpj)", nativeQuery = true)
     UUID findIdByCnpj(@Param("cnpj") String cnpj);
 

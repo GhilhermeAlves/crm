@@ -58,7 +58,7 @@ public class MembershipDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // V133: companies tem RLS — sem usuário, só os ids estão disponíveis.
+        // V134: companies tem RLS — sem usuário, só os ids estão disponíveis.
         List<UUID> companyIds = companyRepository.findAllIds();
         if (companyIds.isEmpty()) {
             log.info("Membership seed: nenhuma empresa disponível; pulando.");
