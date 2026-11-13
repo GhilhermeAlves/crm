@@ -38,13 +38,29 @@ class AutomatedSenderDetectorTest {
     }
 
     @Test
-    void shouldDetectSameMessageRepeatedAfterOurReply() {
+    void repeatedMessageIsOnlyAWeakSignalNotEnoughToIgnore() {
         String greeting = "Olá! Obrigado por entrar em contato com a Loja X.";
         List<Message> recent = List.of(
                 message(MessageDirection.INBOUND, greeting),
                 message(MessageDirection.OUTBOUND, "Oi! Quer agendar uma avaliação?"),
                 message(MessageDirection.INBOUND, greeting));
-        assertTrue(AutomatedSenderDetector.detect(greeting, recent).isPresent());
+        assertTrue(AutomatedSenderDetector.detectRepeated(greeting, recent).isPresent());
+        assertFalse(AutomatedSenderDetector.detect(greeting, recent).isPresent());
+    }
+
+    @Test
+    void shouldDetectWhatsAppTemplateMessage() {
+        assertTrue(AutomatedSenderDetector.detect("[templateMessage]", List.of()).isPresent());
+    }
+
+    @Test
+    void stickersReactionsAndShortGreetingsAreNotBots() {
+        assertFalse(AutomatedSenderDetector.detect("[stickerMessage]", List.of()).isPresent());
+        assertFalse(AutomatedSenderDetector.detect("[reactionMessage]", List.of()).isPresent());
+        assertFalse(AutomatedSenderDetector.detect("A paz do senhor Jesus", List.of()).isPresent());
+        assertFalse(AutomatedSenderDetector.detectRepeated("Bom dia", List.of(
+                message(MessageDirection.INBOUND, "Bom dia"),
+                message(MessageDirection.OUTBOUND, "Bom dia! Como posso ajudar?"))).isPresent());
     }
 
     @Test
