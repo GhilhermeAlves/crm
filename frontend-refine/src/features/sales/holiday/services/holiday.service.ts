@@ -15,10 +15,7 @@ export class HolidayService {
   }
 
   static async create(companyId: string, data: CreateHolidayRequest): Promise<CompanyHoliday> {
-    const response = await api.post<CompanyHoliday>(
-      `/companies/${companyId}/holidays`,
-      data,
-    );
+    const response = await api.post<CompanyHoliday>(`/companies/${companyId}/holidays`, data);
     return response.data;
   }
 
@@ -27,10 +24,7 @@ export class HolidayService {
     id: string,
     data: UpdateHolidayRequest,
   ): Promise<CompanyHoliday> {
-    const response = await api.put<CompanyHoliday>(
-      `/companies/${companyId}/holidays/${id}`,
-      data,
-    );
+    const response = await api.put<CompanyHoliday>(`/companies/${companyId}/holidays/${id}`, data);
     return response.data;
   }
 
