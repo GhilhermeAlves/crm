@@ -106,14 +106,24 @@ export const TenantService = {
 };
 
 export const CompanyPreferencesService = {
-  async getContactRules(companyId: string): Promise<{ requireContactCpf: boolean }> {
-    const response = await api.get<{ requireContactCpf: boolean }>(
-      `${BASE_PATH}/${companyId}/settings/contact-rules`,
-    );
+  async getContactRules(
+    companyId: string,
+  ): Promise<{ requireContactCpf: boolean; autoBudgetFromProcedures?: boolean }> {
+    const response = await api.get<{
+      requireContactCpf: boolean;
+      autoBudgetFromProcedures?: boolean;
+    }>(`${BASE_PATH}/${companyId}/settings/contact-rules`);
     return response.data;
   },
 
   async setRequireContactCpf(companyId: string, requireContactCpf: boolean): Promise<void> {
     await api.put(`${BASE_PATH}/${companyId}/settings`, { requireContactCpf });
+  },
+
+  async setAutoBudgetFromProcedures(
+    companyId: string,
+    autoBudgetFromProcedures: boolean,
+  ): Promise<void> {
+    await api.put(`${BASE_PATH}/${companyId}/settings`, { autoBudgetFromProcedures });
   },
 };

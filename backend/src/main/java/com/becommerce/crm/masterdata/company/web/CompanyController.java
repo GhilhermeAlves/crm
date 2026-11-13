@@ -78,7 +78,8 @@ public class CompanyController {
     public ResponseEntity<java.util.Map<String, Boolean>> getContactRules(@PathVariable UUID id,
                                                                         @AuthenticationPrincipal CurrentUser principal) {
         CompanySettingsResponse settings = companyUseCase.getCompanySettings(id, principal.companyId());
-        return ResponseEntity.ok(java.util.Map.of("requireContactCpf", settings.requireContactCpf()));
+        return ResponseEntity.ok(java.util.Map.of("requireContactCpf", settings.requireContactCpf(),
+                "autoBudgetFromProcedures", settings.autoBudgetFromProcedures()));
     }
 
     @PostMapping

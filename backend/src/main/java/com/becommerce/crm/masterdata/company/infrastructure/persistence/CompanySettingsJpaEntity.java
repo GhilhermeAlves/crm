@@ -44,6 +44,9 @@ public class CompanySettingsJpaEntity implements Persistable<UUID> {
     @Column(name = "require_contact_cpf", nullable = false)
     private boolean requireContactCpf;
 
+    @Column(name = "auto_budget_from_procedures", nullable = false)
+    private boolean autoBudgetFromProcedures;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -79,6 +82,8 @@ public class CompanySettingsJpaEntity implements Persistable<UUID> {
     public void setNotificationPreferences(String notificationPreferences) { this.notificationPreferences = notificationPreferences; }
 
     public boolean isRequireContactCpf() { return requireContactCpf; }
+    public boolean isAutoBudgetFromProcedures() { return autoBudgetFromProcedures; }
+    public void setAutoBudgetFromProcedures(boolean autoBudgetFromProcedures) { this.autoBudgetFromProcedures = autoBudgetFromProcedures; }
     public void setRequireContactCpf(boolean requireContactCpf) { this.requireContactCpf = requireContactCpf; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }

@@ -16,6 +16,7 @@ public class CompanySettingsMapper {
         entity.setBusinessHours(settings.getBusinessHours());
         entity.setNotificationPreferences(settings.getNotificationPreferences());
         entity.setRequireContactCpf(settings.isRequireContactCpf());
+        entity.setAutoBudgetFromProcedures(settings.isAutoBudgetFromProcedures());
         entity.setCreatedAt(settings.getCreatedAt());
         entity.setUpdatedAt(settings.getUpdatedAt());
         return entity;
@@ -34,6 +35,7 @@ public class CompanySettingsMapper {
                 entity.getUpdatedAt()
         );
         settings.restoreRequireContactCpf(entity.isRequireContactCpf());
+        settings.restoreAutoBudgetFromProcedures(entity.isAutoBudgetFromProcedures());
         return settings;
     }
 }

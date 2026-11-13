@@ -93,3 +93,20 @@ export function useSetRequireContactCpf(companyId: string | null | undefined) {
     onError: onError({ errorMessage: "Erro ao salvar preferência" }),
   });
 }
+
+export function useSetAutoBudgetFromProcedures(companyId: string | null | undefined) {
+  const { onSuccess, onError } = useMutationDefaults();
+
+  return useMutation({
+    mutationFn: (autoBudgetFromProcedures: boolean) =>
+      CompanyPreferencesService.setAutoBudgetFromProcedures(
+        companyId as string,
+        autoBudgetFromProcedures,
+      ),
+    onSuccess: onSuccess({
+      successMessage: "Preferência salva",
+      invalidateKeys: [["contact-rules", companyId]],
+    }),
+    onError: onError({ errorMessage: "Erro ao salvar preferência" }),
+  });
+}

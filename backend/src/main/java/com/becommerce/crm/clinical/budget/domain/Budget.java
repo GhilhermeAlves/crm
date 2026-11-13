@@ -153,6 +153,42 @@ public class Budget {
         touch(actorId);
     }
 
+    /** Orçamento automático (V135): inclui o procedimento planejado no rascunho. */
+    public void addItemForProcedure(UUID procedureId, long priceCents, UUID actorId) {
+        if (!isDraft()) {
+            throw new ContactConflictException("Só orçamentos em rascunho podem ser editados.");
+        }
+        if (items.stream().anyMatch(item -> item.procedureId().equals(procedureId))) {
+            return;
+        }
+        List<BudgetItem> next = new ArrayList<>(items);
+        next.add(new BudgetItem(UUID.randomUUID(), procedureId, priceCents, next.size()));
+        this.items = List.copyOf(next);
+        touch(actorId);
+    }
+
+    /** Orçamento automático (V135): o item acompanha o valor do procedimento editado. */
+    public void updateItemPrice(UUID procedureId, long priceCents, UUID actorId) {
+        if (!isDraft()) {
+            return;
+        }
+        List<BudgetItem> next = new ArrayList<>();
+        boolean changed = false;
+        for (BudgetItem item : items) {
+            if (item.procedureId().equals(procedureId) && item.priceCents() != priceCents) {
+                next.add(new BudgetItem(item.id(), item.procedureId(), priceCents, item.position()));
+                changed = true;
+            } else {
+                next.add(item);
+            }
+        }
+        if (changed) {
+            this.items = List.copyOf(next);
+            this.discountCents = Math.min(discountCents, subtotalCents());
+            touch(actorId);
+        }
+    }
+
     public long subtotalCents() {
         return items.stream().mapToLong(BudgetItem::priceCents).sum();
     }
