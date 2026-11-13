@@ -81,14 +81,15 @@ AS $$
     WHERE r.token = app.current_registration_token();
 $$;
 
+-- RETURNS TABLE (id): o código consulta "SELECT id FROM app.all_company_ids()".
 CREATE OR REPLACE FUNCTION app.all_company_ids()
-RETURNS SETOF UUID
+RETURNS TABLE (id UUID)
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-    SELECT id FROM companies ORDER BY created_at, id;
+    SELECT c.id FROM companies c ORDER BY c.created_at, c.id;
 $$;
 
 CREATE OR REPLACE FUNCTION app.company_id_by_cnpj(p_cnpj TEXT)
