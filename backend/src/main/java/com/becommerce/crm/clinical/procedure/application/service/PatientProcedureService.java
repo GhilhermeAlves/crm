@@ -97,6 +97,15 @@ public class PatientProcedureService implements PatientProcedureUseCase {
     }
     private final BudgetRepository budgetRepository;
 
+    private com.becommerce.crm.clinical.budget.application.service.BudgetDraftTransactionSync draftSync;
+
+    /** Mantém o lançamento previsto do orçamento em rascunho (opcional nos testes). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setBudgetDraftTransactionSync(
+            com.becommerce.crm.clinical.budget.application.service.BudgetDraftTransactionSync draftSync) {
+        this.draftSync = draftSync;
+    }
+
     public PatientProcedureService(PatientProcedureRepository repository,
                                    ContactRepository contactRepository,
                                    CatalogItemRepository catalogRepository,
@@ -316,6 +325,7 @@ public class PatientProcedureService implements PatientProcedureUseCase {
         } else {
             open.addItemForProcedure(procedure.getId(), procedure.getPriceCents(), actorId);
         }
+        syncDraft(open, actorId);
         budgetRepository.save(open);
     }
 
@@ -339,6 +349,12 @@ public class PatientProcedureService implements PatientProcedureUseCase {
         return tx;
     }
 
+    private void syncDraft(Budget budget, UUID actorId) {
+        if (draftSync != null) {
+            draftSync.sync(budget, actorId);
+        }
+    }
+
     private Budget activeBudgetOf(UUID companyId, UUID procedureId) {
         return budgetRepository.findActiveByProcedureIds(companyId, List.of(procedureId)).get(procedureId);
     }
@@ -349,8 +365,12 @@ public class PatientProcedureService implements PatientProcedureUseCase {
         }
         budget.removeItemForProcedure(procedureId, actorId);
         if (budget.getItems().isEmpty()) {
+            if (draftSync != null) {
+                draftSync.discard(budget);
+            }
             budgetRepository.delete(budget);
         } else {
+            syncDraft(budget, actorId);
             budgetRepository.save(budget);
         }
     }
