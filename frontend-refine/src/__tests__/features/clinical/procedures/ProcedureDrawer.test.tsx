@@ -183,6 +183,29 @@ describe("ProcedureDrawer", () => {
     expect((screen.getByLabelText("Observações") as HTMLTextAreaElement).disabled).toBe(false);
   });
 
+  it("com vários dentes o valor é por dente e o total soma todos", () => {
+    const mutate = vi.fn();
+    updateMutate.fn = mutate;
+    renderDrawer(
+      makeProcedure({
+        priceCents: 20000,
+        teeth: [
+          { tooth: 11, faces: [] },
+          { tooth: 12, faces: [] },
+        ],
+      }),
+    );
+    // 2 dentes por R$ 200,00 no total → R$ 100,00 por dente
+    const price = screen.getByLabelText("Valor por dente (R$)") as HTMLInputElement;
+    expect(price.value).toBe("100,00");
+    openTeeth();
+    fireEvent.click(screen.getByRole("button", { name: "Dente 13" }));
+    expect(screen.getByTestId("procedure-total").textContent).toContain("3 dentes");
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+    const { payload } = mutate.mock.calls[0][0] as { payload: Record<string, unknown> };
+    expect(payload.priceCents).toBe(30000);
+  });
+
   it("seletor de dentes em toggle marca, mostra faces e desmarca", () => {
     renderDrawer(null);
     openTeeth();

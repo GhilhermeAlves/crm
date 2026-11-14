@@ -6,6 +6,7 @@ public record UpdateCompanySettingsRequest(
         String currency,
         String businessHours,
         String notificationPreferences,
-        Boolean requireContactCpf
+        Boolean requireContactCpf,
+        Boolean autoBudgetFromProcedures
 ) {
 }

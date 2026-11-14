@@ -66,6 +66,9 @@ const catalogCents = (item?: CatalogItem | null) =>
 const formatBRL = (reais: number) =>
   reais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+/** Valor cobrado por dente: sem dente marcado (boca toda) conta como 1. */
+const teethCount = (teeth: ProcedureTooth[]) => Math.max(1, teeth.length);
+
 export function ProcedureDrawer({
   companyId,
   contactId,
@@ -89,6 +92,7 @@ export function ProcedureDrawer({
 
   const [state, setState] = useState<ProcedureState>("PLANNED");
   const [catalogItemId, setCatalogItemId] = useState("");
+  /** Valor por dente; o total do procedimento é este valor × quantidade de dentes. */
   const [priceCents, setPriceCents] = useState<number | null>(null);
   const [dentition, setDentition] = useState<Dentition>("PERMANENT");
   const [teeth, setTeeth] = useState<ProcedureTooth[]>([]);
@@ -102,7 +106,9 @@ export function ProcedureDrawer({
     if (!open) return;
     setState(procedure?.state ?? "PLANNED");
     setCatalogItemId(procedure?.catalogItemId ?? "");
-    setPriceCents(procedure ? procedure.priceCents : null);
+    setPriceCents(
+      procedure ? Math.round(procedure.priceCents / teethCount(procedure.teeth)) : null,
+    );
     if (procedure) {
       setDentition(procedure.dentition);
       setTeeth(procedure.teeth);
@@ -118,6 +124,7 @@ export function ProcedureDrawer({
   }, [open, procedure, initialTooth, initialDentition]);
 
   const locked = procedure?.state === "DONE";
+  const totalCents = priceCents == null ? null : priceCents * teethCount(teeth);
   const editing = Boolean(procedure);
   const canFinance = can("finance:create");
   // Procedimento de orçamento aprovado já é cobrado pelo orçamento.
@@ -214,7 +221,7 @@ export function ProcedureDrawer({
             catalogItemId,
             state,
             dentition,
-            priceCents: priceCents ?? 0,
+            priceCents: totalCents ?? 0,
             professionalId: professionalId === NO_PROFESSIONAL ? null : professionalId,
             notes: notes || null,
             performedAt: state === "DONE" ? performedAt : null,
@@ -304,7 +311,9 @@ export function ProcedureDrawer({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${uid}-price`}>Valor (R$)</Label>
+              <Label htmlFor={`${uid}-price`}>
+                {teeth.length > 1 ? "Valor por dente (R$)" : "Valor (R$)"}
+              </Label>
               <Input
                 id={`${uid}-price`}
                 type="text"
@@ -314,6 +323,11 @@ export function ProcedureDrawer({
                 value={centsToMask(priceCents)}
                 onChange={(e) => setPriceCents(maskToCents(e.target.value))}
               />
+              {teeth.length > 1 && totalCents != null && (
+                <p className="text-sm text-muted-foreground" data-testid="procedure-total">
+                  Total: {formatBRL(totalCents / 100)} ({teeth.length} dentes)
+                </p>
+              )}
             </div>
 
             {state === "DONE" && (

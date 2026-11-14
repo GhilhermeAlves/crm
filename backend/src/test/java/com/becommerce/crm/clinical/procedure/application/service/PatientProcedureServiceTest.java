@@ -435,4 +435,75 @@ class PatientProcedureServiceTest {
                 false, null);
         assertThat(service.update(COMPANY_ID, CONTACT_ID, p.getId(), req, ACTOR_ID).notes()).isEqualTo("novas");
     }
+
+    // ===== orçamento automático (V135) =====
+
+    private void enableAutoBudget() {
+        com.becommerce.crm.masterdata.company.application.port.output.CompanySettingsRepository settingsRepository =
+                mock(com.becommerce.crm.masterdata.company.application.port.output.CompanySettingsRepository.class);
+        com.becommerce.crm.masterdata.company.domain.CompanySettings settings =
+                com.becommerce.crm.masterdata.company.domain.CompanySettings.create(COMPANY_ID,
+                        "America/Sao_Paulo", "pt-BR", "BRL", null, null);
+        settings.setAutoBudgetFromProcedures(true);
+        when(settingsRepository.findByCompanyId(COMPANY_ID)).thenReturn(Optional.of(settings));
+        service.setCompanySettingsRepository(settingsRepository);
+        lenient().when(budgetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    @Test
+    void autoBudgetOpensDraftBudgetForFirstPlannedProcedure() {
+        enableAutoBudget();
+        when(budgetRepository.findByCompanyIdAndContactIdOrderByUpdatedAtDesc(COMPANY_ID, CONTACT_ID))
+                .thenReturn(List.of());
+
+        PatientProcedureResponse r = service.create(COMPANY_ID, CONTACT_ID,
+                request(ProcedureState.PLANNED, 60000, null, false), ACTOR_ID, false);
+
+        ArgumentCaptor<Budget> captor = ArgumentCaptor.forClass(Budget.class);
+        verify(budgetRepository).save(captor.capture());
+        Budget budget = captor.getValue();
+        assertThat(budget.getStatus()).isEqualTo(BudgetStatus.DRAFT);
+        assertThat(budget.getTitle()).isEqualTo(PatientProcedureService.AUTO_BUDGET_TITLE);
+        assertThat(budget.getItems()).extracting(BudgetItem::procedureId).containsExactly(r.id());
+        assertThat(budget.totalCents()).isEqualTo(60000);
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    void autoBudgetAddsPlannedProcedureToPatientsOpenDraft() {
+        enableAutoBudget();
+        PatientProcedure first = existing(ProcedureState.PLANNED);
+        Budget open = Budget.create(COMPANY_ID, CONTACT_ID, "Plano de tratamento",
+                List.of(new BudgetItem(UUID.randomUUID(), first.getId(), 15000, 0)), 0, null, ACTOR_ID);
+        when(budgetRepository.findByCompanyIdAndContactIdOrderByUpdatedAtDesc(COMPANY_ID, CONTACT_ID))
+                .thenReturn(List.of(open));
+
+        service.create(COMPANY_ID, CONTACT_ID, request(ProcedureState.PLANNED, 35000, null, false), ACTOR_ID, false);
+
+        verify(budgetRepository).save(open);
+        assertThat(open.getItems()).hasSize(2);
+        assertThat(open.totalCents()).isEqualTo(50000);
+    }
+
+    @Test
+    void autoBudgetCreatesReceivableWhenProcedureIsCompletedEvenWithoutFinancePermission() {
+        enableAutoBudget();
+        PatientProcedure planned = existing(ProcedureState.PLANNED);
+        when(budgetRepository.findActiveByProcedureIds(eq(COMPANY_ID), any())).thenReturn(java.util.Map.of());
+
+        PatientProcedureResponse r = service.complete(COMPANY_ID, CONTACT_ID, planned.getId(),
+                new CompleteProcedureRequest(LocalDate.now(), null, false, null), ACTOR_ID, false);
+
+        ArgumentCaptor<FinancialTransaction> captor = ArgumentCaptor.forClass(FinancialTransaction.class);
+        verify(transactionRepository).save(captor.capture());
+        assertThat(captor.getValue().getAmountCents()).isEqualTo(15000);
+        assertThat(captor.getValue().getStatus()).isEqualTo(TransactionStatus.PENDING);
+        assertThat(r.transaction()).isNotNull();
+    }
+
+    @Test
+    void withoutAutoBudgetPlannedProcedureDoesNotTouchBudgets() {
+        service.create(COMPANY_ID, CONTACT_ID, request(ProcedureState.PLANNED, 15000, null, false), ACTOR_ID, false);
+        verify(budgetRepository, never()).save(any());
+    }
 }

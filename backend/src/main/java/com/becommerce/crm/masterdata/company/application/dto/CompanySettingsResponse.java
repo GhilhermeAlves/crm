@@ -10,6 +10,7 @@ public record CompanySettingsResponse(
         String businessHours,
         String notificationPreferences,
         boolean requireContactCpf,
+        boolean autoBudgetFromProcedures,
         LocalDateTime updatedAt
 ) {
 }

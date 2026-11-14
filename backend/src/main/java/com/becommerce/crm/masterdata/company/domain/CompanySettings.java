@@ -18,6 +18,7 @@ public class CompanySettings {
     private String businessHours;
     private String notificationPreferences;
     private boolean requireContactCpf;
+    private boolean autoBudgetFromProcedures;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -99,6 +100,20 @@ public class CompanySettings {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /** Reidratação a partir da persistência, sem tocar em updatedAt. */
+    public void restoreAutoBudgetFromProcedures(boolean autoBudgetFromProcedures) {
+        this.autoBudgetFromProcedures = autoBudgetFromProcedures;
+    }
+
+    /**
+     * Procedimento planejado entra sozinho no orçamento em aberto do paciente e o
+     * lançamento a receber nasce quando ele é realizado (V135).
+     */
+    public void setAutoBudgetFromProcedures(boolean autoBudgetFromProcedures) {
+        this.autoBudgetFromProcedures = autoBudgetFromProcedures;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void update(
             String timezone,
             String locale,
@@ -122,6 +137,7 @@ public class CompanySettings {
     public String getBusinessHours() { return businessHours; }
     public String getNotificationPreferences() { return notificationPreferences; }
     public boolean isRequireContactCpf() { return requireContactCpf; }
+    public boolean isAutoBudgetFromProcedures() { return autoBudgetFromProcedures; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 

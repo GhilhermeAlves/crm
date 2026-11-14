@@ -5,6 +5,7 @@ import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.clinical.budget.application.port.out.BudgetRepository;
 import com.becommerce.crm.clinical.budget.domain.Budget;
+import com.becommerce.crm.clinical.budget.domain.BudgetItem;
 import com.becommerce.crm.clinical.procedure.application.dto.CompleteProcedureRequest;
 import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureRequest;
 import com.becommerce.crm.clinical.procedure.application.dto.PatientProcedureResponse;
@@ -28,6 +29,8 @@ import com.becommerce.crm.identity.membership.application.port.output.Membership
 import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
+import com.becommerce.crm.masterdata.company.application.port.output.CompanySettingsRepository;
+import com.becommerce.crm.masterdata.company.domain.CompanySettings;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactConflictException;
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundException;
@@ -74,6 +77,17 @@ public class PatientProcedureService implements PatientProcedureUseCase {
     @Autowired(required = false)
     public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
         this.timeline = timeline;
+    }
+
+    /** Título do orçamento aberto automaticamente (V135). */
+    static final String AUTO_BUDGET_TITLE = "Plano de tratamento";
+
+    private CompanySettingsRepository companySettingsRepository;
+
+    /** Opcional: preferência "orçamento automático" da empresa (V135). */
+    @Autowired(required = false)
+    public void setCompanySettingsRepository(CompanySettingsRepository companySettingsRepository) {
+        this.companySettingsRepository = companySettingsRepository;
     }
 
     private void note(UUID companyId, UUID contactId, String body, UUID actorId) {
@@ -142,7 +156,14 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             rememberPriceInCatalog(item, request.priceCents());
             FinancialTransaction generated = maybeGenerateTransaction(procedure, request.generateTransaction(),
                     request.dueDate(), actorId, canCreateFinance);
+            boolean auto = autoBudget(companyId);
+            if (auto && generated == null) {
+                generated = autoTransaction(procedure, actorId);
+            }
             repository.save(procedure);
+            if (auto && procedure.getState() == ProcedureState.PLANNED) {
+                attachToOpenBudget(procedure, actorId);
+            }
 
             note(companyId, contactId, "Procedimento registrado: " + procedure.getNameSnapshot(), actorId);
             auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
@@ -175,7 +196,23 @@ public class PatientProcedureService implements PatientProcedureUseCase {
                         request.professionalId(), request.notes(), teeth);
                 procedure.setGenerateTransactionOnDone(request.generateTransaction());
             }
+            boolean auto = autoBudget(companyId);
+            if (auto && procedure.isDone()) {
+                Budget active = activeBudgetOf(companyId, procedureId);
+                if (active == null || !active.isApproved()) {
+                    autoTransaction(procedure, actorId);
+                }
+            }
             repository.save(procedure);
+            if (auto && procedure.getState() == ProcedureState.PLANNED) {
+                Budget active = activeBudgetOf(companyId, procedureId);
+                if (active == null) {
+                    attachToOpenBudget(procedure, actorId);
+                } else if (active.isDraft()) {
+                    active.updateItemPrice(procedureId, procedure.getPriceCents(), actorId);
+                    budgetRepository.save(active);
+                }
+            }
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
                     procedure.getId().toString(), "Procedimento atualizado.", actorId, null);
@@ -204,6 +241,12 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             procedure.complete(request.performedAt(), request.professionalId());
             FinancialTransaction generated = maybeGenerateTransaction(procedure, request.generateTransaction(),
                     request.dueDate(), actorId, canCreateFinance);
+            if (generated == null && autoBudget(companyId)) {
+                Budget active = activeBudgetOf(companyId, procedureId);
+                if (active == null || !active.isApproved()) {
+                    generated = autoTransaction(procedure, actorId);
+                }
+            }
             repository.save(procedure);
 
             note(companyId, contactId, "Procedimento realizado: " + procedure.getNameSnapshot(), actorId);
@@ -248,6 +291,52 @@ public class PatientProcedureService implements PatientProcedureUseCase {
         } finally {
             TenantContext.clear();
         }
+    }
+
+    private boolean autoBudget(UUID companyId) {
+        return companySettingsRepository != null && companySettingsRepository.findByCompanyId(companyId)
+                .map(CompanySettings::isAutoBudgetFromProcedures)
+                .orElse(false);
+    }
+
+    /**
+     * Orçamento automático (V135): o procedimento planejado entra no orçamento em
+     * rascunho mais recente do paciente; sem rascunho, abre um novo.
+     */
+    private void attachToOpenBudget(PatientProcedure procedure, UUID actorId) {
+        Budget open = budgetRepository.findByCompanyIdAndContactIdOrderByUpdatedAtDesc(
+                        procedure.getCompanyId(), procedure.getContactId()).stream()
+                .filter(Budget::isDraft)
+                .findFirst()
+                .orElse(null);
+        if (open == null) {
+            open = Budget.create(procedure.getCompanyId(), procedure.getContactId(), AUTO_BUDGET_TITLE,
+                    List.of(new BudgetItem(UUID.randomUUID(), procedure.getId(), procedure.getPriceCents(), 0)),
+                    0, null, actorId);
+        } else {
+            open.addItemForProcedure(procedure.getId(), procedure.getPriceCents(), actorId);
+        }
+        budgetRepository.save(open);
+    }
+
+    /**
+     * Orçamento automático (V135): procedimento realizado vira conta a receber sem
+     * pedir confirmação — a regra foi ligada pela empresa, por isso não depende da
+     * permissão financeira de quem marcou como realizado.
+     */
+    private FinancialTransaction autoTransaction(PatientProcedure procedure, UUID actorId) {
+        if (!procedure.isDone() || procedure.getFinancialTransactionId() != null
+                || procedure.getPriceCents() <= 0) {
+            return null;
+        }
+        FinancialTransaction tx = FinancialTransaction.create(UUID.randomUUID(), procedure.getCompanyId(),
+                TransactionType.INCOME, describe(procedure), TransactionCategory.PROCEDURE,
+                procedure.getPriceCents(), 0L, PaymentMethod.OTHER, LocalDate.now(),
+                procedure.getContactId(), procedure.getProfessionalId(), procedure.getCatalogItemId(), null, null,
+                actorId);
+        transactionRepository.save(tx);
+        procedure.linkTransaction(tx.getId());
+        return tx;
     }
 
     private Budget activeBudgetOf(UUID companyId, UUID procedureId) {
