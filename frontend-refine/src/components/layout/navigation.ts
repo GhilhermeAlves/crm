@@ -227,6 +227,11 @@ export const NAVIGATION: NavGroup[] = [
             href: `${ROUTES.REPORTS_EXPORT}/agenda`,
             permission: "appointment:read",
           },
+          {
+            label: "Orçamentos",
+            href: `${ROUTES.REPORTS_EXPORT}/budgets`,
+            permission: "contact:read",
+          },
         ],
       },
       { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive, module: "STORAGE" },

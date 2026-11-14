@@ -141,12 +141,12 @@ public class ReportExportService {
 
     private static ExportFormat parseFormat(String raw) {
         if (raw == null || raw.isBlank()) {
-            throw new ReportExportValidationException("O formato é obrigatório (PDF ou XLSX).");
+            throw new ReportExportValidationException("O formato é obrigatório (PDF, XLSX ou CSV).");
         }
         try {
             return ExportFormat.valueOf(raw.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
-            throw new ReportExportValidationException("Formato inválido: " + raw + ". Use PDF ou XLSX.");
+            throw new ReportExportValidationException("Formato inválido: " + raw + ". Use PDF, XLSX ou CSV.");
         }
     }
 

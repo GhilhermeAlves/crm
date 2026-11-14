@@ -5,6 +5,8 @@ import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.reports.export.application.dto.AgendaDataset;
 import com.becommerce.crm.reports.export.application.dto.AgendaDataset.ProfessionalSummary;
+import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
+import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
@@ -13,6 +15,7 @@ import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreLi
 import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.AppointmentRow;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CategoryTotalRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.DailyTotalRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
@@ -79,6 +82,26 @@ public class ReportDatasetBuilder {
 
     public AgendaDataset agenda(UUID companyId, LocalDate from, LocalDate to) {
         return agenda(gateway.appointments(companyId, from, to));
+    }
+
+    public BudgetsDataset budgets(UUID companyId, LocalDate from, LocalDate to) {
+        return budgets(gateway.budgets(companyId, from, to));
+    }
+
+    /** Resumo na ordem do fluxo do orçamento: rascunho → aprovado → perdido. */
+    static BudgetsDataset budgets(List<BudgetRow> rows) {
+        Map<String, long[]> totals = new LinkedHashMap<>();
+        for (String status : List.of("DRAFT", "APPROVED", "LOST")) {
+            totals.put(status, new long[2]);
+        }
+        for (BudgetRow row : rows) {
+            long[] t = totals.computeIfAbsent(row.status(), s -> new long[2]);
+            t[0]++;
+            t[1] += row.totalCents();
+        }
+        List<StatusSummary> byStatus = new ArrayList<>();
+        totals.forEach((status, t) -> byStatus.add(new StatusSummary(status, t[0], t[1])));
+        return new BudgetsDataset(byStatus, rows);
     }
 
     static MonthlyDreDataset dre(List<CategoryTotalRow> rows) {

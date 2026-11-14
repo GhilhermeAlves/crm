@@ -29,5 +29,6 @@ public interface FinancialTransactionRepository {
 
     record PageResult(List<FinancialTransaction> content, long totalElements) {}
 
-    record TransactionReference(String contactName, String professionalName, String catalogItemName) {}
+    record TransactionReference(String contactName, String professionalName, String catalogItemName,
+                                UUID budgetId, String budgetTitle) {}
 }

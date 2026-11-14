@@ -26,6 +26,8 @@ type TransactionsTableProps = {
   onImport: () => void;
   companyId?: string | null;
   onEditTransaction?: (transaction: FinancialTransaction) => void;
+  /** Clique na descrição: abre os detalhes do lançamento. */
+  onOpenTransaction?: (transaction: FinancialTransaction) => void;
 };
 
 const formatDueDate = (dueDate: string): string => {
@@ -76,6 +78,7 @@ export function TransactionsTable({
   onImport,
   companyId = null,
   onEditTransaction,
+  onOpenTransaction,
 }: TransactionsTableProps) {
   if (isError) {
     return (
@@ -101,7 +104,17 @@ export function TransactionsTable({
       header: "Descrição",
       cell: (transaction) => (
         <div className="min-w-0">
-          <span className="text-sm font-medium">{transaction.description}</span>
+          {onOpenTransaction ? (
+            <button
+              type="button"
+              onClick={() => onOpenTransaction(transaction)}
+              className="text-left text-sm font-medium underline-offset-4 hover:text-primary hover:underline"
+            >
+              {transaction.description}
+            </button>
+          ) : (
+            <span className="text-sm font-medium">{transaction.description}</span>
+          )}
           {transaction.contactName && (
             <p className="truncate text-xs text-muted-foreground">{transaction.contactName}</p>
           )}

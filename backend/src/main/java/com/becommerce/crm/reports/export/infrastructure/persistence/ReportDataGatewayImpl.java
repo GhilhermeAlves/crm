@@ -54,6 +54,18 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
             rs.getString("status"),
             rs.getString("source"));
 
+    private static final RowMapper<BudgetRow> BUDGET_ROW = (rs, i) -> new BudgetRow(
+            rs.getDate("created_on").toLocalDate(),
+            rs.getString("contact_name"),
+            rs.getString("title"),
+            rs.getString("status"),
+            rs.getLong("items"),
+            rs.getLong("subtotal"),
+            rs.getLong("discount_cents"),
+            rs.getString("payment_method") == null ? null : PaymentMethod.valueOf(rs.getString("payment_method")),
+            (Integer) rs.getObject("installments"),
+            toLocalDate(rs.getDate("approved_on")));
+
     private final NamedParameterJdbcTemplate jdbc;
 
     public ReportDataGatewayImpl(NamedParameterJdbcTemplate jdbc) {
@@ -62,10 +74,10 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
 
     @Override
     public CompanyHeader companyHeader(UUID companyId) {
-        String sql = "SELECT COALESCE(NULLIF(trading_name, ''), legal_name) AS name, cnpj "
+        String sql = "SELECT COALESCE(NULLIF(trading_name, ''), legal_name) AS name, cnpj, logo_url "
                 + "FROM companies WHERE id = :companyId";
         List<CompanyHeader> rows = jdbc.query(sql, new MapSqlParameterSource("companyId", companyId),
-                (rs, i) -> new CompanyHeader(rs.getString("name"), rs.getString("cnpj")));
+                (rs, i) -> new CompanyHeader(rs.getString("name"), rs.getString("cnpj"), rs.getString("logo_url")));
         return rows.isEmpty() ? new CompanyHeader("", "") : rows.get(0);
     }
 
@@ -121,6 +133,28 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "AND (a.start_at AT TIME ZONE 'America/Sao_Paulo')::date BETWEEN :from AND :to "
                 + "ORDER BY u.name, a.start_at";
         return jdbc.query(sql, params(companyId, from, to), APPOINTMENT_ROW);
+    }
+
+    @Override
+    public List<BudgetRow> budgets(UUID companyId, LocalDate from, LocalDate to) {
+        // created_at/approved_at são gravados em UTC (LocalDateTime do servidor).
+        String sql = "SELECT (b.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date AS created_on, "
+                + "COALESCE(TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')), '') "
+                + "AS contact_name, "
+                + "b.title AS title, b.status AS status, "
+                + "COUNT(i.id) AS items, COALESCE(SUM(i.price_cents), 0) AS subtotal, "
+                + "b.discount_cents AS discount_cents, b.payment_method AS payment_method, "
+                + "b.installments AS installments, "
+                + "(b.approved_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date AS approved_on "
+                + "FROM budgets b "
+                + "LEFT JOIN contacts c ON c.id = b.contact_id "
+                + "LEFT JOIN budget_items i ON i.budget_id = b.id "
+                + "WHERE b.company_id = :companyId "
+                + "AND (b.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date "
+                + "BETWEEN :from AND :to "
+                + "GROUP BY b.id, c.first_name, c.last_name "
+                + "ORDER BY b.created_at, b.id";
+        return jdbc.query(sql, params(companyId, from, to), BUDGET_ROW);
     }
 
     private static MapSqlParameterSource params(UUID companyId, LocalDate from, LocalDate to) {

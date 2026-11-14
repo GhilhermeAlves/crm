@@ -4,6 +4,8 @@ import com.becommerce.crm.finance.accounting.application.service.FinanceLabels;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.reports.export.application.dto.AgendaDataset;
 import com.becommerce.crm.reports.export.application.dto.AgendaDataset.ProfessionalSummary;
+import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
+import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
@@ -11,6 +13,7 @@ import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreGr
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreLine;
 import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.AppointmentRow;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CompanyHeader;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocument.Column;
@@ -130,6 +133,53 @@ public final class ReportDocumentFactory {
                 Column.text("Status", 1.2f), Column.text("Origem", 1.1f)), detailRows);
         return new ReportDocument(ReportExportType.AGENDA.label(), range(from, to), company.name(),
                 company.cnpj(), issuedAt, true, List.of(summary, detail));
+    }
+
+    public static ReportDocument budgets(BudgetsDataset data, LocalDate from, LocalDate to, CompanyHeader company,
+                                         LocalDateTime issuedAt) {
+        List<Row> summaryRows = new ArrayList<>();
+        for (StatusSummary s : data.byStatus()) {
+            summaryRows.add(Row.item(budgetStatusLabel(s.status()), s.count(), new Money(s.totalCents())));
+        }
+        summaryRows.add(Row.total("Total", data.count(), new Money(data.totalCents())));
+        ReportTable summary = new ReportTable("Resumo por situação", List.of(Column.text("Situação", 3f),
+                Column.count("Orçamentos"), Column.money("Valor total")), summaryRows);
+
+        List<Row> detailRows = new ArrayList<>();
+        for (BudgetRow row : data.rows()) {
+            detailRows.add(Row.item(row.createdOn(), blank(row.contactName()), blank(row.title()),
+                    budgetStatusLabel(row.status()), row.items(), new Money(row.subtotalCents()),
+                    new Money(-row.discountCents()), new Money(row.totalCents()), paymentLabel(row),
+                    row.approvedOn()));
+        }
+        detailRows.add(Row.total("Total", null, null, null, null, null, null,
+                new Money(data.totalCents()), null, null));
+        ReportTable detail = new ReportTable("Orçamentos", List.of(Column.date("Data"),
+                Column.text("Paciente", 2.4f), Column.text("Orçamento", 2.2f), Column.text("Situação", 1.1f),
+                Column.count("Itens"), Column.money("Subtotal"), Column.money("Desconto"), Column.money("Total"),
+                Column.text("Pagamento", 2.2f), Column.date("Aprovado em")), detailRows);
+        return new ReportDocument(ReportExportType.BUDGETS.label(), range(from, to), company.name(),
+                company.cnpj(), issuedAt, true, List.of(summary, detail));
+    }
+
+    static String budgetStatusLabel(String status) {
+        return switch (status) {
+            case "DRAFT" -> "Em aberto";
+            case "APPROVED" -> "Aprovado";
+            case "LOST" -> "Perdido";
+            default -> status;
+        };
+    }
+
+    /** "PIX", "Cartão de crédito em 3x" ou "—" para orçamento ainda não aprovado. */
+    private static String paymentLabel(BudgetRow row) {
+        if (row.paymentMethod() == null) {
+            return "—";
+        }
+        String method = FinanceLabels.paymentLabel(row.paymentMethod());
+        return row.installments() != null && row.installments() > 1
+                ? method + " em " + row.installments() + "x"
+                : method;
     }
 
     static String statusLabel(String status) {
