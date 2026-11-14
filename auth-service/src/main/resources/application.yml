@@ -111,7 +111,7 @@ auth:
     rate-limit-callback: ${AUTH_GATEWAY_RATE_LIMIT_CALLBACK:20}
     rate-limit-refresh: ${AUTH_GATEWAY_RATE_LIMIT_REFRESH:30}
     rate-limit-logout: ${AUTH_GATEWAY_RATE_LIMIT_LOGOUT:20}
-    rate-limit-api: ${AUTH_GATEWAY_RATE_LIMIT_API:60}
+    rate-limit-api: ${AUTH_GATEWAY_RATE_LIMIT_API:600}
     # Rate limit do POST /auth/link (Sprint 7.2): protege as tentativas de senha
     # da conta local no vínculo pendente (chave = token do vínculo/ IP).
     rate-limit-link: ${AUTH_GATEWAY_RATE_LIMIT_LINK:10}

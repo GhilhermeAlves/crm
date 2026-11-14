@@ -126,6 +126,10 @@ services:
       - AUTH_GATEWAY_DYNAMIC_REDIRECT_URI=true
       - AUTH_GATEWAY_APP_BASE_URL=https://clin3dpro.cloud
       - AUTH_GATEWAY_API_BACKEND_URL=http://backend:8080
+      # Limite do relay /api/* por usuário (janela de 60s). O padrão de 60 era
+      # menor que o tráfego normal de uma página (listas, contadores, polling) e
+      # devolvia 429 em ações comuns, como apagar as notificações.
+      - AUTH_GATEWAY_RATE_LIMIT_API=${AUTH_GATEWAY_RATE_LIMIT_API:-600}
       - AUTH_GATEWAY_ISSUER_URI=https://clin3dpro.cloud/realms/CRM
       - AUTH_GATEWAY_SESSION_STORE=redis
       # Sprint 6.10 (Task 1.8) — timeout de sessão ociosa do gateway:
