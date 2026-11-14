@@ -59,6 +59,7 @@ public class BudgetService implements BudgetUseCase {
     private final FinancialTransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final TenantAuditRecorder auditor;
+    private final BudgetDraftTransactionSync draftSync;
 
 
     private PatientTimelineRecorder timeline;
@@ -80,13 +81,15 @@ public class BudgetService implements BudgetUseCase {
                          ContactRepository contactRepository,
                          FinancialTransactionRepository transactionRepository,
                          UserRepository userRepository,
-                         TenantAuditRecorder auditor) {
+                         TenantAuditRecorder auditor,
+                         BudgetDraftTransactionSync draftSync) {
         this.repository = repository;
         this.procedureRepository = procedureRepository;
         this.contactRepository = contactRepository;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.auditor = auditor;
+        this.draftSync = draftSync;
     }
 
     @Override
@@ -127,6 +130,7 @@ public class BudgetService implements BudgetUseCase {
             List<BudgetItem> items = buildItems(companyId, contactId, request, null);
             Budget budget = Budget.create(companyId, contactId, request.title(), items, request.discountCents(),
                     request.notes(), actorId);
+            draftSync.sync(budget, actorId);
             repository.save(budget);
 
             note(companyId, contactId, "Orçamento criado: " + budget.getTitle(), actorId);
@@ -152,6 +156,7 @@ public class BudgetService implements BudgetUseCase {
             }
             List<BudgetItem> items = buildItems(companyId, contactId, request, budget);
             budget.edit(request.title(), items, request.discountCents(), request.notes(), actorId);
+            draftSync.sync(budget, actorId);
             repository.save(budget);
 
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
@@ -176,6 +181,13 @@ public class BudgetService implements BudgetUseCase {
             if (budget.isDraft()) {
                 requireItemsStillBillable(budget);
             }
+            List<FinancialTransaction> previsto = loadTransactions(budget);
+            if (previsto.stream().anyMatch(tx -> tx.getStatus() == TransactionStatus.PAID)) {
+                throw new ContactConflictException(
+                        "O lançamento previsto deste orçamento já foi pago no financeiro. Ajuste-o antes de aprovar.");
+            }
+            previsto.forEach(transactionRepository::delete);
+            budget.linkTransactions(List.of());
             budget.approve(request.paymentMethod(), request.installments(), request.firstDueDate(), actorId);
             if (budget.totalCents() > 0) {
                 List<FinancialTransaction> series = FinancialTransaction.createSeries(companyId,
@@ -204,7 +216,7 @@ public class BudgetService implements BudgetUseCase {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
             Budget budget = requireOwned(companyId, contactId, budgetId, true);
-            if (budget.isApproved()) {
+            {
                 List<FinancialTransaction> linked = loadTransactions(budget);
                 if (linked.stream().anyMatch(tx -> tx.getStatus() == TransactionStatus.PAID)) {
                     throw new ContactConflictException(
@@ -241,6 +253,12 @@ public class BudgetService implements BudgetUseCase {
                 throw new ContactConflictException(
                         "Orçamento aprovado não pode ser excluído. Marque como perdido antes.");
             }
+            List<FinancialTransaction> linked = loadTransactions(budget);
+            if (linked.stream().anyMatch(tx -> tx.getStatus() == TransactionStatus.PAID)) {
+                throw new ContactConflictException(
+                        "O lançamento deste orçamento já foi pago no financeiro. Ajuste-o antes de excluir.");
+            }
+            linked.forEach(transactionRepository::delete);
             repository.delete(budget);
 
             note(companyId, contactId, "Orçamento excluído: " + budget.getTitle(), actorId);
@@ -336,7 +354,7 @@ public class BudgetService implements BudgetUseCase {
                     p.getTeeth().stream().map(t -> new ProcedureToothDto(t.tooth(), t.faces())).toList(),
                     userName(p.getProfessionalId(), names), item.priceCents()));
         }
-        List<BudgetResponse.Installment> installments = loadTransactions(b).stream()
+        List<BudgetResponse.Installment> installments = b.isDraft() ? List.of() : loadTransactions(b).stream()
                 .sorted(Comparator.comparing(FinancialTransaction::getDueDate))
                 .map(tx -> new BudgetResponse.Installment(tx.getId(), tx.getDueDate(), tx.getAmountCents(),
                         tx.getStatus()))

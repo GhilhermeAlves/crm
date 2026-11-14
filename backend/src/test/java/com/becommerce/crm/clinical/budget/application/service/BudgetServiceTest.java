@@ -84,7 +84,7 @@ class BudgetServiceTest {
     @BeforeEach
     void setUp() {
         service = new BudgetService(repository, procedureRepository, contactRepository, transactionRepository,
-                userRepository, auditor);
+                userRepository, auditor, new BudgetDraftTransactionSync(transactionRepository));
         Contact contact = mock(Contact.class);
         lenient().when(contact.getCompanyId()).thenReturn(COMPANY_ID);
         lenient().when(contactRepository.findById(CONTACT_ID)).thenReturn(Optional.of(contact));
@@ -192,6 +192,45 @@ class BudgetServiceTest {
         BudgetResponse r = service.update(COMPANY_ID, CONTACT_ID, budget.getId(),
                 request(0, Map.of(a.getId(), 7000L), a), ACTOR_ID);
         assertThat(r.items().get(0).priceCents()).isEqualTo(7000);
+    }
+
+    @Test
+    void draftAppearsInFinanceAsPendingIncomeAndFollowsEdits() {
+        PatientProcedure a = procedure(CONTACT_ID, ProcedureState.PLANNED, 10000);
+        Budget budget = Budget.create(COMPANY_ID, CONTACT_ID, "Tratamento",
+                List.of(new BudgetItem(UUID.randomUUID(), a.getId(), 9000, 0)), 0L, null, ACTOR_ID);
+        when(repository.findByIdForUpdate(budget.getId())).thenReturn(Optional.of(budget));
+
+        service.update(COMPANY_ID, CONTACT_ID, budget.getId(), request(0, null, a), ACTOR_ID);
+        ArgumentCaptor<FinancialTransaction> created = ArgumentCaptor.forClass(FinancialTransaction.class);
+        verify(transactionRepository).save(created.capture());
+        FinancialTransaction tx = created.getValue();
+        assertThat(tx.getStatus()).isEqualTo(TransactionStatus.PENDING);
+        assertThat(tx.getType()).isEqualTo(TransactionType.INCOME);
+        assertThat(tx.getAmountCents()).isEqualTo(9000);
+        assertThat(tx.getDescription()).isEqualTo("Orçamento: Tratamento");
+        assertThat(budget.getTransactionIds()).containsExactly(tx.getId());
+
+        when(transactionRepository.findById(tx.getId())).thenReturn(Optional.of(tx));
+        service.update(COMPANY_ID, CONTACT_ID, budget.getId(), request(0, Map.of(a.getId(), 7000L), a), ACTOR_ID);
+        assertThat(tx.getAmountCents()).isEqualTo(7000);
+        assertThat(budget.getTransactionIds()).containsExactly(tx.getId());
+    }
+
+    @Test
+    void approveReplacesForecastWithInstallments() {
+        PatientProcedure a = procedure(CONTACT_ID, ProcedureState.PLANNED, 10000);
+        Budget budget = draft(a);
+        FinancialTransaction forecast = FinancialTransaction.create(UUID.randomUUID(), COMPANY_ID,
+                TransactionType.INCOME, "Orçamento: Tratamento", TransactionCategory.PROCEDURE, 10000, 0L,
+                PaymentMethod.OTHER, LocalDate.now(), CONTACT_ID, null, null, null, null, ACTOR_ID);
+        budget.linkTransactions(List.of(forecast.getId()));
+        when(transactionRepository.findById(forecast.getId())).thenReturn(Optional.of(forecast));
+
+        service.approve(COMPANY_ID, CONTACT_ID, budget.getId(), approval(2), ACTOR_ID, true);
+
+        verify(transactionRepository).delete(forecast);
+        assertThat(budget.getTransactionIds()).hasSize(2).doesNotContain(forecast.getId());
     }
 
     @Test
