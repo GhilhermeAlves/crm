@@ -60,7 +60,7 @@ public class OidcGatewayProperties {
     private int rateLimitCallback = 20;
     private int rateLimitRefresh = 30;
     private int rateLimitLogout = 20;
-    private int rateLimitApi = 60;
+    private int rateLimitApi = 600;
     private int rateLimitLink = 10;
     /**
      * Vínculo pendente (Sprint 7.2, Caso B): cookie HttpOnly efêmero que guarda
