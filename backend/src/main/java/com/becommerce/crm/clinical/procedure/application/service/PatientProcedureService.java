@@ -157,32 +157,54 @@ public class PatientProcedureService implements PatientProcedureUseCase {
             requireOwnedContact(companyId, contactId);
             CatalogItem item = requireService(companyId, request.catalogItemId());
             requireProfessional(companyId, request.professionalId());
-            PatientProcedure procedure = PatientProcedure.create(companyId, contactId, request.catalogItemId(),
-                    item.getName(), request.state(), request.dentition(), request.priceCents(),
-                    request.professionalId(), request.notes(), request.performedAt(), toTeeth(request.teeth()),
-                    actorId);
-            procedure.setGenerateTransactionOnDone(request.generateTransaction());
-            rememberPriceInCatalog(item, request.priceCents());
-            FinancialTransaction generated = maybeGenerateTransaction(procedure, request.generateTransaction(),
-                    request.dueDate(), actorId, canCreateFinance);
-            boolean auto = autoBudget(companyId);
-            if (auto && generated == null) {
-                generated = autoTransaction(procedure, actorId);
+            // Como no Capim: cada dente marcado vira um procedimento próprio (valor total dividido).
+            List<ProcedureTooth> allTeeth = toTeeth(request.teeth());
+            List<List<ProcedureTooth>> groups = allTeeth.size() > 1
+                    ? allTeeth.stream().map(List::of).toList()
+                    : List.of(allTeeth);
+            long share = request.priceCents() / groups.size();
+            long remainder = request.priceCents() - share * groups.size();
+            rememberPriceInCatalog(item, share);
+            PatientProcedureResponse first = null;
+            for (int i = 0; i < groups.size(); i++) {
+                long price = share + (i == 0 ? remainder : 0);
+                PatientProcedureResponse r = createOne(companyId, contactId, request, item, groups.get(i), price,
+                        actorId, canCreateFinance);
+                if (first == null) {
+                    first = r;
+                }
             }
-            repository.save(procedure);
-            if (auto && procedure.getState() == ProcedureState.PLANNED) {
-                attachToOpenBudget(procedure, actorId);
-            }
-
-            note(companyId, contactId, "Procedimento registrado: " + procedure.getNameSnapshot(), actorId);
-            auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
-                    procedure.getId().toString(), "Procedimento registrado na ficha clínica.", actorId, null);
-            Map<UUID, String> categories = new HashMap<>();
-            categories.put(request.catalogItemId(), item.getCategory());
-            return toResponse(procedure, categories, new HashMap<>(), generated, null);
+            return first;
         } finally {
             TenantContext.clear();
         }
+    }
+
+    private PatientProcedureResponse createOne(UUID companyId, UUID contactId, PatientProcedureRequest request,
+                                               CatalogItem item, List<ProcedureTooth> teeth, long price,
+                                               UUID actorId, boolean canCreateFinance) {
+        PatientProcedure procedure = PatientProcedure.create(companyId, contactId, request.catalogItemId(),
+                item.getName(), request.state(), request.dentition(), price,
+                request.professionalId(), request.notes(), request.performedAt(), teeth,
+                actorId);
+        procedure.setGenerateTransactionOnDone(request.generateTransaction());
+        FinancialTransaction generated = maybeGenerateTransaction(procedure, request.generateTransaction(),
+                request.dueDate(), actorId, canCreateFinance);
+        boolean auto = autoBudget(companyId);
+        if (auto && generated == null) {
+            generated = autoTransaction(procedure, actorId);
+        }
+        repository.save(procedure);
+        if (auto && procedure.getState() == ProcedureState.PLANNED) {
+            attachToOpenBudget(procedure, actorId);
+        }
+
+        note(companyId, contactId, "Procedimento registrado: " + procedure.getNameSnapshot(), actorId);
+        auditor.record(companyId, AuditAction.CREATE, AuditModule.CONTACTS, RESOURCE,
+                procedure.getId().toString(), "Procedimento registrado na ficha clínica.", actorId, null);
+        Map<UUID, String> categories = new HashMap<>();
+        categories.put(request.catalogItemId(), item.getCategory());
+        return toResponse(procedure, categories, new HashMap<>(), generated, null);
     }
 
     @Override

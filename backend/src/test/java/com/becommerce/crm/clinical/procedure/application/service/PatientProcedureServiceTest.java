@@ -139,6 +139,23 @@ class PatientProcedureServiceTest {
     }
 
     @Test
+    void createWithSeveralTeethCreatesOneProcedurePerTooth() {
+        PatientProcedureRequest req = new PatientProcedureRequest(ITEM_ID, ProcedureState.PLANNED,
+                Dentition.PERMANENT, 10001L, null, null, null,
+                List.of(new ProcedureToothDto(11, Set.of(ToothFace.M)), new ProcedureToothDto(12, Set.of()),
+                        new ProcedureToothDto(13, Set.of())), false, null);
+
+        service.create(COMPANY_ID, CONTACT_ID, req, ACTOR_ID, false);
+
+        ArgumentCaptor<PatientProcedure> saved = ArgumentCaptor.forClass(PatientProcedure.class);
+        verify(repository, org.mockito.Mockito.times(3)).save(saved.capture());
+        assertThat(saved.getAllValues()).extracting(p -> p.getTeeth().get(0).tooth()).containsExactly(11, 12, 13);
+        assertThat(saved.getAllValues()).allSatisfy(p -> assertThat(p.getTeeth()).hasSize(1));
+        assertThat(saved.getAllValues()).extracting(PatientProcedure::getPriceCents)
+                .containsExactly(3335L, 3333L, 3333L);
+    }
+
+    @Test
     void createsPlannedWithCatalogSnapshot() {
         PatientProcedureResponse r = service.create(COMPANY_ID, CONTACT_ID,
                 request(ProcedureState.PLANNED, 15000, null, false), ACTOR_ID, false);
