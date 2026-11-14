@@ -40,7 +40,9 @@ public record FinancialTransactionResponse(
         UUID createdBy,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        boolean overdue
+        boolean overdue,
+        UUID budgetId,
+        String budgetTitle
 ) {
     public static FinancialTransactionResponse from(FinancialTransaction transaction,
                                                     FinancialTransactionRepository.TransactionReference reference,
@@ -55,6 +57,8 @@ public record FinancialTransactionResponse(
                 reference == null ? null : reference.catalogItemName(), transaction.getInstallmentGroupId(),
                 transaction.getInstallmentNumber(), transaction.getInstallmentTotal(), transaction.getNotes(),
                 transaction.getCreatedBy(), transaction.getCreatedAt(), transaction.getUpdatedAt(),
-                transaction.isOverdue(today));
+                transaction.isOverdue(today),
+                reference == null ? null : reference.budgetId(),
+                reference == null ? null : reference.budgetTitle());
     }
 }

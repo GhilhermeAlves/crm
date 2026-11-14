@@ -43,6 +43,8 @@ type TransactionRowActionsProps = {
   onEdit: (transaction: FinancialTransaction) => void;
 };
 
+export type TransactionAction = "pay" | "cancel" | "delete" | null;
+
 export function TransactionRowActions({
   companyId,
   transaction,
@@ -50,19 +52,7 @@ export function TransactionRowActions({
 }: TransactionRowActionsProps) {
   const can = usePermission();
   const canManage = can("finance:manage");
-
-  const [payOpen, setPayOpen] = useState(false);
-  const [paidAt, setPaidAt] = useState(() => format(new Date(), "yyyy-MM-dd"));
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-
-  const payTransaction = usePayTransaction(companyId);
-  const cancelTransaction = useCancelTransaction(companyId);
-  const deleteTransaction = useDeleteTransaction(companyId);
-
-  useEffect(() => {
-    if (payOpen) setPaidAt(format(new Date(), "yyyy-MM-dd"));
-  }, [payOpen]);
+  const [action, setAction] = useState<TransactionAction>(null);
 
   if (!canManage) return null;
 
@@ -84,7 +74,7 @@ export function TransactionRowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {canPay && (
-            <DropdownMenuItem onSelect={() => setPayOpen(true)}>
+            <DropdownMenuItem onSelect={() => setAction("pay")}>
               <CheckCircle2 />
               Marcar como pago
             </DropdownMenuItem>
@@ -94,14 +84,14 @@ export function TransactionRowActions({
             Editar
           </DropdownMenuItem>
           {canCancel && (
-            <DropdownMenuItem onSelect={() => setCancelOpen(true)}>
+            <DropdownMenuItem onSelect={() => setAction("cancel")}>
               <Ban />
               Cancelar lançamento
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onSelect={() => setDeleteOpen(true)}
+            onSelect={() => setAction("delete")}
             className="text-destructive focus:text-destructive"
           >
             <Trash2 />
@@ -110,7 +100,52 @@ export function TransactionRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+      <TransactionActionDialogs
+        companyId={companyId}
+        transaction={transaction}
+        action={action}
+        onActionChange={setAction}
+      />
+    </>
+  );
+}
+
+type TransactionActionDialogsProps = {
+  companyId: string | null;
+  transaction: FinancialTransaction;
+  action: TransactionAction;
+  onActionChange: (action: TransactionAction) => void;
+  /** Chamado após pagar, cancelar ou excluir com sucesso. */
+  onDone?: (action: Exclude<TransactionAction, null>) => void;
+};
+
+/** Diálogos de pagar, cancelar e excluir — usados pelo menu da linha e pelo modal de detalhes. */
+export function TransactionActionDialogs({
+  companyId,
+  transaction,
+  action,
+  onActionChange,
+  onDone,
+}: TransactionActionDialogsProps) {
+  const [paidAt, setPaidAt] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const payTransaction = usePayTransaction(companyId);
+  const cancelTransaction = useCancelTransaction(companyId);
+  const deleteTransaction = useDeleteTransaction(companyId);
+
+  const payOpen = action === "pay";
+  const cancelOpen = action === "cancel";
+  const deleteOpen = action === "delete";
+  const close = (open: boolean) => {
+    if (!open) onActionChange(null);
+  };
+
+  useEffect(() => {
+    if (payOpen) setPaidAt(format(new Date(), "yyyy-MM-dd"));
+  }, [payOpen]);
+
+  return (
+    <>
+      <Dialog open={payOpen} onOpenChange={close}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Marcar como pago</DialogTitle>
@@ -139,7 +174,7 @@ export function TransactionRowActions({
             </Popover>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setPayOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => onActionChange(null)}>
               Cancelar
             </Button>
             <Button
@@ -151,7 +186,8 @@ export function TransactionRowActions({
                   {
                     onSuccess: () => {
                       toast.success("Lançamento salvo");
-                      setPayOpen(false);
+                      onActionChange(null);
+                      onDone?.("pay");
                     },
                   },
                 )
@@ -163,7 +199,7 @@ export function TransactionRowActions({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+      <AlertDialog open={cancelOpen} onOpenChange={close}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancelar lançamento</AlertDialogTitle>
@@ -179,7 +215,8 @@ export function TransactionRowActions({
                 cancelTransaction.mutate(transaction.id, {
                   onSuccess: () => {
                     toast.success("Lançamento cancelado");
-                    setCancelOpen(false);
+                    onActionChange(null);
+                    onDone?.("cancel");
                   },
                 });
               }}
@@ -191,7 +228,7 @@ export function TransactionRowActions({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <AlertDialog open={deleteOpen} onOpenChange={close}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir lançamento</AlertDialogTitle>
@@ -208,7 +245,8 @@ export function TransactionRowActions({
                 deleteTransaction.mutate(transaction.id, {
                   onSuccess: () => {
                     toast.success("Lançamento excluído");
-                    setDeleteOpen(false);
+                    onActionChange(null);
+                    onDone?.("delete");
                   },
                 });
               }}

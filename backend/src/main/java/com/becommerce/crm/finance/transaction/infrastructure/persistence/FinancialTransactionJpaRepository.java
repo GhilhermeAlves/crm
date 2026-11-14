@@ -21,4 +21,9 @@ public interface FinancialTransactionJpaRepository
 
     @Query("SELECT i.id, i.name FROM CatalogItemJpaEntity i WHERE i.id IN :ids")
     List<Object[]> findCatalogItemNames(@Param("ids") Collection<UUID> ids);
+
+    /** Orçamento que gerou cada lançamento (aprovação), quando houver. */
+    @Query(value = "SELECT bt.transaction_id, b.id, b.title FROM budget_transactions bt "
+            + "JOIN budgets b ON b.id = bt.budget_id WHERE bt.transaction_id IN (:ids)", nativeQuery = true)
+    List<Object[]> findBudgetLinks(@Param("ids") Collection<UUID> ids);
 }

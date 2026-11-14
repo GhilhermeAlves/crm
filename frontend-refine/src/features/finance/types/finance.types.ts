@@ -97,6 +97,9 @@ export type FinancialTransaction = {
   createdAt: string;
   updatedAt: string;
   overdue: boolean;
+  /** Orçamento que gerou o lançamento (aprovação), quando houver. */
+  budgetId?: string | null;
+  budgetTitle?: string | null;
 };
 
 export type CreateFinancialTransactionRequest = {

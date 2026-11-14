@@ -18,6 +18,7 @@ import { FinanceTypeTabs, type FinanceTab } from "@/features/finance/components/
 import { ImportTransactionsDialog } from "@/features/finance/components/ImportTransactionsDialog";
 import { PeriodPicker } from "@/features/finance/components/PeriodPicker";
 import { TransactionFormDialog } from "@/features/finance/components/TransactionFormDialog";
+import { TransactionDetailsDialog } from "@/features/finance/components/TransactionDetailsDialog";
 import { TransactionsTable } from "@/features/finance/components/TransactionsTable";
 import { useFinanceSummary, useTransactions } from "@/features/finance/hooks/useFinance";
 import type {
@@ -73,6 +74,7 @@ function FinanceControlContent() {
   const [filtersOpen, setFiltersOpen] = useState(false); // etapa 6: filtros avançados
   const [accountingReportOpen, setAccountingReportOpen] = useState(false); // etapa 7: relatório contábil
   const [editTransaction, setEditTransaction] = useState<FinancialTransaction | null>(null);
+  const [viewTransactionId, setViewTransactionId] = useState<string | null>(null);
 
   const tabParam = searchParams.get("tab");
   const tab: FinanceTab = tabParam === "income" || tabParam === "expense" ? tabParam : "all";
@@ -263,6 +265,7 @@ function FinanceControlContent() {
             onImport={() => setImportOpen(true)}
             companyId={companyId}
             onEditTransaction={setEditTransaction}
+            onOpenTransaction={(transaction) => setViewTransactionId(transaction.id)}
           />
         </CardContent>
       </Card>
@@ -275,6 +278,14 @@ function FinanceControlContent() {
         }}
         companyId={companyId}
         transaction={editTransaction}
+      />
+      <TransactionDetailsDialog
+        companyId={companyId}
+        transaction={transactions.find((t) => t.id === viewTransactionId) ?? null}
+        onOpenChange={(next) => {
+          if (!next) setViewTransactionId(null);
+        }}
+        onEdit={setEditTransaction}
       />
       <ImportTransactionsDialog
         open={importOpen}

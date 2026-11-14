@@ -112,12 +112,19 @@ public class FinancialTransactionRepositoryImpl implements FinancialTransactionR
         Map<UUID, String> contactNames = lookup(contactIds, "contact");
         Map<UUID, String> userNames = lookup(userIds, "user");
         Map<UUID, String> catalogNames = lookup(catalogItemIds, "catalog");
+        Map<UUID, Object[]> budgets = new HashMap<>();
+        for (Object[] link : jpaRepository.findBudgetLinks(transactionIds)) {
+            budgets.putIfAbsent((UUID) link[0], link);
+        }
         Map<UUID, TransactionReference> references = new HashMap<>();
         for (FinancialTransactionJpaEntity row : rows) {
+            Object[] budget = budgets.get(row.getId());
             references.put(row.getId(), new TransactionReference(
                     contactNames.get(row.getContactId()),
                     userNames.get(row.getProfessionalUserId()),
-                    catalogNames.get(row.getCatalogItemId())));
+                    catalogNames.get(row.getCatalogItemId()),
+                    budget == null ? null : (UUID) budget[1],
+                    budget == null ? null : (String) budget[2]));
         }
         return references;
     }
