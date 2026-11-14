@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format, subMonths } from "date-fns";
-import { FileSpreadsheet, Loader2, Printer } from "lucide-react";
+import { FileSpreadsheet, FileText, Loader2, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,7 +24,7 @@ const SHORTCUTS = [
   { key: "last-3-months", label: "Últimos 3 meses" },
 ] as const;
 
-/** Escolha do período e dos botões Imprimir (PDF) / Exportar (Excel). */
+/** Escolha do período e dos botões Imprimir (PDF) / Exportar (Excel) / Exportar (CSV). */
 export function ReportExportForm({ definition, isSubmitting, onSubmit }: ReportExportFormProps) {
   const initialRange = resolveReportPeriod("last-month");
   const [month, setMonth] = useState(() => format(subMonths(new Date(), 1), "yyyy-MM"));
@@ -123,6 +123,14 @@ export function ReportExportForm({ definition, isSubmitting, onSubmit }: ReportE
             <FileSpreadsheet className="h-4 w-4" />
           )}
           Exportar (Excel)
+        </Button>
+        <Button type="button" variant="outline" disabled={disabled} onClick={() => submit("CSV")}>
+          {isSubmitting && pendingFormat === "CSV" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileText className="h-4 w-4" />
+          )}
+          Exportar (CSV)
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">

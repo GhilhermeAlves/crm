@@ -10,7 +10,8 @@ public enum ReportExportType {
     MONTHLY_DRE("Contábil mensal (DRE)", "finance:read", "contabil-mensal"),
     CASH_FLOW("Fluxo de caixa", "finance:read", "fluxo-de-caixa"),
     TRANSACTIONS("Extrato de lançamentos", "finance:read", "extrato-lancamentos"),
-    AGENDA("Agenda / atendimentos", "appointment:read", "agenda");
+    AGENDA("Agenda / atendimentos", "appointment:read", "agenda"),
+    BUDGETS("Orçamentos", "contact:read", "orcamentos");
 
     private final String label;
     private final String requiredPermission;

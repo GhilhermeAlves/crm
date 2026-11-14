@@ -11,6 +11,7 @@ import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
@@ -25,6 +26,9 @@ import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Base64;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -48,6 +52,12 @@ public final class PdfReportLayout {
 
     private static final DateTimeFormatter ISSUED = DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm:ss");
 
+    /** Logo de Configurações → Empresa embutida como data URL (PNG/JPG). */
+    private static final Pattern LOGO_DATA_URL =
+            Pattern.compile("^data:image/(png|jpe?g);base64,(.+)$", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final float LOGO_MAX_HEIGHT = 42f;
+    private static final float LOGO_MAX_WIDTH = 120f;
+
     private static final Font TITLE = font(FontFactory.HELVETICA_BOLD, 14, PRIMARY);
     private static final Font META = font(FontFactory.HELVETICA, 9, MUTED);
     private static final Font META_STRONG = font(FontFactory.HELVETICA_BOLD, 10, TEXT);
@@ -63,13 +73,21 @@ public final class PdfReportLayout {
     }
 
     public static byte[] render(ReportDocument report) {
+        return render(report, null);
+    }
+
+    /**
+     * @param logoUrl logo da empresa (data URL PNG/JPG); link externo, SVG ou
+     *                imagem inválida são ignorados e o cabeçalho sai sem logo.
+     */
+    public static byte[] render(ReportDocument report, String logoUrl) {
         Rectangle size = report.landscape() ? PageSize.A4.rotate() : PageSize.A4;
         Document document = new Document(size, 36, 36, 36, 48);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance(document, out);
         writer.setPageEvent(new Footer(report));
         document.open();
-        header(document, report);
+        header(document, report, logo(logoUrl));
         for (ReportTable table : report.sections()) {
             if (table.heading() != null) {
                 Paragraph heading = new Paragraph(table.heading(), HEADING);
@@ -83,11 +101,32 @@ public final class PdfReportLayout {
         return out.toByteArray();
     }
 
-    private static void header(Document document, ReportDocument report) {
+    /** Imagem da logo pronta para o PDF, ou {@code null} quando não dá para usar. */
+    static Image logo(String logoUrl) {
+        if (logoUrl == null || logoUrl.isBlank()) {
+            return null;
+        }
+        Matcher matcher = LOGO_DATA_URL.matcher(logoUrl.trim());
+        if (!matcher.matches()) {
+            return null;
+        }
+        try {
+            Image image = Image.getInstance(Base64.getMimeDecoder().decode(matcher.group(2)));
+            image.scaleToFit(LOGO_MAX_WIDTH, LOGO_MAX_HEIGHT);
+            return image;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private static void header(Document document, ReportDocument report, Image logo) {
         PdfPTable header = new PdfPTable(new float[] {3.6f, 1.6f});
         header.setWidthPercentage(100);
         PdfPCell left = new PdfPCell();
         left.setBorder(Rectangle.NO_BORDER);
+        if (logo != null) {
+            left.addElement(logo);
+        }
         left.addElement(new Paragraph(report.title().toUpperCase(new Locale("pt", "BR")), TITLE));
         left.addElement(new Paragraph("Período: " + report.period(), META_STRONG));
         PdfPCell right = new PdfPCell();
