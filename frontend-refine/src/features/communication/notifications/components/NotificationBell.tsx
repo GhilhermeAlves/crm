@@ -37,7 +37,6 @@ import type { Notification, NotificationType } from "../types/notification.types
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /** Ícone e cor (círculo) de cada tipo, como no painel do Capim. */
@@ -254,7 +253,12 @@ export function NotificationBell() {
             <p className="text-sm text-muted-foreground">Nenhuma notificação por aqui</p>
           </div>
         ) : (
-          <ScrollArea className="max-h-[420px]">
+          // Rolagem nativa: o ScrollArea do Radix com max-h não rola (o viewport
+          // cresce com o conteúdo e a lista só fica cortada).
+          <div
+            className="max-h-[420px] overflow-y-auto overscroll-contain"
+            data-testid="notification-list"
+          >
             <div className="space-y-3 px-5 py-3">
               {groups.map((group) => (
                 <section key={group.day} className="space-y-2">
@@ -336,7 +340,7 @@ export function NotificationBell() {
                 </section>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         )}
 
         <Link
