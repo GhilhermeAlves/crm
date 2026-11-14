@@ -1,5 +1,11 @@
-export type ReportExportType = "MONTHLY_DRE" | "CASH_FLOW" | "TRANSACTIONS" | "AGENDA";
-export type ExportFormat = "PDF" | "XLSX";
+export type ReportExportType = "MONTHLY_DRE" | "CASH_FLOW" | "TRANSACTIONS" | "AGENDA" | "BUDGETS";
+export type ExportFormat = "PDF" | "XLSX" | "CSV";
+
+export const FORMAT_LABELS: Record<ExportFormat, string> = {
+  PDF: "PDF",
+  XLSX: "Excel",
+  CSV: "CSV",
+};
 export type ReportExportStatus = "PENDING" | "READY" | "FAILED";
 
 export interface ReportExportRequest {
@@ -72,6 +78,15 @@ export const REPORT_EXPORTS: ReportExportDefinition[] = [
     description:
       "Consultas do período com resumo por profissional (agendadas, realizadas, faltas e canceladas) e a lista detalhada.",
     permission: "appointment:read",
+    period: "range",
+  },
+  {
+    type: "BUDGETS",
+    slug: "budgets",
+    label: "Orçamentos",
+    description:
+      "Orçamentos criados no período com resumo por situação (em aberto, aprovados e perdidos) e a lista com paciente, itens, desconto, total e forma de pagamento.",
+    permission: "contact:read",
     period: "range",
   },
 ];

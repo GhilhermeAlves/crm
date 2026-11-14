@@ -108,6 +108,29 @@ class ReportExportGeneratorTest {
     }
 
     @Test
+    void budgetsCsvIsUploadedAsCsvAndNotified() {
+        ReportExport export = pending(ReportExportType.BUDGETS, ExportFormat.CSV);
+        when(gateway.budgets(any(), any(), any())).thenReturn(List.of(new ReportDataGateway.BudgetRow(
+                LocalDate.of(2026, 6, 10), "Ana", "Plano de tratamento", "DRAFT", 1, 35_000, 0, null, null,
+                null)));
+        when(storage.upload(any(), anyString(), anyString(), any(), any()))
+                .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
+
+        generator.generate(COMPANY, export.id());
+
+        ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
+        verify(storage).upload(eq(COMPANY), eq("orcamentos_2026-06-01_a_2026-06-30.csv"), eq("text/csv"),
+                bytes.capture(), eq(USER));
+        assertThat(new String(bytes.getValue(), java.nio.charset.StandardCharsets.UTF_8))
+                .contains("Ana;Plano de tratamento;Em aberto;1;350,00");
+        assertThat(export.status()).isEqualTo(ReportExportStatus.READY);
+        ArgumentCaptor<CreateNotificationRequest> notification =
+                ArgumentCaptor.forClass(CreateNotificationRequest.class);
+        verify(notifications).create(eq(COMPANY), notification.capture(), eq(USER));
+        assertThat(notification.getValue().body()).isEqualTo("Orçamentos · 01/06/2026 a 30/06/2026 · CSV");
+    }
+
+    @Test
     void xlsxFileNameUsesRange() {
         ReportExport export = pending(ReportExportType.CASH_FLOW, ExportFormat.XLSX);
         when(gateway.paidByDay(any(), any(), any())).thenReturn(List.of());

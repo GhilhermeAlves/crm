@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/features/communication/notifications/lib/format";
 
 import { downloadReportExport } from "./report-export.service";
-import type { ReportExport, ReportExportStatus } from "./types";
+import { FORMAT_LABELS, type ReportExport, type ReportExportStatus } from "./types";
 
 type RecentReportExportsProps = {
   companyId: string | null;
@@ -67,7 +67,7 @@ export function RecentReportExports({ companyId, exports, isLoading }: RecentRep
               >
                 <div className="min-w-0 space-y-0.5">
                   <p className="truncate text-sm font-medium">
-                    {item.typeLabel} · {item.format === "PDF" ? "PDF" : "Excel"}
+                    {item.typeLabel} · {FORMAT_LABELS[item.format]}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatDate(item.periodFrom)} a {formatDate(item.periodTo)} · pedido{" "}

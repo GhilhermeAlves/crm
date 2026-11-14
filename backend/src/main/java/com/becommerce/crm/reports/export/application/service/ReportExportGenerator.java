@@ -9,11 +9,11 @@ import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCa
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CompanyHeader;
 import com.becommerce.crm.reports.export.application.port.out.ReportExportRepository;
+import com.becommerce.crm.reports.export.application.service.render.CsvReportWriter;
 import com.becommerce.crm.reports.export.application.service.render.PdfReportLayout;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocument;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocumentFactory;
 import com.becommerce.crm.reports.export.application.service.render.XlsxReportWriter;
-import com.becommerce.crm.reports.export.domain.ExportFormat;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.reports.export.domain.ReportExportStatus;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
@@ -130,10 +130,14 @@ public class ReportExportGenerator {
                     from, to, company, issuedAt);
             case AGENDA -> ReportDocumentFactory.agenda(datasets.agenda(companyId, from, to), from, to, company,
                     issuedAt);
+            case BUDGETS -> ReportDocumentFactory.budgets(datasets.budgets(companyId, from, to), from, to,
+                    company, issuedAt);
         };
-        return export.format() == ExportFormat.PDF
-                ? PdfReportLayout.render(document)
-                : XlsxReportWriter.write(document);
+        return switch (export.format()) {
+            case PDF -> PdfReportLayout.render(document, company.logoUrl());
+            case XLSX -> XlsxReportWriter.write(document);
+            case CSV -> CsvReportWriter.write(document);
+        };
     }
 
     /** {@code contabil-mensal_2026-06.pdf} ou {@code agenda_2026-06-01_a_2026-06-30.xlsx}. */

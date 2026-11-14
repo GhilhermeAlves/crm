@@ -17,7 +17,7 @@ import java.util.UUID;
  */
 public interface ReportDataGateway {
 
-    /** Nome fantasia (ou razão social) e CNPJ da empresa, para o cabeçalho. */
+    /** Nome fantasia (ou razão social), CNPJ e logo da empresa, para o cabeçalho. */
     CompanyHeader companyHeader(UUID companyId);
 
     /** Lançamentos PAID com {@code paid_at} no período, somados por categoria. */
@@ -32,7 +32,19 @@ public interface ReportDataGateway {
     /** Consultas com início (horário de Brasília) no período. */
     List<AppointmentRow> appointments(UUID companyId, LocalDate from, LocalDate to);
 
-    record CompanyHeader(String name, String cnpj) {}
+    /** Orçamentos criados (horário de Brasília) no período, com itens somados. */
+    List<BudgetRow> budgets(UUID companyId, LocalDate from, LocalDate to);
+
+    /**
+     * @param logoUrl logo de Configurações → Empresa: data URL (PNG/JPG embutido)
+     *                ou link; só o data URL entra no PDF.
+     */
+    record CompanyHeader(String name, String cnpj, String logoUrl) {
+
+        public CompanyHeader(String name, String cnpj) {
+            this(name, cnpj, null);
+        }
+    }
 
     record CategoryTotalRow(TransactionCategory category, long count, long totalCents, long feeCents,
                             long feeCount) {}
@@ -42,6 +54,15 @@ public interface ReportDataGateway {
     record TransactionRow(LocalDate dueDate, LocalDate paidAt, String description, String contactName,
                           TransactionCategory category, PaymentMethod paymentMethod, TransactionType type,
                           long amountCents, TransactionStatus status) {}
+
+    record BudgetRow(LocalDate createdOn, String contactName, String title, String status, long items,
+                     long subtotalCents, long discountCents, PaymentMethod paymentMethod, Integer installments,
+                     LocalDate approvedOn) {
+
+        public long totalCents() {
+            return subtotalCents - discountCents;
+        }
+    }
 
     record AppointmentRow(Instant startAt, String contactName, String typeName, String hostName,
                           String status, String source) {}

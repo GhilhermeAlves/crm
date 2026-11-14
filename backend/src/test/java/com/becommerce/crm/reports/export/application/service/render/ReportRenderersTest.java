@@ -6,11 +6,14 @@ import com.becommerce.crm.finance.transaction.domain.TransactionStatus;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.reports.export.application.dto.AgendaDataset;
 import com.becommerce.crm.reports.export.application.dto.AgendaDataset.ProfessionalSummary;
+import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
+import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreGroup;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreLine;
 import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.AppointmentRow;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CompanyHeader;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
 import com.lowagie.text.pdf.PdfReader;
@@ -21,7 +24,11 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -108,5 +115,76 @@ class ReportRenderersTest {
             assertThat(appointment.getCell(5).getStringCellValue()).isEqualTo("WhatsApp");
         }
         assertThat(PdfReportLayout.render(doc)).isNotEmpty();
+    }
+
+    // ===== orçamentos, CSV e logo =====
+
+    private ReportDocument budgets() {
+        List<BudgetRow> rows = List.of(
+                new BudgetRow(LocalDate.of(2026, 11, 13), "Andreia Souza", "Plano de tratamento", "DRAFT", 2,
+                        635_000, 0, null, null, null),
+                new BudgetRow(LocalDate.of(2026, 11, 14), "João; Silva", "Clareamento", "APPROVED", 1,
+                        100_000, 10_000, PaymentMethod.CREDIT_CARD, 3, LocalDate.of(2026, 11, 14)));
+        BudgetsDataset data = new BudgetsDataset(List.of(new StatusSummary("DRAFT", 1, 635_000),
+                new StatusSummary("APPROVED", 1, 90_000), new StatusSummary("LOST", 0, 0)), rows);
+        return ReportDocumentFactory.budgets(data, LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 30),
+                COMPANY, ISSUED);
+    }
+
+    private static String pngDataUrl() throws Exception {
+        BufferedImage image = new BufferedImage(40, 20, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", out);
+        return "data:image/png;base64," + Base64.getEncoder().encodeToString(out.toByteArray());
+    }
+
+    @Test
+    void budgetsPdfHasLogoSummaryAndDetail() throws Exception {
+        byte[] withLogo = PdfReportLayout.render(budgets(), pngDataUrl());
+        byte[] withoutLogo = PdfReportLayout.render(budgets());
+
+        String text = new PdfTextExtractor(new PdfReader(withLogo)).getTextFromPage(1);
+        assertThat(text).contains("ORÇAMENTOS").contains("Resumo por situação").contains("Em aberto")
+                .contains("Andreia Souza").contains("Cartão de crédito");
+        // A logo entra como imagem: o arquivo cresce e o texto continua o mesmo.
+        assertThat(withLogo.length).isGreaterThan(withoutLogo.length);
+    }
+
+    @Test
+    void invalidOrExternalLogoIsIgnored() {
+        assertThat(PdfReportLayout.logo("https://exemplo.com/logo.png")).isNull();
+        assertThat(PdfReportLayout.logo("data:image/svg+xml;base64,PHN2Zz4=")).isNull();
+        assertThat(PdfReportLayout.logo("data:image/png;base64,naoeimagem")).isNull();
+        assertThat(PdfReportLayout.render(budgets(), "data:image/png;base64,naoeimagem")).isNotEmpty();
+    }
+
+    @Test
+    void budgetsXlsxHasSummaryAndDetailSheets() throws Exception {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(XlsxReportWriter.write(budgets())))) {
+            assertThat(workbook.getNumberOfSheets()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    void csvHasBomSemicolonsCommaDecimalsAndEscaping() {
+        byte[] csv = CsvReportWriter.write(budgets());
+
+        assertThat(csv[0]).isEqualTo((byte) 0xEF);
+        assertThat(csv[1]).isEqualTo((byte) 0xBB);
+        assertThat(csv[2]).isEqualTo((byte) 0xBF);
+        String text = new String(csv, 3, csv.length - 3, StandardCharsets.UTF_8);
+        assertThat(text).startsWith("Orçamentos\r\nPeríodo;01/11/2026 a 30/11/2026\r\n");
+        assertThat(text).contains("Situação;Orçamentos;Valor total\r\n");
+        assertThat(text).contains("Em aberto;1;6350,00\r\n");
+        assertThat(text).contains("13/11/2026;Andreia Souza;Plano de tratamento;Em aberto;2;6350,00;0,00;6350,00;—;\r\n");
+        assertThat(text).contains("\"João; Silva\";Clareamento;Aprovado;1;1000,00;-100,00;900,00;Cartão de crédito em 3x;14/11/2026");
+        assertThat(text).contains("Total;;;;;;;7250,00;;");
+    }
+
+    @Test
+    void csvEscapesQuotesAndLineBreaks() {
+        assertThat(CsvReportWriter.escape("diz \"oi\"")).isEqualTo("\"diz \"\"oi\"\"\"");
+        assertThat(CsvReportWriter.escape("linha1\nlinha2")).isEqualTo("\"linha1\nlinha2\"");
+        assertThat(CsvReportWriter.escape("simples")).isEqualTo("simples");
     }
 }
