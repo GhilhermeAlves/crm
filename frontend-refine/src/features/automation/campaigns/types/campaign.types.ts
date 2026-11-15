@@ -81,13 +81,7 @@ export type CampaignExecution = {
   finishedAt: string | null;
 };
 
-export type PageResponse<T> = {
-  content: T[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type { PageResponse } from "@/types/page";
 
 export type ListCampaignsParams = {
   page?: number;

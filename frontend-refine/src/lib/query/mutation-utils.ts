@@ -1,5 +1,6 @@
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { toHttpError } from "@/lib/http-error";
 
 export interface MutationOptions<TData = unknown, TVariables = unknown> {
   successMessage?: string | ((data: TData, variables: TVariables) => string);
@@ -25,12 +26,7 @@ export function useMutationDefaults<TData = unknown, TVariables = unknown, TErro
       },
     onError: (opts: MutationOptions<TData, TVariables>) => (error: TError) => {
       if (opts.silentError) return;
-      const message =
-        (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
-        (error as Error).message ||
-        opts.errorMessage ||
-        "Algo deu errado";
-      toast.error(message);
+      toast.error(toHttpError(error, opts.errorMessage).message);
     },
   };
 }

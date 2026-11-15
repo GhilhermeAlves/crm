@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type {
   InventoryPage,
@@ -21,7 +22,7 @@ export const InventoryService = {
         pageSize: filters.pageSize ?? 20,
       },
     });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async listMovements(
@@ -33,7 +34,7 @@ export const InventoryService = {
     const response = await api.get<StockMovementPage>(`${base(companyId)}/${itemId}/movements`, {
       params: { page, pageSize },
     });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async registerMovement(

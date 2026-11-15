@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type {
   AttachChannelRequest,
@@ -18,7 +19,7 @@ export const CampaignService = {
     const response = await api.get<PageResponse<Campaign>>(`${BASE}/${companyId}/campaigns`, {
       params,
     });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async findById(companyId: string, id: string): Promise<Campaign> {
@@ -110,7 +111,7 @@ export const TemplateService = {
       `${BASE}/${companyId}/templates`,
       { params },
     );
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async create(companyId: string, data: CreateTemplateRequest): Promise<MessageTemplate> {

@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type {
   Channel,
@@ -47,7 +48,7 @@ export const OmnichannelService = {
     const response = await api.get<Page<Conversation>>(`${BASE}/inbox`, {
       params: { page, pageSize },
     });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async getConversation(
@@ -58,7 +59,7 @@ export const OmnichannelService = {
     const response = await api.get<ConversationDetail>(`${BASE}/inbox/${conversationId}`, {
       params: { page, pageSize },
     });
-    return response.data;
+    return { ...response.data, messages: normalizePage(response.data.messages) };
   },
 
   async sendMessage(conversationId: string, body: string): Promise<Message> {
@@ -87,7 +88,7 @@ export const OmnichannelService = {
     const response = await api.get<Page<FollowUp>>(`${BASE}/follow-ups`, {
       params: { conversationId, page, pageSize },
     });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async createFollowUp(data: FollowUpRequest): Promise<FollowUp> {

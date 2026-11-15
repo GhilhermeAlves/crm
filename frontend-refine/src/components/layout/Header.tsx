@@ -6,7 +6,7 @@ import { UserMenu } from "@/components/layout/UserMenu";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { QuickActionMenu } from "@/components/layout/QuickActionMenu";
-import { useSidebar } from "@/store/sidebar";
+import { useSidebar } from "@/stores/sidebar.store";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { NotificationBell } from "@/features/communication/notifications/components/NotificationBell";
 

@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/page";
 // ---------------------------------------------------------------------------
 // Domínio omnichannel (Sprint 16) — tipos espelhando as respostas da API.
 // ---------------------------------------------------------------------------
@@ -74,13 +75,7 @@ export type ConversationDetail = {
   messages: Page<Message>;
 };
 
-export type Page<T> = {
-  content: T[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type Page<T> = PageResponse<T>;
 
 export type ChannelRequest = {
   name: string;

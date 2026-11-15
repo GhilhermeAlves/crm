@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type { Page } from "../types/omnichannel.types";
 import type { FollowUpSequence, FollowUpSequenceRequest } from "../types/followup-sequence.types";
@@ -9,7 +10,7 @@ export const FollowUpSequenceService = {
     const response = await api.get<Page<FollowUpSequence>>(BASE, {
       params: { page, pageSize },
     });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async get(sequenceId: string): Promise<FollowUpSequence> {

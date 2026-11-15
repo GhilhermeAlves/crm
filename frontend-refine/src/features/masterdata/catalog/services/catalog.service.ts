@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type {
   CatalogFilters,
@@ -19,7 +20,7 @@ export const CatalogService = {
         pageSize: filters.pageSize ?? 20,
       },
     });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   /** Todas as páginas: o backend limita cada página a 100 itens. */

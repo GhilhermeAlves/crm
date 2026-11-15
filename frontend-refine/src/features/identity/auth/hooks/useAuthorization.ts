@@ -18,12 +18,24 @@ import { useAuth } from "./useAuth";
  * Isto é APENAS proteção de interface. A autorização efetiva é SEMPRE no backend
  * (@PreAuthorize + RLS).
  */
+/**
+ * Nome canônico da permissão a partir de (recurso, ação) — equivalente ao
+ * `toPermissionName` do access-control do Portal Praia. Ex.: ("patient", "read")
+ * → "patient:read".
+ */
+export function toPermissionName(resource: string, action: string): string {
+  return `${resource}:${action}`;
+}
+
 export function useAuthorization() {
   const { permissions, roles } = useAuth();
 
   const can = useCallback(
-    (permission?: string) => {
-      if (!permission) return true;
+    (permissionOrResource?: string, action?: string) => {
+      if (!permissionOrResource) return true;
+      const permission = action
+        ? toPermissionName(permissionOrResource, action)
+        : permissionOrResource;
       // Fallback conservador: backend continua sendo a autoridade final.
       if (!permissions || permissions.length === 0) return true;
       return permissions.includes(permission);
@@ -31,7 +43,10 @@ export function useAuthorization() {
     [permissions],
   );
 
-  const cannot = useCallback((permission?: string) => !can(permission), [can]);
+  const cannot = useCallback(
+    (permissionOrResource?: string, action?: string) => !can(permissionOrResource, action),
+    [can],
+  );
 
   const hasRole = useCallback((role?: string) => !role || roles.includes(role), [roles]);
 

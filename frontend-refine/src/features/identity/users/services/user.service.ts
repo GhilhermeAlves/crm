@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type {
   User,
@@ -15,7 +16,7 @@ const BASE_PATH = "/users";
 export const UserService = {
   async list(params?: ListUsersParams): Promise<PageResponse<User>> {
     const response = await api.get<PageResponse<User>>(BASE_PATH, { params });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async findById(id: string): Promise<User> {

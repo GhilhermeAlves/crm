@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/page";
 export const LEAD_STATUSES = [
   "NEW",
   "CONTACTED",
@@ -49,13 +50,7 @@ export type UpdateLeadRequest = {
   notes?: string;
 };
 
-export type PageResponse<T> = {
-  content: T[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type { PageResponse };
 
 export type ListLeadsParams = {
   page?: number;

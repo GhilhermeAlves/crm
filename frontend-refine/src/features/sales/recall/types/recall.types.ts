@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/page";
 export type RecallStatus = "PENDING" | "SCHEDULED" | "DISMISSED";
 
 export type RecallWindow = "TODAY" | "NEXT_7_DAYS" | "NEXT_30_DAYS" | "OVERDUE" | "ALL";
@@ -42,13 +43,7 @@ export type CreateRecallRequest = {
 
 export type UpdateRecallRequest = Partial<CreateRecallRequest>;
 
-export type RecallPageResponse<T> = {
-  content: T[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type RecallPageResponse<T> = PageResponse<T>;
 
 export const RECALL_WINDOW_LABELS: Record<RecallWindow, string> = {
   TODAY: "Vence hoje",

@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/page";
 export type UserStatus = "active" | "inactive" | "locked" | "pending";
 
 export type User = {
@@ -62,13 +63,7 @@ export type UpdateProfileRequest = {
   avatarUrl?: string;
 };
 
-export type PageResponse<T> = {
-  content: T[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type { PageResponse };
 
 export type ListUsersParams = {
   page?: number;

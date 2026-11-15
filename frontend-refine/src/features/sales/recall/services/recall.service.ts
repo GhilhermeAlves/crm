@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type {
   CreateRecallRequest,
@@ -29,7 +30,7 @@ export const RecallService = {
     const response = await api.get<RecallPageResponse<Recall>>(
       `${BASE}/${companyId}/recalls?${search.toString()}`,
     );
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async create(companyId: string, data: CreateRecallRequest): Promise<Recall> {

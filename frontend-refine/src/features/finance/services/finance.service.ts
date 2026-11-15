@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type {
   AccountingReportRequest,
@@ -41,7 +42,7 @@ export const FinanceService = {
       `${base(companyId)}/transactions`,
       { params: filters },
     );
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async getTransaction(companyId: string, id: string): Promise<FinancialTransaction> {

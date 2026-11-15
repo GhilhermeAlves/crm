@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/page";
 import type { StockUnit } from "@/features/masterdata/inventory/types/inventory.types";
 
 export type CatalogItemType = "PRODUCT" | "SERVICE";
@@ -53,13 +54,7 @@ export type CatalogFilters = {
   pageSize?: number;
 };
 
-export type CatalogPage = {
-  content: CatalogItem[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type CatalogPage = PageResponse<CatalogItem>;
 
 export const CATALOG_TYPE_LABELS: Record<CatalogItemType, string> = {
   PRODUCT: "Produto",
