@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/page";
 import type { CatalogItem } from "@/features/masterdata/catalog/types/catalog.types";
 
 export type StockUnit = "CAIXA" | "CARTELA" | "MILILITROS" | "PACOTE" | "ROLO" | "UNIDADE";
@@ -37,13 +38,7 @@ export type InventoryFilters = {
   pageSize?: number;
 };
 
-export type InventoryPage = {
-  content: InventoryItem[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type InventoryPage = PageResponse<InventoryItem>;
 
 export type StockMovement = {
   id: string;
@@ -56,13 +51,7 @@ export type StockMovement = {
   createdAt: string;
 };
 
-export type StockMovementPage = {
-  content: StockMovement[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type StockMovementPage = PageResponse<StockMovement>;
 
 export type RegisterMovementRequest = {
   type: StockMovementType;

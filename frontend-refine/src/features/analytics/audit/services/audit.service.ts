@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type { AuditLog, AuditLogPageResponse, AuditLogSearchParams } from "../types/audit.types";
 
@@ -18,7 +19,7 @@ export const AuditService = {
   async search(params: AuditLogSearchParams): Promise<AuditLogPageResponse> {
     const queryString = buildQueryString(params);
     const response = await api.get<AuditLogPageResponse>(`${AUDIT_PATH}${queryString}`);
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async getById(id: string): Promise<AuditLog> {

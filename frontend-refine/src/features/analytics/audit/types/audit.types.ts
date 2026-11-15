@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/page";
 export type AuditAction =
   | "CREATE"
   | "READ"
@@ -58,13 +59,7 @@ export type AuditLog = {
   createdAt: string;
 };
 
-export type AuditLogPageResponse = {
-  content: AuditLog[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type AuditLogPageResponse = PageResponse<AuditLog>;
 
 export type AuditLogSearchParams = {
   page?: number;

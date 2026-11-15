@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/page";
 export type TransactionType = "INCOME" | "EXPENSE";
 
 export type TransactionStatus = "PENDING" | "PAID" | "CANCELLED";
@@ -63,13 +64,7 @@ export type AccountingReportType = "MONTHLY_ACCOUNTING" | "STATEMENT" | "TRANSAC
 
 export type ReportFormat = "PDF" | "CSV";
 
-export type PageResponse<T> = {
-  content: T[];
-  page: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-};
+export type { PageResponse };
 
 export type FinancialTransaction = {
   id: string;

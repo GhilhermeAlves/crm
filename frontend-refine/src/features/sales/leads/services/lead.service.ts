@@ -1,3 +1,4 @@
+import { normalizePage } from "@/types/page";
 import api from "@/lib/api";
 import type {
   Lead,
@@ -12,7 +13,7 @@ const BASE = "/companies";
 export const LeadService = {
   async list(companyId: string, params?: ListLeadsParams): Promise<PageResponse<Lead>> {
     const response = await api.get<PageResponse<Lead>>(`${BASE}/${companyId}/leads`, { params });
-    return response.data;
+    return normalizePage(response.data);
   },
 
   async findById(companyId: string, id: string): Promise<Lead> {
