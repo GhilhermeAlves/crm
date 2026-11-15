@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, SearchX } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/common/EmptyState";
+import { toHttpError } from "@/lib/http-error";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { usePatient } from "@/features/clinical/patients/hooks/usePatient";
 import { PatientHeader } from "@/features/clinical/patients/components/PatientHeader";
@@ -16,7 +19,7 @@ export default function PatientRecordLayout({ children }: { children: React.Reac
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
 
-  const { data: patient, isLoading, isError } = usePatient(companyId, patientId);
+  const { data: patient, isLoading, isError, error } = usePatient(companyId, patientId);
 
   // A edição tem cabeçalho e trilha próprios.
   if (pathname?.endsWith("/edit")) {
@@ -28,6 +31,21 @@ export default function PatientRecordLayout({ children }: { children: React.Reac
       <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" /> Carregando paciente…
       </div>
+    );
+  }
+
+  if (isError && toHttpError(error).status === 404) {
+    return (
+      <EmptyState
+        icon={<SearchX className="h-8 w-8" />}
+        title="Paciente não encontrado nesta empresa"
+        description="Ele pode ter sido excluído ou pertencer a outra empresa. Troque a empresa ativa ou volte para a lista."
+        action={
+          <Button asChild variant="outline" size="sm">
+            <Link href={ROUTES.PATIENTS}>Ver pacientes</Link>
+          </Button>
+        }
+      />
     );
   }
 

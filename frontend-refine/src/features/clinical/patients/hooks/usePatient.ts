@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toHttpError } from "@/lib/http-error";
 import { useMutationDefaults } from "@/lib/query/mutation-utils";
 import { PatientService } from "../services/patient.service";
 import { toast } from "sonner";
@@ -32,6 +33,8 @@ export function usePatient(companyId: string | null, patientId: string | null | 
     queryKey: ["patient", companyId, patientId],
     queryFn: () => PatientService.findById(companyId as string, patientId as string),
     enabled: !!companyId && !!patientId,
+    // 404 = paciente de outra empresa ou excluído: repetir não muda a resposta.
+    retry: (failureCount, error) => toHttpError(error).status !== 404 && failureCount < 2,
   });
 }
 
