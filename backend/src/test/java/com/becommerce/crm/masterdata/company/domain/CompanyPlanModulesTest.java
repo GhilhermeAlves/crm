@@ -14,7 +14,7 @@ class CompanyPlanModulesTest {
     void essentialHasOnlyTheClinicBasics() {
         assertEquals(EnumSet.of(
                 CompanyModule.PATIENTS, CompanyModule.AGENDA, CompanyModule.AGENDA_SETTINGS,
-                CompanyModule.CATALOG, CompanyModule.SERVICE_LIST, CompanyModule.DOCUMENTS,
+                CompanyModule.CATALOG, CompanyModule.DOCUMENTS,
                 CompanyModule.TASKS, CompanyModule.STORAGE), CompanyPlan.ESSENTIAL.defaultModules());
     }
 

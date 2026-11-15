@@ -17,7 +17,6 @@ export type CompanyModuleName =
   | "EMAIL_SETTINGS"
   | "AI_AGENT"
   | "DOCUMENTS"
-  | "SERVICE_LIST"
   | "DATA_MIGRATION"
   | "ROLES"
   | "AUDIT";
@@ -70,7 +69,6 @@ export const MODULE_OPTIONS: { value: CompanyModuleName; label: string; descript
     label: "Documentos",
     description: "Modelos de documentos, anamnese e receituários",
   },
-  { value: "SERVICE_LIST", label: "Lista de serviços", description: "Serviços da empresa" },
   { value: "DATA_MIGRATION", label: "Migração de dados", description: "Importação de dados" },
   { value: "ROLES", label: "Perfis e Permissões", description: "Perfis de acesso da equipe" },
   { value: "AUDIT", label: "Auditoria", description: "Histórico de ações no sistema" },
@@ -107,7 +105,6 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "EMAIL_SETTINGS",
     "AI_AGENT",
     "DOCUMENTS",
-    "SERVICE_LIST",
     "DATA_MIGRATION",
     "ROLES",
     "AUDIT",
@@ -126,7 +123,6 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "EMAIL_SETTINGS",
     "AI_AGENT",
     "DOCUMENTS",
-    "SERVICE_LIST",
     "DATA_MIGRATION",
     "ROLES",
     "AUDIT",
@@ -145,7 +141,6 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "EMAIL_SETTINGS",
     "AI_AGENT",
     "DOCUMENTS",
-    "SERVICE_LIST",
     "DATA_MIGRATION",
     "ROLES",
     "AUDIT",
@@ -161,7 +156,6 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "AGENDA_SETTINGS",
     "EMAIL_SETTINGS",
     "DOCUMENTS",
-    "SERVICE_LIST",
     "DATA_MIGRATION",
     "ROLES",
     "AUDIT",
@@ -187,7 +181,6 @@ export const MODULE_GROUPS: { title: string; modules: CompanyModuleName[] }[] = 
       "EMAIL_SETTINGS",
       "AI_AGENT",
       "DOCUMENTS",
-      "SERVICE_LIST",
       "DATA_MIGRATION",
       "ROLES",
     ],

@@ -108,7 +108,6 @@ const ESSENTIAL_MODULES: CompanyModuleName[] = [
   "AGENDA",
   "AGENDA_SETTINGS",
   "CATALOG",
-  "SERVICE_LIST",
   "DOCUMENTS",
   "TASKS",
   "STORAGE",

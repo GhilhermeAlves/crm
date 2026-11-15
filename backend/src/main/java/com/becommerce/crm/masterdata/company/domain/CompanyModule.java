@@ -41,8 +41,6 @@ public enum CompanyModule {
     AI_AGENT,
     /** Modelos de documentos, anamnese e receituários. */
     DOCUMENTS,
-    /** Lista de serviços da empresa. */
-    SERVICE_LIST,
     /** Migração de dados (importação). */
     DATA_MIGRATION,
     /** Perfis e permissões. */
