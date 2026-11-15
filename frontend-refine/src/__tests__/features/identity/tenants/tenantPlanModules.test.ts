@@ -8,7 +8,6 @@ describe("tenantPlanModules (espelho do backend)", () => {
       "AGENDA",
       "AGENDA_SETTINGS",
       "CATALOG",
-      "SERVICE_LIST",
       "DOCUMENTS",
       "TASKS",
       "STORAGE",
@@ -22,6 +21,6 @@ describe("tenantPlanModules (espelho do backend)", () => {
       const prev = tenantPlanModules[order[i - 1]];
       expect(tenantPlanModules[order[i]]).toEqual(expect.arrayContaining(prev));
     }
-    expect(new Set(tenantPlanModules.enterprise).size).toBe(22);
+    expect(new Set(tenantPlanModules.enterprise).size).toBe(21);
   });
 });

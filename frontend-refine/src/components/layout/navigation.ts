@@ -249,11 +249,6 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Dados da empresa", href: ROUTES.SETTINGS_COMPANY },
           { label: "Preferências", href: `${ROUTES.SETTINGS_COMPANY}/preferences` },
           {
-            label: "Lista de serviços",
-            href: `${ROUTES.SETTINGS_COMPANY}/services`,
-            module: "SERVICE_LIST",
-          },
-          {
             label: "Migração de dados",
             href: `${ROUTES.SETTINGS_COMPANY}/migration`,
             module: "DATA_MIGRATION",
