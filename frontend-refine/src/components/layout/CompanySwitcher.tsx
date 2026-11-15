@@ -5,6 +5,8 @@ import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useMyCompanies, useSwitchCompany } from "@/features/identity/auth/hooks/useAuthMutations";
 import { DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { usePathname, useRouter } from "next/navigation";
+import { pathAfterCompanySwitch } from "@/lib/company-switch";
 
 /**
  * Company Switcher (Sprint 8.4). Renderizado no UserMenu/Header: exibe a empresa
@@ -16,6 +18,17 @@ export function CompanySwitcher() {
   const { user } = useAuth();
   const { data: companies = [], isLoading } = useMyCompanies(!!user?.companyId);
   const switchCompany = useSwitchCompany();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSwitch = (companyId: string) =>
+    switchCompany.mutate(companyId, {
+      onSuccess: () => {
+        // Registro da empresa anterior não existe na nova: volta para a lista.
+        const target = pathAfterCompanySwitch(pathname);
+        if (target) router.push(target);
+      },
+    });
 
   const activeId = user?.companyId ?? null;
   if (!activeId || (!isLoading && companies.length === 0)) {
@@ -41,7 +54,7 @@ export function CompanySwitcher() {
                 type="button"
                 disabled={isActive || switchCompany.isPending}
                 data-testid={`company-option-${company.companyId}`}
-                onClick={() => switchCompany.mutate(company.companyId)}
+                onClick={() => handleSwitch(company.companyId)}
                 className={cn(
                   "flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
                   "hover:bg-accent hover:text-accent-foreground",
