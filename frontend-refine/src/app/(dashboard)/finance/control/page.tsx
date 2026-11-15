@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/types/page";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
@@ -36,8 +37,6 @@ import {
 } from "@/features/finance/utils/period";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-
-const PAGE_SIZE = 20;
 
 function FinanceControlSkeleton() {
   return (
@@ -92,6 +91,11 @@ function FinanceControlContent() {
 
   const pageParam = Number(searchParams.get("page") ?? "1");
   const page = Number.isFinite(pageParam) && pageParam >= 1 ? Math.floor(pageParam) : 1;
+
+  const sizeParam = Number(searchParams.get("size"));
+  const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(sizeParam)
+    ? sizeParam
+    : DEFAULT_PAGE_SIZE;
 
   const months = searchParams.get("months") === "12" ? 12 : 6;
 
@@ -163,9 +167,9 @@ function FinanceControlContent() {
       ...summaryFilters,
       ...(q ? { q } : {}),
       page: page - 1,
-      pageSize: PAGE_SIZE,
+      pageSize,
     }),
-    [summaryFilters, q, page],
+    [summaryFilters, q, page, pageSize],
   );
 
   const summaryQuery = useFinanceSummary(companyId, summaryFilters);
@@ -259,8 +263,9 @@ function FinanceControlContent() {
             page={page}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             onPageChange={(next) => setParams({ page: String(next) }, { resetPage: false })}
+            onPageSizeChange={(size) => setParams({ size: String(size) }, { resetPage: true })}
             onNew={() => setNewOpen(true)}
             onImport={() => setImportOpen(true)}
             companyId={companyId}

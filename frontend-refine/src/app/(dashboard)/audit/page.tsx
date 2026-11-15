@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DEFAULT_PAGE_SIZE } from "@/types/page";
 import { useRouter } from "next/navigation";
 
 import { AuditTable } from "@/features/analytics/audit/components/AuditTable";
@@ -12,7 +13,7 @@ export default function AuditPage() {
   const router = useRouter();
   const [params, setParams] = useState<AuditLogSearchParams>({
     page: 1,
-    pageSize: 20,
+    pageSize: DEFAULT_PAGE_SIZE,
   });
 
   const { data, isLoading } = useAuditLogs(params);
@@ -33,7 +34,9 @@ export default function AuditPage() {
       <AuditTable
         data={data}
         isLoading={isLoading}
+        pageSize={params.pageSize ?? DEFAULT_PAGE_SIZE}
         onPageChange={(page) => setParams({ ...params, page })}
+        onPageSizeChange={(pageSize) => setParams({ ...params, pageSize, page: 1 })}
         onRowClick={handleRowClick}
       />
     </div>

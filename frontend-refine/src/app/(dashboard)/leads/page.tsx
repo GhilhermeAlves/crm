@@ -1,5 +1,7 @@
 "use client";
 
+import { ListPagination } from "@/components/common/ListPagination";
+import { DEFAULT_PAGE_SIZE } from "@/types/page";
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
@@ -49,6 +51,7 @@ export default function LeadsPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 400);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [groupBy, setGroupBy] = useState<"none" | "status">("none");
   const [deleteLead, setDeleteLead] = useState<Lead | null>(null);
@@ -56,7 +59,7 @@ export default function LeadsPage() {
 
   const { data, isLoading, error, refetch } = useLeads(companyId, {
     page,
-    pageSize: 10,
+    pageSize,
     search: debouncedSearch.trim() || undefined,
     status: status !== "all" ? (status as LeadStatus) : undefined,
     source: source !== "all" ? (source as LeadSource) : undefined,
@@ -272,30 +275,18 @@ export default function LeadsPage() {
         />
       )}
 
-      {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {leads.length} de {data.totalElements} leads
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
-              disabled={page >= data.totalPages - 1}
-            >
-              Próximo
-            </Button>
-          </div>
-        </div>
+      {data && (
+        <ListPagination
+          page={page}
+          pageSize={pageSize}
+          totalPages={data.totalPages}
+          totalElements={data.totalElements}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(0);
+          }}
+        />
       )}
 
       <DeleteLeadDialog

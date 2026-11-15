@@ -1,5 +1,7 @@
 "use client";
 
+import { ListPagination } from "@/components/common/ListPagination";
+import { DEFAULT_PAGE_SIZE } from "@/types/page";
 import { useState } from "react";
 import { Package, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +44,6 @@ import {
 } from "@/features/masterdata/catalog/types/catalog.types";
 
 const ALL = "ALL";
-const PAGE_SIZE = 20;
 
 export default function CatalogPage() {
   const { user } = useAuth();
@@ -54,6 +55,7 @@ export default function CatalogPage() {
   const [type, setType] = useState<CatalogItemType | typeof ALL>(ALL);
   const [status, setStatus] = useState<"active" | "inactive" | typeof ALL>(ALL);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const q = useDebouncedValue(search, 300);
 
   const { data, isLoading, error, refetch } = useCatalog(companyId, {
@@ -61,7 +63,7 @@ export default function CatalogPage() {
     type: type === ALL ? undefined : type,
     active: status === ALL ? undefined : status === "active",
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
   });
   const createItem = useCreateCatalogItem(companyId);
   const updateItem = useUpdateCatalogItem(companyId);
@@ -224,29 +226,17 @@ export default function CatalogPage() {
         </Card>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end gap-2 text-sm">
-          <span className="text-muted-foreground">
-            Página {page + 1} de {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage(page - 1)}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page + 1 >= totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            Próxima
-          </Button>
-        </div>
-      )}
+      <ListPagination
+        page={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        totalElements={data?.totalElements ?? 0}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(0);
+        }}
+      />
 
       <CatalogItemDialog
         open={dialogOpen}

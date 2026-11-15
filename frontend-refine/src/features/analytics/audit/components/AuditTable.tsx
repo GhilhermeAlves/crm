@@ -10,7 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye } from "lucide-react";
+import { ListPagination } from "@/components/common/ListPagination";
 import { AuditActionBadge } from "./AuditActionBadge";
 import { AuditModuleBadge } from "./AuditModuleBadge";
 import { AuditStatusBadge } from "./AuditStatusBadge";
@@ -19,11 +20,21 @@ import type { AuditLog, AuditLogPageResponse } from "../types/audit.types";
 interface AuditTableProps {
   data: AuditLogPageResponse | undefined;
   isLoading: boolean;
+  pageSize: number;
+  /** Página 1-based (formato da API de auditoria). */
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onRowClick: (log: AuditLog) => void;
 }
 
-export function AuditTable({ data, isLoading, onPageChange, onRowClick }: AuditTableProps) {
+export function AuditTable({
+  data,
+  isLoading,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  onRowClick,
+}: AuditTableProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -131,33 +142,14 @@ export function AuditTable({ data, isLoading, onPageChange, onRowClick }: AuditT
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Página {page} de {totalPages} ({data?.totalElements || 0} registros)
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(page - 1)}
-              disabled={page <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= totalPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <ListPagination
+        page={page - 1}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        totalElements={data?.totalElements ?? 0}
+        onPageChange={(next) => onPageChange(next + 1)}
+        onPageSizeChange={onPageSizeChange}
+      />
     </div>
   );
 }
