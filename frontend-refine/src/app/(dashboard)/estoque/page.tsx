@@ -1,5 +1,7 @@
 "use client";
 
+import { ListPagination } from "@/components/common/ListPagination";
+import { DEFAULT_PAGE_SIZE } from "@/types/page";
 import { useState } from "react";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
@@ -44,7 +46,6 @@ import {
 } from "@/features/masterdata/catalog/types/catalog.types";
 
 const ALL = "ALL";
-const PAGE_SIZE = 20;
 
 function categoryLabel(category: string | null): string {
   if (!category) return "—";
@@ -62,13 +63,14 @@ export default function EstoquePage() {
   const [category, setCategory] = useState("");
   const [lowStock, setLowStock] = useState<boolean | undefined>(undefined);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading, error, refetch } = useInventory(companyId, {
     q: debouncedSearch,
     category: category || undefined,
     lowStock,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
   });
 
   const registerMovement = useRegisterMovement(companyId);
@@ -176,29 +178,17 @@ export default function EstoquePage() {
                   ))}
                 </TableBody>
               </Table>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Página {page + 1} de {Math.max(totalPages, 1)}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    Anterior
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages - 1}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    Próxima
-                  </Button>
-                </div>
-              </div>
+              <ListPagination
+                page={page}
+                pageSize={pageSize}
+                totalPages={totalPages}
+                totalElements={data?.totalElements ?? 0}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(0);
+                }}
+              />
             </div>
           ) : (
             <EmptyState

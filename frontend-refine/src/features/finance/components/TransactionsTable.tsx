@@ -1,5 +1,6 @@
 "use client";
 
+import { PAGE_SIZE_OPTIONS } from "@/types/page";
 import { format, parseISO } from "date-fns";
 
 import { ErrorCard } from "@/components/common/ErrorCard";
@@ -22,6 +23,7 @@ type TransactionsTableProps = {
   totalElements: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onNew: () => void;
   onImport: () => void;
   companyId?: string | null;
@@ -74,6 +76,7 @@ export function TransactionsTable({
   totalElements,
   pageSize,
   onPageChange,
+  onPageSizeChange,
   onNew,
   onImport,
   companyId = null,
@@ -194,6 +197,8 @@ export function TransactionsTable({
         totalItems: totalElements,
         pageSize,
         onPageChange,
+        onPageSizeChange,
+        pageSizeOptions: [...PAGE_SIZE_OPTIONS],
       }}
     />
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import { ListPagination } from "@/components/common/ListPagination";
+import { DEFAULT_PAGE_SIZE } from "@/types/page";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
@@ -45,12 +47,13 @@ export default function CampaignsPage() {
   const [audienceType, setAudienceType] = useState("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null);
   const [cancelTarget, setCancelTarget] = useState<Campaign | null>(null);
 
   const { data, isLoading, refetch } = useCampaigns(companyId, {
     page,
-    pageSize: 10,
+    pageSize,
     status: status !== "all" ? (status as CampaignStatus) : undefined,
     audienceType: audienceType !== "all" ? (audienceType as AudienceType) : undefined,
   });
@@ -154,30 +157,18 @@ export default function CampaignsPage() {
         }
       />
 
-      {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {data.content.length} de {data.totalElements} campanhas
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
-              disabled={page >= data.totalPages - 1}
-            >
-              Próximo
-            </Button>
-          </div>
-        </div>
+      {data && (
+        <ListPagination
+          page={page}
+          pageSize={pageSize}
+          totalPages={data.totalPages}
+          totalElements={data.totalElements}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(0);
+          }}
+        />
       )}
 
       <DeleteCampaignDialog

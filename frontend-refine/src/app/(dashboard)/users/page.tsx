@@ -1,5 +1,7 @@
 "use client";
 
+import { ListPagination } from "@/components/common/ListPagination";
+import { DEFAULT_PAGE_SIZE } from "@/types/page";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -22,11 +24,12 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
 
   const { data, isLoading, refetch } = useUsers({
     page,
-    pageSize: 10,
+    pageSize,
     search: search || undefined,
     status: status !== "all" ? (status as UserStatus) : undefined,
     sortBy: "createdAt",
@@ -87,30 +90,18 @@ export default function UsersPage() {
         onDeactivate={handleDeactivate}
       />
 
-      {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {data.content.length} de {data.totalElements} usuários
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
-              disabled={page >= data.totalPages - 1}
-            >
-              Próximo
-            </Button>
-          </div>
-        </div>
+      {data && (
+        <ListPagination
+          page={page}
+          pageSize={pageSize}
+          totalPages={data.totalPages}
+          totalElements={data.totalElements}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(0);
+          }}
+        />
       )}
 
       <DeleteUserDialog

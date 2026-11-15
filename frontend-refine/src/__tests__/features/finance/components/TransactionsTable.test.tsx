@@ -40,6 +40,7 @@ const baseProps = {
   totalElements: 1,
   pageSize: 20,
   onPageChange: () => {},
+  onPageSizeChange: () => {},
   onNew: () => {},
   onImport: () => {},
 };

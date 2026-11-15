@@ -12,8 +12,8 @@ import { useContactPermissions } from "@/features/masterdata/contacts/hooks/useC
 import { usePatients } from "@/features/clinical/patients/hooks/usePatient";
 import { PatientTable } from "@/features/clinical/patients/components/PatientTable";
 import { ROUTES } from "@/lib/constants";
-
-const PAGE_SIZE = 20;
+import { ListPagination } from "@/components/common/ListPagination";
+import { DEFAULT_PAGE_SIZE } from "@/types/page";
 
 export default function PatientsPage() {
   const { user } = useAuth();
@@ -23,14 +23,15 @@ export default function PatientsPage() {
   const [draft, setDraft] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data: patients, isLoading, isError, refetch } = usePatients(companyId, search);
 
   const total = patients?.length ?? 0;
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const visible = useMemo(
-    () => (patients ?? []).slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
-    [patients, page],
+    () => (patients ?? []).slice(page * pageSize, (page + 1) * pageSize),
+    [patients, page, pageSize],
   );
 
   const applySearch = () => {
@@ -110,29 +111,17 @@ export default function PatientsPage() {
       ) : (
         <div className="space-y-4">
           <PatientTable patients={visible} canUpdate={canUpdate} />
-          {pageCount > 1 && (
-            <div className="flex items-center justify-end gap-2 text-sm">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Anterior
-              </Button>
-              <span className="text-muted-foreground">
-                Página {page + 1} de {pageCount}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= pageCount}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Próxima
-              </Button>
-            </div>
-          )}
+          <ListPagination
+            page={page}
+            pageSize={pageSize}
+            totalPages={pageCount}
+            totalElements={total}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(0);
+            }}
+          />
         </div>
       )}
     </div>
