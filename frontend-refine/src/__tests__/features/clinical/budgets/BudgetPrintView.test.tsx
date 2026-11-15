@@ -32,37 +32,59 @@ const budget: BudgetDetail = {
   updatedByName: "Dra. Ana",
 };
 
+const patient = {
+  name: "Maria Silva",
+  birthDate: "1989-04-05",
+  gender: "Feminino",
+  mobile: "(34) 99999-0000",
+  cpf: "000.000.000-00",
+  email: null,
+};
+
+const company = {
+  name: "Clínica Sorriso",
+  logoUrl: "https://example.com/logo.png",
+  addressLine: "Rua A, 45 - Centro - Uberlândia / MG",
+  phone: "(34) 3333-0000",
+};
+
 describe("BudgetPrintView", () => {
+  it("imprime cabeçalho da clínica com logo, dados do paciente e assinatura", () => {
+    const { container } = render(
+      <BudgetPrintView budget={budget} blocks={ALL_BLOCKS} patient={patient} company={company} />,
+    );
+    expect(screen.getByText("Clínica Sorriso")).toBeTruthy();
+    expect(screen.getByText("Rua A, 45 - Centro - Uberlândia / MG")).toBeTruthy();
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(company.logoUrl);
+    expect(screen.getByText("05/04/1989")).toBeTruthy();
+    expect(screen.getByText(/Declaro para fins de direito/)).toBeTruthy();
+    expect(screen.getAllByText("Maria Silva").length).toBeGreaterThanOrEqual(2);
+  });
+
   it("com todos os blocos mostra valor, dentista, total e observações", () => {
-    render(<BudgetPrintView budget={budget} blocks={ALL_BLOCKS} patientName="Maria Silva" />);
+    render(<BudgetPrintView budget={budget} blocks={ALL_BLOCKS} patient={patient} />);
     expect(screen.getByText("Tratamento completo")).toBeTruthy();
-    expect(screen.getByText("Paciente: Maria Silva")).toBeTruthy();
     expect(screen.getByText("Valor")).toBeTruthy();
     expect(screen.getByText("Dentista")).toBeTruthy();
-    expect(screen.getByText("Total")).toBeTruthy();
+    expect(screen.getByText("Valor Total:")).toBeTruthy();
     expect(screen.getByText("Retorno em 30 dias")).toBeTruthy();
   });
 
   it("sem os blocos de valores oculta a coluna de valor e o total", () => {
-    render(<BudgetPrintView budget={budget} blocks={[]} patientName="Maria Silva" />);
+    render(<BudgetPrintView budget={budget} blocks={[]} patient={patient} />);
     expect(screen.getByText("Restauração")).toBeTruthy();
     expect(screen.queryByText("Valor")).toBeNull();
     expect(screen.queryByText("Dentista")).toBeNull();
-    expect(screen.queryByText("Total")).toBeNull();
+    expect(screen.queryByText("Valor Total:")).toBeNull();
     expect(screen.queryByText("Desconto")).toBeNull();
     expect(screen.queryByText("Retorno em 30 dias")).toBeNull();
   });
 
   it("fora da odontologia não imprime a coluna de dentes", () => {
     render(
-      <BudgetPrintView
-        budget={budget}
-        blocks={ALL_BLOCKS}
-        patientName="Maria Silva"
-        showTeeth={false}
-      />,
+      <BudgetPrintView budget={budget} blocks={ALL_BLOCKS} patient={patient} showTeeth={false} />,
     );
-    expect(screen.queryByText("Dentes")).toBeNull();
+    expect(screen.queryByText("Dente")).toBeNull();
     expect(screen.getByText("Profissional")).toBeTruthy();
   });
 });

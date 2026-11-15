@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { Ban, CheckCircle2, FileText, Pencil } from "lucide-react";
+import { Ban, CheckCircle2, FileText, Pencil, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -62,7 +62,7 @@ function IconAction({
             {children}
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
+        <TooltipContent side="bottom">{label}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -93,8 +93,11 @@ export function TransactionDetailsDialog({
   return (
     <>
       <Dialog open={action === null} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <div className="flex items-start gap-3 pr-8">
+        <DialogContent
+          className="sm:max-w-md [&>button:last-child]:hidden"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <div className="flex items-start gap-3">
             <div
               className={cn(
                 "min-w-0 flex-1 border-l-4 pl-3",
@@ -107,29 +110,34 @@ export function TransactionDetailsDialog({
               </DialogTitle>
               <DialogDescription className="sr-only">Detalhes do lançamento</DialogDescription>
             </div>
-            {canManage && (
-              <div className="flex shrink-0 items-center">
-                {canCancel && (
-                  <IconAction label="Cancelar lançamento" onClick={() => setAction("cancel")}>
-                    <Ban className="h-4 w-4" />
+            <div className="-mr-2 -mt-1 flex shrink-0 items-center gap-0.5">
+              {canManage && (
+                <>
+                  {canCancel && (
+                    <IconAction label="Cancelar lançamento" onClick={() => setAction("cancel")}>
+                      <Ban className="h-4 w-4" />
+                    </IconAction>
+                  )}
+                  {canPay && (
+                    <IconAction label="Marcar como pago" onClick={() => setAction("pay")}>
+                      <CheckCircle2 className="h-4 w-4" />
+                    </IconAction>
+                  )}
+                  <IconAction
+                    label="Editar"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onEdit(transaction);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
                   </IconAction>
-                )}
-                {canPay && (
-                  <IconAction label="Marcar como pago" onClick={() => setAction("pay")}>
-                    <CheckCircle2 className="h-4 w-4" />
-                  </IconAction>
-                )}
-                <IconAction
-                  label="Editar"
-                  onClick={() => {
-                    onOpenChange(false);
-                    onEdit(transaction);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </IconAction>
-              </div>
-            )}
+                </>
+              )}
+              <IconAction label="Fechar" onClick={() => onOpenChange(false)}>
+                <X className="h-4 w-4" />
+              </IconAction>
+            </div>
           </div>
 
           {transaction.contactName && (
