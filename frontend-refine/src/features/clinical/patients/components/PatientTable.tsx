@@ -35,6 +35,7 @@ export function PatientTable({ patients, canUpdate }: { patients: Contact[]; can
       header: "Nome",
       className: "font-medium",
       hideable: false,
+      sortValue: (p) => fullName(p),
       cell: (patient) => (
         <Link
           href={`${ROUTES.PATIENTS}/${patient.id}`}
@@ -44,10 +45,25 @@ export function PatientTable({ patients, canUpdate }: { patients: Contact[]; can
         </Link>
       ),
     },
-    { id: "cpf", header: "CPF", cell: (p) => (p.cpf ? formatCpf(p.cpf) : "—") },
+    {
+      id: "cpf",
+      header: "CPF",
+      sortValue: (p) => p.cpf,
+      cell: (p) => (p.cpf ? formatCpf(p.cpf) : "—"),
+    },
     { id: "mobile", header: "Celular", cell: (p) => (p.mobile ? formatPhone(p.mobile) : "—") },
-    { id: "recordNumber", header: "Prontuário", cell: (p) => p.recordNumber ?? "—" },
-    { id: "patientSince", header: "Paciente desde", cell: (p) => formatSince(p.patientSince) },
+    {
+      id: "recordNumber",
+      header: "Prontuário",
+      sortValue: (p) => p.recordNumber,
+      cell: (p) => p.recordNumber ?? "—",
+    },
+    {
+      id: "patientSince",
+      header: "Paciente desde",
+      sortValue: (p) => p.patientSince,
+      cell: (p) => formatSince(p.patientSince),
+    },
     {
       id: "actions",
       header: <span className="sr-only">Ações</span>,

@@ -31,6 +31,11 @@ export interface ColumnDef<T> {
   /** Habilita ordenação para a coluna */
   sortable?: boolean;
   sortKey?: string;
+  /**
+   * Ordenação no navegador (listas que já vêm inteiras): valor usado para
+   * comparar. Ignorado quando o grid recebe `sort` (ordenação no servidor).
+   */
+  sortValue?: (row: T) => string | number | Date | null | undefined;
   /** Nome mostrado no botão "Colunas" (obrigatório quando o header não é texto) */
   label?: string;
   /** false = coluna sempre visível */
@@ -117,6 +122,7 @@ export function DataTable<T>({
   tableId,
   toolbar,
 }: DataTableProps<T>) {
+  const serverSort = sort;
   const allIds = columns.map((c, i) => columnId(c, i));
   const prefs = useColumnPreferences(tableId, allIds);
   const byId = new Map(columns.map((c, i) => [allIds[i], c]));
@@ -124,6 +130,45 @@ export function DataTable<T>({
   const visibleIds = tableId ? orderedIds.filter((id) => !prefs.hidden.has(id)) : allIds;
   const visibleColumns = visibleIds.map((id) => ({ id, col: byId.get(id)! }));
   const resizable = Boolean(tableId);
+
+  const [localSort, setLocalSort] = React.useState<{
+    column: string;
+    direction: "asc" | "desc";
+  } | null>(null);
+  const effectiveSort =
+    sort ??
+    (columns.some((c) => c.sortValue)
+      ? {
+          column: localSort?.column ?? "",
+          direction: localSort?.direction ?? ("asc" as const),
+          onSort: (column: string) =>
+            setLocalSort((prev) =>
+              prev?.column !== column
+                ? { column, direction: "asc" }
+                : prev.direction === "asc"
+                  ? { column, direction: "desc" }
+                  : null,
+            ),
+        }
+      : undefined);
+  const rows = React.useMemo(() => {
+    if (sort || !localSort) return data;
+    const col = byId.get(localSort.column);
+    if (!col?.sortValue) return data;
+    const get = col.sortValue;
+    const factor = localSort.direction === "asc" ? 1 : -1;
+    return [...data].sort((a, b) => {
+      const va = get(a);
+      const vb = get(b);
+      if (va == null || va === "") return vb == null || vb === "" ? 0 : 1;
+      if (vb == null || vb === "") return -1;
+      if (typeof va === "string" && typeof vb === "string") {
+        return va.localeCompare(vb, "pt-BR", { sensitivity: "base", numeric: true }) * factor;
+      }
+      return (Number(va) - Number(vb)) * factor;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, sort, localSort, columns]);
 
   const startResize = (id: string, event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -205,6 +250,8 @@ export function DataTable<T>({
             <TableHeader className="bg-muted/40">
               <TableRow className="hover:bg-transparent">
                 {visibleColumns.map(({ id: key, col }) => {
+                  const sort = effectiveSort;
+                  const canSort = col.sortable || (!serverSort && Boolean(col.sortValue));
                   const isSorted = sort && (sort.column === key || sort.column === col.sortKey);
                   return (
                     <TableHead
@@ -216,7 +263,7 @@ export function DataTable<T>({
                         col.headerClassName,
                       )}
                     >
-                      {col.sortable && sort ? (
+                      {canSort && sort ? (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -263,10 +310,10 @@ export function DataTable<T>({
                   loadingRows={loadingRows}
                   hasActions={hasActions}
                 />
-              ) : data.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <DataTableEmpty totalColumns={totalColumns} emptyState={emptyState} />
               ) : (
-                data.map((row, rowIdx) => {
+                rows.map((row, rowIdx) => {
                   const rowActions = typeof actions === "function" ? actions(row) : (actions ?? []);
 
                   return (
