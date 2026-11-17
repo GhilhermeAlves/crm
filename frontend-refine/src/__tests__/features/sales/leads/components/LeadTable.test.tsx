@@ -50,7 +50,7 @@ describe("LeadTable (Sprint 10)", () => {
     const lead = makeLead();
     render(<LeadTable leads={[lead]} onDelete={onDelete} />);
 
-    fireEvent.pointerDown(screen.getByRole("button"));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Ações do lead" }));
     const deleteItem = await screen.findByText("Excluir");
     fireEvent.click(deleteItem);
 

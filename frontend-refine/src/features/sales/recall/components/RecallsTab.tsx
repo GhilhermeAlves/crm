@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ROUTES } from "@/lib/constants";
 import { useQueryClient } from "@tanstack/react-query";
@@ -260,90 +261,101 @@ export function RecallsTab() {
               Nenhum retorno previsto para o período selecionado.
             </p>
           ) : (
-            <div className="rounded-md border">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Paciente</TableHead>
-                      <TableHead>Dentista</TableHead>
-                      <TableHead>Data prevista</TableHead>
-                      <TableHead>Marcador</TableHead>
-                      <TableHead className="w-[80px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recalls.map((recall) => (
-                      <TableRow key={recall.id}>
-                        <TableCell>
-                          <p className="font-medium">{contactName(recall.contactId)}</p>
-                          {recall.phone && (
-                            <p className="text-xs text-muted-foreground">{recall.phone}</p>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm">{memberName(recall.hostId)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{formatDateOnly(recall.dueDate)}</span>
-                            {isOverdue(recall.dueDate) && recall.status === "PENDING" && (
-                              <Badge variant="destructive">vencido</Badge>
-                            )}
-                            {recall.status === "SCHEDULED" && (
-                              <Badge variant="secondary">agendado</Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {(recall.tagId && tagNameById.get(recall.tagId)) ?? recall.tag ?? "—"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-1">
-                            {perms.canCreate && recall.status === "PENDING" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  setScheduleTarget({
-                                    recallId: recall.id,
-                                    contactId: recall.contactId,
-                                    hostId: recall.hostId,
-                                  })
-                                }
-                              >
-                                Agendar
-                              </Button>
-                            )}
-                            {perms.canUpdate && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    aria-label="Ações do retorno"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    className="text-destructive"
-                                    onClick={() => setDismissRecallTarget(recall)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Descartar
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
+            <DataTable
+              tableId="recalls"
+              data={recalls ?? []}
+              columns={[
+                {
+                  id: "paciente",
+                  header: "Paciente",
+                  cell: (recall) => (
+                    <>
+                      <p className="font-medium">{contactName(recall.contactId)}</p>
+                      {recall.phone && (
+                        <p className="text-xs text-muted-foreground">{recall.phone}</p>
+                      )}
+                    </>
+                  ),
+                },
+                {
+                  id: "dentista",
+                  header: "Dentista",
+                  className: "text-sm",
+                  cell: (recall) => <>{memberName(recall.hostId)}</>,
+                },
+                {
+                  id: "data-prevista",
+                  header: "Data prevista",
+                  cell: (recall) => (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{formatDateOnly(recall.dueDate)}</span>
+                      {isOverdue(recall.dueDate) && recall.status === "PENDING" && (
+                        <Badge variant="destructive">vencido</Badge>
+                      )}
+                      {recall.status === "SCHEDULED" && <Badge variant="secondary">agendado</Badge>}
+                    </div>
+                  ),
+                },
+                {
+                  id: "marcador",
+                  header: "Marcador",
+                  className: "text-sm text-muted-foreground",
+                  cell: (recall) => (
+                    <>{(recall.tagId && tagNameById.get(recall.tagId)) ?? recall.tag ?? "—"}</>
+                  ),
+                },
+                {
+                  id: "acoes",
+                  header: "",
+                  label: "Ações",
+                  hideable: false,
+                  headerClassName: "w-[80px]",
+                  cell: (recall) => (
+                    <div className="flex items-center justify-end gap-1">
+                      {perms.canCreate && recall.status === "PENDING" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setScheduleTarget({
+                              recallId: recall.id,
+                              contactId: recall.contactId,
+                              hostId: recall.hostId,
+                            })
+                          }
+                        >
+                          Agendar
+                        </Button>
+                      )}
+                      {perms.canUpdate && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              aria-label="Ações do retorno"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDismissRecallTarget(recall)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Descartar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                  ),
+                },
+              ]}
+              keyExtractor={(recall) => recall.id}
+            />
           )}
         </CardContent>
       </Card>

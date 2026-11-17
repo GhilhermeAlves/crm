@@ -20,14 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import {
   useInventory,
   useRegisterMovement,
@@ -134,37 +127,66 @@ export default function EstoquePage() {
             <ErrorCard message={error.message} onRetry={() => refetch()} />
           ) : data && data.content.length > 0 ? (
             <div className="space-y-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
-                    <TableHead className="text-right">Mínimo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.content.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{categoryLabel(item.category)}</TableCell>
-                      <TableCell>{item.unit ? UNIT_LABELS[item.unit] : "—"}</TableCell>
-                      <TableCell className="text-right" data-testid="inventory-quantity">
-                        {item.quantity}
-                      </TableCell>
-                      <TableCell className="text-right">{item.minStock}</TableCell>
-                      <TableCell>
+              <DataTable
+                tableId="inventory"
+                data={data.content ?? []}
+                bordered={false}
+                columns={[
+                  {
+                    id: "nome",
+                    header: "Nome",
+                    className: "font-medium",
+                    sortValue: (item) => item.name,
+                    cell: (item) => <>{item.name}</>,
+                  },
+                  {
+                    id: "categoria",
+                    header: "Categoria",
+                    cell: (item) => <>{categoryLabel(item.category)}</>,
+                  },
+                  {
+                    id: "unidade",
+                    header: "Unidade",
+                    cell: (item) => <>{item.unit ? UNIT_LABELS[item.unit] : "—"}</>,
+                  },
+                  {
+                    id: "quantidade",
+                    header: "Quantidade",
+                    headerClassName: "text-right",
+                    className: "text-right",
+                    sortValue: (item) => item.quantity,
+                    cell: (item) => <>{item.quantity}</>,
+                  },
+                  {
+                    id: "minimo",
+                    header: "Mínimo",
+                    headerClassName: "text-right",
+                    className: "text-right",
+                    sortValue: (item) => item.minStock,
+                    cell: (item) => <>{item.minStock}</>,
+                  },
+                  {
+                    id: "status",
+                    header: "Status",
+                    cell: (item) => (
+                      <>
                         {item.active ? (
                           <Badge>Ativo</Badge>
                         ) : (
                           <Badge variant="secondary">Inativo</Badge>
                         )}
                         <LowStockBadge item={item} />
-                      </TableCell>
-                      <TableCell className="text-right">
+                      </>
+                    ),
+                  },
+                  {
+                    id: "acoes",
+                    header: "Ações",
+                    hideable: false,
+                    headerClassName: "text-right",
+                    className: "text-right",
+                    cell: (item) => (
+                      <>
                         {canManage ? (
                           <Button variant="outline" size="sm" onClick={() => setMovementItem(item)}>
                             Movimentar
@@ -173,11 +195,12 @@ export default function EstoquePage() {
                         <Button variant="ghost" size="sm" onClick={() => setHistoryItem(item)}>
                           Histórico
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </>
+                    ),
+                  },
+                ]}
+                keyExtractor={(item) => item.id}
+              />
               <ListPagination
                 page={page}
                 pageSize={pageSize}

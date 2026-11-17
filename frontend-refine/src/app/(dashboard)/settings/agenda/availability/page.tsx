@@ -14,14 +14,7 @@ import {
 import { AvailabilityEditor } from "@/features/sales/scheduling/components/AvailabilityEditor";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 
 export default function AvailabilityPage() {
   const { user } = useAuth();
@@ -76,58 +69,64 @@ export default function AvailabilityPage() {
             Nenhum profissional encontrado.
           </p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Profissional</TableHead>
-                <TableHead className="text-xs">Agenda</TableHead>
-                <TableHead className="text-right text-xs">Horários</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {professionals.map((m) => (
-                <TableRow
-                  key={m.userId}
-                  data-state={m.userId === selectedUserId ? "selected" : undefined}
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                        {m.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="text-sm">{m.name}</span>
+          <DataTable
+            tableId="availability"
+            data={professionals ?? []}
+            bordered={false}
+            columns={[
+              {
+                id: "profissional",
+                header: "Profissional",
+                headerClassName: "text-xs",
+                cell: (m) => (
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                      {m.name.charAt(0).toUpperCase()}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={m.enabled}
-                        disabled={types.length === 0 || setProfessional.isPending}
-                        aria-label={`Agenda de ${m.name}`}
-                        onCheckedChange={(enabled) =>
-                          setProfessional.mutate({ userId: m.userId, enabled, types })
-                        }
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {m.enabled ? "Ativada" : "Desativada"}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      aria-label={`Editar horários de ${m.name}`}
-                      onClick={() => setSelectedId(m.userId)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <span className="text-sm">{m.name}</span>
+                  </div>
+                ),
+              },
+              {
+                id: "agenda",
+                header: "Agenda",
+                headerClassName: "text-xs",
+                cell: (m) => (
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={m.enabled}
+                      disabled={types.length === 0 || setProfessional.isPending}
+                      aria-label={`Agenda de ${m.name}`}
+                      onCheckedChange={(enabled) =>
+                        setProfessional.mutate({ userId: m.userId, enabled, types })
+                      }
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {m.enabled ? "Ativada" : "Desativada"}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                id: "horarios",
+                header: "Horários",
+                headerClassName: "text-right text-xs",
+                className: "text-right",
+                cell: (m) => (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    aria-label={`Editar horários de ${m.name}`}
+                    onClick={() => setSelectedId(m.userId)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                ),
+              },
+            ]}
+            keyExtractor={(m) => m.userId}
+          />
         )}
         {!typesLoading && types.length === 0 && (
           <p className="border-t px-4 py-3 text-sm text-muted-foreground">

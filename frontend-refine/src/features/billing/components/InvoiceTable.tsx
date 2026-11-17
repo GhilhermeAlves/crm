@@ -1,11 +1,4 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { formatCents, formatLocalDate } from "../format";
 import { INVOICE_STATUS_LABELS, type InvoiceView } from "../types";
 
@@ -26,24 +19,33 @@ export function InvoiceTable({
     return <p className="text-sm text-muted-foreground">Nenhuma fatura ainda.</p>;
   }
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Vencimento</TableHead>
-          <TableHead>Valor</TableHead>
-          <TableHead>Situação</TableHead>
-          <TableHead className="text-right">Pix</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {invoices.map((i) => {
-          const open = i.status === "PENDING" || i.status === "OVERDUE";
-          return (
-            <TableRow key={i.id}>
-              <TableCell>{formatLocalDate(i.dueDate)}</TableCell>
-              <TableCell>{formatCents(i.valueCents)}</TableCell>
-              <TableCell>{INVOICE_STATUS_LABELS[i.status]}</TableCell>
-              <TableCell className="text-right">
+    <DataTable
+      tableId="invoices"
+      data={invoices ?? []}
+      bordered={false}
+      columns={[
+        {
+          id: "vencimento",
+          header: "Vencimento",
+          sortValue: (i) => i.dueDate,
+          cell: (i) => <>{formatLocalDate(i.dueDate)}</>,
+        },
+        {
+          id: "valor",
+          header: "Valor",
+          sortValue: (i) => i.valueCents,
+          cell: (i) => <>{formatCents(i.valueCents)}</>,
+        },
+        { id: "situacao", header: "Situação", cell: (i) => <>{INVOICE_STATUS_LABELS[i.status]}</> },
+        {
+          id: "pix",
+          header: "Pix",
+          headerClassName: "text-right",
+          className: "text-right",
+          cell: (i) => {
+            const open = i.status === "PENDING" || i.status === "OVERDUE";
+            return (
+              <>
                 {open && i.invoiceUrl ? (
                   <a
                     href={i.invoiceUrl}
@@ -56,11 +58,12 @@ export function InvoiceTable({
                 ) : (
                   "—"
                 )}
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+              </>
+            );
+          },
+        },
+      ]}
+      keyExtractor={(i) => i.id}
+    />
   );
 }

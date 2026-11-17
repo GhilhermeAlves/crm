@@ -9,14 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,19 +103,17 @@ export default function AnamnesisListPage() {
         <Card>
           <CardContent className="p-0">
             {models.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Nome do modelo</TableHead>
-                    <TableHead className="text-xs">Estrutura</TableHead>
-                    <TableHead className="text-xs">Modelo ativo?</TableHead>
-                    {canManage && <TableHead className="text-right text-xs">Ação</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {models.map((model) => (
-                    <TableRow key={model.id}>
-                      <TableCell>
+              <DataTable
+                tableId="anamnesis-templates"
+                data={models ?? []}
+                bordered={false}
+                columns={[
+                  {
+                    id: "nome-do-modelo",
+                    header: "Nome do modelo",
+                    headerClassName: "text-xs",
+                    cell: (model) => (
+                      <>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">{model.name}</span>
                           {model.isDefault && <Badge variant="secondary">Padrão</Badge>}
@@ -130,80 +121,98 @@ export default function AnamnesisListPage() {
                         {model.description && (
                           <p className="text-xs text-muted-foreground">{model.description}</p>
                         )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      </>
+                    ),
+                  },
+                  {
+                    id: "estrutura",
+                    header: "Estrutura",
+                    headerClassName: "text-xs",
+                    className: "text-xs text-muted-foreground",
+                    cell: (model) => (
+                      <>
                         {model.sectionCount} {model.sectionCount === 1 ? "seção" : "seções"} ·{" "}
                         {model.questionCount} {model.questionCount === 1 ? "pergunta" : "perguntas"}
-                      </TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={model.active}
-                          disabled={!canManage || setActive.isPending}
-                          onCheckedChange={(checked) =>
-                            setActive.mutate({ modelId: model.id, active: checked })
-                          }
-                        />
-                      </TableCell>
-                      {canManage && (
-                        <TableCell className="text-right">
-                          <div className="inline-flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              disabled={!model.active || copyingLink === model.id}
-                              onClick={() => void copyOpenLink(model.id)}
-                              title="Copiar link aberto"
-                              aria-label={`Copiar link aberto de ${model.name}`}
-                            >
-                              <Link2 className="h-3.5 w-3.5" />
-                            </Button>
-                            {!model.isDefault && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                disabled={!model.active || setDefault.isPending}
-                                onClick={() => setDefault.mutate(model.id)}
-                                title="Definir como padrão"
-                                aria-label={`Definir ${model.name} como padrão`}
-                              >
-                                <Star className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                              <Link
-                                href={`${ROUTES.SETTINGS_DOCUMENTS_ANAMNESIS}/${model.id}`}
-                                aria-label={`Editar ${model.name}`}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              disabled={model.isDefault || deleteModel.isPending}
-                              onClick={() => {
-                                if (model.isDefault) {
-                                  toast.error(
-                                    "O modelo padrão não pode ser excluído. Defina outro como padrão antes.",
-                                  );
-                                  return;
-                                }
-                                setPendingDelete({ id: model.id, name: model.name });
-                              }}
-                              aria-label={`Excluir ${model.name}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </>
+                    ),
+                  },
+                  {
+                    id: "modelo-ativo",
+                    header: "Modelo ativo?",
+                    headerClassName: "text-xs",
+                    cell: (model) => (
+                      <Switch
+                        checked={model.active}
+                        disabled={!canManage || setActive.isPending}
+                        onCheckedChange={(checked) =>
+                          setActive.mutate({ modelId: model.id, active: checked })
+                        }
+                      />
+                    ),
+                  },
+                  {
+                    id: "acao",
+                    header: "Ação",
+                    headerClassName: "text-right text-xs",
+                    className: "text-right",
+                    cell: (model) => (
+                      <div className="inline-flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={!model.active || copyingLink === model.id}
+                          onClick={() => void copyOpenLink(model.id)}
+                          title="Copiar link aberto"
+                          aria-label={`Copiar link aberto de ${model.name}`}
+                        >
+                          <Link2 className="h-3.5 w-3.5" />
+                        </Button>
+                        {!model.isDefault && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={!model.active || setDefault.isPending}
+                            onClick={() => setDefault.mutate(model.id)}
+                            title="Definir como padrão"
+                            aria-label={`Definir ${model.name} como padrão`}
+                          >
+                            <Star className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                          <Link
+                            href={`${ROUTES.SETTINGS_DOCUMENTS_ANAMNESIS}/${model.id}`}
+                            aria-label={`Editar ${model.name}`}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          disabled={model.isDefault || deleteModel.isPending}
+                          onClick={() => {
+                            if (model.isDefault) {
+                              toast.error(
+                                "O modelo padrão não pode ser excluído. Defina outro como padrão antes.",
+                              );
+                              return;
+                            }
+                            setPendingDelete({ id: model.id, name: model.name });
+                          }}
+                          aria-label={`Excluir ${model.name}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ),
+                  },
+                ]}
+                keyExtractor={(model) => model.id}
+              />
             ) : (
               <EmptyState
                 icon={<FileText className="h-8 w-8" />}

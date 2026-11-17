@@ -32,14 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { useCompanyId } from "@/features/identity/auth/hooks/useCompanyId";
 import { usePermission } from "@/features/identity/auth/hooks/useAuthorization";
 import {
@@ -155,71 +148,74 @@ export default function DocumentTemplatesPage() {
           )}
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">Título</TableHead>
-              <TableHead className="text-xs">Tipo</TableHead>
-              <TableHead className="text-xs">Ativo</TableHead>
-              <TableHead className="text-right text-xs">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
-                  Carregando...
-                </TableCell>
-              </TableRow>
-            ) : templates.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
-                  Nenhum modelo cadastrado.
-                </TableCell>
-              </TableRow>
-            ) : (
-              templates.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell className="text-sm">{t.title}</TableCell>
-                  <TableCell className="text-sm">
-                    {DOCUMENT_TYPE_LABELS?.[t.type] || t.type}
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={!!t.active}
-                      onCheckedChange={(v) => handleToggle(t, v)}
-                      disabled={!canManage}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex gap-1">
-                      {canManage && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => openEdit(t)}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => setPendingDelete(t.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <DataTable
+          tableId="document-templates"
+          data={templates ?? []}
+          bordered={false}
+          emptyState={{ title: "Nenhum modelo cadastrado." }}
+          isLoading={isLoading}
+          columns={[
+            {
+              id: "titulo",
+              header: "Título",
+              headerClassName: "text-xs",
+              className: "text-sm",
+              sortValue: (t) => t.title,
+              cell: (t) => <>{t.title}</>,
+            },
+            {
+              id: "tipo",
+              header: "Tipo",
+              headerClassName: "text-xs",
+              className: "text-sm",
+              cell: (t) => <>{DOCUMENT_TYPE_LABELS?.[t.type] || t.type}</>,
+            },
+            {
+              id: "ativo",
+              header: "Ativo",
+              headerClassName: "text-xs",
+              cell: (t) => (
+                <Switch
+                  checked={!!t.active}
+                  onCheckedChange={(v) => handleToggle(t, v)}
+                  disabled={!canManage}
+                />
+              ),
+            },
+            {
+              id: "acoes",
+              header: "Ações",
+              hideable: false,
+              headerClassName: "text-right text-xs",
+              className: "text-right",
+              cell: (t) => (
+                <div className="inline-flex gap-1">
+                  {canManage && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => openEdit(t)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => setPendingDelete(t.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              ),
+            },
+          ]}
+          keyExtractor={(t) => t.id}
+        />
       </section>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

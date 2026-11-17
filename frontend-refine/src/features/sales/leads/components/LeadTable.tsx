@@ -5,14 +5,7 @@ import { MoreHorizontal, Eye, Pencil, Trash2, Target, RefreshCcw } from "lucide-
 import type { Lead } from "../types/lead.types";
 import { LeadStatusBadge, LeadSourceBadge } from "./LeadBadges";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -95,111 +88,126 @@ export function LeadTable({
   }
 
   return (
-    <div className="rounded-md border">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Lead</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>E-mail</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Fonte</TableHead>
-              <TableHead>Score</TableHead>
-              <TableHead>Responsável</TableHead>
-              <TableHead>Criado em</TableHead>
-              <TableHead className="w-[60px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leads.map((lead) => {
-              const contact = lead.contactId ? contacts?.[lead.contactId] : undefined;
-              const name = contact
-                ? `${contact.firstName}${contact.lastName ? ` ${contact.lastName}` : ""}`
-                : "Contato desconhecido";
-              return (
-                <TableRow key={lead.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-muted text-xs">
-                          {getInitials(name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="leading-tight">
-                        <p className="font-medium">{name}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <LeadStatusBadge status={lead.status} />
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {contact?.email ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {contact?.phone ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    <LeadSourceBadge source={lead.source} />
-                  </TableCell>
-                  <TableCell className="text-sm font-medium">{lead.score}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {lead.assignedTo
-                      ? (responsibleMap?.[lead.assignedTo] ?? lead.assignedTo.slice(0, 8))
-                      : "—"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(lead.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`${ROUTES.LEADS}/${lead.id}`)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Visualizar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => router.push(`${ROUTES.LEADS}/${lead.id}/edit`)}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        {canConvert && lead.status !== "CONVERTED" && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onConvert?.(lead)}>
-                              <RefreshCcw className="mr-2 h-4 w-4" />
-                              Converter em contato
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {onDelete && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => onDelete?.(lead)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <DataTable
+      tableId="leads"
+      data={leads ?? []}
+      columns={[
+        {
+          id: "lead",
+          header: "Lead",
+          cell: (lead) => {
+            const contact = lead.contactId ? contacts?.[lead.contactId] : undefined;
+            const name = contact
+              ? `${contact.firstName}${contact.lastName ? ` ${contact.lastName}` : ""}`
+              : "Contato desconhecido";
+            return (
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-muted text-xs">{getInitials(name)}</AvatarFallback>
+                </Avatar>
+                <div className="leading-tight">
+                  <p className="font-medium">{name}</p>
+                </div>
+              </div>
+            );
+          },
+        },
+        {
+          id: "status",
+          header: "Status",
+          cell: (lead) => <LeadStatusBadge status={lead.status} />,
+        },
+        {
+          id: "e-mail",
+          header: "E-mail",
+          className: "text-sm text-muted-foreground",
+          cell: (lead) => {
+            const contact = lead.contactId ? contacts?.[lead.contactId] : undefined;
+            return <>{contact?.email ?? "—"}</>;
+          },
+        },
+        {
+          id: "telefone",
+          header: "Telefone",
+          className: "text-sm text-muted-foreground",
+          cell: (lead) => {
+            const contact = lead.contactId ? contacts?.[lead.contactId] : undefined;
+            return <>{contact?.phone ?? "—"}</>;
+          },
+        },
+        { id: "fonte", header: "Fonte", cell: (lead) => <LeadSourceBadge source={lead.source} /> },
+        {
+          id: "score",
+          header: "Score",
+          className: "text-sm font-medium",
+          sortValue: (lead) => lead.score,
+          cell: (lead) => <>{lead.score}</>,
+        },
+        {
+          id: "responsavel",
+          header: "Responsável",
+          className: "text-sm text-muted-foreground",
+          cell: (lead) => (
+            <>
+              {lead.assignedTo
+                ? (responsibleMap?.[lead.assignedTo] ?? lead.assignedTo.slice(0, 8))
+                : "—"}
+            </>
+          ),
+        },
+        {
+          id: "criado-em",
+          header: "Criado em",
+          className: "text-sm text-muted-foreground",
+          sortValue: (lead) => lead.createdAt,
+          cell: (lead) => <>{formatDate(lead.createdAt)}</>,
+        },
+        {
+          id: "acoes",
+          header: "",
+          label: "Ações",
+          hideable: false,
+          headerClassName: "w-[60px]",
+          cell: (lead) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Ações do lead">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push(`${ROUTES.LEADS}/${lead.id}`)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Visualizar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`${ROUTES.LEADS}/${lead.id}/edit`)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar
+                </DropdownMenuItem>
+                {canConvert && lead.status !== "CONVERTED" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onConvert?.(lead)}>
+                      <RefreshCcw className="mr-2 h-4 w-4" />
+                      Converter em contato
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onDelete?.(lead)} className="text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+        },
+      ]}
+      keyExtractor={(lead) => lead.id}
+    />
   );
 }

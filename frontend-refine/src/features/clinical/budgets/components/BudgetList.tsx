@@ -15,14 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { centsToBRL } from "@/features/finance/utils/money";
 import { useDeleteBudget, useLoseBudget } from "../hooks/useBudgets";
 import type { BudgetSummary } from "../types/budget.types";
@@ -65,58 +58,71 @@ export function BudgetList({
             Nenhum orçamento para este paciente.
           </p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Última edição</TableHead>
-                <TableHead>Editado por</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {budgets.map((b) => (
-                <TableRow key={b.id}>
-                  <TableCell className="font-medium">{b.title}</TableCell>
-                  <TableCell>{formatDateTime(b.updatedAt)}</TableCell>
-                  <TableCell>{b.updatedByName ?? "—"}</TableCell>
-                  <TableCell>{centsToBRL(b.totalCents)}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{BUDGET_STATUS_LABELS[b.status]}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap items-center gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => onView(b)}>
-                        Visualizar
+          <DataTable
+            tableId="budgets"
+            data={budgets ?? []}
+            bordered={false}
+            columns={[
+              {
+                id: "titulo",
+                header: "Título",
+                className: "font-medium",
+                sortValue: (b) => b.title,
+                cell: (b) => <>{b.title}</>,
+              },
+              {
+                id: "ultima-edicao",
+                header: "Última edição",
+                sortValue: (b) => b.updatedAt,
+                cell: (b) => <>{formatDateTime(b.updatedAt)}</>,
+              },
+              {
+                id: "editado-por",
+                header: "Editado por",
+                sortValue: (b) => b.updatedByName,
+                cell: (b) => <>{b.updatedByName ?? "—"}</>,
+              },
+              { id: "total", header: "Total", cell: (b) => <>{centsToBRL(b.totalCents)}</> },
+              {
+                id: "status",
+                header: "Status",
+                cell: (b) => <Badge variant="outline">{BUDGET_STATUS_LABELS[b.status]}</Badge>,
+              },
+              {
+                id: "acoes",
+                header: "Ações",
+                hideable: false,
+                cell: (b) => (
+                  <div className="flex flex-wrap items-center gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => onView(b)}>
+                      Visualizar
+                    </Button>
+                    {canEdit && b.status === "DRAFT" && (
+                      <>
+                        <Button size="sm" variant="ghost" onClick={() => onEdit(b)}>
+                          Editar
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => onApprove(b)}>
+                          Aprovar
+                        </Button>
+                      </>
+                    )}
+                    {canEdit && (b.status === "DRAFT" || b.status === "APPROVED") && (
+                      <Button size="sm" variant="ghost" onClick={() => setToLose(b)}>
+                        Marcar como perdido
                       </Button>
-                      {canEdit && b.status === "DRAFT" && (
-                        <>
-                          <Button size="sm" variant="ghost" onClick={() => onEdit(b)}>
-                            Editar
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => onApprove(b)}>
-                            Aprovar
-                          </Button>
-                        </>
-                      )}
-                      {canEdit && (b.status === "DRAFT" || b.status === "APPROVED") && (
-                        <Button size="sm" variant="ghost" onClick={() => setToLose(b)}>
-                          Marcar como perdido
-                        </Button>
-                      )}
-                      {canEdit && (b.status === "DRAFT" || b.status === "LOST") && (
-                        <Button size="sm" variant="ghost" onClick={() => setToDelete(b)}>
-                          Excluir
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    )}
+                    {canEdit && (b.status === "DRAFT" || b.status === "LOST") && (
+                      <Button size="sm" variant="ghost" onClick={() => setToDelete(b)}>
+                        Excluir
+                      </Button>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+            keyExtractor={(b) => b.id}
+          />
         )}
       </CardContent>
 
