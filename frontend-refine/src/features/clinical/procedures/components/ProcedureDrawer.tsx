@@ -53,6 +53,8 @@ type Props = {
   initialDentition?: Dentition;
   /** Seção de dentes e faces: só em clínicas de odontologia. */
   showTeeth?: boolean;
+  /** Chamado com o procedimento recém-criado (ex.: marcar no orçamento). */
+  onCreated?: (procedure: PatientProcedureResponse) => void;
 };
 
 const NO_PROFESSIONAL = "none";
@@ -78,6 +80,7 @@ export function ProcedureDrawer({
   initialTooth,
   initialDentition,
   showTeeth = true,
+  onCreated,
 }: Props) {
   const uid = useId();
   const { can } = useAuthorization();
@@ -238,7 +241,12 @@ export function ProcedureDrawer({
     if (procedure) {
       update.mutate({ procedureId: procedure.id, payload }, options);
     } else {
-      create.mutate(payload, options);
+      create.mutate(payload, {
+        onSuccess: (created) => {
+          options.onSuccess();
+          onCreated?.(created);
+        },
+      });
     }
   };
 
