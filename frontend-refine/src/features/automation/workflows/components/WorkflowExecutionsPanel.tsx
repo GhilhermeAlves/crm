@@ -3,14 +3,7 @@
 import { History } from "lucide-react";
 import type { WorkflowExecution, WorkflowExecutionStatus } from "../types/workflow.types";
 import { WORKFLOW_EXECUTION_STATUS_LABELS, WORKFLOW_ACTION_LABELS } from "../types/workflow.types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 
 interface WorkflowExecutionsPanelProps {
@@ -69,33 +62,36 @@ export function WorkflowExecutionsPanel({ data = [], isLoading }: WorkflowExecut
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Evento</TableHead>
-            <TableHead>Ação</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Quando</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((execution) => (
-            <TableRow key={execution.id}>
-              <TableCell className="text-sm">{eventLabel(execution.eventType)}</TableCell>
-              <TableCell className="text-sm">
-                {WORKFLOW_ACTION_LABELS[execution.actionType]}
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={execution.status} />
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {formatDate(execution.createdAt)}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      tableId="workflow-executions"
+      data={data ?? []}
+      columns={[
+        {
+          id: "evento",
+          header: "Evento",
+          className: "text-sm",
+          cell: (execution) => <>{eventLabel(execution.eventType)}</>,
+        },
+        {
+          id: "acao",
+          header: "Ação",
+          className: "text-sm",
+          cell: (execution) => <>{WORKFLOW_ACTION_LABELS[execution.actionType]}</>,
+        },
+        {
+          id: "status",
+          header: "Status",
+          cell: (execution) => <StatusBadge status={execution.status} />,
+        },
+        {
+          id: "quando",
+          header: "Quando",
+          className: "text-sm text-muted-foreground",
+          sortValue: (execution) => execution.createdAt,
+          cell: (execution) => <>{formatDate(execution.createdAt)}</>,
+        },
+      ]}
+      keyExtractor={(execution) => execution.id}
+    />
   );
 }

@@ -141,22 +141,9 @@ export function PatientForm({
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel>Nome completo</FormLabel>
                   <FormControl>
-                    <Input placeholder="Digite o nome do contato" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <OptionalLabel label="Sobrenome" />
-                  <FormControl>
-                    <Input placeholder="Digite o sobrenome" {...field} />
+                    <Input placeholder="Digite o nome completo" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

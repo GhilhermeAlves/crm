@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Trophy, XCircle, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, Trophy, XCircle, Trash2 } from "lucide-react";
 import type { Opportunity } from "../types/pipeline.types";
 import { formatCurrency } from "../schemas/pipeline.schema";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ interface OpportunityCardProps {
   onLost?: () => void;
   onDelete?: () => void;
   busy?: boolean;
+  /** Posição da etapa no funil: 0 = primeira, 1 = última (define a cor do card). */
+  progress?: number;
 }
 
 export function OpportunityCard({
@@ -40,9 +42,16 @@ export function OpportunityCard({
   onLost,
   onDelete,
   busy,
+  progress = 0,
 }: OpportunityCardProps) {
+  // Azul na primeira etapa até verde na última.
+  const hue = Math.round(210 - 68 * Math.min(1, Math.max(0, progress)));
+  const accent = `hsl(${hue} 70% 45%)`;
   return (
-    <Card className="shadow-sm">
+    <Card
+      className="border-l-4 shadow-sm"
+      style={{ borderLeftColor: accent, backgroundColor: `hsl(${hue} 70% 45% / 0.07)` }}
+    >
       <CardHeader className="p-3 pb-1">
         <CardTitle className="text-sm font-medium leading-snug">{opportunity.title}</CardTitle>
       </CardHeader>
@@ -64,7 +73,7 @@ export function OpportunityCard({
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        {(canWin || canLose) && (
+        {isLast && (canWin || canLose) ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 text-xs" disabled={busy}>
@@ -92,7 +101,35 @@ export function OpportunityCard({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
+        ) : canLose || canDelete ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={busy}
+                aria-label="Mais ações"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              {canLose && (
+                <DropdownMenuItem onClick={onLost}>
+                  <XCircle className="mr-2 h-4 w-4 text-red-600" />
+                  Marcar como perdida
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
 
         <Button
           variant="ghost"

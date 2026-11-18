@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageEntityName } from "@/components/navigation/usePageEntityName";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
@@ -63,6 +64,7 @@ export default function LeadDetailPage() {
     companyId,
     lead?.contactId ?? null,
   );
+  usePageEntityName(id, [contact?.firstName, contact?.lastName].filter(Boolean).join(" "));
   const { data: customer360 } = useCustomer360(companyId, lead?.contactId ?? null);
   const { data: members = [] } = useMembers(companyId);
 

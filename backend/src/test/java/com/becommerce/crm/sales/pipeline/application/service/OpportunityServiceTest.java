@@ -196,15 +196,13 @@ class OpportunityServiceTest {
     }
 
     @Test
-    void shouldMarkLostAtLastStage() {
+    void shouldMarkLostAtAnyStage() {
         UUID pipelineId = UUID.randomUUID();
-        Stage s1 = stage(pipelineId, "Prospecção", 1);
-        Stage s2 = stage(pipelineId, "Qualificação", 2);
-        Opportunity opp = opportunity(pipelineId, s2.getId());
+        Stage s1 = stage(pipelineId, "Novo", 1);
+        Opportunity opp = opportunity(pipelineId, s1.getId());
 
         when(opportunityRepository.findById(opp.getId())).thenReturn(Optional.of(opp));
-        when(stageRepository.findByPipelineIdOrdered(pipelineId)).thenReturn(List.of(s1, s2));
-        when(stageRepository.findById(s2.getId())).thenReturn(Optional.of(s2));
+        when(stageRepository.findById(s1.getId())).thenReturn(Optional.of(s1));
 
         var response = opportunityService.markLost(companyId, opp.getId(),
                 new MarkLostRequest("Preço alto"), UUID.randomUUID());
@@ -212,5 +210,22 @@ class OpportunityServiceTest {
         assertEquals(OpportunityStatus.LOST, response.status());
         assertEquals("Preço alto", response.lossReason());
         verify(opportunityRepository).save(any(Opportunity.class));
+    }
+
+    @Test
+    void shouldRejectWinTwice() {
+        UUID pipelineId = UUID.randomUUID();
+        Stage s1 = stage(pipelineId, "Novo", 1);
+        Opportunity opp = opportunity(pipelineId, s1.getId());
+        opp.markWon(java.time.LocalDateTime.now());
+
+        when(opportunityRepository.findById(opp.getId())).thenReturn(Optional.of(opp));
+        when(stageRepository.findByPipelineIdOrdered(pipelineId)).thenReturn(List.of(s1));
+        when(stageRepository.findById(s1.getId())).thenReturn(Optional.of(s1));
+
+        PipelineValidationException ex = assertThrows(PipelineValidationException.class,
+                () -> opportunityService.markWon(companyId, opp.getId(), UUID.randomUUID()));
+        assertEquals("Esta oportunidade já foi concluída como ganha.", ex.getMessage());
+        verify(opportunityRepository, never()).save(any(Opportunity.class));
     }
 }

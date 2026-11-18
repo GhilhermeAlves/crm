@@ -1,14 +1,7 @@
 "use client";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useItemMovements } from "../hooks/useInventory";
 import { STOCK_MOVEMENT_TYPE_LABELS, type InventoryItem } from "../types/inventory.types";
@@ -46,26 +39,37 @@ export function MovementHistorySheet({ open, onOpenChange, companyId, item }: Pr
               </button>
             </div>
           ) : data && data.content.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Delta</TableHead>
-                  <TableHead>Observação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.content.map((movement) => (
-                  <TableRow key={movement.id}>
-                    <TableCell>{new Date(movement.createdAt).toLocaleString("pt-BR")}</TableCell>
-                    <TableCell>{STOCK_MOVEMENT_TYPE_LABELS[movement.type]}</TableCell>
-                    <TableCell className="text-right">{deltaBadge(movement.delta)}</TableCell>
-                    <TableCell>{movement.note ?? "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              tableId="inventory-movements"
+              data={data.content ?? []}
+              bordered={false}
+              columns={[
+                {
+                  id: "data",
+                  header: "Data",
+                  cell: (movement) => <>{new Date(movement.createdAt).toLocaleString("pt-BR")}</>,
+                },
+                {
+                  id: "tipo",
+                  header: "Tipo",
+                  cell: (movement) => <>{STOCK_MOVEMENT_TYPE_LABELS[movement.type]}</>,
+                },
+                {
+                  id: "delta",
+                  header: "Delta",
+                  headerClassName: "text-right",
+                  className: "text-right",
+                  cell: (movement) => <>{deltaBadge(movement.delta)}</>,
+                },
+                {
+                  id: "observacao",
+                  header: "Observação",
+                  sortValue: (movement) => movement.note,
+                  cell: (movement) => <>{movement.note ?? "—"}</>,
+                },
+              ]}
+              keyExtractor={(movement) => movement.id}
+            />
           ) : (
             <p className="text-sm text-muted-foreground">Nenhuma movimentação registrada.</p>
           )}

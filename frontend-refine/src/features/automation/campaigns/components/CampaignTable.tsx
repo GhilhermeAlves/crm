@@ -4,14 +4,7 @@ import { useRouter } from "next/navigation";
 import { Eye, Megaphone, MoreHorizontal, Pause, Pencil, Play, Trash2, XCircle } from "lucide-react";
 import { AUDIENCE_SHORT_LABEL, isCampaignEditable, type Campaign } from "../types/campaign.types";
 import { CampaignStatusBadge } from "./CampaignStatusBadge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -78,109 +71,114 @@ export function CampaignTable({
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Público</TableHead>
-            <TableHead>Destinatários</TableHead>
-            <TableHead>Agendamento</TableHead>
-            <TableHead className="w-[60px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {campaigns.map((campaign) => (
-            <TableRow key={campaign.id}>
-              <TableCell>
-                <button
-                  type="button"
-                  onClick={() => router.push(`${ROUTES.CAMPAIGNS}/${campaign.id}`)}
-                  className="text-sm font-medium hover:underline"
-                >
-                  {campaign.name}
-                </button>
-                {campaign.channelType && (
-                  <p className="text-xs text-muted-foreground">{campaign.channelType}</p>
+    <DataTable
+      tableId="campaigns"
+      data={campaigns ?? []}
+      columns={[
+        {
+          id: "nome",
+          header: "Nome",
+          cell: (campaign) => (
+            <>
+              <button
+                type="button"
+                onClick={() => router.push(`${ROUTES.CAMPAIGNS}/${campaign.id}`)}
+                className="text-sm font-medium hover:underline"
+              >
+                {campaign.name}
+              </button>
+              {campaign.channelType && (
+                <p className="text-xs text-muted-foreground">{campaign.channelType}</p>
+              )}
+            </>
+          ),
+        },
+        {
+          id: "status",
+          header: "Status",
+          cell: (campaign) => <CampaignStatusBadge status={campaign.status} />,
+        },
+        {
+          id: "publico",
+          header: "Público",
+          className: "text-sm text-muted-foreground",
+          cell: (campaign) => <>{AUDIENCE_SHORT_LABEL[campaign.audienceType]}</>,
+        },
+        {
+          id: "destinatarios",
+          header: "Destinatários",
+          className: "text-sm font-medium",
+          sortValue: (campaign) => campaign.estimatedRecipients,
+          cell: (campaign) => <>{campaign.estimatedRecipients}</>,
+        },
+        {
+          id: "agendamento",
+          header: "Agendamento",
+          className: "text-sm text-muted-foreground",
+          sortValue: (campaign) => campaign.scheduledAt,
+          cell: (campaign) => <>{formatDate(campaign.scheduledAt)}</>,
+        },
+        {
+          id: "acoes",
+          header: "",
+          label: "Ações",
+          hideable: false,
+          headerClassName: "w-[60px]",
+          cell: (campaign) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push(`${ROUTES.CAMPAIGNS}/${campaign.id}`)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Visualizar
+                </DropdownMenuItem>
+                {canEdit && isCampaignEditable(campaign.status) && (
+                  <DropdownMenuItem onClick={() => router.push(campaignEditPath(campaign.id))}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
+                  </DropdownMenuItem>
                 )}
-              </TableCell>
-              <TableCell>
-                <CampaignStatusBadge status={campaign.status} />
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {AUDIENCE_SHORT_LABEL[campaign.audienceType]}
-              </TableCell>
-              <TableCell className="text-sm font-medium">{campaign.estimatedRecipients}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {formatDate(campaign.scheduledAt)}
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => router.push(`${ROUTES.CAMPAIGNS}/${campaign.id}`)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Visualizar
-                    </DropdownMenuItem>
-                    {canEdit && isCampaignEditable(campaign.status) && (
-                      <DropdownMenuItem onClick={() => router.push(campaignEditPath(campaign.id))}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                    )}
-                    {campaign.status === "RUNNING" && onPause && (
-                      <DropdownMenuItem onClick={() => onPause(campaign)}>
-                        <Pause className="mr-2 h-4 w-4" />
-                        Pausar
-                      </DropdownMenuItem>
-                    )}
-                    {campaign.status === "PAUSED" && onResume && (
-                      <DropdownMenuItem onClick={() => onResume(campaign)}>
-                        <Play className="mr-2 h-4 w-4" />
-                        Retomar
-                      </DropdownMenuItem>
-                    )}
-                    {(campaign.status === "DRAFT" || campaign.status === "SCHEDULED") &&
-                      onExecute && (
-                        <DropdownMenuItem onClick={() => onExecute(campaign)}>
-                          <Play className="mr-2 h-4 w-4" />
-                          Executar agora
-                        </DropdownMenuItem>
-                      )}
-                    <DropdownMenuSeparator />
-                    {(campaign.status === "DRAFT" || campaign.status === "CANCELLED") &&
-                      onDelete && (
-                        <DropdownMenuItem
-                          onClick={() => onDelete(campaign)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Excluir
-                        </DropdownMenuItem>
-                      )}
-                    {["SCHEDULED", "RUNNING", "PAUSED"].includes(campaign.status) && onCancel && (
-                      <DropdownMenuItem
-                        onClick={() => onCancel(campaign)}
-                        className="text-destructive"
-                      >
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Cancelar campanha
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+                {campaign.status === "RUNNING" && onPause && (
+                  <DropdownMenuItem onClick={() => onPause(campaign)}>
+                    <Pause className="mr-2 h-4 w-4" />
+                    Pausar
+                  </DropdownMenuItem>
+                )}
+                {campaign.status === "PAUSED" && onResume && (
+                  <DropdownMenuItem onClick={() => onResume(campaign)}>
+                    <Play className="mr-2 h-4 w-4" />
+                    Retomar
+                  </DropdownMenuItem>
+                )}
+                {(campaign.status === "DRAFT" || campaign.status === "SCHEDULED") && onExecute && (
+                  <DropdownMenuItem onClick={() => onExecute(campaign)}>
+                    <Play className="mr-2 h-4 w-4" />
+                    Executar agora
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                {(campaign.status === "DRAFT" || campaign.status === "CANCELLED") && onDelete && (
+                  <DropdownMenuItem onClick={() => onDelete(campaign)} className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                )}
+                {["SCHEDULED", "RUNNING", "PAUSED"].includes(campaign.status) && onCancel && (
+                  <DropdownMenuItem onClick={() => onCancel(campaign)} className="text-destructive">
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Cancelar campanha
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+        },
+      ]}
+      keyExtractor={(campaign) => campaign.id}
+    />
   );
 }

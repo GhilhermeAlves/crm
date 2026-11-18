@@ -7,14 +7,7 @@ import { DealForecastBadge } from "./DealForecastBadge";
 import { formatCurrency, formatDate } from "../schemas/deal.schema";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,102 +35,140 @@ export function DealTable({ deals, groupTitle, onEdit, onDelete, onChangeStage }
           {deals.length} {deals.length === 1 ? "negociação" : "negociações"}
         </span>
       </div>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead>Nome</TableHead>
-              <TableHead>Tarefas</TableHead>
-              <TableHead>Cronograma de atividades</TableHead>
-              <TableHead>Etapa</TableHead>
-              <TableHead>Resp.</TableHead>
-              <TableHead className="text-right">Valor da negociação</TableHead>
-              <TableHead>Contato</TableHead>
-              <TableHead>Fechamento esperado</TableHead>
-              <TableHead>Probabilidade</TableHead>
-              <TableHead className="text-right">Valor previsto</TableHead>
-              <TableHead>Última interação</TableHead>
-              <TableHead>Cotações e faturas</TableHead>
-              <TableHead>Categoria de previsão</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {deals.map((deal) => (
-              <TableRow key={deal.id}>
-                <TableCell className="whitespace-nowrap font-medium">{deal.name}</TableCell>
-                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                  {deal.tasks ?? dash}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                  {deal.schedule ?? dash}
-                </TableCell>
-                <TableCell>
-                  <DealStageBadge stage={deal.stage} />
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm">
-                  {deal.responsible ?? dash}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-right font-medium">
-                  {formatCurrency(deal.value)}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm">{deal.contact}</TableCell>
-                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                  {formatDate(deal.expectedCloseDate)}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <span className="inline-flex min-w-[48px] items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                    {deal.probability}%
-                  </span>
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-right text-sm">
-                  {formatCurrency(deal.expectedValue)}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                  {deal.lastInteraction ?? dash}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                  {deal.quotesInvoices ?? dash}
-                </TableCell>
-                <TableCell>
-                  <DealForecastBadge category={deal.forecastCategory} />
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEdit?.(deal)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Editar
+      <DataTable
+        tableId="deals"
+        data={deals ?? []}
+        bordered={false}
+        columns={[
+          {
+            id: "nome",
+            header: "Nome",
+            className: "whitespace-nowrap font-medium",
+            sortValue: (deal) => deal.name,
+            cell: (deal) => <>{deal.name}</>,
+          },
+          {
+            id: "tarefas",
+            header: "Tarefas",
+            className: "whitespace-nowrap text-sm text-muted-foreground",
+            sortValue: (deal) => deal.tasks,
+            cell: (deal) => <>{deal.tasks ?? dash}</>,
+          },
+          {
+            id: "cronograma-de-atividades",
+            header: "Cronograma de atividades",
+            className: "whitespace-nowrap text-sm text-muted-foreground",
+            sortValue: (deal) => deal.schedule,
+            cell: (deal) => <>{deal.schedule ?? dash}</>,
+          },
+          { id: "etapa", header: "Etapa", cell: (deal) => <DealStageBadge stage={deal.stage} /> },
+          {
+            id: "resp",
+            header: "Resp.",
+            className: "whitespace-nowrap text-sm",
+            sortValue: (deal) => deal.responsible,
+            cell: (deal) => <>{deal.responsible ?? dash}</>,
+          },
+          {
+            id: "valor-da-negociacao",
+            header: "Valor da negociação",
+            headerClassName: "text-right",
+            className: "whitespace-nowrap text-right font-medium",
+            sortValue: (deal) => deal.value,
+            cell: (deal) => <>{formatCurrency(deal.value)}</>,
+          },
+          {
+            id: "contato",
+            header: "Contato",
+            className: "whitespace-nowrap text-sm",
+            sortValue: (deal) => deal.contact,
+            cell: (deal) => <>{deal.contact}</>,
+          },
+          {
+            id: "fechamento-esperado",
+            header: "Fechamento esperado",
+            className: "whitespace-nowrap text-sm text-muted-foreground",
+            sortValue: (deal) => deal.expectedCloseDate,
+            cell: (deal) => <>{formatDate(deal.expectedCloseDate)}</>,
+          },
+          {
+            id: "probabilidade",
+            header: "Probabilidade",
+            className: "whitespace-nowrap",
+            cell: (deal) => (
+              <span className="inline-flex min-w-[48px] items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+                {deal.probability}%
+              </span>
+            ),
+          },
+          {
+            id: "valor-previsto",
+            header: "Valor previsto",
+            headerClassName: "text-right",
+            className: "whitespace-nowrap text-right text-sm",
+            sortValue: (deal) => deal.expectedValue,
+            cell: (deal) => <>{formatCurrency(deal.expectedValue)}</>,
+          },
+          {
+            id: "ultima-interacao",
+            header: "Última interação",
+            className: "whitespace-nowrap text-sm text-muted-foreground",
+            sortValue: (deal) => deal.lastInteraction,
+            cell: (deal) => <>{deal.lastInteraction ?? dash}</>,
+          },
+          {
+            id: "cotacoes-e-faturas",
+            header: "Cotações e faturas",
+            className: "whitespace-nowrap text-sm text-muted-foreground",
+            sortValue: (deal) => deal.quotesInvoices,
+            cell: (deal) => <>{deal.quotesInvoices ?? dash}</>,
+          },
+          {
+            id: "categoria-de-previsao",
+            header: "Categoria de previsão",
+            cell: (deal) => <DealForecastBadge category={deal.forecastCategory} />,
+          },
+          {
+            id: "acoes",
+            header: "",
+            label: "Ações",
+            hideable: false,
+            headerClassName: "w-[50px]",
+            cell: (deal) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit?.(deal)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onChangeStage?.(deal)}>
+                    <GitBranch className="mr-2 h-4 w-4" />
+                    Alterar etapa
+                  </DropdownMenuItem>
+                  {onDelete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => onDelete?.(deal)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onChangeStage?.(deal)}>
-                        <GitBranch className="mr-2 h-4 w-4" />
-                        Alterar etapa
-                      </DropdownMenuItem>
-                      {onDelete && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => onDelete?.(deal)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
+        ]}
+        keyExtractor={(deal) => deal.id}
+      />
     </Card>
   );
 }

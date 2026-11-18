@@ -4,14 +4,7 @@ import { useState } from "react";
 import { MessageSquareOff, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorCard } from "@/components/common/ErrorCard";
@@ -76,50 +69,64 @@ export default function ChannelsPage() {
         <Card>
           <CardContent className="p-0">
             {channels && channels.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Provedor</TableHead>
-                    <TableHead>ID externo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {channels.map((channel) => (
-                    <TableRow key={channel.id}>
-                      <TableCell className="font-medium">{channel.name}</TableCell>
-                      <TableCell>{CHANNEL_PROVIDER_LABELS[channel.provider]}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {channel.externalId ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <ChannelStatusBadge status={channel.status} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {canUpdate && (
-                            <Button variant="outline" size="sm" onClick={() => openEdit(channel)}>
-                              Editar
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-destructive"
-                              onClick={() => setToDelete(channel)}
-                            >
-                              Excluir
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                tableId="channels"
+                data={channels ?? []}
+                bordered={false}
+                columns={[
+                  {
+                    id: "nome",
+                    header: "Nome",
+                    className: "font-medium",
+                    sortValue: (channel) => channel.name,
+                    cell: (channel) => <>{channel.name}</>,
+                  },
+                  {
+                    id: "provedor",
+                    header: "Provedor",
+                    cell: (channel) => <>{CHANNEL_PROVIDER_LABELS[channel.provider]}</>,
+                  },
+                  {
+                    id: "id-externo",
+                    header: "ID externo",
+                    className: "text-muted-foreground",
+                    sortValue: (channel) => channel.externalId,
+                    cell: (channel) => <>{channel.externalId ?? "—"}</>,
+                  },
+                  {
+                    id: "status",
+                    header: "Status",
+                    cell: (channel) => <ChannelStatusBadge status={channel.status} />,
+                  },
+                  {
+                    id: "acoes",
+                    header: "Ações",
+                    hideable: false,
+                    headerClassName: "text-right",
+                    className: "text-right",
+                    cell: (channel) => (
+                      <div className="flex justify-end gap-2">
+                        {canUpdate && (
+                          <Button variant="outline" size="sm" onClick={() => openEdit(channel)}>
+                            Editar
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => setToDelete(channel)}
+                          >
+                            Excluir
+                          </Button>
+                        )}
+                      </div>
+                    ),
+                  },
+                ]}
+                keyExtractor={(channel) => channel.id}
+              />
             ) : (
               <EmptyState
                 icon={<MessageSquareOff className="h-8 w-8" />}

@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ClosedOpportunitiesTable } from "@/features/sales/pipeline/components/ClosedOpportunitiesTable";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, ShieldOff, Target } from "lucide-react";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
-import { usePipelines } from "@/features/sales/pipeline/hooks/usePipelines";
+import { useCreatePipeline, usePipelines } from "@/features/sales/pipeline/hooks/usePipelines";
 import {
   useCreateOpportunity,
   useDeleteOpportunity,
@@ -46,6 +48,25 @@ export default function PipelinePage() {
     refetch: refetchPipelines,
   } = usePipelines(companyId);
 
+  // Empresa sem nenhum pipeline: cria o funil padrão uma única vez.
+  const createPipeline = useCreatePipeline(companyId);
+  const autoCreateTried = useRef(false);
+  const canManagePipeline = can("pipeline:update");
+  useEffect(() => {
+    if (
+      autoCreateTried.current ||
+      !canManagePipeline ||
+      pipelinesLoading ||
+      pipelinesError ||
+      !pipelines ||
+      pipelines.length > 0
+    ) {
+      return;
+    }
+    autoCreateTried.current = true;
+    createPipeline.mutate({ name: "Funil comercial" });
+  }, [canManagePipeline, pipelines, pipelinesLoading, pipelinesError, createPipeline]);
+
   const activePipelines = useMemo(() => (pipelines ?? []).filter((p) => p.active), [pipelines]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
@@ -63,6 +84,15 @@ export default function PipelinePage() {
     refetch: refetchOpportunities,
   } = useOpportunities(companyId, activePipeline?.id ?? null);
 
+  const openOpportunities = useMemo(
+    () => opportunities.filter((o) => o.status === "OPEN"),
+    [opportunities],
+  );
+  const closedOpportunities = useMemo(
+    () => opportunities.filter((o) => o.status !== "OPEN"),
+    [opportunities],
+  );
+
   const createOpportunity = useCreateOpportunity(companyId, activePipeline?.id ?? null);
   const moveOpportunity = useMoveOpportunity(companyId);
   const markWon = useMarkWonOpportunity(companyId);
@@ -73,7 +103,7 @@ export default function PipelinePage() {
   const [losing, setLosing] = useState<Opportunity | null>(null);
   const [toDelete, setToDelete] = useState<Opportunity | null>(null);
 
-  const isLoading = pipelinesLoading || opportunitiesLoading;
+  const isLoading = pipelinesLoading || opportunitiesLoading || createPipeline.isPending;
   const error = pipelinesError ?? opportunitiesError;
 
   const handleRetry = () => {
@@ -148,7 +178,11 @@ export default function PipelinePage() {
             <EmptyState
               icon={<Target className="h-8 w-8" />}
               title="Nenhum pipeline"
-              description="Crie um pipeline para começar a vender."
+              description={
+                canManagePipeline
+                  ? "Não foi possível criar o funil padrão. Recarregue a página."
+                  : "Peça a um administrador para abrir esta página e criar o funil comercial."
+              }
             />
           </CardContent>
         </Card>
@@ -170,21 +204,32 @@ export default function PipelinePage() {
           </CardContent>
         </Card>
       ) : (
-        <PipelineBoard
-          stages={activePipeline?.stages ?? []}
-          opportunities={opportunities}
-          canMove={canMove}
-          canWin={canWin}
-          canLose={canLose}
-          canDelete={canDelete}
-          busyOpportunityId={busyOpportunityId}
-          onMove={(opportunity, direction) =>
-            moveOpportunity.mutate({ id: opportunity.id, direction })
-          }
-          onWin={(opportunity) => markWon.mutate(opportunity.id)}
-          onLost={(opportunity) => setLosing(opportunity)}
-          onDelete={(opportunity) => setToDelete(opportunity)}
-        />
+        <Tabs defaultValue="open" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="open">Em andamento ({openOpportunities.length})</TabsTrigger>
+            <TabsTrigger value="closed">Concluídas ({closedOpportunities.length})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="open">
+            <PipelineBoard
+              stages={activePipeline?.stages ?? []}
+              opportunities={openOpportunities}
+              canMove={canMove}
+              canWin={canWin}
+              canLose={canLose}
+              canDelete={canDelete}
+              busyOpportunityId={busyOpportunityId}
+              onMove={(opportunity, direction) =>
+                moveOpportunity.mutate({ id: opportunity.id, direction })
+              }
+              onWin={(opportunity) => markWon.mutate(opportunity.id)}
+              onLost={(opportunity) => setLosing(opportunity)}
+              onDelete={(opportunity) => setToDelete(opportunity)}
+            />
+          </TabsContent>
+          <TabsContent value="closed">
+            <ClosedOpportunitiesTable opportunities={closedOpportunities} />
+          </TabsContent>
+        </Tabs>
       )}
 
       {activePipeline && (

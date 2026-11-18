@@ -36,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type MemberRow = { kind: "member"; id: string; member: Member };
@@ -430,38 +431,51 @@ function ActiveMembersTable({
     );
   }
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Usuário</TableHead>
-          <TableHead>Papel</TableHead>
-          <TableHead>Entrada</TableHead>
-          <TableHead className="w-12" />
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {members.map((member) => (
-          <TableRow key={member.userId}>
-            <TableCell>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">{member.name}</span>
-                <span className="text-xs text-muted-foreground">{member.email}</span>
-              </div>
-            </TableCell>
-            <TableCell>
+    <DataTable
+      tableId="company-members"
+      data={members ?? []}
+      bordered={false}
+      columns={[
+        {
+          id: "usuario",
+          header: "Usuário",
+          cell: (member) => (
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{member.name}</span>
+              <span className="text-xs text-muted-foreground">{member.email}</span>
+            </div>
+          ),
+        },
+        {
+          id: "papel",
+          header: "Papel",
+          cell: (member) => (
+            <>
               <Badge variant="outline">{roleLabel(member.role)}</Badge>
               <SpecialtyHint specialty={member.specialty} />
-            </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              {formatDate(member.joinedAt)}
-            </TableCell>
-            <TableCell>
-              <MemberRowActions companyId={companyId} member={member} activeMembers={members} />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+            </>
+          ),
+        },
+        {
+          id: "entrada",
+          header: "Entrada",
+          className: "text-sm text-muted-foreground",
+          sortValue: (member) => member.joinedAt,
+          cell: (member) => <>{formatDate(member.joinedAt)}</>,
+        },
+        {
+          id: "acoes",
+          header: "",
+          label: "Ações",
+          hideable: false,
+          headerClassName: "w-12",
+          cell: (member) => (
+            <MemberRowActions companyId={companyId} member={member} activeMembers={members} />
+          ),
+        },
+      ]}
+      keyExtractor={(member) => member.userId}
+    />
   );
 }
 
@@ -494,44 +508,58 @@ function PendingInvitationsTable({
     );
   }
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>E-mail</TableHead>
-          <TableHead>Papel</TableHead>
-          <TableHead>Expira em</TableHead>
-          <TableHead className="w-12" />
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {invitations.map((invitation) => (
-          <TableRow key={invitation.id}>
-            <TableCell>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">
-                  {invitation.inviteeName || invitation.email}
-                </span>
-                <span className="text-xs text-muted-foreground">{invitation.email}</span>
-              </div>
-            </TableCell>
-            <TableCell>
+    <DataTable
+      tableId="company-invites"
+      data={invitations ?? []}
+      bordered={false}
+      columns={[
+        {
+          id: "e-mail",
+          header: "E-mail",
+          cell: (invitation) => (
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">
+                {invitation.inviteeName || invitation.email}
+              </span>
+              <span className="text-xs text-muted-foreground">{invitation.email}</span>
+            </div>
+          ),
+        },
+        {
+          id: "papel",
+          header: "Papel",
+          cell: (invitation) => (
+            <>
               <Badge variant="outline">{roleLabel(invitation.role)}</Badge>
               <SpecialtyHint specialty={invitation.specialty} />
-            </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              {format(parseISO(invitation.expiresAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-            </TableCell>
-            <TableCell>
-              <InvitationRowActions
-                companyId={companyId}
-                companyName={companyName}
-                invitation={invitation}
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+            </>
+          ),
+        },
+        {
+          id: "expira-em",
+          header: "Expira em",
+          className: "text-sm text-muted-foreground",
+          cell: (invitation) => (
+            <>{format(parseISO(invitation.expiresAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}</>
+          ),
+        },
+        {
+          id: "acoes",
+          header: "",
+          label: "Ações",
+          hideable: false,
+          headerClassName: "w-12",
+          cell: (invitation) => (
+            <InvitationRowActions
+              companyId={companyId}
+              companyName={companyName}
+              invitation={invitation}
+            />
+          ),
+        },
+      ]}
+      keyExtractor={(invitation) => invitation.id}
+    />
   );
 }
 

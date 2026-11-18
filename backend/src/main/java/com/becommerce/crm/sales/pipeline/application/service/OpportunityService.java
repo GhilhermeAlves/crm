@@ -213,7 +213,7 @@ public class OpportunityService implements OpportunityUseCase {
                 throw new PipelineValidationException("O motivo da perda é obrigatório.");
             }
             Opportunity opportunity = requireOwned(companyId, opportunityId);
-            requireLastStage(opportunity);
+            // Perda pode ser registrada em qualquer etapa; ganho só na última.
             Stage current = stageOf(companyId, opportunity.getStageId());
             opportunity.markLost(request.lossReason().trim(), LocalDateTime.now());
             opportunityRepository.save(opportunity);

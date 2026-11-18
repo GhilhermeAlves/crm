@@ -77,6 +77,8 @@ jobs:
 
       - name: Upload coverage reports
         if: always()
+        # Relatório é opcional: cota de artefatos cheia não deve reprovar o CI.
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: backend-coverage
@@ -210,6 +212,7 @@ jobs:
 
       - name: Upload Playwright report on failure
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
@@ -224,6 +227,7 @@ jobs:
 
       - name: Upload E2E stack logs on failure
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: e2e-stack-logs

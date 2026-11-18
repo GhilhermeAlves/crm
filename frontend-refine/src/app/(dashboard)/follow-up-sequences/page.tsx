@@ -4,14 +4,7 @@ import { useState } from "react";
 import { Plus, Repeat } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -77,62 +70,77 @@ export default function FollowUpSequencesPage() {
         <Card>
           <CardContent className="p-0">
             {sequences.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Criado em</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sequences.map((seq) => (
-                    <TableRow key={seq.id}>
-                      <TableCell className="font-medium">{seq.name}</TableCell>
-                      <TableCell className="max-w-[30ch] truncate text-muted-foreground">
-                        {seq.description ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={seq.status === "ACTIVE" ? "default" : "secondary"}>
-                          {FOLLOW_UP_SEQUENCE_STATUS_LABELS[seq.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(seq.createdAt).toLocaleDateString("pt-BR")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={activateSequence.isPending || deactivateSequence.isPending}
-                            onClick={() =>
-                              seq.status === "ACTIVE"
-                                ? deactivateSequence.mutate(seq.id)
-                                : activateSequence.mutate(seq.id)
-                            }
-                          >
-                            {seq.status === "ACTIVE" ? "Desativar" : "Ativar"}
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => openEdit(seq)}>
-                            Editar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive"
-                            onClick={() => setToDelete(seq)}
-                          >
-                            Excluir
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                tableId="follow-up-sequences"
+                data={sequences ?? []}
+                bordered={false}
+                columns={[
+                  {
+                    id: "nome",
+                    header: "Nome",
+                    className: "font-medium",
+                    sortValue: (seq) => seq.name,
+                    cell: (seq) => <>{seq.name}</>,
+                  },
+                  {
+                    id: "descricao",
+                    header: "Descrição",
+                    className: "max-w-[30ch] truncate text-muted-foreground",
+                    sortValue: (seq) => seq.description,
+                    cell: (seq) => <>{seq.description ?? "—"}</>,
+                  },
+                  {
+                    id: "status",
+                    header: "Status",
+                    cell: (seq) => (
+                      <Badge variant={seq.status === "ACTIVE" ? "default" : "secondary"}>
+                        {FOLLOW_UP_SEQUENCE_STATUS_LABELS[seq.status]}
+                      </Badge>
+                    ),
+                  },
+                  {
+                    id: "criado-em",
+                    header: "Criado em",
+                    className: "text-muted-foreground",
+                    cell: (seq) => <>{new Date(seq.createdAt).toLocaleDateString("pt-BR")}</>,
+                  },
+                  {
+                    id: "acoes",
+                    header: "Ações",
+                    hideable: false,
+                    headerClassName: "text-right",
+                    className: "text-right",
+                    cell: (seq) => (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={activateSequence.isPending || deactivateSequence.isPending}
+                          onClick={() =>
+                            seq.status === "ACTIVE"
+                              ? deactivateSequence.mutate(seq.id)
+                              : activateSequence.mutate(seq.id)
+                          }
+                        >
+                          {seq.status === "ACTIVE" ? "Desativar" : "Ativar"}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => openEdit(seq)}>
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => setToDelete(seq)}
+                        >
+                          Excluir
+                        </Button>
+                      </div>
+                    ),
+                  },
+                ]}
+                keyExtractor={(seq) => seq.id}
+              />
             ) : (
               <EmptyState
                 icon={<Repeat className="h-8 w-8" />}

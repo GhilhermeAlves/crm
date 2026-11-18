@@ -138,8 +138,8 @@ export type PatientFormValues = z.infer<ReturnType<typeof createPatientSchema>>;
 
 export function contactToFormValues(contact: Contact): PatientFormValues {
   return {
-    firstName: contact.firstName ?? "",
-    lastName: contact.lastName ?? "",
+    firstName: [contact.firstName, contact.lastName].filter(Boolean).join(" "),
+    lastName: "",
     birthDate: contact.birthDate ?? "",
     cpf: contact.cpf ? formatCpf(contact.cpf) : "",
     rg: contact.rg ?? "",
@@ -179,7 +179,7 @@ export function formValuesToContactPayload(values: PatientFormValues): CreateCon
   const text = (v?: string) => (v ?? "").trim();
   return {
     firstName: values.firstName.trim(),
-    lastName: text(values.lastName),
+    lastName: "",
     email: text(values.email),
     phone: digits(values.phone),
     mobile: digits(values.mobile),

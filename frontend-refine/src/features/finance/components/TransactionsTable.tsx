@@ -186,6 +186,7 @@ export function TransactionsTable({
 
   return (
     <DataTable
+      tableId="transactions"
       data={transactions}
       columns={columns}
       keyExtractor={(transaction) => transaction.id}

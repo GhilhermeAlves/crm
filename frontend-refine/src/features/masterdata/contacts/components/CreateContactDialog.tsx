@@ -123,8 +123,8 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, contact, on
     () =>
       contact
         ? {
-            firstName: contact.firstName ?? "",
-            lastName: contact.lastName ?? "",
+            firstName: [contact.firstName, contact.lastName].filter(Boolean).join(" "),
+            lastName: "",
             email: contact.email ?? "",
             phone: contact.phone ? formatPhone(contact.phone) : "",
             mobile: contact.mobile ? formatPhone(contact.mobile) : "",
@@ -149,7 +149,7 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, contact, on
   const handleSubmit = (values: FormValues) => {
     onSubmit({
       firstName: values.firstName,
-      lastName: values.lastName ?? "",
+      lastName: "",
       email: values.email ?? "",
       phone: values.phone ? values.phone.replace(/\D/g, "") : "",
       mobile: values.mobile ? values.mobile.replace(/\D/g, "") : "",
@@ -175,28 +175,15 @@ export function CreateContactDialog({ open, onOpenChange, isLoading, contact, on
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex flex-1 flex-col gap-4 pt-2"
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel>Nome completo</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nome" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sobrenome</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Sobrenome" {...field} />
+                      <Input placeholder="Nome completo" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -7,14 +7,7 @@ import type { Contact } from "../types/contact.types";
 import { ROUTES } from "@/lib/constants";
 import { formatCpf, formatPhone } from "@/lib/format";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable, type ColumnDef } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -73,6 +66,111 @@ export function ContactTable({ contacts, isLoading, onEdit, onDelete }: Props) {
     });
   };
 
+  const columns: ColumnDef<Contact>[] = [
+    {
+      id: "select",
+      label: "Seleção",
+      hideable: false,
+      headerClassName: "w-[40px]",
+      header: (
+        <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Selecionar todos" />
+      ),
+      cell: (c) => (
+        <Checkbox
+          checked={selectedIds.has(c.id)}
+          onCheckedChange={() => toggleOne(c.id)}
+          aria-label={`Selecionar ${fullName(c)}`}
+        />
+      ),
+    },
+    {
+      id: "name",
+      header: "Nome",
+      hideable: false,
+      sortValue: fullName,
+      cell: (c) => (
+        <Link href={`${ROUTES.CONTACTS}/${c.id}`} className="font-medium hover:underline">
+          {fullName(c)}
+        </Link>
+      ),
+    },
+    {
+      id: "cpf",
+      header: "CPF",
+      className: "text-sm text-muted-foreground",
+      sortValue: (c) => c.cpf,
+      cell: (c) => (c.cpf ? formatCpf(c.cpf) : "—"),
+    },
+    {
+      id: "mobile",
+      header: "Celular",
+      className: "text-sm text-muted-foreground",
+      cell: (c) => (c.mobile ? formatPhone(c.mobile) : c.phone ? formatPhone(c.phone) : "—"),
+    },
+    {
+      id: "recordNumber",
+      header: "Prontuário",
+      className: "text-sm text-muted-foreground",
+      sortValue: (c) => c.recordNumber,
+      cell: (c) => c.recordNumber ?? "—",
+    },
+    {
+      id: "createdAt",
+      header: "Paciente desde",
+      className: "text-sm text-muted-foreground",
+      sortValue: (c) => c.createdAt,
+      cell: (c) => formatDate(c.createdAt),
+    },
+    {
+      id: "actions",
+      header: "Ações",
+      hideable: false,
+      headerClassName: "w-[160px] text-center",
+      cell: (c) => (
+        <div className="flex items-center justify-center gap-1">
+          {onEdit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(c)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Editar</TooltipContent>
+            </Tooltip>
+          )}
+          {onDelete && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={() => onDelete(c)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Excluir</TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setAuditContact(c)}
+              >
+                <History className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Auditoria</TooltipContent>
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -95,104 +193,7 @@ export function ContactTable({ contacts, isLoading, onEdit, onDelete }: Props) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]">
-                <Checkbox
-                  checked={allSelected}
-                  onCheckedChange={toggleAll}
-                  aria-label="Selecionar todos"
-                />
-              </TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>CPF</TableHead>
-              <TableHead>Celular</TableHead>
-              <TableHead>Prontuário</TableHead>
-              <TableHead>Paciente desde</TableHead>
-              <TableHead className="w-[160px] text-center">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {contacts.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedIds.has(c.id)}
-                    onCheckedChange={() => toggleOne(c.id)}
-                    aria-label={`Selecionar ${fullName(c)}`}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Link href={`${ROUTES.CONTACTS}/${c.id}`} className="font-medium hover:underline">
-                    {fullName(c)}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {c.cpf ? formatCpf(c.cpf) : "—"}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {c.mobile ? formatPhone(c.mobile) : c.phone ? formatPhone(c.phone) : "—"}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {c.recordNumber ?? "—"}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDate(c.createdAt)}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-center gap-1">
-                    {onEdit && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => onEdit(c)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Editar</TooltipContent>
-                      </Tooltip>
-                    )}
-                    {onDelete && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => onDelete(c)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Excluir</TooltipContent>
-                      </Tooltip>
-                    )}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setAuditContact(c)}
-                        >
-                          <History className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Auditoria</TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable tableId="contacts" data={contacts} columns={columns} bordered={false} />
 
       <Dialog open={!!auditContact} onOpenChange={(open) => !open && setAuditContact(null)}>
         <DialogContent className="max-w-md">

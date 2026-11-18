@@ -7,14 +7,7 @@ import { Package, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import {
   Select,
   SelectContent,
@@ -149,66 +142,83 @@ export default function CatalogPage() {
         <Card>
           <CardContent className="p-0">
             {items.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead className="text-right">Preço</TableHead>
-                    <TableHead>Situação</TableHead>
-                    {canManage && <TableHead className="text-right">Ações</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
+              <DataTable
+                tableId="catalog"
+                data={items ?? []}
+                bordered={false}
+                columns={[
+                  {
+                    id: "item",
+                    header: "Item",
+                    cell: (item) => (
+                      <>
                         <p className="font-medium">{item.name}</p>
                         {item.sku && (
                           <p className="text-xs text-muted-foreground">SKU {item.sku}</p>
                         )}
-                      </TableCell>
-                      <TableCell>{CATALOG_TYPE_LABELS[item.type]}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {item.category ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{formatPrice(item)}</TableCell>
-                      <TableCell>
-                        <Badge variant={item.active ? "default" : "secondary"}>
-                          {item.active ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </TableCell>
-                      {canManage && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={setActive.isPending}
-                              onClick={() =>
-                                setActive.mutate({ id: item.id, active: !item.active })
-                              }
-                            >
-                              {item.active ? "Desativar" : "Ativar"}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditing(item);
-                                setDialogOpen(true);
-                              }}
-                            >
-                              Editar
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </>
+                    ),
+                  },
+                  {
+                    id: "tipo",
+                    header: "Tipo",
+                    cell: (item) => <>{CATALOG_TYPE_LABELS[item.type]}</>,
+                  },
+                  {
+                    id: "categoria",
+                    header: "Categoria",
+                    className: "text-muted-foreground",
+                    sortValue: (item) => item.category,
+                    cell: (item) => <>{item.category ?? "—"}</>,
+                  },
+                  {
+                    id: "preco",
+                    header: "Preço",
+                    headerClassName: "text-right",
+                    className: "text-right tabular-nums",
+                    cell: (item) => <>{formatPrice(item)}</>,
+                  },
+                  {
+                    id: "situacao",
+                    header: "Situação",
+                    cell: (item) => (
+                      <Badge variant={item.active ? "default" : "secondary"}>
+                        {item.active ? "Ativo" : "Inativo"}
+                      </Badge>
+                    ),
+                  },
+                  {
+                    id: "acoes",
+                    header: "Ações",
+                    hideable: false,
+                    headerClassName: "text-right",
+                    className: "text-right",
+                    cell: (item) => (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={setActive.isPending}
+                          onClick={() => setActive.mutate({ id: item.id, active: !item.active })}
+                        >
+                          {item.active ? "Desativar" : "Ativar"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditing(item);
+                            setDialogOpen(true);
+                          }}
+                        >
+                          Editar
+                        </Button>
+                      </div>
+                    ),
+                  },
+                ]}
+                keyExtractor={(item) => item.id}
+              />
             ) : (
               <EmptyState
                 icon={<Package className="h-8 w-8" />}

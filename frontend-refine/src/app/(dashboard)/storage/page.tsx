@@ -18,14 +18,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -176,76 +169,94 @@ export default function StoragePage() {
             description="Envie um arquivo ou crie um documento para começar."
           />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Tamanho</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredFiles.map((file) => (
-                <TableRow key={file.id}>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(file.createdAt)}
-                  </TableCell>
-                  <TableCell className="font-medium">{file.fileName}</TableCell>
-                  <TableCell className="text-muted-foreground">{file.contentType}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatBytes(file.sizeBytes)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <TooltipProvider delayDuration={300}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => downloadFile.mutate(file)}
-                              disabled={downloadFile.isPending}
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Baixar</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => downloadFile.mutate(file)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Visualizar documento
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => downloadFile.mutate(file)}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Baixar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => setToDelete(file)}
+          <DataTable
+            tableId="storage"
+            data={filteredFiles ?? []}
+            bordered={false}
+            columns={[
+              {
+                id: "data",
+                header: "Data",
+                className: "text-muted-foreground",
+                sortValue: (file) => file.createdAt,
+                cell: (file) => <>{formatDate(file.createdAt)}</>,
+              },
+              {
+                id: "nome",
+                header: "Nome",
+                className: "font-medium",
+                sortValue: (file) => file.fileName,
+                cell: (file) => <>{file.fileName}</>,
+              },
+              {
+                id: "tipo",
+                header: "Tipo",
+                className: "text-muted-foreground",
+                sortValue: (file) => file.contentType,
+                cell: (file) => <>{file.contentType}</>,
+              },
+              {
+                id: "tamanho",
+                header: "Tamanho",
+                className: "text-muted-foreground",
+                sortValue: (file) => file.sizeBytes,
+                cell: (file) => <>{formatBytes(file.sizeBytes)}</>,
+              },
+              {
+                id: "acoes",
+                header: "Ações",
+                hideable: false,
+                headerClassName: "text-right",
+                className: "text-right",
+                cell: (file) => (
+                  <div className="flex justify-end gap-1">
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => downloadFile.mutate(file)}
+                            disabled={downloadFile.isPending}
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Baixar</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => downloadFile.mutate(file)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Visualizar documento
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => downloadFile.mutate(file)}>
+                          <Download className="mr-2 h-4 w-4" />
+                          Baixar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setToDelete(file)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ),
+              },
+            ]}
+            keyExtractor={(file) => file.id}
+          />
         )}
       </div>
 
