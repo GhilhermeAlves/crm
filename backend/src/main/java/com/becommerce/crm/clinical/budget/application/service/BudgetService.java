@@ -76,6 +76,14 @@ public class BudgetService implements BudgetUseCase {
         }
     }
 
+    private org.springframework.context.ApplicationEventPublisher events;
+
+    /** Opcional (testes unitários): pede a cobrança das parcelas pelo Asaas após o commit. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setEventPublisher(org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
+    }
+
     public BudgetService(BudgetRepository repository,
                          PatientProcedureRepository procedureRepository,
                          ContactRepository contactRepository,
@@ -196,6 +204,10 @@ public class BudgetService implements BudgetUseCase {
                         null, null, null, request.installments(), actorId);
                 transactionRepository.saveAll(series);
                 budget.linkTransactions(series.stream().map(FinancialTransaction::getId).toList());
+                if (Boolean.TRUE.equals(request.chargeViaAsaas()) && events != null) {
+                    events.publishEvent(new BudgetChargeRequestedEvent(companyId,
+                            series.stream().map(FinancialTransaction::getId).toList()));
+                }
             }
             repository.save(budget);
 

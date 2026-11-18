@@ -73,6 +73,18 @@ public class FinancialTransactionService {
         this.auditor = auditor;
     }
 
+    private org.springframework.context.ApplicationEventPublisher events;
+
+    /** Opcional (testes unitários não precisam): avisa outros módulos após baixa/cancelamento/exclusão. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setEventPublisher(org.springframework.context.ApplicationEventPublisher events) {
+        this.events = events;
+    }
+
+    private void publish(UUID companyId, UUID transactionId, FinancialTransactionChangedEvent.Kind kind) {
+        if (events != null) events.publishEvent(new FinancialTransactionChangedEvent(companyId, transactionId, kind));
+    }
+
     @Transactional(readOnly = true)
     public PageResponse<FinancialTransactionResponse> list(UUID companyId, TransactionType type, String status,
                                                            LocalDate from, LocalDate to,
@@ -185,6 +197,7 @@ public class FinancialTransactionService {
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.FINANCE, ENTITY, saved.getId().toString(),
                     "Lançamento financeiro pago: " + saved.getDescription(), actor,
                     Map.of("paidAt", String.valueOf(saved.getPaidAt())));
+            publish(companyId, saved.getId(), FinancialTransactionChangedEvent.Kind.PAID);
             return toResponse(saved);
         } finally {
             TenantContext.clear();
@@ -201,6 +214,7 @@ public class FinancialTransactionService {
             note(companyId, saved, "Lançamento financeiro cancelado", actor);
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.FINANCE, ENTITY, saved.getId().toString(),
                     "Lançamento financeiro cancelado: " + saved.getDescription(), actor, null);
+            publish(companyId, saved.getId(), FinancialTransactionChangedEvent.Kind.CANCELLED);
             return toResponse(saved);
         } finally {
             TenantContext.clear();
@@ -216,6 +230,7 @@ public class FinancialTransactionService {
             note(companyId, transaction, "Lançamento financeiro excluído", actor);
             auditor.record(companyId, AuditAction.DELETE, AuditModule.FINANCE, ENTITY, transactionId.toString(),
                     "Lançamento financeiro excluído: " + transaction.getDescription(), actor, null);
+            publish(companyId, transactionId, FinancialTransactionChangedEvent.Kind.DELETED);
         } finally {
             TenantContext.clear();
         }

@@ -140,4 +140,39 @@ class AsaasClientTest {
         assertTrue(ex.getMessage().contains("CPF inválido"));
         assertFalse(ex.toString().contains("KEY123"));
     }
+
+    @Test
+    void createPaymentLetsPayerChooseAndReturnsLink() {
+        server.expect(requestTo(BASE + "/payments"))
+              .andExpect(method(HttpMethod.POST))
+              .andExpect(jsonPath("$.billingType").value("UNDEFINED"))
+              .andExpect(jsonPath("$.value").value(12.5))
+              .andExpect(jsonPath("$.dueDate").value("2026-11-20"))
+              .andExpect(jsonPath("$.externalReference").value("tx:a:b"))
+              .andRespond(withSuccess("{\"id\":\"pay_1\",\"invoiceUrl\":\"https://i/1\"}",
+                      MediaType.APPLICATION_JSON));
+        var p = client.createPayment("cus_1", 1250, java.time.LocalDate.of(2026, 11, 20), "Orçamento", "tx:a:b");
+        assertEquals("pay_1", p.id());
+        assertEquals("https://i/1", p.invoiceUrl());
+    }
+
+    @Test
+    void receiveInCashDoesNotNotifyPayer() {
+        server.expect(requestTo(BASE + "/payments/pay_1/receiveInCash"))
+              .andExpect(method(HttpMethod.POST))
+              .andExpect(jsonPath("$.notifyCustomer").value(false))
+              .andExpect(jsonPath("$.paymentDate").value("2026-11-18"))
+              .andRespond(withSuccess("{\"id\":\"pay_1\"}", MediaType.APPLICATION_JSON));
+        client.receiveInCash("pay_1", java.time.LocalDate.of(2026, 11, 18), 500);
+        server.verify();
+    }
+
+    @Test
+    void deletePaymentIgnoresNotFound() {
+        server.expect(requestTo(BASE + "/payments/pay_1"))
+              .andExpect(method(HttpMethod.DELETE))
+              .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
+                      .withStatus(org.springframework.http.HttpStatus.NOT_FOUND));
+        assertDoesNotThrow(() -> client.deletePayment("pay_1"));
+    }
 }
