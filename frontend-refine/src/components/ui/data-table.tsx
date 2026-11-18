@@ -288,9 +288,8 @@ export function DataTable<T>({
                       )}
                       {resizable && (
                         <div
-                          role="separator"
-                          aria-orientation="vertical"
-                          aria-label={`Redimensionar ${columnLabel(col, key)}`}
+                          title="Arraste para ajustar a largura"
+                          aria-hidden="true"
                           onMouseDown={(e) => startResize(key, e)}
                           onClick={(e) => e.stopPropagation()}
                           className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-primary/40"
