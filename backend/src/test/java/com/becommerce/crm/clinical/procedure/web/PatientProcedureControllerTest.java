@@ -40,7 +40,7 @@ class PatientProcedureControllerTest {
 
     @Test
     void createPassesFinancePermission() {
-        controller.create(COMPANY_ID, CONTACT_ID, request, principalWith("contact:update", "finance:create"));
+        controller.create(COMPANY_ID, CONTACT_ID, request, principalWith("contact:update", "finance:manage"));
         verify(useCase).create(COMPANY_ID, CONTACT_ID, request, USER_ID, true);
     }
 
@@ -59,7 +59,7 @@ class PatientProcedureControllerTest {
     @Test
     void completePassesFinancePermission() {
         CompleteProcedureRequest req = mock(CompleteProcedureRequest.class);
-        controller.complete(COMPANY_ID, CONTACT_ID, PROC_ID, req, principalWith("finance:create"));
+        controller.complete(COMPANY_ID, CONTACT_ID, PROC_ID, req, principalWith("finance:manage"));
         verify(useCase).complete(COMPANY_ID, CONTACT_ID, PROC_ID, req, USER_ID, true);
     }
 

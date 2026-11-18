@@ -90,8 +90,8 @@ describe("ProcedureDrawer", () => {
     updateMutate.fn = null;
   });
 
-  it("checkbox de lançamento aparece em todos os estados só com finance:create", () => {
-    permissions.value = ["finance:create"];
+  it("checkbox de lançamento aparece em todos os estados só com finance:manage", () => {
+    permissions.value = ["finance:manage"];
     renderDrawer(null);
     expect(screen.getByText("Gerar lançamento financeiro")).toBeTruthy();
     expect(
@@ -107,7 +107,7 @@ describe("ProcedureDrawer", () => {
   });
 
   it("em A realizar o flag marcado e o valor mascarado vão no payload", () => {
-    permissions.value = ["finance:create"];
+    permissions.value = ["finance:manage"];
     const mutate = vi.fn();
     updateMutate.fn = mutate;
     renderDrawer(makeProcedure());
@@ -121,7 +121,7 @@ describe("ProcedureDrawer", () => {
   });
 
   it("orçamento aprovado esconde o lançamento e mostra a cobrança pelo orçamento", () => {
-    permissions.value = ["finance:create"];
+    permissions.value = ["finance:manage"];
     renderDrawer(makeProcedure({ budget: { id: "b1", title: "Plano", status: "APPROVED" } }));
     expect(screen.queryByText("Gerar lançamento financeiro")).toBeNull();
     expect(screen.getByText("Cobrado pelo orçamento Plano.")).toBeTruthy();

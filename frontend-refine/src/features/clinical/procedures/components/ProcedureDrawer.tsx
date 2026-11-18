@@ -129,7 +129,7 @@ export function ProcedureDrawer({
   const locked = procedure?.state === "DONE";
   const totalCents = priceCents == null ? null : priceCents * teethCount(teeth);
   const editing = Boolean(procedure);
-  const canFinance = can("finance:create");
+  const canFinance = can("finance:manage");
   // Procedimento de orçamento aprovado já é cobrado pelo orçamento.
   const budgetApproved = procedure?.budget?.status === "APPROVED";
   const services = catalog ?? [];
