@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/features/identity/auth/hooks/useAuth";
+import { useContacts } from "@/features/masterdata/contacts/hooks/useContacts";
+import { ContactCombobox } from "@/features/sales/scheduling/components/ContactCombobox";
 
 interface CreateOpportunityFormProps {
   onSubmit: (values: {
@@ -25,9 +28,13 @@ export function CreateOpportunityForm({
   onCancel,
   isLoading,
 }: CreateOpportunityFormProps) {
+  const { user } = useAuth();
+  const { data: contacts = [] } = useContacts(user?.companyId ?? null);
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<OpportunityFormValues>({
     resolver: zodResolver(opportunityFormSchema),
@@ -78,11 +85,12 @@ export function CreateOpportunityForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="contactId">Contato (ID) *</Label>
-        <Input
-          id="contactId"
-          placeholder="UUID do contato (ex.: 3fa85f64-5717-4562-b3fc-2c963f66afa6)"
-          {...register("contactId")}
+        <Label htmlFor="contactId">Contato *</Label>
+        <ContactCombobox
+          contacts={contacts}
+          value={watch("contactId") || undefined}
+          onChange={(id) => setValue("contactId", id ?? "", { shouldValidate: true })}
+          placeholder="Busque pelo nome do contato"
         />
         {errors.contactId && <p className="text-sm text-destructive">{errors.contactId.message}</p>}
       </div>

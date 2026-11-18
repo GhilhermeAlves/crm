@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Eye, Pencil, Trash2, Target, RefreshCcw } from "lucide-react";
 import type { Lead } from "../types/lead.types";
@@ -106,7 +107,16 @@ export function LeadTable({
                   <AvatarFallback className="bg-muted text-xs">{getInitials(name)}</AvatarFallback>
                 </Avatar>
                 <div className="leading-tight">
-                  <p className="font-medium">{name}</p>
+                  {contact ? (
+                    <Link
+                      href={`${ROUTES.CONTACTS}/${lead.contactId}`}
+                      className="font-medium hover:text-primary hover:underline"
+                    >
+                      {name}
+                    </Link>
+                  ) : (
+                    <p className="font-medium">{name}</p>
+                  )}
                 </div>
               </div>
             );

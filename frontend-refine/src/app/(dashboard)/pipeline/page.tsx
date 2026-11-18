@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, ShieldOff, Target } from "lucide-react";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
-import { usePipelines } from "@/features/sales/pipeline/hooks/usePipelines";
+import { useCreatePipeline, usePipelines } from "@/features/sales/pipeline/hooks/usePipelines";
 import {
   useCreateOpportunity,
   useDeleteOpportunity,
@@ -46,6 +46,25 @@ export default function PipelinePage() {
     refetch: refetchPipelines,
   } = usePipelines(companyId);
 
+  // Empresa sem nenhum pipeline: cria o funil padrão uma única vez.
+  const createPipeline = useCreatePipeline(companyId);
+  const autoCreateTried = useRef(false);
+  const canManagePipeline = can("pipeline:update");
+  useEffect(() => {
+    if (
+      autoCreateTried.current ||
+      !canManagePipeline ||
+      pipelinesLoading ||
+      pipelinesError ||
+      !pipelines ||
+      pipelines.length > 0
+    ) {
+      return;
+    }
+    autoCreateTried.current = true;
+    createPipeline.mutate({ name: "Funil comercial" });
+  }, [canManagePipeline, pipelines, pipelinesLoading, pipelinesError, createPipeline]);
+
   const activePipelines = useMemo(() => (pipelines ?? []).filter((p) => p.active), [pipelines]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
@@ -73,7 +92,7 @@ export default function PipelinePage() {
   const [losing, setLosing] = useState<Opportunity | null>(null);
   const [toDelete, setToDelete] = useState<Opportunity | null>(null);
 
-  const isLoading = pipelinesLoading || opportunitiesLoading;
+  const isLoading = pipelinesLoading || opportunitiesLoading || createPipeline.isPending;
   const error = pipelinesError ?? opportunitiesError;
 
   const handleRetry = () => {
@@ -148,7 +167,11 @@ export default function PipelinePage() {
             <EmptyState
               icon={<Target className="h-8 w-8" />}
               title="Nenhum pipeline"
-              description="Crie um pipeline para começar a vender."
+              description={
+                canManagePipeline
+                  ? "Não foi possível criar o funil padrão. Recarregue a página."
+                  : "Peça a um administrador para abrir esta página e criar o funil comercial."
+              }
             />
           </CardContent>
         </Card>

@@ -46,11 +46,11 @@ public class PipelineService implements PipelineUseCase {
 
     private static final Map<String, Integer> DEFAULT_STAGES = new LinkedHashMap<>();
     static {
-        DEFAULT_STAGES.put("Prospecção", 10);
-        DEFAULT_STAGES.put("Qualificação", 20);
-        DEFAULT_STAGES.put("Proposta", 45);
-        DEFAULT_STAGES.put("Negociação", 70);
-        DEFAULT_STAGES.put("Fechamento", 95);
+        DEFAULT_STAGES.put("Novo", 10);
+        DEFAULT_STAGES.put("Qualificação", 25);
+        DEFAULT_STAGES.put("Proposta", 50);
+        DEFAULT_STAGES.put("Negociação", 75);
+        DEFAULT_STAGES.put("Fechamento", 90);
     }
 
     private final PipelineRepository pipelineRepository;
