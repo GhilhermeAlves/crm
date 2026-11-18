@@ -1,5 +1,7 @@
 "use client";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ClosedOpportunitiesTable } from "@/features/sales/pipeline/components/ClosedOpportunitiesTable";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, ShieldOff, Target } from "lucide-react";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
@@ -81,6 +83,15 @@ export default function PipelinePage() {
     error: opportunitiesError,
     refetch: refetchOpportunities,
   } = useOpportunities(companyId, activePipeline?.id ?? null);
+
+  const openOpportunities = useMemo(
+    () => opportunities.filter((o) => o.status === "OPEN"),
+    [opportunities],
+  );
+  const closedOpportunities = useMemo(
+    () => opportunities.filter((o) => o.status !== "OPEN"),
+    [opportunities],
+  );
 
   const createOpportunity = useCreateOpportunity(companyId, activePipeline?.id ?? null);
   const moveOpportunity = useMoveOpportunity(companyId);
@@ -193,21 +204,32 @@ export default function PipelinePage() {
           </CardContent>
         </Card>
       ) : (
-        <PipelineBoard
-          stages={activePipeline?.stages ?? []}
-          opportunities={opportunities}
-          canMove={canMove}
-          canWin={canWin}
-          canLose={canLose}
-          canDelete={canDelete}
-          busyOpportunityId={busyOpportunityId}
-          onMove={(opportunity, direction) =>
-            moveOpportunity.mutate({ id: opportunity.id, direction })
-          }
-          onWin={(opportunity) => markWon.mutate(opportunity.id)}
-          onLost={(opportunity) => setLosing(opportunity)}
-          onDelete={(opportunity) => setToDelete(opportunity)}
-        />
+        <Tabs defaultValue="open" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="open">Em andamento ({openOpportunities.length})</TabsTrigger>
+            <TabsTrigger value="closed">Concluídas ({closedOpportunities.length})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="open">
+            <PipelineBoard
+              stages={activePipeline?.stages ?? []}
+              opportunities={openOpportunities}
+              canMove={canMove}
+              canWin={canWin}
+              canLose={canLose}
+              canDelete={canDelete}
+              busyOpportunityId={busyOpportunityId}
+              onMove={(opportunity, direction) =>
+                moveOpportunity.mutate({ id: opportunity.id, direction })
+              }
+              onWin={(opportunity) => markWon.mutate(opportunity.id)}
+              onLost={(opportunity) => setLosing(opportunity)}
+              onDelete={(opportunity) => setToDelete(opportunity)}
+            />
+          </TabsContent>
+          <TabsContent value="closed">
+            <ClosedOpportunitiesTable opportunities={closedOpportunities} />
+          </TabsContent>
+        </Tabs>
       )}
 
       {activePipeline && (

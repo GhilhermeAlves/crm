@@ -132,8 +132,9 @@ public class Opportunity {
 
     private void requireOpen() {
         if (status != OpportunityStatus.OPEN) {
-            throw new PipelineValidationException(
-                    "Oportunidade " + status + " é imutável (não pode ser alterada).");
+            throw new PipelineValidationException(status == OpportunityStatus.WON
+                    ? "Esta oportunidade já foi concluída como ganha."
+                    : "Esta oportunidade já foi concluída como perdida.");
         }
     }
 

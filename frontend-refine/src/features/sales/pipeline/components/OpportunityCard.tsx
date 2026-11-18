@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Trophy, XCircle, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, Trophy, XCircle, Trash2 } from "lucide-react";
 import type { Opportunity } from "../types/pipeline.types";
 import { formatCurrency } from "../schemas/pipeline.schema";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,7 @@ export function OpportunityCard({
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        {(canWin || canLose) && (
+        {isLast && (canWin || canLose) ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-7 text-xs" disabled={busy}>
@@ -92,7 +92,35 @@ export function OpportunityCard({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
+        ) : canLose || canDelete ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={busy}
+                aria-label="Mais ações"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              {canLose && (
+                <DropdownMenuItem onClick={onLost}>
+                  <XCircle className="mr-2 h-4 w-4 text-red-600" />
+                  Marcar como perdida
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
 
         <Button
           variant="ghost"

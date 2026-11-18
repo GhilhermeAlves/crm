@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useContacts } from "@/features/masterdata/contacts/hooks/useContacts";
 import { ContactCombobox } from "@/features/sales/scheduling/components/ContactCombobox";
@@ -54,7 +55,9 @@ export function CreateOpportunityForm({
           title: values.title,
           value: Number(values.value),
           contactId: values.contactId,
-          expectedCloseDate: values.expectedCloseDate || undefined,
+          expectedCloseDate: values.expectedCloseDate
+            ? `${values.expectedCloseDate.slice(0, 10)}T00:00:00`
+            : undefined,
           notes: values.notes || undefined,
         }),
       )}
@@ -80,7 +83,12 @@ export function CreateOpportunityForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="expectedCloseDate">Previsão de fechamento</Label>
-          <Input id="expectedCloseDate" type="datetime-local" {...register("expectedCloseDate")} />
+          <DateTimePicker
+            dateOnly
+            value={watch("expectedCloseDate") || undefined}
+            onChange={(v) => setValue("expectedCloseDate", v)}
+            placeholder="Selecione a data"
+          />
         </div>
       </div>
 
