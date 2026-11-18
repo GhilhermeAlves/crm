@@ -38,7 +38,7 @@ class BudgetControllerTest {
     @Test
     void approvePassesFinancePermission() {
         ApproveBudgetRequest req = mock(ApproveBudgetRequest.class);
-        controller.approve(COMPANY_ID, CONTACT_ID, BUDGET_ID, req, principalWith("contact:update", "finance:create"));
+        controller.approve(COMPANY_ID, CONTACT_ID, BUDGET_ID, req, principalWith("contact:update", "finance:manage"));
         verify(useCase).approve(COMPANY_ID, CONTACT_ID, BUDGET_ID, req, USER_ID, true);
     }
 

@@ -95,6 +95,6 @@ public class PatientProcedureController {
     }
 
     private static boolean canCreateFinance(CurrentUser p) {
-        return p.permissions() != null && p.permissions().contains("finance:create");
+        return p.permissions() != null && p.permissions().contains("finance:manage");
     }
 }

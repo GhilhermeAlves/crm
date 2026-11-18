@@ -54,7 +54,7 @@ export function CompleteProcedureDialog({ companyId, contactId, procedure, onOpe
   }, [procedure]);
 
   const budgetApproved = procedure?.budget?.status === "APPROVED";
-  const canFinance = can("finance:create") && !budgetApproved;
+  const canFinance = can("finance:manage") && !budgetApproved;
 
   const confirm = () => {
     if (!procedure) return;
