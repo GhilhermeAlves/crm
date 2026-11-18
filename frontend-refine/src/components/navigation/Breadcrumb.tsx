@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
+import { useEntityNames } from "./usePageEntityName";
 
 const routeLabels: Record<string, string> = {
   crm: "CRM",
@@ -33,6 +34,8 @@ const pathLabels: Record<string, string> = {
 };
 
 /** Segmentos sem página própria: aparecem como texto, sem link. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const pathsWithoutPage = new Set(["/settings"]);
 
 type BreadcrumbProps = {
@@ -41,20 +44,26 @@ type BreadcrumbProps = {
 
 export function Breadcrumb({ className }: BreadcrumbProps) {
   const pathname = usePathname();
+  const entityName = useEntityNames();
+  const idPart = pathname.split("/").find((p) => UUID_RE.test(p));
+  const idName = idPart ? entityName(idPart) : undefined;
 
   const segments = useMemo(() => {
     const parts = pathname.split("/").filter(Boolean);
     return parts
       .map((part, index) => {
         const href = "/" + parts.slice(0, index + 1).join("/");
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(part);
-        if (isUuid) return null;
+        const isUuid = UUID_RE.test(part);
+        if (isUuid) {
+          const name = part === idPart ? idName : undefined;
+          return name ? { label: name, href, isLast: index === parts.length - 1 } : null;
+        }
         const label =
           pathLabels[href] || routeLabels[part] || part.charAt(0).toUpperCase() + part.slice(1);
         return { label, href, isLast: index === parts.length - 1 };
       })
       .filter(Boolean) as { label: string; href: string; isLast: boolean }[];
-  }, [pathname]);
+  }, [pathname, idPart, idName]);
 
   if (
     segments.length <= 1 &&

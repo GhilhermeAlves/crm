@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageEntityName } from "@/components/navigation/usePageEntityName";
 import { useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -33,6 +34,7 @@ export default function Customer360Page() {
 
   const { data: c360, isLoading, isError } = useCustomer360(companyId, contactId);
   const { data: contact } = useContact(companyId, contactId);
+  usePageEntityName(contactId, [contact?.firstName, contact?.lastName].filter(Boolean).join(" "));
   const queryClient = useQueryClient();
 
   const activityPerms = useActivityPermissions();

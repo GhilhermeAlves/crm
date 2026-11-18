@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageEntityName } from "@/components/navigation/usePageEntityName";
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -24,6 +25,7 @@ export default function EditContactPage() {
   const companyId = user?.companyId ?? null;
 
   const { data: contact, isLoading, isError } = useContact(companyId, contactId);
+  usePageEntityName(contactId, [contact?.firstName, contact?.lastName].filter(Boolean).join(" "));
   const updateContact = useUpdateContact(companyId);
   const [serverError, setServerError] = useState<{
     field: keyof PatientFormValues;

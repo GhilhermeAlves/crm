@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageEntityName } from "@/components/navigation/usePageEntityName";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { ChevronRight, Loader2, SearchX } from "lucide-react";
@@ -20,6 +21,7 @@ export default function PatientRecordLayout({ children }: { children: React.Reac
   const companyId = user?.companyId ?? null;
 
   const { data: patient, isLoading, isError, error } = usePatient(companyId, patientId);
+  usePageEntityName(patientId, [patient?.firstName, patient?.lastName].filter(Boolean).join(" "));
 
   // A edição tem cabeçalho e trilha próprios.
   if (pathname?.endsWith("/edit")) {

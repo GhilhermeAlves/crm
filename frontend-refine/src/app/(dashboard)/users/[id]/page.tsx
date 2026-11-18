@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageEntityName } from "@/components/navigation/usePageEntityName";
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@/features/identity/users/hooks/useUsers";
 import { UserDetails } from "@/features/identity/users/components/UserDetails";
@@ -15,6 +16,7 @@ export default function UserDetailPage() {
   const id = params.id as string;
 
   const { data: user, isLoading } = useUser(id);
+  usePageEntityName(id, [user?.firstName, user?.lastName].filter(Boolean).join(" "));
 
   if (isLoading) {
     return (
