@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -14,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ProcedureDrawer } from "@/features/clinical/procedures/components/ProcedureDrawer";
 import { useProcedures } from "@/features/clinical/procedures/hooks/useProcedures";
 import { formatTeeth } from "@/features/clinical/procedures/utils/teeth";
 import { useIsDentalClinic } from "@/features/identity/modules/hooks/useIsDentalClinic";
@@ -60,6 +62,7 @@ export function BudgetFormDialog({
   const [discount, setDiscount] = useState("0");
   // procedureId -> valor digitado (R$); presença da chave = item marcado.
   const [prices, setPrices] = useState<Record<string, string>>({});
+  const [procedureOpen, setProcedureOpen] = useState(false);
 
   const available = useMemo(
     () =>
@@ -124,107 +127,131 @@ export function BudgetFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{budget ? "Editar orçamento" : "Novo orçamento"}</DialogTitle>
-          <DialogDescription>Selecione os procedimentos e ajuste os valores.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor={`${uid}-title`}>Título</Label>
-            <BudgetTitleCombobox
-              id={`${uid}-title`}
-              companyId={companyId}
-              value={title}
-              onChange={setTitle}
-            />
-          </div>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{budget ? "Editar orçamento" : "Novo orçamento"}</DialogTitle>
+            <DialogDescription>Selecione os procedimentos e ajuste os valores.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor={`${uid}-title`}>Título</Label>
+              <BudgetTitleCombobox
+                id={`${uid}-title`}
+                companyId={companyId}
+                value={title}
+                onChange={setTitle}
+              />
+            </div>
 
-          {available.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum procedimento &quot;A realizar&quot; disponível. Cadastre na Ficha clínica.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {available.map((p) => {
-                const checked = p.id in prices;
-                return (
-                  <li key={p.id} className="flex items-center gap-3">
-                    <Checkbox
-                      id={`${uid}-item-${p.id}`}
-                      checked={checked}
-                      onCheckedChange={(v) => toggle(p.id, p.priceCents, v === true)}
-                    />
-                    <Label htmlFor={`${uid}-item-${p.id}`} className="flex-1 font-normal">
-                      {dental ? `${p.name} — ${formatTeeth(p.teeth)}` : p.name}
-                    </Label>
-                    {checked && (
-                      <Input
-                        aria-label={`Valor (R$) de ${p.name}`}
-                        className="w-28"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={prices[p.id]}
-                        onChange={(e) => setPrices((prev) => ({ ...prev, [p.id]: e.target.value }))}
-                      />
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor={`${uid}-discount`}>Desconto (R$)</Label>
-            <Input
-              id={`${uid}-discount`}
-              type="number"
-              step="0.01"
-              min="0"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-            />
-            {discountTooHigh && (
-              <p className="text-sm text-destructive">
-                O desconto não pode ser maior que o subtotal.
+            {available.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum procedimento &quot;A realizar&quot; disponível. Inclua um novo abaixo.
               </p>
+            ) : (
+              <ul className="space-y-2">
+                {available.map((p) => {
+                  const checked = p.id in prices;
+                  return (
+                    <li key={p.id} className="flex items-center gap-3">
+                      <Checkbox
+                        id={`${uid}-item-${p.id}`}
+                        checked={checked}
+                        onCheckedChange={(v) => toggle(p.id, p.priceCents, v === true)}
+                      />
+                      <Label htmlFor={`${uid}-item-${p.id}`} className="flex-1 font-normal">
+                        {dental ? `${p.name} — ${formatTeeth(p.teeth)}` : p.name}
+                      </Label>
+                      {checked && (
+                        <Input
+                          aria-label={`Valor (R$) de ${p.name}`}
+                          className="w-28"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={prices[p.id]}
+                          onChange={(e) =>
+                            setPrices((prev) => ({ ...prev, [p.id]: e.target.value }))
+                          }
+                        />
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${uid}-notes`}>Observações</Label>
-            <Textarea
-              id={`${uid}-notes`}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
 
-          <dl className="space-y-1 rounded-md border p-3 text-sm tabular-nums">
-            <div className="flex justify-between">
-              <dt>Subtotal</dt>
-              <dd data-testid="budget-subtotal">{centsToBRL(subtotalCents)}</dd>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setProcedureOpen(true)}
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              Novo procedimento
+            </Button>
+
+            <div className="space-y-2">
+              <Label htmlFor={`${uid}-discount`}>Desconto (R$)</Label>
+              <Input
+                id={`${uid}-discount`}
+                type="number"
+                step="0.01"
+                min="0"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+              />
+              {discountTooHigh && (
+                <p className="text-sm text-destructive">
+                  O desconto não pode ser maior que o subtotal.
+                </p>
+              )}
             </div>
-            <div className="flex justify-between">
-              <dt>Desconto</dt>
-              <dd data-testid="budget-discount">{centsToBRL(discountCents)}</dd>
+            <div className="space-y-2">
+              <Label htmlFor={`${uid}-notes`}>Observações</Label>
+              <Textarea
+                id={`${uid}-notes`}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
             </div>
-            <div className="flex justify-between font-semibold">
-              <dt>Total</dt>
-              <dd data-testid="budget-total">{centsToBRL(totalCents)}</dd>
-            </div>
-          </dl>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={save} disabled={!canSave}>
-            Salvar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+
+            <dl className="space-y-1 rounded-md border p-3 text-sm tabular-nums">
+              <div className="flex justify-between">
+                <dt>Subtotal</dt>
+                <dd data-testid="budget-subtotal">{centsToBRL(subtotalCents)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt>Desconto</dt>
+                <dd data-testid="budget-discount">{centsToBRL(discountCents)}</dd>
+              </div>
+              <div className="flex justify-between font-semibold">
+                <dt>Total</dt>
+                <dd data-testid="budget-total">{centsToBRL(totalCents)}</dd>
+              </div>
+            </dl>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={save} disabled={!canSave}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <ProcedureDrawer
+        companyId={companyId}
+        contactId={contactId}
+        open={procedureOpen}
+        onOpenChange={setProcedureOpen}
+        showTeeth={dental}
+        onCreated={(p) => {
+          if (p.state === "PLANNED") toggle(p.id, p.priceCents, true);
+        }}
+      />
+    </>
   );
 }

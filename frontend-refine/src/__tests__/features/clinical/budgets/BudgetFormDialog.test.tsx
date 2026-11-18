@@ -16,6 +16,9 @@ vi.mock("@/features/clinical/procedures/hooks/useProcedures", () => ({
   useProcedures: () => ({ data: procedures.value }),
 }));
 
+vi.mock("@/features/clinical/procedures/components/ProcedureDrawer", () => ({
+  ProcedureDrawer: () => null,
+}));
 vi.mock("@/features/clinical/budgets/components/BudgetTitleCombobox", () => ({
   BudgetTitleCombobox: ({
     id,
@@ -110,7 +113,7 @@ describe("BudgetFormDialog", () => {
     procedures.value = [];
     renderForm();
     expect(
-      screen.getByText('Nenhum procedimento "A realizar" disponível. Cadastre na Ficha clínica.'),
+      screen.getByText('Nenhum procedimento "A realizar" disponível. Inclua um novo abaixo.'),
     ).toBeTruthy();
     expect((screen.getByRole("button", { name: "Salvar" }) as HTMLButtonElement).disabled).toBe(
       true,
