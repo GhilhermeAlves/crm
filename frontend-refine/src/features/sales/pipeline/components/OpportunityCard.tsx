@@ -25,6 +25,8 @@ interface OpportunityCardProps {
   onLost?: () => void;
   onDelete?: () => void;
   busy?: boolean;
+  /** Posição da etapa no funil: 0 = primeira, 1 = última (define a cor do card). */
+  progress?: number;
 }
 
 export function OpportunityCard({
@@ -40,9 +42,16 @@ export function OpportunityCard({
   onLost,
   onDelete,
   busy,
+  progress = 0,
 }: OpportunityCardProps) {
+  // Azul na primeira etapa até verde na última.
+  const hue = Math.round(210 - 68 * Math.min(1, Math.max(0, progress)));
+  const accent = `hsl(${hue} 70% 45%)`;
   return (
-    <Card className="shadow-sm">
+    <Card
+      className="border-l-4 shadow-sm"
+      style={{ borderLeftColor: accent, backgroundColor: `hsl(${hue} 70% 45% / 0.07)` }}
+    >
       <CardHeader className="p-3 pb-1">
         <CardTitle className="text-sm font-medium leading-snug">{opportunity.title}</CardTitle>
       </CardHeader>

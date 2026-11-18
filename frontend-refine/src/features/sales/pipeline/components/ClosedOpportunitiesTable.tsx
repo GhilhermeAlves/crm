@@ -71,6 +71,11 @@ export function ClosedOpportunitiesTable({ opportunities }: { opportunities: Opp
       data={opportunities}
       columns={columns}
       keyExtractor={(o) => o.id}
+      rowClassName={(o) =>
+        o.status === "LOST"
+          ? "border-l-4 border-l-red-600 bg-red-600/15 hover:bg-red-600/20"
+          : "border-l-4 border-l-emerald-600"
+      }
       emptyState={{ title: "Nenhuma oportunidade concluída ainda." }}
     />
   );

@@ -77,6 +77,8 @@ export interface DataTableProps<T> {
   };
   actions?: TableAction<T>[] | ((row: T) => TableAction<T>[]);
   onRowClick?: (row: T) => void;
+  /** Classe extra por linha (ex.: destacar registros) */
+  rowClassName?: (row: T) => string | undefined;
   pagination?: DataTablePaginationProps;
   sort?: {
     column: string;
@@ -121,6 +123,7 @@ export function DataTable<T>({
   bordered = true,
   tableId,
   toolbar,
+  rowClassName,
 }: DataTableProps<T>) {
   const serverSort = sort;
   const allIds = columns.map((c, i) => columnId(c, i));
@@ -323,6 +326,7 @@ export function DataTable<T>({
                       className={cn(
                         onRowClick && "cursor-pointer hover:bg-muted/40",
                         "transition-colors",
+                        rowClassName?.(row),
                       )}
                     >
                       {visibleColumns.map(({ id: key, col }) => (

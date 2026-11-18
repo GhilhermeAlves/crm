@@ -90,6 +90,7 @@ export function PipelineBoard({
                   <OpportunityCard
                     key={opp.id}
                     opportunity={opp}
+                    progress={stages.length > 1 ? index / (stages.length - 1) : 1}
                     isFirst={index === 0}
                     isLast={index === stages.length - 1}
                     canMove={canMove}
