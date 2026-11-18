@@ -236,7 +236,6 @@ export function DataTable<T>({
               hidden={prefs.hidden}
               isCustomized={prefs.isCustomized}
               onToggle={prefs.toggle}
-              onMove={prefs.move}
               onReset={prefs.reset}
             />
           )}

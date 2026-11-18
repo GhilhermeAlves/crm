@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Columns3, RotateCcw } from "lucide-react";
+import { Columns3, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -16,7 +16,6 @@ interface DataTableColumnsMenuProps {
   hidden: Set<string>;
   isCustomized: boolean;
   onToggle: (id: string) => void;
-  onMove: (id: string, delta: -1 | 1) => void;
   onReset: () => void;
 }
 
@@ -26,7 +25,6 @@ export function DataTableColumnsMenu({
   hidden,
   isCustomized,
   onToggle,
-  onMove,
   onReset,
 }: DataTableColumnsMenuProps) {
   const visibleCount = columns.filter((c) => !hidden.has(c.id)).length;
@@ -47,11 +45,9 @@ export function DataTableColumnsMenu({
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-64 p-2">
-          <p className="px-2 pb-2 text-xs font-semibold text-muted-foreground">
-            Mostrar e ordenar colunas
-          </p>
+          <p className="px-2 pb-2 text-xs font-semibold text-muted-foreground">Mostrar colunas</p>
           <ul className="space-y-0.5">
-            {columns.map((col, idx) => {
+            {columns.map((col) => {
               const checked = !hidden.has(col.id);
               const lockLast = checked && visibleCount <= 1;
               return (
@@ -68,26 +64,6 @@ export function DataTableColumnsMenu({
                   <label htmlFor={`col-${col.id}`} className="flex-1 truncate text-sm">
                     {col.label}
                   </label>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    disabled={idx === 0}
-                    aria-label={`Mover ${col.label} para cima`}
-                    onClick={() => onMove(col.id, -1)}
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    disabled={idx === columns.length - 1}
-                    aria-label={`Mover ${col.label} para baixo`}
-                    onClick={() => onMove(col.id, 1)}
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  </Button>
                 </li>
               );
             })}

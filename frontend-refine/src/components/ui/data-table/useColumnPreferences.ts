@@ -79,18 +79,8 @@ export function useColumnPreferences(tableId: string | undefined, defaultIds: st
   );
 
   const defaultKey = defaultIds.join("|");
-  const order = React.useMemo(() => {
-    const known = prefs.order.filter((id) => defaultIds.includes(id));
-    const missing = defaultIds.filter((id) => !known.includes(id));
-    // Coluna nova no código entra na posição original relativa.
-    const result = [...known];
-    for (const id of missing) {
-      const originalIdx = defaultIds.indexOf(id);
-      result.splice(Math.min(originalIdx, result.length), 0, id);
-    }
-    return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefs.order, defaultKey]);
+  // Ordem fixa: a definida no código (ações por último).
+  const order = defaultIds;
 
   const hidden = React.useMemo(
     () => new Set(prefs.hidden.filter((id) => defaultIds.includes(id))),
@@ -98,8 +88,7 @@ export function useColumnPreferences(tableId: string | undefined, defaultIds: st
     [prefs.hidden, defaultKey],
   );
 
-  const isCustomized =
-    order.join("|") !== defaultKey || hidden.size > 0 || Object.keys(prefs.widths).length > 0;
+  const isCustomized = hidden.size > 0 || Object.keys(prefs.widths).length > 0;
 
   const toggle = (id: string) =>
     update((prev) => {
@@ -115,16 +104,6 @@ export function useColumnPreferences(tableId: string | undefined, defaultIds: st
       return { ...prev, hidden: Array.from(set) };
     });
 
-  const move = (id: string, delta: -1 | 1) =>
-    update((prev) => {
-      const current = [...order];
-      const idx = current.indexOf(id);
-      const target = idx + delta;
-      if (idx < 0 || target < 0 || target >= current.length) return prev;
-      [current[idx], current[target]] = [current[target], current[idx]];
-      return { ...prev, order: current.join("|") === defaultKey ? [] : current };
-    });
-
   const setWidth = (id: string, width: number) =>
     update((prev) => ({
       ...prev,
@@ -133,5 +112,5 @@ export function useColumnPreferences(tableId: string | undefined, defaultIds: st
 
   const reset = () => update(() => EMPTY);
 
-  return { order, hidden, widths: prefs.widths, isCustomized, toggle, move, setWidth, reset };
+  return { order, hidden, widths: prefs.widths, isCustomized, toggle, setWidth, reset };
 }
