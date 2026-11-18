@@ -1,5 +1,10 @@
 "use client";
 
+import { Switch } from "@/components/ui/switch";
+import {
+  useAdminPatientBilling,
+  useSetAdminPatientBilling,
+} from "@/features/finance/patient-billing/hooks";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +44,8 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
   const price = useChangeBillingPrice(companyId);
   const grant = useGrantBilling(companyId);
   const cancel = useCancelBilling(companyId);
+  const patientBilling = useAdminPatientBilling(companyId);
+  const setPatientBilling = useSetAdminPatientBilling(companyId);
   const [editing, setEditing] = useState(false);
   const [reais, setReais] = useState("");
   const [days, setDays] = useState("7");
@@ -78,6 +85,20 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
         <CardTitle className="text-base">Cobrança</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
+        <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+          <div>
+            <p className="font-medium">Cobrança de pacientes pelo Asaas</p>
+            <p className="text-xs text-muted-foreground">
+              Receitas do Financeiro desta empresa viram link de pagamento (conta Asaas do CRM).
+            </p>
+          </div>
+          <Switch
+            aria-label="Cobrança de pacientes pelo Asaas"
+            checked={patientBilling.data?.enabled === true}
+            disabled={patientBilling.isLoading || setPatientBilling.isPending}
+            onCheckedChange={(v) => setPatientBilling.mutate(v)}
+          />
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Situação</span>

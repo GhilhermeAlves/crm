@@ -1,7 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { TransactionsTable } from "@/features/finance/components/TransactionsTable";
 import type { FinancialTransaction } from "@/features/finance/types/finance.types";
+
+vi.mock("@/features/finance/patient-billing/hooks", () => ({
+  usePatientBillingEnabled: () => false,
+  usePatientCharges: () => ({ data: undefined }),
+  useChargeTransaction: () => ({ mutate: vi.fn(), isPending: false }),
+  useResendWhatsApp: () => ({ mutate: vi.fn(), isPending: false }),
+  useAdminPatientBilling: () => ({ data: { enabled: false }, isLoading: false }),
+  useSetAdminPatientBilling: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 
 function makeTransaction(overrides: Partial<FinancialTransaction>): FinancialTransaction {
   return {

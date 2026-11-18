@@ -1,5 +1,10 @@
 "use client";
 
+import { ChargeActions } from "@/features/finance/patient-billing/ChargeActions";
+import {
+  usePatientBillingEnabled,
+  usePatientCharges,
+} from "@/features/finance/patient-billing/hooks";
 import { PAGE_SIZE_OPTIONS } from "@/types/page";
 import { format, parseISO } from "date-fns";
 
@@ -83,6 +88,13 @@ export function TransactionsTable({
   onEditTransaction,
   onOpenTransaction,
 }: TransactionsTableProps) {
+  const asaasOn = usePatientBillingEnabled(companyId);
+  const { data: charges } = usePatientCharges(
+    companyId,
+    transactions.map((t) => t.id),
+    asaasOn,
+  );
+
   if (isError) {
     return (
       <ErrorCard
@@ -170,6 +182,22 @@ export function TransactionsTable({
       className: "whitespace-nowrap",
       cell: (transaction) => statusBadge(transaction),
     },
+    ...(asaasOn && companyId
+      ? [
+          {
+            id: "asaas",
+            header: "Asaas",
+            className: "whitespace-nowrap",
+            cell: (transaction: FinancialTransaction) => (
+              <ChargeActions
+                companyId={companyId}
+                transaction={transaction}
+                charge={charges?.[transaction.id]}
+              />
+            ),
+          } satisfies ColumnDef<FinancialTransaction>,
+        ]
+      : []),
     {
       header: <span className="sr-only">Ações</span>,
       className: "w-[52px] text-right",

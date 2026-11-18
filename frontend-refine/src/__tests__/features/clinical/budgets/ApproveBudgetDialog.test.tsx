@@ -3,6 +3,18 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { ApproveBudgetDialog } from "@/features/clinical/budgets/components/ApproveBudgetDialog";
 import type { BudgetSummary } from "@/features/clinical/budgets/types/budget.types";
 
+vi.mock("@/features/finance/patient-billing/hooks", () => ({
+  usePatientBillingEnabled: () => false,
+  usePatientCharges: () => ({ data: undefined }),
+  useChargeTransaction: () => ({ mutate: vi.fn(), isPending: false }),
+  useResendWhatsApp: () => ({ mutate: vi.fn(), isPending: false }),
+  useAdminPatientBilling: () => ({ data: { enabled: false }, isLoading: false }),
+  useSetAdminPatientBilling: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+vi.mock("@/features/masterdata/contacts/hooks/useContacts", () => ({
+  useContact: () => ({ data: undefined }),
+}));
+
 const { approveMutate } = vi.hoisted(() => ({ approveMutate: vi.fn() }));
 
 vi.mock("@/features/clinical/budgets/hooks/useBudgets", () => ({

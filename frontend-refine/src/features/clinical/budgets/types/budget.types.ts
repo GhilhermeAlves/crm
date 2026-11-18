@@ -19,6 +19,7 @@ export type ApproveBudgetRequest = {
   paymentMethod: PaymentMethod;
   installments: number;
   firstDueDate: string;
+  chargeViaAsaas?: boolean;
 };
 
 export type BudgetSummary = {
