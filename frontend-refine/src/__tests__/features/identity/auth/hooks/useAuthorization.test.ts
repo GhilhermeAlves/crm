@@ -53,6 +53,31 @@ describe("useAuthorization (Sprint 9 — permissões da empresa ativa)", () => {
     expect(result.current.cannot("audit:read")).toBe(true);
   });
 
+  it("nega quando o usuário não tem nenhuma permissão", () => {
+    mockAuth({ permissions: [], roles: [] });
+    const { result } = renderAuthorization();
+    expect(result.current.can("patient:read")).toBe(false);
+  });
+
+  it("CRM_ADMIN passa mesmo sem permissões listadas", () => {
+    mockAuth({ permissions: [], roles: ["CRM_ADMIN"] });
+    const { result } = renderAuthorization();
+    expect(result.current.can("patient:read")).toBe(true);
+  });
+
+  it("SUPER_ADMIN passa mesmo sem permissões listadas", () => {
+    mockAuth({ permissions: [], roles: ["SUPER_ADMIN"] });
+    const { result } = renderAuthorization();
+    expect(result.current.can("patient:read")).toBe(true);
+  });
+
+  it("can() compõe recurso:ação e continua exata para usuário comum", () => {
+    mockAuth({ permissions: ["patient:read"], roles: ["VIEWER"] });
+    const { result } = renderAuthorization();
+    expect(result.current.can("patient", "read")).toBe(true);
+    expect(result.current.can("patient", "update")).toBe(false);
+  });
+
   it("can() sem permission é liberado por conveniência", () => {
     mockAuth();
     const { result } = renderAuthorization();

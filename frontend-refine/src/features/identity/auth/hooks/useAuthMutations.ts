@@ -66,7 +66,8 @@ export function useMe(enabled: boolean) {
     queryFn: () => AuthService.me(),
     enabled,
     retry: false,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 }
 
