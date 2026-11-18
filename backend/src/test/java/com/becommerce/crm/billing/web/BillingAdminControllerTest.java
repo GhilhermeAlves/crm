@@ -131,7 +131,7 @@ class BillingAdminControllerTest {
 
     @Test
     void cancelIsAudited() throws Exception {
-        loginAs("CRM_ADMIN");
+        loginAs("SUPER_ADMIN");
         when(service.cancel(TARGET)).thenReturn(
                 new BillingView("NOT_STARTED", "STARTER", 19700, null, null, false, null, null, null));
         mvc.perform(post(URL + "/cancel"))
