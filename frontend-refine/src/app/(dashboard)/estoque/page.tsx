@@ -155,7 +155,7 @@ export default function EstoquePage() {
                     headerClassName: "text-right",
                     className: "text-right",
                     sortValue: (item) => item.quantity,
-                    cell: (item) => <>{item.quantity}</>,
+                    cell: (item) => <span data-testid="inventory-quantity">{item.quantity}</span>,
                   },
                   {
                     id: "minimo",
