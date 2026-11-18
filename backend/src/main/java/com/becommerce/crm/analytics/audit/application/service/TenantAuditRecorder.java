@@ -58,16 +58,21 @@ public class TenantAuditRecorder {
 
     private void recordWithTenantContext(UUID companyId, AuditLog auditLog) {
         UUID previous = TenantContext.getCompanyId();
+        // O log é da empresa alvo: troca o tenant quando difere do atual (ex.: CRM_ADMIN logado
+        // em outra empresa, webhook, job) e restaura o anterior no finally.
+        boolean swap = companyId != null && !companyId.equals(previous);
         try {
-            // Só define o tenant se ainda não estiver definido (preserva o
-            // contexto da chamada atual, restaurando em finally).
-            if (previous == null && companyId != null) {
+            if (swap) {
                 TenantContext.setCompanyId(companyId);
             }
             auditService.recordAudit(auditLog);
         } finally {
-            if (previous == null) {
-                TenantContext.clear();
+            if (swap) {
+                if (previous == null) {
+                    TenantContext.clear();
+                } else {
+                    TenantContext.setCompanyId(previous);
+                }
             }
         }
     }

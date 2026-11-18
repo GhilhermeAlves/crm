@@ -27,7 +27,8 @@ class BillingDailyJobTest {
 
     private BillingDailyJob job(boolean enabled) {
         return new BillingDailyJob(jdbc, accounts, billing, payments, access,
-                new BillingProperties(enabled, "u", enabled ? "KEY" : "", "W"), CLOCK);
+                new BillingProperties(enabled, "u", enabled ? "KEY" : "", "W"), CLOCK,
+                mock(AsaasWebhookService.class));
     }
 
     @BeforeEach

@@ -31,10 +31,12 @@ public class BillingDailyJob {
     private final BillingAccessService access;
     private final BillingProperties props;
     private final Clock clock;
+    private final AsaasWebhookService webhooks;
 
     public BillingDailyJob(JdbcTemplate jdbc, BillingAccountJpaRepository accounts, BillingService billing,
                            BillingPaymentService payments, BillingAccessService access,
-                           BillingProperties props, Clock clock) {
+                           BillingProperties props, Clock clock,
+                           AsaasWebhookService webhooks) {
         this.jdbc = jdbc;
         this.accounts = accounts;
         this.billing = billing;
@@ -42,11 +44,20 @@ public class BillingDailyJob {
         this.access = access;
         this.props = props;
         this.clock = clock;
+        this.webhooks = webhooks;
     }
 
     @Scheduled(cron = "${app.billing.daily-cron:0 30 3 * * *}", zone = "America/Sao_Paulo")
     public void run() {
         LocalDate today = LocalDate.now(clock.withZone(ZONE));
+        if (props.configured()) {
+            try {
+                int replayed = webhooks.reprocessPending();
+                if (replayed > 0) log.info("[BILLING] {} webhooks com falha reprocessados", replayed);
+            } catch (Exception e) {
+                log.error("[BILLING] reprocesso de webhooks falhou: {}", e.getMessage());
+            }
+        }
         List<UUID> companyIds = jdbc.queryForList("SELECT id FROM app.all_company_ids()", UUID.class);
         int blocked = 0;
         for (UUID companyId : companyIds) {

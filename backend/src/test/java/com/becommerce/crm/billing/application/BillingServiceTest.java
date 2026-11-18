@@ -315,4 +315,43 @@ class BillingServiceTest {
         verify(payments).refreshOpen(companyId, null);
         verify(access).evict(companyId);
     }
+
+    @Test
+    void checkPaymentAsksAsaasAtMostOncePer30Seconds() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+
+        service.checkPayment(companyId);
+        service.checkPayment(companyId);
+
+        verify(payments, times(1)).refreshOpen(companyId, null);
+    }
+
+    @Test
+    void firstDueDateUsesSaoPauloDateLateAtNight() {
+        // 01:00 UTC de 09/11 = 22:00 de 08/11 em São Paulo: vencimento conta a partir de 08/11.
+        Clock night = Clock.fixed(Instant.parse("2026-11-09T01:00:00Z"), ZoneOffset.UTC);
+        BillingService s = new BillingService(accounts, invoices, companies, asaas, payments, access,
+                new BillingProperties(true, "https://x", "KEY", "WH"), night);
+        when(accounts.findById(companyId)).thenReturn(Optional.empty());
+        when(asaas.createCustomer(any(), any(), any(), any())).thenReturn("cus_1");
+        when(asaas.createSubscription(eq("cus_1"), eq(19700), eq(LocalDate.of(2026, 11, 15)), anyString(), anyString()))
+                .thenReturn("sub_1");
+
+        assertEquals(LocalDate.of(2026, 11, 15), s.activate(companyId).nextDueDate());
+    }
+
+    @Test
+    void customerIsSavedEvenWhenSubscriptionFails() {
+        when(accounts.findById(companyId)).thenReturn(Optional.empty());
+        when(asaas.createCustomer(any(), any(), any(), any())).thenReturn("cus_1");
+        when(asaas.createSubscription(any(), anyInt(), any(), anyString(), anyString()))
+                .thenThrow(new AsaasClient.AsaasException("Asaas indisponível."));
+
+        var view = service.activate(companyId);
+
+        assertEquals("SYNC_PENDING", view.status());
+        verify(accounts, times(2)).saveAndFlush(argThat(a -> "cus_1".equals(a.getAsaasCustomerId())));
+    }
 }
