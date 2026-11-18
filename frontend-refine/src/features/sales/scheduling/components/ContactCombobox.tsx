@@ -22,6 +22,10 @@ interface Props {
   placeholder?: string;
 }
 
+function contactName(c: Contact): string {
+  return [c.firstName, c.lastName].filter(Boolean).join(" ");
+}
+
 export function ContactCombobox({
   contacts,
   value,
@@ -36,14 +40,14 @@ export function ContactCombobox({
     const q = search.toLowerCase();
     return contacts.filter(
       (c) =>
-        `${c.firstName} ${c.lastName}`.toLowerCase().includes(q) ||
+        contactName(c).toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
         c.phone?.includes(q),
     );
   }, [contacts, search]);
 
   const selected = contacts.find((c) => c.id === value);
-  const displayName = selected ? `${selected.firstName} ${selected.lastName}`.trim() : null;
+  const displayName = selected ? contactName(selected) : null;
 
   return (
     <div className="flex items-center gap-1">
@@ -68,7 +72,7 @@ export function ContactCombobox({
               <CommandEmpty>Nenhum contato encontrado.</CommandEmpty>
               <CommandGroup>
                 {filtered.map((c) => {
-                  const name = `${c.firstName} ${c.lastName}`.trim();
+                  const name = contactName(c);
                   return (
                     <CommandItem
                       key={c.id}

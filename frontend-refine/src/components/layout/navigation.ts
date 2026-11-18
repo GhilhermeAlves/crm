@@ -84,6 +84,11 @@ export const NAVIGATION: NavGroup[] = [
         icon: CircleDollarSign,
         permission: "finance:read",
         module: "FINANCE",
+        children: [
+          { label: "Controle financeiro", href: ROUTES.FINANCE_CONTROL },
+          { label: "Simulador de crédito", href: ROUTES.FINANCE_CREDIT_SIMULATOR },
+          { label: "Taxas do cartão", href: ROUTES.FINANCE_CARD_FEES },
+        ],
       },
       {
         label: "Tarefas",
@@ -336,6 +341,12 @@ export const NAVIGATION: NavGroup[] = [
     icon: ServerCog,
     items: [
       { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, crmAdminOnly: true },
+      {
+        label: "Modelos de taxa",
+        href: ROUTES.CARD_FEE_PRESETS,
+        icon: CreditCard,
+        crmAdminOnly: true,
+      },
       {
         label: "Auditoria",
         href: ROUTES.AUDIT,

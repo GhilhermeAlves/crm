@@ -15,6 +15,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CreditSimulator } from "@/features/finance/credit/components/CreditSimulator";
 import { DataTable } from "@/components/ui/data-table";
 import { centsToBRL } from "@/features/finance/utils/money";
 import { useDeleteBudget, useLoseBudget } from "../hooks/useBudgets";
@@ -49,6 +57,7 @@ export function BudgetList({
   const remove = useDeleteBudget(companyId, contactId);
   const [toLose, setToLose] = useState<BudgetSummary | null>(null);
   const [toDelete, setToDelete] = useState<BudgetSummary | null>(null);
+  const [toSimulate, setToSimulate] = useState<BudgetSummary | null>(null);
 
   return (
     <Card>
@@ -97,6 +106,9 @@ export function BudgetList({
                     <Button size="sm" variant="ghost" onClick={() => onView(b)}>
                       Visualizar
                     </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setToSimulate(b)}>
+                      Simular no crédito
+                    </Button>
                     {canEdit && b.status === "DRAFT" && (
                       <>
                         <Button size="sm" variant="ghost" onClick={() => onEdit(b)}>
@@ -125,6 +137,20 @@ export function BudgetList({
           />
         )}
       </CardContent>
+
+      <Dialog open={toSimulate != null} onOpenChange={(o) => !o && setToSimulate(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Simular no crédito</DialogTitle>
+            <DialogDescription>
+              {toSimulate ? `${toSimulate.title} · ${centsToBRL(toSimulate.totalCents)}` : null}
+            </DialogDescription>
+          </DialogHeader>
+          {toSimulate && (
+            <CreditSimulator amountCents={toSimulate.totalCents} companyId={companyId} />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={toLose != null} onOpenChange={(o) => !o && setToLose(null)}>
         <AlertDialogContent>

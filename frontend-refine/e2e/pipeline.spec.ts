@@ -16,7 +16,7 @@ import {
  *
  * O kanban lista pipelines da empresa por created_at DESC, então o pipeline
  * criado pelo seed (mais recente) é sempre `activePipelines[0]` — e o board
- * mostra as 5 etapas padrão criadas junto (Prospecção → Fechamento).
+ * mostra as 5 etapas padrão criadas junto (Novo → Fechamento).
  *
  * `purgeE2EPipelines` no beforeAll remove resíduos "E2E Pipeline" de runs
  * falhas, mantendo o board determinístico também em CI com retry.
@@ -57,9 +57,9 @@ test.describe("Pipeline — seed E2E (Task 4.3)", () => {
       await expect(page.getByText(stage.name, { exact: true }).first()).toBeVisible();
     }
 
-    // Card do seed na 1ª etapa (iso: subtitle "Prospecção · 10%").
+    // Card do seed na 1ª etapa (iso: subtitle "Novo · 10%").
     await expect(page.getByText(seedOppTitle)).toBeVisible();
-    await expect(page.getByText("Prospecção · 10%")).toBeVisible();
+    await expect(page.getByText("Novo · 10%")).toBeVisible();
   });
 
   test("cria uma oportunidade pelo modal (toast + card novo)", async () => {
@@ -69,7 +69,10 @@ test.describe("Pipeline — seed E2E (Task 4.3)", () => {
     await page.getByRole("button", { name: "Nova oportunidade" }).click();
     await page.getByLabel("Título *").fill(newTitle);
     await page.getByLabel("Valor (R$) *").fill("1200");
-    await page.getByLabel("Contato (ID) *").fill(contact.id);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("combobox").click();
+    await page.getByPlaceholder("Buscar contato…").fill(contact.lastName);
+    await page.getByRole("option", { name: new RegExp(contact.lastName) }).click();
     await page.getByRole("button", { name: "Criar Oportunidade" }).click();
 
     await expect(page.getByText("Oportunidade criada com sucesso")).toBeVisible();
@@ -84,7 +87,7 @@ test.describe("Pipeline — seed E2E (Task 4.3)", () => {
     await card.getByRole("button", { name: "Avançar" }).click();
 
     await expect(page.getByText("Oportunidade movida")).toBeVisible();
-    // 2ª etapa padrão: Qualificação · 20% (verified: DEFAULT_STAGES).
-    await expect(card.getByText("Qualificação · 20%")).toBeVisible({ timeout: 15_000 });
+    // 2ª etapa padrão: Qualificação · 25% (verified: DEFAULT_STAGES).
+    await expect(card.getByText("Qualificação · 25%")).toBeVisible({ timeout: 15_000 });
   });
 });
