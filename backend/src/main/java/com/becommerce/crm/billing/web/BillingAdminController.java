@@ -59,6 +59,16 @@ public class BillingAdminController {
         return view;
     }
 
+    @PostMapping("/cancel")
+    @PreAuthorize("isAuthenticated()")
+    public BillingView cancel(@PathVariable UUID companyId, @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        BillingView view = service.cancel(companyId);
+        inTenant(companyId, () -> auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing",
+                companyId.toString(), "Cobrança: assinatura encerrada", user.userId(), null));
+        return view;
+    }
+
     @PutMapping("/price")
     @PreAuthorize("isAuthenticated()")
     public BillingView price(@PathVariable UUID companyId, @Valid @RequestBody PriceRequest body,

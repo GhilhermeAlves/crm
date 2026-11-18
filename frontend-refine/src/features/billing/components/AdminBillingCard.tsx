@@ -21,6 +21,7 @@ import {
   useActivateBilling,
   useAdminBilling,
   useAdminInvoices,
+  useCancelBilling,
   useChangeBillingPrice,
   useExemptBilling,
   useGrantBilling,
@@ -37,6 +38,7 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
   const exempt = useExemptBilling(companyId);
   const price = useChangeBillingPrice(companyId);
   const grant = useGrantBilling(companyId);
+  const cancel = useCancelBilling(companyId);
   const [editing, setEditing] = useState(false);
   const [reais, setReais] = useState("");
   const [days, setDays] = useState("7");
@@ -165,6 +167,31 @@ export function AdminBillingCard({ companyId }: { companyId: string }) {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction onClick={() => exempt.mutate()}>Isentar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          {(data.hasSubscription || data.status === "SYNC_PENDING") && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={cancel.isPending}>
+                  Encerrar cobrança
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Encerrar a cobrança desta empresa?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    A assinatura é removida no Asaas, junto com as cobranças em aberto. A empresa
+                    deixa de ser cobrada e de ser bloqueada. O histórico de faturas é mantido e a
+                    cobrança pode ser ativada de novo depois (ou a empresa marcada como isenta).
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Voltar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => cancel.mutate()}>
+                    Encerrar cobrança
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

@@ -76,6 +76,20 @@ public class BillingAccount {
         touch();
     }
 
+    /**
+     * Assinatura encerrada no Asaas: volta a "não iniciada" (pode ser ativada de novo ou isentada).
+     * Mantém o cliente do Asaas para reaproveitar numa nova ativação.
+     */
+    public void cancelled() {
+        this.asaasSubscriptionId = null;
+        this.status = BillingStatus.NOT_STARTED;
+        this.nextDueDate = null;
+        this.overdueSince = null;
+        this.graceUntil = null;
+        this.syncError = null;
+        touch();
+    }
+
     public void changePrice(CompanyPlan newPlan, int cents) {
         this.plan = newPlan;
         setPrice(cents);
