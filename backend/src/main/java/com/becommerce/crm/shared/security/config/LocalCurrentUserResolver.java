@@ -83,6 +83,9 @@ public class LocalCurrentUserResolver implements CurrentUserResolver {
             try {
                 user = authUseCase.provisionKeycloakUser(
                         keycloakSub, email, preferredUsername, givenName, familyName, identityProvider);
+                if (!user.isActive()) {
+                    throw new CrmAccessDeniedException("Usuário desativado: acesso ao CRM negado.");
+                }
             } catch (UserProvisioningException e) {
                 throw new AuthenticationServiceException(e.getMessage());
             } catch (LinkingRequiredException e) {
