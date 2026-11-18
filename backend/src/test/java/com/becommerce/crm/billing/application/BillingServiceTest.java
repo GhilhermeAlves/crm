@@ -1,7 +1,9 @@
 package com.becommerce.crm.billing.application;
 
 import com.becommerce.crm.billing.domain.BillingAccount;
+import com.becommerce.crm.billing.domain.BillingInvoice;
 import com.becommerce.crm.billing.domain.BillingStatus;
+import com.becommerce.crm.billing.domain.InvoiceStatus;
 import com.becommerce.crm.billing.infrastructure.AsaasClient;
 import com.becommerce.crm.billing.infrastructure.BillingAccountJpaRepository;
 import com.becommerce.crm.billing.infrastructure.BillingInvoiceJpaRepository;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.*;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -248,6 +251,60 @@ class BillingServiceTest {
     }
 
     @Test
+    void cancelDeletesSubscriptionCancelsOpenInvoicesAndResets() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 10, 15));
+        acc.onOverdue(LocalDate.of(2026, 10, 15));
+        acc.block();
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+        BillingInvoice open = BillingInvoice.fromAsaas(companyId, "pay_1", LocalDate.of(2026, 10, 15), 19700,
+                InvoiceStatus.OVERDUE, "https://pix/1", null);
+        when(invoices.findByCompanyIdAndStatusIn(eq(companyId), any())).thenReturn(List.of(open), List.of());
+
+        var view = service.cancel(companyId);
+
+        verify(asaas).deleteSubscription("sub_1");
+        assertEquals(InvoiceStatus.CANCELLED, open.getStatus());
+        assertEquals("NOT_STARTED", view.status());
+        assertFalse(view.hasSubscription());
+        assertNull(view.overdueSince());
+        assertNull(view.nextDueDate());
+        assertEquals("cus_1", acc.getAsaasCustomerId());
+        verify(access).evict(companyId);
+    }
+
+    @Test
+    void cancelFailureInAsaasChangesNothing() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+        doThrow(new AsaasClient.AsaasException("Asaas indisponível.")).when(asaas).deleteSubscription("sub_1");
+
+        assertThrows(BillingRuleException.class, () -> service.cancel(companyId));
+
+        assertEquals(BillingStatus.ACTIVE, acc.getStatus());
+        assertEquals("sub_1", acc.getAsaasSubscriptionId());
+        verify(accounts, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void cancelWithoutSubscriptionIsRejected() {
+        when(accounts.findById(companyId)).thenReturn(Optional.of(BillingAccount.start(companyId, CompanyPlan.STARTER, 19700)));
+        assertThrows(BillingRuleException.class, () -> service.cancel(companyId));
+        verifyNoInteractions(asaas);
+    }
+
+    @Test
+    void cancelSyncPendingResetsWithoutCallingAsaas() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.syncFailed("timeout");
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+
+        assertEquals("NOT_STARTED", service.cancel(companyId).status());
+        verifyNoInteractions(asaas);
+    }
+
+    @Test
     void checkPaymentRefreshesOpenInvoices() {
         BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
         acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
@@ -257,5 +314,44 @@ class BillingServiceTest {
 
         verify(payments).refreshOpen(companyId, null);
         verify(access).evict(companyId);
+    }
+
+    @Test
+    void checkPaymentAsksAsaasAtMostOncePer30Seconds() {
+        BillingAccount acc = BillingAccount.start(companyId, CompanyPlan.STARTER, 19700);
+        acc.activated("cus_1", "sub_1", LocalDate.of(2026, 11, 15));
+        when(accounts.findById(companyId)).thenReturn(Optional.of(acc));
+
+        service.checkPayment(companyId);
+        service.checkPayment(companyId);
+
+        verify(payments, times(1)).refreshOpen(companyId, null);
+    }
+
+    @Test
+    void firstDueDateUsesSaoPauloDateLateAtNight() {
+        // 01:00 UTC de 09/11 = 22:00 de 08/11 em São Paulo: vencimento conta a partir de 08/11.
+        Clock night = Clock.fixed(Instant.parse("2026-11-09T01:00:00Z"), ZoneOffset.UTC);
+        BillingService s = new BillingService(accounts, invoices, companies, asaas, payments, access,
+                new BillingProperties(true, "https://x", "KEY", "WH"), night);
+        when(accounts.findById(companyId)).thenReturn(Optional.empty());
+        when(asaas.createCustomer(any(), any(), any(), any())).thenReturn("cus_1");
+        when(asaas.createSubscription(eq("cus_1"), eq(19700), eq(LocalDate.of(2026, 11, 15)), anyString(), anyString()))
+                .thenReturn("sub_1");
+
+        assertEquals(LocalDate.of(2026, 11, 15), s.activate(companyId).nextDueDate());
+    }
+
+    @Test
+    void customerIsSavedEvenWhenSubscriptionFails() {
+        when(accounts.findById(companyId)).thenReturn(Optional.empty());
+        when(asaas.createCustomer(any(), any(), any(), any())).thenReturn("cus_1");
+        when(asaas.createSubscription(any(), anyInt(), any(), anyString(), anyString()))
+                .thenThrow(new AsaasClient.AsaasException("Asaas indisponível."));
+
+        var view = service.activate(companyId);
+
+        assertEquals("SYNC_PENDING", view.status());
+        verify(accounts, times(2)).saveAndFlush(argThat(a -> "cus_1".equals(a.getAsaasCustomerId())));
     }
 }

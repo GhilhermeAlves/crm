@@ -2,6 +2,15 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { AdminBillingCard } from "@/features/billing/components/AdminBillingCard";
 
+vi.mock("@/features/finance/patient-billing/hooks", () => ({
+  usePatientBillingEnabled: () => false,
+  usePatientCharges: () => ({ data: undefined }),
+  useChargeTransaction: () => ({ mutate: vi.fn(), isPending: false }),
+  useResendWhatsApp: () => ({ mutate: vi.fn(), isPending: false }),
+  useAdminPatientBilling: () => ({ data: { enabled: false }, isLoading: false }),
+  useSetAdminPatientBilling: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 const state = vi.hoisted(() => ({
   billing: null as null | Record<string, unknown>,
   error: false,
@@ -22,6 +31,7 @@ vi.mock("@/features/billing/hooks", () => ({
   useExemptBilling: () => ({ mutate: state.exempt, isPending: false }),
   useChangeBillingPrice: () => ({ mutate: state.price, isPending: false }),
   useGrantBilling: () => ({ mutate: state.grant, isPending: false }),
+  useCancelBilling: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 const base = {

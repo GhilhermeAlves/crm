@@ -8,4 +8,9 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public record ApproveBudgetRequest(@NotNull PaymentMethod paymentMethod, @Min(1) @Max(24) int installments,
-                                   @NotNull LocalDate firstDueDate) {}
+                                   @NotNull LocalDate firstDueDate, Boolean chargeViaAsaas) {
+
+    public ApproveBudgetRequest(PaymentMethod paymentMethod, int installments, LocalDate firstDueDate) {
+        this(paymentMethod, installments, firstDueDate, null);
+    }
+}

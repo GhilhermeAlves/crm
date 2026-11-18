@@ -72,7 +72,10 @@ public class BillingService {
                 .orElseGet(() -> BillingView.notStarted(company.getPlan())));
     }
 
-    @Transactional
+    /**
+     * Sem @Transactional: as chamadas HTTP ao Asaas não seguram conexão/transação do banco, e cada
+     * passo é gravado logo após dar certo no Asaas (o cliente criado não se perde se a assinatura falhar).
+     */
     public BillingView activate(UUID companyId) {
         if (!props.configured()) {
             throw new BillingRuleException("Cobrança desligada: configure ASAAS_API_KEY e BILLING_ENABLED.");
@@ -81,7 +84,7 @@ public class BillingService {
         if (company.getCnpj() == null || company.getCnpj().isBlank()) {
             throw new BillingRuleException("Cadastre o CPF ou CNPJ da empresa antes de ativar a cobrança.");
         }
-        return inTenant(companyId, () -> {
+        BillingView view = inTenant(companyId, () -> {
             BillingAccount acc = accounts.findById(companyId).orElseGet(() -> BillingAccount.start(
                     companyId, company.getPlan(), company.getPlan().defaultMonthlyPriceCents()));
             if (acc.getStatus() == BillingStatus.EXEMPT) {
@@ -95,8 +98,9 @@ public class BillingService {
                 if (acc.getAsaasCustomerId() == null) {
                     acc.customerCreated(asaas.createCustomer(
                             company.getTradingName(), company.getCnpj(), company.getEmail(), ref));
+                    acc = accounts.saveAndFlush(acc);
                 }
-                LocalDate firstDue = LocalDate.now(clock).plusDays(FIRST_DUE_DAYS);
+                LocalDate firstDue = today().plusDays(FIRST_DUE_DAYS);
                 String sub = asaas.createSubscription(acc.getAsaasCustomerId(), acc.getMonthlyPriceCents(),
                         firstDue, description(acc.getPlan()), ref);
                 acc.activated(acc.getAsaasCustomerId(), sub, firstDue);
@@ -106,6 +110,8 @@ public class BillingService {
             }
             return viewOf(accounts.saveAndFlush(acc));
         });
+        access.evict(companyId);
+        return view;
     }
 
     @Transactional
@@ -116,14 +122,14 @@ public class BillingService {
                     companyId, company.getPlan(), company.getPlan().defaultMonthlyPriceCents()));
             if (acc.hasSubscription()) {
                 throw new BillingRuleException(
-                        "Empresa com assinatura ativa no Asaas: cancele a assinatura antes de isentar.");
+                        "Empresa com assinatura ativa no Asaas: encerre a cobrança antes de isentar.");
             }
             acc.markExempt();
             return viewOf(accounts.saveAndFlush(acc));
         });
     }
 
-    @Transactional
+    // Sem @Transactional: pushPrice chama o Asaas (HTTP) e não deve segurar a transação.
     public BillingView changePrice(UUID companyId, int cents) {
         Company company = requireCompany(companyId);
         return inTenant(companyId, () -> {
@@ -155,7 +161,6 @@ public class BillingService {
         });
     }
 
-    @Transactional
     public void retrySync(UUID companyId) {
         BillingAccount acc = inTenant(companyId, () -> accounts.findById(companyId).orElse(null));
         if (acc == null) return;
@@ -191,7 +196,38 @@ public class BillingService {
         BillingView view = inTenant(companyId, () -> {
             BillingAccount acc = accounts.findById(companyId)
                     .orElseThrow(() -> new BillingRuleException("Empresa sem cobrança ativa."));
-            acc.grant(LocalDate.now(clock).plusDays(days));
+            acc.grant(today().plusDays(days));
+            return viewOf(accounts.saveAndFlush(acc));
+        });
+        access.evict(companyId);
+        return view;
+    }
+
+    /**
+     * Encerra a cobrança: remove a assinatura no Asaas e volta a conta para "não iniciada".
+     * O histórico de faturas é mantido; as em aberto viram canceladas. Se o Asaas recusar, nada muda.
+     * Sem @Transactional: o evict precisa rodar depois do commit.
+     */
+    public BillingView cancel(UUID companyId) {
+        requireCompany(companyId);
+        BillingView view = inTenant(companyId, () -> {
+            BillingAccount acc = accounts.findById(companyId)
+                    .orElseThrow(() -> new BillingRuleException("Empresa sem cobrança ativa."));
+            if (!acc.hasSubscription() && acc.getStatus() != BillingStatus.SYNC_PENDING) {
+                throw new BillingRuleException("Empresa sem cobrança ativa.");
+            }
+            if (acc.hasSubscription()) {
+                try {
+                    asaas.deleteSubscription(acc.getAsaasSubscriptionId());
+                } catch (AsaasClient.AsaasException e) {
+                    log.warn("Falha ao encerrar cobrança da empresa {}: {}", companyId, e.getMessage());
+                    throw new BillingRuleException("Não foi possível encerrar no Asaas: " + e.getMessage());
+                }
+            }
+            List<BillingInvoice> open = invoices.findByCompanyIdAndStatusIn(companyId, BillingPaymentService.OPEN);
+            open.forEach(BillingInvoice::cancel);
+            invoices.saveAllAndFlush(open);
+            acc.cancelled();
             return viewOf(accounts.saveAndFlush(acc));
         });
         access.evict(companyId);
@@ -204,8 +240,17 @@ public class BillingService {
                 .map(InvoiceView::of).toList());
     }
 
+    static final java.time.Duration CHECK_PAYMENT_COOLDOWN = java.time.Duration.ofSeconds(30);
+    private final java.util.concurrent.ConcurrentHashMap<UUID, java.time.Instant> lastCheck =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** "Já paguei": consulta o Asaas no máximo 1× a cada 30 s por empresa; nos demais cliques só relê. */
     public BillingView checkPayment(UUID companyId) {
-        if (props.configured()) {
+        java.time.Instant now = clock.instant();
+        java.time.Instant previous = lastCheck.get(companyId);
+        boolean throttled = previous != null && previous.plus(CHECK_PAYMENT_COOLDOWN).isAfter(now);
+        if (!throttled) lastCheck.put(companyId, now);
+        if (props.configured() && !throttled) {
             payments.refreshOpen(companyId, null);
             access.evict(companyId);
         }
@@ -239,6 +284,11 @@ public class BillingService {
     private Company requireCompany(UUID companyId) {
         return BillingTenant.run(companyId, () -> companies.findById(companyId))
                 .orElseThrow(() -> new CompanyNotFoundException(companyId));
+    }
+
+    /** "Hoje" no fuso das clínicas (o Clock da aplicação é UTC: após 21h viraria o dia seguinte). */
+    private LocalDate today() {
+        return LocalDate.now(clock.withZone(BillingDailyJob.ZONE));
     }
 
     private <T> T inTenant(UUID companyId, Supplier<T> work) {

@@ -40,7 +40,7 @@ public class AsaasWebhookService {
         String eventId = body.path("id").asText("");
         if (eventId.isBlank()) eventId = event + ":" + paymentId;
 
-        if (events.register(eventId, event)) return;
+        if (events.register(eventId, event, paymentId)) return;
         if (!HANDLED.contains(event) || paymentId.isBlank()) {
             events.markProcessed(eventId);
             return;
@@ -51,5 +51,20 @@ public class AsaasWebhookService {
         } catch (RuntimeException e) {
             log.warn("[BILLING] webhook {} ({}) não aplicado: {}", eventId, event, e.getMessage());
         }
+    }
+
+    /** Reaplica eventos que falharam (o Asaas já recebeu 200 e não reenvia). Chamado pelo job diário. */
+    public int reprocessPending() {
+        int done = 0;
+        for (BillingWebhookEventStore.Pending p : events.pending(200)) {
+            try {
+                payments.apply(p.paymentId());
+                events.markProcessed(p.eventId());
+                done++;
+            } catch (RuntimeException e) {
+                log.warn("[BILLING] reprocesso do webhook {} falhou: {}", p.eventId(), e.getMessage());
+            }
+        }
+        return done;
     }
 }

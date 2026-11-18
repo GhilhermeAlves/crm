@@ -41,6 +41,13 @@ public class BillingInvoice {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /** Fatura em aberto de uma assinatura encerrada: o Asaas a removeu. */
+    public void cancel() {
+        if (!isOpen()) return;
+        this.status = InvoiceStatus.CANCELLED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public boolean isOpen() {
         return status == InvoiceStatus.PENDING || status == InvoiceStatus.OVERDUE;
     }

@@ -65,6 +65,61 @@ public class AsaasClient {
         return requireId(post("/subscriptions", body));
     }
 
+    /** Cliente pessoa física (paciente) com as notificações do Asaas (e-mail) ligadas. */
+    public String createPatientCustomer(String name, String cpf, String email, String mobile,
+                                        String externalReference) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("name", name);
+        body.put("cpfCnpj", cpf.replaceAll("\\D", ""));
+        if (email != null && !email.isBlank()) body.put("email", email);
+        if (mobile != null && !mobile.isBlank()) body.put("mobilePhone", mobile.replaceAll("\\D", ""));
+        body.put("externalReference", externalReference);
+        body.put("notificationDisabled", false);
+        return requireId(post("/customers", body));
+    }
+
+    public record CreatedPayment(String id, String invoiceUrl) {}
+
+    /** Cobrança avulsa em que o pagador escolhe Pix, boleto ou cartão. */
+    public CreatedPayment createPayment(String customerId, long valueCents, LocalDate dueDate, String description,
+                                        String externalReference) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("customer", customerId);
+        body.put("billingType", "UNDEFINED");
+        body.put("value", java.math.BigDecimal.valueOf(valueCents).movePointLeft(2));
+        body.put("dueDate", dueDate.toString());
+        body.put("description", description);
+        body.put("externalReference", externalReference);
+        JsonNode n = post("/payments", body);
+        return new CreatedPayment(requireId(n), text(n, "invoiceUrl"));
+    }
+
+    /** Pagamento recebido fora do Asaas (recepção): sem crédito de saldo e sem aviso ao pagador. */
+    public void receiveInCash(String paymentId, LocalDate paymentDate, long valueCents) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("paymentDate", paymentDate.toString());
+        body.put("value", java.math.BigDecimal.valueOf(valueCents).movePointLeft(2));
+        body.put("notifyCustomer", false);
+        call(() -> rest.post().uri(props.baseUrl() + "/payments/{id}/receiveInCash", paymentId)
+                .headers(h -> { h.set("access_token", props.apiKey()); h.set("User-Agent", "clin3dpro-crm"); })
+                .contentType(MediaType.APPLICATION_JSON).body(body)
+                .retrieve().body(JsonNode.class));
+    }
+
+    /** Remove a cobrança avulsa; já inexistente (404) conta como removida. */
+    public void deletePayment(String paymentId) {
+        try {
+            rest.delete().uri(props.baseUrl() + "/payments/{id}", paymentId)
+                    .headers(h -> { h.set("access_token", props.apiKey()); h.set("User-Agent", "clin3dpro-crm"); })
+                    .retrieve().toBodilessEntity();
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == 404) return;
+            throw new AsaasException("Asaas recusou (" + e.getStatusCode().value() + "): " + describe(e));
+        } catch (RestClientException e) {
+            throw new AsaasException("Asaas indisponível.");
+        }
+    }
+
     private static String requireId(JsonNode node) {
         String id = node == null ? "" : node.path("id").asText("");
         if (id.isBlank()) throw new AsaasException("Asaas não devolveu o id.");
@@ -118,6 +173,23 @@ public class AsaasClient {
                 .headers(h -> { h.set("access_token", props.apiKey()); h.set("User-Agent", "clin3dpro-crm"); })
                 .contentType(MediaType.APPLICATION_JSON).body(body)
                 .retrieve().body(JsonNode.class));
+    }
+
+    /**
+     * Remove a assinatura no Asaas (ele também remove as cobranças pendentes dela).
+     * Assinatura já inexistente (404) conta como removida.
+     */
+    public void deleteSubscription(String subscriptionId) {
+        try {
+            rest.delete().uri(props.baseUrl() + "/subscriptions/{id}", subscriptionId)
+                    .headers(h -> { h.set("access_token", props.apiKey()); h.set("User-Agent", "clin3dpro-crm"); })
+                    .retrieve().toBodilessEntity();
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == 404) return;
+            throw new AsaasException("Asaas recusou (" + e.getStatusCode().value() + "): " + describe(e));
+        } catch (RestClientException e) {
+            throw new AsaasException("Asaas indisponível.");
+        }
     }
 
     private JsonNode post(String path, Map<String, Object> body) {

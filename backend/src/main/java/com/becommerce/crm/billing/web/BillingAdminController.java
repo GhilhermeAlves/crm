@@ -28,9 +28,40 @@ public class BillingAdminController {
     private final BillingService service;
     private final TenantAuditRecorder auditor;
 
+    private com.becommerce.crm.finance.patientbilling.PatientBillingService patientBilling;
+
     public BillingAdminController(BillingService service, TenantAuditRecorder auditor) {
         this.service = service;
         this.auditor = auditor;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPatientBilling(com.becommerce.crm.finance.patientbilling.PatientBillingService patientBilling) {
+        this.patientBilling = patientBilling;
+    }
+
+    public record PatientBillingRequest(boolean enabled) {}
+
+    /** Liga/desliga a cobrança de pacientes pelo Asaas nesta empresa (só o dono do CRM). */
+    @PutMapping("/patient-billing")
+    @PreAuthorize("isAuthenticated()")
+    public Map<String, Boolean> patientBilling(@PathVariable UUID companyId, @RequestBody PatientBillingRequest body,
+                                               @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        if (patientBilling == null) throw new BillingRuleException("Cobrança de pacientes indisponível.");
+        patientBilling.setEnabled(companyId, body.enabled());
+        inTenant(companyId, () -> auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing",
+                companyId.toString(), "Cobrança de pacientes pelo Asaas " + (body.enabled() ? "ligada" : "desligada"),
+                user.userId(), null));
+        return Map.of("enabled", patientBilling.enabled(companyId));
+    }
+
+    @GetMapping("/patient-billing")
+    @PreAuthorize("isAuthenticated()")
+    public Map<String, Boolean> patientBillingStatus(@PathVariable UUID companyId,
+                                                     @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        return Map.of("enabled", patientBilling != null && patientBilling.enabled(companyId));
     }
 
     public record PriceRequest(@Positive int monthlyPriceCents) {}
@@ -56,6 +87,16 @@ public class BillingAdminController {
         BillingView view = service.markExempt(companyId);
         inTenant(companyId, () -> auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing",
                 companyId.toString(), "Cobrança: empresa marcada como isenta", user.userId(), null));
+        return view;
+    }
+
+    @PostMapping("/cancel")
+    @PreAuthorize("isAuthenticated()")
+    public BillingView cancel(@PathVariable UUID companyId, @AuthenticationPrincipal CurrentUser user) {
+        requireCrmAdmin(user);
+        BillingView view = service.cancel(companyId);
+        inTenant(companyId, () -> auditor.record(companyId, AuditAction.UPDATE, AuditModule.SETTINGS, "Billing",
+                companyId.toString(), "Cobrança: assinatura encerrada", user.userId(), null));
         return view;
     }
 

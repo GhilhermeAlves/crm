@@ -130,6 +130,25 @@ class BillingAdminControllerTest {
     }
 
     @Test
+    void cancelIsAudited() throws Exception {
+        loginAs("SUPER_ADMIN");
+        when(service.cancel(TARGET)).thenReturn(
+                new BillingView("NOT_STARTED", "STARTER", 19700, null, null, false, null, null, null));
+        mvc.perform(post(URL + "/cancel"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.status").value("NOT_STARTED"));
+        verify(auditor).record(eq(TARGET), eq(AuditAction.UPDATE), eq(AuditModule.SETTINGS), eq("Billing"),
+                eq(TARGET.toString()), eq("Cobrança: assinatura encerrada"), any(), any());
+    }
+
+    @Test
+    void cancelNonAdminForbidden() throws Exception {
+        loginAs("ADMIN");
+        mvc.perform(post(URL + "/cancel")).andExpect(status().isForbidden());
+        verifyNoInteractions(service);
+    }
+
+    @Test
     void grantNonAdminForbidden() throws Exception {
         loginAs("ADMIN");
         mvc.perform(post(URL + "/grant").contentType("application/json").content("{\"days\":7}"))

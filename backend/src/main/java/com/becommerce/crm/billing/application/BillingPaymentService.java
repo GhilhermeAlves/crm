@@ -37,8 +37,20 @@ public class BillingPaymentService {
         this.access = access;
     }
 
+    private com.becommerce.crm.finance.patientbilling.PatientBillingService patientBilling;
+
+    /** Opcional: pagamentos de cobranças de pacientes (referência "tx:") vão para o módulo de pacientes. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setPatientBilling(@org.springframework.context.annotation.Lazy
+                           com.becommerce.crm.finance.patientbilling.PatientBillingService patientBilling) {
+        this.patientBilling = patientBilling;
+    }
+
     public Optional<UUID> apply(String asaasPaymentId) {
         AsaasPayment p = asaas.getPayment(asaasPaymentId);
+        if (patientBilling != null && patientBilling.applyWebhook(p)) {
+            return Optional.empty();
+        }
         Optional<UUID> company = companyOf(p);
         if (company.isEmpty()) {
             log.warn("[BILLING] pagamento {} sem empresa reconhecida; ignorado", p.id());

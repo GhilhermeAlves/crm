@@ -22,6 +22,9 @@ import {
 } from "@/components/ui/select";
 import { PAYMENT_METHOD_LABELS } from "@/features/finance/types/finance.types";
 import { centsToBRL } from "@/features/finance/utils/money";
+import { Checkbox } from "@/components/ui/checkbox";
+import { usePatientBillingEnabled } from "@/features/finance/patient-billing/hooks";
+import { useContact } from "@/features/masterdata/contacts/hooks/useContacts";
 import { useApproveBudget } from "../hooks/useBudgets";
 import { splitInstallments } from "../utils/installments";
 import type { BudgetDetail, BudgetSummary, PaymentMethod } from "../types/budget.types";
@@ -45,6 +48,10 @@ export function ApproveBudgetDialog({ companyId, contactId, budget, onOpenChange
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("PIX");
   const [installments, setInstallments] = useState(1);
   const [firstDueDate, setFirstDueDate] = useState(today());
+  const [chargeViaAsaas, setChargeViaAsaas] = useState(false);
+  const asaasOn = usePatientBillingEnabled(companyId);
+  const { data: contact } = useContact(asaasOn ? companyId : null, asaasOn ? contactId : null);
+  const hasCpf = Boolean(contact?.cpf);
 
   // Reset só ao abrir ou trocar de orçamento (não a cada refetch com nova referência).
   const hasBudget = budget != null;
@@ -54,6 +61,7 @@ export function ApproveBudgetDialog({ companyId, contactId, budget, onOpenChange
     setPaymentMethod("PIX");
     setInstallments(1);
     setFirstDueDate(today());
+    setChargeViaAsaas(false);
   }, [hasBudget, budgetId]);
 
   const totalCents = budget?.totalCents ?? 0;
@@ -67,7 +75,15 @@ export function ApproveBudgetDialog({ companyId, contactId, budget, onOpenChange
   const confirm = () => {
     if (!budget) return;
     approve.mutate(
-      { budgetId: budget.id, payload: { paymentMethod, installments, firstDueDate } },
+      {
+        budgetId: budget.id,
+        payload: {
+          paymentMethod,
+          installments,
+          firstDueDate,
+          ...(asaasOn && hasCpf && chargeViaAsaas ? { chargeViaAsaas: true } : {}),
+        },
+      },
       { onSuccess: () => onOpenChange(false) },
     );
   };
@@ -123,6 +139,26 @@ export function ApproveBudgetDialog({ companyId, contactId, budget, onOpenChange
               />
             </div>
           </div>
+          {asaasOn && totalCents > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id={`${uid}-asaas`}
+                  checked={chargeViaAsaas}
+                  disabled={!hasCpf}
+                  onCheckedChange={(v) => setChargeViaAsaas(v === true)}
+                />
+                <Label htmlFor={`${uid}-asaas`}>
+                  Enviar cobrança pelo Asaas (e-mail e WhatsApp)
+                </Label>
+              </div>
+              {!hasCpf && (
+                <p className="text-xs text-muted-foreground">
+                  Cadastre o CPF do paciente para cobrar pelo Asaas.
+                </p>
+              )}
+            </div>
+          )}
           {totalCents === 0 ? (
             <p className="text-sm text-muted-foreground">
               Orçamento sem valor: nenhuma parcela será gerada.

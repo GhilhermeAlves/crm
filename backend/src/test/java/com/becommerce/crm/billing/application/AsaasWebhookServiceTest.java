@@ -37,7 +37,7 @@ class AsaasWebhookServiceTest {
 
     @Test
     void paymentEventIsAppliedAndMarked() throws Exception {
-        when(events.register("evt_1", "PAYMENT_RECEIVED")).thenReturn(false);
+        when(events.register("evt_1", "PAYMENT_RECEIVED", "pay_1")).thenReturn(false);
         when(payments.apply("pay_1")).thenReturn(Optional.of(UUID.randomUUID()));
         service.handle(body("PAYMENT_RECEIVED"));
         verify(payments).apply("pay_1");
@@ -46,14 +46,14 @@ class AsaasWebhookServiceTest {
 
     @Test
     void repeatedEventIsIgnored() throws Exception {
-        when(events.register("evt_1", "PAYMENT_RECEIVED")).thenReturn(true);
+        when(events.register("evt_1", "PAYMENT_RECEIVED", "pay_1")).thenReturn(true);
         service.handle(body("PAYMENT_RECEIVED"));
         verifyNoInteractions(payments);
     }
 
     @Test
     void otherEventsAreRecordedAndIgnored() throws Exception {
-        when(events.register("evt_1", "PAYMENT_UPDATED")).thenReturn(false);
+        when(events.register("evt_1", "PAYMENT_UPDATED", "pay_1")).thenReturn(false);
         service.handle(body("PAYMENT_UPDATED"));
         verifyNoInteractions(payments);
         verify(events).markProcessed("evt_1");
@@ -61,9 +61,27 @@ class AsaasWebhookServiceTest {
 
     @Test
     void asaasFailureLeavesEventUnprocessedWithoutThrowing() throws Exception {
-        when(events.register("evt_1", "PAYMENT_OVERDUE")).thenReturn(false);
+        when(events.register("evt_1", "PAYMENT_OVERDUE", "pay_1")).thenReturn(false);
         when(payments.apply("pay_1")).thenThrow(new AsaasClient.AsaasException("Asaas indisponível."));
         assertDoesNotThrow(() -> service.handle(body("PAYMENT_OVERDUE")));
+        verify(events, never()).markProcessed(any());
+    }
+
+    @Test
+    void reprocessPendingAppliesAndMarks() {
+        when(events.pending(200)).thenReturn(java.util.List.of(
+                new com.becommerce.crm.billing.infrastructure.BillingWebhookEventStore.Pending("evt_9", "pay_9")));
+        when(payments.apply("pay_9")).thenReturn(Optional.of(UUID.randomUUID()));
+        assertEquals(1, service.reprocessPending());
+        verify(events).markProcessed("evt_9");
+    }
+
+    @Test
+    void reprocessPendingKeepsFailedEventsPending() {
+        when(events.pending(200)).thenReturn(java.util.List.of(
+                new com.becommerce.crm.billing.infrastructure.BillingWebhookEventStore.Pending("evt_9", "pay_9")));
+        when(payments.apply("pay_9")).thenThrow(new AsaasClient.AsaasException("Asaas indisponível."));
+        assertEquals(0, service.reprocessPending());
         verify(events, never()).markProcessed(any());
     }
 }
