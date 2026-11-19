@@ -30,6 +30,7 @@ export function useCreateRole() {
     mutationFn: (data: CreateRoleRequest) => RbacService.createRole(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Role criada com sucesso");
     },
     onError: (error: Error) => {
@@ -47,6 +48,7 @@ export function useUpdateRole() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
       queryClient.invalidateQueries({ queryKey: ["roles", id] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Role atualizada com sucesso");
     },
     onError: (error: Error) => {
@@ -62,6 +64,7 @@ export function useDeleteRole() {
     mutationFn: (id: string) => RbacService.deleteRole(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Role excluída com sucesso");
     },
     onError: (error: Error) => {
@@ -79,6 +82,7 @@ export function useAssignPermission() {
     onSuccess: (_, { roleId }) => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
       queryClient.invalidateQueries({ queryKey: ["roles", roleId] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Permissão atribuída com sucesso");
     },
     onError: (error: Error) => {
@@ -95,6 +99,7 @@ export function useRemovePermission() {
       RbacService.removePermission(roleId, permissionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Permissão removida com sucesso");
     },
     onError: (error: Error) => {
@@ -112,6 +117,7 @@ export function useAssignRoleToUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Role atribuída ao usuário com sucesso");
     },
     onError: (error: Error) => {
@@ -129,6 +135,7 @@ export function useRemoveRoleFromUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Role removida do usuário com sucesso");
     },
     onError: (error: Error) => {
