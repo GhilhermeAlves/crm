@@ -19,7 +19,8 @@ public class PatientImportController {
 
     private static final String OWN_COMPANY = "Você só pode importar dados na sua própria empresa.";
     private static final long MAX_ZIP_BYTES = 5L * 1024 * 1024;
-    private static final String CAN_IMPORT = "hasRole('CRM_ADMIN') or hasRole('SUPER_ADMIN') or (hasAuthority('company:update') and hasAuthority('contact:create'))";
+    // @perm.has já deixa CRM_ADMIN/SUPER_ADMIN passar; sem "or" para a regra de arquitetura.
+    private static final String CAN_IMPORT = "@perm.has('company:update') and @perm.has('contact:create')";
 
     private final PatientImportService service;
 
