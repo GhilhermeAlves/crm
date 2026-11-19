@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { CreateAppointmentDialog } from "@/features/sales/scheduling/components/CreateAppointmentDialog";
 import type { Contact } from "@/features/masterdata/contacts/types/contact.types";
 
@@ -8,8 +8,12 @@ vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
 }));
 
 const PROC_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const { lookupFilters } = vi.hoisted(() => ({ lookupFilters: { value: null as unknown } }));
 vi.mock("@/features/masterdata/catalog/hooks/useCatalog", () => ({
-  useCatalog: () => ({ data: { content: [{ id: PROC_ID, name: "Limpeza" }] } }),
+  useCatalogLookup: (_companyId: string, filters: unknown) => {
+    lookupFilters.value = filters;
+    return { data: [{ id: PROC_ID, name: "Limpeza", price: null, currency: "BRL" }] };
+  },
 }));
 
 vi.mock("@/features/sales/tag/hooks/useTags", () => ({
@@ -65,7 +69,14 @@ async function submit(onSubmit: ReturnType<typeof vi.fn>) {
 
 // O diálogo é pesado no jsdom (3–7 s por teste com recorrência); 5 s padrão estoura.
 describe("CreateAppointmentDialog", { timeout: 20000 }, () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    lookupFilters.value = null;
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
 
   it("inicia como Pendente e envia status SCHEDULED", async () => {
     const { onSubmit } = renderDialog();
@@ -145,6 +156,11 @@ describe("CreateAppointmentDialog", { timeout: 20000 }, () => {
   it("não lista os procedimentos antes de abrir a busca", () => {
     renderDialog();
     expect(screen.queryByText("Limpeza")).toBeNull();
+  });
+
+  it("busca procedimentos no lookup mínimo do catálogo", () => {
+    renderDialog();
+    expect(lookupFilters.value).toEqual({ type: "SERVICE", active: true });
   });
 
   it("envia contactPhone só quando o celular muda", async () => {

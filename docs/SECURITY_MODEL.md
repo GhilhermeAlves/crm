@@ -81,3 +81,22 @@
 - UI hierárquica completa de permissões na tela de Perfis (subgrupos Página/Campos);
 - cache das autoridades se volume justificar;
 - auditoria detalhada de cada alteração de override (hoje via TenantAuditRecorder).
+
+## Checklist — nova tela ou endpoint
+
+**Permissão nova**
+1. Migration `INSERT INTO permissions` (nome `modulo:acao`), concedida aos papéis padrão; checar número da migration, RLS e GRANT.
+2. `RoleSeedService`/seed: incluir no `CRM_ADMIN`.
+
+**Endpoint**
+1. Listagem/detalhe/escrita → `@PreAuthorize("hasAuthority('modulo:acao')")` (só a dona).
+2. Select/lookup usado por outra tela → endpoint `/lookup` mínimo com `@PreAuthorize("@perm.hasOrDependent('dono:read')")` + linha em `PermissionDependencies` (ordem alfabética).
+3. Nunca `or hasAuthority(...)` entre módulos diferentes — o `SecurityAnnotationArchTest` falha.
+4. `isAuthenticated()` só para rotas de identidade/conta; nova entrada exige incluir na allowlist do teste com motivo.
+
+**Front**
+1. Botões/menus com `can('modulo:acao')`; nunca liberar no front o que o back nega.
+2. Mutation que muda papel/permissão invalida `["me"]`.
+
+**Teste**
+1. Controller test: 200 com a permissão, 403 sem ela; se lookup, 200 para a tela dependente.

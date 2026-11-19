@@ -2,6 +2,7 @@ package com.becommerce.crm.masterdata.catalog.web;
 
 import com.becommerce.crm.masterdata.catalog.application.dto.CatalogItemRequest;
 import com.becommerce.crm.masterdata.catalog.application.dto.CatalogItemResponse;
+import com.becommerce.crm.masterdata.catalog.application.dto.CatalogLookupResponse;
 import com.becommerce.crm.masterdata.catalog.application.service.CatalogService;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Catálogo de produtos/serviços (V078). Isolamento por RLS FORCE + {@code @CurrentCompanyId}. */
@@ -44,6 +46,16 @@ public class CatalogController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize) {
         return ResponseEntity.ok(catalogService.list(companyId, q, type, active, page, pageSize));
+    }
+
+    @GetMapping("/lookup")
+    @PreAuthorize("@perm.hasOrDependent('catalog:read')")
+    public ResponseEntity<List<CatalogLookupResponse>> lookup(
+            @CurrentCompanyId(OWN_COMPANY) UUID companyId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) CatalogItemType type,
+            @RequestParam(required = false) Boolean active) {
+        return ResponseEntity.ok(catalogService.lookup(companyId, q, type, active));
     }
 
     @GetMapping("/{itemId}")

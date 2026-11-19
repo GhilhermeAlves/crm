@@ -52,6 +52,7 @@ export type UserPermissionsResponse = {
   roles: string[];
   effective: string[];
   overrides: UserPermissionOverride[];
+  rolePermissionNames?: string[];
 };
 
 export type PermissionModule = {
