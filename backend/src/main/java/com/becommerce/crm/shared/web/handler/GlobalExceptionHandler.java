@@ -964,6 +964,18 @@ public class GlobalExceptionHandler {
             ));
     }
 
+    @ExceptionHandler(com.becommerce.crm.masterdata.importing.application.ImportFileException.class)
+    public ResponseEntity<Map<String, Object>> handleImportFileException(
+            com.becommerce.crm.masterdata.importing.application.ImportFileException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(Map.of(
+                "status", 400,
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationLinkNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleRegistrationLinkNotFoundException(
             com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationLinkNotFoundException ex) {

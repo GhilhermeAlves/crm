@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Smartphone,
+  Upload,
   Send,
   Mail,
   Users,
@@ -307,6 +308,12 @@ export const NAVIGATION: NavGroup[] = [
         label: "Plano e cobrança",
         href: ROUTES.SETTINGS_BILLING,
         icon: CreditCard,
+        permission: "company:update",
+      },
+      {
+        label: "Importar dados",
+        href: ROUTES.SETTINGS_IMPORT,
+        icon: Upload,
         permission: "company:update",
       },
       {

@@ -131,6 +131,18 @@ class ContactServiceTest {
     }
 
     @Test
+    void createImportedPatientDoesNotTriggerWorkflows() {
+        doNothing().when(quotaService).assertCanAddContact(companyId);
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        contactService.createImportedPatient(
+                companyId, createRequest("Ana", "Souza", null, null, null), UUID.randomUUID());
+
+        verify(contactRepository).save(any(Contact.class));
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
     void shouldRejectDuplicateEmailWithConflictInsteadOfDatabaseError() {
         doNothing().when(quotaService).assertCanAddContact(companyId);
         when(contactRepository.existsActiveByEmail(companyId, "ana@empresa.com", null)).thenReturn(true);

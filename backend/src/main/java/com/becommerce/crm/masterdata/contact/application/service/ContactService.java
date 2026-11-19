@@ -55,17 +55,27 @@ public class ContactService implements ContactUseCase {
     @Override
     @Transactional
     public ContactResponse create(UUID companyId, CreateContactRequest request, UUID createdBy) {
-        return create(companyId, request, createdBy, false);
+        return create(companyId, request, createdBy, false, true);
     }
 
     @Override
     @Transactional
     public ContactResponse createPatient(UUID companyId, CreateContactRequest request, UUID createdBy) {
-        return create(companyId, request, createdBy, true);
+        return create(companyId, request, createdBy, true, true);
+    }
+
+    /**
+     * Paciente vindo da importação de base de outro sistema: mesmas validações
+     * do cadastro, mas sem disparar automações de "contato criado" (evita
+     * mensagens em massa para a base inteira).
+     */
+    @Transactional
+    public ContactResponse createImportedPatient(UUID companyId, CreateContactRequest request, UUID createdBy) {
+        return create(companyId, request, createdBy, true, false);
     }
 
     private ContactResponse create(UUID companyId, CreateContactRequest request, UUID createdBy,
-                                   boolean patient) {
+                                   boolean patient, boolean publishEvents) {
         try {
             TenantContext.setCompanyId(companyId);
             quotaService.assertCanAddContact(companyId);
@@ -93,8 +103,10 @@ public class ContactService implements ContactUseCase {
                     createdBy, Map.of("email", String.valueOf(contact.getEmail())));
 
             // Sprint 18: dispara automações (workflows) de contato criado
-            eventPublisher.publish(com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent
-                    .contactCreated(companyId, saved.getId(), saved.getEmail(), saved.getPhone()));
+            if (publishEvents) {
+                eventPublisher.publish(com.becommerce.crm.automation.workflow.domain.event.WorkflowTriggerEvent
+                        .contactCreated(companyId, saved.getId(), saved.getEmail(), saved.getPhone()));
+            }
             return toResponse(saved);
         } finally {
             TenantContext.clear();

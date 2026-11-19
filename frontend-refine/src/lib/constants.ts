@@ -35,6 +35,7 @@ export const ROUTES = {
   SETTINGS_AGENT_CONFIG: "/settings/agent-config",
   SETTINGS_WHATSAPP: "/settings/whatsapp",
   SETTINGS_EMAIL: "/settings/email",
+  SETTINGS_IMPORT: "/settings/import",
   SETTINGS_TELEGRAM: "/settings/telegram",
   SETTINGS_COMPANY: "/settings/company",
   SETTINGS_COMPANY_PREFERENCES: "/settings/company/preferences",
