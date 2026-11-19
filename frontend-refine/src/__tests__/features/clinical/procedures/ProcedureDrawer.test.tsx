@@ -1,22 +1,53 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { fireEvent, render, screen, cleanup } from "@testing-library/react";
 import { ProcedureDrawer } from "@/features/clinical/procedures/components/ProcedureDrawer";
 import type { PatientProcedureResponse } from "@/features/clinical/procedures/types/procedure.types";
 
-const { permissions, createMutate, updateMutate, rememberPrice } = vi.hoisted(() => ({
+const {
+  permissions,
+  createMutate,
+  updateMutate,
+  rememberPrice,
+  lookupFilters,
+  fullCatalogEnabled,
+} = vi.hoisted(() => ({
   rememberPrice: vi.fn(),
   permissions: { value: [] as string[] },
   createMutate: { fn: null as null | ((...args: unknown[]) => void) },
   updateMutate: { fn: null as null | ((...args: unknown[]) => void) },
+  lookupFilters: { value: null as unknown },
+  fullCatalogEnabled: { value: null as unknown },
 }));
 
 vi.mock("@/features/masterdata/catalog/hooks/useCatalog", () => ({
-  useAllCatalog: () => ({
-    data: [
-      { id: "s1", name: "Restauração", category: "Dentística", price: 150, active: true },
-      { id: "s2", name: "Avaliação", category: "Clínica", price: null, active: true },
-    ],
-  }),
+  useCatalogLookup: (_companyId: string, filters: unknown) => {
+    lookupFilters.value = filters;
+    return {
+      data: [
+        { id: "s1", name: "Restauração", price: 150, currency: "BRL" },
+        { id: "s2", name: "Avaliação", price: null, currency: "BRL" },
+      ],
+    };
+  },
+  useAllCatalog: (_companyId: string, _filters: unknown, enabled: unknown) => {
+    fullCatalogEnabled.value = enabled;
+    return {
+      data: [
+        {
+          id: "s1",
+          type: "SERVICE",
+          name: "Restauração",
+          description: null,
+          category: "Dentística",
+          price: 150,
+          currency: "BRL",
+          sku: null,
+          unit: null,
+          minStock: 0,
+        },
+      ],
+    };
+  },
   useCreateCatalogItem: () => ({ mutate: vi.fn(), isPending: false }),
   useRememberCatalogPrice: () => ({ mutate: rememberPrice }),
 }));
@@ -88,6 +119,12 @@ describe("ProcedureDrawer", () => {
     permissions.value = [];
     createMutate.fn = null;
     updateMutate.fn = null;
+    lookupFilters.value = null;
+    fullCatalogEnabled.value = null;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("checkbox de lançamento aparece em todos os estados só com finance:manage", () => {
@@ -152,6 +189,19 @@ describe("ProcedureDrawer", () => {
     renderDrawer(null);
     expect(screen.getByText("Procedimentos")).toBeTruthy();
     expect(screen.getByText("Selecione um procedimento")).toBeTruthy();
+  });
+
+  it("select de procedimentos usa o lookup mínimo do catálogo", () => {
+    renderDrawer(null);
+    expect(lookupFilters.value).toEqual({ type: "SERVICE", active: true });
+  });
+
+  it("catálogo completo só é buscado por quem gerencia o catálogo", () => {
+    renderDrawer(null);
+    expect(fullCatalogEnabled.value).toBe(false);
+    permissions.value = ["catalog:manage"];
+    renderDrawer(null);
+    expect(fullCatalogEnabled.value).toBe(true);
   });
 
   it("valor usa máscara BRL e envia centavos", () => {

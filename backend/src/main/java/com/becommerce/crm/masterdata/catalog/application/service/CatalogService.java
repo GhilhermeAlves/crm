@@ -3,6 +3,7 @@ package com.becommerce.crm.masterdata.catalog.application.service;
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.catalog.application.dto.CatalogItemRequest;
 import com.becommerce.crm.masterdata.catalog.application.dto.CatalogItemResponse;
+import com.becommerce.crm.masterdata.catalog.application.dto.CatalogLookupResponse;
 import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
 import com.becommerce.crm.shared.application.dto.PageResponse;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
@@ -16,6 +17,8 @@ import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -47,6 +50,26 @@ public class CatalogService {
             var result = repository.search(companyId, blankToNull(query), type, active, safePage, size);
             return PageResponse.of(result.content().stream().map(CatalogItemResponse::from).toList(),
                     safePage, size, result.totalElements());
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<CatalogLookupResponse> lookup(UUID companyId, String query,
+                                                        CatalogItemType type, Boolean active) {
+        try {
+            TenantContext.setCompanyId(companyId);
+            String normalizedQuery = blankToNull(query);
+            List<CatalogLookupResponse> result = new ArrayList<>();
+            int page = 0;
+            boolean hasMore;
+            do {
+                var batch = repository.search(companyId, normalizedQuery, type, active, page++, MAX_PAGE_SIZE);
+                batch.content().stream().map(CatalogLookupResponse::from).forEach(result::add);
+                hasMore = !batch.content().isEmpty() && result.size() < batch.totalElements();
+            } while (hasMore);
+            return result;
         } finally {
             TenantContext.clear();
         }

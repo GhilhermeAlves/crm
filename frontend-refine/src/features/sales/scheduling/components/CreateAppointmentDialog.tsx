@@ -40,7 +40,7 @@ import { ContactCombobox } from "./ContactCombobox";
 import { ProcedureCombobox } from "./ProcedureCombobox";
 import { RecurrenceDialog, describeRecurrence } from "./RecurrenceDialog";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
-import { useCatalog } from "@/features/masterdata/catalog/hooks/useCatalog";
+import { useCatalogLookup } from "@/features/masterdata/catalog/hooks/useCatalog";
 import { useCreateTag } from "@/features/sales/tag/hooks/useTags";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -266,12 +266,7 @@ export function CreateAppointmentDialog({
 
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
-  const { data: catalogPage } = useCatalog(companyId, {
-    type: "SERVICE",
-    active: true,
-    pageSize: 200,
-  });
-  const procedures = catalogPage?.content ?? [];
+  const { data: procedures = [] } = useCatalogLookup(companyId, { type: "SERVICE", active: true });
   const createTag = useCreateTag(companyId);
 
   const [phone, setPhone] = useState("");
