@@ -2,6 +2,7 @@ package com.becommerce.crm.masterdata.catalog.application.service;
 
 import com.becommerce.crm.analytics.audit.application.service.TenantAuditRecorder;
 import com.becommerce.crm.masterdata.catalog.application.dto.CatalogItemRequest;
+import com.becommerce.crm.masterdata.catalog.application.dto.CatalogLookupResponse;
 import com.becommerce.crm.masterdata.catalog.application.port.output.CatalogItemRepository;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItem;
 import com.becommerce.crm.masterdata.catalog.domain.CatalogItemType;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -45,6 +47,13 @@ class CatalogServiceTest {
     private static CatalogItemRequest request(String sku) {
         return new CatalogItemRequest(CatalogItemType.PRODUCT, "Plano Pro", null, null,
                 new BigDecimal("10.00"), "BRL", sku, null, null);
+    }
+
+    private static List<CatalogItem> serviceItems(int from, int count) {
+        return IntStream.range(from, from + count)
+                .mapToObj(i -> CatalogItem.create(COMPANY, CatalogItemType.SERVICE, "Serviço " + i, null,
+                        null, new BigDecimal("10.00"), "BRL", null, null, 0))
+                .toList();
     }
 
     @Test
@@ -113,5 +122,28 @@ class CatalogServiceTest {
                 .thenReturn(new CatalogItemRepository.PageResult(List.of(), 0));
 
         assertEquals(100, service.list(COMPANY, "  ", null, null, -3, 5000).pageSize());
+    }
+
+    @Test
+    void lookupReturnsItemsFromEveryPage() {
+        List<CatalogItem> firstPage = serviceItems(0, 100);
+        List<CatalogItem> secondPage = serviceItems(100, 100);
+        List<CatalogItem> thirdPage = serviceItems(200, 50);
+        when(repository.search(eq(COMPANY), isNull(), isNull(), isNull(), eq(0), eq(100)))
+                .thenReturn(new CatalogItemRepository.PageResult(firstPage, 250));
+        when(repository.search(eq(COMPANY), isNull(), isNull(), isNull(), eq(1), eq(100)))
+                .thenReturn(new CatalogItemRepository.PageResult(secondPage, 250));
+        when(repository.search(eq(COMPANY), isNull(), isNull(), isNull(), eq(2), eq(100)))
+                .thenReturn(new CatalogItemRepository.PageResult(thirdPage, 250));
+
+        List<CatalogLookupResponse> result = service.lookup(COMPANY, null, null, null);
+
+        assertEquals(250, result.size());
+        assertEquals(firstPage.get(0).getId(), result.get(0).id());
+        assertEquals(secondPage.get(0).getId(), result.get(100).id());
+        assertEquals(thirdPage.get(49).getId(), result.get(249).id());
+        verify(repository).search(eq(COMPANY), isNull(), isNull(), isNull(), eq(0), eq(100));
+        verify(repository).search(eq(COMPANY), isNull(), isNull(), isNull(), eq(1), eq(100));
+        verify(repository).search(eq(COMPANY), isNull(), isNull(), isNull(), eq(2), eq(100));
     }
 }

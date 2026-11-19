@@ -17,6 +17,7 @@ import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,8 +60,16 @@ public class CatalogService {
                                                         CatalogItemType type, Boolean active) {
         try {
             TenantContext.setCompanyId(companyId);
-            return repository.search(companyId, blankToNull(query), type, active, 0, MAX_PAGE_SIZE)
-                    .content().stream().map(CatalogLookupResponse::from).toList();
+            String normalizedQuery = blankToNull(query);
+            List<CatalogLookupResponse> result = new ArrayList<>();
+            int page = 0;
+            boolean hasMore;
+            do {
+                var batch = repository.search(companyId, normalizedQuery, type, active, page++, MAX_PAGE_SIZE);
+                batch.content().stream().map(CatalogLookupResponse::from).forEach(result::add);
+                hasMore = !batch.content().isEmpty() && result.size() < batch.totalElements();
+            } while (hasMore);
+            return result;
         } finally {
             TenantContext.clear();
         }
