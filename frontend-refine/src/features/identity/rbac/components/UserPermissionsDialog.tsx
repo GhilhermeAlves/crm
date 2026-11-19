@@ -32,8 +32,6 @@ type UserPermissionsDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-type PermissionsWithOrigin = UserPermissionsResponse & { rolePermissionNames?: string[] };
-
 function OriginBadge({ origin }: { origin: PermissionOrigin }) {
   if (origin === "allow") {
     return <Badge className="bg-green-100 text-green-700">Adicionada</Badge>;
@@ -70,7 +68,7 @@ export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermis
 
   if (!member) return null;
 
-  const data = permissionsQuery.data as PermissionsWithOrigin | undefined;
+  const data = permissionsQuery.data;
   const fromRoles = new Set(data?.rolePermissionNames ?? []);
   const overridesByName = new Map(
     (data?.overrides ?? []).map((o: { permissionName: string; effect: string }) => [

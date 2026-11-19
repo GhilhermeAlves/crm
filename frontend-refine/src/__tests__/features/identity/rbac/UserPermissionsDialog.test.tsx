@@ -49,6 +49,17 @@ const permissions = [
   permission("3", "patient:read", "Visualizar prontuário do paciente"),
 ];
 
+const userPermissions: UserPermissionsResponse = {
+  userId: "u1",
+  roles: ["Administradora"],
+  effective: ["finance:read", "finance:manage"],
+  overrides: [
+    { permissionName: "finance:manage", effect: "ALLOW" },
+    { permissionName: "patient:read", effect: "DENY" },
+  ],
+  rolePermissionNames: ["finance:read"],
+};
+
 function renderDialog() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -72,16 +83,7 @@ describe("UserPermissionsDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(RbacService.listAllPermissions).mockResolvedValue(permissions);
-    vi.mocked(RbacService.getUserPermissions).mockResolvedValue({
-      userId: "u1",
-      roles: ["Administradora"],
-      effective: ["finance:read", "finance:manage"],
-      overrides: [
-        { permissionName: "finance:manage", effect: "ALLOW" },
-        { permissionName: "patient:read", effect: "DENY" },
-      ],
-      rolePermissionNames: ["finance:read"],
-    } as UserPermissionsResponse & { rolePermissionNames: string[] });
+    vi.mocked(RbacService.getUserPermissions).mockResolvedValue(userPermissions);
     vi.mocked(RbacService.setUserPermissionOverride).mockResolvedValue(undefined);
     vi.mocked(RbacService.removeUserPermissionOverride).mockResolvedValue(undefined);
   });
