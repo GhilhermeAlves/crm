@@ -14,7 +14,8 @@ public record UserPermissionsResponse(
         UUID userId,
         List<String> roles,
         List<String> effective,
-        List<OverrideEntry> overrides
+        List<OverrideEntry> overrides,
+        List<String> rolePermissionNames
 ) {
 
     public record OverrideEntry(String permissionName, String effect) {

@@ -18,13 +18,32 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  groupPermissions,
+  originOf,
+  type PermissionOrigin,
+} from "@/features/identity/rbac/utils/groupPermissions";
 
 type UserPermissionsDialogProps = {
   member: Member | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+function OriginBadge({ origin }: { origin: PermissionOrigin }) {
+  if (origin === "allow") {
+    return <Badge className="bg-green-100 text-green-700">Adicionada</Badge>;
+  }
+  if (origin === "deny") {
+    return <Badge className="bg-red-100 text-red-700">Removida</Badge>;
+  }
+  if (origin === "role") {
+    return <Badge variant="secondary">Pelo perfil</Badge>;
+  }
+  return <Badge variant="outline">Sem acesso</Badge>;
+}
 
 /**
  * Sprint 20 (Fase 2): mostra perfis, permissões efetivas e overrides
@@ -33,6 +52,7 @@ type UserPermissionsDialogProps = {
 export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermissionsDialogProps) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const permissionsQuery = useQuery({
     queryKey: ["user-permissions", member?.userId],
@@ -48,27 +68,34 @@ export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermis
 
   if (!member) return null;
 
-  const data = permissionsQuery.data as UserPermissionsResponse | undefined;
+  const data = permissionsQuery.data;
+  const fromRoles = new Set(data?.rolePermissionNames ?? []);
   const overridesByName = new Map(
     (data?.overrides ?? []).map((o: { permissionName: string; effect: string }) => [
       o.permissionName,
       o.effect,
     ]),
   );
+  const groups = groupPermissions(allPermissionsQuery.data ?? []);
+  const term = search.trim().toLocaleLowerCase("pt-BR");
+  const matchesSearch = (permission: { name: string; description: string }) =>
+    !term ||
+    `${permission.name} ${permission.description}`.toLocaleLowerCase("pt-BR").includes(term);
 
   const applyEffect = async (permissionId: string, effect: UserPermissionEffect | null) => {
     setSaving(permissionId);
     try {
       if (effect === null) {
         await RbacService.removeUserPermissionOverride(member.userId, permissionId);
-        toast.success("Permissão voltou para HERDADA");
+        toast.success("Permissão voltou a ser herdada do perfil");
       } else {
         await RbacService.setUserPermissionOverride(member.userId, permissionId, effect);
-        toast.success(`Override ${effect} aplicado`);
+        toast.success(effect === "ALLOW" ? "Permissão adicionada" : "Permissão removida");
       }
       queryClient.invalidateQueries({ queryKey: ["user-permissions", member.userId] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao salvar override");
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar permissão");
     } finally {
       setSaving(null);
     }
@@ -81,77 +108,101 @@ export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermis
           <DialogTitle>Permissões — {member.name}</DialogTitle>
           <DialogDescription>
             Perfis: {data?.roles.join(", ") || "nenhum"}. Overrides individuais têm precedência
-            sobre os perfis (DENY vence ALLOW).
+            sobre os perfis (Removida vence Adicionada).
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2 text-xs">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">Herdada</Badge>
-            <Badge className="bg-green-100 text-green-700">ALLOW individual</Badge>
-            <Badge className="bg-red-100 text-red-700">DENY individual</Badge>
+            <Badge variant="secondary">Pelo perfil</Badge>
+            <Badge className="bg-green-100 text-green-700">Adicionada</Badge>
+            <Badge className="bg-red-100 text-red-700">Removida</Badge>
           </div>
+
+          <Input
+            aria-label="Buscar permissões"
+            placeholder="Buscar por nome ou descrição"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
 
           {permissionsQuery.isLoading && (
             <p className="py-4 text-center text-muted-foreground">Carregando...</p>
           )}
 
           <ScrollArea className="h-80 rounded-md border p-3">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-muted-foreground">
-                  <th className="pb-2">Permissão</th>
-                  <th className="pb-2">Estado</th>
-                  <th className="pb-2 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(allPermissionsQuery.data ?? []).map((permission) => {
-                  const isEffective = data?.effective.includes(permission.name) ?? false;
-                  const override = overridesByName.get(permission.name);
-                  return (
-                    <tr key={permission.id} className="border-t">
-                      <td className="py-1.5 font-mono text-xs">{permission.name}</td>
-                      <td className="py-1.5">
-                        {override === "ALLOW" ? (
-                          <Badge className="bg-green-100 text-green-700">ALLOW</Badge>
-                        ) : override === "DENY" ? (
-                          <Badge className="bg-red-100 text-red-700">DENY</Badge>
-                        ) : isEffective ? (
-                          <Badge variant="secondary">Herdada ✓</Badge>
-                        ) : (
-                          <Badge variant="outline">Sem acesso</Badge>
-                        )}
-                      </td>
-                      <td className="py-1.5 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="sm"
-                            variant={override === "ALLOW" ? "default" : "outline"}
-                            disabled={saving === permission.id}
-                            onClick={() =>
-                              applyEffect(permission.id, override === "ALLOW" ? null : "ALLOW")
-                            }
-                          >
-                            Permitir
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={override === "DENY" ? "destructive" : "outline"}
-                            disabled={saving === permission.id}
-                            onClick={() =>
-                              applyEffect(permission.id, override === "DENY" ? null : "DENY")
-                            }
-                          >
-                            Negar
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            {Object.entries(groups).map(([module, permissions]) => {
+              const visible = permissions.filter(matchesSearch);
+              if (visible.length === 0) return null;
+
+              return (
+                <details key={module} open className="mb-2 rounded-md border border-border p-2">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    <span>{module}</span>{" "}
+                    <span className="text-muted-foreground">
+                      {visible.length} de {permissions.length}
+                    </span>
+                  </summary>
+                  <table className="mt-2 w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="pb-2">Permissão</th>
+                        <th className="pb-2">Origem</th>
+                        <th className="pb-2 text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visible.map((permission) => {
+                        const override = overridesByName.get(permission.name);
+                        const origin = originOf(permission.name, fromRoles, overridesByName);
+                        return (
+                          <tr key={permission.id} className="border-t">
+                            <td className="py-1.5">
+                              <div className="font-mono text-xs">{permission.name}</div>
+                              {permission.description && (
+                                <div className="text-muted-foreground">
+                                  {permission.description}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-1.5">
+                              <OriginBadge origin={origin} />
+                            </td>
+                            <td className="py-1.5 text-right">
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  size="sm"
+                                  variant={override === "ALLOW" ? "default" : "outline"}
+                                  disabled={saving === permission.id}
+                                  onClick={() =>
+                                    applyEffect(
+                                      permission.id,
+                                      override === "ALLOW" ? null : "ALLOW",
+                                    )
+                                  }
+                                >
+                                  Permitir
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={override === "DENY" ? "destructive" : "outline"}
+                                  disabled={saving === permission.id}
+                                  onClick={() =>
+                                    applyEffect(permission.id, override === "DENY" ? null : "DENY")
+                                  }
+                                >
+                                  Negar
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </details>
+              );
+            })}
           </ScrollArea>
         </div>
       </DialogContent>

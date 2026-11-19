@@ -7,6 +7,8 @@ import com.becommerce.crm.identity.application.port.output.PermissionRepository;
 import com.becommerce.crm.identity.application.port.output.UserPermissionOverrideRepository;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.application.port.output.UserRoleRepository;
+import com.becommerce.crm.identity.domain.Permission;
+import com.becommerce.crm.identity.domain.UserRole;
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.analytics.audit.domain.AuditModule;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
@@ -55,12 +57,20 @@ public class UserPermissionOverrideService implements UserPermissionOverrideUseC
             TenantContext.setCompanyId(companyId);
             requireSameCompany(companyId, userId);
 
-            List<String> roles = userRoleRepository.findByUserIdAndCompanyId(userId, companyId)
+            List<UserRole> userRoles = userRoleRepository.findByUserIdAndCompanyId(userId, companyId);
+            List<String> roles = userRoles
                     .stream()
                     .map(userRole -> roleRepository.findById(userRole.getRoleId()))
                     .filter(java.util.Optional::isPresent)
                     .map(java.util.Optional::get)
                     .map(role -> role.getName())
+                    .toList();
+            List<String> rolePermissionNames = userRoles
+                    .stream()
+                    .flatMap(userRole -> permissionRepository.findByRoleId(userRole.getRoleId()).stream())
+                    .map(Permission::getName)
+                    .distinct()
+                    .sorted()
                     .toList();
             List<String> effective =
                     permissionRepository.findEffectivePermissionNamesByUserIdAndCompanyId(
@@ -70,7 +80,8 @@ public class UserPermissionOverrideService implements UserPermissionOverrideUseC
                             .map(entry -> new UserPermissionsResponse.OverrideEntry(
                                     entry.permissionName(), entry.effect()))
                             .toList();
-            return new UserPermissionsResponse(userId, roles, effective, overrides);
+            return new UserPermissionsResponse(
+                    userId, roles, effective, overrides, rolePermissionNames);
         } finally {
             TenantContext.clear();
         }
