@@ -17,7 +17,7 @@
 - Migration nova: `V142__data_import.sql`; RLS `tenant_isolation_policy` + `GRANT ... TO crm_app`, igual à V141.
 - Toda guarda deixa o CRM_ADMIN passar (permissões `company:update` + `contact:create`).
 - Dados reais da clínica **nunca** entram no repositório; testes usam CSV fictício.
-- Zip até 20 MB; `patients.csv` lido com limite de 10 MB descompactado.
+- Zip até 5 MB (limite global de multipart já existente; nginx sem client_max_body_size usa 1 MB — o zip real tem bem menos); `patients.csv` lido com limite de 10 MB descompactado.
 - Commits locais na branch `feature/importar-pacientes`; sem push/PR sem pedido.
 - Textos de UI em pt-BR.
 
@@ -963,8 +963,8 @@ import java.util.UUID;
 public class PatientImportController {
 
     private static final String OWN_COMPANY = "Você só pode importar dados na sua própria empresa.";
-    private static final long MAX_ZIP_BYTES = 20L * 1024 * 1024;
-    private static final String CAN_IMPORT = "hasAuthority('company:update') and hasAuthority('contact:create')";
+    private static final long MAX_ZIP_BYTES = 5L * 1024 * 1024;
+    private static final String CAN_IMPORT = "hasRole('CRM_ADMIN') or hasRole('SUPER_ADMIN') or (hasAuthority('company:update') and hasAuthority('contact:create'))";
 
     private final PatientImportService service;
 
@@ -999,7 +999,7 @@ public class PatientImportController {
 
     private static byte[] read(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) throw new ImportFileException("Selecione um arquivo .zip.");
-        if (file.getSize() > MAX_ZIP_BYTES) throw new ImportFileException("O arquivo deve ter no máximo 20 MB.");
+        if (file.getSize() > MAX_ZIP_BYTES) throw new ImportFileException("O arquivo deve ter no máximo 5 MB.");
         return file.getBytes();
     }
 }

@@ -33,7 +33,7 @@ Configurações → "Importar base de outro sistema" (admin da empresa; CRM_ADMI
 - `DELETE /imports/{id}` → desfaz: remove pacientes da importação **sem** agenda nem
   procedimentos; retorna removidos e mantidos.
 
-Limites: zip até 20 MB; ignora entradas fora de `*.csv`; proteção contra zip-slip/zip-bomb
+Limites: zip até 5 MB; ignora entradas fora de `*.csv`; proteção contra zip-slip/zip-bomb
 (lê só `patients.csv` em memória com limite de tamanho).
 
 ### Mapeamento `patients.csv` → `CreateContactRequest`
