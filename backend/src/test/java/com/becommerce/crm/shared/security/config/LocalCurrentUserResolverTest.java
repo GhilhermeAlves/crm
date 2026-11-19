@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -292,5 +293,36 @@ class LocalCurrentUserResolverTest {
 
         assertTrue(currentUser.roles().contains("CRM_ADMIN"));
         assertFalse(currentUser.isPlatformAdmin(), "CRM_ADMIN administra só a própria empresa");
+    }
+
+    @Test
+    void usuarioDesativadoEhNegadoMesmoComMembershipAtiva() {
+        UUID companyId = UUID.randomUUID();
+        User user = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ana", "Lima", companyId);
+        user.linkKeycloak(SUB);
+        user.deactivate();
+
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
+        lenient().when(membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId))
+                .thenReturn(true);
+
+        CrmAccessDeniedAuthenticationException ex = assertThrows(
+                CrmAccessDeniedAuthenticationException.class, () -> resolver.resolve(jwt()));
+        assertEquals("Usuário desativado: acesso ao CRM negado.", ex.getMessage());
+    }
+
+    @Test
+    void superAdminDesativadoTambemEhNegado() {
+        UUID companyId = UUID.randomUUID();
+        User user = User.create(new Email(EMAIL), new Password("Kc!Valid1Aa1"), "Ana", "Lima", companyId);
+        user.linkKeycloak(SUB);
+        user.deactivate();
+
+        when(authUseCase.provisionKeycloakUser(eq(SUB), eq(EMAIL), any(), any(), any(), any())).thenReturn(user);
+        lenient().when(userRoleRepository.isPlatformAdmin(user.getId())).thenReturn(true);
+        lenient().when(membershipRepository.existsActiveByUserIdAndCompanyId(user.getId(), companyId))
+                .thenReturn(true);
+
+        assertThrows(CrmAccessDeniedAuthenticationException.class, () -> resolver.resolve(jwt()));
     }
 }
