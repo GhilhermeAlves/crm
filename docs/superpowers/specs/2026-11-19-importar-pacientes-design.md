@@ -27,7 +27,8 @@ Configurações → "Importar base de outro sistema" (admin da empresa; CRM_ADMI
 
 - `POST /imports/patients/preview` (multipart zip) → análise, não grava.
 - `POST /imports/patients` (multipart zip) → reanalisa e cria via `ContactService`
-  (mesmas validações/regras do cadastro manual), marcando `import_id`.
+  (mesmas validações/regras do cadastro manual), registrando o vínculo em `data_import_contacts`.
+  Pacientes importados **não disparam** automações de "contato criado" (evita mensagens em massa).
 - `GET /imports` → histórico da empresa.
 - `DELETE /imports/{id}` → desfaz: remove pacientes da importação **sem** agenda nem
   procedimentos; retorna removidos e mantidos.
@@ -47,7 +48,7 @@ Limites: zip até 20 MB; ignora entradas fora de `*.csv`; proteção contra zip-
 | `cpf` | `cpf` (só dígitos) |
 | `identity_document` / `identity_document_emissor` | `rg` / `rgIssuer` |
 | `gender`, `marital_status` | `gender`, `maritalStatus` (normalizados para os valores do CRM; desconhecido → vazio) |
-| `occupation` | `professionalStatus` |
+| `occupation` | `notes` ("Profissão: …"; `professionalStatus` do CRM é ATIVO/INATIVO) |
 | `zipcode`, `address1`, `address_number`, `address2`, `district`, `city`, `state` | endereço (UF em maiúsculas) |
 | `health_plan`, `health_plan_number` | convênio |
 | `medical_record_id` | `recordNumber` |
@@ -68,7 +69,8 @@ Migration nova:
 - Tabela `data_import` (`id`, `company_id`, `user_id`, `source_file`, `created_at`,
   `total`, `imported`, `skipped`, `failed`, `undone_at`), com RLS por empresa e GRANT iguais
   às demais tabelas multiempresa.
-- Coluna `import_id` (nullable, FK) em contato + índice.
+- Tabela de vínculo `data_import_contacts` (`import_id`, `contact_id`, `company_id`), com RLS e GRANT
+  — evita mexer no domínio `Contact`.
 
 ## Testes
 
