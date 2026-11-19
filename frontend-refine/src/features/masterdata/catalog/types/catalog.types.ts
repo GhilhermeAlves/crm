@@ -56,6 +56,8 @@ export type CatalogFilters = {
 
 export type CatalogPage = PageResponse<CatalogItem>;
 
+export type CatalogLookupItem = Pick<CatalogItem, "id" | "name" | "price" | "currency">;
+
 export const CATALOG_TYPE_LABELS: Record<CatalogItemType, string> = {
   PRODUCT: "Produto",
   SERVICE: "Serviço",

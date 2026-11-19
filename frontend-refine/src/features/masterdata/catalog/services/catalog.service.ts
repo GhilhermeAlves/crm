@@ -4,6 +4,7 @@ import type {
   CatalogFilters,
   CatalogItem,
   CatalogItemRequest,
+  CatalogLookupItem,
   CatalogPage,
 } from "../types/catalog.types";
 
@@ -33,6 +34,20 @@ export const CatalogService = {
       ),
     );
     return [first, ...rest].flatMap((page) => page.content);
+  },
+
+  async lookup(
+    companyId: string,
+    filters: Pick<CatalogFilters, "q" | "type" | "active"> = {},
+  ): Promise<CatalogLookupItem[]> {
+    const response = await api.get<CatalogLookupItem[]>(`${base(companyId)}/lookup`, {
+      params: {
+        q: filters.q || undefined,
+        type: filters.type,
+        active: filters.active,
+      },
+    });
+    return response.data;
   },
 
   async create(companyId: string, data: CatalogItemRequest): Promise<CatalogItem> {

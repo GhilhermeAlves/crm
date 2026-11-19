@@ -4,6 +4,7 @@ import { CatalogService } from "../services/catalog.service";
 import type { CatalogFilters, CatalogItem, CatalogItemRequest } from "../types/catalog.types";
 
 type SetActiveVars = { id: string; active: boolean };
+type LookupFilters = Pick<CatalogFilters, "q" | "type" | "active">;
 
 export function useCatalog(companyId: string | null, filters: CatalogFilters) {
   return useQuery({
@@ -14,15 +15,25 @@ export function useCatalog(companyId: string | null, filters: CatalogFilters) {
   });
 }
 
+/** Lookup mínimo do catálogo para selects de outros domínios. */
+export function useCatalogLookup(companyId: string | null, filters: LookupFilters) {
+  return useQuery({
+    queryKey: ["catalog", companyId, "lookup", filters],
+    queryFn: () => CatalogService.lookup(companyId as string, filters),
+    enabled: !!companyId,
+  });
+}
+
 /** Catálogo inteiro (todas as páginas), para listas de seleção. */
 export function useAllCatalog(
   companyId: string | null,
   filters: Omit<CatalogFilters, "page" | "pageSize">,
+  enabled = true,
 ) {
   return useQuery({
     queryKey: ["catalog", companyId, "all", filters],
     queryFn: () => CatalogService.listAll(companyId as string, filters),
-    enabled: !!companyId,
+    enabled: !!companyId && enabled,
   });
 }
 

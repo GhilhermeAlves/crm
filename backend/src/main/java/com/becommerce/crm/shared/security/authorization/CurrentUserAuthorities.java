@@ -24,4 +24,8 @@ public class CurrentUserAuthorities {
         return authentication.getAuthorities().stream()
                 .anyMatch(granted -> permission.equals(granted.getAuthority()));
     }
+
+    public boolean hasRole(String role) {
+        return has("ROLE_" + role);
+    }
 }
