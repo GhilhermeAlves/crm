@@ -70,7 +70,7 @@ public class MembershipService implements MembershipUseCase {
         assertOwnCompany(companyId, requesterCompanyId);
         MembershipStatus filter = status == null ? MembershipStatus.ACTIVE : status;
         return membershipRepository.findMembersByCompanyIdAndStatus(companyId, filter.name()).stream()
-                .map(this::mapToMemberResponse)
+                .map(projection -> mapToMemberResponse(projection, companyId))
                 .toList();
     }
 
@@ -205,15 +205,18 @@ public class MembershipService implements MembershipUseCase {
         }
     }
 
-    private MemberResponse mapToMemberResponse(MemberProjection projection) {
+    private MemberResponse mapToMemberResponse(MemberProjection projection, UUID companyId) {
+        UUID userId = projection.getUserId();
         return new MemberResponse(
-                projection.getUserId(),
+                userId,
                 projection.getName(),
                 projection.getEmail(),
                 projection.getRole(),
                 projection.getStatus(),
                 projection.getJoinedAt(),
-                projection.getSpecialty());
+                projection.getSpecialty(),
+                userRoleRepository.isPlatformAdmin(userId),
+                !userRoleRepository.findByUserIdAndCompanyId(userId, companyId).isEmpty());
     }
 
     private MemberResponse mapToMemberResponse(Membership membership, UUID userId) {

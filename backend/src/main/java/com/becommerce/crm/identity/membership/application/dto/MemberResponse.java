@@ -13,10 +13,19 @@ public record MemberResponse(
         String role,
         String status,
         LocalDateTime joinedAt,
-        String specialty) {
+        String specialty,
+        /** Dono da plataforma (SUPER_ADMIN): tem todas as permissões em qualquer empresa. */
+        Boolean platformAdmin,
+        /** Tem ao menos um perfil RBAC nesta empresa (null quando não calculado). */
+        Boolean hasProfile) {
+
+    public MemberResponse(UUID userId, String name, String email, String role, String status,
+                          LocalDateTime joinedAt, String specialty) {
+        this(userId, name, email, role, status, joinedAt, specialty, null, null);
+    }
 
     public MemberResponse(UUID userId, String name, String email, String role, String status,
                           LocalDateTime joinedAt) {
-        this(userId, name, email, role, status, joinedAt, null);
+        this(userId, name, email, role, status, joinedAt, null, null, null);
     }
 }

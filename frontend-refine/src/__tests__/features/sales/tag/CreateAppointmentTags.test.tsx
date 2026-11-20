@@ -8,6 +8,7 @@ vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
 
 vi.mock("@/features/masterdata/catalog/hooks/useCatalog", () => ({
   useCatalog: () => ({ data: { content: [] } }),
+  useCatalogLookup: () => ({ data: [] }),
 }));
 
 vi.mock("@/features/sales/tag/hooks/useTags", () => ({

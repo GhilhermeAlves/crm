@@ -42,14 +42,15 @@ public enum CompanyPlan {
         if (this == ESSENTIAL) return modules;
         modules.addAll(EnumSet.of(
                 CompanyModule.FINANCE, CompanyModule.CRM, CompanyModule.REPORTS,
-                CompanyModule.EMAIL_SETTINGS, CompanyModule.INVENTORY, CompanyModule.DATA_MIGRATION));
+                CompanyModule.EMAIL_SETTINGS, CompanyModule.INVENTORY, CompanyModule.DATA_MIGRATION,
+                CompanyModule.CREDIT_SIMULATOR, CompanyModule.CARD_FEES, CompanyModule.PATIENT_BILLING));
         if (this == STARTER) return modules;
         modules.addAll(EnumSet.of(
                 CompanyModule.INBOX, CompanyModule.FOLLOW_UPS, CompanyModule.CAMPAIGNS,
-                CompanyModule.ROLES, CompanyModule.AUDIT));
+                CompanyModule.ROLES, CompanyModule.AUDIT, CompanyModule.WHATSAPP));
         if (this == PROFESSIONAL) return modules;
         modules.addAll(EnumSet.of(
-                CompanyModule.WORKFLOWS, CompanyModule.ASSISTANT, CompanyModule.AI_AGENT));
+                CompanyModule.WORKFLOWS, CompanyModule.ASSISTANT, CompanyModule.AI_AGENT, CompanyModule.TELEGRAM));
         if (this == BUSINESS) return modules;
         return EnumSet.allOf(CompanyModule.class);
     }

@@ -104,7 +104,7 @@ export function MemberRowActions({ companyId, member, activeMembers }: MemberRow
           {canManagePermissions && (
             <DropdownMenuItem onSelect={() => setPermissionsOpen(true)}>
               <Shield />
-              Permissões individuais
+              Exceções de permissão
             </DropdownMenuItem>
           )}
           {canDelete && (

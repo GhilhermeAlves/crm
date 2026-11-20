@@ -19,7 +19,12 @@ export type CompanyModuleName =
   | "DOCUMENTS"
   | "DATA_MIGRATION"
   | "ROLES"
-  | "AUDIT";
+  | "AUDIT"
+  | "CREDIT_SIMULATOR"
+  | "CARD_FEES"
+  | "PATIENT_BILLING"
+  | "WHATSAPP"
+  | "TELEGRAM";
 
 export type CompanySegment = "GENERIC" | "DENTAL" | "OCCUPATIONAL_SAFETY" | "TRICHOLOGY";
 
@@ -69,9 +74,26 @@ export const MODULE_OPTIONS: { value: CompanyModuleName; label: string; descript
     label: "Documentos",
     description: "Modelos de documentos, anamnese e receituários",
   },
-  { value: "DATA_MIGRATION", label: "Migração de dados", description: "Importação de dados" },
+  {
+    value: "DATA_MIGRATION",
+    label: "Migração de dados",
+    description: "Importar pacientes e procedimentos de outro sistema",
+  },
   { value: "ROLES", label: "Perfis e Permissões", description: "Perfis de acesso da equipe" },
   { value: "AUDIT", label: "Auditoria", description: "Histórico de ações no sistema" },
+  {
+    value: "CREDIT_SIMULATOR",
+    label: "Simulador de crédito",
+    description: "Simulação de parcelamento para o paciente",
+  },
+  { value: "CARD_FEES", label: "Taxas do cartão", description: "Taxas por bandeira e parcelas" },
+  {
+    value: "PATIENT_BILLING",
+    label: "Cobrança de pacientes",
+    description: "Boleto e Pix pelo Asaas a partir de lançamentos e orçamentos",
+  },
+  { value: "WHATSAPP", label: "WhatsApp", description: "Conexão do WhatsApp da clínica" },
+  { value: "TELEGRAM", label: "Telegram (Léo)", description: "Assistente Léo pelo Telegram" },
 ];
 
 /**
@@ -91,9 +113,13 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "PATIENTS",
     "AGENDA",
     "FINANCE",
+    "CREDIT_SIMULATOR",
+    "CARD_FEES",
+    "PATIENT_BILLING",
     "TASKS",
     "ASSISTANT",
     "INBOX",
+    "WHATSAPP",
     "FOLLOW_UPS",
     "CAMPAIGNS",
     "WORKFLOWS",
@@ -104,6 +130,7 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "AGENDA_SETTINGS",
     "EMAIL_SETTINGS",
     "AI_AGENT",
+    "TELEGRAM",
     "DOCUMENTS",
     "DATA_MIGRATION",
     "ROLES",
@@ -113,15 +140,20 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "PATIENTS",
     "AGENDA",
     "FINANCE",
+    "CREDIT_SIMULATOR",
+    "CARD_FEES",
+    "PATIENT_BILLING",
     "TASKS",
     "ASSISTANT",
     "INBOX",
+    "WHATSAPP",
     "CATALOG",
     "REPORTS",
     "STORAGE",
     "AGENDA_SETTINGS",
     "EMAIL_SETTINGS",
     "AI_AGENT",
+    "TELEGRAM",
     "DOCUMENTS",
     "DATA_MIGRATION",
     "ROLES",
@@ -131,15 +163,20 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "PATIENTS",
     "AGENDA",
     "FINANCE",
+    "CREDIT_SIMULATOR",
+    "CARD_FEES",
+    "PATIENT_BILLING",
     "TASKS",
     "ASSISTANT",
     "INBOX",
+    "WHATSAPP",
     "CATALOG",
     "REPORTS",
     "STORAGE",
     "AGENDA_SETTINGS",
     "EMAIL_SETTINGS",
     "AI_AGENT",
+    "TELEGRAM",
     "DOCUMENTS",
     "DATA_MIGRATION",
     "ROLES",
@@ -149,6 +186,9 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "PATIENTS",
     "AGENDA",
     "FINANCE",
+    "CREDIT_SIMULATOR",
+    "CARD_FEES",
+    "PATIENT_BILLING",
     "TASKS",
     "CATALOG",
     "REPORTS",
@@ -170,6 +210,7 @@ export const ALL_COMPANY_MODULES: CompanyModuleName[] = MODULE_OPTIONS.map(
 /** Módulos agrupados como no menu lateral (navigation.ts). */
 export const MODULE_GROUPS: { title: string; modules: CompanyModuleName[] }[] = [
   { title: "Principal", modules: ["AGENDA", "PATIENTS", "FINANCE", "TASKS", "ASSISTANT"] },
+  { title: "Financeiro", modules: ["CREDIT_SIMULATOR", "CARD_FEES", "PATIENT_BILLING"] },
   { title: "Comercial", modules: ["CRM"] },
   { title: "Atendimento", modules: ["INBOX", "FOLLOW_UPS", "CAMPAIGNS", "WORKFLOWS"] },
   { title: "Operação", modules: ["CATALOG", "INVENTORY"] },
@@ -179,7 +220,9 @@ export const MODULE_GROUPS: { title: string; modules: CompanyModuleName[] }[] = 
     modules: [
       "AGENDA_SETTINGS",
       "EMAIL_SETTINGS",
+      "WHATSAPP",
       "AI_AGENT",
+      "TELEGRAM",
       "DOCUMENTS",
       "DATA_MIGRATION",
       "ROLES",

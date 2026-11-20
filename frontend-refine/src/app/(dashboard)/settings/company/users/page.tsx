@@ -1,5 +1,6 @@
 "use client";
 
+import { MemberAccessHint } from "@/features/identity/members/components/MemberAccessHint";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
@@ -343,6 +344,7 @@ function MemberTableRow({
       <TableCell>
         <Badge variant="outline">{roleLabel(member.role)}</Badge>
         <SpecialtyHint specialty={member.specialty} />
+        <MemberAccessHint member={member} />
       </TableCell>
       <TableCell>
         <Badge variant={status.variant}>{status.label}</Badge>
@@ -453,6 +455,7 @@ function ActiveMembersTable({
             <>
               <Badge variant="outline">{roleLabel(member.role)}</Badge>
               <SpecialtyHint specialty={member.specialty} />
+              <MemberAccessHint member={member} />
             </>
           ),
         },

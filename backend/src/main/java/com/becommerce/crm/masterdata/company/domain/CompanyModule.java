@@ -46,5 +46,15 @@ public enum CompanyModule {
     /** Perfis e permissões. */
     ROLES,
     /** Auditoria. */
-    AUDIT
+    AUDIT,
+    /** Simulador de crédito (Financeiro). */
+    CREDIT_SIMULATOR,
+    /** Taxas do cartão (Financeiro). */
+    CARD_FEES,
+    /** Cobrança de pacientes pelo Asaas (boleto/Pix). */
+    PATIENT_BILLING,
+    /** Conexão do WhatsApp (Configurações). */
+    WHATSAPP,
+    /** Telegram do assistente Léo (Configurações). */
+    TELEGRAM
 }

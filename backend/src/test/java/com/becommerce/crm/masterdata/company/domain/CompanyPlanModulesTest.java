@@ -34,6 +34,11 @@ class CompanyPlanModulesTest {
         assertTrue(CompanyPlan.PROFESSIONAL.defaultModules().contains(CompanyModule.INBOX));
         assertFalse(CompanyPlan.PROFESSIONAL.defaultModules().contains(CompanyModule.WORKFLOWS));
         assertTrue(CompanyPlan.BUSINESS.defaultModules().contains(CompanyModule.AI_AGENT));
+        assertTrue(CompanyPlan.STARTER.defaultModules().contains(CompanyModule.CREDIT_SIMULATOR));
+        assertTrue(CompanyPlan.STARTER.defaultModules().contains(CompanyModule.PATIENT_BILLING));
+        assertTrue(CompanyPlan.PROFESSIONAL.defaultModules().contains(CompanyModule.WHATSAPP));
+        assertFalse(CompanyPlan.PROFESSIONAL.defaultModules().contains(CompanyModule.TELEGRAM));
+        assertTrue(CompanyPlan.BUSINESS.defaultModules().contains(CompanyModule.TELEGRAM));
         assertEquals(EnumSet.allOf(CompanyModule.class), CompanyPlan.ENTERPRISE.defaultModules());
     }
 
