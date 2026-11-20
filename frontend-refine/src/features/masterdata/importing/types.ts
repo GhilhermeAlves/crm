@@ -17,10 +17,14 @@ export interface PatientImportPreview {
   unsupportedFiles: string[];
   rows: ImportRowResult[];
   importId: string | null;
+  notices: string[];
 }
+
+export type ImportKind = "patients" | "procedures";
 
 export interface DataImportSummary {
   id: string;
+  kind: "PATIENTS" | "PROCEDURES";
   sourceFile: string | null;
   total: number;
   imported: number;
