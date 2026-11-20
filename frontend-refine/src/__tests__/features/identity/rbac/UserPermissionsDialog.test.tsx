@@ -129,8 +129,8 @@ describe("UserPermissionsDialog", () => {
     renderDialog();
     await renderedRows();
 
-    const details = screen.getByText("finance").closest("details") as HTMLDetailsElement;
-    const summary = screen.getByText("finance").closest("summary") as HTMLElement;
+    const details = screen.getByText("Financeiro").closest("details") as HTMLDetailsElement;
+    const summary = screen.getByText("Financeiro").closest("summary") as HTMLElement;
     expect(details.open).toBe(true);
 
     fireEvent.click(summary);

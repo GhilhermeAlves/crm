@@ -1,5 +1,6 @@
 "use client";
 
+import { permissionLabel } from "../utils/permissionLabels";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ export function PermissionList({ permissions }: PermissionListProps) {
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
+        permissionLabel(p).toLowerCase().includes(q) ||
         p.module.toLowerCase().includes(q),
     );
   }, [permissions, search]);
@@ -67,7 +69,7 @@ export function PermissionList({ permissions }: PermissionListProps) {
                 <div key={permission.id} className="flex items-start gap-3 rounded-md border p-3">
                   <PermissionBadge name={permission.name} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{permission.description}</p>
+                    <p className="text-sm font-medium">{permissionLabel(permission)}</p>
                     <p className="text-xs text-muted-foreground">
                       {actionName[permission.action] || permission.action}
                     </p>
