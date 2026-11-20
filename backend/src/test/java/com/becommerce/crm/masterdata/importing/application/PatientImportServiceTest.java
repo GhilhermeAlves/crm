@@ -80,7 +80,7 @@ class PatientImportServiceTest {
 
         assertEquals(importId, r.importId());
         verify(contacts, times(1)).createImportedPatient(eq(company), any(), eq(user));
-        verify(repo).linkContact(company, importId, contactId);
+        verify(repo).linkContact(company, importId, contactId, null);
         verify(repo).finishImport(company, importId, 8, 1, 5, 2);
         assertEquals("IMPORTADO", r.rows().get(0).status());
     }

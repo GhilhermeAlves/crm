@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  permissionLabel,
+  permissionPrefixLabel,
+} from "@/features/identity/rbac/utils/permissionLabels";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -80,7 +84,9 @@ export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermis
   const term = search.trim().toLocaleLowerCase("pt-BR");
   const matchesSearch = (permission: { name: string; description: string }) =>
     !term ||
-    `${permission.name} ${permission.description}`.toLocaleLowerCase("pt-BR").includes(term);
+    `${permission.name} ${permission.description} ${permissionLabel(permission)}`
+      .toLocaleLowerCase("pt-BR")
+      .includes(term);
 
   const applyEffect = async (permissionId: string, effect: UserPermissionEffect | null) => {
     setSaving(permissionId);
@@ -138,7 +144,7 @@ export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermis
               return (
                 <details key={module} open className="mb-2 rounded-md border border-border p-2">
                   <summary className="cursor-pointer text-sm font-medium">
-                    <span>{module}</span>{" "}
+                    <span>{permissionPrefixLabel(module)}</span>{" "}
                     <span className="text-muted-foreground">
                       {visible.length} de {permissions.length}
                     </span>
@@ -159,11 +165,9 @@ export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermis
                           <tr key={permission.id} className="border-t">
                             <td className="py-1.5">
                               <div className="font-mono text-xs">{permission.name}</div>
-                              {permission.description && (
-                                <div className="text-muted-foreground">
-                                  {permission.description}
-                                </div>
-                              )}
+                              <div className="text-muted-foreground">
+                                {permissionLabel(permission)}
+                              </div>
                             </td>
                             <td className="py-1.5">
                               <OriginBadge origin={origin} />

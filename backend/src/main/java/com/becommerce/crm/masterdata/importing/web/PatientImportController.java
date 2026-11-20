@@ -2,6 +2,8 @@ package com.becommerce.crm.masterdata.importing.web;
 
 import com.becommerce.crm.masterdata.importing.application.ImportFileException;
 import com.becommerce.crm.masterdata.importing.application.PatientImportService;
+import com.becommerce.crm.masterdata.importing.application.ProcedureImportService;
+import com.becommerce.crm.masterdata.importing.infrastructure.DataImportRepository;
 import com.becommerce.crm.masterdata.importing.application.dto.*;
 import com.becommerce.crm.shared.security.config.CurrentCompanyId;
 import com.becommerce.crm.shared.security.filter.CurrentUser;
@@ -23,8 +25,15 @@ public class PatientImportController {
     private static final String CAN_IMPORT = "@perm.has('company:update') and @perm.has('contact:create')";
 
     private final PatientImportService service;
+    private final ProcedureImportService procedures;
+    private final DataImportRepository imports;
 
-    public PatientImportController(PatientImportService service) { this.service = service; }
+    public PatientImportController(PatientImportService service, ProcedureImportService procedures,
+                                   DataImportRepository imports) {
+        this.service = service;
+        this.procedures = procedures;
+        this.imports = imports;
+    }
 
     @PostMapping("/patients/preview")
     @PreAuthorize(CAN_IMPORT)
@@ -41,6 +50,21 @@ public class PatientImportController {
         return service.importPatients(companyId, read(file), file.getOriginalFilename(), principal.userId());
     }
 
+    @PostMapping("/procedures/preview")
+    @PreAuthorize(CAN_IMPORT)
+    public PatientImportPreview previewProcedures(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                  @RequestParam("file") MultipartFile file) throws IOException {
+        return procedures.preview(companyId, read(file));
+    }
+
+    @PostMapping("/procedures")
+    @PreAuthorize(CAN_IMPORT)
+    public PatientImportPreview importProcedures(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                 @RequestParam("file") MultipartFile file,
+                                                 @AuthenticationPrincipal CurrentUser principal) throws IOException {
+        return procedures.importProcedures(companyId, read(file), file.getOriginalFilename(), principal.userId());
+    }
+
     @GetMapping
     @PreAuthorize(CAN_IMPORT)
     public List<DataImportSummary> list(@CurrentCompanyId(OWN_COMPANY) UUID companyId) {
@@ -50,7 +74,11 @@ public class PatientImportController {
     @DeleteMapping("/{importId}")
     @PreAuthorize(CAN_IMPORT)
     public UndoResult undo(@CurrentCompanyId(OWN_COMPANY) UUID companyId, @PathVariable UUID importId) {
-        return service.undo(companyId, importId);
+        String kind = PatientImportService.withTenant(companyId, () -> imports.kindOf(companyId, importId));
+        if (kind == null) throw new ImportFileException("Importação não encontrada.");
+        return "PROCEDURES".equals(kind)
+                ? procedures.undo(companyId, importId)
+                : service.undo(companyId, importId);
     }
 
     private static byte[] read(MultipartFile file) throws IOException {

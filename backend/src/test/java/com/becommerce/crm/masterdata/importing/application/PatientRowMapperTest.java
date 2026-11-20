@@ -17,7 +17,7 @@ class PatientRowMapperTest {
     @Test
     void mapsMainFields() {
         MappedPatient p = PatientRowMapper.map(2, row(
-                "name", "  Maria  da Silva Souza ", "email", "MARIA@EX.COM ", "phone", "(34) 99999-0000",
+                "id", "123", "name", "  Maria  da Silva Souza ", "email", "MARIA@EX.COM ", "phone", "(34) 99999-0000",
                 "birthdate", "1986-06-25", "cpf", "123.456.789-09", "gender", "female",
                 "marital_status", "married", "state", "mg", "zipcode", "38400-000",
                 "address1", "Rua A", "address_number", "10", "district", "Centro", "city", "Uberlândia",
@@ -39,6 +39,7 @@ class PatientRowMapperTest {
         assertEquals(Boolean.TRUE, r.hasGuardian());
         assertEquals("34988880000", r.guardianPhone());
         assertFalse(p.discarded());
+        assertEquals("123", p.sourceId());
     }
 
     @Test

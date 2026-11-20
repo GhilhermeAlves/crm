@@ -1,7 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { importService } from "./import.service";
+import type { ImportKind } from "./types";
 
-const PATIENT_KEYS = ["patients", "contacts", "patient", "contacts-search"];
+// Tudo que uma importação (ou o desfazer) pode alterar.
+const AFFECTED_KEYS = [
+  "data-imports",
+  "patients",
+  "contacts",
+  "patient",
+  "contacts-search",
+  "patient-procedures",
+  "catalog",
+];
 
 export function useImports(companyId: string | undefined) {
   return useQuery({
@@ -11,28 +21,25 @@ export function useImports(companyId: string | undefined) {
   });
 }
 
-export function usePreviewImport(companyId: string | undefined) {
-  return useMutation({ mutationFn: (file: File) => importService.preview(companyId!, file) });
+export function usePreviewImport(companyId: string | undefined, kind: ImportKind) {
+  return useMutation({ mutationFn: (file: File) => importService.preview(companyId!, kind, file) });
 }
 
-function useInvalidatePatients() {
+function useInvalidateAffected() {
   const qc = useQueryClient();
-  return () => {
-    qc.invalidateQueries({ queryKey: ["data-imports"] });
-    PATIENT_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
-  };
+  return () => AFFECTED_KEYS.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
 }
 
-export function useImportPatients(companyId: string | undefined) {
-  const invalidate = useInvalidatePatients();
+export function useImportData(companyId: string | undefined, kind: ImportKind) {
+  const invalidate = useInvalidateAffected();
   return useMutation({
-    mutationFn: (file: File) => importService.importPatients(companyId!, file),
+    mutationFn: (file: File) => importService.importData(companyId!, kind, file),
     onSuccess: invalidate,
   });
 }
 
 export function useUndoImport(companyId: string | undefined) {
-  const invalidate = useInvalidatePatients();
+  const invalidate = useInvalidateAffected();
   return useMutation({
     mutationFn: (importId: string) => importService.undo(companyId!, importId),
     onSuccess: invalidate,

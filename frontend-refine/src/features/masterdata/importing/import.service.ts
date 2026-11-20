@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import type { DataImportSummary, PatientImportPreview, UndoResult } from "./types";
+import type { DataImportSummary, ImportKind, PatientImportPreview, UndoResult } from "./types";
 
 const base = (companyId: string) => `/companies/${companyId}/imports`;
 
@@ -13,17 +13,17 @@ function zipForm(file: File): FormData {
 const multipart = { headers: { "Content-Type": null } };
 
 export const importService = {
-  async preview(companyId: string, file: File): Promise<PatientImportPreview> {
+  async preview(companyId: string, kind: ImportKind, file: File): Promise<PatientImportPreview> {
     const r = await api.post<PatientImportPreview>(
-      `${base(companyId)}/patients/preview`,
+      `${base(companyId)}/${kind}/preview`,
       zipForm(file),
       multipart,
     );
     return r.data;
   },
-  async importPatients(companyId: string, file: File): Promise<PatientImportPreview> {
+  async importData(companyId: string, kind: ImportKind, file: File): Promise<PatientImportPreview> {
     const r = await api.post<PatientImportPreview>(
-      `${base(companyId)}/patients`,
+      `${base(companyId)}/${kind}`,
       zipForm(file),
       multipart,
     );
