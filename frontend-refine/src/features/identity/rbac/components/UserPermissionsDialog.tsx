@@ -111,7 +111,22 @@ export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermis
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Permissões — {member.name}</DialogTitle>
+          <DialogTitle>Exceções de permissão — {member.name}</DialogTitle>
+          {member.platformAdmin ? (
+            <p className="text-sm text-muted-foreground">
+              Dono da plataforma: já tem todas as permissões em qualquer empresa. Exceções aqui não
+              mudam o acesso dele.
+            </p>
+          ) : member.hasProfile === false ? (
+            <p className="text-sm text-destructive">
+              Sem perfil nesta empresa. Atribua um perfil em “Alterar perfil” em vez de liberar
+              permissões uma a uma.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              O acesso vem do perfil. Use exceções só para liberar ou bloquear algo pontual.
+            </p>
+          )}
           <DialogDescription>
             Perfis: {data?.roles.join(", ") || "nenhum"}. Overrides individuais têm precedência
             sobre os perfis (Removida vence Adicionada).

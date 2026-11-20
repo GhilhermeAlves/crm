@@ -84,6 +84,19 @@ class MembershipServiceTest {
     }
 
     @Test
+    void shouldFlagPlatformAdminAndMissingProfile() {
+        when(membershipRepository.findMembersByCompanyIdAndStatus(COMPANY_ID, "ACTIVE"))
+                .thenReturn(List.of(memberProjection("AGENT", "ACTIVE")));
+        when(userRoleRepository.isPlatformAdmin(USER_ID)).thenReturn(true);
+        when(userRoleRepository.findByUserIdAndCompanyId(USER_ID, COMPANY_ID)).thenReturn(List.of());
+
+        MemberResponse member = service.listMembers(COMPANY_ID, COMPANY_ID, null).get(0);
+
+        assertEquals(Boolean.TRUE, member.platformAdmin());
+        assertEquals(Boolean.FALSE, member.hasProfile());
+    }
+
+    @Test
     void shouldListRemovedMembersWhenAsked() {
         when(membershipRepository.findMembersByCompanyIdAndStatus(COMPANY_ID, "REMOVED"))
                 .thenReturn(List.of(memberProjection("AGENT", "REMOVED")));

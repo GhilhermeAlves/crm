@@ -14,6 +14,10 @@ export type Member = {
   status: MemberStatus;
   joinedAt: string | null;
   specialty?: string | null;
+  /** Dono da plataforma (SUPER_ADMIN): todas as permissões em qualquer empresa. */
+  platformAdmin?: boolean | null;
+  /** Tem ao menos um perfil nesta empresa. */
+  hasProfile?: boolean | null;
 };
 
 export type InviteMemberRequest = {
