@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Smartphone,
-  Upload,
   Send,
   Mail,
   Users,
@@ -87,8 +86,12 @@ export const NAVIGATION: NavGroup[] = [
         module: "FINANCE",
         children: [
           { label: "Controle financeiro", href: ROUTES.FINANCE_CONTROL },
-          { label: "Simulador de crédito", href: ROUTES.FINANCE_CREDIT_SIMULATOR },
-          { label: "Taxas do cartão", href: ROUTES.FINANCE_CARD_FEES },
+          {
+            label: "Simulador de crédito",
+            href: ROUTES.FINANCE_CREDIT_SIMULATOR,
+            module: "CREDIT_SIMULATOR",
+          },
+          { label: "Taxas do cartão", href: ROUTES.FINANCE_CARD_FEES, module: "CARD_FEES" },
         ],
       },
       {
@@ -256,7 +259,7 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Preferências", href: `${ROUTES.SETTINGS_COMPANY}/preferences` },
           {
             label: "Migração de dados",
-            href: `${ROUTES.SETTINGS_COMPANY}/migration`,
+            href: ROUTES.SETTINGS_IMPORT,
             module: "DATA_MIGRATION",
           },
         ],
@@ -295,7 +298,7 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.SETTINGS_WHATSAPP,
         icon: Smartphone,
         permission: "omnichannel:update",
-        module: "INBOX",
+        module: "WHATSAPP",
       },
       {
         label: "E-mail",
@@ -311,17 +314,11 @@ export const NAVIGATION: NavGroup[] = [
         permission: "company:update",
       },
       {
-        label: "Importar dados",
-        href: ROUTES.SETTINGS_IMPORT,
-        icon: Upload,
-        permission: "company:update",
-      },
-      {
         label: "Telegram (Leo)",
         href: ROUTES.SETTINGS_TELEGRAM,
         icon: Send,
         permission: "company:update",
-        module: "AI_AGENT",
+        module: "TELEGRAM",
       },
       {
         label: "Agente de IA",

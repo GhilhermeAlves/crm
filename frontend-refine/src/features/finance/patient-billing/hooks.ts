@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useActiveCompanyModules } from "@/features/identity/modules/hooks/useCompanyModules";
 import { toast } from "sonner";
 import { toHttpError } from "@/lib/http-error";
 import { PatientBillingService, type ChargeView } from "./service";
@@ -18,7 +19,8 @@ export function usePatientBillingEnabled(companyId: string | null) {
     staleTime: 60_000,
     retry: false,
   });
-  return q.data?.enabled === true;
+  const { isEnabled } = useActiveCompanyModules();
+  return q.data?.enabled === true && isEnabled("PATIENT_BILLING");
 }
 
 /** Cobranças Asaas dos lançamentos exibidos, por id do lançamento. */
