@@ -35,7 +35,7 @@ public class PatientImportService {
 
     public PatientImportPreview preview(UUID companyId, byte[] zip) {
         Analysis a = analyze(companyId, zip);
-        return summarize(a.rows(), a.others(), null);
+        return summarize(a.rows(), a.others(), null, List.of());
     }
 
     public PatientImportPreview importPatients(UUID companyId, byte[] zip, String fileName, UUID userId) {
@@ -51,8 +51,12 @@ public class PatientImportService {
                 continue;
             }
             try {
-                UUID contactId = contacts.createImportedPatient(companyId, a.patients().get(i).request(), userId).id();
-                withTenant(companyId, () -> { repo.linkContact(companyId, importId, contactId); return null; });
+                MappedPatient patient = a.patients().get(i);
+                UUID contactId = contacts.createImportedPatient(companyId, patient.request(), userId).id();
+                withTenant(companyId, () -> {
+                    repo.linkContact(companyId, importId, contactId, patient.sourceId());
+                    return null;
+                });
                 imported++;
                 out.add(new ImportRowResult(row.line(), row.name(), DONE, null, row.warnings()));
             } catch (RuntimeException e) {
@@ -62,7 +66,7 @@ public class PatientImportService {
         }
         final int fi = imported, fs = skipped, ff = failed;
         withTenant(companyId, () -> { repo.finishImport(companyId, importId, out.size(), fi, fs, ff); return null; });
-        return summarize(out, a.others(), importId);
+        return summarize(out, a.others(), importId, List.of());
     }
 
     public List<DataImportSummary> list(UUID companyId) {
@@ -121,14 +125,16 @@ public class PatientImportService {
         return new Analysis(patients, rows, contents.otherFiles());
     }
 
-    private static PatientImportPreview summarize(List<ImportRowResult> rows, List<String> others, UUID importId) {
+    static PatientImportPreview summarize(List<ImportRowResult> rows, List<String> others, UUID importId,
+                                          List<String> notices) {
         Map<String, Long> c = rows.stream().collect(Collectors.groupingBy(ImportRowResult::status, Collectors.counting()));
         int ok = (int) (c.getOrDefault(OK, 0L) + c.getOrDefault(DONE, 0L));
         return new PatientImportPreview(rows.size(), ok, c.getOrDefault(DUP, 0L).intValue(),
-                c.getOrDefault(ERR, 0L).intValue(), c.getOrDefault(IGN, 0L).intValue(), others, rows, importId);
+                c.getOrDefault(ERR, 0L).intValue(), c.getOrDefault(IGN, 0L).intValue(), others, rows, importId,
+                notices);
     }
 
-    private static <T> T withTenant(UUID companyId, java.util.function.Supplier<T> action) {
+    public static <T> T withTenant(UUID companyId, java.util.function.Supplier<T> action) {
         boolean had = TenantContext.hasCompanyId();
         UUID previous = had ? TenantContext.getCompanyId() : null;
         TenantContext.setCompanyId(companyId);

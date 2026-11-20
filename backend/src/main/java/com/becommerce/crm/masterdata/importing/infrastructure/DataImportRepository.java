@@ -43,9 +43,32 @@ public class DataImportRepository {
         return id;
     }
 
-    public void linkContact(UUID companyId, UUID importId, UUID contactId) {
-        jdbc.update("INSERT INTO data_import_contacts (import_id, contact_id, company_id) VALUES (:i, :ct, :c)",
-                Map.of("i", importId, "ct", contactId, "c", companyId));
+    public void linkContact(UUID companyId, UUID importId, UUID contactId, String sourceId) {
+        jdbc.update("""
+                INSERT INTO data_import_contacts (import_id, contact_id, company_id, source_id)
+                VALUES (:i, :ct, :c, :s)""",
+                new MapSqlParameterSource().addValue("i", importId).addValue("ct", contactId)
+                        .addValue("c", companyId).addValue("s", sourceId));
+    }
+
+    /** Código do paciente no sistema de origem → contato, só de importações não desfeitas. */
+    public Map<String, UUID> contactsBySourceId(UUID companyId) {
+        Map<String, UUID> out = new HashMap<>();
+        jdbc.query("""
+                SELECT l.source_id, l.contact_id FROM data_import_contacts l
+                JOIN data_import d ON d.id = l.import_id AND d.undone_at IS NULL
+                JOIN contacts c ON c.id = l.contact_id AND c.deleted_at IS NULL
+                WHERE l.company_id = :c AND l.source_id IS NOT NULL
+                ORDER BY d.created_at""", Map.of("c", companyId),
+                rs -> { out.put(rs.getString("source_id"), rs.getObject("contact_id", UUID.class)); });
+        return out;
+    }
+
+    public String kindOf(UUID companyId, UUID importId) {
+        List<String> kinds = jdbc.queryForList(
+                "SELECT kind FROM data_import WHERE id = :id AND company_id = :c",
+                Map.of("id", importId, "c", companyId), String.class);
+        return kinds.isEmpty() ? null : kinds.get(0);
     }
 
     public void finishImport(UUID companyId, UUID importId, int total, int imported, int skipped, int failed) {
@@ -57,10 +80,10 @@ public class DataImportRepository {
 
     public List<DataImportSummary> list(UUID companyId) {
         return jdbc.query("""
-                SELECT id, source_file, total, imported, skipped, failed, created_at, undone_at
+                SELECT id, kind, source_file, total, imported, skipped, failed, created_at, undone_at
                 FROM data_import WHERE company_id = :c ORDER BY created_at DESC LIMIT 50""",
                 Map.of("c", companyId), (rs, i) -> new DataImportSummary(
-                        rs.getObject("id", UUID.class), rs.getString("source_file"),
+                        rs.getObject("id", UUID.class), rs.getString("kind"), rs.getString("source_file"),
                         rs.getInt("total"), rs.getInt("imported"), rs.getInt("skipped"), rs.getInt("failed"),
                         rs.getTimestamp("created_at").toInstant(),
                         Optional.ofNullable(rs.getTimestamp("undone_at")).map(Timestamp::toInstant).orElse(null)));

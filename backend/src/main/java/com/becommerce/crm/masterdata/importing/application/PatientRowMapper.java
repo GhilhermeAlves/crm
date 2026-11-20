@@ -68,7 +68,7 @@ public final class PatientRowMapper {
                 f.cut(f.digits("contact_cpf"), "contact_cpf", 14),
                 f.cut(f.digits("contact_phone"), "contact_phone", 20));
 
-        return new MappedPatient(line, fullName, req, f.raw("discarded_at") != null, List.copyOf(warnings));
+        return new MappedPatient(line, f.raw("id"), fullName, req, f.raw("discarded_at") != null, List.copyOf(warnings));
     }
 
     private record Fields(Map<String, String> row, List<String> warnings) {

@@ -16,8 +16,25 @@ public record CsvTable(List<String> header, List<Map<String, String>> rows) {
     public record ZipContents(CsvTable patients, List<String> otherFiles) {}
 
     public static ZipContents readZip(byte[] zip) {
-        CsvTable patients = null;
+        Map<String, CsvTable> tables = new HashMap<>();
         List<String> others = new ArrayList<>();
+        scan(zip, Set.of("patients.csv"), tables, others);
+        CsvTable patients = tables.get("patients.csv");
+        if (patients == null) throw new ImportFileException("O zip não contém o arquivo patients.csv.");
+        return new ZipContents(patients, others);
+    }
+
+    /** Lê só os CSVs pedidos (nome base, minúsculo); falta algum → ImportFileException. */
+    public static Map<String, CsvTable> readTables(byte[] zip, String... names) {
+        Map<String, CsvTable> tables = new HashMap<>();
+        scan(zip, Set.of(names), tables, new ArrayList<>());
+        for (String n : names) {
+            if (!tables.containsKey(n)) throw new ImportFileException("O zip não contém o arquivo " + n + ".");
+        }
+        return tables;
+    }
+
+    private static void scan(byte[] zip, Set<String> wanted, Map<String, CsvTable> tables, List<String> others) {
         boolean anyEntry = false;
         try (ZipInputStream in = new ZipInputStream(new ByteArrayInputStream(zip), StandardCharsets.UTF_8)) {
             ZipEntry e;
@@ -26,9 +43,10 @@ public record CsvTable(List<String> header, List<Map<String, String>> rows) {
                 if (e.isDirectory()) continue;
                 String name = e.getName().replace('\\', '/');
                 String base = name.substring(name.lastIndexOf('/') + 1);
-                if (!base.toLowerCase(Locale.ROOT).endsWith(".csv")) continue;
-                if (base.equalsIgnoreCase("patients.csv")) {
-                    patients = parse(new String(readLimited(in), StandardCharsets.UTF_8));
+                String lower = base.toLowerCase(Locale.ROOT);
+                if (!lower.endsWith(".csv")) continue;
+                if (wanted.contains(lower)) {
+                    tables.put(lower, parse(new String(readLimited(in, base), StandardCharsets.UTF_8)));
                 } else {
                     others.add(base);
                 }
@@ -37,19 +55,17 @@ public record CsvTable(List<String> header, List<Map<String, String>> rows) {
             throw new ImportFileException("Arquivo .zip inválido ou corrompido.");
         }
         if (!anyEntry) throw new ImportFileException("Arquivo .zip inválido ou vazio.");
-        if (patients == null) throw new ImportFileException("O zip não contém o arquivo patients.csv.");
         Collections.sort(others);
-        return new ZipContents(patients, others);
     }
 
-    private static byte[] readLimited(ZipInputStream in) throws IOException {
+    private static byte[] readLimited(ZipInputStream in, String name) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buf = new byte[8192];
         long total = 0;
         int n;
         while ((n = in.read(buf)) > 0) {
             total += n;
-            if (total > MAX_ENTRY_BYTES) throw new ImportFileException("patients.csv excede 10 MB.");
+            if (total > MAX_ENTRY_BYTES) throw new ImportFileException(name + " excede 10 MB.");
             out.write(buf, 0, n);
         }
         return out.toByteArray();
