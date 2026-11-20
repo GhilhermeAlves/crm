@@ -9,7 +9,8 @@ import { useTenant, useUpdateTenant } from "@/features/identity/tenants/hooks/us
 import { TenantForm } from "@/features/identity/tenants/components/TenantForm";
 import type { CreateTenantRequest } from "@/features/identity/tenants/types/tenant.types";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
-import { CompanyModulesCard } from "@/features/identity/modules/components/CompanyModulesCard";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function EditTenantPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,7 +57,11 @@ export default function EditTenantPage() {
         onSubmit={handleSubmit}
         isLoading={updateMutation.isPending}
       />
-      {isPlatformAdmin && <CompanyModulesCard companyId={id} />}
+      {isPlatformAdmin && (
+        <Button asChild variant="outline">
+          <Link href={`${ROUTES.COMPANY_MODULES}?company=${id}`}>Gerenciar módulos</Link>
+        </Button>
+      )}
     </div>
   );
 }

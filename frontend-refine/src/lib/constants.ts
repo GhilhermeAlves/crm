@@ -11,6 +11,7 @@ export const ROUTES = {
   ONBOARDING: "/onboarding",
   TENANTS: "/tenants",
   TENANTS_NEW: "/tenants/new",
+  COMPANY_MODULES: "/tenants/modules",
   USERS: "/users",
   USERS_NEW: "/users/new",
   MEMBERS: "/members",
