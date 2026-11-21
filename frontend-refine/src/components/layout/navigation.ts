@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Blocks,
   Smartphone,
   Send,
   Mail,
@@ -48,7 +49,13 @@ export interface NavItem {
   module?: CompanyModuleName;
   /** Visível só para o dono da plataforma (SUPER_ADMIN), nunca para as empresas clientes. */
   crmAdminOnly?: boolean;
-  children?: { label: string; href: string; permission?: string; module?: CompanyModuleName }[];
+  children?: {
+    label: string;
+    href: string;
+    permission?: string;
+    module?: CompanyModuleName;
+    crmAdminOnly?: boolean;
+  }[];
 }
 
 export interface NavGroup {
@@ -271,13 +278,6 @@ export const NAVIGATION: NavGroup[] = [
         permission: "user:read",
       },
       {
-        label: "Perfis e Permissões",
-        href: ROUTES.SETTINGS_ROLES,
-        icon: Shield,
-        permission: "security:page:view",
-        module: "ROLES",
-      },
-      {
         label: "Agenda",
         href: ROUTES.SETTINGS_AGENDA,
         icon: CalendarDays,
@@ -312,6 +312,10 @@ export const NAVIGATION: NavGroup[] = [
         href: ROUTES.SETTINGS_BILLING,
         icon: CreditCard,
         permission: "company:update",
+        children: [
+          { label: "Plano e cobrança", href: ROUTES.SETTINGS_BILLING },
+          { label: "Modelos de taxa", href: ROUTES.CARD_FEE_PRESETS, crmAdminOnly: true },
+        ],
       },
       {
         label: "Telegram (Leo)",
@@ -345,11 +349,13 @@ export const NAVIGATION: NavGroup[] = [
     icon: ServerCog,
     items: [
       { label: "Empresas", href: ROUTES.TENANTS, icon: Building2, crmAdminOnly: true },
+      { label: "Módulos", href: ROUTES.COMPANY_MODULES, icon: Blocks, crmAdminOnly: true },
       {
-        label: "Modelos de taxa",
-        href: ROUTES.CARD_FEE_PRESETS,
-        icon: CreditCard,
-        crmAdminOnly: true,
+        label: "Perfis e Permissões",
+        href: ROUTES.SETTINGS_ROLES,
+        icon: Shield,
+        permission: "security:page:view",
+        module: "ROLES",
       },
       {
         label: "Auditoria",

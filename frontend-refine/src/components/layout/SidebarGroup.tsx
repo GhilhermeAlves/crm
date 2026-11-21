@@ -63,7 +63,9 @@ export function SidebarGroup({ group, collapsed, onNavClick }: SidebarGroupProps
             ...item,
             children: item.children.filter(
               (child) =>
-                hasPermission(child.permission) && (!child.module || isModuleEnabled(child.module)),
+                (!child.crmAdminOnly || isPlatformAdmin) &&
+                hasPermission(child.permission) &&
+                (!child.module || isModuleEnabled(child.module)),
             ),
           }
         : item,
