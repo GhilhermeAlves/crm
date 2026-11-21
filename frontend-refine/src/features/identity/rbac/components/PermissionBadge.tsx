@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { PERMISSION_LABELS } from "../utils/permissionLabels";
 
 interface PermissionBadgeProps {
   name: string;
@@ -26,8 +27,12 @@ export function PermissionBadge({ name, className }: PermissionBadgeProps) {
     actionColors[action] || "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
 
   return (
-    <Badge variant="outline" className={cn("text-[10px] font-medium", colorClass, className)}>
-      {name}
+    <Badge
+      variant="outline"
+      title={name}
+      className={cn("text-[10px] font-medium", colorClass, className)}
+    >
+      {PERMISSION_LABELS[name] ?? name}
     </Badge>
   );
 }

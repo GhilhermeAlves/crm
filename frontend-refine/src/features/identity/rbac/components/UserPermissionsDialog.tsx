@@ -179,8 +179,7 @@ export function UserPermissionsDialog({ member, open, onOpenChange }: UserPermis
                         return (
                           <tr key={permission.id} className="border-t">
                             <td className="py-1.5">
-                              <div className="font-mono text-xs">{permission.name}</div>
-                              <div className="text-muted-foreground">
+                              <div className="font-semibold" title={permission.name}>
                                 {permissionLabel(permission)}
                               </div>
                             </td>
