@@ -1,11 +1,6 @@
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 import { login } from "./fixtures/auth";
-import {
-  deleteRole,
-  listRoles,
-  newRunId,
-  purgeE2ERoles,
-} from "./fixtures/seed";
+import { deleteRole, listRoles, newRunId, purgeE2ERoles } from "./fixtures/seed";
 
 /**
  * Task 4.3 — Perfis de acesso (roles & permissões, seed E2E via API).
@@ -65,9 +60,7 @@ test.describe("Perfis de acesso — seed E2E (Task 4.3)", () => {
 
     await expect(page.getByText("Role criada com sucesso")).toBeVisible();
     // Após criar, a página seleciona o novo perfil (h2 com nome "humanizado").
-    await expect(
-      page.getByRole("heading", { name: roleName.replace(/_/g, " ") }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: roleName.replace(/_/g, " ") })).toBeVisible();
 
     // Captura o id para cleanup (a UI não o expõe).
     const roles = await listRoles(page);
@@ -79,7 +72,7 @@ test.describe("Perfis de acesso — seed E2E (Task 4.3)", () => {
     // A role nova começa sem permissões; atribui dashboard:view no matrix.
     await page
       .locator("label")
-      .filter({ hasText: "dashboard:view" })
+      .filter({ hasText: /^Ver o painel$/ })
       .getByRole("checkbox")
       .click();
     await expect(page.getByText("Permissão atribuída com sucesso")).toBeVisible();
