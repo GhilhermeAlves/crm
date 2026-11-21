@@ -61,6 +61,9 @@ class SecurityAnnotationArchTest {
             "WhatsAppWebhookController#verify",
             // TODO revisar: webhook validado por token e assinatura X-Hub-Signature-256 no método
             "WhatsAppWebhookController#handle",
+            // webhook do Instagram: handshake por verify token e POST validado por X-Hub-Signature-256
+            "InstagramWebhookController#verify",
+            "InstagramWebhookController#handle",
             // TODO revisar: webhook validado por X-Telegram-Bot-Api-Secret-Token no método
             "TelegramWebhookController#receive",
             // TODO revisar: leitura exige login via @AuthenticationPrincipal; nenhuma authority de card fee definida

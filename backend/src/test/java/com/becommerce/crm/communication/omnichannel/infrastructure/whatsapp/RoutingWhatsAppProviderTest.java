@@ -4,6 +4,7 @@ import com.becommerce.crm.communication.omnichannel.application.port.output.Omni
 import com.becommerce.crm.communication.omnichannel.application.port.output.WhatsAppProvider;
 import com.becommerce.crm.communication.omnichannel.domain.Channel;
 import com.becommerce.crm.communication.omnichannel.domain.ChannelProvider;
+import com.becommerce.crm.communication.omnichannel.infrastructure.instagram.MetaInstagramProvider;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,10 +20,11 @@ import static org.mockito.Mockito.when;
 class RoutingWhatsAppProviderTest {
 
     private final MetaCloudWhatsAppProvider meta = mock(MetaCloudWhatsAppProvider.class);
+    private final MetaInstagramProvider instagram = mock(MetaInstagramProvider.class);
     private final WhatsAppProvider evolution = mock(WhatsAppProvider.class);
     private final OmnichannelChannelRepository channels = mock(OmnichannelChannelRepository.class);
     private final RoutingWhatsAppProvider routing =
-            new RoutingWhatsAppProvider(meta, List.of(meta, evolution), channels);
+            new RoutingWhatsAppProvider(meta, instagram, List.of(meta, instagram, evolution), channels);
 
     private WhatsAppProvider.SendRequest requestFor(ChannelProvider provider) {
         UUID channelId = UUID.randomUUID();
@@ -58,5 +60,15 @@ class RoutingWhatsAppProviderTest {
         when(evolution.send(request)).thenReturn(new WhatsAppProvider.SendResult("x"));
 
         assertEquals("x", routing.send(request).externalMessageId());
+    }
+
+    @Test
+    void canalMetaInstagram_vaiParaInstagram() {
+        WhatsAppProvider.SendRequest request = requestFor(ChannelProvider.META_INSTAGRAM);
+        when(instagram.send(request)).thenReturn(new WhatsAppProvider.SendResult("mid.1"));
+
+        assertEquals("mid.1", routing.send(request).externalMessageId());
+        verify(meta, never()).send(request);
+        verify(evolution, never()).send(request);
     }
 }

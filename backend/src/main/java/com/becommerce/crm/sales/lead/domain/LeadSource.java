@@ -6,6 +6,7 @@ package com.becommerce.crm.sales.lead.domain;
  */
 public enum LeadSource {
     WHATSAPP,
+    INSTAGRAM,
     FORM,
     API,
     IMPORT,

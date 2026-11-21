@@ -78,6 +78,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/public/registration/**").permitAll()
                 .requestMatchers("/api/v1/public/forms/**").permitAll()
                 .requestMatchers("/api/v1/omnichannel/whatsapp/webhook").permitAll()
+                .requestMatchers("/api/v1/omnichannel/instagram/webhook").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/telegram/webhook/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/public/billing/asaas/webhook").permitAll()
                 .requestMatchers("/actuator/**", "/docs/**").permitAll()

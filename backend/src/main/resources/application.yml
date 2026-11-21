@@ -155,6 +155,11 @@ omnichannel:
       api-version: ${META_GRAPH_API_VERSION:v25.0}
       verify-token: ${META_WEBHOOK_VERIFY_TOKEN:}   # "Verify token" do webhook no painel da Meta
       app-secret: ${META_APP_SECRET:}               # App Secret: valida o X-Hub-Signature-256 de cada POST
+  instagram:                                # Instagram Direct (canais META_INSTAGRAM; token via META_INSTAGRAM_ACCESS_TOKEN / secrets_ref do canal)
+    base-url: ${META_INSTAGRAM_BASE_URL:https://graph.instagram.com}
+    api-version: ${META_INSTAGRAM_API_VERSION:v25.0}
+    verify-token: ${META_INSTAGRAM_VERIFY_TOKEN:}   # "Verify token" do webhook do Instagram no painel da Meta
+    app-secret: ${META_INSTAGRAM_APP_SECRET:}       # App Secret do app do Instagram: valida o X-Hub-Signature-256
 
 springdoc:
   api-docs:
