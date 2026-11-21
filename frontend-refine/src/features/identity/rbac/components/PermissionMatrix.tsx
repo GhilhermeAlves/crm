@@ -72,8 +72,7 @@ export function PermissionMatrix({
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium">{permission.name}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">
+                    <p className="truncate text-xs font-semibold" title={permission.name}>
                       {permissionLabel(permission)}
                     </p>
                   </div>

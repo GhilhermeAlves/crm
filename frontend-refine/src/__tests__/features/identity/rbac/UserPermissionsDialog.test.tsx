@@ -73,10 +73,12 @@ function renderDialog() {
 }
 
 async function renderedRows() {
-  await screen.findByText("finance:read");
-  return ["finance:read", "finance:manage", "patient:read"].map(
-    (name) => screen.getByText(name).closest("tr") as HTMLElement,
-  );
+  await screen.findByText("Ver o financeiro");
+  return [
+    "Ver o financeiro",
+    "Gerenciar lançamentos financeiros",
+    "Visualizar prontuário do paciente",
+  ].map((name) => screen.getByText(name).closest("tr") as HTMLElement);
 }
 
 describe("UserPermissionsDialog", () => {
@@ -107,8 +109,8 @@ describe("UserPermissionsDialog", () => {
       target: { value: "finance:manage" },
     });
 
-    expect(screen.getByText("finance:manage")).toBeTruthy();
-    expect(screen.queryByText("finance:read")).toBeNull();
+    expect(screen.getByText("Gerenciar lançamentos financeiros")).toBeTruthy();
+    expect(screen.queryByText("Ver o financeiro")).toBeNull();
     expect(screen.getByText("1 de 2")).toBeTruthy();
   });
 
@@ -120,8 +122,8 @@ describe("UserPermissionsDialog", () => {
       target: { value: "prontuário" },
     });
 
-    expect(screen.getByText("patient:read")).toBeTruthy();
-    expect(screen.queryByText("finance:read")).toBeNull();
+    expect(screen.getByText("Visualizar prontuário do paciente")).toBeTruthy();
+    expect(screen.queryByText("Ver o financeiro")).toBeNull();
     expect(screen.getByText("1 de 1")).toBeTruthy();
   });
 

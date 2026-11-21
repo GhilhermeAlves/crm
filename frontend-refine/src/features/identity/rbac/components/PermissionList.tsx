@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
-import { PermissionBadge } from "./PermissionBadge";
 import type { Permission } from "../types/rbac.types";
 import { roleModuleName, actionName } from "../schemas/role.schema";
 
@@ -67,7 +66,6 @@ export function PermissionList({ permissions }: PermissionListProps) {
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
               {modulePermissions.map((permission) => (
                 <div key={permission.id} className="flex items-start gap-3 rounded-md border p-3">
-                  <PermissionBadge name={permission.name} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{permissionLabel(permission)}</p>
                     <p className="text-xs text-muted-foreground">
