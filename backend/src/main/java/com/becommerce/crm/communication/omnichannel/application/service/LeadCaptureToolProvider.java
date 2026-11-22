@@ -15,8 +15,10 @@ import com.becommerce.crm.masterdata.contact.application.port.in.ContactUseCase;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.masterdata.contact.domain.Contact;
 import com.becommerce.crm.sales.lead.application.dto.CreateLeadRequest;
+import com.becommerce.crm.sales.lead.application.dto.UpdateLeadRequest;
 import com.becommerce.crm.sales.lead.application.port.in.LeadUseCase;
 import com.becommerce.crm.sales.lead.application.port.out.LeadRepository;
+import com.becommerce.crm.sales.lead.domain.Lead;
 import com.becommerce.crm.sales.lead.domain.LeadSource;
 import com.becommerce.crm.sales.lead.domain.LeadStatus;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
@@ -43,6 +45,7 @@ public class LeadCaptureToolProvider implements AgentToolProvider {
     private static final Logger log = LoggerFactory.getLogger(LeadCaptureToolProvider.class);
 
     static final String REGISTER_LEAD = "registrar_lead";
+    static final String UPDATE_LEAD = "atualizar_lead";
     static final int MAX_NOTES = 1000;
 
     private static final String FAILURE =
@@ -92,18 +95,34 @@ public class LeadCaptureToolProvider implements AgentToolProvider {
         props.put("observacoes", Map.of("type", "string", "description", "Outros detalhes relevantes"));
         Map<String, Object> schema = Map.of("type", "object", "properties", props,
                 "required", List.of("nome", "interesse"));
-        return List.of(new AiProvider.ToolDefinition(REGISTER_LEAD,
-                "Registra a pessoa como lead no CRM com o resumo do que ela quer.", schema));
+        Map<String, Object> updateProps = new LinkedHashMap<>();
+        updateProps.put("situacao", Map.of("type", "string", "enum", List.of("qualificado", "perdido"),
+                "description", "qualificado: pedido completo; perdido: a pessoa desistiu ou não quer comprar"));
+        updateProps.put("resumo", Map.of("type", "string",
+                "description", "Resumo do pedido (qualificado) ou motivo da desistência (perdido)"));
+        Map<String, Object> updateSchema = Map.of("type", "object", "properties", updateProps,
+                "required", List.of("situacao", "resumo"));
+        return List.of(
+                new AiProvider.ToolDefinition(REGISTER_LEAD,
+                        "Registra a pessoa como lead no CRM com o resumo do que ela quer.", schema),
+                new AiProvider.ToolDefinition(UPDATE_LEAD,
+                        "Atualiza o lead desta conversa: qualificado quando o pedido está completo, "
+                                + "perdido quando a pessoa desiste.", updateSchema));
     }
 
     @Override
     public Optional<String> guidance(AgentConfig agent, AgentToolSession session) {
-        return Optional.of("Quando souber o nome da pessoa e o que ela quer, use registrar_lead uma vez com o "
-                + "resumo do pedido. Não comente com a pessoa que registrou.");
+        return Optional.of("Quando souber o nome da pessoa, use registrar_lead uma vez. Quando o pedido estiver "
+                + "completo (produto, quantidade, data e entrega/retirada), use atualizar_lead com situacao "
+                + "qualificado e o resumo. Se a pessoa disser que não quer comprar, use atualizar_lead com situacao "
+                + "perdido e o motivo. Não comente com a pessoa que registrou ou atualizou.");
     }
 
     @Override
     public String execute(AgentToolSession session, AiProvider.ToolCall call) {
+        if (UPDATE_LEAD.equals(call.name())) {
+            return updateLead(session, call);
+        }
         UUID previousTenant = TenantContext.hasCompanyId() ? TenantContext.getCompanyId() : null;
         try {
             Map<String, Object> args = call.arguments() == null ? Map.of() : call.arguments();
@@ -143,6 +162,54 @@ public class LeadCaptureToolProvider implements AgentToolProvider {
                 TenantContext.clear();
             }
         }
+    }
+
+    private String updateLead(AgentToolSession session, AiProvider.ToolCall call) {
+        UUID previousTenant = TenantContext.hasCompanyId() ? TenantContext.getCompanyId() : null;
+        try {
+            Map<String, Object> args = call.arguments() == null ? Map.of() : call.arguments();
+            String situation = text(args.get("situacao"));
+            LeadStatus status = "qualificado".equalsIgnoreCase(situation) ? LeadStatus.QUALIFIED
+                    : "perdido".equalsIgnoreCase(situation) ? LeadStatus.LOST : null;
+            if (status == null) {
+                return "Situação inválida: use qualificado ou perdido.";
+            }
+            UUID contactId = conversationRepository.findById(session.conversationId())
+                    .map(Conversation::getContactId).orElse(null);
+            if (contactId == null) {
+                return "Ainda não há lead nesta conversa: use registrar_lead antes.";
+            }
+            TenantContext.setCompanyId(session.companyId());
+            Lead lead = leadRepository.findByContactIdAndCompanyId(contactId, session.companyId()).orElse(null);
+            if (lead == null) {
+                return "Ainda não há lead nesta conversa: use registrar_lead antes.";
+            }
+            if (lead.getStatus() == LeadStatus.CONVERTED || lead.getStatus() == status) {
+                return "Lead já está atualizado. Continue o atendimento normalmente.";
+            }
+            String label = status == LeadStatus.QUALIFIED ? "Pedido completo" : "Desistência";
+            String notes = appendNote(lead.getNotes(), label + ": " + text(args.get("resumo")));
+            leadUseCase.update(session.companyId(), lead.getId(),
+                    new UpdateLeadRequest(status, null, null, null, null, notes));
+            log.info("[AGENT][LEAD] lead {} -> {} (company={})", lead.getId(), status, session.companyId());
+            return "Lead atualizado. Continue o atendimento normalmente.";
+        } catch (RuntimeException e) {
+            log.warn("[AGENT][LEAD] falha ao atualizar lead (company={}): {}", session.companyId(), e.getMessage());
+            return "Não foi possível atualizar agora. Continue o atendimento normalmente.";
+        } finally {
+            if (previousTenant != null) {
+                TenantContext.setCompanyId(previousTenant);
+            } else {
+                TenantContext.clear();
+            }
+        }
+    }
+
+    /** Acrescenta uma linha às notas do lead, mantendo as mais recentes dentro do limite. */
+    static String appendNote(String current, String line) {
+        String merged = current == null || current.isBlank() ? line : current + "
+" + line;
+        return merged.length() <= MAX_NOTES ? merged : merged.substring(merged.length() - MAX_NOTES);
     }
 
     private UUID resolveContact(AgentToolSession session, Conversation conversation, String name, String phone,

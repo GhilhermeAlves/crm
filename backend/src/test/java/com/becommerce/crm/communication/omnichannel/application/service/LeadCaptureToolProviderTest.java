@@ -14,9 +14,12 @@ import com.becommerce.crm.masterdata.contact.application.dto.response.ContactRes
 import com.becommerce.crm.masterdata.contact.application.port.in.ContactUseCase;
 import com.becommerce.crm.masterdata.contact.application.port.out.ContactRepository;
 import com.becommerce.crm.sales.lead.application.dto.CreateLeadRequest;
+import com.becommerce.crm.sales.lead.application.dto.UpdateLeadRequest;
 import com.becommerce.crm.sales.lead.application.port.in.LeadUseCase;
 import com.becommerce.crm.sales.lead.application.port.out.LeadRepository;
+import com.becommerce.crm.sales.lead.domain.Lead;
 import com.becommerce.crm.sales.lead.domain.LeadSource;
+import com.becommerce.crm.sales.lead.domain.LeadStatus;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -174,5 +177,66 @@ class LeadCaptureToolProviderTest {
 
         assertEquals(LeadCaptureToolProvider.MAX_NOTES, notes.length());
         assertTrue(notes.startsWith("Pedido via Instagram"));
+    }
+
+    private Lead lead(LeadStatus status, String notes) {
+        Lead lead = mock(Lead.class);
+        when(lead.getId()).thenReturn(UUID.randomUUID());
+        when(lead.getStatus()).thenReturn(status);
+        when(lead.getNotes()).thenReturn(notes);
+        return lead;
+    }
+
+    @Test
+    void atualizarLeadQualificadoAcrescentaResumoNasNotas() {
+        UUID contact = UUID.randomUUID();
+        Conversation c = conversation(ChannelType.INSTAGRAM, contact, "1784000111");
+        Lead lead = lead(LeadStatus.NEW, "Pedido via Instagram (agente)");
+        when(leadRepository.findByContactIdAndCompanyId(contact, companyId)).thenReturn(Optional.of(lead));
+
+        String result = provider.execute(session(c), new AiProvider.ToolCall("c2", LeadCaptureToolProvider.UPDATE_LEAD,
+                Map.of("situacao", "qualificado", "resumo", "2 Kit Presépio, retirada dia 20")));
+
+        assertEquals("Lead atualizado. Continue o atendimento normalmente.", result);
+        ArgumentCaptor<UpdateLeadRequest> update = ArgumentCaptor.forClass(UpdateLeadRequest.class);
+        verify(leadUseCase).update(eq(companyId), eq(lead.getId()), update.capture());
+        assertEquals(LeadStatus.QUALIFIED, update.getValue().status());
+        assertEquals("Pedido via Instagram (agente)
+Pedido completo: 2 Kit Presépio, retirada dia 20",
+                update.getValue().notes());
+    }
+
+    @Test
+    void atualizarLeadPerdidoESemLeadPedeRegistro() {
+        UUID contact = UUID.randomUUID();
+        Conversation c = conversation(ChannelType.WHATSAPP, contact, "5534999998888");
+        when(leadRepository.findByContactIdAndCompanyId(contact, companyId)).thenReturn(Optional.empty());
+
+        String result = provider.execute(session(c), new AiProvider.ToolCall("c3", LeadCaptureToolProvider.UPDATE_LEAD,
+                Map.of("situacao", "perdido", "resumo", "achou caro")));
+
+        assertTrue(result.contains("registrar_lead"));
+        verify(leadUseCase, never()).update(any(), any(), any());
+    }
+
+    @Test
+    void atualizarLeadIgnoraConvertidoESituacaoInvalida() {
+        UUID contact = UUID.randomUUID();
+        Conversation c = conversation(ChannelType.INSTAGRAM, contact, "1784000111");
+        Lead lead = lead(LeadStatus.CONVERTED, null);
+        when(leadRepository.findByContactIdAndCompanyId(contact, companyId)).thenReturn(Optional.of(lead));
+
+        assertTrue(provider.execute(session(c), new AiProvider.ToolCall("c4", LeadCaptureToolProvider.UPDATE_LEAD,
+                Map.of("situacao", "perdido", "resumo", "x"))).contains("já está atualizado"));
+        assertTrue(provider.execute(session(c), new AiProvider.ToolCall("c5", LeadCaptureToolProvider.UPDATE_LEAD,
+                Map.of("situacao", "talvez", "resumo", "x"))).startsWith("Situação inválida"));
+        verify(leadUseCase, never()).update(any(), any(), any());
+    }
+
+    @Test
+    void appendNoteMantemOsMaisRecentesNoLimite() {
+        String merged = LeadCaptureToolProvider.appendNote("a".repeat(990), "Desistência: caro");
+        assertEquals(LeadCaptureToolProvider.MAX_NOTES, merged.length());
+        assertTrue(merged.endsWith("Desistência: caro"));
     }
 }

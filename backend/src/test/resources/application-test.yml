@@ -23,3 +23,7 @@ spring:
     port: 5672
     username: guest
     password: guest
+
+# Job de follow-up de leads do agente: desligado nos testes.
+lead-followup:
+  enabled: false

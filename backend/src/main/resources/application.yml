@@ -194,3 +194,14 @@ logging:
     org.hibernate.SQL: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Follow-up dos leads captados pelo agente (WhatsApp/Instagram). Horas sem resposta do cliente.
+lead-followup:
+  enabled: ${LEAD_FOLLOWUP_ENABLED:true}
+  instagram:
+    first-hours: 20     # Instagram só aceita mensagem da empresa até 24h depois da última do cliente
+    lost-hours: 48
+  whatsapp:
+    first-hours: 24
+    second-hours: 72
+    lost-hours: 168

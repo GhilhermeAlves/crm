@@ -14,6 +14,8 @@ public interface LeadJpaRepository extends JpaRepository<LeadJpaEntity, UUID> {
 
     boolean existsByContactIdAndCompanyId(UUID contactId, UUID companyId);
 
+    java.util.Optional<LeadJpaEntity> findByContactIdAndCompanyId(UUID contactId, UUID companyId);
+
     @Query("SELECT l FROM LeadJpaEntity l LEFT JOIN ContactJpaEntity c ON c.id = l.contactId " +
             "WHERE l.companyId = :companyId " +
             "AND (:status IS NULL OR :status = '' OR l.status = :status) " +
