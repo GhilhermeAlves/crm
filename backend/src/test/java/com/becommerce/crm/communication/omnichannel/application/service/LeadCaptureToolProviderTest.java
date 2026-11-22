@@ -201,8 +201,7 @@ class LeadCaptureToolProviderTest {
         ArgumentCaptor<UpdateLeadRequest> update = ArgumentCaptor.forClass(UpdateLeadRequest.class);
         verify(leadUseCase).update(eq(companyId), eq(lead.getId()), update.capture());
         assertEquals(LeadStatus.QUALIFIED, update.getValue().status());
-        assertEquals("Pedido via Instagram (agente)
-Pedido completo: 2 Kit Presépio, retirada dia 20",
+        assertEquals("Pedido via Instagram (agente)\nPedido completo: 2 Kit Presépio, retirada dia 20",
                 update.getValue().notes());
     }
 

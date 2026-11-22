@@ -207,8 +207,7 @@ public class LeadCaptureToolProvider implements AgentToolProvider {
 
     /** Acrescenta uma linha às notas do lead, mantendo as mais recentes dentro do limite. */
     static String appendNote(String current, String line) {
-        String merged = current == null || current.isBlank() ? line : current + "
-" + line;
+        String merged = current == null || current.isBlank() ? line : current + "\n" + line;
         return merged.length() <= MAX_NOTES ? merged : merged.substring(merged.length() - MAX_NOTES);
     }
 
