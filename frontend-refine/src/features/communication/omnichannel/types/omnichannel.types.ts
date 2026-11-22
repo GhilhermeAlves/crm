@@ -3,9 +3,9 @@ import type { PageResponse } from "@/types/page";
 // Domínio omnichannel (Sprint 16) — tipos espelhando as respostas da API.
 // ---------------------------------------------------------------------------
 
-export type ChannelType = "WHATSAPP";
+export type ChannelType = "WHATSAPP" | "INSTAGRAM";
 
-export type ChannelProvider = "EVOLUTION" | "META_CLOUD" | "FAKE";
+export type ChannelProvider = "EVOLUTION" | "META_CLOUD" | "META_INSTAGRAM" | "FAKE";
 
 export type ChannelStatus = "ACTIVE" | "INACTIVE" | "ERROR";
 
@@ -100,6 +100,7 @@ export const CHANNEL_STATUS_LABELS: Record<ChannelStatus, string> = {
 export const CHANNEL_PROVIDER_LABELS: Record<ChannelProvider, string> = {
   EVOLUTION: "Evolution API",
   META_CLOUD: "WhatsApp Oficial (Meta Cloud API)",
+  META_INSTAGRAM: "Instagram Direct (Meta)",
   FAKE: "Fake (desenvolvimento)",
 };
 
