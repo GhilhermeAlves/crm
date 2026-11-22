@@ -192,6 +192,7 @@ class LeadCaptureToolProviderTest {
         UUID contact = UUID.randomUUID();
         Conversation c = conversation(ChannelType.INSTAGRAM, contact, "1784000111");
         Lead lead = lead(LeadStatus.NEW, "Pedido via Instagram (agente)");
+        UUID leadId = lead.getId();
         when(leadRepository.findByContactIdAndCompanyId(contact, companyId)).thenReturn(Optional.of(lead));
 
         String result = provider.execute(session(c), new AiProvider.ToolCall("c2", LeadCaptureToolProvider.UPDATE_LEAD,
@@ -199,7 +200,7 @@ class LeadCaptureToolProviderTest {
 
         assertEquals("Lead atualizado. Continue o atendimento normalmente.", result);
         ArgumentCaptor<UpdateLeadRequest> update = ArgumentCaptor.forClass(UpdateLeadRequest.class);
-        verify(leadUseCase).update(eq(companyId), eq(lead.getId()), update.capture());
+        verify(leadUseCase).update(eq(companyId), eq(leadId), update.capture());
         assertEquals(LeadStatus.QUALIFIED, update.getValue().status());
         assertEquals("Pedido via Instagram (agente)\nPedido completo: 2 Kit Presépio, retirada dia 20",
                 update.getValue().notes());
