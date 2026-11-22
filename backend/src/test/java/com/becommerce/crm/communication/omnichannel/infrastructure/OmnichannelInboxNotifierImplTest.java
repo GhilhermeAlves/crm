@@ -1,5 +1,6 @@
 package com.becommerce.crm.communication.omnichannel.infrastructure;
 
+import com.becommerce.crm.communication.omnichannel.domain.ChannelType;
 import com.becommerce.crm.communication.notification.application.dto.CreateNotificationRequest;
 import com.becommerce.crm.communication.notification.application.port.input.NotificationUseCase;
 import com.becommerce.crm.communication.notification.domain.NotificationType;
@@ -44,7 +45,7 @@ class OmnichannelInboxNotifierImplTest {
         User pendente = user(UserStatus.PENDING);
         when(userRepository.findAllByCompanyId(companyId)).thenReturn(List.of(ativo, inativo, pendente));
 
-        notifier.notifyNewInbound(companyId, conversationId, "5534991546422", "Preciso  marcar\numa consulta");
+        notifier.notifyNewInbound(companyId, conversationId, ChannelType.WHATSAPP, "5534991546422", "Preciso  marcar\numa consulta");
 
         ArgumentCaptor<CreateNotificationRequest> captor = ArgumentCaptor.forClass(CreateNotificationRequest.class);
         verify(notificationUseCase, times(1)).create(eq(companyId), captor.capture(), any());
