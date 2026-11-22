@@ -2,13 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ConversationList } from "@/features/communication/omnichannel/components/ConversationList";
 import { ChatThread } from "@/features/communication/omnichannel/components/ChatThread";
@@ -27,7 +21,7 @@ import type {
   Conversation,
 } from "@/features/communication/omnichannel/types/omnichannel.types";
 
-type ChannelFilter = "ALL" | ChannelType;
+const CHANNEL_LABEL: Record<ChannelType, string> = { WHATSAPP: "WhatsApp", INSTAGRAM: "Instagram" };
 
 const digits = (phone: string) => phone.replace(/\D/g, "");
 
@@ -35,7 +29,7 @@ export default function InboxPage() {
   const { data: page } = useConversations();
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [toIgnore, setToIgnore] = useState<Conversation | null>(null);
-  const [channelFilter, setChannelFilter] = useState<ChannelFilter>("ALL");
+  const [channelFilter, setChannelFilter] = useState<ChannelType>("WHATSAPP");
   const { data: channels = [] } = useChannels();
 
   const conversation = useConversation(selected?.id ?? null);
@@ -52,7 +46,7 @@ export default function InboxPage() {
     return (page?.content ?? []).filter(
       (c) =>
         !ignoredPhones.has(digits(c.externalPhone)) &&
-        (channelFilter === "ALL" || typeByChannel.get(c.channelId) === channelFilter),
+        typeByChannel.get(c.channelId) === channelFilter,
     );
   }, [page, ignored, channels, channelFilter]);
 
@@ -80,27 +74,22 @@ export default function InboxPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Inbox — {CHANNEL_LABEL[channelFilter]}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Atenda conversas de WhatsApp e Instagram em um só lugar.
+            Conversas do {CHANNEL_LABEL[channelFilter]}.
           </p>
         </div>
-        <Select
-          value={channelFilter}
-          onValueChange={(v) => {
-            setChannelFilter(v as ChannelFilter);
+        <Button
+          variant="outline"
+          onClick={() => {
+            setChannelFilter(channelFilter === "WHATSAPP" ? "INSTAGRAM" : "WHATSAPP");
             setSelected(null);
           }}
         >
-          <SelectTrigger className="w-44" aria-label="Canal">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Todos os canais</SelectItem>
-            <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
-            <SelectItem value="INSTAGRAM">Instagram</SelectItem>
-          </SelectContent>
-        </Select>
+          Ir para {CHANNEL_LABEL[channelFilter === "WHATSAPP" ? "INSTAGRAM" : "WHATSAPP"]}
+        </Button>
       </div>
 
       <Card className="h-[calc(100dvh-220px)] overflow-hidden">
