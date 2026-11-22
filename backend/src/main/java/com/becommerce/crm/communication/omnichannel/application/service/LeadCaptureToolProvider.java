@@ -112,7 +112,9 @@ public class LeadCaptureToolProvider implements AgentToolProvider {
 
     @Override
     public Optional<String> guidance(AgentConfig agent, AgentToolSession session) {
-        return Optional.of("Quando souber o nome da pessoa, use registrar_lead uma vez. Quando o pedido estiver "
+        return Optional.of("Se ainda não souber o nome da pessoa, pergunte de forma natural já na primeira ou segunda "
+                + "resposta (ex.: \"Com quem eu falo?\"), junto com a ajuda que ela pediu. "
+                + "Quando souber o nome e o que ela procura, use registrar_lead uma vez. Quando o pedido estiver "
                 + "completo (produto, quantidade, data e entrega/retirada), use atualizar_lead com situacao "
                 + "qualificado e o resumo. Se a pessoa disser que não quer comprar, use atualizar_lead com situacao "
                 + "perdido e o motivo. Não comente com a pessoa que registrou ou atualizou.");
