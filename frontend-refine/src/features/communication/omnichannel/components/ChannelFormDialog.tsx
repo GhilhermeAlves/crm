@@ -32,8 +32,8 @@ import {
 
 const channelSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(120),
-  type: z.literal("WHATSAPP"),
-  provider: z.enum(["EVOLUTION", "META_CLOUD", "FAKE"] as const),
+  type: z.enum(["WHATSAPP", "INSTAGRAM"] as const),
+  provider: z.enum(["EVOLUTION", "META_CLOUD", "META_INSTAGRAM", "FAKE"] as const),
   externalId: z.string().max(120).optional(),
   config: z.string().max(4000).optional(),
   secretsRef: z.string().max(200).optional(),
@@ -55,7 +55,7 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
     resolver: zodResolver(channelSchema),
     defaultValues: {
       name: channel?.name ?? "",
-      type: "WHATSAPP",
+      type: channel?.type ?? "WHATSAPP",
       provider: channel?.provider ?? "EVOLUTION",
       externalId: channel?.externalId ?? "",
       config: channel?.config ?? "",
@@ -71,7 +71,15 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
           <DialogTitle>{channel ? "Editar canal" : "Novo canal"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit((values) =>
+              onSubmit({
+                ...values,
+                type: values.provider === "META_INSTAGRAM" ? "INSTAGRAM" : "WHATSAPP",
+              }),
+            )}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -120,14 +128,18 @@ export function ChannelFormDialog({ open, onOpenChange, channel, isLoading, onSu
                   <FormLabel>
                     {form.watch("provider") === "META_CLOUD"
                       ? "Phone number ID (Meta)"
-                      : "Instância Evolution"}
+                      : form.watch("provider") === "META_INSTAGRAM"
+                        ? "ID da conta profissional do Instagram"
+                        : "Instância Evolution"}
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder={
                         form.watch("provider") === "META_CLOUD"
                           ? "ID do número no WhatsApp Manager (ex.: 1234567890)"
-                          : "Nome da instância (ex.: comercial)"
+                          : form.watch("provider") === "META_INSTAGRAM"
+                            ? "ID ao lado da conta no painel da Meta (ex.: 17841400000000000)"
+                            : "Nome da instância (ex.: comercial)"
                       }
                       {...field}
                     />
