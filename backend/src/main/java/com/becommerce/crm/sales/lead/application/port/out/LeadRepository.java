@@ -22,6 +22,8 @@ public interface LeadRepository {
 
     boolean existsByContactIdAndCompanyId(UUID contactId, UUID companyId);
 
+    Optional<Lead> findByContactIdAndCompanyId(UUID contactId, UUID companyId);
+
     PageResult findByCompanyWithFilters(UUID companyId, String status, String source, String classification,
                                         String search, int page, int pageSize, String sortBy, String sortDirection);
 

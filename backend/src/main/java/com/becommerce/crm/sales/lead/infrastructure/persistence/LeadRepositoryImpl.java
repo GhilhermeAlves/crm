@@ -44,6 +44,11 @@ public class LeadRepositoryImpl implements LeadRepository {
     }
 
     @Override
+    public Optional<Lead> findByContactIdAndCompanyId(UUID contactId, UUID companyId) {
+        return jpaRepository.findByContactIdAndCompanyId(contactId, companyId).map(LeadRepositoryImpl::toDomain);
+    }
+
+    @Override
     public PageResult findByCompanyWithFilters(UUID companyId, String status, String source, String classification,
                                                String search, int page, int pageSize, String sortBy,
                                                String sortDirection) {
