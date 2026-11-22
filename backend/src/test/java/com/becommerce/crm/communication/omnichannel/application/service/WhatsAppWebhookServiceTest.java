@@ -88,7 +88,7 @@ class WhatsAppWebhookServiceTest {
         verify(conversationRepository, times(2)).save(any(Conversation.class));
         verify(eventPublisher).publish(any(WorkflowTriggerEvent.class));
         verify(whatsAppEventPublisher).publishInbound(any());
-        verify(inboxNotifier).notifyNewInbound(eq(companyId), any(), eq("+5511999998888"), eq("Oi"));
+        verify(inboxNotifier).notifyNewInbound(eq(companyId), any(), any(), eq("+5511999998888"), eq("Oi"));
     }
 
     private void stubChannelAndMessage(WhatsAppWebhookParser.InboundMessageData data) {
@@ -204,7 +204,7 @@ class WhatsAppWebhookServiceTest {
         service.handleEvent(inboundPayload());
 
         verify(messageRepository).saveByExternalId(any(Message.class));
-        verify(inboxNotifier, never()).notifyNewInbound(any(), any(), any(), any());
+        verify(inboxNotifier, never()).notifyNewInbound(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -224,7 +224,7 @@ class WhatsAppWebhookServiceTest {
         when(conversationRepository.save(any(Conversation.class))).thenAnswer(inv -> inv.getArgument(0));
         when(messageRepository.saveByExternalId(any(Message.class))).thenAnswer(inv -> inv.getArgument(0));
         doThrow(new IllegalStateException("db down")).when(inboxNotifier)
-                .notifyNewInbound(any(), any(), any(), any());
+                .notifyNewInbound(any(), any(), any(), any(), any());
 
         service.handleEvent(inboundPayload());
 

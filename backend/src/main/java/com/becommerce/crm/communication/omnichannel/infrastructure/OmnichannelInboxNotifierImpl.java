@@ -4,6 +4,7 @@ import com.becommerce.crm.communication.notification.application.dto.CreateNotif
 import com.becommerce.crm.communication.notification.application.port.input.NotificationUseCase;
 import com.becommerce.crm.communication.notification.domain.NotificationType;
 import com.becommerce.crm.communication.omnichannel.application.port.output.OmnichannelInboxNotifier;
+import com.becommerce.crm.communication.omnichannel.domain.ChannelType;
 import com.becommerce.crm.identity.application.port.output.UserRepository;
 import com.becommerce.crm.identity.domain.User;
 import org.slf4j.Logger;
@@ -36,9 +37,11 @@ public class OmnichannelInboxNotifierImpl implements OmnichannelInboxNotifier {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void notifyNewInbound(UUID companyId, UUID conversationId, String fromPhone, String body) {
-        String title = "Nova mensagem no WhatsApp";
-        String text = formatPhone(fromPhone) + ": " + preview(body);
+    public void notifyNewInbound(UUID companyId, UUID conversationId, ChannelType channelType, String fromPhone,
+                                 String body) {
+        boolean instagram = channelType == ChannelType.INSTAGRAM;
+        String title = instagram ? "Nova mensagem no Instagram" : "Nova mensagem no WhatsApp";
+        String text = (instagram ? "Instagram" : formatPhone(fromPhone)) + ": " + preview(body);
         String metadata = "{\"conversationId\":\"" + conversationId + "\"}";
         for (User user : userRepository.findAllByCompanyId(companyId)) {
             if (user.getStatus() == null || !user.getStatus().isActive()) {

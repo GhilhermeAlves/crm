@@ -187,7 +187,8 @@ public class WhatsAppWebhookService implements WhatsAppWebhookUseCase {
         // evita uma notificação por mensagem enquanto ninguém abre a Inbox.
         if (conversation.getUnreadCount() == 1) {
             try {
-                inboxNotifier.notifyNewInbound(companyId, conversation.getId(), data.from(), data.body());
+                inboxNotifier.notifyNewInbound(companyId, conversation.getId(), channel.getType(),
+                        data.from(), data.body());
             } catch (RuntimeException e) {
                 log.warn("Falha ao notificar mensagem nova (company={}, conversation={}): {}",
                         companyId, conversation.getId(), e.getMessage());
