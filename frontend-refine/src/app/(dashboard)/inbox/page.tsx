@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ConversationList } from "@/features/communication/omnichannel/components/ConversationList";
 import { ChatThread } from "@/features/communication/omnichannel/components/ChatThread";
 import {
   useAddIgnoredContact,
+  useChannels,
   useConversation,
   useConversations,
   useIgnoredContacts,
@@ -14,7 +16,12 @@ import {
   useOmnichannelPermissions,
   useSendMessage,
 } from "@/features/communication/omnichannel/hooks/useOmnichannel";
-import type { Conversation } from "@/features/communication/omnichannel/types/omnichannel.types";
+import type {
+  ChannelType,
+  Conversation,
+} from "@/features/communication/omnichannel/types/omnichannel.types";
+
+const CHANNEL_LABEL: Record<ChannelType, string> = { WHATSAPP: "WhatsApp", INSTAGRAM: "Instagram" };
 
 const digits = (phone: string) => phone.replace(/\D/g, "");
 
@@ -22,6 +29,8 @@ export default function InboxPage() {
   const { data: page } = useConversations();
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [toIgnore, setToIgnore] = useState<Conversation | null>(null);
+  const [channelFilter, setChannelFilter] = useState<ChannelType>("WHATSAPP");
+  const { data: channels = [] } = useChannels();
 
   const conversation = useConversation(selected?.id ?? null);
   const sendMessage = useSendMessage();
@@ -33,8 +42,13 @@ export default function InboxPage() {
   // Contatos ignorados saem da lista; voltam ao remover em Canais → Contatos ignorados.
   const conversations = useMemo(() => {
     const ignoredPhones = new Set(ignored.map((c) => digits(c.phone)));
-    return (page?.content ?? []).filter((c) => !ignoredPhones.has(digits(c.externalPhone)));
-  }, [page, ignored]);
+    const typeByChannel = new Map(channels.map((ch) => [ch.id, ch.type]));
+    return (page?.content ?? []).filter(
+      (c) =>
+        !ignoredPhones.has(digits(c.externalPhone)) &&
+        typeByChannel.get(c.channelId) === channelFilter,
+    );
+  }, [page, ignored, channels, channelFilter]);
 
   const handleSelect = (c: Conversation) => {
     setSelected(c);
@@ -58,11 +72,24 @@ export default function InboxPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
-        <p className="text-sm text-muted-foreground">
-          Atenda conversas de WhatsApp em um só lugar.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Inbox — {CHANNEL_LABEL[channelFilter]}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Conversas do {CHANNEL_LABEL[channelFilter]}.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setChannelFilter(channelFilter === "WHATSAPP" ? "INSTAGRAM" : "WHATSAPP");
+            setSelected(null);
+          }}
+        >
+          Ir para {CHANNEL_LABEL[channelFilter === "WHATSAPP" ? "INSTAGRAM" : "WHATSAPP"]}
+        </Button>
       </div>
 
       <Card className="h-[calc(100dvh-220px)] overflow-hidden">
