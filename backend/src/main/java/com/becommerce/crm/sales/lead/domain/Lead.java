@@ -82,19 +82,11 @@ public class Lead {
         if (status == LeadStatus.CONVERTED) {
             throw new IllegalStateException("Lead já convertido em oportunidade não pode ter o status alterado.");
         }
-        Integer allowedNew = allowedTransition(status);
-        if (allowedNew != null && !allowedNew.equals(newStatus)) {
+        // Perdido só reabre como novo; manter o mesmo status (ex.: editar notas) é sempre permitido.
+        if (status == LeadStatus.LOST && newStatus != LeadStatus.LOST && newStatus != LeadStatus.NEW) {
             throw new IllegalStateException("Transição de status inválida de " + status + " para " + newStatus + ".");
         }
         this.status = newStatus;
-    }
-
-    private static Integer allowedTransition(LeadStatus current) {
-        // Restrições mínimas de escopo Sprint 10: apenas LOST só reabre para NEW.
-        switch (current) {
-            case LOST: return LeadStatus.NEW.ordinal();
-            default: return null; // demais transições livres nesta sprint
-        }
     }
 
     public void updateScore(int score) {
