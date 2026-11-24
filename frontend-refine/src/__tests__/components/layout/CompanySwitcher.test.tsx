@@ -9,6 +9,12 @@ import type { CompanyOption } from "@/features/identity/auth/types/auth.types";
 const { pathnameState } = vi.hoisted(() => ({
   pathnameState: { value: "/dashboard" },
 }));
+const assignMock = vi.fn();
+Object.defineProperty(window, "location", {
+  configurable: true,
+  value: { ...window.location, assign: assignMock },
+});
+
 const { meMock, myCompaniesMock, switchCompanyMock } = vi.hoisted(() => ({
   meMock: vi.fn(),
   myCompaniesMock: vi.fn(),
@@ -86,6 +92,7 @@ describe("CompanySwitcher (Sprint 8.4)", () => {
     meMock.mockReset();
     myCompaniesMock.mockReset();
     switchCompanyMock.mockReset();
+    assignMock.mockReset();
     switchCompanyMock.mockResolvedValue({
       companyId: COMPANY_B,
       name: "Empresa B",
@@ -128,6 +135,28 @@ describe("CompanySwitcher (Sprint 8.4)", () => {
       const activeOption = await optionButton(COMPANY_B);
       expect(activeOption.disabled).toBe(true);
     });
+  });
+
+  it("reloads the current page after switching so no data from the previous company survives", async () => {
+    pathnameState.value = "/automation/ai";
+    meMock.mockResolvedValue(mockUser(COMPANY_A));
+    myCompaniesMock.mockResolvedValue(companies(COMPANY_A));
+
+    renderSwitcher();
+    fireEvent.click(await optionButton(COMPANY_B));
+
+    await waitFor(() => expect(assignMock).toHaveBeenCalledWith("/automation/ai"));
+  });
+
+  it("goes back to the list when switching on a detail page", async () => {
+    pathnameState.value = "/leads/0b6f7c3e-1d2a-4c5b-9e8f-123456789abc";
+    meMock.mockResolvedValue(mockUser(COMPANY_A));
+    myCompaniesMock.mockResolvedValue(companies(COMPANY_A));
+
+    renderSwitcher();
+    fireEvent.click(await optionButton(COMPANY_B));
+
+    await waitFor(() => expect(assignMock).toHaveBeenCalledWith("/leads"));
   });
 
   it("renders nothing for a company-less user (onboarding)", async () => {
