@@ -5,7 +5,7 @@ import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { useMyCompanies, useSwitchCompany } from "@/features/identity/auth/hooks/useAuthMutations";
 import { DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { pathAfterCompanySwitch } from "@/lib/company-switch";
 
 /**
@@ -19,14 +19,15 @@ export function CompanySwitcher() {
   const { data: companies = [], isLoading } = useMyCompanies(!!user?.companyId);
   const switchCompany = useSwitchCompany();
   const pathname = usePathname();
-  const router = useRouter();
 
   const handleSwitch = (companyId: string) =>
     switchCompany.mutate(companyId, {
       onSuccess: () => {
-        // Registro da empresa anterior não existe na nova: volta para a lista.
-        const target = pathAfterCompanySwitch(pathname);
-        if (target) router.push(target);
+        // Recarrega a página inteira: o cache e os formulários abertos da
+        // empresa anterior não podem sobreviver à troca (senão um "Salvar"
+        // grava dados de uma empresa na outra). Registro da empresa anterior
+        // não existe na nova: nas páginas de detalhe, volta para a lista.
+        window.location.assign(pathAfterCompanySwitch(pathname) ?? pathname ?? "/");
       },
     });
 
