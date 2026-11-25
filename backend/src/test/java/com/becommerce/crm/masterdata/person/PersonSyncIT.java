@@ -199,8 +199,8 @@ class PersonSyncIT {
             assertEquals("f", one(c, "SELECT app.is_valid_cnpj('12ABC34501DE36')::text").substring(0, 1));
             assertEquals("t", one(c, "SELECT app.is_valid_cpf('52998224725')::text").substring(0, 1));
             assertEquals("5571", one(c, "SELECT count(*)::text FROM cities"));
-            assertEquals("PF", one(c, "SELECT min(context) FROM person_field_contexts fc JOIN person_fields f "
-                    + "ON f.id = fc.field_id WHERE f.field_key = 'PERSON_NAME'"));
+            assertEquals("1", one(c, "SELECT count(*)::text FROM person_field_contexts fc JOIN person_fields f "
+                    + "ON f.id = fc.field_id WHERE f.field_key = 'PERSON_NAME' AND fc.context = 'PF'"));
         }
     }
 
