@@ -141,7 +141,9 @@ class SecurityAnnotationArchTest {
 
     private static final Set<String> CONTROLLERS_COM_MISTURA_DE_MODULOS = Set.of(
             // company:update configura o SMTP e membership:manage consulta se há e-mail antes de convidar
-            "CompanyMailController"
+            "CompanyMailController",
+            // bairro novo pode nascer no cadastro da pessoa (person:update) ou na tela de localidades
+            "LocationController"
     );
 
     @ArchTest

@@ -96,6 +96,9 @@ server:
     context-path: /api/v1
 
 app:
+  people:
+    # Chave AES-256 (Base64, 32 bytes) dos dados bancários do cadastro de pessoas.
+    data-key: ${PEOPLE_DATA_KEY:}
   cors:
     # Default restrito: sem CORS_ALLOWED_ORIGINS, nenhuma origem cross-origin é
     # aceita (o perfil dev libera o frontend local em application-dev.yml e o

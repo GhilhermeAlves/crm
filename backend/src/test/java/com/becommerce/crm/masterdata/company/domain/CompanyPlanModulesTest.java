@@ -15,7 +15,9 @@ class CompanyPlanModulesTest {
         assertEquals(EnumSet.of(
                 CompanyModule.PATIENTS, CompanyModule.AGENDA, CompanyModule.AGENDA_SETTINGS,
                 CompanyModule.CATALOG, CompanyModule.DOCUMENTS,
-                CompanyModule.TASKS, CompanyModule.STORAGE), CompanyPlan.ESSENTIAL.defaultModules());
+                CompanyModule.TASKS, CompanyModule.STORAGE,
+                CompanyModule.PEOPLE, CompanyModule.SUPPLIERS, CompanyModule.EMPLOYEES, CompanyModule.LOCATIONS),
+                CompanyPlan.ESSENTIAL.defaultModules());
     }
 
     @Test

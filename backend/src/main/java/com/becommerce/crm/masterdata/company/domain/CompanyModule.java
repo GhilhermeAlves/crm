@@ -56,5 +56,13 @@ public enum CompanyModule {
     /** Conexão do WhatsApp (Configurações). */
     WHATSAPP,
     /** Telegram do assistente Léo (Configurações). */
-    TELEGRAM
+    TELEGRAM,
+    /** Pessoas: cadastro central e Clientes (paciente no segmento saúde). */
+    PEOPLE,
+    /** Pessoas → Fornecedores. */
+    SUPPLIERS,
+    /** Pessoas → Funcionários (profissionais, cargos e especialidades). */
+    EMPLOYEES,
+    /** Pessoas → Localidades (país, estado, cidade e bairro). */
+    LOCATIONS
 }

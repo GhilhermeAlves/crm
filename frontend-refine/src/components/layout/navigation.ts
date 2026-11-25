@@ -33,7 +33,6 @@ import {
   LineChart,
   Settings,
   ServerCog,
-  HeartPulse,
   CreditCard,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
@@ -79,11 +78,19 @@ export const NAVIGATION: NavGroup[] = [
         module: "AGENDA",
       },
       {
-        label: "Pacientes",
-        href: ROUTES.PATIENTS,
-        icon: HeartPulse,
-        permission: "contact:read",
-        module: "PATIENTS",
+        label: "Pessoas",
+        href: ROUTES.PEOPLE,
+        icon: UsersRound,
+        permission: "person:read",
+        module: "PEOPLE",
+        children: [
+          { label: "Pessoas", href: ROUTES.PEOPLE },
+          { label: "Clientes", href: ROUTES.PEOPLE_CUSTOMERS },
+          { label: "Fornecedores", href: ROUTES.PEOPLE_SUPPLIERS, module: "SUPPLIERS" },
+          { label: "Funcionários", href: ROUTES.PEOPLE_EMPLOYEES, module: "EMPLOYEES" },
+          { label: "Localidades", href: ROUTES.PEOPLE_LOCATIONS, module: "LOCATIONS" },
+          { label: "Duplicados", href: ROUTES.PEOPLE_DUPLICATES, permission: "person:merge" },
+        ],
       },
       {
         label: "Financeiro",
@@ -264,6 +271,11 @@ export const NAVIGATION: NavGroup[] = [
         children: [
           { label: "Dados da empresa", href: ROUTES.SETTINGS_COMPANY },
           { label: "Preferências", href: `${ROUTES.SETTINGS_COMPANY}/preferences` },
+          {
+            label: "Cadastro de pessoas",
+            href: ROUTES.SETTINGS_PERSON_FIELDS,
+            module: "PEOPLE",
+          },
           {
             label: "Migração de dados",
             href: ROUTES.SETTINGS_IMPORT,

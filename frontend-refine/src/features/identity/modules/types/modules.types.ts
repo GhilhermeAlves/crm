@@ -24,7 +24,11 @@ export type CompanyModuleName =
   | "CARD_FEES"
   | "PATIENT_BILLING"
   | "WHATSAPP"
-  | "TELEGRAM";
+  | "TELEGRAM"
+  | "PEOPLE"
+  | "SUPPLIERS"
+  | "EMPLOYEES"
+  | "LOCATIONS";
 
 export type CompanySegment = "GENERIC" | "DENTAL" | "OCCUPATIONAL_SAFETY" | "TRICHOLOGY";
 
@@ -94,6 +98,26 @@ export const MODULE_OPTIONS: { value: CompanyModuleName; label: string; descript
   },
   { value: "WHATSAPP", label: "WhatsApp", description: "Conexão do WhatsApp da clínica" },
   { value: "TELEGRAM", label: "Telegram (Léo)", description: "Assistente Léo pelo Telegram" },
+  {
+    value: "PEOPLE",
+    label: "Pessoas e Clientes",
+    description: "Cadastro central de pessoas e Clientes (na área da saúde o cliente é o paciente)",
+  },
+  {
+    value: "SUPPLIERS",
+    label: "Fornecedores",
+    description: "Laboratórios, dentais e prestadores (contas a pagar e estoque)",
+  },
+  {
+    value: "EMPLOYEES",
+    label: "Funcionários",
+    description: "Funcionários, cargos e profissionais com especialidade e conselho",
+  },
+  {
+    value: "LOCATIONS",
+    label: "Localidades",
+    description: "Países, estados, cidades e bairros usados nos endereços e no CEP",
+  },
 ];
 
 /**
@@ -109,6 +133,10 @@ export const SEGMENT_OPTIONS: { value: CompanySegment; label: string }[] = [
 
 export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]> = {
   GENERIC: [
+    "PEOPLE",
+    "SUPPLIERS",
+    "EMPLOYEES",
+    "LOCATIONS",
     "CRM",
     "PATIENTS",
     "AGENDA",
@@ -137,6 +165,10 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "AUDIT",
   ],
   DENTAL: [
+    "PEOPLE",
+    "SUPPLIERS",
+    "EMPLOYEES",
+    "LOCATIONS",
     "PATIENTS",
     "AGENDA",
     "FINANCE",
@@ -160,6 +192,10 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "AUDIT",
   ],
   TRICHOLOGY: [
+    "PEOPLE",
+    "SUPPLIERS",
+    "EMPLOYEES",
+    "LOCATIONS",
     "PATIENTS",
     "AGENDA",
     "FINANCE",
@@ -183,6 +219,10 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "AUDIT",
   ],
   OCCUPATIONAL_SAFETY: [
+    "PEOPLE",
+    "SUPPLIERS",
+    "EMPLOYEES",
+    "LOCATIONS",
     "PATIENTS",
     "AGENDA",
     "FINANCE",
@@ -210,6 +250,7 @@ export const ALL_COMPANY_MODULES: CompanyModuleName[] = MODULE_OPTIONS.map(
 /** Módulos agrupados como no menu lateral (navigation.ts). */
 export const MODULE_GROUPS: { title: string; modules: CompanyModuleName[] }[] = [
   { title: "Principal", modules: ["AGENDA", "PATIENTS", "FINANCE", "TASKS", "ASSISTANT"] },
+  { title: "Pessoas", modules: ["PEOPLE", "SUPPLIERS", "EMPLOYEES", "LOCATIONS"] },
   { title: "Financeiro", modules: ["CREDIT_SIMULATOR", "CARD_FEES", "PATIENT_BILLING"] },
   { title: "Comercial", modules: ["CRM"] },
   { title: "Atendimento", modules: ["INBOX", "FOLLOW_UPS", "CAMPAIGNS", "WORKFLOWS"] },
@@ -256,6 +297,10 @@ export const PERMISSION_RESOURCE_MODULES: Record<string, CompanyModuleName> = {
   workflow: "WORKFLOWS",
   catalog: "CATALOG",
   inventory: "INVENTORY",
+  person: "PEOPLE",
+  supplier: "SUPPLIERS",
+  employee: "EMPLOYEES",
+  location: "LOCATIONS",
   report: "REPORTS",
   analytics: "REPORTS",
 };
