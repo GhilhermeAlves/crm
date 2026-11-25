@@ -38,7 +38,8 @@ public enum CompanyPlan {
         EnumSet<CompanyModule> modules = EnumSet.of(
                 CompanyModule.PATIENTS, CompanyModule.AGENDA, CompanyModule.AGENDA_SETTINGS,
                 CompanyModule.CATALOG, CompanyModule.DOCUMENTS,
-                CompanyModule.TASKS, CompanyModule.STORAGE);
+                CompanyModule.TASKS, CompanyModule.STORAGE,
+                CompanyModule.PEOPLE, CompanyModule.SUPPLIERS, CompanyModule.EMPLOYEES, CompanyModule.LOCATIONS);
         if (this == ESSENTIAL) return modules;
         modules.addAll(EnumSet.of(
                 CompanyModule.FINANCE, CompanyModule.CRM, CompanyModule.REPORTS,

@@ -102,6 +102,12 @@ public class CompanyModulesService {
                 .orElse(true);
     }
 
+    /** Segmento da empresa (GENERIC quando não há registro). */
+    @Transactional(readOnly = true)
+    public CompanySegment segmentOf(UUID companyId) {
+        return repository.findByCompanyId(companyId).map(CompanyModules::segment).orElse(CompanySegment.GENERIC);
+    }
+
     private static CompanyModulesResponse toResponse(UUID companyId, CompanyModules modules) {
         return new CompanyModulesResponse(companyId.toString(), modules.segment().name(),
                 modules.orderedModules().stream().map(Enum::name).toList());

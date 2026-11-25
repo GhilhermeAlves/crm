@@ -63,7 +63,13 @@ public class ModuleGuardInterceptor implements HandlerInterceptor {
             Map.entry("analytics", CompanyModule.REPORTS),
             Map.entry("reports", CompanyModule.REPORTS),
             Map.entry("report-exports", CompanyModule.REPORTS),
-            Map.entry("report-suggestions", CompanyModule.REPORTS));
+            Map.entry("report-suggestions", CompanyModule.REPORTS),
+            Map.entry("persons", CompanyModule.PEOPLE),
+            Map.entry("persons-duplicates", CompanyModule.PEOPLE),
+            Map.entry("customers", CompanyModule.PEOPLE),
+            Map.entry("suppliers", CompanyModule.SUPPLIERS),
+            Map.entry("employees", CompanyModule.EMPLOYEES),
+            Map.entry("job-titles", CompanyModule.EMPLOYEES));
 
     private final CompanyModulesService modulesService;
 
