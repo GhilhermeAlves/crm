@@ -51,9 +51,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON company_person_field_settings TO crm_app
 
 -- Catálogo: chave, grupo, rótulo, obrigatório pelo sistema, ordem e padrão por contexto
 -- (NULL = não se aplica). Ordem dos contextos: PF, PJ, CUSTOMER, SUPPLIER, EMPLOYEE.
-CREATE TEMP TABLE tmp_fields (k TEXT, g TEXT, l TEXT, s BOOLEAN, o INT, pf BOOLEAN, pj BOOLEAN,
-                              cu BOOLEAN, su BOOLEAN, em BOOLEAN) ON COMMIT DROP;
-INSERT INTO tmp_fields VALUES
+WITH t (k, g, l, s, o, pf, pj, cu, su, em) AS (VALUES
     ('PERSON_NAME',            'IDENTIFICATION', 'Nome / Razão social',              TRUE,  1, TRUE,  TRUE,  TRUE,  TRUE,  TRUE),
     ('PERSON_TAX_ID',          'IDENTIFICATION', 'CPF / CNPJ',                       FALSE, 2, FALSE, TRUE,  TRUE,  TRUE,  TRUE),
     ('PERSON_RG_IE',           'IDENTIFICATION', 'RG / Inscrição estadual',          FALSE, 3, FALSE, FALSE, FALSE, TRUE,  TRUE),
@@ -79,15 +77,17 @@ INSERT INTO tmp_fields VALUES
     ('PATIENT_REFERRAL_SOURCE','PATIENT',        'Como conheceu (origem)',           FALSE, 3, NULL,  NULL,  FALSE, NULL,  NULL),
     ('PATIENT_GUARDIAN_MINOR', 'PATIENT',        'Responsável (cliente menor de idade)', FALSE, 4, NULL, NULL, TRUE, NULL,  NULL),
     ('EMPLOYEE_SPECIALTY',     'PROFESSIONAL',   'Especialidade',                    FALSE, 1, NULL,  NULL,  NULL,  NULL,  FALSE),
-    ('EMPLOYEE_COUNCIL',       'PROFESSIONAL',   'Conselho e número (CRO, CRM)',     FALSE, 2, NULL,  NULL,  NULL,  NULL,  FALSE);
-
-INSERT INTO person_fields (group_name, field_key, label, system_required, sort_order)
-SELECT g, k, l, s, o FROM tmp_fields;
-
+    ('EMPLOYEE_COUNCIL',       'PROFESSIONAL',   'Conselho e número (CRO, CRM)',     FALSE, 2, NULL,  NULL,  NULL,  NULL,  FALSE)
+),
+ins AS (
+    INSERT INTO person_fields (group_name, field_key, label, system_required, sort_order)
+    SELECT g, k, l, s, o FROM t
+    RETURNING id, field_key
+)
 INSERT INTO person_field_contexts (field_id, context, default_required)
-SELECT f.id, x.ctx, x.req
-  FROM tmp_fields t
-  JOIN person_fields f ON f.field_key = t.k
+SELECT ins.id, x.ctx, x.req
+  FROM t
+  JOIN ins ON ins.field_key = t.k
   CROSS JOIN LATERAL (VALUES ('PF', t.pf), ('PJ', t.pj), ('CUSTOMER', t.cu), ('SUPPLIER', t.su), ('EMPLOYEE', t.em))
        AS x(ctx, req)
  WHERE x.req IS NOT NULL;

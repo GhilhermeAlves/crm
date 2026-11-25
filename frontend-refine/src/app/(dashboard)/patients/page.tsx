@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActiveCompanyModules } from "@/features/identity/modules/hooks/useCompanyModules";
 import Link from "next/link";
 import { HeartPulse, Loader2, Plus, Search, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,12 @@ import { ListPagination } from "@/components/common/ListPagination";
 import { DEFAULT_PAGE_SIZE } from "@/types/page";
 
 export default function PatientsPage() {
+  const router = useRouter();
+  const { enabledModules } = useActiveCompanyModules();
+  // A lista de pacientes passou para Pessoas → Clientes (doc 22.3); a ficha clínica continua aqui.
+  useEffect(() => {
+    if (enabledModules?.includes("PEOPLE")) router.replace(ROUTES.PEOPLE_CUSTOMERS);
+  }, [enabledModules, router]);
   const { user } = useAuth();
   const companyId = user?.companyId ?? null;
   const { canCreate, canUpdate } = useContactPermissions();

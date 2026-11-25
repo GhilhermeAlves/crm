@@ -16,6 +16,15 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+}));
+
+// Sem o módulo Pessoas a lista antiga continua (com ele, redireciona para Pessoas → Clientes).
+vi.mock("@/features/identity/modules/hooks/useCompanyModules", () => ({
+  useActiveCompanyModules: () => ({ enabledModules: ["PATIENTS"], isEnabled: () => true }),
+}));
+
 vi.mock("@/features/identity/auth/hooks/useAuth", () => ({
   useAuth: () => ({ user: { id: "u1", companyId: "co1" } }),
 }));

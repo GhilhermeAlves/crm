@@ -57,7 +57,7 @@ describe("HomePage", () => {
   });
 
   it("sem o módulo Comercial não mostra os cards de vendas", () => {
-    modulesState.value = ["AGENDA", "PATIENTS", "TASKS", "FINANCE"];
+    modulesState.value = ["AGENDA", "PATIENTS", "PEOPLE", "TASKS", "FINANCE"];
 
     render(<HomePage />);
 
@@ -66,7 +66,7 @@ describe("HomePage", () => {
     expect(screen.getByText("Consulta Ana")).toBeTruthy();
     expect(screen.getByText("Ligar para fornecedor")).toBeTruthy();
     expect(screen.getByText("Receita do mês")).toBeTruthy();
-    expect(screen.getByText("Pacientes")).toBeTruthy();
+    expect(screen.getByText("Pessoas")).toBeTruthy();
     expect(screen.queryByText("Painel comercial")).toBeNull();
     expect(screen.queryByText("Pipeline")).toBeNull();
   });

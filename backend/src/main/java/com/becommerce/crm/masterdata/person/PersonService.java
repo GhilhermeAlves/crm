@@ -206,7 +206,7 @@ public class PersonService {
         Set<String> wanted = new LinkedHashSet<>(req.roles() == null ? List.of() : req.roles());
         boolean needsContact = wanted.contains("CUSTOMER");
         if (needsContact) {
-            insertContact(companyId, id, n, req.mobile(), req.email(), req.address());
+            insertContact(companyId, id, n, req.rgIssuer(), req.mobile(), req.email(), req.address());
         } else {
             jdbc.update("INSERT INTO persons (id, company_id, person_type, name, trade_name, tax_id, rg_or_ie, rg_issuer, "
                             + "birth_or_foundation_date, gender, marital_status, professional_status, nationality, country_id, "
@@ -679,7 +679,8 @@ public class PersonService {
         if (!Boolean.TRUE.equals(ok)) throw PersonException.notFound("Cadastro");
     }
 
-    private void insertContact(UUID companyId, UUID id, Normalized n, String mobile, String email, AddressRequest address) {
+    private void insertContact(UUID companyId, UUID id, Normalized n, String rgIssuer, String mobile, String email,
+                               AddressRequest address) {
         String[] parts = splitName(n.name);
         AddressValues a = address != null && hasAddressData(address) ? addressValues(address) : null;
         String cityName = a == null ? null : a.city;
@@ -692,11 +693,12 @@ public class PersonService {
         }
         String mail = email == null || email.isBlank() ? null : email.trim().toLowerCase(Locale.ROOT);
         try {
-            jdbc.update("INSERT INTO contacts (id, company_id, first_name, last_name, email, phone, cpf, rg, birth_date, gender, "
-                            + "marital_status, professional_status, notes, zip_code, street, address_number, address_complement, "
-                            + "neighborhood, city, state) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            jdbc.update("INSERT INTO contacts (id, company_id, first_name, last_name, email, phone, cpf, rg, rg_issuer, birth_date, "
+                            + "gender, marital_status, professional_status, notes, zip_code, street, address_number, "
+                            + "address_complement, neighborhood, city, state) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                     id, companyId, parts[0], parts[1], mail, mobile == null ? null : trunc(mobile.replaceAll("\\D", ""), 20),
-                    n.taxId, trunc(n.rgOrIe, 20), n.birth, n.gender, n.marital, n.professional, n.notes,
+                    n.taxId, trunc(n.rgOrIe, 20), trunc(blank(rgIssuer), 20), n.birth, n.gender, n.marital, n.professional,
+                    n.notes,
                     a == null ? null : a.postal, a == null ? null : a.street, a == null ? null : a.number,
                     a == null ? null : a.complement, a == null ? null : a.neighborhood, cityName, uf);
         } catch (DuplicateKeyException e) {
