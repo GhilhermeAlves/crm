@@ -21,16 +21,19 @@ public class LocationController {
     }
 
     @GetMapping("/countries")
+    @PreAuthorize("hasAuthority('person:read')")
     public List<Country> countries(@RequestParam(defaultValue = "true") boolean onlyActive) {
         return service.countries(onlyActive);
     }
 
     @GetMapping("/countries/{id}/states")
+    @PreAuthorize("hasAuthority('person:read')")
     public List<State> states(@PathVariable Integer id, @RequestParam(defaultValue = "true") boolean onlyActive) {
         return service.states(id, onlyActive);
     }
 
     @GetMapping("/states/{id}/cities")
+    @PreAuthorize("hasAuthority('person:read')")
     public List<City> cities(@PathVariable Integer id, @RequestParam(required = false) String q,
                              @RequestParam(defaultValue = "true") boolean onlyActive,
                              @RequestParam(defaultValue = "1000") int limit) {
@@ -38,17 +41,20 @@ public class LocationController {
     }
 
     @GetMapping("/cities/ibge/{ibge}")
+    @PreAuthorize("hasAuthority('person:read')")
     public City cityByIbge(@PathVariable int ibge) {
         return service.cityByIbge(ibge);
     }
 
     @GetMapping("/cities/{id}/neighborhoods")
+    @PreAuthorize("hasAuthority('person:read')")
     public List<Neighborhood> neighborhoods(@PathVariable Integer id, @RequestParam(required = false) String q,
                                             @RequestParam(defaultValue = "true") boolean onlyActive) {
         return service.neighborhoods(id, q, onlyActive);
     }
 
     @GetMapping("/postal-codes/{cep}")
+    @PreAuthorize("hasAuthority('person:read')")
     public PostalCodeResult postalCode(@PathVariable String cep) {
         return service.lookupPostalCode(cep);
     }
