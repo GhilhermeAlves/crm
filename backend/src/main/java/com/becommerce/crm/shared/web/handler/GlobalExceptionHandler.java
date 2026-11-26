@@ -619,6 +619,32 @@ public class GlobalExceptionHandler {
             ));
     }
 
+    @ExceptionHandler(com.becommerce.crm.clinical.trichology.domain.exception.TrichologyNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTrichologyNotFound(RuntimeException ex) {
+        return trichologyError(HttpStatus.NOT_FOUND, "Not Found", ex);
+    }
+
+    @ExceptionHandler(com.becommerce.crm.clinical.trichology.domain.exception.TrichologyValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleTrichologyValidation(RuntimeException ex) {
+        return trichologyError(HttpStatus.BAD_REQUEST, "Bad Request", ex);
+    }
+
+    @ExceptionHandler(com.becommerce.crm.clinical.trichology.domain.exception.TrichologyStateException.class)
+    public ResponseEntity<Map<String, Object>> handleTrichologyState(RuntimeException ex) {
+        return trichologyError(HttpStatus.CONFLICT, "Conflict", ex);
+    }
+
+    private static ResponseEntity<Map<String, Object>> trichologyError(HttpStatus status, String error,
+                                                                       RuntimeException ex) {
+        return ResponseEntity.status(status)
+            .body(Map.of(
+                "status", status.value(),
+                "error", error,
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(TrichoscopyImageNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleTrichoscopyImageNotFoundException(
             TrichoscopyImageNotFoundException ex) {

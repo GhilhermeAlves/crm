@@ -8,5 +8,7 @@ public enum DocumentType {
     PRESCRIPTION,
     CERTIFICATE,
     CONSENT,
-    OTHER
+    OTHER,
+    /** Relatório do exame tricológico (V154); emitido só pelo módulo de tricologia, sem modelo. */
+    TRICHOLOGY_REPORT
 }

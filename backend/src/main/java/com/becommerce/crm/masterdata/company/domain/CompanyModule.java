@@ -64,5 +64,7 @@ public enum CompanyModule {
     /** Pessoas → Funcionários (profissionais, cargos e especialidades). */
     EMPLOYEES,
     /** Pessoas → Localidades (país, estado, cidade e bairro). */
-    LOCATIONS
+    LOCATIONS,
+    /** Exame tricológico, IA na tricoscopia e relatório (só para o segmento TRICHOLOGY). */
+    TRICHOLOGY
 }
