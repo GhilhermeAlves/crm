@@ -18,5 +18,9 @@ export const config = {
   // Em produção o nginx encaminha /auth e /api direto ao auth-service, sem
   // passar pelo Next. Exclusão replicada no matcher (defensiva) para o dev
   // local: nessas rotas o proxy (rewrites) responde, não o middleware.
-  matcher: ["/((?!auth|api|_next/static|_next/image|favicon.ico|docs).*)"],
+  // Ícones e manifesto ficam fora: o navegador os busca sem sessão ao instalar
+  // o app ou criar atalho.
+  matcher: [
+    "/((?!auth|api|_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|icons/|manifest.webmanifest|docs).*)",
+  ],
 };
