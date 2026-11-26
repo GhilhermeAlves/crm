@@ -26,6 +26,9 @@ import com.becommerce.crm.masterdata.contact.domain.exception.ContactNotFoundExc
 import com.becommerce.crm.masterdata.contact.domain.exception.ContactValidationException;
 import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import com.becommerce.crm.clinical.document.application.port.out.ReportPdfSource;
+import com.becommerce.crm.clinical.documenttemplate.domain.DocumentType;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,6 +72,13 @@ public class PatientDocumentService implements PatientDocumentUseCase {
 
 
     private PatientTimelineRecorder timeline;
+    private ObjectProvider<ReportPdfSource> reportPdfSource;
+
+    /** PDF guardado de documentos emitidos por outros módulos (relatório de tricologia). */
+    @Autowired
+    public void setReportPdfSource(ObjectProvider<ReportPdfSource> reportPdfSource) {
+        this.reportPdfSource = reportPdfSource;
+    }
 
     /** Opcional: registra os eventos nas anotações do paciente. */
     @Autowired(required = false)
@@ -170,6 +180,14 @@ public class PatientDocumentService implements PatientDocumentUseCase {
             PatientDocument document = requireOwned(companyId, contactId, documentId);
             String companyName = companyRepository.findById(companyId)
                     .map(Company::getTradingName).orElse("");
+            ReportPdfSource source = reportPdfSource == null ? null : reportPdfSource.getIfAvailable();
+            if (document.getType() == DocumentType.TRICHOLOGY_REPORT && source != null) {
+                byte[] stored = source.pdfForDocument(companyId, contactId, documentId);
+                TenantContext.setCompanyId(companyId);
+                if (stored != null) {
+                    return new PatientDocumentPdf(stored, fileName(document, contact));
+                }
+            }
             byte[] content = pdfRenderer.render(document, companyName, fullName(contact));
             return new PatientDocumentPdf(content, fileName(document, contact));
         } finally {
@@ -184,6 +202,10 @@ public class PatientDocumentService implements PatientDocumentUseCase {
             TenantContext.setCompanyId(companyId);
             requireOwnedContact(companyId, contactId);
             PatientDocument document = requireOwned(companyId, contactId, documentId);
+            if (document.getType() == DocumentType.TRICHOLOGY_REPORT) {
+                throw new CrmAccessDeniedException(
+                        "Relatório de tricologia publicado não pode ser excluído; gere uma nova versão no exame.");
+            }
             if (!admin) {
                 throw new CrmAccessDeniedException("Só administradores podem excluir documentos emitidos.");
             }

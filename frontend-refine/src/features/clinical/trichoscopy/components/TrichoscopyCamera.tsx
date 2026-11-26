@@ -17,6 +17,12 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import type { ImageQuality } from "@/features/clinical/trichology/types/trichology.types";
+import { QUALITY_LABELS } from "@/features/clinical/trichology/types/trichology.types";
+import {
+  measureCanvas,
+  type QualityReport,
+} from "@/features/clinical/trichology/utils/imageQuality";
 import {
   Select,
   SelectContent,
@@ -29,10 +35,33 @@ import { cn } from "@/lib/utils";
 import { useCaptureTrichoscopy } from "../hooks/useTrichoscopy";
 import { LiveViewPanel } from "./LiveViewPanel";
 
+/**
+ * Modo exame tricológico (doc v1.2, seção 3.1): a região vem do protocolo, a
+ * magnificação é informada, a qualidade é medida no navegador (só aviso) e a
+ * foto vai direto para o exame; a câmera continua aberta para a próxima região.
+ */
+export type ExamCaptureMode = {
+  regions: {
+    code: string;
+    label: string;
+    magnifications: string[];
+    minImages: number;
+    images: number;
+  }[];
+  saving: boolean;
+  onCapture: (input: {
+    file: Blob;
+    regionCode: string;
+    magnification?: string;
+    qualityStatus: ImageQuality;
+  }) => Promise<unknown>;
+};
+
 type Props = {
   companyId: string;
   contactId: string;
   onSaved?: () => void;
+  exam?: ExamCaptureMode;
 };
 
 type SaveTarget = "system" | "computer";
@@ -131,7 +160,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
  * digital, foto (sistema ou computador), vídeo (sempre no computador),
  * região do couro cabeludo e o botão de captura do aparelho (tecla aprendida).
  */
-export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
+export function TrichoscopyCamera({ companyId, contactId, onSaved, exam }: Props) {
   const uid = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -149,7 +178,13 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [notes, setNotes] = useState("");
-  const [region, setRegion] = useState(NO_REGION);
+  const [region, setRegion] = useState(() => {
+    if (!exam || exam.regions.length === 0) return NO_REGION;
+    return (exam.regions.find((r) => r.images < r.minImages) ?? exam.regions[0]).code;
+  });
+  const [magnification, setMagnification] = useState("");
+  const [quality, setQuality] = useState<QualityReport | null>(null);
+  const examRegion = exam?.regions.find((r) => r.code === region);
   const [zoom, setZoom] = useState<number>(1);
   const [mirror, setMirror] = useState(true);
   const mirrorRef = useRef(true);
@@ -292,7 +327,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
     return () => clearInterval(timer);
   }, [recordStart]);
 
-  const regionLabel = region === NO_REGION ? null : region;
+  const regionLabel = region === NO_REGION ? null : (examRegion?.label ?? region);
   const fileBase = () =>
     `tricoscopia-${regionLabel ? `${regionLabel.toLowerCase().replace(/\s+/g, "-")}-` : ""}${format(
       new Date(),
@@ -308,6 +343,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     drawZoomed(ctx, video, zoom, mirror);
+    if (exam) setQuality(measureCanvas(canvas));
     canvas.toBlob(
       (result) => {
         if (!result) return;
@@ -320,7 +356,7 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
       "image/jpeg",
       0.92,
     );
-  }, [mirror, preview, stopStream, streaming, zoom]);
+  }, [exam, mirror, preview, stopStream, streaming, zoom]);
 
   const startRecording = () => {
     const video = videoRef.current;
@@ -403,6 +439,30 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
 
   const save = () => {
     if (!blob) return;
+    if (exam) {
+      if (region === NO_REGION) {
+        setError("Escolha a região do couro cabeludo.");
+        return;
+      }
+      void exam
+        .onCapture({
+          file: blob,
+          regionCode: region,
+          magnification: magnification || undefined,
+          qualityStatus: quality?.status ?? "UNCHECKED",
+        })
+        .then(() => {
+          clearPreview();
+          setQuality(null);
+          const next = exam.regions.find((r) => r.code !== region && r.images < r.minImages);
+          if (next && (examRegion?.images ?? 0) + 1 >= (examRegion?.minImages ?? 0)) {
+            setRegion(next.code);
+          }
+          void startStream(deviceId);
+        })
+        .catch(() => undefined);
+      return;
+    }
     if (saveTarget === "computer") {
       downloadBlob(blob, `${fileBase()}.jpg`);
       toast.success("Foto salva no computador (pasta Downloads).");
@@ -459,36 +519,75 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1">
-          <Label htmlFor={`${uid}-region`}>Região do couro cabeludo</Label>
-          <Select value={region} onValueChange={setRegion}>
-            <SelectTrigger id={`${uid}-region`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NO_REGION}>Não informar</SelectItem>
-              {REGIONS.map((r) => (
-                <SelectItem key={r} value={r}>
-                  {r}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {exam ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label htmlFor={`${uid}-region`}>Região do couro cabeludo</Label>
+            <Select value={region} onValueChange={setRegion}>
+              <SelectTrigger id={`${uid}-region`}>
+                <SelectValue placeholder="Escolha a região" />
+              </SelectTrigger>
+              <SelectContent>
+                {exam.regions.map((r) => (
+                  <SelectItem key={r.code} value={r.code}>
+                    {r.label} ({r.images}/{r.minImages})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor={`${uid}-mag`}>Magnificação</Label>
+            <Select
+              value={magnification || "none"}
+              onValueChange={(v) => setMagnification(v === "none" ? "" : v)}
+            >
+              <SelectTrigger id={`${uid}-mag`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Não informar</SelectItem>
+                {(examRegion?.magnifications ?? []).map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {m}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="space-y-1">
-          <Label htmlFor={`${uid}-target`}>Salvar fotos</Label>
-          <Select value={saveTarget} onValueChange={(v) => chooseSaveTarget(v as SaveTarget)}>
-            <SelectTrigger id={`${uid}-target`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="system">No sistema (histórico do paciente)</SelectItem>
-              <SelectItem value="computer">No meu computador</SelectItem>
-            </SelectContent>
-          </Select>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label htmlFor={`${uid}-region`}>Região do couro cabeludo</Label>
+            <Select value={region} onValueChange={setRegion}>
+              <SelectTrigger id={`${uid}-region`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_REGION}>Não informar</SelectItem>
+                {REGIONS.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor={`${uid}-target`}>Salvar fotos</Label>
+            <Select value={saveTarget} onValueChange={(v) => chooseSaveTarget(v as SaveTarget)}>
+              <SelectTrigger id={`${uid}-target`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="system">No sistema (histórico do paciente)</SelectItem>
+                <SelectItem value="computer">No meu computador</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="relative min-h-[180px] w-full flex-1 overflow-hidden rounded-lg bg-black">
         {preview ? (
@@ -598,7 +697,15 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {preview && (
+      {preview && exam && quality && quality.status !== "OK" && (
+        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          Qualidade: {QUALITY_LABELS[quality.status]}. Recomendamos tirar novamente
+          {quality.status === "BLURRED" ? " (a IA não analisa fotos desfocadas)" : ""}; você ainda
+          pode salvar.
+        </p>
+      )}
+
+      {preview && !exam && (
         <div className="space-y-1">
           <Label htmlFor={`${uid}-notes`}>Observações (opcional)</Label>
           <Textarea
@@ -614,15 +721,19 @@ export function TrichoscopyCamera({ companyId, contactId, onSaved }: Props) {
       <div className="flex flex-wrap gap-2">
         {preview ? (
           <>
-            <Button type="button" onClick={save} disabled={capture.isPending}>
-              {capture.isPending ? (
+            <Button type="button" onClick={save} disabled={capture.isPending || exam?.saving}>
+              {capture.isPending || exam?.saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : saveTarget === "computer" ? (
                 <Download className="mr-2 h-4 w-4" />
               ) : (
                 <Save className="mr-2 h-4 w-4" />
               )}
-              {saveTarget === "computer" ? "Salvar no computador" : "Salvar imagem"}
+              {exam
+                ? "Salvar no exame"
+                : saveTarget === "computer"
+                  ? "Salvar no computador"
+                  : "Salvar imagem"}
             </Button>
             <Button type="button" variant="outline" onClick={retake} disabled={capture.isPending}>
               <RefreshCw className="mr-2 h-4 w-4" /> Tirar novamente

@@ -68,6 +68,9 @@ public class DocumentTemplate {
         if (type == null) {
             throw new ContactValidationException("O tipo do documento é obrigatório.");
         }
+        if (type == DocumentType.TRICHOLOGY_REPORT) {
+            throw new ContactValidationException("O relatório de tricologia é emitido pelo próprio exame, sem modelo.");
+        }
         return type;
     }
 

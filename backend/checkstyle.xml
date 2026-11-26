@@ -14,6 +14,13 @@
         <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
     </module>
 
+    <!-- Geradores de PDF (OpenPDF) precisam de java.awt.Color para as cores; só essa classe é liberada -->
+    <module name="SuppressionSingleFilter">
+        <property name="files" value="PdfRenderer\.java$"/>
+        <property name="checks" value="IllegalImport"/>
+        <property name="message" value="java\.awt\.Color\.$"/>
+    </module>
+
     <module name="TreeWalker">
         <property name="tabWidth" value="4"/>
 

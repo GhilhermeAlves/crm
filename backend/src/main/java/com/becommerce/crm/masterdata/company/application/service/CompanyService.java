@@ -173,6 +173,10 @@ public class CompanyService implements CompanyUseCase {
         var modules = request.enabledModules() == null
                 ? EnumSet.allOf(CompanyModule.class)
                 : CompanyModules.parse(request.enabledModules());
+        if (request.enabledModules() == null && segment != CompanySegment.TRICHOLOGY) {
+            modules = EnumSet.copyOf(modules);
+            modules.remove(CompanyModule.TRICHOLOGY); // módulo exclusivo das clínicas de tricologia
+        }
         return new CompanyModules(segment, modules);
     }
 
@@ -285,7 +289,11 @@ public class CompanyService implements CompanyUseCase {
         CompanySegment segment = companyModulesRepository.findByCompanyId(companyId)
                 .map(CompanyModules::segment)
                 .orElse(CompanySegment.GENERIC);
-        companyModulesRepository.update(companyId, new CompanyModules(segment, plan.defaultModules()));
+        java.util.Set<CompanyModule> modules = java.util.EnumSet.copyOf(plan.defaultModules());
+        if (segment != CompanySegment.TRICHOLOGY) {
+            modules.remove(CompanyModule.TRICHOLOGY); // módulo exclusivo das clínicas de tricologia
+        }
+        companyModulesRepository.update(companyId, new CompanyModules(segment, modules));
     }
 
     @Override

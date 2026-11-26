@@ -28,7 +28,8 @@ export type CompanyModuleName =
   | "PEOPLE"
   | "SUPPLIERS"
   | "EMPLOYEES"
-  | "LOCATIONS";
+  | "LOCATIONS"
+  | "TRICHOLOGY";
 
 export type CompanySegment = "GENERIC" | "DENTAL" | "OCCUPATIONAL_SAFETY" | "TRICHOLOGY";
 
@@ -117,6 +118,11 @@ export const MODULE_OPTIONS: { value: CompanyModuleName; label: string; descript
     value: "LOCATIONS",
     label: "Localidades",
     description: "Países, estados, cidades e bairros usados nos endereços e no CEP",
+  },
+  {
+    value: "TRICHOLOGY",
+    label: "Tricologia",
+    description: "Exame tricológico com IA na tricoscopia e relatório (clínicas de tricologia)",
   },
 ];
 

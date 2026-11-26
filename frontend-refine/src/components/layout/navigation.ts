@@ -34,6 +34,7 @@ import {
   Settings,
   ServerCog,
   CreditCard,
+  Microscope,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import type { CompanyModuleName } from "@/features/identity/modules/types/modules.types";
@@ -353,6 +354,13 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Modelos de anamnese", href: `${ROUTES.SETTINGS_DOCUMENTS}/anamnesis` },
           { label: "Receituários", href: `${ROUTES.SETTINGS_DOCUMENTS}/prescriptions` },
         ],
+      },
+      {
+        label: "Tricologia",
+        href: ROUTES.SETTINGS_TRICHOLOGY,
+        icon: Microscope,
+        permission: "trichology:settings",
+        module: "TRICHOLOGY",
       },
     ],
   },
