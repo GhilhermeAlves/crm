@@ -40,7 +40,7 @@ public enum CompanyPlan {
                 CompanyModule.CATALOG, CompanyModule.DOCUMENTS,
                 CompanyModule.TASKS, CompanyModule.STORAGE,
                 CompanyModule.PEOPLE, CompanyModule.SUPPLIERS, CompanyModule.EMPLOYEES, CompanyModule.LOCATIONS,
-                // Só tem efeito em empresas do segmento TRICHOLOGY (guarda no TrichologyAccess).
+                // Removido para empresas fora do segmento TRICHOLOGY (CompanyService.applyPlanModules).
                 CompanyModule.TRICHOLOGY);
         if (this == ESSENTIAL) return modules;
         modules.addAll(EnumSet.of(
