@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ROUTES } from "@/lib/constants";
+import { toHttpError } from "@/lib/http-error";
 import { parseAnamnesisImport, type ImportedAnamnesis } from "../lib/importAnamnesis";
 import { AnamnesisService } from "../services/anamnesis.service";
 import { ANAMNESIS_QUESTION_TYPE_LABELS } from "../types/anamnesis.types";
@@ -55,11 +56,17 @@ export function ImportAnamnesisDialog({ companyId, open, onOpenChange }: Props) 
         name: data.name,
         description: data.description,
       });
-      await AnamnesisService.update(companyId as string, created.id, {
-        name: data.name,
-        description: data.description,
-        sections: data.sections,
-      });
+      try {
+        await AnamnesisService.update(companyId as string, created.id, {
+          name: data.name,
+          description: data.description,
+          sections: data.sections,
+        });
+      } catch (error) {
+        // Sem as perguntas o modelo fica vazio: desfaz a criação.
+        await AnamnesisService.remove(companyId as string, created.id).catch(() => undefined);
+        throw error;
+      }
       return created;
     },
     onSuccess: (created) => {
@@ -69,7 +76,7 @@ export function ImportAnamnesisDialog({ companyId, open, onOpenChange }: Props) 
       onOpenChange(false);
       router.push(`${ROUTES.SETTINGS_DOCUMENTS_ANAMNESIS}/${created.id}`);
     },
-    onError: () => toast.error("Erro ao importar o modelo."),
+    onError: (error) => toast.error(toHttpError(error, "Erro ao importar o modelo.").message),
   });
 
   const reset = () => {

@@ -156,4 +156,37 @@ describe("parseAnamnesisJson — formatos de outros sistemas", () => {
     expect(result.name).toBe("Lista");
     expect(result.sections[0].questions?.[0].type).toBe("YES_NO");
   });
+
+  it("checkbox sem opções vira Sim/Não e multiselect é múltipla escolha", () => {
+    const result = parseAnamnesisJson(
+      JSON.stringify({
+        schema_version: 1,
+        form: {
+          title: "Ficha",
+          sections: [
+            {
+              title: "Final",
+              fields: [
+                {
+                  id: "a",
+                  label: "Tipo de cabelo",
+                  type: "multiselect",
+                  options: [{ label: "Seco", value: "seco" }],
+                },
+                {
+                  id: "b",
+                  label: "Declaro que as informações são verdadeiras",
+                  type: "checkbox",
+                  required: true,
+                },
+              ],
+            },
+          ],
+        },
+      }),
+      "x",
+    );
+    expect(result.name).toBe("Ficha");
+    expect(result.sections[0].questions?.map((q) => q.type)).toEqual(["MULTI_SELECT", "YES_NO"]);
+  });
 });
