@@ -82,6 +82,11 @@ services:
       - AI_PROVIDER=${AI_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      # Tricologia — módulo desligado até a conferência manual
+      - TRICHOLOGY_ENABLED=${TRICHOLOGY_ENABLED:-false}
+      - TRICHOLOGY_AI_ENABLED=${TRICHOLOGY_AI_ENABLED:-true}
+      - TRICHOLOGY_VISION_MODEL=${TRICHOLOGY_VISION_MODEL:-}
+      - TRICHOLOGY_TEXT_MODEL=${TRICHOLOGY_TEXT_MODEL:-}
       # Telegram (Leo) — URL pública do backend, ex.: https://api.suaclinica.com.br
       - TELEGRAM_WEBHOOK_BASE_URL=${TELEGRAM_WEBHOOK_BASE_URL:-}
       # Cobrança (Asaas) — desligada por padrão; sandbox até a troca para produção.
