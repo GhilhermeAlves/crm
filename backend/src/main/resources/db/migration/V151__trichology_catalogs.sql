@@ -51,7 +51,7 @@ CREATE TABLE trichology_markers (
     sex              VARCHAR(1),
     reference_min    NUMERIC(12, 4),
     reference_max    NUMERIC(12, 4),
-    target_quartile  SMALLINT,
+    target_quartile  INTEGER,
     active           BOOLEAN NOT NULL DEFAULT TRUE,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
