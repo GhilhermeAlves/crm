@@ -13,12 +13,12 @@ import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
-import com.lowagie.text.pdf.GrayColor;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.stereotype.Component;
 
+import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -38,9 +38,8 @@ public class TrichologyReportPdfRenderer {
             + "nem prescrição.";
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
             .withZone(ZoneId.of("America/Sao_Paulo"));
-    /** Tons de cinza (0 = preto, 1 = branco): java.awt é proibido pelo Checkstyle. */
-    private static final GrayColor GRID = new GrayColor(0.8f);
-    private static final Float HEADER = 0.93f;
+    private static final Color GRID = new Color(203, 213, 224);
+    private static final Color HEADER = new Color(234, 242, 248);
 
     /** Foto da grade: bytes já baixados do storage. */
     public record Photo(String regionLabel, String magnification, String caption, byte[] data) {
@@ -59,9 +58,9 @@ public class TrichologyReportPdfRenderer {
             pdf.open();
             Font clinic = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
             Font title = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13);
-            Font heading = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+            Font heading = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, new Color(18, 59, 92));
             Font body = FontFactory.getFont(FontFactory.HELVETICA, 10);
-            Font small = FontFactory.getFont(FontFactory.HELVETICA, 8);
+            Font small = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.DARK_GRAY);
 
             Paragraph p = new Paragraph(safe(in.clinicName()), clinic);
             p.setAlignment(Element.ALIGN_CENTER);
@@ -169,12 +168,12 @@ public class TrichologyReportPdfRenderer {
         return grid;
     }
 
-    private static PdfPCell cell(String text, Font font, Float background) {
+    private static PdfPCell cell(String text, Font font, Color background) {
         PdfPCell cell = new PdfPCell(new Phrase(safe(text), font));
         cell.setBorderColor(GRID);
         cell.setPadding(3);
         if (background != null) {
-            cell.setGrayFill(background);
+            cell.setBackgroundColor(background);
         }
         return cell;
     }
