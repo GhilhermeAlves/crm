@@ -29,7 +29,6 @@ export const ROUTES = {
   PEOPLE_SUPPLIERS: "/people/suppliers",
   PEOPLE_EMPLOYEES: "/people/employees",
   PEOPLE_LOCATIONS: "/people/locations",
-  PEOPLE_DUPLICATES: "/people/duplicates",
   SETTINGS_PERSON_FIELDS: "/settings/person-fields",
   PIPELINE: "/pipeline",
   CAMPAIGNS: "/campaigns",

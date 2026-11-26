@@ -89,7 +89,6 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Fornecedores", href: ROUTES.PEOPLE_SUPPLIERS, module: "SUPPLIERS" },
           { label: "Funcionários", href: ROUTES.PEOPLE_EMPLOYEES, module: "EMPLOYEES" },
           { label: "Localidades", href: ROUTES.PEOPLE_LOCATIONS, module: "LOCATIONS" },
-          { label: "Duplicados", href: ROUTES.PEOPLE_DUPLICATES, permission: "person:merge" },
         ],
       },
       {

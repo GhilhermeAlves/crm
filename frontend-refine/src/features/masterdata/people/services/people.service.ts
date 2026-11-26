@@ -11,7 +11,6 @@ import type {
   CustomerRequest,
   CustomerRow,
   DocumentRequest,
-  DuplicateGroup,
   DuplicateMember,
   EmployeeRequest,
   EmployeeRow,
@@ -19,7 +18,6 @@ import type {
   FieldSettings,
   HistoryEntry,
   JobTitle,
-  MergeResult,
   Neighborhood,
   PageResult,
   PersonDetail,
@@ -204,17 +202,6 @@ export const PeopleService = {
   ) {
     const url = id ? `${base(companyId)}/job-titles/${id}` : `${base(companyId)}/job-titles`;
     return (id ? await api.put<JobTitle[]>(url, data) : await api.post<JobTitle[]>(url, data)).data;
-  },
-
-  // ------------------------------------------------------------ duplicados
-  async duplicates(companyId: string) {
-    return (await api.get<DuplicateGroup[]>(`${base(companyId)}/persons-duplicates`)).data;
-  },
-  async merge(companyId: string, data: { keepId: string; removeId: string; reason: string }) {
-    return (await api.post<MergeResult>(`${base(companyId)}/persons-duplicates/merge`, data)).data;
-  },
-  async dismissIssue(companyId: string, issueId: string) {
-    await api.post(`${base(companyId)}/persons-duplicates/issues/${issueId}/dismiss`);
   },
 
   // ------------------------------------------------------------ obrigatoriedade
