@@ -32,6 +32,10 @@ public final class AssessmentData {
     public record SkippedRegion(String regionCode, String reason) {
     }
 
+    /** Média de uma medida confirmada numa região (comparação de evolução). */
+    public record RegionMeasure(String regionCode, String measure, BigDecimal value) {
+    }
+
     public record LabResult(String markerCode, BigDecimal value, String unit) {
     }
 

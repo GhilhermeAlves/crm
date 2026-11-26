@@ -110,6 +110,11 @@ public class TrichologyRepositoryAdapter
         return assessments.existsByVerificationCode(code);
     }
 
+    @Override
+    public Optional<TrichologyAssessment> findByPatientDocument(UUID companyId, UUID documentId) {
+        return assessments.findByCompanyIdAndPatientDocumentId(companyId, documentId).map(this::toDomain);
+    }
+
     private AssessmentEntity toEntity(TrichologyAssessment.State s) {
         AssessmentEntity e = new AssessmentEntity();
         e.id = s.id();

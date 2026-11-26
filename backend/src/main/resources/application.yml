@@ -134,6 +134,19 @@ app:
     api-key: ${ASAAS_API_KEY:}
     webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
     daily-cron: ${BILLING_DAILY_CRON:0 30 3 * * *}
+  trichology:
+    # Módulo Tricologia (doc v1.2, seção 8). Desligado até a conferência manual em produção.
+    enabled: ${TRICHOLOGY_ENABLED:false}
+    ai:
+      enabled: ${TRICHOLOGY_AI_ENABLED:true}
+      vision-model: ${TRICHOLOGY_VISION_MODEL:}
+      text-model: ${TRICHOLOGY_TEXT_MODEL:}
+      min-confidence: ${TRICHOLOGY_AI_MIN_CONFIDENCE:0.6}
+      timeout-seconds: ${TRICHOLOGY_AI_TIMEOUT_SECONDS:30}
+      max-retries: ${TRICHOLOGY_AI_MAX_RETRIES:2}
+    report:
+      horizons-months: ${TRICHOLOGY_REPORT_HORIZONS_MONTHS:3,6,9,12}
+    quiz-link-days: ${TRICHOLOGY_QUIZ_LINK_DAYS:7}
   ai:
     provider: ${AI_PROVIDER:openai}
     api-key: ${OPENAI_API_KEY:}

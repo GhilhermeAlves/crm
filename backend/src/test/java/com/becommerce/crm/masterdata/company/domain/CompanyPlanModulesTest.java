@@ -16,7 +16,8 @@ class CompanyPlanModulesTest {
                 CompanyModule.PATIENTS, CompanyModule.AGENDA, CompanyModule.AGENDA_SETTINGS,
                 CompanyModule.CATALOG, CompanyModule.DOCUMENTS,
                 CompanyModule.TASKS, CompanyModule.STORAGE,
-                CompanyModule.PEOPLE, CompanyModule.SUPPLIERS, CompanyModule.EMPLOYEES, CompanyModule.LOCATIONS),
+                CompanyModule.PEOPLE, CompanyModule.SUPPLIERS, CompanyModule.EMPLOYEES, CompanyModule.LOCATIONS,
+                CompanyModule.TRICHOLOGY),
                 CompanyPlan.ESSENTIAL.defaultModules());
     }
 

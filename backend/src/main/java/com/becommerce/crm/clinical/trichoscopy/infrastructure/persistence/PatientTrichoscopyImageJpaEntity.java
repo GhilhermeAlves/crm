@@ -35,6 +35,12 @@ public class PatientTrichoscopyImageJpaEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "deleted_at")
+    private java.time.Instant deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getCompanyId() { return companyId; }
@@ -51,4 +57,8 @@ public class PatientTrichoscopyImageJpaEntity {
     public void setNotes(String notes) { this.notes = notes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public java.time.Instant getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(java.time.Instant deletedAt) { this.deletedAt = deletedAt; }
+    public UUID getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(UUID deletedBy) { this.deletedBy = deletedBy; }
 }

@@ -33,6 +33,8 @@ public final class TrichologyRepositories {
                                                              UUID excludeId);
 
         boolean verificationCodeExists(String code);
+
+        Optional<TrichologyAssessment> findByPatientDocument(UUID companyId, UUID documentId);
     }
 
     public interface AssessmentImageRepository {

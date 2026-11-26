@@ -26,4 +26,7 @@ interface SpringDataTrichologyAssessments extends JpaRepository<TrichologyJpaEnt
                                                                     UUID excludeId);
 
     boolean existsByVerificationCode(String code);
+
+    Optional<TrichologyJpaEntities.AssessmentEntity> findByCompanyIdAndPatientDocumentId(UUID companyId,
+                                                                                       UUID documentId);
 }

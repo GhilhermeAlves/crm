@@ -11,7 +11,10 @@ import com.becommerce.crm.masterdata.company.domain.CompanyModules;
 import com.becommerce.crm.masterdata.company.domain.CompanySegment;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
+import com.becommerce.crm.clinical.trichology.application.port.out.TrichologyRepositories.AssessmentImageRepository;
+import com.becommerce.crm.clinical.trichology.domain.exception.TrichologyStateException;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.ObjectProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,6 +36,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class TrichoscopyServiceTest {
@@ -122,7 +126,7 @@ class TrichoscopyServiceTest {
         segment(CompanySegment.TRICHOLOGY);
         PatientTrichoscopyImage image = PatientTrichoscopyImage.create(COMPANY_ID, CONTACT_ID, STORAGE_ID,
                 USER_ID, null);
-        when(repository.findByCompanyIdAndContactId(COMPANY_ID, CONTACT_ID)).thenReturn(List.of(image));
+        when(repository.findVisibleByCompanyIdAndContactId(COMPANY_ID, CONTACT_ID)).thenReturn(List.of(image));
 
         assertThat(service.list(COMPANY_ID, CONTACT_ID)).extracting(TrichoscopyImageResponse::id)
                 .containsExactly(image.getId());
@@ -152,5 +156,50 @@ class TrichoscopyServiceTest {
         assertThatThrownBy(() -> service.delete(COMPANY_ID, CONTACT_ID, imageId, USER_ID))
                 .isInstanceOf(TrichoscopyImageNotFoundException.class);
         verify(storageUseCase, never()).delete(any(), any());
+    }
+
+    @Test
+    void deleteOfImageLinkedToAssessmentHidesItAndKeepsTheFile() {
+        segment(CompanySegment.TRICHOLOGY);
+        PatientTrichoscopyImage image = PatientTrichoscopyImage.create(COMPANY_ID, CONTACT_ID, STORAGE_ID,
+                USER_ID, null);
+        when(repository.findByIdAndCompanyIdAndContactId(image.getId(), COMPANY_ID, CONTACT_ID))
+                .thenReturn(Optional.of(image));
+        AssessmentImageRepository linked = mock(AssessmentImageRepository.class);
+        when(linked.isLinked(COMPANY_ID, image.getId())).thenReturn(true);
+        when(linked.isLinkedToPublished(COMPANY_ID, image.getId())).thenReturn(false);
+        service.setAssessmentImages(provider(linked));
+
+        service.delete(COMPANY_ID, CONTACT_ID, image.getId(), USER_ID);
+
+        assertThat(image.getDeletedAt()).isNotNull();
+        verify(repository).save(image);
+        verify(repository, never()).delete(any());
+        verify(storageUseCase, never()).delete(any(), any());
+    }
+
+    @Test
+    void deleteOfImageInPublishedReportIsRefused() {
+        segment(CompanySegment.TRICHOLOGY);
+        PatientTrichoscopyImage image = PatientTrichoscopyImage.create(COMPANY_ID, CONTACT_ID, STORAGE_ID,
+                USER_ID, null);
+        when(repository.findByIdAndCompanyIdAndContactId(image.getId(), COMPANY_ID, CONTACT_ID))
+                .thenReturn(Optional.of(image));
+        AssessmentImageRepository linked = mock(AssessmentImageRepository.class);
+        when(linked.isLinked(COMPANY_ID, image.getId())).thenReturn(true);
+        when(linked.isLinkedToPublished(COMPANY_ID, image.getId())).thenReturn(true);
+        service.setAssessmentImages(provider(linked));
+
+        assertThatThrownBy(() -> service.delete(COMPANY_ID, CONTACT_ID, image.getId(), USER_ID))
+                .isInstanceOf(TrichologyStateException.class);
+        verify(repository, never()).save(any());
+        verify(storageUseCase, never()).delete(any(), any());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ObjectProvider<AssessmentImageRepository> provider(AssessmentImageRepository repository) {
+        ObjectProvider<AssessmentImageRepository> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(repository);
+        return provider;
     }
 }

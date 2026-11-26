@@ -29,6 +29,12 @@ public class TrichoscopyRepositoryAdapter implements TrichoscopyRepository {
     }
 
     @Override
+    public List<PatientTrichoscopyImage> findVisibleByCompanyIdAndContactId(UUID companyId, UUID contactId) {
+        return repository.findByCompanyIdAndContactIdAndDeletedAtIsNullOrderByTakenAtDesc(companyId, contactId)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public Optional<PatientTrichoscopyImage> findByIdAndCompanyIdAndContactId(UUID id, UUID companyId,
                                                                              UUID contactId) {
         return repository.findByIdAndCompanyIdAndContactId(id, companyId, contactId).map(this::toDomain);
@@ -52,6 +58,8 @@ public class TrichoscopyRepositoryAdapter implements TrichoscopyRepository {
         entity.setTakenAt(image.getTakenAt());
         entity.setNotes(image.getNotes());
         entity.setCreatedAt(image.getCreatedAt());
+        entity.setDeletedAt(image.getDeletedAt());
+        entity.setDeletedBy(image.getDeletedBy());
         return entity;
     }
 
@@ -64,6 +72,6 @@ public class TrichoscopyRepositoryAdapter implements TrichoscopyRepository {
                 entity.getTakenBy(),
                 entity.getTakenAt(),
                 entity.getNotes(),
-                entity.getCreatedAt());
+                entity.getCreatedAt()).withDeletion(entity.getDeletedAt(), entity.getDeletedBy());
     }
 }
