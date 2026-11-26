@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Sistema CRM Omnichannel para gestão de leads, contatos e comunicação",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#2563eb",
+    background_color: "#000000",
+    theme_color: "#000000",
     lang: "pt-BR",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
