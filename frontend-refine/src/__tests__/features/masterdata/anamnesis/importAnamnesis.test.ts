@@ -105,3 +105,55 @@ describe("parseAnamnesisJson", () => {
     expect(result.sections[0]).toMatchObject({ title: "Geral" });
   });
 });
+
+describe("parseAnamnesisJson — formatos de outros sistemas", () => {
+  it("aceita campos/label/obrigatorio e tipos em português", () => {
+    const json = JSON.stringify({
+      titulo: "Anamnese Tricológica",
+      descricao: "Teste",
+      secoes: [
+        {
+          titulo: "Queixa principal",
+          campos: [
+            { label: "Qual a sua queixa?", tipo: "textarea", obrigatorio: true },
+            { label: "Há quanto tempo?", tipo: "radio", opcoes: ["< 6 meses", "> 1 ano"] },
+          ],
+        },
+        { titulo: "Histórico", campos: [{ label: "Usa medicamento?", tipo: "boolean" }] },
+      ],
+    });
+    const result = parseAnamnesisJson(json, "fallback");
+    expect(result.name).toBe("Anamnese Tricológica");
+    expect(result.sections).toHaveLength(2);
+    expect(result.sections[0].questions?.[0]).toMatchObject({
+      text: "Qual a sua queixa?",
+      type: "LONG_TEXT",
+      required: true,
+    });
+    expect(result.sections[0].questions?.[1].type).toBe("SINGLE_SELECT");
+    expect(result.sections[1].questions?.[0].type).toBe("YES_NO");
+  });
+
+  it("encontra as perguntas dentro de um envelope e aceita BOM", () => {
+    const json =
+      "﻿" +
+      JSON.stringify({
+        anamnese: {
+          nome: "Capilar",
+          fields: [{ question: "Idade", type: "number" }, "Observações"],
+        },
+      });
+    const result = parseAnamnesisImport(json, "arquivo.json");
+    expect(result.name).toBe("Capilar");
+    expect(result.sections[0].questions?.map((q) => q.type)).toEqual(["NUMBER", "SHORT_TEXT"]);
+  });
+
+  it("lista de perguntas soltas na raiz", () => {
+    const result = parseAnamnesisJson(
+      JSON.stringify([{ pergunta: "Tem alergia?", tipo: "sim/não" }]),
+      "Lista",
+    );
+    expect(result.name).toBe("Lista");
+    expect(result.sections[0].questions?.[0].type).toBe("YES_NO");
+  });
+});
