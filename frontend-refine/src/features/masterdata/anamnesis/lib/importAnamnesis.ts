@@ -49,58 +49,154 @@ function clean(text: string | null | undefined): string {
 // ---------------------------------------------------------------------------
 // JSON
 // ---------------------------------------------------------------------------
+//
+// JSONs de anamnese vêm de muitas fontes (outros sistemas, IA, planilhas), cada
+// uma com seus nomes de campo. Aceitamos os sinônimos mais comuns em português
+// e inglês e procuramos as seções/perguntas mesmo dentro de um objeto "envelope"
+// (ex.: { "anamnese": { ... } } ou { "data": { ... } }).
 
-type JsonOption = string | { label?: string; text?: string; value?: string };
-type JsonQuestion = {
-  text?: string;
-  label?: string;
-  pergunta?: string;
-  type?: string;
-  tipo?: string;
-  required?: boolean;
-  obrigatoria?: boolean;
-  highlight?: boolean;
-  options?: JsonOption[];
-  opcoes?: JsonOption[];
-};
-type JsonSection = {
-  title?: string;
-  titulo?: string;
-  professional?: boolean;
-  questions?: JsonQuestion[];
-  perguntas?: JsonQuestion[];
-};
+type Json = Record<string, unknown>;
 
-function jsonType(raw: string | undefined, hasOptions: boolean): AnamnesisQuestionType {
-  const value = (raw ?? "").toUpperCase();
+const SECTION_KEYS = [
+  "sections",
+  "secoes",
+  "seções",
+  "grupos",
+  "groups",
+  "blocos",
+  "etapas",
+  "pages",
+  "paginas",
+  "steps",
+  "categorias",
+];
+const QUESTION_KEYS = [
+  "questions",
+  "perguntas",
+  "questoes",
+  "questões",
+  "campos",
+  "fields",
+  "items",
+  "itens",
+];
+const TEXT_KEYS = [
+  "text",
+  "label",
+  "pergunta",
+  "question",
+  "enunciado",
+  "descricao_pergunta",
+  "titulo",
+  "title",
+  "nome",
+  "name",
+];
+const SECTION_TITLE_KEYS = ["title", "titulo", "título", "name", "nome", "label", "secao", "seção"];
+const OPTION_KEYS = ["options", "opcoes", "opções", "alternativas", "choices", "valores", "values"];
+const TYPE_KEYS = ["type", "tipo", "inputType", "tipo_campo", "tipoCampo"];
+const REQUIRED_KEYS = ["required", "obrigatoria", "obrigatória", "obrigatorio", "obrigatório"];
+
+const isObject = (v: unknown): v is Json =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** Primeiro valor presente entre as chaves (ignorando maiúsculas/minúsculas). */
+function pick(obj: Json, keys: string[]): unknown {
+  const lower = new Map(Object.keys(obj).map((k) => [k.toLowerCase(), k]));
+  for (const key of keys) {
+    const real = lower.get(key.toLowerCase());
+    if (real !== undefined && obj[real] !== undefined && obj[real] !== null) return obj[real];
+  }
+  return undefined;
+}
+
+function pickString(obj: Json, keys: string[]): string {
+  const v = pick(obj, keys);
+  return typeof v === "string" || typeof v === "number" ? clean(String(v)) : "";
+}
+
+function pickArray(obj: Json, keys: string[]): unknown[] | undefined {
+  const v = pick(obj, keys);
+  return Array.isArray(v) ? v : undefined;
+}
+
+function truthy(v: unknown): boolean {
+  return v === true || (typeof v === "string" && /^(true|sim|s|yes|1)$/i.test(v.trim())) || v === 1;
+}
+
+function jsonType(raw: string, hasOptions: boolean): AnamnesisQuestionType {
+  const value = raw
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase()
+    .replace(/[\s-/]+/g, "_");
   if ((QUESTION_TYPES as string[]).includes(value)) return value as AnamnesisQuestionType;
   const aliases: Record<string, AnamnesisQuestionType> = {
     TEXT: "SHORT_TEXT",
     TEXTO: "SHORT_TEXT",
+    STRING: "SHORT_TEXT",
+    INPUT: "SHORT_TEXT",
+    EMAIL: "SHORT_TEXT",
+    TEL: "SHORT_TEXT",
+    TELEFONE: "SHORT_TEXT",
+    TEXTO_CURTO: "SHORT_TEXT",
     TEXTAREA: "LONG_TEXT",
+    TEXTO_LONGO: "LONG_TEXT",
+    PARAGRAFO: "LONG_TEXT",
+    PARAGRAPH: "LONG_TEXT",
+    LONG: "LONG_TEXT",
     BOOLEAN: "YES_NO",
+    BOOL: "YES_NO",
     SIM_NAO: "YES_NO",
+    YESNO: "YES_NO",
     NUMERO: "NUMBER",
+    NUMERIC: "NUMBER",
+    INTEGER: "NUMBER",
+    INT: "NUMBER",
     RADIO: "SINGLE_SELECT",
     SELECT: "SINGLE_SELECT",
+    DROPDOWN: "SINGLE_SELECT",
+    ESCOLHA_UNICA: "SINGLE_SELECT",
+    UNICA: "SINGLE_SELECT",
+    SINGLE: "SINGLE_SELECT",
+    CHOICE: "SINGLE_SELECT",
     CHECKBOX: "MULTI_SELECT",
+    CHECKBOXES: "MULTI_SELECT",
+    MULTIPLA: "MULTI_SELECT",
+    MULTIPLA_ESCOLHA: "MULTI_SELECT",
+    MULTIPLE: "MULTI_SELECT",
+    MULTI: "MULTI_SELECT",
     DATA: "DATE",
+    DATETIME: "DATE",
   };
   return aliases[value] ?? (hasOptions ? "SINGLE_SELECT" : "SHORT_TEXT");
 }
 
-function jsonQuestion(q: JsonQuestion): AnamnesisQuestionRequest | null {
-  const text = clean(q.text ?? q.label ?? q.pergunta);
+function jsonQuestion(raw: unknown): AnamnesisQuestionRequest | null {
+  if (typeof raw === "string") {
+    const text = clean(raw);
+    return text ? { text, type: "SHORT_TEXT", required: false, highlight: false } : null;
+  }
+  if (!isObject(raw)) return null;
+  const text = pickString(raw, TEXT_KEYS);
   if (!text) return null;
-  const options = (q.options ?? q.opcoes ?? [])
-    .map((o) => clean(typeof o === "string" ? o : (o.label ?? o.text ?? o.value)))
+  const options = (pickArray(raw, OPTION_KEYS) ?? [])
+    .map((o) =>
+      clean(
+        typeof o === "string" || typeof o === "number"
+          ? String(o)
+          : isObject(o)
+            ? pickString(o, ["label", "text", "texto", "nome", "name", "value", "valor"])
+            : "",
+      ),
+    )
     .filter(Boolean);
-  const type = jsonType(q.type ?? q.tipo, options.length > 0);
+  const type = jsonType(pickString(raw, TYPE_KEYS), options.length > 0);
   return {
     text,
     type,
-    required: Boolean(q.required ?? q.obrigatoria),
-    highlight: Boolean(q.highlight),
+    required: truthy(pick(raw, REQUIRED_KEYS)),
+    highlight: truthy(pick(raw, ["highlight", "destaque"])),
     options:
       type === "SINGLE_SELECT" || type === "MULTI_SELECT"
         ? options.map((label) => ({ label }))
@@ -108,40 +204,65 @@ function jsonQuestion(q: JsonQuestion): AnamnesisQuestionRequest | null {
   };
 }
 
-export function parseAnamnesisJson(raw: string, fallbackName: string): ImportedAnamnesis {
-  let data: unknown;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error("O arquivo não é um JSON válido.");
-  }
-  const root = (Array.isArray(data) ? { sections: data } : data) as {
-    name?: string;
-    nome?: string;
-    description?: string;
-    descricao?: string;
-    sections?: JsonSection[];
-    secoes?: JsonSection[];
-    questions?: JsonQuestion[];
-    perguntas?: JsonQuestion[];
-  };
-  let rawSections = root.sections ?? root.secoes;
-  const looseQuestions = root.questions ?? root.perguntas;
-  if (!rawSections && looseQuestions) rawSections = [{ title: "Geral", questions: looseQuestions }];
-  const sections = (rawSections ?? [])
+function toSections(root: Json): AnamnesisSectionRequest[] {
+  let rawSections = pickArray(root, SECTION_KEYS);
+  const loose = pickArray(root, QUESTION_KEYS);
+  if (!rawSections && loose) rawSections = [{ titulo: "Geral", perguntas: loose }];
+  return (rawSections ?? [])
+    .filter(isObject)
     .map((s, index) => ({
-      title: clean(s.title ?? s.titulo) || `Seção ${index + 1}`,
-      professional: Boolean(s.professional),
-      questions: (s.questions ?? s.perguntas ?? [])
+      title: pickString(s, SECTION_TITLE_KEYS) || `Seção ${index + 1}`,
+      professional: truthy(pick(s, ["professional", "profissional"])),
+      questions: (pickArray(s, QUESTION_KEYS) ?? [])
         .map(jsonQuestion)
         .filter((q): q is AnamnesisQuestionRequest => q !== null),
     }))
     .filter((s) => s.questions.length > 0);
-  if (sections.length === 0) throw new Error("Nenhuma pergunta encontrada no JSON.");
+}
+
+/** Procura, em largura, o primeiro objeto que tenha seções ou perguntas. */
+function findRoot(data: unknown): Json | null {
+  const queue: unknown[] = [Array.isArray(data) ? { sections: data } : data];
+  for (let i = 0; i < queue.length && i < 200; i++) {
+    const node = queue[i];
+    if (!isObject(node)) continue;
+    if (toSections(node).length > 0) return node;
+    for (const value of Object.values(node)) {
+      if (isObject(value)) queue.push(value);
+    }
+  }
+  return null;
+}
+
+export function parseAnamnesisJson(raw: string, fallbackName: string): ImportedAnamnesis {
+  let data: unknown;
+  try {
+    data = JSON.parse(raw.replace(/^﻿/, ""));
+  } catch {
+    throw new Error("O arquivo não é um JSON válido.");
+  }
+  // Lista na raiz: de seções (têm perguntas dentro) ou de perguntas soltas.
+  if (Array.isArray(data)) {
+    const asSections = data.some((d) => isObject(d) && pickArray(d, QUESTION_KEYS));
+    data = asSections ? { sections: data } : { questions: data };
+  }
+  const root = findRoot(data);
+  if (!root) {
+    throw new Error(
+      'Nenhuma pergunta encontrada no JSON. Use, por exemplo: { "nome": "...", "secoes": [ { "titulo": "...", "perguntas": [ { "texto": "...", "tipo": "texto" } ] } ] }.',
+    );
+  }
+  const top = isObject(data) ? data : root;
   return {
-    name: clean(root.name ?? root.nome) || fallbackName,
-    description: clean(root.description ?? root.descricao) || undefined,
-    sections,
+    name:
+      pickString(root, ["name", "nome", "titulo", "título", "title"]) ||
+      pickString(top, ["name", "nome", "titulo", "título", "title"]) ||
+      fallbackName,
+    description:
+      pickString(root, ["description", "descricao", "descrição"]) ||
+      pickString(top, ["description", "descricao", "descrição"]) ||
+      undefined,
+    sections: toSections(root),
   };
 }
 
