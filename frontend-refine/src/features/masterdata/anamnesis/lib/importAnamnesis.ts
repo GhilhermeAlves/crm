@@ -166,6 +166,8 @@ function jsonType(raw: string, hasOptions: boolean): AnamnesisQuestionType {
     MULTIPLA_ESCOLHA: "MULTI_SELECT",
     MULTIPLE: "MULTI_SELECT",
     MULTI: "MULTI_SELECT",
+    MULTISELECT: "MULTI_SELECT",
+    MULTIPLE_CHOICE: "MULTI_SELECT",
     DATA: "DATE",
     DATETIME: "DATE",
   };
@@ -191,7 +193,12 @@ function jsonQuestion(raw: unknown): AnamnesisQuestionRequest | null {
       ),
     )
     .filter(Boolean);
-  const type = jsonType(pickString(raw, TYPE_KEYS), options.length > 0);
+  let type = jsonType(pickString(raw, TYPE_KEYS), options.length > 0);
+  // Seleção sem opções não é aceita pelo servidor: um checkbox sozinho
+  // (ex.: "Declaro que as informações são verdadeiras") vira Sim/Não.
+  if ((type === "SINGLE_SELECT" || type === "MULTI_SELECT") && options.length === 0) {
+    type = "YES_NO";
+  }
   return {
     text,
     type,
