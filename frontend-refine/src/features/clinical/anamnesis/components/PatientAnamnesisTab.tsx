@@ -9,9 +9,12 @@ import {
   useCurrentPatientAnamnesis,
   useDiscardPatientAnamnesis,
   usePatientAnamneses,
-  useStartPatientAnamnesis,
 } from "../hooks/usePatientAnamnesis";
-import { type FormRequest, usePatientFormRequests } from "../hooks/usePatientFormRequests";
+import {
+  type FormRequest,
+  useCreateFormRequest,
+  usePatientFormRequests,
+} from "../hooks/usePatientFormRequests";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -86,7 +89,7 @@ export function PatientAnamnesisTab({
   );
   const { data: history = [] } = usePatientAnamneses(companyId, contactId);
   const { data: requests = [] } = usePatientFormRequests(companyId, contactId);
-  const startMutation = useStartPatientAnamnesis(companyId, contactId);
+  const createRequest = useCreateFormRequest(companyId, contactId);
   const discardMutation = useDiscardPatientAnamnesis(companyId, contactId);
   const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
   const [viewing, setViewing] = useState<string | null>(null);
@@ -105,6 +108,29 @@ export function PatientAnamnesisTab({
   const editable = drafts.filter((d) => !waiting.includes(d));
   const completedHistory = history.filter((h) => h.status === "COMPLETED" && h.id !== current?.id);
   const viewingItem = viewing ? history.find((h) => h.id === viewing) : undefined;
+
+  /**
+   * Abre o modo recepção numa aba nova: o paciente responde e assina no tablet;
+   * as seções do profissional ficam para depois, aqui na ficha.
+   */
+  const openReception = (modelId: string) => {
+    // A aba precisa abrir no clique (antes da resposta), senão o navegador bloqueia.
+    const tab = window.open("about:blank", "_blank");
+    createRequest.mutate(
+      { modelId, mode: "RECEPTION", sendWhatsApp: false, sendEmail: false },
+      {
+        onSuccess: (result) => {
+          const base = result.url.startsWith("http")
+            ? result.url
+            : `${window.location.origin}${result.url}`;
+          const url = `${base}?modo=recepcao`;
+          if (tab) tab.location.href = url;
+          else window.open(url, "_blank");
+        },
+        onError: () => tab?.close(),
+      },
+    );
+  };
 
   if (loadingCurrent) {
     return <p className="text-sm text-muted-foreground">Carregando...</p>;
@@ -152,10 +178,11 @@ export function PatientAnamnesisTab({
           </Select>
           <Button
             variant="outline"
-            disabled={!effectiveModel || startMutation.isPending}
-            onClick={() => effectiveModel && startMutation.mutate({ modelId: effectiveModel })}
+            className="gap-1.5"
+            disabled={!effectiveModel || createRequest.isPending}
+            onClick={() => effectiveModel && openReception(effectiveModel)}
           >
-            Preencher agora
+            <Tablet className="h-4 w-4" /> Preencher agora (tablet)
           </Button>
           <Button className="gap-1.5" onClick={() => setSendOpen(true)}>
             <Send className="h-4 w-4" /> Enviar ao paciente
