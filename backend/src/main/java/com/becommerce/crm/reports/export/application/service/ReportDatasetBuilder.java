@@ -19,6 +19,7 @@ import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CategoryTotalRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.DailyTotalRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportTooLargeException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -62,6 +63,9 @@ public class ReportDatasetBuilder {
     static final String FINANCIAL_GROUP = "Resultado financeiro";
     static final String CARD_FEES = "Taxas de cartão/maquininha";
 
+    static final String TOO_LARGE_MESSAGE =
+            "O relatório excede o limite de 50.000 linhas. Reduza o período.";
+
     private final ReportDataGateway gateway;
 
     public ReportDatasetBuilder(ReportDataGateway gateway) {
@@ -77,15 +81,23 @@ public class ReportDatasetBuilder {
     }
 
     public TransactionsDataset transactions(UUID companyId, LocalDate from, LocalDate to) {
-        return transactions(gateway.transactions(companyId, from, to));
+        return transactions(limited(gateway.transactions(companyId, from, to)));
     }
 
     public AgendaDataset agenda(UUID companyId, LocalDate from, LocalDate to) {
-        return agenda(gateway.appointments(companyId, from, to));
+        return agenda(limited(gateway.appointments(companyId, from, to)));
     }
 
     public BudgetsDataset budgets(UUID companyId, LocalDate from, LocalDate to) {
-        return budgets(gateway.budgets(companyId, from, to));
+        return budgets(limited(gateway.budgets(companyId, from, to)));
+    }
+
+    /** Falha a exportação quando a consulta passa de {@link ReportDataGateway#MAX_ROWS}. */
+    static <T> List<T> limited(List<T> rows) {
+        if (rows.size() > ReportDataGateway.MAX_ROWS) {
+            throw new ReportExportTooLargeException(TOO_LARGE_MESSAGE);
+        }
+        return rows;
     }
 
     /** Resumo na ordem do fluxo do orçamento: rascunho → aprovado → perdido. */

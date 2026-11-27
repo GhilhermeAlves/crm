@@ -39,6 +39,10 @@ public final class CsvReportWriter {
             metaLine(csv, List.of("CNPJ", report.companyCnpj()));
         }
         metaLine(csv, List.of("Emitido em", ISSUED.format(report.issuedAt())));
+        if (report.notice() != null) {
+            csv.append(NEWLINE);
+            metaLine(csv, List.of(report.notice()));
+        }
         for (ReportTable table : report.sections()) {
             csv.append(NEWLINE);
             if (table.heading() != null) {

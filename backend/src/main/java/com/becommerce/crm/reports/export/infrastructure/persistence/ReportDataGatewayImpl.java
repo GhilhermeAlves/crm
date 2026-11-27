@@ -114,7 +114,7 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "LEFT JOIN contacts c ON c.id = ft.contact_id AND c.deleted_at IS NULL "
                 + "WHERE ft.company_id = :companyId AND ft.status <> 'CANCELLED' "
                 + "AND ft.due_date BETWEEN :from AND :to "
-                + "ORDER BY ft.due_date, ft.created_at, ft.id";
+                + "ORDER BY ft.due_date, ft.created_at, ft.id LIMIT " + (MAX_ROWS + 1);
         return jdbc.query(sql, params(companyId, from, to), TRANSACTION_ROW);
     }
 
@@ -131,7 +131,7 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "LEFT JOIN users u ON u.id = a.host_id "
                 + "WHERE a.company_id = :companyId "
                 + "AND (a.start_at AT TIME ZONE 'America/Sao_Paulo')::date BETWEEN :from AND :to "
-                + "ORDER BY u.name, a.start_at";
+                + "ORDER BY u.name, a.start_at LIMIT " + (MAX_ROWS + 1);
         return jdbc.query(sql, params(companyId, from, to), APPOINTMENT_ROW);
     }
 
@@ -153,7 +153,7 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "AND (b.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date "
                 + "BETWEEN :from AND :to "
                 + "GROUP BY b.id, c.first_name, c.last_name "
-                + "ORDER BY b.created_at, b.id";
+                + "ORDER BY b.created_at, b.id LIMIT " + (MAX_ROWS + 1);
         return jdbc.query(sql, params(companyId, from, to), BUDGET_ROW);
     }
 

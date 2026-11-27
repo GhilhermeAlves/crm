@@ -17,6 +17,13 @@ import java.util.UUID;
  */
 public interface ReportDataGateway {
 
+    /**
+     * Teto de linhas por exportação. As consultas de detalhe trazem no máximo
+     * {@code MAX_ROWS + 1} linhas, só para saber que o limite foi passado sem
+     * carregar tudo na memória.
+     */
+    int MAX_ROWS = 50_000;
+
     /** Nome fantasia (ou razão social), CNPJ e logo da empresa, para o cabeçalho. */
     CompanyHeader companyHeader(UUID companyId);
 

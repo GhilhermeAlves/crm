@@ -74,6 +74,12 @@ public final class XlsxReportWriter {
                 + "   ·   Emitido em " + ISSUED.format(report.issuedAt()));
         sheet.getRow(1).getCell(0).setCellStyle(styles.meta);
         sheet.getRow(2).getCell(0).setCellStyle(styles.meta);
+        if (report.notice() != null) {
+            // Linha 3 fica livre entre os metadados e o cabeçalho das colunas.
+            Cell notice = sheet.createRow(3).createCell(0);
+            notice.setCellValue(SpreadsheetSanitizer.sanitize(report.notice()));
+            notice.setCellStyle(styles.meta);
+        }
 
         org.apache.poi.ss.usermodel.Row head = sheet.createRow(HEADER_ROW);
         for (int i = 0; i < columns.size(); i++) {

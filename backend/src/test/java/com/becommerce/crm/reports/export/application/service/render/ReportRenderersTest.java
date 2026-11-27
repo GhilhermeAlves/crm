@@ -249,4 +249,28 @@ class ReportRenderersTest {
             assertThat(foundNegative).isTrue();
         }
     }
+
+    @Test
+    void emptyNoticeAppearsInPdfCsvAndXlsx() throws Exception {
+        ReportDocument doc = ReportDocumentFactory.transactions(new TransactionsDataset(List.of(), 0, 0),
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30), COMPANY, ISSUED)
+                .withNotice(ReportDocument.EMPTY_NOTICE);
+
+        String pdf = new PdfTextExtractor(new PdfReader(PdfReportLayout.render(doc))).getTextFromPage(1);
+        assertThat(pdf).contains("Nenhum registro encontrado para o período.");
+
+        String csv = new String(CsvReportWriter.write(doc), StandardCharsets.UTF_8);
+        assertThat(csv).contains("\r\nNenhum registro encontrado para o período.\r\n");
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(XlsxReportWriter.write(doc)))) {
+            assertThat(workbook.getSheetAt(0).getRow(3).getCell(0).getStringCellValue())
+                    .isEqualTo("Nenhum registro encontrado para o período.");
+        }
+    }
+
+    @Test
+    void documentWithoutNoticeHasNoEmptyMessage() {
+        String csv = new String(CsvReportWriter.write(dre()), StandardCharsets.UTF_8);
+        assertThat(csv).doesNotContain("Nenhum registro");
+    }
 }

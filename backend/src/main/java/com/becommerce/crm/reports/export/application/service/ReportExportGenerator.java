@@ -6,6 +6,11 @@ import com.becommerce.crm.communication.notification.domain.NotificationType;
 import com.becommerce.crm.finance.accounting.application.service.FinanceLabels;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
+import com.becommerce.crm.reports.export.application.dto.AgendaDataset;
+import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
+import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
+import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
+import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CompanyHeader;
 import com.becommerce.crm.reports.export.application.port.out.ReportExportRepository;
@@ -16,6 +21,7 @@ import com.becommerce.crm.reports.export.application.service.render.ReportDocume
 import com.becommerce.crm.reports.export.application.service.render.XlsxReportWriter;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.reports.export.domain.ReportExportStatus;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportTooLargeException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -107,9 +113,12 @@ public class ReportExportGenerator {
                     return null;
                 });
             }
+            // Limite de linhas não se resolve tentando de novo: mostra a orientação.
+            String hint = cause instanceof ReportExportTooLargeException
+                    ? cause.getMessage() : "Tente novamente em instantes.";
             notifications.create(companyId, new CreateNotificationRequest(export.requestedBy(),
                     NotificationType.SYSTEM, "Não foi possível gerar o relatório",
-                    summary(export) + ". Tente novamente em instantes.", null), export.requestedBy());
+                    summary(export) + ". " + hint, null), export.requestedBy());
         } catch (RuntimeException ex) {
             log.error("Falha ao registrar o erro da exportação {}", export.id(), ex);
         }
@@ -122,22 +131,42 @@ public class ReportExportGenerator {
         CompanyHeader company = dataGateway.companyHeader(companyId);
         LocalDateTime issuedAt = LocalDateTime.now(clock).withNano(0);
         ReportDocument document = switch (export.type()) {
-            case MONTHLY_DRE -> ReportDocumentFactory.monthlyDre(datasets.monthlyDre(companyId, from, to),
-                    YearMonth.from(from), company, issuedAt);
-            case CASH_FLOW -> ReportDocumentFactory.cashFlow(datasets.cashFlow(companyId, from, to), from, to,
-                    company, issuedAt);
-            case TRANSACTIONS -> ReportDocumentFactory.transactions(datasets.transactions(companyId, from, to),
-                    from, to, company, issuedAt);
-            case AGENDA -> ReportDocumentFactory.agenda(datasets.agenda(companyId, from, to), from, to, company,
-                    issuedAt);
-            case BUDGETS -> ReportDocumentFactory.budgets(datasets.budgets(companyId, from, to), from, to,
-                    company, issuedAt);
+            case MONTHLY_DRE -> {
+                MonthlyDreDataset data = datasets.monthlyDre(companyId, from, to);
+                yield emptyNotice(ReportDocumentFactory.monthlyDre(data, YearMonth.from(from), company, issuedAt),
+                        data.groups().stream().flatMap(g -> g.lines().stream()).allMatch(l -> l.count() == 0));
+            }
+            case CASH_FLOW -> {
+                CashFlowDataset data = datasets.cashFlow(companyId, from, to);
+                yield emptyNotice(ReportDocumentFactory.cashFlow(data, from, to, company, issuedAt),
+                        data.days().isEmpty());
+            }
+            case TRANSACTIONS -> {
+                TransactionsDataset data = datasets.transactions(companyId, from, to);
+                yield emptyNotice(ReportDocumentFactory.transactions(data, from, to, company, issuedAt),
+                        data.rows().isEmpty());
+            }
+            case AGENDA -> {
+                AgendaDataset data = datasets.agenda(companyId, from, to);
+                yield emptyNotice(ReportDocumentFactory.agenda(data, from, to, company, issuedAt),
+                        data.rows().isEmpty());
+            }
+            case BUDGETS -> {
+                BudgetsDataset data = datasets.budgets(companyId, from, to);
+                yield emptyNotice(ReportDocumentFactory.budgets(data, from, to, company, issuedAt),
+                        data.rows().isEmpty());
+            }
         };
         return switch (export.format()) {
             case PDF -> PdfReportLayout.render(document, company.logoUrl());
             case XLSX -> XlsxReportWriter.write(document);
             case CSV -> CsvReportWriter.write(document);
         };
+    }
+
+    /** Sem registros o arquivo sai normalmente (READY), com o aviso de estado vazio. */
+    private static ReportDocument emptyNotice(ReportDocument document, boolean empty) {
+        return empty ? document.withNotice(ReportDocument.EMPTY_NOTICE) : document;
     }
 
     /** {@code contabil-mensal_2026-06.pdf} ou {@code agenda_2026-06-01_a_2026-06-30.xlsx}. */

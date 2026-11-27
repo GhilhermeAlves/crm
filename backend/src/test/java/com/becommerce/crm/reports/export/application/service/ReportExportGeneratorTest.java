@@ -15,10 +15,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -152,5 +155,53 @@ class ReportExportGeneratorTest {
 
         verify(storage, never()).upload(any(), any(), any(), any(), any());
         verify(notifications, never()).create(any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExportFormat.class)
+    void emptyDatasetIsReadyWithEmptyNotice(ExportFormat format) throws Exception {
+        ReportExport export = pending(ReportExportType.TRANSACTIONS, format);
+        when(storage.upload(any(), anyString(), anyString(), any(), any()))
+                .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
+
+        generator.generate(COMPANY, export.id());
+
+        assertThat(export.status()).isEqualTo(ReportExportStatus.READY);
+        ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
+        verify(storage).upload(eq(COMPANY), anyString(), eq(format.contentType()), bytes.capture(), eq(USER));
+        assertThat(ReportFileText.of(format, bytes.getValue()))
+                .contains("Nenhum registro encontrado para o período.");
+        ArgumentCaptor<CreateNotificationRequest> notification =
+                ArgumentCaptor.forClass(CreateNotificationRequest.class);
+        verify(notifications).create(eq(COMPANY), notification.capture(), eq(USER));
+        assertThat(notification.getValue().title()).isEqualTo("Relatório pronto para download");
+    }
+
+    @Test
+    void datasetAboveMaxRowsFailsWithClearMessage() {
+        ReportExport export = pending(ReportExportType.AGENDA, ExportFormat.PDF);
+        ReportDataGateway.AppointmentRow row = new ReportDataGateway.AppointmentRow(java.time.Instant.now(),
+                "Ana", "Consulta", "Dr. João", "SCHEDULED", "MANUAL");
+        when(gateway.appointments(any(), any(), any()))
+                .thenReturn(Collections.nCopies(ReportDataGateway.MAX_ROWS + 1, row));
+
+        generator.generate(COMPANY, export.id());
+
+        assertThat(export.status()).isEqualTo(ReportExportStatus.FAILED);
+        assertThat(export.errorMessage())
+                .isEqualTo("O relatório excede o limite de 50.000 linhas. Reduza o período.");
+        verify(repository).update(export);
+        verify(storage, never()).upload(any(), any(), any(), any(), any());
+        ArgumentCaptor<CreateNotificationRequest> notification =
+                ArgumentCaptor.forClass(CreateNotificationRequest.class);
+        verify(notifications).create(eq(COMPANY), notification.capture(), eq(USER));
+        assertThat(notification.getValue().title()).isEqualTo("Não foi possível gerar o relatório");
+        assertThat(notification.getValue().body()).endsWith("Reduza o período.");
+    }
+
+    @Test
+    void datasetAtMaxRowsIsAccepted() {
+        List<Integer> rows = Collections.nCopies(ReportDataGateway.MAX_ROWS, 1);
+        assertThat(ReportDatasetBuilder.limited(rows)).hasSize(ReportDataGateway.MAX_ROWS);
     }
 }
