@@ -1,16 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { PageTitle } from "@/components/common/PageTitle";
 import { useAuth } from "@/features/identity/auth/hooks/useAuth";
-import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { RecentReportExports } from "@/features/reports/export/RecentReportExports";
 import { ReportExportForm } from "@/features/reports/export/ReportExportForm";
 import { findReportExport } from "@/features/reports/export/types";
 import {
   useCancelReportExport,
+  useReportCatalog,
   useReportExports,
   useRequestReportExport,
 } from "@/features/reports/export/useReportExports";
@@ -18,14 +19,26 @@ import { ROUTES } from "@/lib/constants";
 
 export default function ReportExportPage() {
   const params = useParams<{ type: string }>();
-  const definition = findReportExport(params.type);
+  const router = useRouter();
   const { user } = useAuth();
-  const { can } = useAuthorization();
   const companyId = user?.companyId ?? null;
+  // O catálogo já vem filtrado pelas permissões do usuário (CRM_ADMIN vê todos).
+  const catalogQuery = useReportCatalog(companyId);
+  const definition = findReportExport(catalogQuery.data, params.type);
+  const notAllowed = catalogQuery.isSuccess && !definition;
 
   const exportsQuery = useReportExports(companyId);
   const requestExport = useRequestReportExport(companyId);
   const cancelExport = useCancelReportExport(companyId);
+
+  // Relatório inexistente ou sem permissão: volta para a lista de Relatórios.
+  useEffect(() => {
+    if (notAllowed) router.replace(ROUTES.REPORTS);
+  }, [notAllowed, router]);
+
+  if (!definition && !catalogQuery.isError) {
+    return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  }
 
   if (!definition) {
     return (
@@ -54,18 +67,12 @@ export default function ReportExportPage() {
         <p className="max-w-2xl text-sm text-muted-foreground">{definition.description}</p>
       </div>
 
-      {can(definition.permission) ? (
-        <ReportExportForm
-          key={definition.type}
-          definition={definition}
-          isSubmitting={requestExport.isPending}
-          onSubmit={(request) => requestExport.mutate(request)}
-        />
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          Você não tem permissão para gerar este relatório.
-        </p>
-      )}
+      <ReportExportForm
+        key={definition.type}
+        definition={definition}
+        isSubmitting={requestExport.isPending}
+        onSubmit={(request) => requestExport.mutate(request)}
+      />
 
       <RecentReportExports
         companyId={companyId}

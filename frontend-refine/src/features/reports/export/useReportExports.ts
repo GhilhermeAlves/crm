@@ -7,6 +7,16 @@ const POLL_PENDING_MS = 5_000;
 
 export const reportExportsKey = (companyId: string | null) => ["report-exports", companyId];
 
+/** Catálogo de relatórios do usuário (só os permitidos); muda pouco, então fica em cache. */
+export function useReportCatalog(companyId: string | null) {
+  return useQuery({
+    queryKey: ["report-exports", companyId, "catalog"],
+    queryFn: () => ReportExportService.catalog(companyId as string),
+    enabled: !!companyId,
+    staleTime: 5 * 60_000,
+  });
+}
+
 /** Exportações recentes do usuário; consulta a cada 5 s enquanto houver alguma gerando. */
 export function useReportExports(companyId: string | null) {
   return useQuery({

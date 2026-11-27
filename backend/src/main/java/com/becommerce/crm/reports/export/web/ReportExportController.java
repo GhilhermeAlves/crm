@@ -1,6 +1,7 @@
 package com.becommerce.crm.reports.export.web;
 
 import com.becommerce.crm.masterdata.storage.application.dto.StorageDownload;
+import com.becommerce.crm.reports.export.application.dto.ReportCatalogEntry;
 import com.becommerce.crm.reports.export.application.dto.ReportExportRequest;
 import com.becommerce.crm.reports.export.application.dto.ReportExportResponse;
 import com.becommerce.crm.reports.export.application.service.ReportExportService;
@@ -47,8 +48,8 @@ public class ReportExportController {
     public ResponseEntity<ReportExportResponse> request(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
                                                         @RequestBody ReportExportRequest request,
                                                         @AuthenticationPrincipal CurrentUser principal) {
-        ReportExportResponse response = service.request(companyId, principal.userId(), principal.permissions(),
-                request);
+        ReportExportResponse response = service.request(companyId, principal.userId(), principal.roles(),
+                principal.permissions(), request);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
@@ -57,6 +58,14 @@ public class ReportExportController {
     public ResponseEntity<List<ReportExportResponse>> recent(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
                                                              @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(service.recent(companyId, principal.userId()));
+    }
+
+    /** Catálogo dos relatórios que o usuário pode gerar, com formatos e modo de período. */
+    @GetMapping("/catalog")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ReportCatalogEntry>> catalog(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                            @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(service.catalog(principal.roles(), principal.permissions()));
     }
 
     @GetMapping("/{exportId}")
@@ -80,7 +89,8 @@ public class ReportExportController {
     public ResponseEntity<byte[]> download(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
                                            @PathVariable UUID exportId,
                                            @AuthenticationPrincipal CurrentUser principal) {
-        StorageDownload file = service.download(companyId, principal.userId(), principal.permissions(), exportId);
+        StorageDownload file = service.download(companyId, principal.userId(), principal.roles(),
+                principal.permissions(), exportId);
         ContentDisposition disposition = ContentDisposition.attachment()
                 .filename(file.fileName(), StandardCharsets.UTF_8)
                 .build();

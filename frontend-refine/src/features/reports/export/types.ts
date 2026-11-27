@@ -34,67 +34,53 @@ export interface ReportExport {
   rowCount?: number | null;
 }
 
-export interface ReportExportDefinition {
+/** Item do catálogo vindo do backend (`GET /report-exports/catalog`), fonte única dos relatórios. */
+export interface ReportCatalogEntry {
   type: ReportExportType;
   /** Segmento da URL: /reports/export/<slug>. */
   slug: string;
   label: string;
   description: string;
+  domain: string;
   permission: string;
-  /** DRE é gerada por mês fechado; os demais por intervalo de datas. */
-  period: "month" | "range";
+  formats: ExportFormat[];
+  periodMode: "MONTH" | "RANGE";
+  /** Janela máxima do período, em meses. */
+  maxMonths: number;
 }
 
-export const REPORT_EXPORTS: ReportExportDefinition[] = [
-  {
-    type: "MONTHLY_DRE",
-    slug: "monthly-dre",
-    label: "Contábil mensal (DRE)",
-    description:
-      "Receitas, deduções e despesas do mês agrupadas por conta, com o resultado do mês (regime de caixa). Ideal para enviar ao contador.",
-    permission: "finance:read",
-    period: "month",
-  },
-  {
-    type: "CASH_FLOW",
-    slug: "cash-flow",
-    label: "Fluxo de caixa",
-    description:
-      "Entradas e saídas pagas dia a dia, com saldo do dia e saldo acumulado do período.",
-    permission: "finance:read",
-    period: "range",
-  },
-  {
-    type: "TRANSACTIONS",
-    slug: "transactions",
-    label: "Extrato de lançamentos",
-    description:
-      "Todos os lançamentos com vencimento no período: paciente, categoria, forma de pagamento, valor e status.",
-    permission: "finance:read",
-    period: "range",
-  },
-  {
-    type: "AGENDA",
-    slug: "agenda",
-    label: "Agenda / atendimentos",
-    description:
-      "Consultas do período com resumo por profissional (agendadas, realizadas, faltas e canceladas) e a lista detalhada.",
-    permission: "appointment:read",
-    period: "range",
-  },
-  {
-    type: "BUDGETS",
-    slug: "budgets",
-    label: "Orçamentos",
-    description:
-      "Orçamentos criados no período com resumo por situação (em aberto, aprovados e perdidos) e a lista com paciente, itens, desconto, total e forma de pagamento.",
-    permission: "contact:read",
-    period: "range",
-  },
-];
+export interface ReportExportDefinition {
+  type: ReportExportType;
+  slug: string;
+  label: string;
+  description: string;
+  permission: string;
+  formats: ExportFormat[];
+  /** DRE é gerada por mês fechado; os demais por intervalo de datas. */
+  period: "month" | "range";
+  maxMonths: number;
+}
 
-export function findReportExport(slug: string): ReportExportDefinition | undefined {
-  return REPORT_EXPORTS.find((definition) => definition.slug === slug);
+export function toReportExportDefinition(entry: ReportCatalogEntry): ReportExportDefinition {
+  return {
+    type: entry.type,
+    slug: entry.slug,
+    label: entry.label,
+    description: entry.description,
+    permission: entry.permission,
+    formats: entry.formats,
+    period: entry.periodMode === "MONTH" ? "month" : "range",
+    maxMonths: entry.maxMonths,
+  };
+}
+
+/** Procura no catálogo (já filtrado por permissão) o relatório do slug da URL. */
+export function findReportExport(
+  catalog: ReportCatalogEntry[] | undefined,
+  slug: string,
+): ReportExportDefinition | undefined {
+  const entry = catalog?.find((item) => item.slug === slug);
+  return entry ? toReportExportDefinition(entry) : undefined;
 }
 
 /** Metadados gravados pelo backend na notificação de relatório pronto. */

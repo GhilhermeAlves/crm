@@ -3,6 +3,7 @@ package com.becommerce.crm.reports.export.application.service;
 import com.becommerce.crm.identity.domain.exception.CrmAccessDeniedException;
 import com.becommerce.crm.masterdata.storage.application.dto.StorageDownload;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
+import com.becommerce.crm.reports.export.application.dto.ReportCatalogEntry;
 import com.becommerce.crm.reports.export.application.dto.ReportExportRequest;
 import com.becommerce.crm.reports.export.application.dto.ReportExportResponse;
 import com.becommerce.crm.reports.export.application.port.out.ReportExportRepository;
@@ -10,6 +11,7 @@ import com.becommerce.crm.reports.export.domain.ExportFormat;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.reports.export.domain.ReportExportStatus;
 import com.becommerce.crm.reports.export.domain.ReportExportType;
+import com.becommerce.crm.reports.export.domain.ReportPeriodMode;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportConflictException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportNotFoundException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportRateLimitException;
@@ -26,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -40,7 +43,7 @@ import java.util.UUID;
 @Service
 public class ReportExportService {
 
-    static final int MAX_MONTHS = 12;
+    static final int MAX_MONTHS = ReportExportType.Defaults.MAX_MONTHS;
     private static final int RECENT_LIMIT = 20;
 
     static final int DEFAULT_MAX_PENDING = 3;
@@ -71,15 +74,34 @@ public class ReportExportService {
         this.maxPerHour = maxPerHour;
     }
 
+    /** Relatórios do catálogo que o usuário pode gerar (CRM_ADMIN vê todos). */
+    public List<ReportCatalogEntry> catalog(Collection<String> roles, Collection<String> permissions) {
+        return Arrays.stream(ReportExportType.values())
+                .filter(type -> type.allowedFor(roles, permissions))
+                .map(ReportCatalogEntry::from)
+                .toList();
+    }
+
     @Transactional
     public ReportExportResponse request(UUID companyId, UUID userId, Collection<String> permissions,
                                         ReportExportRequest request) {
+        return request(companyId, userId, List.of(), permissions, request);
+    }
+
+    /** Valida tipo, permissão, formato e período a partir do catálogo ({@link ReportExportType}). */
+    @Transactional
+    public ReportExportResponse request(UUID companyId, UUID userId, Collection<String> roles,
+                                        Collection<String> permissions, ReportExportRequest request) {
         ReportExportType type = parseType(request.type());
         ExportFormat format = parseFormat(request.format());
-        requirePermission(type, permissions);
+        requirePermission(type, roles, permissions);
+        if (!type.supports(format)) {
+            throw new ReportExportValidationException("O relatório " + type.label()
+                    + " não pode ser gerado em " + format.label() + ".");
+        }
         LocalDate from;
         LocalDate to;
-        if (type == ReportExportType.MONTHLY_DRE) {
+        if (type.periodMode() == ReportPeriodMode.MONTH) {
             YearMonth month = parseMonth(request.month() != null ? request.month() : monthOf(request.from()));
             from = month.atDay(1);
             to = month.atEndOfMonth();
@@ -89,8 +111,9 @@ public class ReportExportService {
             if (to.isBefore(from)) {
                 throw new ReportExportValidationException("A data final deve ser igual ou posterior à inicial.");
             }
-            if (!to.isBefore(from.plusMonths(MAX_MONTHS))) {
-                throw new ReportExportValidationException("O período máximo é de " + MAX_MONTHS + " meses.");
+            int maxMonths = type.maxMonths();
+            if (!to.isBefore(from.plusMonths(maxMonths))) {
+                throw new ReportExportValidationException("O período máximo é de " + maxMonths + " meses.");
             }
         }
         ReportExport export = ReportExport.pending(companyId, userId, type, format, from, to);
@@ -168,12 +191,17 @@ public class ReportExportService {
 
     /** Arquivo pronto do próprio usuário; qualquer outro caso é 404. */
     public StorageDownload download(UUID companyId, UUID userId, Collection<String> permissions, UUID exportId) {
+        return download(companyId, userId, List.of(), permissions, exportId);
+    }
+
+    public StorageDownload download(UUID companyId, UUID userId, Collection<String> roles,
+                                    Collection<String> permissions, UUID exportId) {
         ReportExport export = owned(companyId, userId, exportId);
         if (export.status() != ReportExportStatus.READY || export.storageObjectId() == null) {
             throw new ReportExportNotFoundException(exportId);
         }
         try {
-            requirePermission(export.type(), permissions);
+            requirePermission(export.type(), roles, permissions);
         } catch (CrmAccessDeniedException ex) {
             auditor.record(ReportExportAuditor.Event.ACCESS_DENIED, export, userId);
             throw ex;
@@ -204,8 +232,10 @@ public class ReportExportService {
         return export;
     }
 
-    private static void requirePermission(ReportExportType type, Collection<String> permissions) {
-        if (permissions == null || !permissions.contains(type.requiredPermission())) {
+    /** CRM_ADMIN sempre passa (regra do projeto); os demais precisam da permissão do tipo. */
+    private static void requirePermission(ReportExportType type, Collection<String> roles,
+                                          Collection<String> permissions) {
+        if (!type.allowedFor(roles, permissions)) {
             throw new CrmAccessDeniedException("Você não tem permissão para gerar o relatório "
                     + type.label() + ".");
         }

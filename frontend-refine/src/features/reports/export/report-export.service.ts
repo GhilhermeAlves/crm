@@ -1,10 +1,16 @@
 import api from "@/lib/api";
 import { downloadBlob } from "@/features/finance/utils/accounting-report";
-import type { ReportExport, ReportExportRequest } from "./types";
+import type { ReportCatalogEntry, ReportExport, ReportExportRequest } from "./types";
 
 const base = (companyId: string) => `/companies/${companyId}/report-exports`;
 
 export const ReportExportService = {
+  /** Relatórios que o usuário pode gerar, com formatos e modo de período. */
+  async catalog(companyId: string): Promise<ReportCatalogEntry[]> {
+    const response = await api.get<ReportCatalogEntry[]>(`${base(companyId)}/catalog`);
+    return response.data;
+  },
+
   async request(companyId: string, request: ReportExportRequest): Promise<ReportExport> {
     const response = await api.post<ReportExport>(base(companyId), request);
     return response.data;

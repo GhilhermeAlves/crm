@@ -240,4 +240,41 @@ class ReportExportServiceTest {
         assertThatThrownBy(() -> service.cancel(COMPANY, USER, export.id()))
                 .isInstanceOf(ReportExportConflictException.class);
     }
+
+    @Test
+    void catalogListsOnlyAllowedReports() {
+        assertThat(service.catalog(List.of(), FINANCE))
+                .extracting(entry -> entry.type())
+                .containsExactly("MONTHLY_DRE", "CASH_FLOW", "TRANSACTIONS");
+        assertThat(service.catalog(List.of(), List.of())).isEmpty();
+    }
+
+    @Test
+    void catalogShowsEverythingToCrmAdmin() {
+        assertThat(service.catalog(List.of("CRM_ADMIN"), List.of()))
+                .hasSize(ReportExportType.values().length)
+                .anySatisfy(entry -> {
+                    assertThat(entry.type()).isEqualTo("MONTHLY_DRE");
+                    assertThat(entry.slug()).isEqualTo("monthly-dre");
+                    assertThat(entry.periodMode()).isEqualTo("MONTH");
+                    assertThat(entry.formats()).containsExactly("PDF", "XLSX", "CSV");
+                    assertThat(entry.domain()).isEqualTo("FINANCE");
+                });
+    }
+
+    @Test
+    void crmAdminRequestsWithoutExplicitPermission() {
+        service.request(COMPANY, USER, List.of("CRM_ADMIN"), List.of(),
+                new ReportExportRequest("AGENDA", "CSV", "2026-01-01", "2026-01-31", null));
+
+        verify(repository).insert(any());
+    }
+
+    @Test
+    void rangeWindowComesFromCatalog() {
+        assertThatThrownBy(() -> service.request(COMPANY, USER, List.of("contact:read"),
+                new ReportExportRequest("BUDGETS", "XLSX", "2026-01-01", "2027-01-01", null)))
+                .isInstanceOf(ReportExportValidationException.class)
+                .hasMessageContaining(ReportExportType.BUDGETS.maxMonths() + " meses");
+    }
 }

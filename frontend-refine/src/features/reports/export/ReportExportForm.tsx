@@ -24,6 +24,18 @@ const SHORTCUTS = [
   { key: "last-3-months", label: "Últimos 3 meses" },
 ] as const;
 
+/** Botões por formato; só aparecem os que o catálogo do relatório aceita. */
+const FORMAT_BUTTONS = [
+  { format: "PDF", label: "Imprimir (PDF)", icon: Printer, variant: "default" },
+  { format: "XLSX", label: "Exportar (Excel)", icon: FileSpreadsheet, variant: "outline" },
+  { format: "CSV", label: "Exportar (CSV)", icon: FileText, variant: "outline" },
+] as const satisfies ReadonlyArray<{
+  format: ExportFormat;
+  label: string;
+  icon: typeof Printer;
+  variant: "default" | "outline";
+}>;
+
 /** Escolha do período e dos botões Imprimir (PDF) / Exportar (Excel) / Exportar (CSV). */
 export function ReportExportForm({ definition, isSubmitting, onSubmit }: ReportExportFormProps) {
   const initialRange = resolveReportPeriod("last-month");
@@ -108,30 +120,24 @@ export function ReportExportForm({ definition, isSubmitting, onSubmit }: ReportE
       </section>
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Button type="button" disabled={disabled} onClick={() => submit("PDF")}>
-          {isSubmitting && pendingFormat === "PDF" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Printer className="h-4 w-4" />
-          )}
-          Imprimir (PDF)
-        </Button>
-        <Button type="button" variant="outline" disabled={disabled} onClick={() => submit("XLSX")}>
-          {isSubmitting && pendingFormat === "XLSX" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <FileSpreadsheet className="h-4 w-4" />
-          )}
-          Exportar (Excel)
-        </Button>
-        <Button type="button" variant="outline" disabled={disabled} onClick={() => submit("CSV")}>
-          {isSubmitting && pendingFormat === "CSV" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <FileText className="h-4 w-4" />
-          )}
-          Exportar (CSV)
-        </Button>
+        {FORMAT_BUTTONS.filter((button) => definition.formats.includes(button.format)).map(
+          ({ format: buttonFormat, label, icon: Icon, variant }) => (
+            <Button
+              key={buttonFormat}
+              type="button"
+              variant={variant}
+              disabled={disabled}
+              onClick={() => submit(buttonFormat)}
+            >
+              {isSubmitting && pendingFormat === buttonFormat ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Icon className="h-4 w-4" />
+              )}
+              {label}
+            </Button>
+          ),
+        )}
       </div>
       <p className="text-xs text-muted-foreground">
         O arquivo é gerado em segundo plano. Quando ficar pronto, o link de download aparece no sino
