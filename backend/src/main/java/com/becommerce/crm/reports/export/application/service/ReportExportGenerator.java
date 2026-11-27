@@ -63,17 +63,24 @@ public class ReportExportGenerator {
     private final StorageUseCase storage;
     private final NotificationUseCase notifications;
     private final ObjectMapper objectMapper;
+    private final ReportExportAuditor auditor;
     private Clock clock = Clock.system(CLINIC_ZONE);
 
     public ReportExportGenerator(ReportExportRepository repository, ReportDataGateway dataGateway,
                                  ReportDatasetBuilder datasets, StorageUseCase storage,
-                                 NotificationUseCase notifications, ObjectMapper objectMapper) {
+                                 NotificationUseCase notifications, ObjectMapper objectMapper,
+                                 ReportExportAuditor auditor) {
         this.repository = repository;
         this.dataGateway = dataGateway;
         this.datasets = datasets;
         this.storage = storage;
         this.notifications = notifications;
         this.objectMapper = objectMapper;
+        this.auditor = auditor;
+    }
+
+    /** Arquivo renderizado e a quantidade de linhas de dados do relatório. */
+    private record Rendered(byte[] content, int rowCount) {
     }
 
     void setClock(Clock clock) {
@@ -87,16 +94,16 @@ public class ReportExportGenerator {
         }
         ReportExport export = found.get();
         try {
-            byte[] content = inTenant(companyId, () -> render(export));
+            Rendered rendered = inTenant(companyId, () -> render(export));
             // Cancelada (ou finalizada pelo job de travados) durante a geração: nem sobe o arquivo.
             if (!stillPending(companyId, exportId)) {
                 log.info("Exportação {} finalizada durante a geração; arquivo descartado", exportId);
                 return;
             }
             String fileName = fileName(export);
-            StorageResponse stored = storage.upload(companyId, fileName, export.format().contentType(), content,
-                    export.requestedBy());
-            export.markReady(stored.id(), fileName);
+            StorageResponse stored = storage.upload(companyId, fileName, export.format().contentType(),
+                    rendered.content(), export.requestedBy());
+            export.markReady(stored.id(), fileName, rendered.rowCount());
             // Gravação condicional: se cancelaram entre o upload e aqui, apaga o objeto e não avisa.
             boolean published = inTenant(companyId, () -> repository.updateIfPending(export));
             if (!published) {
@@ -104,11 +111,14 @@ public class ReportExportGenerator {
                 discard(companyId, stored.id());
                 return;
             }
+            auditor.record(ReportExportAuditor.Event.READY, export);
             notifications.create(companyId, new CreateNotificationRequest(export.requestedBy(),
                     NotificationType.SYSTEM, "Relatório pronto para download", summary(export),
                     metadata(export)), export.requestedBy());
         } catch (RuntimeException ex) {
-            log.error("Falha ao gerar a exportação {} ({})", exportId, export.type(), ex);
+            // Só ids e o tipo da exceção: a mensagem/stack pode carregar dados do relatório.
+            log.error("[RELATORIOS] falha ao gerar a exportação {} ({}): {}", exportId, export.type(),
+                    ex.getClass().getSimpleName());
             fail(companyId, export, ex);
         }
     }
@@ -122,6 +132,7 @@ public class ReportExportGenerator {
         export.markFailed(message);
         boolean updated = inTenant(companyId, () -> repository.updateIfPending(export));
         if (updated) {
+            auditor.record(ReportExportAuditor.Event.FAILED, export);
             notifyFailure(companyId, export, message);
         }
         return updated;
@@ -154,12 +165,14 @@ public class ReportExportGenerator {
                 // Cancelada pelo autor (ou finalizada por outro fluxo): sem notificação.
                 return;
             }
+            auditor.record(ReportExportAuditor.Event.FAILED, export);
             // Limite de linhas não se resolve tentando de novo: mostra a orientação.
             String hint = cause instanceof ReportExportTooLargeException
                     ? cause.getMessage() : "Tente novamente em instantes.";
             notifyFailure(companyId, export, hint);
         } catch (RuntimeException ex) {
-            log.error("Falha ao registrar o erro da exportação {}", export.id(), ex);
+            log.error("[RELATORIOS] falha ao registrar o erro da exportação {}: {}", export.id(),
+                    ex.getClass().getSimpleName());
         }
     }
 
@@ -169,44 +182,51 @@ public class ReportExportGenerator {
                 summary(export) + ". " + hint, null), export.requestedBy());
     }
 
-    private byte[] render(ReportExport export) {
+    private Rendered render(ReportExport export) {
         UUID companyId = export.companyId();
         LocalDate from = export.periodFrom();
         LocalDate to = export.periodTo();
         CompanyHeader company = dataGateway.companyHeader(companyId);
         LocalDateTime issuedAt = LocalDateTime.now(clock).withNano(0);
+        int[] rows = {0};
         ReportDocument document = switch (export.type()) {
             case MONTHLY_DRE -> {
                 MonthlyDreDataset data = datasets.monthlyDre(companyId, from, to);
+                rows[0] = data.groups().stream().mapToInt(g -> g.lines().size()).sum();
                 yield emptyNotice(ReportDocumentFactory.monthlyDre(data, YearMonth.from(from), company, issuedAt),
                         data.groups().stream().flatMap(g -> g.lines().stream()).allMatch(l -> l.count() == 0));
             }
             case CASH_FLOW -> {
                 CashFlowDataset data = datasets.cashFlow(companyId, from, to);
+                rows[0] = data.days().size();
                 yield emptyNotice(ReportDocumentFactory.cashFlow(data, from, to, company, issuedAt),
                         data.days().isEmpty());
             }
             case TRANSACTIONS -> {
                 TransactionsDataset data = datasets.transactions(companyId, from, to);
+                rows[0] = data.rows().size();
                 yield emptyNotice(ReportDocumentFactory.transactions(data, from, to, company, issuedAt),
                         data.rows().isEmpty());
             }
             case AGENDA -> {
                 AgendaDataset data = datasets.agenda(companyId, from, to);
+                rows[0] = data.rows().size();
                 yield emptyNotice(ReportDocumentFactory.agenda(data, from, to, company, issuedAt),
                         data.rows().isEmpty());
             }
             case BUDGETS -> {
                 BudgetsDataset data = datasets.budgets(companyId, from, to);
+                rows[0] = data.rows().size();
                 yield emptyNotice(ReportDocumentFactory.budgets(data, from, to, company, issuedAt),
                         data.rows().isEmpty());
             }
         };
-        return switch (export.format()) {
+        byte[] content = switch (export.format()) {
             case PDF -> PdfReportLayout.render(document, company.logoUrl());
             case XLSX -> XlsxReportWriter.write(document);
             case CSV -> CsvReportWriter.write(document);
         };
+        return new Rendered(content, rows[0]);
     }
 
     /** Sem registros o arquivo sai normalmente (READY), com o aviso de estado vazio. */

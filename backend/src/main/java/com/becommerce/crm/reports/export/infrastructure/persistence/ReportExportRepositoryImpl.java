@@ -25,7 +25,7 @@ import java.util.UUID;
 public class ReportExportRepositoryImpl implements ReportExportRepository {
 
     private static final String COLUMNS = "id, company_id, requested_by, type, format, period_from, period_to, "
-            + "status, file_name, storage_object_id, error_message, created_at, finished_at";
+            + "status, file_name, storage_object_id, error_message, created_at, finished_at, row_count";
 
     private static final RowMapper<ReportExport> ROW = (rs, i) -> new ReportExport(
             rs.getObject("id", UUID.class),
@@ -40,7 +40,8 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
             rs.getObject("storage_object_id", UUID.class),
             rs.getString("error_message"),
             toInstant(rs.getTimestamp("created_at")),
-            toInstant(rs.getTimestamp("finished_at")));
+            toInstant(rs.getTimestamp("finished_at")),
+            rs.getObject("row_count", Integer.class));
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -52,7 +53,7 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
     public void insert(ReportExport export) {
         String sql = "INSERT INTO report_exports (" + COLUMNS + ") VALUES (:id, :companyId, :requestedBy, "
                 + ":type, :format, :periodFrom, :periodTo, :status, :fileName, :storageObjectId, "
-                + ":errorMessage, :createdAt, :finishedAt)";
+                + ":errorMessage, :createdAt, :finishedAt, :rowCount)";
         jdbc.update(sql, params(export));
     }
 
@@ -60,7 +61,7 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
     public void update(ReportExport export) {
         String sql = "UPDATE report_exports SET status = :status, file_name = :fileName, "
                 + "storage_object_id = :storageObjectId, error_message = :errorMessage, "
-                + "finished_at = :finishedAt WHERE id = :id AND company_id = :companyId";
+                + "finished_at = :finishedAt, row_count = :rowCount WHERE id = :id AND company_id = :companyId";
         jdbc.update(sql, params(export));
     }
 
@@ -68,7 +69,7 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
     public boolean updateIfPending(ReportExport export) {
         String sql = "UPDATE report_exports SET status = :status, file_name = :fileName, "
                 + "storage_object_id = :storageObjectId, error_message = :errorMessage, "
-                + "finished_at = :finishedAt WHERE id = :id AND company_id = :companyId AND status = 'PENDING'";
+                + "finished_at = :finishedAt, row_count = :rowCount WHERE id = :id AND company_id = :companyId AND status = 'PENDING'";
         return jdbc.update(sql, params(export)) > 0;
     }
 
@@ -154,7 +155,8 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
                 .addValue("storageObjectId", export.storageObjectId())
                 .addValue("errorMessage", export.errorMessage())
                 .addValue("createdAt", toTimestamp(export.createdAt()))
-                .addValue("finishedAt", toTimestamp(export.finishedAt()));
+                .addValue("finishedAt", toTimestamp(export.finishedAt()))
+                .addValue("rowCount", export.rowCount());
     }
 
     private static Timestamp toTimestamp(Instant instant) {

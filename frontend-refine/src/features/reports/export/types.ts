@@ -30,6 +30,8 @@ export interface ReportExport {
   errorMessage: string | null;
   createdAt: string;
   finishedAt: string | null;
+  /** Linhas de dados do arquivo; preenchido quando READY. */
+  rowCount?: number | null;
 }
 
 export interface ReportExportDefinition {

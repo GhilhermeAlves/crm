@@ -3,6 +3,7 @@ package com.becommerce.crm.reports.export.infrastructure.scheduler;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
 import com.becommerce.crm.masterdata.storage.domain.exception.StorageObjectNotFoundException;
 import com.becommerce.crm.reports.export.application.port.out.ReportExportRepository;
+import com.becommerce.crm.reports.export.application.service.ReportExportAuditor;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
 import org.slf4j.Logger;
@@ -36,11 +37,14 @@ public class ReportExportRetentionJob {
     private final ReportExportRepository repository;
     private final StorageUseCase storage;
     private final JdbcTemplate jdbc;
+    private final ReportExportAuditor auditor;
 
-    public ReportExportRetentionJob(ReportExportRepository repository, StorageUseCase storage, JdbcTemplate jdbc) {
+    public ReportExportRetentionJob(ReportExportRepository repository, StorageUseCase storage, JdbcTemplate jdbc,
+                                    ReportExportAuditor auditor) {
         this.repository = repository;
         this.storage = storage;
         this.jdbc = jdbc;
+        this.auditor = auditor;
     }
 
     @Scheduled(cron = "${app.reports.export-retention-cron:0 15 3 * * *}")
@@ -96,5 +100,7 @@ public class ReportExportRetentionJob {
         export.markExpired();
         TenantContext.setCompanyId(companyId);
         repository.update(export);
+        TenantContext.clear();
+        auditor.record(ReportExportAuditor.Event.EXPIRED, export);
     }
 }

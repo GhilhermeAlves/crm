@@ -51,20 +51,22 @@ public class ReportExportService {
     private final ApplicationEventPublisher events;
     private final int maxPending;
     private final int maxPerHour;
+    private final ReportExportAuditor auditor;
 
     public ReportExportService(ReportExportRepository repository, StorageUseCase storage,
-                               ApplicationEventPublisher events) {
-        this(repository, storage, events, DEFAULT_MAX_PENDING, DEFAULT_MAX_PER_HOUR);
+                               ApplicationEventPublisher events, ReportExportAuditor auditor) {
+        this(repository, storage, events, auditor, DEFAULT_MAX_PENDING, DEFAULT_MAX_PER_HOUR);
     }
 
     @Autowired
     public ReportExportService(ReportExportRepository repository, StorageUseCase storage,
-                               ApplicationEventPublisher events,
+                               ApplicationEventPublisher events, ReportExportAuditor auditor,
                                @Value("${app.reports.export-max-pending-per-user:3}") int maxPending,
                                @Value("${app.reports.export-max-per-hour-per-user:30}") int maxPerHour) {
         this.repository = repository;
         this.storage = storage;
         this.events = events;
+        this.auditor = auditor;
         this.maxPending = maxPending;
         this.maxPerHour = maxPerHour;
     }
@@ -99,6 +101,7 @@ public class ReportExportService {
         } finally {
             TenantContext.clear();
         }
+        auditor.record(ReportExportAuditor.Event.REQUESTED, export);
         events.publishEvent(new ReportExportRequestedEvent(companyId, export.id()));
         return ReportExportResponse.from(export);
     }
@@ -142,6 +145,7 @@ public class ReportExportService {
         if (!updated) {
             throw notCancelable();
         }
+        auditor.record(ReportExportAuditor.Event.CANCELED, export);
         return ReportExportResponse.from(export);
     }
 
@@ -168,21 +172,36 @@ public class ReportExportService {
         if (export.status() != ReportExportStatus.READY || export.storageObjectId() == null) {
             throw new ReportExportNotFoundException(exportId);
         }
-        requirePermission(export.type(), permissions);
+        try {
+            requirePermission(export.type(), permissions);
+        } catch (CrmAccessDeniedException ex) {
+            auditor.record(ReportExportAuditor.Event.ACCESS_DENIED, export, userId);
+            throw ex;
+        }
         StorageDownload file = storage.download(companyId, export.storageObjectId());
+        auditor.record(ReportExportAuditor.Event.DOWNLOADED, export, userId);
         return new StorageDownload(file.id(), export.fileName(), export.format().contentType(), file.sizeBytes(),
                 file.data());
     }
 
+    /**
+     * Exportação do próprio usuário. De outro usuário da empresa é 404 para
+     * quem pediu, mas fica auditada como ACCESS_DENIED.
+     */
     private ReportExport owned(UUID companyId, UUID userId, UUID exportId) {
+        ReportExport export;
         try {
             TenantContext.setCompanyId(companyId);
-            return repository.findById(companyId, exportId)
-                    .filter(export -> export.requestedBy().equals(userId))
+            export = repository.findById(companyId, exportId)
                     .orElseThrow(() -> new ReportExportNotFoundException(exportId));
         } finally {
             TenantContext.clear();
         }
+        if (!export.requestedBy().equals(userId)) {
+            auditor.record(ReportExportAuditor.Event.ACCESS_DENIED, export, userId);
+            throw new ReportExportNotFoundException(exportId);
+        }
+        return export;
     }
 
     private static void requirePermission(ReportExportType type, Collection<String> permissions) {

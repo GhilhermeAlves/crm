@@ -27,6 +27,8 @@ public class ReportExport {
     private UUID storageObjectId;
     private String errorMessage;
     private Instant finishedAt;
+    /** Linhas de dados do arquivo gerado; preenchido ao ficar READY. */
+    private Integer rowCount;
 
     public ReportExport(UUID id, UUID companyId, UUID requestedBy, ReportExportType type, ExportFormat format,
                         LocalDate periodFrom, LocalDate periodTo, ReportExportStatus status, String fileName,
@@ -46,6 +48,15 @@ public class ReportExport {
         this.finishedAt = finishedAt;
     }
 
+    public ReportExport(UUID id, UUID companyId, UUID requestedBy, ReportExportType type, ExportFormat format,
+                        LocalDate periodFrom, LocalDate periodTo, ReportExportStatus status, String fileName,
+                        UUID storageObjectId, String errorMessage, Instant createdAt, Instant finishedAt,
+                        Integer rowCount) {
+        this(id, companyId, requestedBy, type, format, periodFrom, periodTo, status, fileName, storageObjectId,
+                errorMessage, createdAt, finishedAt);
+        this.rowCount = rowCount;
+    }
+
     public static ReportExport pending(UUID companyId, UUID requestedBy, ReportExportType type,
                                        ExportFormat format, LocalDate periodFrom, LocalDate periodTo) {
         return new ReportExport(UUID.randomUUID(), companyId, requestedBy, type, format, periodFrom, periodTo,
@@ -53,7 +64,12 @@ public class ReportExport {
     }
 
     public void markReady(UUID storageObjectId, String fileName) {
+        markReady(storageObjectId, fileName, null);
+    }
+
+    public void markReady(UUID storageObjectId, String fileName, Integer rowCount) {
         requirePending();
+        this.rowCount = rowCount;
         this.status = ReportExportStatus.READY;
         this.storageObjectId = storageObjectId;
         this.fileName = fileName;
@@ -143,5 +159,9 @@ public class ReportExport {
 
     public Instant finishedAt() {
         return finishedAt;
+    }
+
+    public Integer rowCount() {
+        return rowCount;
     }
 }

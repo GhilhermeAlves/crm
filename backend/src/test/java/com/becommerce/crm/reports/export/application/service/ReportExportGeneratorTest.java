@@ -44,6 +44,7 @@ class ReportExportGeneratorTest {
     private ReportDataGateway gateway;
     private StorageUseCase storage;
     private NotificationUseCase notifications;
+    private ReportExportAuditor auditor;
     private ReportExportGenerator generator;
 
     @BeforeEach
@@ -52,10 +53,11 @@ class ReportExportGeneratorTest {
         gateway = mock(ReportDataGateway.class);
         storage = mock(StorageUseCase.class);
         notifications = mock(NotificationUseCase.class);
+        auditor = mock(ReportExportAuditor.class);
         when(gateway.companyHeader(COMPANY)).thenReturn(new CompanyHeader("Clínica", "00.000.000/0001-00"));
         when(repository.updateIfPending(any())).thenReturn(true);
         generator = new ReportExportGenerator(repository, gateway, new ReportDatasetBuilder(gateway), storage,
-                notifications, new ObjectMapper());
+                notifications, new ObjectMapper(), auditor);
     }
 
     private ReportExport pending(ReportExportType type, ExportFormat format) {
@@ -81,7 +83,9 @@ class ReportExportGeneratorTest {
         assertThat(new String(bytes.getValue(), 0, 4)).isEqualTo("%PDF");
         assertThat(export.status()).isEqualTo(ReportExportStatus.READY);
         assertThat(export.storageObjectId()).isEqualTo(objectId);
+        assertThat(export.rowCount()).isNotNull();
         verify(repository).updateIfPending(export);
+        verify(auditor).record(ReportExportAuditor.Event.READY, export);
 
         ArgumentCaptor<CreateNotificationRequest> notification =
                 ArgumentCaptor.forClass(CreateNotificationRequest.class);
@@ -103,6 +107,7 @@ class ReportExportGeneratorTest {
 
         assertThat(export.status()).isEqualTo(ReportExportStatus.FAILED);
         verify(repository).updateIfPending(export);
+        verify(auditor).record(ReportExportAuditor.Event.FAILED, export);
         verify(storage, never()).upload(any(), any(), any(), any(), any());
         ArgumentCaptor<CreateNotificationRequest> notification =
                 ArgumentCaptor.forClass(CreateNotificationRequest.class);

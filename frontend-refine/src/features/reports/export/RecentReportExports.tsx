@@ -87,6 +87,13 @@ export function RecentReportExports({
                   <p className="text-xs text-muted-foreground">
                     {formatDate(item.periodFrom)} a {formatDate(item.periodTo)} · pedido{" "}
                     {formatRelativeTime(item.createdAt)}
+                    {item.status === "READY" && item.rowCount != null && (
+                      <>
+                        {" "}
+                        · {item.rowCount.toLocaleString("pt-BR")}{" "}
+                        {item.rowCount === 1 ? "linha" : "linhas"}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

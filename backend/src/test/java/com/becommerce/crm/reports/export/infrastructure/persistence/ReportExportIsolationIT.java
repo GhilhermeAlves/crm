@@ -77,7 +77,8 @@ class ReportExportIsolationIT {
                         .getContentAsString(StandardCharsets.UTF_8));
             }
             for (String migration : List.of("V136__report_exports_budgets_csv.sql",
-                    "V155__report_exports_expired.sql", "V156__report_exports_canceled.sql")) {
+                    "V155__report_exports_expired.sql", "V156__report_exports_canceled.sql",
+                    "V157__report_exports_row_count.sql")) {
                 try (Statement st = conn.createStatement()) {
                     st.execute(new ClassPathResource("db/migration/" + migration)
                             .getContentAsString(StandardCharsets.UTF_8));
@@ -157,13 +158,14 @@ class ReportExportIsolationIT {
         ReportExport export = export(TENANT_A);
         repository.insert(export);
         UUID objectId = UUID.randomUUID();
-        export.markReady(objectId, "fluxo.xlsx");
+        export.markReady(objectId, "fluxo.xlsx", 42);
         repository.update(export);
 
         ReportExport loaded = repository.findById(TENANT_A, export.id()).orElseThrow();
         assertEquals(ReportExportStatus.READY, loaded.status());
         assertEquals(objectId, loaded.storageObjectId());
         assertEquals("fluxo.xlsx", loaded.fileName());
+        assertEquals(42, loaded.rowCount());
         assertEquals(LocalDate.of(2026, 6, 30), loaded.periodTo());
         assertNotNull(loaded.finishedAt());
 
@@ -220,6 +222,7 @@ class ReportExportIsolationIT {
         ReportExport loaded = repository.findById(TENANT_A, readyA.id()).orElseThrow();
         assertEquals(ReportExportStatus.EXPIRED, loaded.status());
         assertEquals("fluxo.xlsx", loaded.fileName());
+        assertEquals(42, loaded.rowCount());
         assertNull(loaded.storageObjectId());
     }
 

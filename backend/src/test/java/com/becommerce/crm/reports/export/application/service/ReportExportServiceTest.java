@@ -42,6 +42,7 @@ class ReportExportServiceTest {
     private ReportExportRepository repository;
     private StorageUseCase storage;
     private ApplicationEventPublisher events;
+    private ReportExportAuditor auditor;
     private ReportExportService service;
 
     @BeforeEach
@@ -49,7 +50,8 @@ class ReportExportServiceTest {
         repository = mock(ReportExportRepository.class);
         storage = mock(StorageUseCase.class);
         events = mock(ApplicationEventPublisher.class);
-        service = new ReportExportService(repository, storage, events);
+        auditor = mock(ReportExportAuditor.class);
+        service = new ReportExportService(repository, storage, events, auditor);
     }
 
     @Test
@@ -63,6 +65,7 @@ class ReportExportServiceTest {
         assertThat(saved.getValue().periodTo()).isEqualTo(LocalDate.of(2026, 6, 30));
         assertThat(response.status()).isEqualTo("PENDING");
         verify(events).publishEvent(new ReportExportRequestedEvent(COMPANY, response.id()));
+        verify(auditor).record(ReportExportAuditor.Event.REQUESTED, saved.getValue());
     }
 
     @Test
@@ -97,6 +100,20 @@ class ReportExportServiceTest {
         assertThatThrownBy(() -> service.download(COMPANY, USER, FINANCE, export.id()))
                 .isInstanceOf(ReportExportNotFoundException.class);
         verify(storage, never()).download(any(), any());
+        verify(auditor).record(ReportExportAuditor.Event.ACCESS_DENIED, export, USER);
+    }
+
+    @Test
+    void downloadWithoutPermissionIsAuditedAsDenied() {
+        ReportExport export = ReportExport.pending(COMPANY, USER, ReportExportType.AGENDA, ExportFormat.PDF,
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30));
+        export.markReady(UUID.randomUUID(), "agenda.pdf");
+        when(repository.findById(COMPANY, export.id())).thenReturn(Optional.of(export));
+
+        assertThatThrownBy(() -> service.download(COMPANY, USER, FINANCE, export.id()))
+                .isInstanceOf(CrmAccessDeniedException.class);
+        verify(auditor).record(ReportExportAuditor.Event.ACCESS_DENIED, export, USER);
+        verify(storage, never()).download(any(), any());
     }
 
     @Test
@@ -124,6 +141,7 @@ class ReportExportServiceTest {
         assertThat(file.fileName()).isEqualTo("fluxo-de-caixa_2026-06-01_a_2026-06-30.xlsx");
         assertThat(file.contentType()).isEqualTo(ExportFormat.XLSX.contentType());
         assertThat(file.data()).hasSize(3);
+        verify(auditor).record(ReportExportAuditor.Event.DOWNLOADED, export, USER);
     }
 
     private static final ReportExportRequest DRE =
@@ -159,7 +177,7 @@ class ReportExportServiceTest {
 
     @Test
     void limitsAreConfigurable() {
-        service = new ReportExportService(repository, storage, events, 1, 100);
+        service = new ReportExportService(repository, storage, events, auditor, 1, 100);
         when(repository.countPending(COMPANY, USER)).thenReturn(1);
 
         assertThatThrownBy(() -> service.request(COMPANY, USER, FINANCE, DRE))
@@ -185,6 +203,7 @@ class ReportExportServiceTest {
 
         assertThat(response.status()).isEqualTo("CANCELED");
         assertThat(export.status()).isEqualTo(ReportExportStatus.CANCELED);
+        verify(auditor).record(ReportExportAuditor.Event.CANCELED, export);
     }
 
     @Test
@@ -194,6 +213,7 @@ class ReportExportServiceTest {
         assertThatThrownBy(() -> service.cancel(COMPANY, USER, export.id()))
                 .isInstanceOf(ReportExportNotFoundException.class);
         verify(repository, never()).updateIfPending(any());
+        verify(auditor).record(ReportExportAuditor.Event.ACCESS_DENIED, export, USER);
     }
 
     @Test

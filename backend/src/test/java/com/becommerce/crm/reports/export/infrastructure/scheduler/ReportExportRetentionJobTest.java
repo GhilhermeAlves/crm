@@ -3,6 +3,7 @@ package com.becommerce.crm.reports.export.infrastructure.scheduler;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
 import com.becommerce.crm.masterdata.storage.domain.exception.StorageObjectNotFoundException;
 import com.becommerce.crm.reports.export.application.port.out.ReportExportRepository;
+import com.becommerce.crm.reports.export.application.service.ReportExportAuditor;
 import com.becommerce.crm.reports.export.domain.ExportFormat;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.reports.export.domain.ReportExportStatus;
@@ -35,6 +36,7 @@ class ReportExportRetentionJobTest {
     private ReportExportRepository repository;
     private StorageUseCase storage;
     private JdbcTemplate jdbc;
+    private ReportExportAuditor auditor;
     private ReportExportRetentionJob job;
 
     @BeforeEach
@@ -42,7 +44,8 @@ class ReportExportRetentionJobTest {
         repository = mock(ReportExportRepository.class);
         storage = mock(StorageUseCase.class);
         jdbc = mock(JdbcTemplate.class);
-        job = new ReportExportRetentionJob(repository, storage, jdbc);
+        auditor = mock(ReportExportAuditor.class);
+        job = new ReportExportRetentionJob(repository, storage, jdbc, auditor);
         when(jdbc.queryForList(anyString(), eq(UUID.class))).thenReturn(List.of(companyA, companyB));
     }
 
@@ -68,6 +71,8 @@ class ReportExportRetentionJobTest {
         verify(storage).delete(companyB, objectB);
         verify(repository).update(a);
         verify(repository).update(b);
+        verify(auditor).record(ReportExportAuditor.Event.EXPIRED, a);
+        verify(auditor).record(ReportExportAuditor.Event.EXPIRED, b);
         assertThat(a.status()).isEqualTo(ReportExportStatus.EXPIRED);
         assertThat(b.status()).isEqualTo(ReportExportStatus.EXPIRED);
     }
