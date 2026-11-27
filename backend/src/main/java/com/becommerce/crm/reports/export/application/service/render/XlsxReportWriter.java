@@ -63,13 +63,13 @@ public final class XlsxReportWriter {
         int lastColumn = columns.size() - 1;
 
         Cell title = sheet.createRow(0).createCell(0);
-        title.setCellValue(report.title());
+        title.setCellValue(SpreadsheetSanitizer.sanitize(report.title()));
         title.setCellStyle(styles.title);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, Math.max(lastColumn, 1)));
 
-        sheet.createRow(1).createCell(0).setCellValue(report.companyName()
+        sheet.createRow(1).createCell(0).setCellValue(SpreadsheetSanitizer.sanitize(report.companyName()
                 + (report.companyCnpj() == null || report.companyCnpj().isBlank() ? "" : " · CNPJ "
-                + report.companyCnpj()));
+                + report.companyCnpj())));
         sheet.createRow(2).createCell(0).setCellValue("Período: " + report.period()
                 + "   ·   Emitido em " + ISSUED.format(report.issuedAt()));
         sheet.getRow(1).getCell(0).setCellStyle(styles.meta);
@@ -78,7 +78,7 @@ public final class XlsxReportWriter {
         org.apache.poi.ss.usermodel.Row head = sheet.createRow(HEADER_ROW);
         for (int i = 0; i < columns.size(); i++) {
             Cell cell = head.createCell(i);
-            cell.setCellValue(columns.get(i).header());
+            cell.setCellValue(SpreadsheetSanitizer.sanitize(columns.get(i).header()));
             cell.setCellStyle(styles.head);
         }
 
@@ -89,7 +89,7 @@ public final class XlsxReportWriter {
                 for (int i = 0; i < columns.size(); i++) {
                     excelRow.createCell(i).setCellStyle(styles.group);
                 }
-                excelRow.getCell(0).setCellValue(String.valueOf(row.cells().get(0)));
+                excelRow.getCell(0).setCellValue(SpreadsheetSanitizer.sanitize(String.valueOf(row.cells().get(0))));
                 if (lastColumn > 0) {
                     sheet.addMergedRegion(new CellRangeAddress(rowIndex, rowIndex, 0, lastColumn));
                 }
@@ -137,7 +137,8 @@ public final class XlsxReportWriter {
         } else if (value instanceof LocalDate date) {
             cell.setCellValue(date);
         } else if (value != null) {
-            cell.setCellValue(String.valueOf(value));
+            // Só texto livre é sanitizado; números e datas seguem tipados.
+            cell.setCellValue(SpreadsheetSanitizer.sanitize(String.valueOf(value)));
         }
     }
 

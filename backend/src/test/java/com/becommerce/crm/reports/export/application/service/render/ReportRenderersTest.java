@@ -187,4 +187,66 @@ class ReportRenderersTest {
         assertThat(CsvReportWriter.escape("linha1\nlinha2")).isEqualTo("\"linha1\nlinha2\"");
         assertThat(CsvReportWriter.escape("simples")).isEqualTo("simples");
     }
+
+    // ===== formula injection =====
+
+    private ReportDocument budgetsWithFormula() {
+        List<BudgetRow> rows = List.of(new BudgetRow(LocalDate.of(2026, 11, 14), "=SUM(A1)", "Clareamento",
+                "APPROVED", 1, 100_000, 10_000, PaymentMethod.CREDIT_CARD, 3, LocalDate.of(2026, 11, 14)));
+        BudgetsDataset data = new BudgetsDataset(List.of(new StatusSummary("APPROVED", 1, 90_000)), rows);
+        return ReportDocumentFactory.budgets(data, LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 30),
+                COMPANY, ISSUED);
+    }
+
+    @Test
+    void sanitizerPrefixesOnlyDangerousText() {
+        assertThat(SpreadsheetSanitizer.sanitize("=SUM(A1)")).isEqualTo("'=SUM(A1)");
+        assertThat(SpreadsheetSanitizer.sanitize("+1")).isEqualTo("'+1");
+        assertThat(SpreadsheetSanitizer.sanitize("-2")).isEqualTo("'-2");
+        assertThat(SpreadsheetSanitizer.sanitize("@cmd")).isEqualTo("'@cmd");
+        assertThat(SpreadsheetSanitizer.sanitize("\tx")).isEqualTo("'\tx");
+        assertThat(SpreadsheetSanitizer.sanitize("\rx")).isEqualTo("'\rx");
+        assertThat(SpreadsheetSanitizer.sanitize("Andreia Souza")).isEqualTo("Andreia Souza");
+        assertThat(SpreadsheetSanitizer.sanitize("")).isEmpty();
+        assertThat(SpreadsheetSanitizer.sanitize(null)).isNull();
+    }
+
+    @Test
+    void csvSanitizesFormulaTextButNotNegativeMoney() {
+        byte[] csv = CsvReportWriter.write(budgetsWithFormula());
+        String text = new String(csv, 3, csv.length - 3, StandardCharsets.UTF_8);
+
+        assertThat(text).contains(";'=SUM(A1);Clareamento;");
+        assertThat(text).doesNotContain(";=SUM(A1)");
+        // Desconto negativo de coluna MONEY continua número, sem apóstrofo.
+        assertThat(text).contains(";-100,00;").doesNotContain("'-100,00");
+        assertThat(CsvReportWriter.text(new ReportDocument.Money(-1_234))).isEqualTo("-12,34");
+        assertThat(CsvReportWriter.text(-5L)).isEqualTo("-5");
+        assertThat(CsvReportWriter.text("Texto normal")).isEqualTo("Texto normal");
+    }
+
+    @Test
+    void xlsxSanitizesFormulaTextButKeepsNegativeMoneyNumeric() throws Exception {
+        byte[] xlsx = XlsxReportWriter.write(budgetsWithFormula());
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsx))) {
+            boolean foundFormula = false;
+            boolean foundNegative = false;
+            for (Sheet sheet : workbook) {
+                for (Row row : sheet) {
+                    for (org.apache.poi.ss.usermodel.Cell cell : row) {
+                        assertThat(cell.getCellType()).isNotEqualTo(CellType.FORMULA);
+                        if (cell.getCellType() == CellType.STRING) {
+                            assertThat(cell.getStringCellValue()).isNotEqualTo("=SUM(A1)");
+                            foundFormula |= cell.getStringCellValue().equals("'=SUM(A1)");
+                        } else if (cell.getCellType() == CellType.NUMERIC) {
+                            foundNegative |= cell.getNumericCellValue() == -100.0;
+                        }
+                    }
+                }
+            }
+            assertThat(foundFormula).isTrue();
+            assertThat(foundNegative).isTrue();
+        }
+    }
 }

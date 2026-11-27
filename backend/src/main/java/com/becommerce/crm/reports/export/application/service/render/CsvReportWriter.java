@@ -32,22 +32,22 @@ public final class CsvReportWriter {
 
     public static byte[] write(ReportDocument report) {
         StringBuilder csv = new StringBuilder();
-        line(csv, List.of(report.title()));
-        line(csv, List.of("Período", report.period()));
-        line(csv, List.of("Empresa", report.companyName()));
+        metaLine(csv, List.of(report.title()));
+        metaLine(csv, List.of("Período", report.period()));
+        metaLine(csv, List.of("Empresa", report.companyName()));
         if (report.companyCnpj() != null && !report.companyCnpj().isBlank()) {
-            line(csv, List.of("CNPJ", report.companyCnpj()));
+            metaLine(csv, List.of("CNPJ", report.companyCnpj()));
         }
-        line(csv, List.of("Emitido em", ISSUED.format(report.issuedAt())));
+        metaLine(csv, List.of("Emitido em", ISSUED.format(report.issuedAt())));
         for (ReportTable table : report.sections()) {
             csv.append(NEWLINE);
             if (table.heading() != null) {
-                line(csv, List.of(table.heading()));
+                metaLine(csv, List.of(table.heading()));
             }
-            line(csv, table.columns().stream().map(Column::header).toList());
+            metaLine(csv, table.columns().stream().map(Column::header).toList());
             for (Row row : table.rows()) {
                 if (row.kind() == RowKind.GROUP) {
-                    line(csv, List.of(String.valueOf(row.cells().get(0))));
+                    line(csv, List.of(text(row.cells().get(0))));
                     continue;
                 }
                 List<String> cells = new ArrayList<>();
@@ -76,7 +76,16 @@ public final class CsvReportWriter {
         if (value instanceof LocalDate date) {
             return FinanceLabels.dateLabel(date);
         }
-        return String.valueOf(value);
+        if (value instanceof Number) {
+            return String.valueOf(value);
+        }
+        // Texto livre (nome de paciente, descrição...) pode carregar fórmula.
+        return SpreadsheetSanitizer.sanitize(String.valueOf(value));
+    }
+
+    /** Linha de cabeçalho/metadados: tudo é texto, então sempre sanitiza. */
+    private static void metaLine(StringBuilder csv, List<String> cells) {
+        line(csv, cells.stream().map(SpreadsheetSanitizer::sanitize).toList());
     }
 
     private static void line(StringBuilder csv, List<String> cells) {
