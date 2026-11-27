@@ -101,7 +101,8 @@ public class ReportExportGenerator {
                 return;
             }
             String fileName = fileName(export);
-            StorageResponse stored = storage.upload(companyId, fileName, export.format().contentType(),
+            // Arquivo temporário: não consome a cota de armazenamento da empresa.
+            StorageResponse stored = storage.uploadTemporary(companyId, fileName, export.format().contentType(),
                     rendered.content(), export.requestedBy());
             export.markReady(stored.id(), fileName, rendered.rowCount());
             // Gravação condicional: se cancelaram entre o upload e aqui, apaga o objeto e não avisa.

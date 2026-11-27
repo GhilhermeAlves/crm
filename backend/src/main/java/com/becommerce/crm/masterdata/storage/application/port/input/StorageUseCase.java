@@ -17,6 +17,14 @@ public interface StorageUseCase {
                            byte[] data, UUID userId);
 
     /**
+     * Grava um arquivo temporário da empresa (ex.: exportação de relatório). Não
+     * consome nem é barrado pela cota {@code max_storage_mb} e não aparece em
+     * {@link #list}; continua acessível por {@link #download} e {@link #delete}.
+     */
+    StorageResponse uploadTemporary(UUID companyId, String fileName, String contentType,
+                                    byte[] data, UUID userId);
+
+    /**
      * Faz upload de um arquivo vinculado a um paciente ({@code contactId}) da
      * empresa, com as mesmas validações de quota de {@link #upload}. Lança
      * {@code ContactNotFoundException} se o contato não pertencer à empresa.

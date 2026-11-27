@@ -18,13 +18,13 @@ public interface StorageRepository {
 
     StorageObject save(StorageObject storageObject);
 
-    /** Soma de {@code size_bytes} dos objetos da empresa (uso corrente). */
+    /** Soma de {@code size_bytes} dos objetos da empresa (uso corrente), sem os temporários. */
     long sumSizeByCompanyId(UUID companyId);
 
     /** Objeto de uma empresa (download/recuperação). */
     Optional<StorageObject> findByIdAndCompanyId(UUID id, UUID companyId);
 
-    /** Metadados (sem bytes) dos objetos da empresa, mais recentes primeiro. */
+    /** Metadados (sem bytes) dos objetos da empresa, mais recentes primeiro, sem os temporários. */
     List<StorageObject> listByCompanyId(UUID companyId);
 
     /** Metadados (sem bytes) dos arquivos vinculados a um paciente, mais recentes primeiro. */

@@ -12,17 +12,22 @@ import java.util.UUID;
 
 public interface StorageJpaRepository extends JpaRepository<StorageJpaEntity, UUID> {
 
-    @Query("select coalesce(sum(s.sizeBytes), 0) from StorageJpaEntity s where s.companyId = :companyId")
+    /** Uso da cota: arquivos temporários (exportações de relatório) não contam. */
+    @Query("select coalesce(sum(s.sizeBytes), 0) from StorageJpaEntity s"
+            + " where s.companyId = :companyId and s.temporary = false")
     Long sumSizeByCompanyId(@Param("companyId") UUID companyId);
 
     Optional<StorageJpaEntity> findByIdAndCompanyId(UUID id, UUID companyId);
 
-    /** Lista metadados (sem {@code data}) dos arquivos da empresa (sem paciente), mais recentes primeiro. */
+    /**
+     * Lista metadados (sem {@code data}) dos arquivos da empresa (sem paciente), mais recentes
+     * primeiro. Temporários (exportações de relatório) ficam de fora.
+     */
     @Query("""
             select s.id as id, s.objectKey as objectKey, s.fileName as fileName,
                    s.contentType as contentType, s.sizeBytes as sizeBytes, s.createdAt as createdAt
             from StorageJpaEntity s
-            where s.companyId = :companyId and s.contactId is null
+            where s.companyId = :companyId and s.contactId is null and s.temporary = false
             order by s.createdAt desc
             """)
     List<StorageSummary> findSummariesByCompanyId(@Param("companyId") UUID companyId);

@@ -71,14 +71,14 @@ class ReportExportGeneratorTest {
     void successUploadsMarksReadyAndNotifiesWithDownloadMetadata() throws Exception {
         ReportExport export = pending(ReportExportType.MONTHLY_DRE, ExportFormat.PDF);
         UUID objectId = UUID.randomUUID();
-        when(storage.upload(eq(COMPANY), anyString(), anyString(), any(), eq(USER)))
+        when(storage.uploadTemporary(eq(COMPANY), anyString(), anyString(), any(), eq(USER)))
                 .thenReturn(new StorageResponse(objectId, "k", "f", "application/pdf", 10, COMPANY,
                         LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 
         ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
-        verify(storage).upload(eq(COMPANY), eq("contabil-mensal_2026-06.pdf"), eq("application/pdf"),
+        verify(storage).uploadTemporary(eq(COMPANY), eq("contabil-mensal_2026-06.pdf"), eq("application/pdf"),
                 bytes.capture(), eq(USER));
         assertThat(new String(bytes.getValue(), 0, 4)).isEqualTo("%PDF");
         assertThat(export.status()).isEqualTo(ReportExportStatus.READY);
@@ -122,13 +122,13 @@ class ReportExportGeneratorTest {
         when(gateway.budgets(any(), any(), any())).thenReturn(List.of(new ReportDataGateway.BudgetRow(
                 LocalDate.of(2026, 6, 10), "Ana", "Plano de tratamento", "DRAFT", 1, 35_000, 0, null, null,
                 null)));
-        when(storage.upload(any(), anyString(), anyString(), any(), any()))
+        when(storage.uploadTemporary(any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 
         ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
-        verify(storage).upload(eq(COMPANY), eq("orcamentos_2026-06-01_a_2026-06-30.csv"), eq("text/csv"),
+        verify(storage).uploadTemporary(eq(COMPANY), eq("orcamentos_2026-06-01_a_2026-06-30.csv"), eq("text/csv"),
                 bytes.capture(), eq(USER));
         assertThat(new String(bytes.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .contains("Ana;Plano de tratamento;Em aberto;1;350,00");
@@ -143,12 +143,12 @@ class ReportExportGeneratorTest {
     void xlsxFileNameUsesRange() {
         ReportExport export = pending(ReportExportType.CASH_FLOW, ExportFormat.XLSX);
         when(gateway.paidByDay(any(), any(), any())).thenReturn(List.of());
-        when(storage.upload(any(), anyString(), anyString(), any(), any()))
+        when(storage.uploadTemporary(any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 
-        verify(storage).upload(eq(COMPANY), eq("fluxo-de-caixa_2026-06-01_a_2026-06-30.xlsx"),
+        verify(storage).uploadTemporary(eq(COMPANY), eq("fluxo-de-caixa_2026-06-01_a_2026-06-30.xlsx"),
                 eq(ExportFormat.XLSX.contentType()), any(), eq(USER));
     }
 
@@ -167,14 +167,14 @@ class ReportExportGeneratorTest {
     @EnumSource(ExportFormat.class)
     void emptyDatasetIsReadyWithEmptyNotice(ExportFormat format) throws Exception {
         ReportExport export = pending(ReportExportType.TRANSACTIONS, format);
-        when(storage.upload(any(), anyString(), anyString(), any(), any()))
+        when(storage.uploadTemporary(any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 
         assertThat(export.status()).isEqualTo(ReportExportStatus.READY);
         ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
-        verify(storage).upload(eq(COMPANY), anyString(), eq(format.contentType()), bytes.capture(), eq(USER));
+        verify(storage).uploadTemporary(eq(COMPANY), anyString(), eq(format.contentType()), bytes.capture(), eq(USER));
         assertThat(ReportFileText.of(format, bytes.getValue()))
                 .contains("Nenhum registro encontrado para o período.");
         ArgumentCaptor<CreateNotificationRequest> notification =
@@ -239,7 +239,7 @@ class ReportExportGeneratorTest {
         ReportExport export = pending(ReportExportType.CASH_FLOW, ExportFormat.PDF);
         when(gateway.paidByDay(any(), any(), any())).thenReturn(List.of());
         UUID objectId = UUID.randomUUID();
-        when(storage.upload(any(), anyString(), anyString(), any(), any()))
+        when(storage.uploadTemporary(any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new StorageResponse(objectId, "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
         when(repository.updateIfPending(export)).thenReturn(false);
 
