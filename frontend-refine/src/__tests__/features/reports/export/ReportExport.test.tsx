@@ -95,6 +95,7 @@ describe("RecentReportExports", () => {
           exportItem({ id: "a", status: "READY" }),
           exportItem({ id: "b", status: "PENDING", fileName: null }),
           exportItem({ id: "c", status: "FAILED", fileName: null }),
+          exportItem({ id: "d", status: "EXPIRED" }),
         ]}
       />,
     );
@@ -102,6 +103,7 @@ describe("RecentReportExports", () => {
     expect(screen.getAllByRole("button", { name: /Baixar/ })).toHaveLength(1);
     expect(screen.getByText("Gerando")).toBeTruthy();
     expect(screen.getByText("Falhou")).toBeTruthy();
+    expect(screen.getByText("Expirado")).toBeTruthy();
   });
 });
 

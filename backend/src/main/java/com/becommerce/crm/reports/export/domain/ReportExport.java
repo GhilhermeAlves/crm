@@ -6,7 +6,8 @@ import java.util.UUID;
 
 /**
  * Pedido de exportação de relatório. Nasce PENDING e termina READY (arquivo no
- * storage) ou FAILED (mensagem de erro); estados terminais não mudam mais.
+ * storage) ou FAILED (mensagem de erro). Um READY vira EXPIRED quando o
+ * arquivo é expurgado após a retenção; FAILED e EXPIRED não mudam mais.
  */
 public class ReportExport {
 
@@ -64,6 +65,18 @@ public class ReportExport {
         this.status = ReportExportStatus.FAILED;
         this.errorMessage = text.length() > MAX_ERROR ? text.substring(0, MAX_ERROR) : text;
         this.finishedAt = Instant.now();
+    }
+
+    /**
+     * Expira uma exportação pronta cujo arquivo já foi removido do storage. O
+     * {@code fileName} e o {@code finishedAt} ficam para o histórico.
+     */
+    public void markExpired() {
+        if (status != ReportExportStatus.READY) {
+            throw new IllegalStateException("Exportação " + id + " não está pronta (" + status + ").");
+        }
+        this.status = ReportExportStatus.EXPIRED;
+        this.storageObjectId = null;
     }
 
     private void requirePending() {

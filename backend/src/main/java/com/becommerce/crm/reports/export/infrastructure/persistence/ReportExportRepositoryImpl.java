@@ -85,6 +85,18 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
         return jdbc.query(sql, params, ROW);
     }
 
+    @Override
+    public List<ReportExport> findReadyFinishedBefore(UUID companyId, Instant before, int limit) {
+        String sql = "SELECT " + COLUMNS + " FROM report_exports "
+                + "WHERE company_id = :companyId AND status = 'READY' AND finished_at < :before "
+                + "ORDER BY finished_at LIMIT :limit";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("companyId", companyId)
+                .addValue("before", toTimestamp(before))
+                .addValue("limit", limit);
+        return jdbc.query(sql, params, ROW);
+    }
+
     private static MapSqlParameterSource params(ReportExport export) {
         return new MapSqlParameterSource()
                 .addValue("id", export.id())

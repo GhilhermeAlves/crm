@@ -49,4 +49,32 @@ class ReportExportTest {
         assertThatThrownBy(() -> failed.markReady(UUID.randomUUID(), "a.pdf"))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void readyExpiresKeepingFileNameForHistory() {
+        ReportExport export = pending();
+        export.markReady(UUID.randomUUID(), "fluxo.pdf");
+
+        export.markExpired();
+
+        assertThat(export.status()).isEqualTo(ReportExportStatus.EXPIRED);
+        assertThat(export.storageObjectId()).isNull();
+        assertThat(export.fileName()).isEqualTo("fluxo.pdf");
+        assertThat(export.finishedAt()).isNotNull();
+    }
+
+    @Test
+    void onlyReadyCanExpire() {
+        assertThatThrownBy(() -> pending().markExpired()).isInstanceOf(IllegalStateException.class);
+
+        ReportExport failed = pending();
+        failed.markFailed("boom");
+        assertThatThrownBy(failed::markExpired).isInstanceOf(IllegalStateException.class);
+
+        ReportExport expired = pending();
+        expired.markReady(UUID.randomUUID(), "a.pdf");
+        expired.markExpired();
+        assertThatThrownBy(expired::markExpired).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> expired.markFailed("x")).isInstanceOf(IllegalStateException.class);
+    }
 }

@@ -21,11 +21,15 @@ type RecentReportExportsProps = {
 
 const STATUS: Record<
   ReportExportStatus,
-  { label: string; variant: "secondary" | "default" | "destructive" }
+  {
+    label: string;
+    variant: "secondary" | "default" | "destructive" | "outline";
+  }
 > = {
   PENDING: { label: "Gerando", variant: "secondary" },
   READY: { label: "Pronto", variant: "default" },
   FAILED: { label: "Falhou", variant: "destructive" },
+  EXPIRED: { label: "Expirado", variant: "outline" },
 };
 
 function formatDate(value: string): string {

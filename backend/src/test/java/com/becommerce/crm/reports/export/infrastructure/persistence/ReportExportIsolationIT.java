@@ -26,12 +26,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -72,6 +74,13 @@ class ReportExportIsolationIT {
             try (Statement st = conn.createStatement()) {
                 st.execute(new ClassPathResource("db/migration/V096__report_exports.sql")
                         .getContentAsString(StandardCharsets.UTF_8));
+            }
+            for (String migration : List.of("V136__report_exports_budgets_csv.sql",
+                    "V155__report_exports_expired.sql")) {
+                try (Statement st = conn.createStatement()) {
+                    st.execute(new ClassPathResource("db/migration/" + migration)
+                            .getContentAsString(StandardCharsets.UTF_8));
+                }
             }
             try (Statement st = conn.createStatement()) {
                 st.execute("CREATE ROLE " + APP_USER + " LOGIN PASSWORD '" + APP_PASSWORD
@@ -179,5 +188,37 @@ class ReportExportIsolationIT {
     void tenantBCannotInsertForTenantA() {
         TenantContext.setCompanyId(TENANT_B);
         assertThrows(DataAccessException.class, () -> repository.insert(export(TENANT_A)));
+    }
+
+    @Test
+    void retentionScanSeesOnlyTenantReadyExportsAndPersistsExpired() {
+        TenantContext.setCompanyId(TENANT_A);
+        ReportExport readyA = export(TENANT_A);
+        repository.insert(readyA);
+        readyA.markReady(UUID.randomUUID(), "fluxo.xlsx");
+        repository.update(readyA);
+        repository.insert(export(TENANT_A)); // PENDING: fica fora da varredura
+        TenantContext.setCompanyId(TENANT_B);
+        ReportExport readyB = export(TENANT_B);
+        repository.insert(readyB);
+        readyB.markReady(UUID.randomUUID(), "b.xlsx");
+        repository.update(readyB);
+
+        Instant future = Instant.now().plusSeconds(60);
+        // Tenant B não enxerga as exportações de A, mesmo pedindo pelo company_id dela.
+        assertTrue(repository.findReadyFinishedBefore(TENANT_A, future, 10).isEmpty());
+
+        TenantContext.setCompanyId(TENANT_A);
+        assertTrue(repository.findReadyFinishedBefore(TENANT_A, Instant.now().minusSeconds(3600), 10).isEmpty());
+        List<ReportExport> candidates = repository.findReadyFinishedBefore(TENANT_A, future, 10);
+        assertEquals(1, candidates.size());
+
+        ReportExport candidate = candidates.get(0);
+        candidate.markExpired();
+        repository.update(candidate);
+        ReportExport loaded = repository.findById(TENANT_A, readyA.id()).orElseThrow();
+        assertEquals(ReportExportStatus.EXPIRED, loaded.status());
+        assertEquals("fluxo.xlsx", loaded.fileName());
+        assertNull(loaded.storageObjectId());
     }
 }
