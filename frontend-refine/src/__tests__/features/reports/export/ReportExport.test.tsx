@@ -105,6 +105,28 @@ describe("RecentReportExports", () => {
     expect(screen.getByText("Falhou")).toBeTruthy();
     expect(screen.getByText("Expirado")).toBeTruthy();
   });
+
+  it("mostra Cancelar só para exportações em geração e o status Cancelado", () => {
+    const onCancel = vi.fn();
+    render(
+      <RecentReportExports
+        companyId="c1"
+        isLoading={false}
+        onCancel={onCancel}
+        exports={[
+          exportItem({ id: "a", status: "READY" }),
+          exportItem({ id: "b", status: "PENDING", fileName: null }),
+          exportItem({ id: "c", status: "CANCELED", fileName: null }),
+        ]}
+      />,
+    );
+
+    const cancel = screen.getAllByRole("button", { name: /Cancelar/ });
+    expect(cancel).toHaveLength(1);
+    fireEvent.click(cancel[0]);
+    expect(onCancel).toHaveBeenCalledWith("b");
+    expect(screen.getByText("Cancelado")).toBeTruthy();
+  });
 });
 
 describe("parseReportExportMetadata", () => {

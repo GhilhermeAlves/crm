@@ -15,6 +15,11 @@ export const ReportExportService = {
     return response.data;
   },
 
+  async cancel(companyId: string, exportId: string): Promise<ReportExport> {
+    const response = await api.post<ReportExport>(`${base(companyId)}/${exportId}/cancel`);
+    return response.data;
+  },
+
   async download(companyId: string, exportId: string): Promise<Blob> {
     const response = await api.get<Blob>(`${base(companyId)}/${exportId}/download`, {
       responseType: "blob",

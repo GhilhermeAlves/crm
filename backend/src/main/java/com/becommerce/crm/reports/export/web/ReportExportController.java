@@ -26,7 +26,8 @@ import java.util.UUID;
 
 /**
  * Impressão/exportação de relatórios: o {@code POST} agenda a geração (202) e o
- * usuário é avisado no sino; {@code GET /{id}/download} entrega o arquivo. A
+ * usuário é avisado no sino; {@code GET /{id}/download} entrega o arquivo e
+ * {@code POST /{id}/cancel} cancela uma ainda em geração. A
  * permissão fina (finance:read / appointment:read) é checada no service.
  */
 @RestController
@@ -64,6 +65,14 @@ public class ReportExportController {
                                                     @PathVariable UUID exportId,
                                                     @AuthenticationPrincipal CurrentUser principal) {
         return ResponseEntity.ok(service.get(companyId, principal.userId(), exportId));
+    }
+
+    @PostMapping("/{exportId}/cancel")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ReportExportResponse> cancel(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                       @PathVariable UUID exportId,
+                                                       @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(service.cancel(companyId, principal.userId(), exportId));
     }
 
     @GetMapping("/{exportId}/download")

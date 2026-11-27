@@ -37,3 +37,20 @@ export function useRequestReportExport(companyId: string | null) {
     },
   });
 }
+
+/** Cancela uma exportação ainda em geração (só o autor; o backend devolve 409 se já terminou). */
+export function useCancelReportExport(companyId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (exportId: string) => ReportExportService.cancel(companyId as string, exportId),
+    onSuccess: () => {
+      toast.success("Exportação cancelada.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Não foi possível cancelar a exportação.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: reportExportsKey(companyId) });
+    },
+  });
+}

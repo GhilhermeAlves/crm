@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -76,7 +77,7 @@ class ReportExportIsolationIT {
                         .getContentAsString(StandardCharsets.UTF_8));
             }
             for (String migration : List.of("V136__report_exports_budgets_csv.sql",
-                    "V155__report_exports_expired.sql")) {
+                    "V155__report_exports_expired.sql", "V156__report_exports_canceled.sql")) {
                 try (Statement st = conn.createStatement()) {
                     st.execute(new ClassPathResource("db/migration/" + migration)
                             .getContentAsString(StandardCharsets.UTF_8));
@@ -220,5 +221,35 @@ class ReportExportIsolationIT {
         assertEquals(ReportExportStatus.EXPIRED, loaded.status());
         assertEquals("fluxo.xlsx", loaded.fileName());
         assertNull(loaded.storageObjectId());
+    }
+
+    @Test
+    void cancelIsConditionalAndCountsRespectTenant() {
+        TenantContext.setCompanyId(TENANT_A);
+        ReportExport pendingA = export(TENANT_A);
+        repository.insert(pendingA);
+        repository.insert(export(TENANT_A));
+        assertEquals(2, repository.countPending(TENANT_A, USER));
+        assertEquals(2, repository.countRequestedSince(TENANT_A, USER, Instant.now().minusSeconds(3600)));
+
+        pendingA.markCanceled();
+        assertTrue(repository.updateIfPending(pendingA));
+        assertEquals(ReportExportStatus.CANCELED,
+                repository.findById(TENANT_A, pendingA.id()).orElseThrow().status());
+        assertEquals(1, repository.countPending(TENANT_A, USER));
+
+        // Já finalizada: a gravação condicional do gerador não sobrescreve o CANCELED.
+        ReportExport late = new ReportExport(pendingA.id(), TENANT_A, USER, pendingA.type(), pendingA.format(),
+                pendingA.periodFrom(), pendingA.periodTo(), ReportExportStatus.PENDING, null, null, null,
+                pendingA.createdAt(), null);
+        late.markReady(UUID.randomUUID(), "tarde.xlsx");
+        assertFalse(repository.updateIfPending(late));
+        assertEquals(ReportExportStatus.CANCELED,
+                repository.findById(TENANT_A, pendingA.id()).orElseThrow().status());
+
+        assertEquals(1, repository.findPendingCreatedBefore(TENANT_A, Instant.now().plusSeconds(60), 10).size());
+        TenantContext.setCompanyId(TENANT_B);
+        assertEquals(0, repository.countPending(TENANT_A, USER));
+        assertTrue(repository.findPendingCreatedBefore(TENANT_A, Instant.now().plusSeconds(60), 10).isEmpty());
     }
 }

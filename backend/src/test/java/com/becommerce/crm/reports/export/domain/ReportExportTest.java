@@ -77,4 +77,20 @@ class ReportExportTest {
         assertThatThrownBy(expired::markExpired).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> expired.markFailed("x")).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void onlyPendingCanBeCanceledAndCanceledIsTerminal() {
+        ReportExport export = pending();
+        export.markCanceled();
+        assertThat(export.status()).isEqualTo(ReportExportStatus.CANCELED);
+        assertThat(export.finishedAt()).isNotNull();
+        assertThatThrownBy(export::markCanceled).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> export.markReady(UUID.randomUUID(), "a.pdf"))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> export.markFailed("x")).isInstanceOf(IllegalStateException.class);
+
+        ReportExport ready = pending();
+        ready.markReady(UUID.randomUUID(), "a.pdf");
+        assertThatThrownBy(ready::markCanceled).isInstanceOf(IllegalStateException.class);
+    }
 }

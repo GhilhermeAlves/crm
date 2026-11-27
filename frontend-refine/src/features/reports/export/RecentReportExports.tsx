@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,10 @@ type RecentReportExportsProps = {
   companyId: string | null;
   exports: ReportExport[];
   isLoading: boolean;
+  /** Cancela uma exportação em geração; sem ele o botão não aparece. */
+  onCancel?: (exportId: string) => void;
+  /** Exportação cujo cancelamento está em andamento. */
+  cancelingId?: string | null;
 };
 
 const STATUS: Record<
@@ -30,6 +34,7 @@ const STATUS: Record<
   READY: { label: "Pronto", variant: "default" },
   FAILED: { label: "Falhou", variant: "destructive" },
   EXPIRED: { label: "Expirado", variant: "outline" },
+  CANCELED: { label: "Cancelado", variant: "outline" },
 };
 
 function formatDate(value: string): string {
@@ -37,7 +42,13 @@ function formatDate(value: string): string {
   return `${day}/${month}/${year}`;
 }
 
-export function RecentReportExports({ companyId, exports, isLoading }: RecentReportExportsProps) {
+export function RecentReportExports({
+  companyId,
+  exports,
+  isLoading,
+  onCancel,
+  cancelingId = null,
+}: RecentReportExportsProps) {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const handleDownload = async (item: ReportExport) => {
@@ -83,6 +94,18 @@ export function RecentReportExports({ companyId, exports, isLoading }: RecentRep
                     {item.status === "PENDING" && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
                     {status.label}
                   </Badge>
+                  {item.status === "PENDING" && onCancel && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={cancelingId === item.id}
+                      onClick={() => onCancel(item.id)}
+                    >
+                      <X className="h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  )}
                   {item.status === "READY" && (
                     <Button
                       type="button"

@@ -10,6 +10,7 @@ import { RecentReportExports } from "@/features/reports/export/RecentReportExpor
 import { ReportExportForm } from "@/features/reports/export/ReportExportForm";
 import { findReportExport } from "@/features/reports/export/types";
 import {
+  useCancelReportExport,
   useReportExports,
   useRequestReportExport,
 } from "@/features/reports/export/useReportExports";
@@ -24,6 +25,7 @@ export default function ReportExportPage() {
 
   const exportsQuery = useReportExports(companyId);
   const requestExport = useRequestReportExport(companyId);
+  const cancelExport = useCancelReportExport(companyId);
 
   if (!definition) {
     return (
@@ -69,6 +71,8 @@ export default function ReportExportPage() {
         companyId={companyId}
         exports={exportsQuery.data ?? []}
         isLoading={exportsQuery.isLoading}
+        onCancel={(exportId) => cancelExport.mutate(exportId)}
+        cancelingId={cancelExport.isPending ? (cancelExport.variables ?? null) : null}
       />
     </div>
   );

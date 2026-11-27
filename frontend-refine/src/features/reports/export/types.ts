@@ -6,7 +6,7 @@ export const FORMAT_LABELS: Record<ExportFormat, string> = {
   XLSX: "Excel",
   CSV: "CSV",
 };
-export type ReportExportStatus = "PENDING" | "READY" | "FAILED" | "EXPIRED";
+export type ReportExportStatus = "PENDING" | "READY" | "FAILED" | "EXPIRED" | "CANCELED";
 
 export interface ReportExportRequest {
   type: ReportExportType;

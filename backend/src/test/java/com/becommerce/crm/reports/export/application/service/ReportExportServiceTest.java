@@ -9,7 +9,10 @@ import com.becommerce.crm.reports.export.application.port.out.ReportExportReposi
 import com.becommerce.crm.reports.export.domain.ExportFormat;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.reports.export.domain.ReportExportType;
+import com.becommerce.crm.reports.export.domain.ReportExportStatus;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportConflictException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportNotFoundException;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportRateLimitException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +27,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -120,5 +124,100 @@ class ReportExportServiceTest {
         assertThat(file.fileName()).isEqualTo("fluxo-de-caixa_2026-06-01_a_2026-06-30.xlsx");
         assertThat(file.contentType()).isEqualTo(ExportFormat.XLSX.contentType());
         assertThat(file.data()).hasSize(3);
+    }
+
+    private static final ReportExportRequest DRE =
+            new ReportExportRequest("MONTHLY_DRE", "PDF", null, null, "2026-06");
+
+    private ReportExport stored(UUID owner) {
+        ReportExport export = ReportExport.pending(COMPANY, owner, ReportExportType.CASH_FLOW, ExportFormat.PDF,
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30));
+        when(repository.findById(COMPANY, export.id())).thenReturn(Optional.of(export));
+        return export;
+    }
+
+    @Test
+    void tooManyPendingIsRateLimited() {
+        when(repository.countPending(COMPANY, USER)).thenReturn(3);
+
+        assertThatThrownBy(() -> service.request(COMPANY, USER, FINANCE, DRE))
+                .isInstanceOf(ReportExportRateLimitException.class)
+                .hasMessageContaining("3 relatórios sendo gerados");
+        verify(repository, never()).insert(any());
+        verify(events, never()).publishEvent(any());
+    }
+
+    @Test
+    void tooManyPerHourIsRateLimited() {
+        when(repository.countRequestedSince(eq(COMPANY), eq(USER), any())).thenReturn(30);
+
+        assertThatThrownBy(() -> service.request(COMPANY, USER, FINANCE, DRE))
+                .isInstanceOf(ReportExportRateLimitException.class)
+                .hasMessageContaining("30 relatórios por hora");
+        verify(repository, never()).insert(any());
+    }
+
+    @Test
+    void limitsAreConfigurable() {
+        service = new ReportExportService(repository, storage, events, 1, 100);
+        when(repository.countPending(COMPANY, USER)).thenReturn(1);
+
+        assertThatThrownBy(() -> service.request(COMPANY, USER, FINANCE, DRE))
+                .isInstanceOf(ReportExportRateLimitException.class);
+    }
+
+    @Test
+    void belowLimitsIsAccepted() {
+        when(repository.countPending(COMPANY, USER)).thenReturn(2);
+        when(repository.countRequestedSince(eq(COMPANY), eq(USER), any())).thenReturn(29);
+
+        service.request(COMPANY, USER, FINANCE, DRE);
+
+        verify(repository).insert(any());
+    }
+
+    @Test
+    void ownerCancelsPendingExport() {
+        ReportExport export = stored(USER);
+        when(repository.updateIfPending(export)).thenReturn(true);
+
+        ReportExportResponse response = service.cancel(COMPANY, USER, export.id());
+
+        assertThat(response.status()).isEqualTo("CANCELED");
+        assertThat(export.status()).isEqualTo(ReportExportStatus.CANCELED);
+    }
+
+    @Test
+    void cancelOfAnotherUsersExportIsNotFound() {
+        ReportExport export = stored(UUID.randomUUID());
+
+        assertThatThrownBy(() -> service.cancel(COMPANY, USER, export.id()))
+                .isInstanceOf(ReportExportNotFoundException.class);
+        verify(repository, never()).updateIfPending(any());
+    }
+
+    @Test
+    void cancelOfMissingExportIsNotFound() {
+        assertThatThrownBy(() -> service.cancel(COMPANY, USER, UUID.randomUUID()))
+                .isInstanceOf(ReportExportNotFoundException.class);
+    }
+
+    @Test
+    void cancelOfFinishedExportIsConflict() {
+        ReportExport export = stored(USER);
+        export.markReady(UUID.randomUUID(), "f.pdf");
+
+        assertThatThrownBy(() -> service.cancel(COMPANY, USER, export.id()))
+                .isInstanceOf(ReportExportConflictException.class);
+        verify(repository, never()).updateIfPending(any());
+    }
+
+    @Test
+    void cancelLosingRaceWithGeneratorIsConflict() {
+        ReportExport export = stored(USER);
+        when(repository.updateIfPending(export)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.cancel(COMPANY, USER, export.id()))
+                .isInstanceOf(ReportExportConflictException.class);
     }
 }

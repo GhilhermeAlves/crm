@@ -65,6 +65,14 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
     }
 
     @Override
+    public boolean updateIfPending(ReportExport export) {
+        String sql = "UPDATE report_exports SET status = :status, file_name = :fileName, "
+                + "storage_object_id = :storageObjectId, error_message = :errorMessage, "
+                + "finished_at = :finishedAt WHERE id = :id AND company_id = :companyId AND status = 'PENDING'";
+        return jdbc.update(sql, params(export)) > 0;
+    }
+
+    @Override
     public Optional<ReportExport> findById(UUID companyId, UUID id) {
         String sql = "SELECT " + COLUMNS + " FROM report_exports WHERE id = :id AND company_id = :companyId";
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -95,6 +103,41 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
                 .addValue("before", toTimestamp(before))
                 .addValue("limit", limit);
         return jdbc.query(sql, params, ROW);
+    }
+
+    @Override
+    public List<ReportExport> findPendingCreatedBefore(UUID companyId, Instant before, int limit) {
+        String sql = "SELECT " + COLUMNS + " FROM report_exports "
+                + "WHERE company_id = :companyId AND status = 'PENDING' AND created_at < :before "
+                + "ORDER BY created_at LIMIT :limit";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("companyId", companyId)
+                .addValue("before", toTimestamp(before))
+                .addValue("limit", limit);
+        return jdbc.query(sql, params, ROW);
+    }
+
+    @Override
+    public int countPending(UUID companyId, UUID requestedBy) {
+        String sql = "SELECT COUNT(*) FROM report_exports "
+                + "WHERE company_id = :companyId AND requested_by = :requestedBy AND status = 'PENDING'";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("companyId", companyId)
+                .addValue("requestedBy", requestedBy);
+        Integer count = jdbc.queryForObject(sql, params, Integer.class);
+        return count == null ? 0 : count;
+    }
+
+    @Override
+    public int countRequestedSince(UUID companyId, UUID requestedBy, Instant since) {
+        String sql = "SELECT COUNT(*) FROM report_exports "
+                + "WHERE company_id = :companyId AND requested_by = :requestedBy AND created_at >= :since";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("companyId", companyId)
+                .addValue("requestedBy", requestedBy)
+                .addValue("since", toTimestamp(since));
+        Integer count = jdbc.queryForObject(sql, params, Integer.class);
+        return count == null ? 0 : count;
     }
 
     private static MapSqlParameterSource params(ReportExport export) {

@@ -7,7 +7,8 @@ import java.util.UUID;
 /**
  * Pedido de exportação de relatório. Nasce PENDING e termina READY (arquivo no
  * storage) ou FAILED (mensagem de erro). Um READY vira EXPIRED quando o
- * arquivo é expurgado após a retenção; FAILED e EXPIRED não mudam mais.
+ * arquivo é expurgado após a retenção. Um PENDING pode ser CANCELED pelo
+ * autor; FAILED, EXPIRED e CANCELED não mudam mais.
  */
 public class ReportExport {
 
@@ -64,6 +65,13 @@ public class ReportExport {
         String text = message == null || message.isBlank() ? "Erro ao gerar o relatório." : message;
         this.status = ReportExportStatus.FAILED;
         this.errorMessage = text.length() > MAX_ERROR ? text.substring(0, MAX_ERROR) : text;
+        this.finishedAt = Instant.now();
+    }
+
+    /** Cancelamento pelo autor: só enquanto a geração não terminou. */
+    public void markCanceled() {
+        requirePending();
+        this.status = ReportExportStatus.CANCELED;
         this.finishedAt = Instant.now();
     }
 

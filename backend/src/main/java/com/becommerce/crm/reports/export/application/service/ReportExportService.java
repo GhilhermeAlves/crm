@@ -10,13 +10,19 @@ import com.becommerce.crm.reports.export.domain.ExportFormat;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.reports.export.domain.ReportExportStatus;
 import com.becommerce.crm.reports.export.domain.ReportExportType;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportConflictException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportNotFoundException;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportRateLimitException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportValidationException;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -37,15 +43,30 @@ public class ReportExportService {
     static final int MAX_MONTHS = 12;
     private static final int RECENT_LIMIT = 20;
 
+    static final int DEFAULT_MAX_PENDING = 3;
+    static final int DEFAULT_MAX_PER_HOUR = 30;
+
     private final ReportExportRepository repository;
     private final StorageUseCase storage;
     private final ApplicationEventPublisher events;
+    private final int maxPending;
+    private final int maxPerHour;
 
     public ReportExportService(ReportExportRepository repository, StorageUseCase storage,
                                ApplicationEventPublisher events) {
+        this(repository, storage, events, DEFAULT_MAX_PENDING, DEFAULT_MAX_PER_HOUR);
+    }
+
+    @Autowired
+    public ReportExportService(ReportExportRepository repository, StorageUseCase storage,
+                               ApplicationEventPublisher events,
+                               @Value("${app.reports.export-max-pending-per-user:3}") int maxPending,
+                               @Value("${app.reports.export-max-per-hour-per-user:30}") int maxPerHour) {
         this.repository = repository;
         this.storage = storage;
         this.events = events;
+        this.maxPending = maxPending;
+        this.maxPerHour = maxPerHour;
     }
 
     @Transactional
@@ -73,6 +94,7 @@ public class ReportExportService {
         ReportExport export = ReportExport.pending(companyId, userId, type, format, from, to);
         try {
             TenantContext.setCompanyId(companyId);
+            requireWithinLimits(companyId, userId);
             repository.insert(export);
         } finally {
             TenantContext.clear();
@@ -96,6 +118,48 @@ public class ReportExportService {
     @Transactional(readOnly = true)
     public ReportExportResponse get(UUID companyId, UUID userId, UUID exportId) {
         return ReportExportResponse.from(owned(companyId, userId, exportId));
+    }
+
+    /**
+     * Cancela uma exportação PENDING do próprio usuário. Inexistente ou de
+     * outro usuário é 404; já finalizada é 409. A gravação é condicional para
+     * não atropelar o gerador que termine no mesmo instante.
+     */
+    @Transactional
+    public ReportExportResponse cancel(UUID companyId, UUID userId, UUID exportId) {
+        ReportExport export = owned(companyId, userId, exportId);
+        if (export.status() != ReportExportStatus.PENDING) {
+            throw notCancelable();
+        }
+        export.markCanceled();
+        boolean updated;
+        try {
+            TenantContext.setCompanyId(companyId);
+            updated = repository.updateIfPending(export);
+        } finally {
+            TenantContext.clear();
+        }
+        if (!updated) {
+            throw notCancelable();
+        }
+        return ReportExportResponse.from(export);
+    }
+
+    private static ReportExportConflictException notCancelable() {
+        return new ReportExportConflictException("Só é possível cancelar exportações que ainda estão sendo geradas.");
+    }
+
+    /** Limites por usuário e empresa, contados no banco (vale entre instâncias). */
+    private void requireWithinLimits(UUID companyId, UUID userId) {
+        if (repository.countPending(companyId, userId) >= maxPending) {
+            throw new ReportExportRateLimitException("Você já tem " + maxPending
+                    + " relatórios sendo gerados. Aguarde a conclusão ou cancele algum antes de pedir outro.");
+        }
+        Instant since = Instant.now().minus(Duration.ofHours(1));
+        if (repository.countRequestedSince(companyId, userId, since) >= maxPerHour) {
+            throw new ReportExportRateLimitException("Limite de " + maxPerHour
+                    + " relatórios por hora atingido. Tente novamente mais tarde.");
+        }
     }
 
     /** Arquivo pronto do próprio usuário; qualquer outro caso é 404. */

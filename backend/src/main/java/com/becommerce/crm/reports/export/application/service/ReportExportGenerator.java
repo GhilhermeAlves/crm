@@ -43,7 +43,8 @@ import java.util.function.Supplier;
 /**
  * Gera o arquivo de uma exportação PENDING: dataset → documento → PDF/XLSX →
  * storage → READY → notificação no sino com o link de download. Qualquer erro
- * marca FAILED e avisa o usuário; o registro nunca fica em PENDING.
+ * marca FAILED e avisa o usuário. Se o autor cancelar durante a geração, o
+ * arquivo é descartado (apagado do storage se já subiu) e ninguém é avisado.
  *
  * <p>Os serviços de storage e notificação limpam o {@link TenantContext} ao
  * terminar, então cada acesso ao banco daqui define o tenant de novo.
@@ -87,14 +88,22 @@ public class ReportExportGenerator {
         ReportExport export = found.get();
         try {
             byte[] content = inTenant(companyId, () -> render(export));
+            // Cancelada (ou finalizada pelo job de travados) durante a geração: nem sobe o arquivo.
+            if (!stillPending(companyId, exportId)) {
+                log.info("Exportação {} finalizada durante a geração; arquivo descartado", exportId);
+                return;
+            }
             String fileName = fileName(export);
             StorageResponse stored = storage.upload(companyId, fileName, export.format().contentType(), content,
                     export.requestedBy());
             export.markReady(stored.id(), fileName);
-            inTenant(companyId, () -> {
-                repository.update(export);
-                return null;
-            });
+            // Gravação condicional: se cancelaram entre o upload e aqui, apaga o objeto e não avisa.
+            boolean published = inTenant(companyId, () -> repository.updateIfPending(export));
+            if (!published) {
+                log.info("Exportação {} cancelada antes de publicar; arquivo descartado", exportId);
+                discard(companyId, stored.id());
+                return;
+            }
             notifications.create(companyId, new CreateNotificationRequest(export.requestedBy(),
                     NotificationType.SYSTEM, "Relatório pronto para download", summary(export),
                     metadata(export)), export.requestedBy());
@@ -104,24 +113,60 @@ public class ReportExportGenerator {
         }
     }
 
+    /**
+     * Marca FAILED uma exportação PENDING com a mensagem ao usuário e envia a
+     * notificação de falha (usado pelo job de gerações travadas). Retorna
+     * {@code false} se outro fluxo já a finalizou.
+     */
+    public boolean failPending(UUID companyId, ReportExport export, String message) {
+        export.markFailed(message);
+        boolean updated = inTenant(companyId, () -> repository.updateIfPending(export));
+        if (updated) {
+            notifyFailure(companyId, export, message);
+        }
+        return updated;
+    }
+
+    private boolean stillPending(UUID companyId, UUID exportId) {
+        return inTenant(companyId, () -> repository.findById(companyId, exportId))
+                .map(current -> current.status() == ReportExportStatus.PENDING)
+                .orElse(false);
+    }
+
+    private void discard(UUID companyId, UUID storageObjectId) {
+        try {
+            // O StorageService seta e limpa o TenantContext por conta própria.
+            storage.delete(companyId, storageObjectId);
+        } catch (RuntimeException ex) {
+            log.warn("Falha ao apagar o arquivo descartado {}: {}", storageObjectId, ex.getClass().getSimpleName());
+        }
+    }
+
     private void fail(UUID companyId, ReportExport export, RuntimeException cause) {
         try {
-            if (export.status() == ReportExportStatus.PENDING) {
-                export.markFailed(cause.getMessage());
-                inTenant(companyId, () -> {
-                    repository.update(export);
-                    return null;
-                });
+            if (export.status() != ReportExportStatus.PENDING) {
+                // Já marcada READY em memória mas não publicada: nada a registrar.
+                return;
+            }
+            export.markFailed(cause.getMessage());
+            boolean updated = inTenant(companyId, () -> repository.updateIfPending(export));
+            if (!updated) {
+                // Cancelada pelo autor (ou finalizada por outro fluxo): sem notificação.
+                return;
             }
             // Limite de linhas não se resolve tentando de novo: mostra a orientação.
             String hint = cause instanceof ReportExportTooLargeException
                     ? cause.getMessage() : "Tente novamente em instantes.";
-            notifications.create(companyId, new CreateNotificationRequest(export.requestedBy(),
-                    NotificationType.SYSTEM, "Não foi possível gerar o relatório",
-                    summary(export) + ". " + hint, null), export.requestedBy());
+            notifyFailure(companyId, export, hint);
         } catch (RuntimeException ex) {
             log.error("Falha ao registrar o erro da exportação {}", export.id(), ex);
         }
+    }
+
+    private void notifyFailure(UUID companyId, ReportExport export, String hint) {
+        notifications.create(companyId, new CreateNotificationRequest(export.requestedBy(),
+                NotificationType.SYSTEM, "Não foi possível gerar o relatório",
+                summary(export) + ". " + hint, null), export.requestedBy());
     }
 
     private byte[] render(ReportExport export) {

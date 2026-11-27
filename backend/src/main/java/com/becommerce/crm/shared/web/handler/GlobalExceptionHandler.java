@@ -67,7 +67,9 @@ import com.becommerce.crm.sales.pipeline.domain.exception.PipelineValidationExce
 import com.becommerce.crm.sales.pipeline.domain.exception.StageNotFoundException;
 import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import com.becommerce.crm.masterdata.storage.domain.exception.StorageObjectNotFoundException;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportConflictException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportNotFoundException;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportRateLimitException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportValidationException;
 import com.becommerce.crm.sales.task.domain.exception.TaskNotFoundException;
 import com.becommerce.crm.sales.task.domain.exception.TaskValidationException;
@@ -925,6 +927,30 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 400,
                 "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ReportExportConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleReportExportConflictException(
+            ReportExportConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ReportExportRateLimitException.class)
+    public ResponseEntity<Map<String, Object>> handleReportExportRateLimitException(
+            ReportExportRateLimitException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(Map.of(
+                "status", 429,
+                "error", "Too Many Requests",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));
