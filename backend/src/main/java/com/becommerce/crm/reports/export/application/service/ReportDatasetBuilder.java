@@ -9,6 +9,8 @@ import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
 import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
+import com.becommerce.crm.reports.export.application.dto.LeadsDataset;
+import com.becommerce.crm.reports.export.application.dto.LeadsDataset.StatusCount;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreGroup;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreLine;
@@ -18,8 +20,10 @@ import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CategoryTotalRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.DailyTotalRow;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.LeadRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportTooLargeException;
+import com.becommerce.crm.sales.lead.domain.LeadStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -92,6 +96,10 @@ public class ReportDatasetBuilder {
         return budgets(limited(gateway.budgets(companyId, from, to)));
     }
 
+    public LeadsDataset leads(UUID companyId, LocalDate from, LocalDate to) {
+        return leads(limited(gateway.leads(companyId, from, to)));
+    }
+
     /** Falha a exportação quando a consulta passa de {@link ReportDataGateway#MAX_ROWS}. */
     static <T> List<T> limited(List<T> rows) {
         if (rows.size() > ReportDataGateway.MAX_ROWS) {
@@ -114,6 +122,20 @@ public class ReportDatasetBuilder {
         List<StatusSummary> byStatus = new ArrayList<>();
         totals.forEach((status, t) -> byStatus.add(new StatusSummary(status, t[0], t[1])));
         return new BudgetsDataset(byStatus, rows);
+    }
+
+    /** Contagem na ordem do funil (LeadStatus), incluindo status sem leads. */
+    static LeadsDataset leads(List<LeadRow> rows) {
+        Map<String, long[]> counts = new LinkedHashMap<>();
+        for (LeadStatus status : LeadStatus.values()) {
+            counts.put(status.name(), new long[1]);
+        }
+        for (LeadRow row : rows) {
+            counts.computeIfAbsent(row.status(), s -> new long[1])[0]++;
+        }
+        List<StatusCount> byStatus = new ArrayList<>();
+        counts.forEach((status, c) -> byStatus.add(new StatusCount(status, c[0])));
+        return new LeadsDataset(byStatus, rows);
     }
 
     static MonthlyDreDataset dre(List<CategoryTotalRow> rows) {

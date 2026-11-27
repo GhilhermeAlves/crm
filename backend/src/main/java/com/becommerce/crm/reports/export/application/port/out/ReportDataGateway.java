@@ -42,6 +42,9 @@ public interface ReportDataGateway {
     /** Orçamentos criados (horário de Brasília) no período, com itens somados. */
     List<BudgetRow> budgets(UUID companyId, LocalDate from, LocalDate to);
 
+    /** Leads criados (horário de Brasília) no período, cujo contato não foi excluído. */
+    List<LeadRow> leads(UUID companyId, LocalDate from, LocalDate to);
+
     /**
      * @param logoUrl logo de Configurações → Empresa: data URL (PNG/JPG embutido)
      *                ou link; só o data URL entra no PDF.
@@ -70,6 +73,10 @@ public interface ReportDataGateway {
             return subtotalCents - discountCents;
         }
     }
+
+    /** Status e origem chegam como texto do banco (LeadStatus/LeadSource). */
+    record LeadRow(LocalDate createdOn, String name, String email, String phone, String source,
+                   String status, String assignedName, int score) {}
 
     record AppointmentRow(Instant startAt, String contactName, String typeName, String hostName,
                           String status, String source) {}

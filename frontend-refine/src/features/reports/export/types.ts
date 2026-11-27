@@ -1,4 +1,5 @@
-export type ReportExportType = "MONTHLY_DRE" | "CASH_FLOW" | "TRANSACTIONS" | "AGENDA" | "BUDGETS";
+export type ReportExportType =
+  "MONTHLY_DRE" | "CASH_FLOW" | "TRANSACTIONS" | "AGENDA" | "BUDGETS" | "LEADS";
 export type ExportFormat = "PDF" | "XLSX" | "CSV";
 
 export const FORMAT_LABELS: Record<ExportFormat, string> = {

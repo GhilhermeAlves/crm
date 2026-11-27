@@ -8,6 +8,8 @@ import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
 import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
+import com.becommerce.crm.reports.export.application.dto.LeadsDataset;
+import com.becommerce.crm.reports.export.application.dto.LeadsDataset.StatusCount;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreGroup;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreLine;
@@ -15,6 +17,7 @@ import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.AppointmentRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CompanyHeader;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.LeadRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocument.Column;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocument.Money;
@@ -160,6 +163,56 @@ public final class ReportDocumentFactory {
                 Column.text("Pagamento", 2.2f), Column.date("Aprovado em")), detailRows);
         return new ReportDocument(ReportExportType.BUDGETS.label(), range(from, to), company.name(),
                 company.cnpj(), issuedAt, true, List.of(summary, detail));
+    }
+
+    public static ReportDocument leads(LeadsDataset data, LocalDate from, LocalDate to, CompanyHeader company,
+                                       LocalDateTime issuedAt) {
+        List<Row> summaryRows = new ArrayList<>();
+        for (StatusCount s : data.byStatus()) {
+            summaryRows.add(Row.item(leadStatusLabel(s.status()), s.count()));
+        }
+        summaryRows.add(Row.total("Total", data.count()));
+        ReportTable summary = new ReportTable("Resumo por status", List.of(Column.text("Status", 3f),
+                Column.count("Leads")), summaryRows);
+
+        List<Row> detailRows = new ArrayList<>();
+        for (LeadRow row : data.rows()) {
+            detailRows.add(Row.item(row.createdOn(), blank(row.name()), row.email(), row.phone(),
+                    leadSourceLabel(row.source()), leadStatusLabel(row.status()), blank(row.assignedName()),
+                    (long) row.score()));
+        }
+        ReportTable detail = new ReportTable("Leads", List.of(Column.date("Criado em"),
+                Column.text("Nome", 2.4f),
+                Column.personal("E-mail", 2.2f, ReportFieldMasker.SensitiveField.EMAIL),
+                Column.personal("Telefone", 1.4f, ReportFieldMasker.SensitiveField.PHONE),
+                Column.text("Origem", 1.1f), Column.text("Status", 1.2f), Column.text("Responsável", 1.8f),
+                Column.count("Score")), detailRows);
+        return new ReportDocument(ReportExportType.LEADS.label(), range(from, to), company.name(),
+                company.cnpj(), issuedAt, true, List.of(summary, detail));
+    }
+
+    static String leadStatusLabel(String status) {
+        return switch (status) {
+            case "NEW" -> "Novo";
+            case "CONTACTED" -> "Contatado";
+            case "QUALIFIED" -> "Qualificado";
+            case "UNQUALIFIED" -> "Desqualificado";
+            case "CONVERTED" -> "Convertido";
+            case "LOST" -> "Perdido";
+            default -> status;
+        };
+    }
+
+    static String leadSourceLabel(String source) {
+        return switch (source) {
+            case "WHATSAPP" -> "WhatsApp";
+            case "INSTAGRAM" -> "Instagram";
+            case "FORM" -> "Formulário";
+            case "API" -> "API";
+            case "IMPORT" -> "Importação";
+            case "MANUAL" -> "Manual";
+            default -> source;
+        };
     }
 
     static String budgetStatusLabel(String status) {

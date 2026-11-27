@@ -35,7 +35,12 @@ public enum ReportExportType {
             "Orçamentos criados no período com resumo por situação (em aberto, aprovados e perdidos) e a "
                     + "lista com paciente, itens, desconto, total e forma de pagamento.",
             ReportDomain.SALES, "contact:read", Formats.ALL, ReportPeriodMode.RANGE, Defaults.MAX_MONTHS,
-            "budgets", "orcamentos");
+            "budgets", "orcamentos"),
+    LEADS("Leads",
+            "Leads criados no período com resumo por status e a lista com nome, contato, origem, status, "
+                    + "responsável e score.",
+            ReportDomain.SALES, "lead:read", Formats.ALL, ReportPeriodMode.RANGE, Defaults.MAX_MONTHS,
+            "leads", "leads");
 
     /** Janelas padrão; relatórios de alto volume podem usar {@link #HIGH_VOLUME_MAX_MONTHS}. */
     public static final class Defaults {
