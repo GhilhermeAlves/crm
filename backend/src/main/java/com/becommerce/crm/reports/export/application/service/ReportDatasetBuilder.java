@@ -9,6 +9,7 @@ import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
 import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
+import com.becommerce.crm.reports.export.application.dto.ContactsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset.StatusCount;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
@@ -98,6 +99,10 @@ public class ReportDatasetBuilder {
 
     public LeadsDataset leads(UUID companyId, LocalDate from, LocalDate to) {
         return leads(limited(gateway.leads(companyId, from, to)));
+    }
+
+    public ContactsDataset contacts(UUID companyId, LocalDate from, LocalDate to) {
+        return new ContactsDataset(limited(gateway.contacts(companyId, from, to)));
     }
 
     /** Falha a exportação quando a consulta passa de {@link ReportDataGateway#MAX_ROWS}. */

@@ -45,6 +45,9 @@ public interface ReportDataGateway {
     /** Leads criados (horário de Brasília) no período, cujo contato não foi excluído. */
     List<LeadRow> leads(UUID companyId, LocalDate from, LocalDate to);
 
+    /** Contatos cadastrados (horário de Brasília) no período, sem os excluídos. */
+    List<ContactRow> contacts(UUID companyId, LocalDate from, LocalDate to);
+
     /**
      * @param logoUrl logo de Configurações → Empresa: data URL (PNG/JPG embutido)
      *                ou link; só o data URL entra no PDF.
@@ -77,6 +80,10 @@ public interface ReportDataGateway {
     /** Status e origem chegam como texto do banco (LeadStatus/LeadSource). */
     record LeadRow(LocalDate createdOn, String name, String email, String phone, String source,
                    String status, String assignedName, int score) {}
+
+    /** Só colunas em claro de contacts (nada do cadastro criptografado de persons). */
+    record ContactRow(LocalDate createdOn, String name, String document, String email, String phone,
+                      String city, String state, LocalDate birthDate, String source, String tags) {}
 
     record AppointmentRow(Instant startAt, String contactName, String typeName, String hostName,
                           String status, String source) {}

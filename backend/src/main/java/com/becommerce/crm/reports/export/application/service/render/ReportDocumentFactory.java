@@ -8,6 +8,7 @@ import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
 import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
+import com.becommerce.crm.reports.export.application.dto.ContactsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset.StatusCount;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
@@ -17,6 +18,7 @@ import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.AppointmentRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CompanyHeader;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.ContactRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.LeadRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocument.Column;
@@ -189,6 +191,39 @@ public final class ReportDocumentFactory {
                 Column.count("Score")), detailRows);
         return new ReportDocument(ReportExportType.LEADS.label(), range(from, to), company.name(),
                 company.cnpj(), issuedAt, true, List.of(summary, detail));
+    }
+
+    public static ReportDocument contacts(ContactsDataset data, LocalDate from, LocalDate to,
+                                          CompanyHeader company, LocalDateTime issuedAt) {
+        List<Row> rows = new ArrayList<>();
+        for (ContactRow row : data.rows()) {
+            rows.add(Row.item(row.createdOn(), blank(row.name()), row.document(), row.email(), row.phone(),
+                    cityState(row.city(), row.state()), row.birthDate(), blank(row.source()), blank(row.tags())));
+        }
+        // Total geral no rodapé; células sem valor ficam vazias (a máscara ignora texto em branco).
+        rows.add(Row.total("Total", data.count() + (data.count() == 1 ? " contato" : " contatos"),
+                "", "", "", "", "", "", ""));
+        ReportTable detail = new ReportTable("Contatos", List.of(Column.date("Cadastrado em"),
+                Column.text("Nome", 2.2f),
+                Column.personal("Documento", 1.4f, ReportFieldMasker.SensitiveField.CPF),
+                Column.personal("E-mail", 2.0f, ReportFieldMasker.SensitiveField.EMAIL),
+                Column.personal("Telefone", 1.3f, ReportFieldMasker.SensitiveField.PHONE),
+                Column.text("Cidade/UF", 1.4f),
+                new Column("Nascimento", ReportDocument.ColumnKind.DATE, 1.1f,
+                        ReportFieldMasker.SensitiveField.BIRTH_DATE),
+                Column.text("Origem", 1.2f), Column.text("Tags", 1.6f)), rows);
+        return new ReportDocument(ReportExportType.CONTACTS.label(), range(from, to), company.name(),
+                company.cnpj(), issuedAt, true, List.of(detail));
+    }
+
+    /** "Campinas/SP", só a cidade ou só a UF; "—" quando não há nenhuma. */
+    static String cityState(String city, String state) {
+        String c = city == null ? "" : city.trim();
+        String s = state == null ? "" : state.trim();
+        if (!c.isEmpty() && !s.isEmpty()) {
+            return c + "/" + s;
+        }
+        return blank(c.isEmpty() ? s : c);
     }
 
     static String leadStatusLabel(String status) {

@@ -9,6 +9,7 @@ import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCa
 import com.becommerce.crm.reports.export.application.dto.AgendaDataset;
 import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset;
+import com.becommerce.crm.reports.export.application.dto.ContactsDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
 import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
@@ -227,6 +228,12 @@ public class ReportExportGenerator {
                 LeadsDataset data = datasets.leads(companyId, from, to);
                 rows[0] = data.rows().size();
                 yield emptyNotice(ReportDocumentFactory.leads(data, from, to, company, issuedAt),
+                        data.rows().isEmpty());
+            }
+            case CONTACTS -> {
+                ContactsDataset data = datasets.contacts(companyId, from, to);
+                rows[0] = data.rows().size();
+                yield emptyNotice(ReportDocumentFactory.contacts(data, from, to, company, issuedAt),
                         data.rows().isEmpty());
             }
         };

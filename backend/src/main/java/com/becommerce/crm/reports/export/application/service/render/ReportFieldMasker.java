@@ -29,7 +29,7 @@ public final class ReportFieldMasker {
 
     /** Classificação dos campos pessoais sensíveis. */
     public enum SensitiveField {
-        /** CPF (ou CNPJ de pessoa física): "***.456.789-**". */
+        /** CPF: "***.456.789-**". CNPJ (pessoa jurídica) não é mascarado. */
         CPF,
         /** E-mail: "j***@dominio.com". */
         EMAIL,
@@ -123,14 +123,14 @@ public final class ReportFieldMasker {
         return new ReportTable(table.heading(), columns, rows);
     }
 
-    /** "123.456.789-01" → "***.456.789-**"; CNPJ (14 dígitos) vai pela mesma ideia. */
+    /** "123.456.789-01" → "***.456.789-**"; CNPJ (14 dígitos) é dado de empresa e sai sem máscara. */
     static String maskCpf(String raw) {
         String digits = raw.replaceAll("[^0-9]", "");
         if (digits.length() == 11) {
             return "***." + digits.substring(3, 6) + "." + digits.substring(6, 9) + "-**";
         }
         if (digits.length() == 14) {
-            return "**." + digits.substring(2, 5) + "." + digits.substring(5, 8) + "/****-**";
+            return raw;
         }
         return OMITTED;
     }

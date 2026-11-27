@@ -77,6 +77,18 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
             rs.getString("assigned_name"),
             rs.getInt("score"));
 
+    private static final RowMapper<ContactRow> CONTACT_ROW = (rs, i) -> new ContactRow(
+            rs.getDate("created_on").toLocalDate(),
+            rs.getString("name"),
+            rs.getString("document"),
+            rs.getString("email"),
+            rs.getString("phone"),
+            rs.getString("city"),
+            rs.getString("state"),
+            toLocalDate(rs.getDate("birth_date")),
+            rs.getString("source"),
+            rs.getString("tags"));
+
     /** Linhas buscadas por ida ao banco nas consultas de detalhe (até MAX_ROWS). */
     static final int DETAIL_FETCH_SIZE = 1000;
 
@@ -197,6 +209,26 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "BETWEEN :from AND :to "
                 + "ORDER BY l.created_at, l.id LIMIT " + (MAX_ROWS + 1);
         return detailJdbc.query(sql, params(companyId, from, to), LEAD_ROW);
+    }
+
+    @Override
+    public List<ContactRow> contacts(UUID companyId, LocalDate from, LocalDate to) {
+        // Só colunas em claro de contacts; o cadastro de pessoas (persons, criptografado) não entra.
+        // Telefone: celular quando houver, senão o fixo. created_at é gravado em UTC.
+        String sql = "SELECT (c.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date AS created_on, "
+                + "TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')) AS name, "
+                + "c.cpf AS document, c.email AS email, "
+                + "COALESCE(NULLIF(TRIM(c.mobile), ''), c.phone) AS phone, "
+                + "c.city AS city, c.state AS state, c.birth_date AS birth_date, "
+                + "c.referral_source AS source, "
+                + "(SELECT string_agg(t.name, ', ' ORDER BY t.name) FROM contact_tags ct "
+                + "JOIN tags t ON t.id = ct.tag_id WHERE ct.contact_id = c.id) AS tags "
+                + "FROM contacts c "
+                + "WHERE c.company_id = :companyId AND c.deleted_at IS NULL "
+                + "AND (c.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date "
+                + "BETWEEN :from AND :to "
+                + "ORDER BY c.created_at, c.id LIMIT " + (MAX_ROWS + 1);
+        return detailJdbc.query(sql, params(companyId, from, to), CONTACT_ROW);
     }
 
     private static MapSqlParameterSource params(UUID companyId, LocalDate from, LocalDate to) {

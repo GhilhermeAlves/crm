@@ -40,7 +40,12 @@ public enum ReportExportType {
             "Leads criados no período com resumo por status e a lista com nome, contato, origem, status, "
                     + "responsável e score.",
             ReportDomain.SALES, "lead:read", Formats.ALL, ReportPeriodMode.RANGE, Defaults.MAX_MONTHS,
-            "leads", "leads");
+            "leads", "leads"),
+    CONTACTS("Contatos",
+            "Contatos cadastrados no período com documento, e-mail, telefone, cidade/UF, nascimento, "
+                    + "origem e tags.",
+            ReportDomain.SALES, "contact:read", Formats.ALL, ReportPeriodMode.RANGE, Defaults.MAX_MONTHS,
+            "contacts", "contatos");
 
     /** Janelas padrão; relatórios de alto volume podem usar {@link #HIGH_VOLUME_MAX_MONTHS}. */
     public static final class Defaults {
