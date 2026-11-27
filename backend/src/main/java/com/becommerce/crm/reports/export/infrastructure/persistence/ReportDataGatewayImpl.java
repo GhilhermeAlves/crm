@@ -5,6 +5,7 @@ import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionStatus;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -66,10 +67,23 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
             (Integer) rs.getObject("installments"),
             toLocalDate(rs.getDate("approved_on")));
 
+    /** Linhas buscadas por ida ao banco nas consultas de detalhe (até MAX_ROWS). */
+    static final int DETAIL_FETCH_SIZE = 1000;
+
     private final NamedParameterJdbcTemplate jdbc;
+    /**
+     * Template próprio com {@code fetchSize} para as listas de detalhe: não altera
+     * o bean compartilhado. No PostgreSQL o cursor só vale dentro de transação;
+     * fora dela o driver ignora o valor sem efeito colateral.
+     */
+    private final NamedParameterJdbcTemplate detailJdbc;
 
     public ReportDataGatewayImpl(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
+        JdbcTemplate base = jdbc.getJdbcTemplate();
+        JdbcTemplate detail = new JdbcTemplate(base.getDataSource());
+        detail.setFetchSize(DETAIL_FETCH_SIZE);
+        this.detailJdbc = new NamedParameterJdbcTemplate(detail);
     }
 
     @Override
@@ -115,7 +129,7 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "WHERE ft.company_id = :companyId AND ft.status <> 'CANCELLED' "
                 + "AND ft.due_date BETWEEN :from AND :to "
                 + "ORDER BY ft.due_date, ft.created_at, ft.id LIMIT " + (MAX_ROWS + 1);
-        return jdbc.query(sql, params(companyId, from, to), TRANSACTION_ROW);
+        return detailJdbc.query(sql, params(companyId, from, to), TRANSACTION_ROW);
     }
 
     @Override
@@ -132,7 +146,7 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "WHERE a.company_id = :companyId "
                 + "AND (a.start_at AT TIME ZONE 'America/Sao_Paulo')::date BETWEEN :from AND :to "
                 + "ORDER BY u.name, a.start_at LIMIT " + (MAX_ROWS + 1);
-        return jdbc.query(sql, params(companyId, from, to), APPOINTMENT_ROW);
+        return detailJdbc.query(sql, params(companyId, from, to), APPOINTMENT_ROW);
     }
 
     @Override
@@ -154,7 +168,7 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "BETWEEN :from AND :to "
                 + "GROUP BY b.id, c.first_name, c.last_name "
                 + "ORDER BY b.created_at, b.id LIMIT " + (MAX_ROWS + 1);
-        return jdbc.query(sql, params(companyId, from, to), BUDGET_ROW);
+        return detailJdbc.query(sql, params(companyId, from, to), BUDGET_ROW);
     }
 
     private static MapSqlParameterSource params(UUID companyId, LocalDate from, LocalDate to) {

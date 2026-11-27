@@ -273,4 +273,29 @@ class ReportRenderersTest {
         String csv = new String(CsvReportWriter.write(dre()), StandardCharsets.UTF_8);
         assertThat(csv).doesNotContain("Nenhum registro");
     }
+
+    /** Volume próximo do limite: só confere a contagem de linhas geradas. */
+    @Test
+    void largeVolumeXlsxAndCsvKeepAllRows() throws Exception {
+        int total = 20_000;
+        List<ReportDocument.Row> rows = new ArrayList<>(total);
+        for (int i = 0; i < total; i++) {
+            rows.add(ReportDocument.Row.item("Paciente " + i, LocalDate.of(2026, 6, 1),
+                    new ReportDocument.Money(i * 100L)));
+        }
+        ReportDocument doc = new ReportDocument("Volume", "06/2026", COMPANY.name(), COMPANY.cnpj(), ISSUED,
+                false, List.of(new ReportDocument.ReportTable(null, List.of(
+                        ReportDocument.Column.text("Nome", 3), ReportDocument.Column.date("Data"),
+                        ReportDocument.Column.money("Valor")), rows)));
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(XlsxReportWriter.write(doc)))) {
+            Sheet sheet = workbook.getSheetAt(0);
+            // Cabeçalho na linha 4 (base 0) + uma linha por item.
+            assertThat(sheet.getLastRowNum()).isEqualTo(4 + total);
+            assertThat(sheet.getRow(5 + total - 1).getCell(2).getNumericCellValue()).isEqualTo(total - 1.0);
+        }
+
+        String csv = new String(CsvReportWriter.write(doc), StandardCharsets.UTF_8);
+        assertThat(csv.lines().filter(l -> l.startsWith("Paciente ")).count()).isEqualTo(total);
+    }
 }

@@ -11,16 +11,18 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -33,32 +35,58 @@ import java.util.Map;
  * linha de título, período/emissão, cabeçalho em negrito com fundo, grupos e
  * subtotais em negrito, valores como número ({@code R$ #,##0.00}), datas como
  * data, larguras ajustadas e painel congelado abaixo do cabeçalho.
+ *
+ * <p>Usa {@link SXSSFWorkbook} (streaming): só uma janela de
+ * {@value #ROW_WINDOW} linhas fica em memória; as demais vão para um arquivo
+ * temporário, apagado em {@code dispose()}. Estilos, tipos e larguras são os
+ * mesmos do XSSF; as larguras são calculadas a partir do {@link ReportDocument}
+ * (sem {@code autoSizeColumn}), então não dependem das linhas já descarregadas.
+ * O retorno em {@code byte[]} continua porque o storage exige; o ganho é não
+ * manter o modelo XSSF inteiro (50 mil linhas) em paralelo ao arquivo gerado.
  */
 public final class XlsxReportWriter {
 
     private static final DateTimeFormatter ISSUED = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     private static final int HEADER_ROW = 4;
+    /** Linhas mantidas em memória antes de descarregar para o temporário. */
+    static final int ROW_WINDOW = 200;
 
     private XlsxReportWriter() {
     }
 
     public static byte[] write(ReportDocument report) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Styles styles = new Styles(workbook);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        write(report, out);
+        return out.toByteArray();
+    }
+
+    /** Escreve direto no {@code out} (não o fecha). */
+    public static void write(ReportDocument report, OutputStream out) {
+        SXSSFWorkbook workbook = new SXSSFWorkbook(ROW_WINDOW);
+        try {
+            // Estilos e fontes ficam no XSSF subjacente; o SXSSF compartilha a tabela de estilos.
+            Styles styles = new Styles(workbook.getXSSFWorkbook());
             for (ReportTable table : report.sections()) {
                 String name = table.heading() != null ? table.heading() : "Relatório";
-                XSSFSheet sheet = workbook.createSheet(WorkbookUtil.createSafeSheetName(
+                Sheet sheet = workbook.createSheet(WorkbookUtil.createSafeSheetName(
                         report.sections().size() > 1 ? name : "Relatório"));
                 sheet(sheet, report, table, styles);
             }
             workbook.write(out);
-            return out.toByteArray();
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
+        } finally {
+            // Remove os temporários do streaming mesmo em caso de erro.
+            workbook.dispose();
+            try {
+                workbook.close();
+            } catch (IOException ignored) {
+                // nada a fazer: o conteúdo já foi escrito ou a exceção original prevalece
+            }
         }
     }
 
-    private static void sheet(XSSFSheet sheet, ReportDocument report, ReportTable table, Styles styles) {
+    private static void sheet(Sheet sheet, ReportDocument report, ReportTable table, Styles styles) {
         List<Column> columns = table.columns();
         int lastColumn = columns.size() - 1;
 
@@ -67,13 +95,15 @@ public final class XlsxReportWriter {
         title.setCellStyle(styles.title);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, Math.max(lastColumn, 1)));
 
-        sheet.createRow(1).createCell(0).setCellValue(SpreadsheetSanitizer.sanitize(report.companyName()
+        Cell company = sheet.createRow(1).createCell(0);
+        company.setCellValue(SpreadsheetSanitizer.sanitize(report.companyName()
                 + (report.companyCnpj() == null || report.companyCnpj().isBlank() ? "" : " · CNPJ "
                 + report.companyCnpj())));
-        sheet.createRow(2).createCell(0).setCellValue("Período: " + report.period()
+        Cell period = sheet.createRow(2).createCell(0);
+        period.setCellValue("Período: " + report.period()
                 + "   ·   Emitido em " + ISSUED.format(report.issuedAt()));
-        sheet.getRow(1).getCell(0).setCellStyle(styles.meta);
-        sheet.getRow(2).getCell(0).setCellStyle(styles.meta);
+        company.setCellStyle(styles.meta);
+        period.setCellStyle(styles.meta);
         if (report.notice() != null) {
             // Linha 3 fica livre entre os metadados e o cabeçalho das colunas.
             Cell notice = sheet.createRow(3).createCell(0);
