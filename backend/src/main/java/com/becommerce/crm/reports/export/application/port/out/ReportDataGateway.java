@@ -48,6 +48,9 @@ public interface ReportDataGateway {
     /** Contatos cadastrados (horário de Brasília) no período, sem os excluídos. */
     List<ContactRow> contacts(UUID companyId, LocalDate from, LocalDate to);
 
+    /** Atividades com data (horário de Brasília) no período; sem descrição livre. */
+    List<ActivityRow> activities(UUID companyId, LocalDate from, LocalDate to);
+
     /**
      * @param logoUrl logo de Configurações → Empresa: data URL (PNG/JPG embutido)
      *                ou link; só o data URL entra no PDF.
@@ -82,6 +85,10 @@ public interface ReportDataGateway {
                    String status, String assignedName, int score) {}
 
     /** Só colunas em claro de contacts (nada do cadastro criptografado de persons). */
+    /** Tipo chega como texto do banco (ActivityType); a descrição livre não entra (pode ter dado clínico). */
+    record ActivityRow(LocalDate activityOn, String type, String subject, String contactName,
+                       String createdByName) {}
+
     record ContactRow(LocalDate createdOn, String name, String document, String email, String phone,
                       String city, String state, LocalDate birthDate, String source, String tags) {}
 

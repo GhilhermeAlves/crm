@@ -77,6 +77,13 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
             rs.getString("assigned_name"),
             rs.getInt("score"));
 
+    private static final RowMapper<ActivityRow> ACTIVITY_ROW = (rs, i) -> new ActivityRow(
+            rs.getDate("activity_on").toLocalDate(),
+            rs.getString("type"),
+            rs.getString("subject"),
+            rs.getString("contact_name"),
+            rs.getString("created_by_name"));
+
     private static final RowMapper<ContactRow> CONTACT_ROW = (rs, i) -> new ContactRow(
             rs.getDate("created_on").toLocalDate(),
             rs.getString("name"),
@@ -229,6 +236,25 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "BETWEEN :from AND :to "
                 + "ORDER BY c.created_at, c.id LIMIT " + (MAX_ROWS + 1);
         return detailJdbc.query(sql, params(companyId, from, to), CONTACT_ROW);
+    }
+
+    @Override
+    public List<ActivityRow> activities(UUID companyId, LocalDate from, LocalDate to) {
+        // Activity não tem exclusão lógica; contato excluído (deleted_at) sai sem nome.
+        // description fica de fora de propósito (texto livre, pode ter dado clínico).
+        // activity_at é LocalDateTime do servidor (UTC), como created_at.
+        String sql = "SELECT (a.activity_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date AS activity_on, "
+                + "a.type AS type, a.subject AS subject, "
+                + "TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')) AS contact_name, "
+                + "COALESCE(u.name, '') AS created_by_name "
+                + "FROM activities a "
+                + "LEFT JOIN contacts c ON c.id = a.contact_id AND c.deleted_at IS NULL "
+                + "LEFT JOIN users u ON u.id = a.created_by "
+                + "WHERE a.company_id = :companyId "
+                + "AND (a.activity_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date "
+                + "BETWEEN :from AND :to "
+                + "ORDER BY a.activity_at, a.id LIMIT " + (MAX_ROWS + 1);
+        return detailJdbc.query(sql, params(companyId, from, to), ACTIVITY_ROW);
     }
 
     private static MapSqlParameterSource params(UUID companyId, LocalDate from, LocalDate to) {

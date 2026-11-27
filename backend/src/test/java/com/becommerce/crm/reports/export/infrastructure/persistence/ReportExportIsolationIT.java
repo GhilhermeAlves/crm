@@ -79,7 +79,8 @@ class ReportExportIsolationIT {
             for (String migration : List.of("V136__report_exports_budgets_csv.sql",
                     "V155__report_exports_expired.sql", "V156__report_exports_canceled.sql",
                     "V157__report_exports_row_count.sql", "V159__report_exports_unmasked.sql",
-                    "V160__report_exports_leads.sql", "V161__report_exports_contacts.sql")) {
+                    "V160__report_exports_leads.sql", "V161__report_exports_contacts.sql",
+                    "V162__report_exports_activities.sql")) {
                 try (Statement st = conn.createStatement()) {
                     st.execute(new ClassPathResource("db/migration/" + migration)
                             .getContentAsString(StandardCharsets.UTF_8));

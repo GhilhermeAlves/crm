@@ -9,6 +9,8 @@ import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
 import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
+import com.becommerce.crm.reports.export.application.dto.ActivitiesDataset;
+import com.becommerce.crm.reports.export.application.dto.ActivitiesDataset.TypeCount;
 import com.becommerce.crm.reports.export.application.dto.ContactsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset.StatusCount;
@@ -18,12 +20,14 @@ import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreLi
 import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.AppointmentRow;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.ActivityRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CategoryTotalRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.DailyTotalRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.LeadRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportTooLargeException;
+import com.becommerce.crm.sales.activity.domain.ActivityType;
 import com.becommerce.crm.sales.lead.domain.LeadStatus;
 import org.springframework.stereotype.Component;
 
@@ -103,6 +107,24 @@ public class ReportDatasetBuilder {
 
     public ContactsDataset contacts(UUID companyId, LocalDate from, LocalDate to) {
         return new ContactsDataset(limited(gateway.contacts(companyId, from, to)));
+    }
+
+    public ActivitiesDataset activities(UUID companyId, LocalDate from, LocalDate to) {
+        return activities(limited(gateway.activities(companyId, from, to)));
+    }
+
+    /** Contagem na ordem do enum ActivityType, incluindo tipos sem atividades. */
+    static ActivitiesDataset activities(List<ActivityRow> rows) {
+        Map<String, long[]> counts = new LinkedHashMap<>();
+        for (ActivityType type : ActivityType.values()) {
+            counts.put(type.name(), new long[1]);
+        }
+        for (ActivityRow row : rows) {
+            counts.computeIfAbsent(row.type(), t -> new long[1])[0]++;
+        }
+        List<TypeCount> byType = new ArrayList<>();
+        counts.forEach((type, c) -> byType.add(new TypeCount(type, c[0])));
+        return new ActivitiesDataset(byType, rows);
     }
 
     /** Falha a exportação quando a consulta passa de {@link ReportDataGateway#MAX_ROWS}. */

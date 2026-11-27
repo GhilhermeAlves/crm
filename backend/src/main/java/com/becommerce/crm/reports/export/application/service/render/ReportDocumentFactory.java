@@ -8,6 +8,8 @@ import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
 import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
+import com.becommerce.crm.reports.export.application.dto.ActivitiesDataset;
+import com.becommerce.crm.reports.export.application.dto.ActivitiesDataset.TypeCount;
 import com.becommerce.crm.reports.export.application.dto.ContactsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset;
 import com.becommerce.crm.reports.export.application.dto.LeadsDataset.StatusCount;
@@ -18,6 +20,7 @@ import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.AppointmentRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CompanyHeader;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.ActivityRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.ContactRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.LeadRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
@@ -224,6 +227,42 @@ public final class ReportDocumentFactory {
             return c + "/" + s;
         }
         return blank(c.isEmpty() ? s : c);
+    }
+
+    public static ReportDocument activities(ActivitiesDataset data, LocalDate from, LocalDate to,
+                                            CompanyHeader company, LocalDateTime issuedAt) {
+        List<Row> summaryRows = new ArrayList<>();
+        for (TypeCount t : data.byType()) {
+            summaryRows.add(Row.item(activityTypeLabel(t.type()), t.count()));
+        }
+        summaryRows.add(Row.total("Total", data.count()));
+        ReportTable summary = new ReportTable("Resumo por tipo", List.of(Column.text("Tipo", 3f),
+                Column.count("Atividades")), summaryRows);
+
+        List<Row> detailRows = new ArrayList<>();
+        for (ActivityRow row : data.rows()) {
+            detailRows.add(Row.item(row.activityOn(), activityTypeLabel(row.type()), blank(row.subject()),
+                    blank(row.contactName()), blank(row.createdByName())));
+        }
+        ReportTable detail = new ReportTable("Atividades", List.of(Column.date("Data"),
+                Column.text("Tipo", 1.2f), Column.text("Assunto", 3f), Column.text("Contato", 2.2f),
+                Column.text("Registrado por", 1.8f)), detailRows);
+        return new ReportDocument(ReportExportType.ACTIVITIES.label(), range(from, to), company.name(),
+                company.cnpj(), issuedAt, true, List.of(summary, detail));
+    }
+
+    static String activityTypeLabel(String type) {
+        return switch (type) {
+            case "CALL" -> "Ligação";
+            case "MEETING" -> "Reunião";
+            case "EMAIL" -> "E-mail";
+            case "MESSAGE" -> "Mensagem";
+            case "NOTE" -> "Anotação";
+            case "PROPOSAL" -> "Proposta";
+            case "FOLLOW_UP" -> "Follow-up";
+            case "OTHER" -> "Outro";
+            default -> type;
+        };
     }
 
     static String leadStatusLabel(String status) {
