@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
-import { Copy, ExternalLink, Loader2, Mail, MessageCircle, Send, Tablet } from "lucide-react";
+import { Copy, ExternalLink, Loader2, Mail, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -192,14 +192,6 @@ export function SendFormDialog({ companyId, patient, models, open, onOpenChange 
             </Button>
           ) : (
             <>
-              <Button
-                variant="outline"
-                className="gap-1.5"
-                disabled={!effectiveModel || create.isPending}
-                onClick={() => generate("RECEPTION")}
-              >
-                <Tablet className="h-4 w-4" /> Modo recepção (tablet)
-              </Button>
               {emailEnabled && patient.email && (
                 <Button
                   variant="outline"
