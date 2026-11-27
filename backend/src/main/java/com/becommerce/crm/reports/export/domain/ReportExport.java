@@ -29,6 +29,8 @@ public class ReportExport {
     private Instant finishedAt;
     /** Linhas de dados do arquivo gerado; preenchido ao ficar READY. */
     private Integer rowCount;
+    /** Solicitante podia ver dados pessoais sem máscara (LGPD); decidido no pedido. */
+    private boolean unmasked;
 
     public ReportExport(UUID id, UUID companyId, UUID requestedBy, ReportExportType type, ExportFormat format,
                         LocalDate periodFrom, LocalDate periodTo, ReportExportStatus status, String fileName,
@@ -57,10 +59,26 @@ public class ReportExport {
         this.rowCount = rowCount;
     }
 
+    public ReportExport(UUID id, UUID companyId, UUID requestedBy, ReportExportType type, ExportFormat format,
+                        LocalDate periodFrom, LocalDate periodTo, ReportExportStatus status, String fileName,
+                        UUID storageObjectId, String errorMessage, Instant createdAt, Instant finishedAt,
+                        Integer rowCount, boolean unmasked) {
+        this(id, companyId, requestedBy, type, format, periodFrom, periodTo, status, fileName, storageObjectId,
+                errorMessage, createdAt, finishedAt, rowCount);
+        this.unmasked = unmasked;
+    }
+
+    /** Pedido mascarado (padrão seguro). */
     public static ReportExport pending(UUID companyId, UUID requestedBy, ReportExportType type,
                                        ExportFormat format, LocalDate periodFrom, LocalDate periodTo) {
+        return pending(companyId, requestedBy, type, format, periodFrom, periodTo, false);
+    }
+
+    public static ReportExport pending(UUID companyId, UUID requestedBy, ReportExportType type,
+                                       ExportFormat format, LocalDate periodFrom, LocalDate periodTo,
+                                       boolean unmasked) {
         return new ReportExport(UUID.randomUUID(), companyId, requestedBy, type, format, periodFrom, periodTo,
-                ReportExportStatus.PENDING, null, null, null, Instant.now(), null);
+                ReportExportStatus.PENDING, null, null, null, Instant.now(), null, null, unmasked);
     }
 
     public void markReady(UUID storageObjectId, String fileName) {
@@ -163,5 +181,9 @@ public class ReportExport {
 
     public Integer rowCount() {
         return rowCount;
+    }
+
+    public boolean unmasked() {
+        return unmasked;
     }
 }

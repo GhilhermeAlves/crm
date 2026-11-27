@@ -18,6 +18,7 @@ import com.becommerce.crm.reports.export.application.service.render.CsvReportWri
 import com.becommerce.crm.reports.export.application.service.render.PdfReportLayout;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocument;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocumentFactory;
+import com.becommerce.crm.reports.export.application.service.render.ReportFieldMasker;
 import com.becommerce.crm.reports.export.application.service.render.XlsxReportWriter;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.reports.export.domain.ReportExportStatus;
@@ -222,6 +223,8 @@ public class ReportExportGenerator {
                         data.rows().isEmpty());
             }
         };
+        // Máscara LGPD antes de qualquer renderer: vale igual para PDF, XLSX e CSV.
+        document = ReportFieldMasker.forExport(export.unmasked()).apply(document);
         byte[] content = switch (export.format()) {
             case PDF -> PdfReportLayout.render(document, company.logoUrl());
             case XLSX -> XlsxReportWriter.write(document);

@@ -7,6 +7,7 @@ import com.becommerce.crm.reports.export.application.dto.ReportCatalogEntry;
 import com.becommerce.crm.reports.export.application.dto.ReportExportRequest;
 import com.becommerce.crm.reports.export.application.dto.ReportExportResponse;
 import com.becommerce.crm.reports.export.application.port.out.ReportExportRepository;
+import com.becommerce.crm.reports.export.application.service.render.ReportFieldMasker;
 import com.becommerce.crm.reports.export.domain.ExportFormat;
 import com.becommerce.crm.reports.export.domain.ReportExport;
 import com.becommerce.crm.reports.export.domain.ReportExportStatus;
@@ -116,7 +117,9 @@ public class ReportExportService {
                 throw new ReportExportValidationException("O período máximo é de " + maxMonths + " meses.");
             }
         }
-        ReportExport export = ReportExport.pending(companyId, userId, type, format, from, to);
+        // Decide agora (o gerador assíncrono não tem o usuário) se o arquivo sai sem máscara LGPD.
+        boolean unmasked = ReportFieldMasker.canSeeUnmasked(roles, permissions);
+        ReportExport export = ReportExport.pending(companyId, userId, type, format, from, to, unmasked);
         try {
             TenantContext.setCompanyId(companyId);
             requireWithinLimits(companyId, userId);

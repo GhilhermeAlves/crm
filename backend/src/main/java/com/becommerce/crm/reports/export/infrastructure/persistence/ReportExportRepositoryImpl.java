@@ -25,7 +25,7 @@ import java.util.UUID;
 public class ReportExportRepositoryImpl implements ReportExportRepository {
 
     private static final String COLUMNS = "id, company_id, requested_by, type, format, period_from, period_to, "
-            + "status, file_name, storage_object_id, error_message, created_at, finished_at, row_count";
+            + "status, file_name, storage_object_id, error_message, created_at, finished_at, row_count, unmasked";
 
     private static final RowMapper<ReportExport> ROW = (rs, i) -> new ReportExport(
             rs.getObject("id", UUID.class),
@@ -41,7 +41,8 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
             rs.getString("error_message"),
             toInstant(rs.getTimestamp("created_at")),
             toInstant(rs.getTimestamp("finished_at")),
-            rs.getObject("row_count", Integer.class));
+            rs.getObject("row_count", Integer.class),
+            rs.getBoolean("unmasked"));
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -53,7 +54,7 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
     public void insert(ReportExport export) {
         String sql = "INSERT INTO report_exports (" + COLUMNS + ") VALUES (:id, :companyId, :requestedBy, "
                 + ":type, :format, :periodFrom, :periodTo, :status, :fileName, :storageObjectId, "
-                + ":errorMessage, :createdAt, :finishedAt, :rowCount)";
+                + ":errorMessage, :createdAt, :finishedAt, :rowCount, :unmasked)";
         jdbc.update(sql, params(export));
     }
 
@@ -156,7 +157,8 @@ public class ReportExportRepositoryImpl implements ReportExportRepository {
                 .addValue("errorMessage", export.errorMessage())
                 .addValue("createdAt", toTimestamp(export.createdAt()))
                 .addValue("finishedAt", toTimestamp(export.finishedAt()))
-                .addValue("rowCount", export.rowCount());
+                .addValue("rowCount", export.rowCount())
+                .addValue("unmasked", export.unmasked());
     }
 
     private static Timestamp toTimestamp(Instant instant) {

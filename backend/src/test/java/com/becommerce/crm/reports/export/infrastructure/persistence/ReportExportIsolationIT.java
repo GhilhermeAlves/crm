@@ -78,7 +78,7 @@ class ReportExportIsolationIT {
             }
             for (String migration : List.of("V136__report_exports_budgets_csv.sql",
                     "V155__report_exports_expired.sql", "V156__report_exports_canceled.sql",
-                    "V157__report_exports_row_count.sql")) {
+                    "V157__report_exports_row_count.sql", "V159__report_exports_unmasked.sql")) {
                 try (Statement st = conn.createStatement()) {
                     st.execute(new ClassPathResource("db/migration/" + migration)
                             .getContentAsString(StandardCharsets.UTF_8));
@@ -168,6 +168,12 @@ class ReportExportIsolationIT {
         assertEquals(42, loaded.rowCount());
         assertEquals(LocalDate.of(2026, 6, 30), loaded.periodTo());
         assertNotNull(loaded.finishedAt());
+        // V159: padrão mascarado; flag gravado no pedido volta do banco.
+        assertEquals(false, loaded.unmasked());
+        ReportExport open = ReportExport.pending(TENANT_A, USER, ReportExportType.CASH_FLOW, ExportFormat.CSV,
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30), true);
+        repository.insert(open);
+        assertEquals(true, repository.findById(TENANT_A, open.id()).orElseThrow().unmasked());
 
         List<ReportExport> recent = repository.findRecent(TENANT_A, USER, 20);
         assertEquals(1, recent.size());

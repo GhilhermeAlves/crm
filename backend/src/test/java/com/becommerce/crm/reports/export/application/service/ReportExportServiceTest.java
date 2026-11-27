@@ -69,6 +69,22 @@ class ReportExportServiceTest {
     }
 
     @Test
+    void requestRecordsMaskingDecision() {
+        ArgumentCaptor<ReportExport> saved = ArgumentCaptor.forClass(ReportExport.class);
+        // Sem person:sensitive: arquivo mascarado.
+        service.request(COMPANY, USER, List.of(), List.of("agenda:read", "finance:read"),
+                new ReportExportRequest("CASH_FLOW", "CSV", "2026-06-01", "2026-06-30", null));
+        // Com a permissão de dados sensíveis.
+        service.request(COMPANY, USER, List.of(), List.of("finance:read", "person:sensitive"),
+                new ReportExportRequest("CASH_FLOW", "CSV", "2026-06-01", "2026-06-30", null));
+        // CRM_ADMIN sempre passa.
+        service.request(COMPANY, USER, List.of("CRM_ADMIN"), List.of(),
+                new ReportExportRequest("CASH_FLOW", "CSV", "2026-06-01", "2026-06-30", null));
+        verify(repository, org.mockito.Mockito.times(3)).insert(saved.capture());
+        assertThat(saved.getAllValues()).extracting(ReportExport::unmasked).containsExactly(false, true, true);
+    }
+
+    @Test
     void missingPermissionIsDenied() {
         assertThatThrownBy(() -> service.request(COMPANY, USER, List.of("finance:read"),
                 new ReportExportRequest("AGENDA", "XLSX", "2026-06-01", "2026-06-30", null)))
