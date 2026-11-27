@@ -189,4 +189,68 @@ describe("parseAnamnesisJson — formatos de outros sistemas", () => {
     expect(result.name).toBe("Ficha");
     expect(result.sections[0].questions?.map((q) => q.type)).toEqual(["MULTI_SELECT", "YES_NO"]);
   });
+
+  it("pergunta condicional de texto vira campo complementar da pergunta-mãe", () => {
+    const result = parseAnamnesisJson(
+      JSON.stringify({
+        form: {
+          title: "Ficha",
+          sections: [
+            {
+              title: "Saúde",
+              fields: [
+                { id: "cond", label: "Tem condição diagnosticada?", type: "yes_no" },
+                {
+                  id: "cond_det",
+                  label: "Se sim, qual?",
+                  type: "textarea",
+                  visible_when: { field: "cond", equals: "sim" },
+                },
+                {
+                  id: "trat",
+                  label: "Tratamento",
+                  type: "multiselect",
+                  options: [
+                    { label: "Minoxidil", value: "minox" },
+                    { label: "Outro", value: "outro" },
+                  ],
+                },
+                {
+                  id: "trat_outro",
+                  label: "Qual outro?",
+                  type: "text",
+                  visible_when: { field: "trat", includes: "outro" },
+                },
+                {
+                  id: "sem_mae",
+                  label: "Órfã",
+                  type: "text",
+                  visible_when: { field: "nao_existe", equals: "x" },
+                },
+              ],
+            },
+          ],
+        },
+      }),
+      "x",
+    );
+    const qs = result.sections[0].questions ?? [];
+    expect(qs.map((q) => q.text)).toEqual(["Tem condição diagnosticada?", "Tratamento", "Órfã"]);
+    expect(qs[0]).toMatchObject({
+      allowComplement: true,
+      complementLabel: "Se sim, qual?",
+      complementTrigger: "YES",
+    });
+    expect(qs[1]).toMatchObject({
+      allowComplement: true,
+      complementTrigger: "OPTION",
+      complementOptionValue: "Outro",
+    });
+  });
+
+  it("pedaço de JSON colado sem o começo dá aviso claro", () => {
+    expect(() => parseAnamnesisImport('  "id": "x",\n  "label": "Se sim, qual?",')).toThrow(
+      /JSON incompleto/,
+    );
+  });
 });

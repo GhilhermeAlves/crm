@@ -174,55 +174,162 @@ function jsonType(raw: string, hasOptions: boolean): AnamnesisQuestionType {
   return aliases[value] ?? (hasOptions ? "SINGLE_SELECT" : "SHORT_TEXT");
 }
 
-function jsonQuestion(raw: unknown): AnamnesisQuestionRequest | null {
+/** Pergunta lida do JSON, com o que é preciso para ligar condicionais depois. */
+type ParsedQuestion = {
+  id: string;
+  question: AnamnesisQuestionRequest;
+  optionPairs: { label: string; value: string }[];
+  condition: { field: string; value: string } | null;
+};
+
+const CONDITION_KEYS = [
+  "visible_when",
+  "visibleWhen",
+  "show_if",
+  "showIf",
+  "condition",
+  "condicao",
+  "condição",
+  "depends_on",
+  "dependsOn",
+];
+
+function readCondition(raw: Json): { field: string; value: string } | null {
+  const cond = pick(raw, CONDITION_KEYS);
+  if (!isObject(cond)) return null;
+  const field = pickString(cond, ["field", "campo", "question", "pergunta", "id", "dependsOn"]);
+  let value = pick(cond, [
+    "equals",
+    "eq",
+    "value",
+    "valor",
+    "includes",
+    "contains",
+    "in",
+    "values",
+  ]);
+  if (Array.isArray(value)) value = value.length === 1 ? value[0] : undefined;
+  if (typeof value === "boolean") value = value ? "sim" : "nao";
+  if (!field || (typeof value !== "string" && typeof value !== "number")) return null;
+  return { field, value: String(value) };
+}
+
+function jsonQuestion(raw: unknown, index: number): ParsedQuestion | null {
   if (typeof raw === "string") {
     const text = clean(raw);
-    return text ? { text, type: "SHORT_TEXT", required: false, highlight: false } : null;
+    return text
+      ? {
+          id: `#${index}`,
+          question: { text, type: "SHORT_TEXT", required: false, highlight: false },
+          optionPairs: [],
+          condition: null,
+        }
+      : null;
   }
   if (!isObject(raw)) return null;
   const text = pickString(raw, TEXT_KEYS);
   if (!text) return null;
-  const options = (pickArray(raw, OPTION_KEYS) ?? [])
-    .map((o) =>
-      clean(
-        typeof o === "string" || typeof o === "number"
-          ? String(o)
-          : isObject(o)
-            ? pickString(o, ["label", "text", "texto", "nome", "name", "value", "valor"])
-            : "",
-      ),
-    )
-    .filter(Boolean);
-  let type = jsonType(pickString(raw, TYPE_KEYS), options.length > 0);
+  const optionPairs = (pickArray(raw, OPTION_KEYS) ?? [])
+    .map((o) => {
+      if (typeof o === "string" || typeof o === "number") {
+        const label = clean(String(o));
+        return { label, value: label };
+      }
+      if (!isObject(o)) return { label: "", value: "" };
+      const label = pickString(o, ["label", "text", "texto", "nome", "name", "value", "valor"]);
+      return { label, value: pickString(o, ["value", "valor", "id"]) || label };
+    })
+    .filter((o) => o.label);
+  let type = jsonType(pickString(raw, TYPE_KEYS), optionPairs.length > 0);
   // Seleção sem opções não é aceita pelo servidor: um checkbox sozinho
   // (ex.: "Declaro que as informações são verdadeiras") vira Sim/Não.
-  if ((type === "SINGLE_SELECT" || type === "MULTI_SELECT") && options.length === 0) {
+  if ((type === "SINGLE_SELECT" || type === "MULTI_SELECT") && optionPairs.length === 0) {
     type = "YES_NO";
   }
   return {
-    text,
-    type,
-    required: truthy(pick(raw, REQUIRED_KEYS)),
-    highlight: truthy(pick(raw, ["highlight", "destaque"])),
-    options:
-      type === "SINGLE_SELECT" || type === "MULTI_SELECT"
-        ? options.map((label) => ({ label }))
-        : undefined,
+    id: pickString(raw, ["id", "name", "key", "chave"]) || `#${index}`,
+    question: {
+      text,
+      type,
+      required: truthy(pick(raw, REQUIRED_KEYS)),
+      highlight: truthy(pick(raw, ["highlight", "destaque"])),
+      options:
+        type === "SINGLE_SELECT" || type === "MULTI_SELECT"
+          ? optionPairs.map((o) => ({ label: o.label }))
+          : undefined,
+    },
+    optionPairs,
+    condition: readCondition(raw),
   };
+}
+
+const norm = (v: string) =>
+  v
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
+/**
+ * O modelo não tem perguntas condicionais, mas tem o "campo complementar": um
+ * texto que aparece conforme a resposta (Sim, Não ou uma opção). Uma pergunta de
+ * texto que só aparece quando outra tem certa resposta ("Se sim, qual?") vira o
+ * campo complementar dessa outra. Os demais casos continuam como perguntas comuns.
+ */
+function mergeComplement(child: ParsedQuestion, parent: ParsedQuestion | undefined): boolean {
+  const cond = child.condition;
+  const q = parent?.question;
+  if (!cond || !parent || !q || q.allowComplement) return false;
+  if (child.question.type !== "SHORT_TEXT" && child.question.type !== "LONG_TEXT") return false;
+  const wanted = norm(cond.value);
+  const complementLabel = child.question.text.slice(0, 255);
+  if (q.type === "YES_NO") {
+    const trigger =
+      YES.test(wanted) || wanted === "true" || wanted === "1"
+        ? "YES"
+        : NO.test(wanted) || wanted === "false" || wanted === "0"
+          ? "NO"
+          : null;
+    if (!trigger) return false;
+    Object.assign(q, { allowComplement: true, complementLabel, complementTrigger: trigger });
+    return true;
+  }
+  if (q.type === "SINGLE_SELECT" || q.type === "MULTI_SELECT") {
+    const option = parent.optionPairs.find(
+      (o) => norm(o.value) === wanted || norm(o.label) === wanted,
+    );
+    if (!option) return false;
+    Object.assign(q, {
+      allowComplement: true,
+      complementLabel,
+      complementTrigger: "OPTION",
+      complementOptionValue: option.label,
+    });
+    return true;
+  }
+  return false;
 }
 
 function toSections(root: Json): AnamnesisSectionRequest[] {
   let rawSections = pickArray(root, SECTION_KEYS);
   const loose = pickArray(root, QUESTION_KEYS);
   if (!rawSections && loose) rawSections = [{ titulo: "Geral", perguntas: loose }];
-  return (rawSections ?? [])
-    .filter(isObject)
-    .map((s, index) => ({
-      title: pickString(s, SECTION_TITLE_KEYS) || `Seção ${index + 1}`,
-      professional: truthy(pick(s, ["professional", "profissional"])),
-      questions: (pickArray(s, QUESTION_KEYS) ?? [])
-        .map(jsonQuestion)
-        .filter((q): q is AnamnesisQuestionRequest => q !== null),
+  let counter = 0;
+  const parsed = (rawSections ?? []).filter(isObject).map((s, index) => ({
+    title: pickString(s, SECTION_TITLE_KEYS) || `Seção ${index + 1}`,
+    professional: truthy(pick(s, ["professional", "profissional"])),
+    questions: (pickArray(s, QUESTION_KEYS) ?? [])
+      .map((q) => jsonQuestion(q, counter++))
+      .filter((q): q is ParsedQuestion => q !== null),
+  }));
+  const byId = new Map(parsed.flatMap((s) => s.questions).map((q) => [q.id, q]));
+  return parsed
+    .map((s) => ({
+      title: s.title,
+      professional: s.professional,
+      questions: s.questions
+        .filter((q) => !mergeComplement(q, q.condition ? byId.get(q.condition.field) : undefined))
+        .map((q) => q.question),
     }))
     .filter((s) => s.questions.length > 0);
 }
@@ -246,7 +353,9 @@ export function parseAnamnesisJson(raw: string, fallbackName: string): ImportedA
   try {
     data = JSON.parse(raw.replace(/^﻿/, ""));
   } catch {
-    throw new Error("O arquivo não é um JSON válido.");
+    throw new Error(
+      "O JSON está inválido ou incompleto: confira se ele começa com { e termina com } e se não foi cortado ao copiar.",
+    );
   }
   // Lista na raiz: de seções (têm perguntas dentro) ou de perguntas soltas.
   if (Array.isArray(data)) {
@@ -431,7 +540,14 @@ export function parseAnamnesisImport(raw: string, fileName = ""): ImportedAnamne
   const fallbackName = fileName.replace(/\.(json|html?)$/i, "").trim() || "Anamnese importada";
   const trimmed = raw.trim();
   if (!trimmed) throw new Error("Cole o conteúdo ou escolha um arquivo.");
-  return trimmed.startsWith("{") || trimmed.startsWith("[")
-    ? parseAnamnesisJson(trimmed, fallbackName)
-    : parseAnamnesisHtml(trimmed, fallbackName);
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    return parseAnamnesisJson(trimmed, fallbackName);
+  }
+  // Pedaço de JSON colado sem o começo: avisa em vez de tentar ler como HTML.
+  if (!trimmed.includes("<") && /"[^"]+"\s*:/.test(trimmed)) {
+    throw new Error(
+      "O conteúdo parece um JSON incompleto: ele precisa começar com { e terminar com }. Escolha o arquivo ou copie o conteúdo inteiro (Ctrl+A, Ctrl+C).",
+    );
+  }
+  return parseAnamnesisHtml(trimmed, fallbackName);
 }
