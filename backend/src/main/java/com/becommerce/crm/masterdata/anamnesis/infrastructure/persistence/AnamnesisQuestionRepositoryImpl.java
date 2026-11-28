@@ -40,7 +40,8 @@ public class AnamnesisQuestionRepositoryImpl implements AnamnesisQuestionReposit
                 e.getText(), AnamnesisQuestionType.valueOf(e.getQuestionType()), e.isRequired(),
                 e.isHighlight(), e.isAllowComplement(), e.getComplementLabel(),
                 AnamnesisComplementTrigger.valueOf(e.getComplementTrigger()), e.getComplementOptionValue(),
-                e.getSortOrder(), e.getCreatedAt(), e.getUpdatedAt());
+                e.getSortOrder(), e.getCreatedAt(), e.getUpdatedAt(),
+                e.getBinding() == null ? null : com.becommerce.crm.masterdata.anamnesis.domain.AnamnesisBinding.valueOf(e.getBinding()));
     }
 
     static AnamnesisQuestionJpaEntity toEntity(AnamnesisQuestion q) {
@@ -58,6 +59,7 @@ public class AnamnesisQuestionRepositoryImpl implements AnamnesisQuestionReposit
         e.setComplementTrigger(q.getComplementTrigger().name());
         e.setComplementOptionValue(q.getComplementOptionValue());
         e.setSortOrder(q.getSortOrder());
+        e.setBinding(q.getBinding() == null ? null : q.getBinding().name());
         e.setCreatedAt(q.getCreatedAt());
         e.setUpdatedAt(q.getUpdatedAt());
         return e;

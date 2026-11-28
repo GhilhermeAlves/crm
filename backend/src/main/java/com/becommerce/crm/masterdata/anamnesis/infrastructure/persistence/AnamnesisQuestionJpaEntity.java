@@ -48,6 +48,9 @@ public class AnamnesisQuestionJpaEntity {
     @Column(name = "complement_option_value")
     private String complementOptionValue;
 
+    @Column(name = "binding", length = 40)
+    private String binding;
+
     @Column(name = "sort_order")
     private int sortOrder;
 
@@ -83,6 +86,8 @@ public class AnamnesisQuestionJpaEntity {
     public void setComplementOptionValue(String complementOptionValue) {
         this.complementOptionValue = complementOptionValue;
     }
+    public String getBinding() { return binding; }
+    public void setBinding(String binding) { this.binding = binding; }
     public int getSortOrder() { return sortOrder; }
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
     public LocalDateTime getCreatedAt() { return createdAt; }

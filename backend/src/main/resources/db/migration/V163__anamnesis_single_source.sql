@@ -13,8 +13,9 @@ ALTER TABLE anamnesis_questions ADD CONSTRAINT chk_anamnesis_questions_binding C
     'TRICHO_SEX', 'TRICHO_PATTERN', 'TRICHO_ONSET', 'TRICHO_DAILY_SHEDDING', 'TRICHO_FAMILY_HISTORY',
     'TRICHO_RECENT_TRIGGERS', 'TRICHO_POSTPARTUM', 'TRICHO_SCALP_SYMPTOMS', 'TRICHO_HAIR_PROCEDURES',
     'TRICHO_ACNE_HIRSUTISM', 'TRICHO_IRREGULAR_CYCLES', 'TRICHO_ANABOLIC_USE', 'TRICHO_CHIEF_COMPLAINT'));
-CREATE UNIQUE INDEX uq_anamnesis_questions_model_binding
-    ON anamnesis_questions (model_id, binding) WHERE binding IS NOT NULL;
+-- Unicidade do vínculo por modelo é garantida pelo AnamnesisService: o editor apaga e
+-- recria as perguntas na mesma transação, e um índice único dependeria da ordem do flush.
+CREATE INDEX idx_anamnesis_questions_binding ON anamnesis_questions (model_id, binding) WHERE binding IS NOT NULL;
 
 -- ===========================================================================
 -- 2. Divergências entre anamnese e cadastro

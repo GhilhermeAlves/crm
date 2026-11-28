@@ -23,6 +23,14 @@ public record AnamnesisQuestionRequest(
         @Size(max = 255) String complementLabel,
         AnamnesisComplementTrigger complementTrigger,
         @Size(max = 255) String complementOptionValue,
-        List<AnamnesisOptionRequest> options
+        List<AnamnesisOptionRequest> options,
+        com.becommerce.crm.masterdata.anamnesis.domain.AnamnesisBinding binding
 ) {
+    public AnamnesisQuestionRequest(UUID id, String text, AnamnesisQuestionType type, Boolean required,
+                                    Boolean highlight, Boolean allowComplement, String complementLabel,
+                                    AnamnesisComplementTrigger complementTrigger, String complementOptionValue,
+                                    List<AnamnesisOptionRequest> options) {
+        this(id, text, type, required, highlight, allowComplement, complementLabel, complementTrigger,
+                complementOptionValue, options, null);
+    }
 }
