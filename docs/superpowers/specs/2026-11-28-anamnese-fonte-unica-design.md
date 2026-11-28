@@ -103,7 +103,26 @@ Ficha do paciente: faixa "Dados da anamnese divergentes do cadastro (N)" com Ace
 ### 6. Modelo pronto
 
 - Migration de dados na V163: para cada modelo cujo nome é "Ficha de Anamnese Capilar", vincula por texto exato as perguntas "Nome completo" (primeira ocorrência), "Data de nascimento", "Sexo", "Telefone / WhatsApp", "E-mail", "Cidade / endereço", "Qual é sua principal queixa ou disfunção capilar?". Perguntas não encontradas ficam sem vínculo (sem erro).
-- Perguntas clínicas de tricologia (padrão, início, queda diária etc.) **não existem** no modelo atual; o usuário as adiciona pelo editor. O spec da Parte 3 pode trazer um modelo padrão completo.
+- Na mesma migration, a pergunta "Sexo" vinculada recebe `value` `F`/`M` nas opções Feminino/Masculino (rótulos inalterados).
+- **Perguntas clínicas novas**: a migration acrescenta a esses modelos uma seção "Avaliação tricológica" (`is_professional = false`, ao fim) com as perguntas abaixo, já vinculadas e com os códigos das regras do Copiloto (mesmos do `QuizEngine` atual). O modelo de anamnese não tem ramificação, então as perguntas específicas por sexo são opcionais e trazem o público no texto.
+
+| Pergunta | Tipo | Obrig. | Vínculo | Opções (`value` → rótulo) |
+|---|---|---|---|---|
+| Há quanto tempo a queda ou o afinamento começou? | SINGLE_SELECT | sim | `TRICHO_ONSET` | `LT_3M` Menos de 3 meses · `3_12M` De 3 a 12 meses · `GT_1Y` Mais de 1 ano |
+| Como é a perda ou o afinamento? | SINGLE_SELECT | sim | `TRICHO_PATTERN` | `DIFFUSE_SHEDDING` Queda espalhada pela cabeça · `THINNING_TOP` Afinamento no topo, entradas ou coroa · `PATCHES` Falhas arredondadas · `SCALP_SYMPTOMS` Principalmente coceira, ardor ou descamação · `BREAKAGE` Fios quebrando no comprimento |
+| Quantos fios você vê caindo por dia (banho, travesseiro, escova)? | SINGLE_SELECT | sim | `TRICHO_DAILY_SHEDDING` | `LT_50` Menos de 50 · `50_100` Entre 50 e 100 · `GT_100` Mais de 100 |
+| Nos últimos 6 meses aconteceu algo destes? | MULTI_SELECT | sim | `TRICHO_RECENT_TRIGGERS` | `FEVER_INFECTION` Febre alta, COVID ou infecção · `SURGERY` Cirurgia · `WEIGHT_LOSS` Perda de peso rápida ou dieta restritiva · `SEVERE_STRESS` Estresse intenso · `NEW_MEDICATION` Remédio novo · `NONE` Nenhum |
+| Pais ou irmãos têm calvície ou afinamento? | YES_NO | sim | `TRICHO_FAMILY_HISTORY` | — |
+| Sente algo no couro cabeludo? | MULTI_SELECT | sim | `TRICHO_SCALP_SYMPTOMS` | `ITCH` Coceira · `BURNING` Ardor · `PAIN` Dor · `OILINESS` Oleosidade · `FLAKING` Descamação · `NONE` Nada |
+| Faz procedimentos no cabelo? | MULTI_SELECT | não | `TRICHO_HAIR_PROCEDURES` | `CHEMICAL` Química/alisamento · `HEAT` Chapinha ou secador quase todo dia · `TIGHT_STYLES` Penteados presos/apertados · `NONE` Nenhum |
+| (Mulheres) Teve parto nos últimos 12 meses? | YES_NO | não | `TRICHO_POSTPARTUM` | — |
+| (Mulheres) Ciclo menstrual irregular? | YES_NO | não | `TRICHO_IRREGULAR_CYCLES` | — |
+| (Mulheres) Acne ou aumento de pelos no rosto/corpo? | YES_NO | não | `TRICHO_ACNE_HIRSUTISM` | — |
+| (Homens) Usa ou usou testosterona/anabolizantes? | YES_NO | não | `TRICHO_ANABOLIC_USE` | — |
+
+- Remédios, tratamentos anteriores, alimentação e exposição ao sol já existem como perguntas livres no modelo atual e chegam à IA pelo texto da anamnese; não ganham vínculo.
+- A migration é idempotente: só insere a seção se o modelo ainda não tiver nenhuma pergunta com vínculo `TRICHO_*` além da queixa. Anamneses já preenchidas não mudam (usam o snapshot antigo).
+- Para empresas de tricologia sem esse modelo, o "Restaurar modelo padrão" (se existir) ou o editor permitem montar o mesmo conjunto; um modelo padrão de tricologia completo entra quando houver criação de empresa com segmento TRICHOLOGY (fora deste escopo).
 
 ### 7. Ajustes menores
 
