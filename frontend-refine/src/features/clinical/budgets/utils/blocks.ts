@@ -3,7 +3,7 @@ export type BudgetBlock = "total" | "procedures" | "dentists" | "discount" | "no
 export const BUDGET_BLOCKS: { key: BudgetBlock; label: string }[] = [
   { key: "total", label: "Valor total" },
   { key: "procedures", label: "Valor por procedimento" },
-  { key: "dentists", label: "Dentistas" },
+  { key: "dentists", label: "Profissionais" },
   { key: "discount", label: "Desconto" },
   { key: "notes", label: "Observações" },
   { key: "payment", label: "Forma de pagamento" },

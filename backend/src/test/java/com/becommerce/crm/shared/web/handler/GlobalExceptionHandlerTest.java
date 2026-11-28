@@ -88,6 +88,6 @@ class GlobalExceptionHandlerTest {
                 new RuntimeException("Segredo expirado: AWS secret rejeitado"));
 
         assertEquals(500, response.getStatusCode().value());
-        assertEquals("An unexpected error occurred", response.getBody().get("message"));
+        assertEquals("Não foi possível concluir a ação. Tente novamente.", response.getBody().get("message"));
     }
 }
