@@ -7,6 +7,16 @@ const POLL_PENDING_MS = 5_000;
 
 export const reportExportsKey = (companyId: string | null) => ["report-exports", companyId];
 
+/** Catálogo de relatórios do usuário (só os permitidos); muda pouco, então fica em cache. */
+export function useReportCatalog(companyId: string | null) {
+  return useQuery({
+    queryKey: ["report-exports", companyId, "catalog"],
+    queryFn: () => ReportExportService.catalog(companyId as string),
+    enabled: !!companyId,
+    staleTime: 5 * 60_000,
+  });
+}
+
 /** Exportações recentes do usuário; consulta a cada 5 s enquanto houver alguma gerando. */
 export function useReportExports(companyId: string | null) {
   return useQuery({
@@ -34,6 +44,23 @@ export function useRequestReportExport(companyId: string | null) {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Não foi possível pedir o relatório.");
+    },
+  });
+}
+
+/** Cancela uma exportação ainda em geração (só o autor; o backend devolve 409 se já terminou). */
+export function useCancelReportExport(companyId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (exportId: string) => ReportExportService.cancel(companyId as string, exportId),
+    onSuccess: () => {
+      toast.success("Exportação cancelada.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Não foi possível cancelar a exportação.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: reportExportsKey(companyId) });
     },
   });
 }

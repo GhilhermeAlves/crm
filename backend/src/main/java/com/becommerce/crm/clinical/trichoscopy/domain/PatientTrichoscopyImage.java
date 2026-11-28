@@ -14,6 +14,8 @@ public class PatientTrichoscopyImage {
     private LocalDateTime takenAt;
     private String notes;
     private LocalDateTime createdAt;
+    private java.time.Instant deletedAt;
+    private UUID deletedBy;
 
     public static PatientTrichoscopyImage create(UUID companyId, UUID contactId, UUID storageObjectId,
                                                  UUID takenBy, String notes) {
@@ -53,4 +55,18 @@ public class PatientTrichoscopyImage {
     public LocalDateTime getTakenAt() { return takenAt; }
     public String getNotes() { return notes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public java.time.Instant getDeletedAt() { return deletedAt; }
+    public UUID getDeletedBy() { return deletedBy; }
+
+    /** Foto ligada a exame tricológico não é apagada: fica oculta (V150). */
+    public void softDelete(UUID userId, java.time.Instant now) {
+        this.deletedAt = now;
+        this.deletedBy = userId;
+    }
+
+    public PatientTrichoscopyImage withDeletion(java.time.Instant deletedAt, UUID deletedBy) {
+        this.deletedAt = deletedAt;
+        this.deletedBy = deletedBy;
+        return this;
+    }
 }

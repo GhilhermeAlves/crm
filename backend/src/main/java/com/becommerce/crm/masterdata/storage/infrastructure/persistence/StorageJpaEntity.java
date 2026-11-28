@@ -42,6 +42,9 @@ public class StorageJpaEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "temporary")
+    private boolean temporary;
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getCompanyId() { return companyId; }
@@ -62,4 +65,6 @@ public class StorageJpaEntity {
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public boolean isTemporary() { return temporary; }
+    public void setTemporary(boolean temporary) { this.temporary = temporary; }
 }

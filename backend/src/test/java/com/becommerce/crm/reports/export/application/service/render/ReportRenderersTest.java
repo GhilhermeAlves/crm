@@ -187,4 +187,115 @@ class ReportRenderersTest {
         assertThat(CsvReportWriter.escape("linha1\nlinha2")).isEqualTo("\"linha1\nlinha2\"");
         assertThat(CsvReportWriter.escape("simples")).isEqualTo("simples");
     }
+
+    // ===== formula injection =====
+
+    private ReportDocument budgetsWithFormula() {
+        List<BudgetRow> rows = List.of(new BudgetRow(LocalDate.of(2026, 11, 14), "=SUM(A1)", "Clareamento",
+                "APPROVED", 1, 100_000, 10_000, PaymentMethod.CREDIT_CARD, 3, LocalDate.of(2026, 11, 14)));
+        BudgetsDataset data = new BudgetsDataset(List.of(new StatusSummary("APPROVED", 1, 90_000)), rows);
+        return ReportDocumentFactory.budgets(data, LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 30),
+                COMPANY, ISSUED);
+    }
+
+    @Test
+    void sanitizerPrefixesOnlyDangerousText() {
+        assertThat(SpreadsheetSanitizer.sanitize("=SUM(A1)")).isEqualTo("'=SUM(A1)");
+        assertThat(SpreadsheetSanitizer.sanitize("+1")).isEqualTo("'+1");
+        assertThat(SpreadsheetSanitizer.sanitize("-2")).isEqualTo("'-2");
+        assertThat(SpreadsheetSanitizer.sanitize("@cmd")).isEqualTo("'@cmd");
+        assertThat(SpreadsheetSanitizer.sanitize("\tx")).isEqualTo("'\tx");
+        assertThat(SpreadsheetSanitizer.sanitize("\rx")).isEqualTo("'\rx");
+        assertThat(SpreadsheetSanitizer.sanitize("Andreia Souza")).isEqualTo("Andreia Souza");
+        assertThat(SpreadsheetSanitizer.sanitize("")).isEmpty();
+        assertThat(SpreadsheetSanitizer.sanitize(null)).isNull();
+    }
+
+    @Test
+    void csvSanitizesFormulaTextButNotNegativeMoney() {
+        byte[] csv = CsvReportWriter.write(budgetsWithFormula());
+        String text = new String(csv, 3, csv.length - 3, StandardCharsets.UTF_8);
+
+        assertThat(text).contains(";'=SUM(A1);Clareamento;");
+        assertThat(text).doesNotContain(";=SUM(A1)");
+        // Desconto negativo de coluna MONEY continua número, sem apóstrofo.
+        assertThat(text).contains(";-100,00;").doesNotContain("'-100,00");
+        assertThat(CsvReportWriter.text(new ReportDocument.Money(-1_234))).isEqualTo("-12,34");
+        assertThat(CsvReportWriter.text(-5L)).isEqualTo("-5");
+        assertThat(CsvReportWriter.text("Texto normal")).isEqualTo("Texto normal");
+    }
+
+    @Test
+    void xlsxSanitizesFormulaTextButKeepsNegativeMoneyNumeric() throws Exception {
+        byte[] xlsx = XlsxReportWriter.write(budgetsWithFormula());
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsx))) {
+            boolean foundFormula = false;
+            boolean foundNegative = false;
+            for (Sheet sheet : workbook) {
+                for (Row row : sheet) {
+                    for (org.apache.poi.ss.usermodel.Cell cell : row) {
+                        assertThat(cell.getCellType()).isNotEqualTo(CellType.FORMULA);
+                        if (cell.getCellType() == CellType.STRING) {
+                            assertThat(cell.getStringCellValue()).isNotEqualTo("=SUM(A1)");
+                            foundFormula |= cell.getStringCellValue().equals("'=SUM(A1)");
+                        } else if (cell.getCellType() == CellType.NUMERIC) {
+                            foundNegative |= cell.getNumericCellValue() == -100.0;
+                        }
+                    }
+                }
+            }
+            assertThat(foundFormula).isTrue();
+            assertThat(foundNegative).isTrue();
+        }
+    }
+
+    @Test
+    void emptyNoticeAppearsInPdfCsvAndXlsx() throws Exception {
+        ReportDocument doc = ReportDocumentFactory.transactions(new TransactionsDataset(List.of(), 0, 0),
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30), COMPANY, ISSUED)
+                .withNotice(ReportDocument.EMPTY_NOTICE);
+
+        String pdf = new PdfTextExtractor(new PdfReader(PdfReportLayout.render(doc))).getTextFromPage(1);
+        assertThat(pdf).contains("Nenhum registro encontrado para o período.");
+
+        String csv = new String(CsvReportWriter.write(doc), StandardCharsets.UTF_8);
+        assertThat(csv).contains("\r\nNenhum registro encontrado para o período.\r\n");
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(XlsxReportWriter.write(doc)))) {
+            assertThat(workbook.getSheetAt(0).getRow(3).getCell(0).getStringCellValue())
+                    .isEqualTo("Nenhum registro encontrado para o período.");
+        }
+    }
+
+    @Test
+    void documentWithoutNoticeHasNoEmptyMessage() {
+        String csv = new String(CsvReportWriter.write(dre()), StandardCharsets.UTF_8);
+        assertThat(csv).doesNotContain("Nenhum registro");
+    }
+
+    /** Volume próximo do limite: só confere a contagem de linhas geradas. */
+    @Test
+    void largeVolumeXlsxAndCsvKeepAllRows() throws Exception {
+        int total = 20_000;
+        List<ReportDocument.Row> rows = new ArrayList<>(total);
+        for (int i = 0; i < total; i++) {
+            rows.add(ReportDocument.Row.item("Paciente " + i, LocalDate.of(2026, 6, 1),
+                    new ReportDocument.Money(i * 100L)));
+        }
+        ReportDocument doc = new ReportDocument("Volume", "06/2026", COMPANY.name(), COMPANY.cnpj(), ISSUED,
+                false, List.of(new ReportDocument.ReportTable(null, List.of(
+                        ReportDocument.Column.text("Nome", 3), ReportDocument.Column.date("Data"),
+                        ReportDocument.Column.money("Valor")), rows)));
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(XlsxReportWriter.write(doc)))) {
+            Sheet sheet = workbook.getSheetAt(0);
+            // Cabeçalho na linha 4 (base 0) + uma linha por item.
+            assertThat(sheet.getLastRowNum()).isEqualTo(4 + total);
+            assertThat(sheet.getRow(5 + total - 1).getCell(2).getNumericCellValue()).isEqualTo(total - 1.0);
+        }
+
+        String csv = new String(CsvReportWriter.write(doc), StandardCharsets.UTF_8);
+        assertThat(csv.lines().filter(l -> l.startsWith("Paciente ")).count()).isEqualTo(total);
+    }
 }

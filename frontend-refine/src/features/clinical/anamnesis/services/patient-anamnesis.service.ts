@@ -39,7 +39,7 @@ export const patientAnamnesisService = {
     payload: StartPatientAnamnesisRequest,
   ): Promise<PatientAnamnesisResponse> => {
     const response = await api.post(
-      `/companies/${companyId}/patients/${contactId}/anamneses/start`,
+      `/companies/${companyId}/patients/${contactId}/anamneses`,
       payload,
     );
     return response.data;

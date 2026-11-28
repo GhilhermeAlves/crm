@@ -7,7 +7,13 @@ import com.becommerce.crm.reports.export.application.service.render.ReportDocume
 import com.becommerce.crm.reports.export.application.service.render.ReportDocument.Row;
 import com.becommerce.crm.reports.export.application.service.render.ReportDocument.RowKind;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +25,10 @@ import java.util.List;
  * pt-BR: UTF-8 com BOM, separador {@code ;}, decimal com vírgula e sem "R$"
  * (os valores continuam somáveis). Cada seção vem com o próprio título e
  * cabeçalho de colunas, separada por uma linha em branco.
+ *
+ * <p>Escreve linha a linha num {@link BufferedWriter} sobre o
+ * {@link OutputStream} de destino, sem montar o CSV inteiro num
+ * {@code StringBuilder} (evita texto e bytes duplicados em memória).
  */
 public final class CsvReportWriter {
 
@@ -31,23 +41,44 @@ public final class CsvReportWriter {
     }
 
     public static byte[] write(ReportDocument report) {
-        StringBuilder csv = new StringBuilder();
-        line(csv, List.of(report.title()));
-        line(csv, List.of("Período", report.period()));
-        line(csv, List.of("Empresa", report.companyName()));
-        if (report.companyCnpj() != null && !report.companyCnpj().isBlank()) {
-            line(csv, List.of("CNPJ", report.companyCnpj()));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        write(report, out);
+        return out.toByteArray();
+    }
+
+    /** Escreve direto no {@code out} (faz flush, mas não o fecha). */
+    public static void write(ReportDocument report, OutputStream out) {
+        try {
+            out.write(UTF8_BOM);
+            Writer csv = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8), 64 * 1024);
+            body(csv, report);
+            csv.flush();
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
         }
-        line(csv, List.of("Emitido em", ISSUED.format(report.issuedAt())));
+    }
+
+    private static void body(Writer csv, ReportDocument report) throws IOException {
+        metaLine(csv, List.of(report.title()));
+        metaLine(csv, List.of("Período", report.period()));
+        metaLine(csv, List.of("Empresa", report.companyName()));
+        if (report.companyCnpj() != null && !report.companyCnpj().isBlank()) {
+            metaLine(csv, List.of("CNPJ", report.companyCnpj()));
+        }
+        metaLine(csv, List.of("Emitido em", ISSUED.format(report.issuedAt())));
+        if (report.notice() != null) {
+            csv.write(NEWLINE);
+            metaLine(csv, List.of(report.notice()));
+        }
         for (ReportTable table : report.sections()) {
-            csv.append(NEWLINE);
+            csv.write(NEWLINE);
             if (table.heading() != null) {
-                line(csv, List.of(table.heading()));
+                metaLine(csv, List.of(table.heading()));
             }
-            line(csv, table.columns().stream().map(Column::header).toList());
+            metaLine(csv, table.columns().stream().map(Column::header).toList());
             for (Row row : table.rows()) {
                 if (row.kind() == RowKind.GROUP) {
-                    line(csv, List.of(String.valueOf(row.cells().get(0))));
+                    line(csv, List.of(text(row.cells().get(0))));
                     continue;
                 }
                 List<String> cells = new ArrayList<>();
@@ -57,10 +88,6 @@ public final class CsvReportWriter {
                 line(csv, cells);
             }
         }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        out.writeBytes(UTF8_BOM);
-        out.writeBytes(csv.toString().getBytes(StandardCharsets.UTF_8));
-        return out.toByteArray();
     }
 
     /** Valor como planilha entende: 1234,56 / 03/11/2026 / texto. */
@@ -76,17 +103,26 @@ public final class CsvReportWriter {
         if (value instanceof LocalDate date) {
             return FinanceLabels.dateLabel(date);
         }
-        return String.valueOf(value);
+        if (value instanceof Number) {
+            return String.valueOf(value);
+        }
+        // Texto livre (nome de paciente, descrição...) pode carregar fórmula.
+        return SpreadsheetSanitizer.sanitize(String.valueOf(value));
     }
 
-    private static void line(StringBuilder csv, List<String> cells) {
+    /** Linha de cabeçalho/metadados: tudo é texto, então sempre sanitiza. */
+    private static void metaLine(Writer csv, List<String> cells) throws IOException {
+        line(csv, cells.stream().map(SpreadsheetSanitizer::sanitize).toList());
+    }
+
+    private static void line(Writer csv, List<String> cells) throws IOException {
         for (int i = 0; i < cells.size(); i++) {
             if (i > 0) {
-                csv.append(SEPARATOR);
+                csv.write(SEPARATOR);
             }
-            csv.append(escape(cells.get(i)));
+            csv.write(escape(cells.get(i)));
         }
-        csv.append(NEWLINE);
+        csv.write(NEWLINE);
     }
 
     /** Aspas quando o campo tem separador, aspas ou quebra de linha (RFC 4180). */

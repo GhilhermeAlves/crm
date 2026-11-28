@@ -14,6 +14,9 @@ import com.becommerce.crm.masterdata.storage.application.dto.StorageResponse;
 import com.becommerce.crm.masterdata.storage.application.port.input.StorageUseCase;
 import com.becommerce.crm.masterdata.contact.note.application.service.PatientTimelineRecorder;
 import com.becommerce.crm.shared.tenant.context.TenantContext;
+import com.becommerce.crm.clinical.trichology.application.port.out.TrichologyRepositories.AssessmentImageRepository;
+import com.becommerce.crm.clinical.trichology.domain.exception.TrichologyStateException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -41,6 +44,13 @@ public class TrichoscopyService implements TrichoscopyUseCase {
 
 
     private PatientTimelineRecorder timeline;
+    private ObjectProvider<AssessmentImageRepository> assessmentImages;
+
+    /** Exames de tricologia que usam a foto (soft delete, V150). */
+    @Autowired
+    public void setAssessmentImages(ObjectProvider<AssessmentImageRepository> assessmentImages) {
+        this.assessmentImages = assessmentImages;
+    }
 
     /** Opcional: registra os eventos nas anotações do paciente. */
     @Autowired(required = false)
@@ -105,7 +115,7 @@ public class TrichoscopyService implements TrichoscopyUseCase {
         requireTrichology(companyId);
         try {
             TenantContext.setCompanyId(companyId);
-            return repository.findByCompanyIdAndContactId(companyId, contactId).stream()
+            return repository.findVisibleByCompanyIdAndContactId(companyId, contactId).stream()
                     .map(this::toResponse)
                     .toList();
         } finally {
@@ -122,8 +132,22 @@ public class TrichoscopyService implements TrichoscopyUseCase {
             PatientTrichoscopyImage image = repository
                     .findByIdAndCompanyIdAndContactId(imageId, companyId, contactId)
                     .orElseThrow(() -> new TrichoscopyImageNotFoundException(imageId));
-            repository.delete(image);
-            storageUseCase.delete(companyId, image.getStorageObjectId());
+            if (image.getDeletedAt() != null) {
+                throw new TrichoscopyImageNotFoundException(imageId);
+            }
+            AssessmentImageRepository linked = assessmentImages == null ? null : assessmentImages.getIfAvailable();
+            if (linked != null && linked.isLinked(companyId, imageId)) {
+                // Ligada a exame: some da galeria, mas o arquivo fica para o exame e o relatório.
+                if (linked.isLinkedToPublished(companyId, imageId)) {
+                    throw new TrichologyStateException(
+                            "Esta foto faz parte de um relatório de tricologia publicado e não pode ser excluída.");
+                }
+                image.softDelete(userId, java.time.Instant.now());
+                repository.save(image);
+            } else {
+                repository.delete(image);
+                storageUseCase.delete(companyId, image.getStorageObjectId());
+            }
             note(companyId, contactId, "Imagem de tricoscopia excluída.", userId);
             auditor.record(companyId, AuditAction.DELETE, AuditModule.CONTACTS, "PatientTrichoscopyImage",
                     imageId.toString(), "TRICHOSCOPY_DELETED", userId,

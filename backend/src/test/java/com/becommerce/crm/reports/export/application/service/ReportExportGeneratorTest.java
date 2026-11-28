@@ -15,10 +15,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,6 +44,7 @@ class ReportExportGeneratorTest {
     private ReportDataGateway gateway;
     private StorageUseCase storage;
     private NotificationUseCase notifications;
+    private ReportExportAuditor auditor;
     private ReportExportGenerator generator;
 
     @BeforeEach
@@ -49,9 +53,11 @@ class ReportExportGeneratorTest {
         gateway = mock(ReportDataGateway.class);
         storage = mock(StorageUseCase.class);
         notifications = mock(NotificationUseCase.class);
+        auditor = mock(ReportExportAuditor.class);
         when(gateway.companyHeader(COMPANY)).thenReturn(new CompanyHeader("Clínica", "00.000.000/0001-00"));
+        when(repository.updateIfPending(any())).thenReturn(true);
         generator = new ReportExportGenerator(repository, gateway, new ReportDatasetBuilder(gateway), storage,
-                notifications, new ObjectMapper());
+                notifications, new ObjectMapper(), auditor);
     }
 
     private ReportExport pending(ReportExportType type, ExportFormat format) {
@@ -65,19 +71,21 @@ class ReportExportGeneratorTest {
     void successUploadsMarksReadyAndNotifiesWithDownloadMetadata() throws Exception {
         ReportExport export = pending(ReportExportType.MONTHLY_DRE, ExportFormat.PDF);
         UUID objectId = UUID.randomUUID();
-        when(storage.upload(eq(COMPANY), anyString(), anyString(), any(), eq(USER)))
+        when(storage.uploadTemporary(eq(COMPANY), anyString(), anyString(), any(), eq(USER)))
                 .thenReturn(new StorageResponse(objectId, "k", "f", "application/pdf", 10, COMPANY,
                         LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 
         ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
-        verify(storage).upload(eq(COMPANY), eq("contabil-mensal_2026-06.pdf"), eq("application/pdf"),
+        verify(storage).uploadTemporary(eq(COMPANY), eq("contabil-mensal_2026-06.pdf"), eq("application/pdf"),
                 bytes.capture(), eq(USER));
         assertThat(new String(bytes.getValue(), 0, 4)).isEqualTo("%PDF");
         assertThat(export.status()).isEqualTo(ReportExportStatus.READY);
         assertThat(export.storageObjectId()).isEqualTo(objectId);
-        verify(repository).update(export);
+        assertThat(export.rowCount()).isNotNull();
+        verify(repository).updateIfPending(export);
+        verify(auditor).record(ReportExportAuditor.Event.READY, export);
 
         ArgumentCaptor<CreateNotificationRequest> notification =
                 ArgumentCaptor.forClass(CreateNotificationRequest.class);
@@ -98,7 +106,8 @@ class ReportExportGeneratorTest {
         generator.generate(COMPANY, export.id());
 
         assertThat(export.status()).isEqualTo(ReportExportStatus.FAILED);
-        verify(repository).update(export);
+        verify(repository).updateIfPending(export);
+        verify(auditor).record(ReportExportAuditor.Event.FAILED, export);
         verify(storage, never()).upload(any(), any(), any(), any(), any());
         ArgumentCaptor<CreateNotificationRequest> notification =
                 ArgumentCaptor.forClass(CreateNotificationRequest.class);
@@ -113,13 +122,13 @@ class ReportExportGeneratorTest {
         when(gateway.budgets(any(), any(), any())).thenReturn(List.of(new ReportDataGateway.BudgetRow(
                 LocalDate.of(2026, 6, 10), "Ana", "Plano de tratamento", "DRAFT", 1, 35_000, 0, null, null,
                 null)));
-        when(storage.upload(any(), anyString(), anyString(), any(), any()))
+        when(storage.uploadTemporary(any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 
         ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
-        verify(storage).upload(eq(COMPANY), eq("orcamentos_2026-06-01_a_2026-06-30.csv"), eq("text/csv"),
+        verify(storage).uploadTemporary(eq(COMPANY), eq("orcamentos_2026-06-01_a_2026-06-30.csv"), eq("text/csv"),
                 bytes.capture(), eq(USER));
         assertThat(new String(bytes.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .contains("Ana;Plano de tratamento;Em aberto;1;350,00");
@@ -134,12 +143,12 @@ class ReportExportGeneratorTest {
     void xlsxFileNameUsesRange() {
         ReportExport export = pending(ReportExportType.CASH_FLOW, ExportFormat.XLSX);
         when(gateway.paidByDay(any(), any(), any())).thenReturn(List.of());
-        when(storage.upload(any(), anyString(), anyString(), any(), any()))
+        when(storage.uploadTemporary(any(), anyString(), anyString(), any(), any()))
                 .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
 
         generator.generate(COMPANY, export.id());
 
-        verify(storage).upload(eq(COMPANY), eq("fluxo-de-caixa_2026-06-01_a_2026-06-30.xlsx"),
+        verify(storage).uploadTemporary(eq(COMPANY), eq("fluxo-de-caixa_2026-06-01_a_2026-06-30.xlsx"),
                 eq(ExportFormat.XLSX.contentType()), any(), eq(USER));
     }
 
@@ -151,6 +160,127 @@ class ReportExportGeneratorTest {
         generator.generate(COMPANY, export.id());
 
         verify(storage, never()).upload(any(), any(), any(), any(), any());
+        verify(notifications, never()).create(any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExportFormat.class)
+    void emptyDatasetIsReadyWithEmptyNotice(ExportFormat format) throws Exception {
+        ReportExport export = pending(ReportExportType.TRANSACTIONS, format);
+        when(storage.uploadTemporary(any(), anyString(), anyString(), any(), any()))
+                .thenReturn(new StorageResponse(UUID.randomUUID(), "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
+
+        generator.generate(COMPANY, export.id());
+
+        assertThat(export.status()).isEqualTo(ReportExportStatus.READY);
+        ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
+        verify(storage).uploadTemporary(eq(COMPANY), anyString(), eq(format.contentType()), bytes.capture(), eq(USER));
+        assertThat(ReportFileText.of(format, bytes.getValue()))
+                .contains("Nenhum registro encontrado para o período.");
+        ArgumentCaptor<CreateNotificationRequest> notification =
+                ArgumentCaptor.forClass(CreateNotificationRequest.class);
+        verify(notifications).create(eq(COMPANY), notification.capture(), eq(USER));
+        assertThat(notification.getValue().title()).isEqualTo("Relatório pronto para download");
+    }
+
+    @Test
+    void datasetAboveMaxRowsFailsWithClearMessage() {
+        ReportExport export = pending(ReportExportType.AGENDA, ExportFormat.PDF);
+        ReportDataGateway.AppointmentRow row = new ReportDataGateway.AppointmentRow(java.time.Instant.now(),
+                "Ana", "Consulta", "Dr. João", "SCHEDULED", "MANUAL");
+        when(gateway.appointments(any(), any(), any()))
+                .thenReturn(Collections.nCopies(ReportDataGateway.MAX_ROWS + 1, row));
+
+        generator.generate(COMPANY, export.id());
+
+        assertThat(export.status()).isEqualTo(ReportExportStatus.FAILED);
+        assertThat(export.errorMessage())
+                .isEqualTo("O relatório excede o limite de 50.000 linhas. Reduza o período.");
+        verify(repository).updateIfPending(export);
+        verify(storage, never()).upload(any(), any(), any(), any(), any());
+        ArgumentCaptor<CreateNotificationRequest> notification =
+                ArgumentCaptor.forClass(CreateNotificationRequest.class);
+        verify(notifications).create(eq(COMPANY), notification.capture(), eq(USER));
+        assertThat(notification.getValue().title()).isEqualTo("Não foi possível gerar o relatório");
+        assertThat(notification.getValue().body()).endsWith("Reduza o período.");
+    }
+
+    @Test
+    void datasetAtMaxRowsIsAccepted() {
+        List<Integer> rows = Collections.nCopies(ReportDataGateway.MAX_ROWS, 1);
+        assertThat(ReportDatasetBuilder.limited(rows)).hasSize(ReportDataGateway.MAX_ROWS);
+    }
+
+    private ReportExport canceledCopy(ReportExport export) {
+        ReportExport copy = new ReportExport(export.id(), COMPANY, USER, export.type(), export.format(),
+                export.periodFrom(), export.periodTo(), ReportExportStatus.PENDING, null, null, null,
+                export.createdAt(), null);
+        copy.markCanceled();
+        return copy;
+    }
+
+    @Test
+    void canceledDuringRenderSkipsUploadAndNotification() {
+        ReportExport export = ReportExport.pending(COMPANY, USER, ReportExportType.CASH_FLOW, ExportFormat.PDF,
+                LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30));
+        when(repository.findById(COMPANY, export.id()))
+                .thenReturn(Optional.of(export), Optional.of(canceledCopy(export)));
+        when(gateway.paidByDay(any(), any(), any())).thenReturn(List.of());
+
+        generator.generate(COMPANY, export.id());
+
+        verify(storage, never()).upload(any(), any(), any(), any(), any());
+        verify(repository, never()).updateIfPending(any());
+        verify(notifications, never()).create(any(), any(), any());
+    }
+
+    @Test
+    void canceledAfterUploadDeletesObjectWithoutNotifying() {
+        ReportExport export = pending(ReportExportType.CASH_FLOW, ExportFormat.PDF);
+        when(gateway.paidByDay(any(), any(), any())).thenReturn(List.of());
+        UUID objectId = UUID.randomUUID();
+        when(storage.uploadTemporary(any(), anyString(), anyString(), any(), any()))
+                .thenReturn(new StorageResponse(objectId, "k", "f", "x", 1, COMPANY, LocalDateTime.now(), null));
+        when(repository.updateIfPending(export)).thenReturn(false);
+
+        generator.generate(COMPANY, export.id());
+
+        verify(storage).delete(COMPANY, objectId);
+        verify(notifications, never()).create(any(), any(), any());
+    }
+
+    @Test
+    void failureAfterCancelIsNotNotified() {
+        ReportExport export = pending(ReportExportType.AGENDA, ExportFormat.XLSX);
+        when(gateway.appointments(any(), any(), any())).thenThrow(new IllegalStateException("db down"));
+        when(repository.updateIfPending(export)).thenReturn(false);
+
+        generator.generate(COMPANY, export.id());
+
+        verify(notifications, never()).create(any(), any(), any());
+    }
+
+    @Test
+    void failPendingMarksFailedAndNotifiesWithMessage() {
+        ReportExport export = pending(ReportExportType.CASH_FLOW, ExportFormat.PDF);
+
+        boolean failed = generator.failPending(COMPANY, export, "Tempo de geração excedido. Tente novamente.");
+
+        assertThat(failed).isTrue();
+        assertThat(export.status()).isEqualTo(ReportExportStatus.FAILED);
+        assertThat(export.errorMessage()).isEqualTo("Tempo de geração excedido. Tente novamente.");
+        ArgumentCaptor<CreateNotificationRequest> notification =
+                ArgumentCaptor.forClass(CreateNotificationRequest.class);
+        verify(notifications).create(eq(COMPANY), notification.capture(), eq(USER));
+        assertThat(notification.getValue().body()).endsWith("Tempo de geração excedido. Tente novamente.");
+    }
+
+    @Test
+    void failPendingAlreadyFinishedDoesNotNotify() {
+        ReportExport export = pending(ReportExportType.CASH_FLOW, ExportFormat.PDF);
+        when(repository.updateIfPending(export)).thenReturn(false);
+
+        assertThat(generator.failPending(COMPANY, export, "x")).isFalse();
         verify(notifications, never()).create(any(), any(), any());
     }
 }

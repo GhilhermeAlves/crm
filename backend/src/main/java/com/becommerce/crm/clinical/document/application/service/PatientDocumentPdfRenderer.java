@@ -74,6 +74,7 @@ public class PatientDocumentPdfRenderer {
             case CERTIFICATE -> "ATESTADO";
             case CONSENT -> "TERMO";
             case OTHER -> safe(document.getTitle());
+            case TRICHOLOGY_REPORT -> "RELATÓRIO DE TRICOLOGIA";
         };
     }
 

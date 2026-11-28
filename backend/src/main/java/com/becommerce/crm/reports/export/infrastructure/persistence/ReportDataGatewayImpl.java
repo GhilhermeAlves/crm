@@ -5,6 +5,7 @@ import com.becommerce.crm.finance.transaction.domain.TransactionCategory;
 import com.becommerce.crm.finance.transaction.domain.TransactionStatus;
 import com.becommerce.crm.finance.transaction.domain.TransactionType;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -66,10 +67,52 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
             (Integer) rs.getObject("installments"),
             toLocalDate(rs.getDate("approved_on")));
 
+    private static final RowMapper<LeadRow> LEAD_ROW = (rs, i) -> new LeadRow(
+            rs.getDate("created_on").toLocalDate(),
+            rs.getString("name"),
+            rs.getString("email"),
+            rs.getString("phone"),
+            rs.getString("source"),
+            rs.getString("status"),
+            rs.getString("assigned_name"),
+            rs.getInt("score"));
+
+    private static final RowMapper<ActivityRow> ACTIVITY_ROW = (rs, i) -> new ActivityRow(
+            rs.getDate("activity_on").toLocalDate(),
+            rs.getString("type"),
+            rs.getString("subject"),
+            rs.getString("contact_name"),
+            rs.getString("created_by_name"));
+
+    private static final RowMapper<ContactRow> CONTACT_ROW = (rs, i) -> new ContactRow(
+            rs.getDate("created_on").toLocalDate(),
+            rs.getString("name"),
+            rs.getString("document"),
+            rs.getString("email"),
+            rs.getString("phone"),
+            rs.getString("city"),
+            rs.getString("state"),
+            toLocalDate(rs.getDate("birth_date")),
+            rs.getString("source"),
+            rs.getString("tags"));
+
+    /** Linhas buscadas por ida ao banco nas consultas de detalhe (até MAX_ROWS). */
+    static final int DETAIL_FETCH_SIZE = 1000;
+
     private final NamedParameterJdbcTemplate jdbc;
+    /**
+     * Template próprio com {@code fetchSize} para as listas de detalhe: não altera
+     * o bean compartilhado. No PostgreSQL o cursor só vale dentro de transação;
+     * fora dela o driver ignora o valor sem efeito colateral.
+     */
+    private final NamedParameterJdbcTemplate detailJdbc;
 
     public ReportDataGatewayImpl(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
+        JdbcTemplate base = jdbc.getJdbcTemplate();
+        JdbcTemplate detail = new JdbcTemplate(base.getDataSource());
+        detail.setFetchSize(DETAIL_FETCH_SIZE);
+        this.detailJdbc = new NamedParameterJdbcTemplate(detail);
     }
 
     @Override
@@ -114,8 +157,8 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "LEFT JOIN contacts c ON c.id = ft.contact_id AND c.deleted_at IS NULL "
                 + "WHERE ft.company_id = :companyId AND ft.status <> 'CANCELLED' "
                 + "AND ft.due_date BETWEEN :from AND :to "
-                + "ORDER BY ft.due_date, ft.created_at, ft.id";
-        return jdbc.query(sql, params(companyId, from, to), TRANSACTION_ROW);
+                + "ORDER BY ft.due_date, ft.created_at, ft.id LIMIT " + (MAX_ROWS + 1);
+        return detailJdbc.query(sql, params(companyId, from, to), TRANSACTION_ROW);
     }
 
     @Override
@@ -131,8 +174,8 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "LEFT JOIN users u ON u.id = a.host_id "
                 + "WHERE a.company_id = :companyId "
                 + "AND (a.start_at AT TIME ZONE 'America/Sao_Paulo')::date BETWEEN :from AND :to "
-                + "ORDER BY u.name, a.start_at";
-        return jdbc.query(sql, params(companyId, from, to), APPOINTMENT_ROW);
+                + "ORDER BY u.name, a.start_at LIMIT " + (MAX_ROWS + 1);
+        return detailJdbc.query(sql, params(companyId, from, to), APPOINTMENT_ROW);
     }
 
     @Override
@@ -153,8 +196,65 @@ public class ReportDataGatewayImpl implements ReportDataGateway {
                 + "AND (b.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date "
                 + "BETWEEN :from AND :to "
                 + "GROUP BY b.id, c.first_name, c.last_name "
-                + "ORDER BY b.created_at, b.id";
-        return jdbc.query(sql, params(companyId, from, to), BUDGET_ROW);
+                + "ORDER BY b.created_at, b.id LIMIT " + (MAX_ROWS + 1);
+        return detailJdbc.query(sql, params(companyId, from, to), BUDGET_ROW);
+    }
+
+    @Override
+    public List<LeadRow> leads(UUID companyId, LocalDate from, LocalDate to) {
+        // Lead não tem exclusão lógica (DELETE físico); o contato sim — JOIN só com contato ativo.
+        // created_at é gravado em UTC (LocalDateTime do servidor).
+        String sql = "SELECT (l.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date AS created_on, "
+                + "TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')) AS name, "
+                + "c.email AS email, c.phone AS phone, l.source AS source, l.status AS status, "
+                + "COALESCE(u.name, '') AS assigned_name, l.score AS score "
+                + "FROM leads l "
+                + "JOIN contacts c ON c.id = l.contact_id AND c.deleted_at IS NULL "
+                + "LEFT JOIN users u ON u.id = l.assigned_to "
+                + "WHERE l.company_id = :companyId "
+                + "AND (l.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date "
+                + "BETWEEN :from AND :to "
+                + "ORDER BY l.created_at, l.id LIMIT " + (MAX_ROWS + 1);
+        return detailJdbc.query(sql, params(companyId, from, to), LEAD_ROW);
+    }
+
+    @Override
+    public List<ContactRow> contacts(UUID companyId, LocalDate from, LocalDate to) {
+        // Só colunas em claro de contacts; o cadastro de pessoas (persons, criptografado) não entra.
+        // Telefone: celular quando houver, senão o fixo. created_at é gravado em UTC.
+        String sql = "SELECT (c.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date AS created_on, "
+                + "TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')) AS name, "
+                + "c.cpf AS document, c.email AS email, "
+                + "COALESCE(NULLIF(TRIM(c.mobile), ''), c.phone) AS phone, "
+                + "c.city AS city, c.state AS state, c.birth_date AS birth_date, "
+                + "c.referral_source AS source, "
+                + "(SELECT string_agg(t.name, ', ' ORDER BY t.name) FROM contact_tags ct "
+                + "JOIN tags t ON t.id = ct.tag_id WHERE ct.contact_id = c.id) AS tags "
+                + "FROM contacts c "
+                + "WHERE c.company_id = :companyId AND c.deleted_at IS NULL "
+                + "AND (c.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date "
+                + "BETWEEN :from AND :to "
+                + "ORDER BY c.created_at, c.id LIMIT " + (MAX_ROWS + 1);
+        return detailJdbc.query(sql, params(companyId, from, to), CONTACT_ROW);
+    }
+
+    @Override
+    public List<ActivityRow> activities(UUID companyId, LocalDate from, LocalDate to) {
+        // Activity não tem exclusão lógica; contato excluído (deleted_at) sai sem nome.
+        // description fica de fora de propósito (texto livre, pode ter dado clínico).
+        // activity_at é LocalDateTime do servidor (UTC), como created_at.
+        String sql = "SELECT (a.activity_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date AS activity_on, "
+                + "a.type AS type, a.subject AS subject, "
+                + "TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')) AS contact_name, "
+                + "COALESCE(u.name, '') AS created_by_name "
+                + "FROM activities a "
+                + "LEFT JOIN contacts c ON c.id = a.contact_id AND c.deleted_at IS NULL "
+                + "LEFT JOIN users u ON u.id = a.created_by "
+                + "WHERE a.company_id = :companyId "
+                + "AND (a.activity_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')::date "
+                + "BETWEEN :from AND :to "
+                + "ORDER BY a.activity_at, a.id LIMIT " + (MAX_ROWS + 1);
+        return detailJdbc.query(sql, params(companyId, from, to), ACTIVITY_ROW);
     }
 
     private static MapSqlParameterSource params(UUID companyId, LocalDate from, LocalDate to) {

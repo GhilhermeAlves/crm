@@ -39,7 +39,9 @@ public enum CompanyPlan {
                 CompanyModule.PATIENTS, CompanyModule.AGENDA, CompanyModule.AGENDA_SETTINGS,
                 CompanyModule.CATALOG, CompanyModule.DOCUMENTS,
                 CompanyModule.TASKS, CompanyModule.STORAGE,
-                CompanyModule.PEOPLE, CompanyModule.SUPPLIERS, CompanyModule.EMPLOYEES, CompanyModule.LOCATIONS);
+                CompanyModule.PEOPLE, CompanyModule.SUPPLIERS, CompanyModule.EMPLOYEES, CompanyModule.LOCATIONS,
+                // Removido para empresas fora do segmento TRICHOLOGY (CompanyService.applyPlanModules).
+                CompanyModule.TRICHOLOGY);
         if (this == ESSENTIAL) return modules;
         modules.addAll(EnumSet.of(
                 CompanyModule.FINANCE, CompanyModule.CRM, CompanyModule.REPORTS,

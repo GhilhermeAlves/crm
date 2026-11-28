@@ -106,6 +106,40 @@ public class OpenAiMediaProvider implements AiMediaProvider {
     }
 
     @Override
+    public VisionJsonResult analyzeImageJson(byte[] image, String mimeType, String systemPrompt, String userPrompt,
+                                             String model, int maxTokens) {
+        requireKey();
+        String usedModel = model != null && !model.isBlank() ? model : visionModel;
+        String dataUrl = "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(image);
+        Map<String, Object> body = Map.of(
+                "model", usedModel,
+                "max_tokens", maxTokens,
+                "temperature", 0.1,
+                "response_format", Map.of("type", "json_object"),
+                "messages", List.of(
+                        Map.of("role", "system", "content", systemPrompt),
+                        Map.of("role", "user", "content", List.of(
+                                Map.of("type", "text", "text", userPrompt),
+                                Map.of("type", "image_url", "image_url", Map.of("url", dataUrl, "detail", "high"))))));
+        Map<?, ?> response = call(() -> restClient.post().uri("/v1/chat/completions")
+                .header("Authorization", "Bearer " + apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    throw new AiProviderException("Análise de imagem HTTP " + res.getStatusCode().value(), false);
+                })
+                .body(Map.class));
+        Integer in = null;
+        Integer out = null;
+        if (response != null && response.get("usage") instanceof Map<?, ?> usage) {
+            in = usage.get("prompt_tokens") instanceof Number n ? n.intValue() : null;
+            out = usage.get("completion_tokens") instanceof Number n ? n.intValue() : null;
+        }
+        return new VisionJsonResult(firstChoiceContent(response), usedModel, in, out);
+    }
+
+    @Override
     public byte[] speech(String text) {
         requireKey();
         Map<String, Object> body = Map.of(

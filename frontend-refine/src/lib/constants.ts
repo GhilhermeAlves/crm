@@ -63,6 +63,7 @@ export const ROUTES = {
   ASSISTANT: "/assistant",
   DESIGN_SYSTEM: "/design-system",
   SETTINGS_DOCUMENTS: "/settings/documents",
+  SETTINGS_TRICHOLOGY: "/settings/trichology",
   SETTINGS_DOCUMENTS_ANAMNESIS: "/settings/documents/anamnesis",
   SETTINGS_DOCUMENTS_PRESCRIPTIONS: "/settings/documents/prescriptions",
   FINANCE: "/finance",

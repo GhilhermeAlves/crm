@@ -20,10 +20,12 @@ public class StorageObject {
     private final byte[] data;
     private final UUID createdBy;
     private final LocalDateTime createdAt;
+    /** Arquivo temporário (ex.: exportação de relatório): fora da cota e das listagens da empresa. */
+    private final boolean temporary;
 
     private StorageObject(UUID id, UUID companyId, UUID contactId, String objectKey, String fileName,
                           String contentType, long sizeBytes, byte[] data,
-                          UUID createdBy, LocalDateTime createdAt) {
+                          UUID createdBy, LocalDateTime createdAt, boolean temporary) {
         this.id = id;
         this.companyId = companyId;
         this.contactId = contactId;
@@ -34,6 +36,7 @@ public class StorageObject {
         this.data = data;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
+        this.temporary = temporary;
     }
 
     public static StorageObject create(UUID companyId, String objectKey, String fileName,
@@ -46,7 +49,15 @@ public class StorageObject {
                                                  String contentType, byte[] data, UUID createdBy) {
         return new StorageObject(
                 UUID.randomUUID(), companyId, contactId, objectKey, fileName, contentType,
-                data == null ? 0L : data.length, data, createdBy, LocalDateTime.now());
+                data == null ? 0L : data.length, data, createdBy, LocalDateTime.now(), false);
+    }
+
+    /** Cria um objeto temporário da empresa (ex.: exportação de relatório), que não conta na cota. */
+    public static StorageObject createTemporary(UUID companyId, String objectKey, String fileName,
+                                                String contentType, byte[] data, UUID createdBy) {
+        return new StorageObject(
+                UUID.randomUUID(), companyId, null, objectKey, fileName, contentType,
+                data == null ? 0L : data.length, data, createdBy, LocalDateTime.now(), true);
     }
 
     public static StorageObject reconstitute(UUID id, UUID companyId, String objectKey, String fileName,
@@ -59,8 +70,16 @@ public class StorageObject {
     public static StorageObject reconstitute(UUID id, UUID companyId, UUID contactId, String objectKey,
                                              String fileName, String contentType, long sizeBytes, byte[] data,
                                              UUID createdBy, LocalDateTime createdAt) {
+        return reconstitute(id, companyId, contactId, objectKey, fileName, contentType, sizeBytes, data,
+                createdBy, createdAt, false);
+    }
+
+    public static StorageObject reconstitute(UUID id, UUID companyId, UUID contactId, String objectKey,
+                                             String fileName, String contentType, long sizeBytes, byte[] data,
+                                             UUID createdBy, LocalDateTime createdAt, boolean temporary) {
         return new StorageObject(
-                id, companyId, contactId, objectKey, fileName, contentType, sizeBytes, data, createdBy, createdAt);
+                id, companyId, contactId, objectKey, fileName, contentType, sizeBytes, data, createdBy, createdAt,
+                temporary);
     }
 
     public UUID getId() { return id; }
@@ -73,4 +92,5 @@ public class StorageObject {
     public byte[] getData() { return data; }
     public UUID getCreatedBy() { return createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public boolean isTemporary() { return temporary; }
 }

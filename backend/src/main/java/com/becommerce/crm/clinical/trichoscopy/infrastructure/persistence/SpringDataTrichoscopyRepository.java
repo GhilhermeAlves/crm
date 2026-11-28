@@ -10,6 +10,9 @@ interface SpringDataTrichoscopyRepository extends JpaRepository<PatientTrichosco
     List<PatientTrichoscopyImageJpaEntity> findByCompanyIdAndContactIdOrderByTakenAtDesc(UUID companyId,
                                                                                          UUID contactId);
 
+    List<PatientTrichoscopyImageJpaEntity> findByCompanyIdAndContactIdAndDeletedAtIsNullOrderByTakenAtDesc(
+            UUID companyId, UUID contactId);
+
     Optional<PatientTrichoscopyImageJpaEntity> findByIdAndCompanyIdAndContactId(UUID id, UUID companyId,
                                                                                UUID contactId);
 }

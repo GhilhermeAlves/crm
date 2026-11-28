@@ -1,6 +1,7 @@
 package com.becommerce.crm.reports.export.web;
 
 import com.becommerce.crm.masterdata.storage.application.dto.StorageDownload;
+import com.becommerce.crm.reports.export.application.dto.ReportCatalogEntry;
 import com.becommerce.crm.reports.export.application.dto.ReportExportRequest;
 import com.becommerce.crm.reports.export.application.dto.ReportExportResponse;
 import com.becommerce.crm.reports.export.application.service.ReportExportService;
@@ -26,7 +27,8 @@ import java.util.UUID;
 
 /**
  * Impressão/exportação de relatórios: o {@code POST} agenda a geração (202) e o
- * usuário é avisado no sino; {@code GET /{id}/download} entrega o arquivo. A
+ * usuário é avisado no sino; {@code GET /{id}/download} entrega o arquivo e
+ * {@code POST /{id}/cancel} cancela uma ainda em geração. A
  * permissão fina (finance:read / appointment:read) é checada no service.
  */
 @RestController
@@ -46,8 +48,8 @@ public class ReportExportController {
     public ResponseEntity<ReportExportResponse> request(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
                                                         @RequestBody ReportExportRequest request,
                                                         @AuthenticationPrincipal CurrentUser principal) {
-        ReportExportResponse response = service.request(companyId, principal.userId(), principal.permissions(),
-                request);
+        ReportExportResponse response = service.request(companyId, principal.userId(), principal.roles(),
+                principal.permissions(), request);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
@@ -58,6 +60,14 @@ public class ReportExportController {
         return ResponseEntity.ok(service.recent(companyId, principal.userId()));
     }
 
+    /** Catálogo dos relatórios que o usuário pode gerar, com formatos e modo de período. */
+    @GetMapping("/catalog")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ReportCatalogEntry>> catalog(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                            @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(service.catalog(principal.roles(), principal.permissions()));
+    }
+
     @GetMapping("/{exportId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReportExportResponse> get(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
@@ -66,12 +76,21 @@ public class ReportExportController {
         return ResponseEntity.ok(service.get(companyId, principal.userId(), exportId));
     }
 
+    @PostMapping("/{exportId}/cancel")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ReportExportResponse> cancel(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
+                                                       @PathVariable UUID exportId,
+                                                       @AuthenticationPrincipal CurrentUser principal) {
+        return ResponseEntity.ok(service.cancel(companyId, principal.userId(), exportId));
+    }
+
     @GetMapping("/{exportId}/download")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> download(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
                                            @PathVariable UUID exportId,
                                            @AuthenticationPrincipal CurrentUser principal) {
-        StorageDownload file = service.download(companyId, principal.userId(), principal.permissions(), exportId);
+        StorageDownload file = service.download(companyId, principal.userId(), principal.roles(),
+                principal.permissions(), exportId);
         ContentDisposition disposition = ContentDisposition.attachment()
                 .filename(file.fileName(), StandardCharsets.UTF_8)
                 .build();

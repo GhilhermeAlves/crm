@@ -18,11 +18,13 @@ public record ReportExportResponse(
         String fileName,
         String errorMessage,
         Instant createdAt,
-        Instant finishedAt
+        Instant finishedAt,
+        Integer rowCount
 ) {
     public static ReportExportResponse from(ReportExport export) {
         return new ReportExportResponse(export.id(), export.type().name(), export.type().label(),
                 export.format().name(), export.periodFrom(), export.periodTo(), export.status().name(),
-                export.fileName(), export.errorMessage(), export.createdAt(), export.finishedAt());
+                export.fileName(), export.errorMessage(), export.createdAt(), export.finishedAt(),
+                export.rowCount());
     }
 }

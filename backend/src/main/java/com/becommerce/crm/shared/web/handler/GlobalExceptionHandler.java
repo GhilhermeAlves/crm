@@ -67,7 +67,9 @@ import com.becommerce.crm.sales.pipeline.domain.exception.PipelineValidationExce
 import com.becommerce.crm.sales.pipeline.domain.exception.StageNotFoundException;
 import com.becommerce.crm.masterdata.quota.domain.exception.QuotaExceededException;
 import com.becommerce.crm.masterdata.storage.domain.exception.StorageObjectNotFoundException;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportConflictException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportNotFoundException;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportRateLimitException;
 import com.becommerce.crm.reports.export.domain.exception.ReportExportValidationException;
 import com.becommerce.crm.sales.task.domain.exception.TaskNotFoundException;
 import com.becommerce.crm.sales.task.domain.exception.TaskValidationException;
@@ -619,6 +621,32 @@ public class GlobalExceptionHandler {
             ));
     }
 
+    @ExceptionHandler(com.becommerce.crm.clinical.trichology.domain.exception.TrichologyNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTrichologyNotFound(RuntimeException ex) {
+        return trichologyError(HttpStatus.NOT_FOUND, "Not Found", ex);
+    }
+
+    @ExceptionHandler(com.becommerce.crm.clinical.trichology.domain.exception.TrichologyValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleTrichologyValidation(RuntimeException ex) {
+        return trichologyError(HttpStatus.BAD_REQUEST, "Bad Request", ex);
+    }
+
+    @ExceptionHandler(com.becommerce.crm.clinical.trichology.domain.exception.TrichologyStateException.class)
+    public ResponseEntity<Map<String, Object>> handleTrichologyState(RuntimeException ex) {
+        return trichologyError(HttpStatus.CONFLICT, "Conflict", ex);
+    }
+
+    private static ResponseEntity<Map<String, Object>> trichologyError(HttpStatus status, String error,
+                                                                       RuntimeException ex) {
+        return ResponseEntity.status(status)
+            .body(Map.of(
+                "status", status.value(),
+                "error", error,
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
     @ExceptionHandler(TrichoscopyImageNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleTrichoscopyImageNotFoundException(
             TrichoscopyImageNotFoundException ex) {
@@ -899,6 +927,30 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 400,
                 "error", "Bad Request",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ReportExportConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleReportExportConflictException(
+            ReportExportConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                "status", 409,
+                "error", "Conflict",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+            ));
+    }
+
+    @ExceptionHandler(ReportExportRateLimitException.class)
+    public ResponseEntity<Map<String, Object>> handleReportExportRateLimitException(
+            ReportExportRateLimitException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(Map.of(
+                "status", 429,
+                "error", "Too Many Requests",
                 "message", ex.getMessage(),
                 "timestamp", LocalDateTime.now().toString()
             ));

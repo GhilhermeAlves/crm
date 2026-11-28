@@ -17,6 +17,13 @@ import java.util.UUID;
  */
 public interface ReportDataGateway {
 
+    /**
+     * Teto de linhas por exportação. As consultas de detalhe trazem no máximo
+     * {@code MAX_ROWS + 1} linhas, só para saber que o limite foi passado sem
+     * carregar tudo na memória.
+     */
+    int MAX_ROWS = 50_000;
+
     /** Nome fantasia (ou razão social), CNPJ e logo da empresa, para o cabeçalho. */
     CompanyHeader companyHeader(UUID companyId);
 
@@ -34,6 +41,15 @@ public interface ReportDataGateway {
 
     /** Orçamentos criados (horário de Brasília) no período, com itens somados. */
     List<BudgetRow> budgets(UUID companyId, LocalDate from, LocalDate to);
+
+    /** Leads criados (horário de Brasília) no período, cujo contato não foi excluído. */
+    List<LeadRow> leads(UUID companyId, LocalDate from, LocalDate to);
+
+    /** Contatos cadastrados (horário de Brasília) no período, sem os excluídos. */
+    List<ContactRow> contacts(UUID companyId, LocalDate from, LocalDate to);
+
+    /** Atividades com data (horário de Brasília) no período; sem descrição livre. */
+    List<ActivityRow> activities(UUID companyId, LocalDate from, LocalDate to);
 
     /**
      * @param logoUrl logo de Configurações → Empresa: data URL (PNG/JPG embutido)
@@ -63,6 +79,18 @@ public interface ReportDataGateway {
             return subtotalCents - discountCents;
         }
     }
+
+    /** Status e origem chegam como texto do banco (LeadStatus/LeadSource). */
+    record LeadRow(LocalDate createdOn, String name, String email, String phone, String source,
+                   String status, String assignedName, int score) {}
+
+    /** Só colunas em claro de contacts (nada do cadastro criptografado de persons). */
+    /** Tipo chega como texto do banco (ActivityType); a descrição livre não entra (pode ter dado clínico). */
+    record ActivityRow(LocalDate activityOn, String type, String subject, String contactName,
+                       String createdByName) {}
+
+    record ContactRow(LocalDate createdOn, String name, String document, String email, String phone,
+                      String city, String state, LocalDate birthDate, String source, String tags) {}
 
     record AppointmentRow(Instant startAt, String contactName, String typeName, String hostName,
                           String status, String source) {}

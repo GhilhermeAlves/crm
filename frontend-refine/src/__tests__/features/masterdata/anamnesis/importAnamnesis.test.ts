@@ -105,3 +105,152 @@ describe("parseAnamnesisJson", () => {
     expect(result.sections[0]).toMatchObject({ title: "Geral" });
   });
 });
+
+describe("parseAnamnesisJson — formatos de outros sistemas", () => {
+  it("aceita campos/label/obrigatorio e tipos em português", () => {
+    const json = JSON.stringify({
+      titulo: "Anamnese Tricológica",
+      descricao: "Teste",
+      secoes: [
+        {
+          titulo: "Queixa principal",
+          campos: [
+            { label: "Qual a sua queixa?", tipo: "textarea", obrigatorio: true },
+            { label: "Há quanto tempo?", tipo: "radio", opcoes: ["< 6 meses", "> 1 ano"] },
+          ],
+        },
+        { titulo: "Histórico", campos: [{ label: "Usa medicamento?", tipo: "boolean" }] },
+      ],
+    });
+    const result = parseAnamnesisJson(json, "fallback");
+    expect(result.name).toBe("Anamnese Tricológica");
+    expect(result.sections).toHaveLength(2);
+    expect(result.sections[0].questions?.[0]).toMatchObject({
+      text: "Qual a sua queixa?",
+      type: "LONG_TEXT",
+      required: true,
+    });
+    expect(result.sections[0].questions?.[1].type).toBe("SINGLE_SELECT");
+    expect(result.sections[1].questions?.[0].type).toBe("YES_NO");
+  });
+
+  it("encontra as perguntas dentro de um envelope e aceita BOM", () => {
+    const json =
+      "﻿" +
+      JSON.stringify({
+        anamnese: {
+          nome: "Capilar",
+          fields: [{ question: "Idade", type: "number" }, "Observações"],
+        },
+      });
+    const result = parseAnamnesisImport(json, "arquivo.json");
+    expect(result.name).toBe("Capilar");
+    expect(result.sections[0].questions?.map((q) => q.type)).toEqual(["NUMBER", "SHORT_TEXT"]);
+  });
+
+  it("lista de perguntas soltas na raiz", () => {
+    const result = parseAnamnesisJson(
+      JSON.stringify([{ pergunta: "Tem alergia?", tipo: "sim/não" }]),
+      "Lista",
+    );
+    expect(result.name).toBe("Lista");
+    expect(result.sections[0].questions?.[0].type).toBe("YES_NO");
+  });
+
+  it("checkbox sem opções vira Sim/Não e multiselect é múltipla escolha", () => {
+    const result = parseAnamnesisJson(
+      JSON.stringify({
+        schema_version: 1,
+        form: {
+          title: "Ficha",
+          sections: [
+            {
+              title: "Final",
+              fields: [
+                {
+                  id: "a",
+                  label: "Tipo de cabelo",
+                  type: "multiselect",
+                  options: [{ label: "Seco", value: "seco" }],
+                },
+                {
+                  id: "b",
+                  label: "Declaro que as informações são verdadeiras",
+                  type: "checkbox",
+                  required: true,
+                },
+              ],
+            },
+          ],
+        },
+      }),
+      "x",
+    );
+    expect(result.name).toBe("Ficha");
+    expect(result.sections[0].questions?.map((q) => q.type)).toEqual(["MULTI_SELECT", "YES_NO"]);
+  });
+
+  it("pergunta condicional de texto vira campo complementar da pergunta-mãe", () => {
+    const result = parseAnamnesisJson(
+      JSON.stringify({
+        form: {
+          title: "Ficha",
+          sections: [
+            {
+              title: "Saúde",
+              fields: [
+                { id: "cond", label: "Tem condição diagnosticada?", type: "yes_no" },
+                {
+                  id: "cond_det",
+                  label: "Se sim, qual?",
+                  type: "textarea",
+                  visible_when: { field: "cond", equals: "sim" },
+                },
+                {
+                  id: "trat",
+                  label: "Tratamento",
+                  type: "multiselect",
+                  options: [
+                    { label: "Minoxidil", value: "minox" },
+                    { label: "Outro", value: "outro" },
+                  ],
+                },
+                {
+                  id: "trat_outro",
+                  label: "Qual outro?",
+                  type: "text",
+                  visible_when: { field: "trat", includes: "outro" },
+                },
+                {
+                  id: "sem_mae",
+                  label: "Órfã",
+                  type: "text",
+                  visible_when: { field: "nao_existe", equals: "x" },
+                },
+              ],
+            },
+          ],
+        },
+      }),
+      "x",
+    );
+    const qs = result.sections[0].questions ?? [];
+    expect(qs.map((q) => q.text)).toEqual(["Tem condição diagnosticada?", "Tratamento", "Órfã"]);
+    expect(qs[0]).toMatchObject({
+      allowComplement: true,
+      complementLabel: "Se sim, qual?",
+      complementTrigger: "YES",
+    });
+    expect(qs[1]).toMatchObject({
+      allowComplement: true,
+      complementTrigger: "OPTION",
+      complementOptionValue: "Outro",
+    });
+  });
+
+  it("pedaço de JSON colado sem o começo dá aviso claro", () => {
+    expect(() => parseAnamnesisImport('  "id": "x",\n  "label": "Se sim, qual?",')).toThrow(
+      /JSON incompleto/,
+    );
+  });
+});

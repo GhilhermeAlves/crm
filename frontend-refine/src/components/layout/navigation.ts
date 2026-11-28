@@ -34,6 +34,7 @@ import {
   Settings,
   ServerCog,
   CreditCard,
+  Microscope,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import type { CompanyModuleName } from "@/features/identity/modules/types/modules.types";
@@ -254,6 +255,21 @@ export const NAVIGATION: NavGroup[] = [
             href: `${ROUTES.REPORTS_EXPORT}/budgets`,
             permission: "contact:read",
           },
+          {
+            label: "Leads",
+            href: `${ROUTES.REPORTS_EXPORT}/leads`,
+            permission: "lead:read",
+          },
+          {
+            label: "Contatos",
+            href: `${ROUTES.REPORTS_EXPORT}/contacts`,
+            permission: "contact:read",
+          },
+          {
+            label: "Atividades",
+            href: `${ROUTES.REPORTS_EXPORT}/activities`,
+            permission: "activity:read",
+          },
         ],
       },
       { label: "Arquivos", href: ROUTES.STORAGE, icon: HardDrive, module: "STORAGE" },
@@ -352,6 +368,13 @@ export const NAVIGATION: NavGroup[] = [
           { label: "Modelos de anamnese", href: `${ROUTES.SETTINGS_DOCUMENTS}/anamnesis` },
           { label: "Receituários", href: `${ROUTES.SETTINGS_DOCUMENTS}/prescriptions` },
         ],
+      },
+      {
+        label: "Tricologia",
+        href: ROUTES.SETTINGS_TRICHOLOGY,
+        icon: Microscope,
+        permission: "trichology:settings",
+        module: "TRICHOLOGY",
       },
     ],
   },

@@ -47,7 +47,14 @@ public class StorageService implements StorageUseCase {
     @Transactional
     public StorageResponse upload(UUID companyId, String fileName, String contentType,
                                   byte[] data, UUID userId) {
-        return doUpload(companyId, null, fileName, contentType, data, userId);
+        return doUpload(companyId, null, fileName, contentType, data, userId, false);
+    }
+
+    @Override
+    @Transactional
+    public StorageResponse uploadTemporary(UUID companyId, String fileName, String contentType,
+                                           byte[] data, UUID userId) {
+        return doUpload(companyId, null, fileName, contentType, data, userId, true);
     }
 
     @Override
@@ -60,21 +67,27 @@ public class StorageService implements StorageUseCase {
         } finally {
             TenantContext.clear();
         }
-        return doUpload(companyId, contactId, fileName, contentType, data, userId);
+        return doUpload(companyId, contactId, fileName, contentType, data, userId, false);
     }
 
     private StorageResponse doUpload(UUID companyId, UUID contactId, String fileName, String contentType,
-                                     byte[] data, UUID userId) {
+                                     byte[] data, UUID userId, boolean temporary) {
         byte[] bytes = data == null ? new byte[0] : data;
         try {
             TenantContext.setCompanyId(companyId);
 
-            // A quota é validada pelo espaço a ser reservado (bytes reais a gravar).
-            quotaService.assertCanAddSpace(companyId, bytes.length);
-
-            StorageObject storage = StorageObject.createForContact(
-                    companyId, contactId, UUID.randomUUID().toString(), safe(fileName),
-                    contentType, bytes, userId);
+            StorageObject storage;
+            if (temporary) {
+                // Temporário (exportação de relatório): não consome a cota permanente.
+                storage = StorageObject.createTemporary(
+                        companyId, UUID.randomUUID().toString(), safe(fileName), contentType, bytes, userId);
+            } else {
+                // A quota é validada pelo espaço a ser reservado (bytes reais a gravar).
+                quotaService.assertCanAddSpace(companyId, bytes.length);
+                storage = StorageObject.createForContact(
+                        companyId, contactId, UUID.randomUUID().toString(), safe(fileName),
+                        contentType, bytes, userId);
+            }
             StorageObject saved = storageRepository.save(storage);
 
             auditor.record(companyId, AuditAction.CREATE, AuditModule.SETTINGS, "StorageObject",

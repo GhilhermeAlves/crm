@@ -21,14 +21,41 @@ public record ReportDocument(
         String companyCnpj,
         LocalDateTime issuedAt,
         boolean landscape,
-        List<ReportTable> sections
+        List<ReportTable> sections,
+        String notice
 ) {
+
+    /** Mensagem de estado vazio impressa abaixo do cabeçalho nos três formatos. */
+    public static final String EMPTY_NOTICE = "Nenhum registro encontrado para o período.";
+
+    public ReportDocument(String title, String period, String companyName, String companyCnpj,
+                          LocalDateTime issuedAt, boolean landscape, List<ReportTable> sections) {
+        this(title, period, companyName, companyCnpj, issuedAt, landscape, sections, null);
+    }
+
+    /** Cópia com um aviso (ex.: {@link #EMPTY_NOTICE}) abaixo do cabeçalho. */
+    public ReportDocument withNotice(String text) {
+        return new ReportDocument(title, period, companyName, companyCnpj, issuedAt, landscape, sections, text);
+    }
 
     public enum ColumnKind { TEXT, MONEY, COUNT, DATE }
 
     public enum RowKind { GROUP, ITEM, SUBTOTAL, TOTAL }
 
-    public record Column(String header, ColumnKind kind, float width) {
+    /**
+     * @param sensitive classificação LGPD da coluna (null = dado comum); o
+     *                  {@link ReportFieldMasker} mascara as células dessas colunas.
+     */
+    public record Column(String header, ColumnKind kind, float width, ReportFieldMasker.SensitiveField sensitive) {
+
+        public Column(String header, ColumnKind kind, float width) {
+            this(header, kind, width, null);
+        }
+
+        /** Coluna de texto com dado pessoal sensível. */
+        public static Column personal(String header, float width, ReportFieldMasker.SensitiveField field) {
+            return new Column(header, ColumnKind.TEXT, width, field);
+        }
 
         public static Column text(String header, float width) {
             return new Column(header, ColumnKind.TEXT, width);

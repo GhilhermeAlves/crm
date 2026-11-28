@@ -6,12 +6,34 @@ import { ReportExportForm } from "@/features/reports/export/ReportExportForm";
 import {
   findReportExport,
   parseReportExportMetadata,
+  type ReportCatalogEntry,
   type ReportExport,
 } from "@/features/reports/export/types";
 
 vi.mock("@/features/reports/export/report-export.service", () => ({
   downloadReportExport: vi.fn().mockResolvedValue(undefined),
 }));
+
+function entry(overrides: Partial<ReportCatalogEntry>): ReportCatalogEntry {
+  return {
+    type: "CASH_FLOW",
+    slug: "cash-flow",
+    label: "Fluxo de caixa",
+    description: "",
+    domain: "FINANCE",
+    permission: "finance:read",
+    formats: ["PDF", "XLSX", "CSV"],
+    periodMode: "RANGE",
+    maxMonths: 12,
+    ...overrides,
+  };
+}
+
+const CATALOG: ReportCatalogEntry[] = [
+  entry({ type: "MONTHLY_DRE", slug: "monthly-dre", periodMode: "MONTH", maxMonths: 1 }),
+  entry({}),
+  entry({ type: "AGENDA", slug: "agenda", formats: ["PDF"] }),
+];
 
 function exportItem(overrides: Partial<ReportExport>): ReportExport {
   return {
@@ -35,7 +57,7 @@ describe("ReportExportForm", () => {
     const onSubmit = vi.fn();
     render(
       <ReportExportForm
-        definition={findReportExport("monthly-dre")!}
+        definition={findReportExport(CATALOG, "monthly-dre")!}
         isSubmitting={false}
         onSubmit={onSubmit}
       />,
@@ -50,7 +72,7 @@ describe("ReportExportForm", () => {
     const onSubmit = vi.fn();
     render(
       <ReportExportForm
-        definition={findReportExport("cash-flow")!}
+        definition={findReportExport(CATALOG, "cash-flow")!}
         isSubmitting={false}
         onSubmit={onSubmit}
       />,
@@ -70,7 +92,7 @@ describe("ReportExportForm", () => {
   it("bloqueia intervalo invertido", () => {
     render(
       <ReportExportForm
-        definition={findReportExport("agenda")!}
+        definition={findReportExport(CATALOG, "agenda")!}
         isSubmitting={false}
         onSubmit={vi.fn()}
       />,
@@ -85,6 +107,26 @@ describe("ReportExportForm", () => {
   });
 });
 
+describe("catálogo de relatórios", () => {
+  it("não encontra relatório ausente do catálogo (sem permissão)", () => {
+    expect(findReportExport(CATALOG, "budgets")).toBeUndefined();
+    expect(findReportExport(undefined, "agenda")).toBeUndefined();
+  });
+
+  it("mostra só os formatos aceitos pelo relatório", () => {
+    render(
+      <ReportExportForm
+        definition={findReportExport(CATALOG, "agenda")!}
+        isSubmitting={false}
+        onSubmit={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /Imprimir \(PDF\)/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Exportar \(Excel\)/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Exportar \(CSV\)/ })).toBeNull();
+  });
+});
+
 describe("RecentReportExports", () => {
   it("mostra Baixar só para exportações prontas", () => {
     render(
@@ -95,6 +137,7 @@ describe("RecentReportExports", () => {
           exportItem({ id: "a", status: "READY" }),
           exportItem({ id: "b", status: "PENDING", fileName: null }),
           exportItem({ id: "c", status: "FAILED", fileName: null }),
+          exportItem({ id: "d", status: "EXPIRED" }),
         ]}
       />,
     );
@@ -102,6 +145,29 @@ describe("RecentReportExports", () => {
     expect(screen.getAllByRole("button", { name: /Baixar/ })).toHaveLength(1);
     expect(screen.getByText("Gerando")).toBeTruthy();
     expect(screen.getByText("Falhou")).toBeTruthy();
+    expect(screen.getByText("Expirado")).toBeTruthy();
+  });
+
+  it("mostra Cancelar só para exportações em geração e o status Cancelado", () => {
+    const onCancel = vi.fn();
+    render(
+      <RecentReportExports
+        companyId="c1"
+        isLoading={false}
+        onCancel={onCancel}
+        exports={[
+          exportItem({ id: "a", status: "READY" }),
+          exportItem({ id: "b", status: "PENDING", fileName: null }),
+          exportItem({ id: "c", status: "CANCELED", fileName: null }),
+        ]}
+      />,
+    );
+
+    const cancel = screen.getAllByRole("button", { name: /Cancelar/ });
+    expect(cancel).toHaveLength(1);
+    fireEvent.click(cancel[0]);
+    expect(onCancel).toHaveBeenCalledWith("b");
+    expect(screen.getByText("Cancelado")).toBeTruthy();
   });
 });
 

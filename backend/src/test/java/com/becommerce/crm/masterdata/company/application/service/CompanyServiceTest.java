@@ -304,7 +304,9 @@ class CompanyServiceTest {
         org.mockito.ArgumentCaptor<CompanyModules> captor = org.mockito.ArgumentCaptor.forClass(CompanyModules.class);
         verify(companyModulesRepository).update(eq(sampleCompany.getId()), captor.capture());
         assertEquals(CompanySegment.DENTAL, captor.getValue().segment());
-        assertEquals(newPlan.defaultModules(), captor.getValue().enabledModules());
+        java.util.Set<CompanyModule> expected = java.util.EnumSet.copyOf(newPlan.defaultModules());
+        expected.remove(CompanyModule.TRICHOLOGY); // só clínicas de tricologia recebem o módulo
+        assertEquals(expected, captor.getValue().enabledModules());
     }
 
     @Test
