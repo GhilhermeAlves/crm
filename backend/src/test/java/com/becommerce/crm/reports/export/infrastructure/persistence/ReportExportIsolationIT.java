@@ -206,7 +206,7 @@ class ReportExportIsolationIT {
         TenantContext.setCompanyId(TENANT_A);
         ReportExport readyA = export(TENANT_A);
         repository.insert(readyA);
-        readyA.markReady(UUID.randomUUID(), "fluxo.xlsx");
+        readyA.markReady(UUID.randomUUID(), "fluxo.xlsx", 42);
         repository.update(readyA);
         repository.insert(export(TENANT_A)); // PENDING: fica fora da varredura
         TenantContext.setCompanyId(TENANT_B);
