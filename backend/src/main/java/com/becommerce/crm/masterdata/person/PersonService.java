@@ -58,6 +58,126 @@ public class PersonService {
         this.roles = roles;
     }
 
+    // =================================================================== anamnese
+
+    /** Campos do cadastro que a anamnese pode completar (spec 2026-11-28-anamnese-fonte-unica). */
+    public enum ProfileField { NAME, BIRTH_DATE, GENDER, CPF, MOBILE, EMAIL, ADDRESS }
+
+    /** Valores atuais do cadastro usados no pré-preenchimento e na comparação da anamnese. */
+    public record ProfileValues(String name, LocalDate birthDate, String gender, String cpf, String mobile,
+                                String email, String address) {}
+
+    @Transactional(readOnly = true)
+    public ProfileValues profileValues(UUID companyId, UUID personId) {
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT name, tax_id, birth_or_foundation_date, gender "
+                + "FROM persons WHERE company_id = ? AND id = ?", companyId, personId);
+        if (rows.isEmpty()) {
+            return null;
+        }
+        Map<String, Object> p = rows.get(0);
+        String mobile = firstValue("SELECT value FROM person_contacts WHERE company_id = ? AND person_id = ? "
+                + "AND contact_type IN ('MOBILE','PHONE') AND active ORDER BY is_primary DESC, "
+                + "(contact_type = 'MOBILE') DESC, created_at LIMIT 1", companyId, personId);
+        String email = firstValue("SELECT value FROM person_contacts WHERE company_id = ? AND person_id = ? "
+                + "AND contact_type = 'EMAIL' AND active ORDER BY is_primary DESC, created_at LIMIT 1", companyId, personId);
+        String address = firstValue("SELECT concat_ws(', ', NULLIF(street, ''), NULLIF(address_number, ''), "
+                + "NULLIF(neighborhood_name, ''), NULLIF(concat_ws('/', NULLIF(city_name, ''), NULLIF(uf, '')), '')) "
+                + "FROM person_addresses WHERE company_id = ? AND person_id = ? AND active "
+                + "ORDER BY is_primary DESC, created_at LIMIT 1", companyId, personId);
+        return new ProfileValues((String) p.get("name"), date(p.get("birth_or_foundation_date")),
+                (String) p.get("gender"), (String) p.get("tax_id"), mobile, email, blank(address));
+    }
+
+    /**
+     * Aplica um campo vindo da anamnese com as mesmas regras da edição manual (CPF válido e único,
+     * espelho em contacts). CPF válido tira o cadastro do modo provisório.
+     */
+    @Transactional
+    public void applyAnamnesisPatch(UUID companyId, UUID personId, ProfileField field, String value, UUID userId,
+                                    String origin) {
+        requirePerson(companyId, personId);
+        String v = blank(value);
+        if (v == null) {
+            return;
+        }
+        switch (field) {
+            case MOBILE -> addChannel(companyId, personId,
+                    new ContactChannelRequest("MOBILE", v, null, Boolean.TRUE, null), userId, true);
+            case EMAIL -> addChannel(companyId, personId,
+                    new ContactChannelRequest("EMAIL", v, null, Boolean.FALSE, null), userId, true);
+            case ADDRESS -> addAddress(companyId, personId, new AddressRequest("RESIDENTIAL", null, trunc(v, 160),
+                    null, null, null, null, null, null, null, null, null, null), userId, true);
+            default -> applyIdentityField(companyId, personId, field, v, userId, origin);
+        }
+    }
+
+    private void applyIdentityField(UUID companyId, UUID personId, ProfileField field, String v, UUID userId,
+                                    String origin) {
+        Map<String, Object> before = snapshot(companyId, personId);
+        boolean contact = hasContact(companyId, personId);
+        Object param;
+        String contactColumn;
+        String personColumn;
+        switch (field) {
+            case NAME -> {
+                param = trunc(v, 150);
+                contactColumn = null;
+                personColumn = "name";
+            }
+            case BIRTH_DATE -> {
+                try {
+                    param = LocalDate.parse(v);
+                } catch (RuntimeException e) {
+                    throw PersonException.badRequest("Data de nascimento inválida.");
+                }
+                contactColumn = "birth_date";
+                personColumn = "birth_or_foundation_date";
+            }
+            case GENDER -> {
+                param = trunc(v, 20);
+                contactColumn = "gender";
+                personColumn = "gender";
+            }
+            case CPF -> {
+                String tax = TaxIdValidator.normalize(v);
+                if (tax == null || !TaxIdValidator.isValidCpf(tax)) {
+                    throw PersonException.badRequest("CPF inválido.");
+                }
+                ensureUniqueTax(companyId, tax, personId);
+                param = tax;
+                contactColumn = "cpf";
+                personColumn = "tax_id";
+            }
+            default -> throw new IllegalArgumentException("Campo não suportado: " + field);
+        }
+        try {
+            if (contact && field == ProfileField.NAME) {
+                String[] parts = splitName((String) param);
+                jdbc.update("UPDATE contacts SET first_name = ?, last_name = ?, updated_at = now() "
+                        + "WHERE company_id = ? AND id = ?", parts[0], parts[1], companyId, personId);
+            } else if (contact) {
+                jdbc.update("UPDATE contacts SET " + contactColumn + " = ?, updated_at = now() "
+                        + "WHERE company_id = ? AND id = ?", param, companyId, personId);
+            } else {
+                jdbc.update("UPDATE persons SET " + personColumn + " = ?, updated_by = ?, updated_at = now() "
+                        + "WHERE company_id = ? AND id = ?", param, userId, companyId, personId);
+            }
+        } catch (DataIntegrityViolationException e) {
+            throw PersonException.badRequest("Não foi possível salvar: confira os dados informados.");
+        }
+        if (field == ProfileField.CPF) {
+            jdbc.update("UPDATE persons SET provisional = FALSE, updated_by = ?, updated_at = now() "
+                    + "WHERE company_id = ? AND id = ? AND provisional", userId, companyId, personId);
+        }
+        history.record(companyId, personId, userId, "UPDATE", "persons", before, snapshot(companyId, personId),
+                origin);
+    }
+
+    private String firstValue(String sql, Object... args) {
+        List<String> values = jdbc.queryForList(sql, String.class, args);
+        return values.isEmpty() ? null : values.get(0);
+    }
+
     // =================================================================== consulta
 
     @Transactional(readOnly = true)

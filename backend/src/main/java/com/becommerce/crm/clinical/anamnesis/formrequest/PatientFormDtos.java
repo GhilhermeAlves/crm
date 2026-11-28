@@ -41,7 +41,13 @@ public final class PatientFormDtos {
     /** O que a página pública mostra: só o formulário, nunca a ficha. */
     public record PublicFormResponse(String clinicName, String clinicLogoUrl, String patientFirstName,
                                      String formName,
-                                     AnamnesisModelResponse form, String mode) {
+                                     AnamnesisModelResponse form, String mode,
+                                     /* valores do cadastro para perguntas vinculadas */
+                                     Map<UUID, Object> prefill) {
+        public PublicFormResponse(String clinicName, String clinicLogoUrl, String patientFirstName, String formName,
+                                  AnamnesisModelResponse form, String mode) {
+            this(clinicName, clinicLogoUrl, patientFirstName, formName, form, mode, Map.of());
+        }
     }
 
     /**

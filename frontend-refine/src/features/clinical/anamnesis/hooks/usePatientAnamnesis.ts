@@ -80,6 +80,12 @@ export function useSavePatientAnamnesis(companyId: string, contactId: string) {
       queryClient.invalidateQueries({
         queryKey: patientAnamnesisKeys.detail(companyId, contactId, data.id),
       });
+      if (data.status === "COMPLETED") {
+        // a anamnese concluída pode completar o cadastro e ligar o exame: atualiza tudo do paciente
+        queryClient.invalidateQueries({
+          predicate: (query) => query.queryKey.some((part) => part === contactId),
+        });
+      }
       toast.success(data.status === "COMPLETED" ? "Anamnese concluída" : "Anamnese salva");
     },
     onError: (error: unknown) => {

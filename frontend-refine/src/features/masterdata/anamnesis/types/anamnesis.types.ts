@@ -1,3 +1,5 @@
+import type { AnamnesisBinding } from "../lib/bindings";
+
 export type AnamnesisQuestionType =
   | "SHORT_TEXT"
   | "LONG_TEXT"
@@ -29,6 +31,7 @@ export type AnamnesisQuestion = {
   complementOptionValue: string | null;
   sortOrder: number;
   options: AnamnesisOption[];
+  binding?: AnamnesisBinding | null;
 };
 
 export type AnamnesisSection = {
@@ -83,6 +86,7 @@ export type AnamnesisQuestionRequest = {
   complementTrigger?: AnamnesisComplementTrigger;
   complementOptionValue?: string | null;
   options?: AnamnesisOptionRequest[];
+  binding?: AnamnesisBinding | null;
 };
 
 export type AnamnesisSectionRequest = {

@@ -257,6 +257,7 @@ public class AnamnesisService {
 
         List<com.becommerce.crm.masterdata.anamnesis.application.dto.AnamnesisSectionRequest> sections =
                 request.sections() == null ? List.of() : request.sections();
+        validateBindings(sections);
         int sectionOrder = 0;
         for (var sectionReq : sections) {
             UUID sectionId = orRandom(sectionReq.id());
@@ -273,6 +274,44 @@ public class AnamnesisService {
                         questionReq, questionOrder++);
                 questionRepository.save(question);
                 persistOptions(companyId, question, questionReq);
+            }
+        }
+    }
+
+    /** Vínculos: um por modelo, tipo compatível e, quando há códigos, opções só com esses valores. */
+    static void validateBindings(
+            List<com.becommerce.crm.masterdata.anamnesis.application.dto.AnamnesisSectionRequest> sections) {
+        java.util.Set<com.becommerce.crm.masterdata.anamnesis.domain.AnamnesisBinding> seen = java.util.EnumSet.noneOf(com.becommerce.crm.masterdata.anamnesis.domain.AnamnesisBinding.class);
+        if (sections == null) {
+            return;
+        }
+        for (var section : sections) {
+            if (section.questions() == null) {
+                continue;
+            }
+            for (var q : section.questions()) {
+                com.becommerce.crm.masterdata.anamnesis.domain.AnamnesisBinding binding = q.binding();
+                if (binding == null) {
+                    continue;
+                }
+                if (!seen.add(binding)) {
+                    throw new AnamnesisValidationException(
+                            "O vínculo " + binding + " já está em outra pergunta deste modelo.");
+                }
+                if (!binding.types().contains(q.type())) {
+                    throw new AnamnesisValidationException("A pergunta \"" + q.text()
+                            + "\" não aceita o vínculo " + binding + ": tipo de pergunta incompatível.");
+                }
+                if (!binding.codes().isEmpty() && q.options() != null) {
+                    for (var option : q.options()) {
+                        String value = option.value() != null ? option.value() : option.label();
+                        if (!binding.codes().contains(value)) {
+                            throw new AnamnesisValidationException("Opção \"" + value + "\" inválida para o vínculo "
+                                    + binding + ". Use: "
+                                    + String.join(", ", new java.util.TreeSet<>(binding.codes())) + ".");
+                        }
+                    }
+                }
             }
         }
     }
@@ -307,7 +346,7 @@ public class AnamnesisService {
         }
         return AnamnesisQuestion.create(questionId, sectionId, modelId, companyId, req.text(), type,
                 Boolean.TRUE.equals(req.required()), Boolean.TRUE.equals(req.highlight()), allowComplement,
-                complementLabel, trigger, optionValue, sortOrder);
+                complementLabel, trigger, optionValue, sortOrder, req.binding());
     }
 
     private void persistOptions(UUID companyId, AnamnesisQuestion question,

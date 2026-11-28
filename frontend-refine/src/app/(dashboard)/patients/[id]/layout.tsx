@@ -11,6 +11,7 @@ import { useAuth } from "@/features/identity/auth/hooks/useAuth";
 import { usePatient } from "@/features/clinical/patients/hooks/usePatient";
 import { PatientHeader } from "@/features/clinical/patients/components/PatientHeader";
 import { PatientTabs } from "@/features/clinical/patients/components/PatientTabs";
+import { ProfileDivergenceBanner } from "@/features/clinical/anamnesis/components/ProfileDivergenceBanner";
 import { ROUTES } from "@/lib/constants";
 
 export default function PatientRecordLayout({ children }: { children: React.ReactNode }) {
@@ -83,6 +84,7 @@ export default function PatientRecordLayout({ children }: { children: React.Reac
 
       <PatientHeader contact={patient} />
       <PatientTabs contactId={patient.id} />
+      {companyId && <ProfileDivergenceBanner companyId={companyId} contactId={patient.id} />}
 
       <div>{children}</div>
     </div>

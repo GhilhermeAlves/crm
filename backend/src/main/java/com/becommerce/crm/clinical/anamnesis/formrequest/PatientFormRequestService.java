@@ -197,7 +197,8 @@ public class PatientFormRequestService {
             String firstName = contactUseCase.getById(request.getCompanyId(), request.getContactId()).firstName();
             return new PublicFormResponse(company.getTradingName(), company.getLogoUrl(), firstName,
                     anamnesis.modelName(),
-                    patientView(anamnesis.snapshot()), request.getMode());
+                    patientView(anamnesis.snapshot()), request.getMode(),
+                    anamnesis.prefill() == null ? Map.of() : anamnesis.prefill());
         } finally {
             tokenContext.clear();
             TenantContext.clear();

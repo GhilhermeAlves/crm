@@ -31,54 +31,6 @@ class TrichologyDomainTest {
     private static final Instant NOW = Instant.parse("2026-11-25T12:00:00Z");
 
     @Nested
-    class QuizEngineTest {
-
-        private Map<String, Object> complete(String sex) {
-            Map<String, Object> answers = new HashMap<>();
-            answers.put("sex", sex);
-            answers.put("age_range", "30_44");
-            answers.put("chief_complaint", "Queda de cabelo");
-            answers.put("onset", "3_12M");
-            answers.put("pattern", "DIFFUSE_SHEDDING");
-            answers.put("daily_shedding", "GT_100");
-            answers.put("recent_triggers", List.of("SEVERE_STRESS"));
-            answers.put("family_history", false);
-            answers.put("scalp_symptoms", List.of("NONE"));
-            answers.put("postpartum", false);
-            answers.put("irregular_cycles", false);
-            answers.put("acne_hirsutism", false);
-            answers.put("anabolic_use", true);
-            return answers;
-        }
-
-        @Test
-        void dropsAnswersHiddenByBranching() {
-            Map<String, Object> clean = QuizEngine.sanitize(complete("F"), true);
-            assertThat(clean).containsKey("postpartum").doesNotContainKey("anabolic_use");
-
-            Map<String, Object> male = QuizEngine.sanitize(complete("M"), true);
-            assertThat(male).containsKey("anabolic_use").doesNotContainKey("postpartum");
-        }
-
-        @Test
-        void requiresVisibleRequiredQuestionsWhenComplete() {
-            Map<String, Object> answers = complete("F");
-            answers.remove("postpartum");
-            assertThatThrownBy(() -> QuizEngine.sanitize(answers, true))
-                    .isInstanceOf(TrichologyValidationException.class);
-            assertThat(QuizEngine.sanitize(answers, false)).doesNotContainKey("postpartum");
-        }
-
-        @Test
-        void rejectsOptionOutsideTheList() {
-            Map<String, Object> answers = complete("F");
-            answers.put("pattern", "INVENTED");
-            assertThatThrownBy(() -> QuizEngine.sanitize(answers, true))
-                    .isInstanceOf(TrichologyValidationException.class);
-        }
-    }
-
-    @Nested
     class RpsCalculatorTest {
 
         private final List<Marker> markers = List.of(

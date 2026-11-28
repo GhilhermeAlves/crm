@@ -20,6 +20,7 @@ public class AnamnesisQuestion {
     private final AnamnesisComplementTrigger complementTrigger;
     private final String complementOptionValue;
     private final int sortOrder;
+    private final AnamnesisBinding binding;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
@@ -27,7 +28,8 @@ public class AnamnesisQuestion {
                               AnamnesisQuestionType type, boolean required, boolean highlight,
                               boolean allowComplement, String complementLabel,
                               AnamnesisComplementTrigger complementTrigger, String complementOptionValue,
-                              int sortOrder, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                              int sortOrder, LocalDateTime createdAt, LocalDateTime updatedAt,
+                              AnamnesisBinding binding) {
         this.id = Objects.requireNonNull(id, "id");
         this.sectionId = Objects.requireNonNull(sectionId, "sectionId");
         this.modelId = Objects.requireNonNull(modelId, "modelId");
@@ -35,6 +37,7 @@ public class AnamnesisQuestion {
         this.required = required;
         this.highlight = highlight;
         this.sortOrder = sortOrder;
+        this.binding = binding;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.type = Objects.requireNonNull(type, "type");
@@ -53,9 +56,19 @@ public class AnamnesisQuestion {
                                            boolean allowComplement, String complementLabel,
                                            AnamnesisComplementTrigger complementTrigger,
                                            String complementOptionValue, int sortOrder) {
+        return create(id, sectionId, modelId, companyId, text, type, required, highlight, allowComplement,
+                complementLabel, complementTrigger, complementOptionValue, sortOrder, null);
+    }
+
+    public static AnamnesisQuestion create(UUID id, UUID sectionId, UUID modelId, UUID companyId, String text,
+                                           AnamnesisQuestionType type, boolean required, boolean highlight,
+                                           boolean allowComplement, String complementLabel,
+                                           AnamnesisComplementTrigger complementTrigger,
+                                           String complementOptionValue, int sortOrder, AnamnesisBinding binding) {
         LocalDateTime now = LocalDateTime.now();
         return new AnamnesisQuestion(id, sectionId, modelId, companyId, text, type, required, highlight,
-                allowComplement, complementLabel, complementTrigger, complementOptionValue, sortOrder, now, now);
+                allowComplement, complementLabel, complementTrigger, complementOptionValue, sortOrder, now, now,
+                binding);
     }
 
     public static AnamnesisQuestion reconstitute(UUID id, UUID sectionId, UUID modelId, UUID companyId,
@@ -65,9 +78,21 @@ public class AnamnesisQuestion {
                                                  AnamnesisComplementTrigger complementTrigger,
                                                  String complementOptionValue, int sortOrder,
                                                  LocalDateTime createdAt, LocalDateTime updatedAt) {
+        return reconstitute(id, sectionId, modelId, companyId, text, type, required, highlight, allowComplement,
+                complementLabel, complementTrigger, complementOptionValue, sortOrder, createdAt, updatedAt, null);
+    }
+
+    public static AnamnesisQuestion reconstitute(UUID id, UUID sectionId, UUID modelId, UUID companyId,
+                                                 String text, AnamnesisQuestionType type, boolean required,
+                                                 boolean highlight, boolean allowComplement,
+                                                 String complementLabel,
+                                                 AnamnesisComplementTrigger complementTrigger,
+                                                 String complementOptionValue, int sortOrder,
+                                                 LocalDateTime createdAt, LocalDateTime updatedAt,
+                                                 AnamnesisBinding binding) {
         return new AnamnesisQuestion(id, sectionId, modelId, companyId, text, type, required, highlight,
                 allowComplement, complementLabel, complementTrigger, complementOptionValue, sortOrder,
-                createdAt, updatedAt);
+                createdAt, updatedAt, binding);
     }
 
     private static String blankToNull(String value) {
@@ -87,6 +112,7 @@ public class AnamnesisQuestion {
     public AnamnesisComplementTrigger getComplementTrigger() { return complementTrigger; }
     public String getComplementOptionValue() { return complementOptionValue; }
     public int getSortOrder() { return sortOrder; }
+    public AnamnesisBinding getBinding() { return binding; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

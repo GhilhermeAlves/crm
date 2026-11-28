@@ -13,7 +13,6 @@ import type {
   LabResult,
   Measures,
   PullTest,
-  QuizAnswers,
   ReportSection,
   SkippedRegion,
   CaptureRegion,
@@ -25,7 +24,6 @@ export const trichologyKeys = {
     ["trichology", companyId, contactId, id] as const,
   copilot: (companyId: string, contactId: string, id: string) =>
     ["trichology", companyId, contactId, id, "copilot"] as const,
-  quiz: (companyId: string) => ["trichology-quiz", companyId] as const,
   settings: (companyId: string) => ["trichology-settings", companyId] as const,
 };
 
@@ -71,15 +69,6 @@ export function useCopilot(companyId: string, contactId: string, id: string, ena
   });
 }
 
-export function useQuizDefinition(companyId: string, contactId: string) {
-  return useQuery({
-    queryKey: trichologyKeys.quiz(companyId),
-    queryFn: () => TrichologyService.quizDefinition(companyId, contactId),
-    enabled: Boolean(companyId && contactId),
-    staleTime: Infinity,
-  });
-}
-
 export function useTrichologySettings(companyId: string) {
   return useQuery({
     queryKey: trichologyKeys.settings(companyId),
@@ -109,17 +98,6 @@ export function useAssessmentMutations(companyId: string, contactId: string, id:
       mutationFn: (reason?: string) => TrichologyService.cancel(companyId, contactId, id, reason),
       onSuccess: ok("Exame cancelado"),
       onError: onError({ errorMessage: "Erro ao cancelar o exame" }),
-    }),
-    quizLink: useMutation({
-      mutationFn: () => TrichologyService.quizLink(companyId, contactId, id),
-      onSuccess: ok(),
-      onError: onError({ errorMessage: "Erro ao gerar o link do quiz" }),
-    }),
-    saveQuiz: useMutation({
-      mutationFn: ({ answers, complete }: { answers: QuizAnswers; complete: boolean }) =>
-        TrichologyService.saveQuiz(companyId, contactId, id, answers, complete),
-      onSuccess: ok("Quiz salvo"),
-      onError: onError({ errorMessage: "Erro ao salvar o quiz" }),
     }),
     capture: useMutation({
       mutationFn: (input: {

@@ -75,6 +75,28 @@ public class PatientAnamnesisService implements PatientAnamnesisUseCase {
     }
     private final ObjectMapper objectMapper;
 
+    private com.becommerce.crm.masterdata.person.PersonService personService;
+    private AnamnesisProfileSync profileSync;
+    private java.util.List<AnamnesisCompletionListener> completionListeners = java.util.List.of();
+
+    /** Opcional: pré-preenchimento com o cadastro. */
+    @Autowired(required = false)
+    public void setPersonService(com.becommerce.crm.masterdata.person.PersonService personService) {
+        this.personService = personService;
+    }
+
+    /** Opcional: a anamnese concluída completa o cadastro. */
+    @Autowired(required = false)
+    public void setProfileSync(AnamnesisProfileSync profileSync) {
+        this.profileSync = profileSync;
+    }
+
+    /** Opcional: outros módulos (ex.: exame tricológico) reagem à conclusão. */
+    @Autowired(required = false)
+    public void setCompletionListeners(java.util.List<AnamnesisCompletionListener> listeners) {
+        this.completionListeners = listeners == null ? java.util.List.of() : listeners;
+    }
+
     public PatientAnamnesisService(PatientAnamnesisRepository anamnesisRepository,
                                    ContactRepository contactRepository,
                                    AnamnesisService modelService,
@@ -185,6 +207,15 @@ public class PatientAnamnesisService implements PatientAnamnesisUseCase {
 
             if (complete) {
                 note(companyId, contactId, "Anamnese concluída: " + anamnesis.getModelName(), actorId);
+                if (profileSync != null) {
+                    profileSync.sync(companyId, contactId, anamnesis.getId(), snapshot, answers, actorId);
+                    // o serviço de pessoas limpa o contexto em alguns caminhos; reaplica para o restante
+                    TenantContext.setCompanyId(companyId);
+                }
+                for (AnamnesisCompletionListener listener : completionListeners) {
+                    listener.onCompleted(companyId, contactId, anamnesis.getId());
+                    TenantContext.setCompanyId(companyId);
+                }
             }
             auditor.record(companyId, AuditAction.UPDATE, AuditModule.CONTACTS, RESOURCE,
                     anamnesis.getId().toString(),
@@ -341,7 +372,20 @@ public class PatientAnamnesisService implements PatientAnamnesisUseCase {
                 userName(anamnesis.getCompletedBy(), cache),
                 anamnesis.getCompletedAt(),
                 anamnesis.getCreatedAt(),
-                anamnesis.getUpdatedAt());
+                anamnesis.getUpdatedAt(),
+                prefill(anamnesis));
+    }
+
+    private Map<UUID, Object> prefill(PatientAnamnesis anamnesis) {
+        if (personService == null || !anamnesis.isDraft()) {
+            return Map.of();
+        }
+        try {
+            return AnamnesisBindings.prefill(readSnapshot(anamnesis),
+                    personService.profileValues(anamnesis.getCompanyId(), anamnesis.getContactId()));
+        } catch (RuntimeException e) {
+            return Map.of();
+        }
     }
 
     private String userName(UUID userId, Map<UUID, String> cache) {

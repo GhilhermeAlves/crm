@@ -2,11 +2,8 @@ package com.becommerce.crm.clinical.trichology.application.service;
 
 import com.becommerce.crm.analytics.audit.domain.AuditAction;
 import com.becommerce.crm.clinical.anamnesis.formrequest.FormTokenContextHolder;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.PublicQuizSubmit;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.PublicQuizView;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.VerifyView;
 import com.becommerce.crm.clinical.trichology.application.port.out.TrichologyRepositories.AssessmentRepository;
-import com.becommerce.crm.clinical.trichology.domain.QuizEngine;
 import com.becommerce.crm.clinical.trichology.domain.TrichologyAssessment;
 import com.becommerce.crm.clinical.trichology.domain.VerificationCode;
 import com.becommerce.crm.clinical.trichology.domain.exception.TrichologyNotFoundException;
@@ -56,43 +53,6 @@ public class PublicTrichologyService {
     }
 
     @Transactional(readOnly = true)
-    public PublicQuizView quiz(String token) {
-        access.requireEnabled();
-        TrichologyAssessment a = usable(token);
-        try {
-            UUID companyId = a.getCompanyId();
-            String clinic = companies.findById(companyId).map(Company::getTradingName).orElse("");
-            String firstName = contacts.getById(companyId, a.getContactId()).firstName();
-            return new PublicQuizView(clinic, firstName, core.quizDefinition());
-        } finally {
-            tokenContext.clear();
-            TenantContext.clear();
-        }
-    }
-
-    @Transactional
-    public void submit(String token, PublicQuizSubmit submit) {
-        access.requireEnabled();
-        if (submit.website() != null && !submit.website().isBlank()) {
-            throw new TrichologyValidationException("Requisição inválida.");
-        }
-        TrichologyAssessment a = usable(token);
-        try {
-            UUID companyId = a.getCompanyId();
-            TenantContext.setCompanyId(companyId);
-            Map<String, Object> answers = QuizEngine.sanitize(submit.answers(), true);
-            a.completeQuiz(answers, (String) answers.get("chief_complaint"), core.now());
-            assessments.save(a);
-            core.note(companyId, a.getContactId(), "Quiz capilar respondido pelo paciente.", null);
-            core.audit(companyId, AuditAction.UPDATE, a.getId(), "TRICHOLOGY_QUIZ_ANSWERED_BY_PATIENT", null,
-                    Map.of());
-        } finally {
-            tokenContext.clear();
-            TenantContext.clear();
-        }
-    }
-
-    @Transactional(readOnly = true)
     public VerifyView verify(String rawCode) {
         access.requireEnabled();
         String code = VerificationCode.normalize(rawCode);
@@ -109,19 +69,4 @@ public class PublicTrichologyService {
         return rows.isEmpty() ? new VerifyView(false, null, null, null, null, null, null, false) : rows.get(0);
     }
 
-    /** Lê o exame pelo hash do token; valida expiração e se já foi respondido. */
-    private TrichologyAssessment usable(String token) {
-        if (token == null || token.isBlank() || token.length() > 200) {
-            throw new TrichologyNotFoundException(INVALID);
-        }
-        String hash = RegistrationLink.hash(token);
-        tokenContext.setTokenHash(hash);
-        TrichologyAssessment a = assessments.findByQuizTokenHash(hash).orElse(null);
-        if (a == null || a.getStatus().isFinal() || a.state().quizFormExpiresAt() == null
-                || a.state().quizFormExpiresAt().isBefore(core.now())) {
-            tokenContext.clear();
-            throw new TrichologyNotFoundException(INVALID);
-        }
-        return a;
-    }
 }

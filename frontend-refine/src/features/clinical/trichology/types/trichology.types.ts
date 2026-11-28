@@ -150,6 +150,8 @@ export type AssessmentDetail = {
   quizAnswers: QuizAnswers | null;
   quizCompletedAt: string | null;
   quizLinkExpiresAt: string | null;
+  anamnesisId: string | null;
+  anamnesisCompletedAt: string | null;
   clinicalNotes: string | null;
   pullTest: PullTest | null;
   pullTestPositive: boolean;

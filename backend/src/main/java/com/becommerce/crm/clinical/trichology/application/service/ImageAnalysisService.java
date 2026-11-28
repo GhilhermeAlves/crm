@@ -180,7 +180,23 @@ public class ImageAnalysisService {
         Map<String, String> labels = new LinkedHashMap<>();
         items.forEach(f -> labels.put(f.code(), f.label()));
         return new Context(companyId, assessmentId, assessmentImageId, download, region, image.magnification(),
-                assessment.state().quizAnswers(), assessment.state().chiefComplaint(), labels.keySet(), labels);
+                clinicalAnswers(assessment), assessment.state().chiefComplaint(), labels.keySet(), labels);
+    }
+
+    private org.springframework.beans.factory.ObjectProvider<AssessmentService> assessmentService;
+
+    /** Lazy: AssessmentService publica o evento que este serviço consome. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setAssessmentService(org.springframework.beans.factory.ObjectProvider<AssessmentService> provider) {
+        this.assessmentService = provider;
+    }
+
+    private Map<String, Object> clinicalAnswers(TrichologyAssessment assessment) {
+        AssessmentService core = assessmentService == null ? null : assessmentService.getIfAvailable();
+        if (core != null) {
+            return core.clinicalAnswers(assessment);
+        }
+        return assessment.state().quizAnswers();
     }
 
     private String systemPrompt(Context ctx) {

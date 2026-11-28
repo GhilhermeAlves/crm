@@ -11,7 +11,6 @@ import com.becommerce.crm.clinical.trichology.domain.CatalogItems.ExamRule;
 import com.becommerce.crm.clinical.trichology.domain.CatalogItems.FindingCatalogItem;
 import com.becommerce.crm.clinical.trichology.domain.CatalogItems.Marker;
 import com.becommerce.crm.clinical.trichology.domain.Finding;
-import com.becommerce.crm.clinical.trichology.domain.QuizEngine;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -34,8 +33,6 @@ public final class TrichologyDtos {
     public record CancelRequest(String reason) {
     }
 
-    public record QuizRequest(Map<String, Object> answers, boolean complete) {
-    }
 
     public record ClinicalRequest(PullTest pullTest, String notes) {
     }
@@ -78,8 +75,6 @@ public final class TrichologyDtos {
                                 boolean active) {
     }
 
-    public record PublicQuizSubmit(Map<String, Object> answers, String website) {
-    }
 
     // ------------------------------------------------------------ respostas
 
@@ -113,14 +108,10 @@ public final class TrichologyDtos {
                                    RpsSummary rpsSummary, ReportPayload report, String verificationCode,
                                    String professionalName, String professionalRegistry, Instant reviewedAt,
                                    Instant publishedAt, Instant cancelledAt, String cancelReason, Instant createdAt,
-                                   Instant updatedAt) {
+                                   Instant updatedAt, UUID anamnesisId, java.time.LocalDateTime anamnesisCompletedAt) {
     }
 
-    public record QuizLinkResponse(String url, Instant expiresAt) {
-    }
 
-    public record QuizDefinition(String version, List<QuizEngine.Question> questions) {
-    }
 
     public record Hypothesis(String code, String label, List<String> support) {
     }
@@ -144,8 +135,6 @@ public final class TrichologyDtos {
                                List<Marker> markers) {
     }
 
-    public record PublicQuizView(String clinicName, String patientFirstName, QuizDefinition quiz) {
-    }
 
     public record VerifyView(boolean valid, Instant publishedAt, String professionalName, String professionalRegistry,
                              String clinicName, Integer reportVersion, String pdfSha256, boolean superseded) {

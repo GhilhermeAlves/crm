@@ -9,10 +9,7 @@ import type {
   ImageQuality,
   LabResult,
   Measures,
-  PublicQuizView,
   PullTest,
-  QuizAnswers,
-  QuizDefinition,
   ReportSection,
   SkippedRegion,
   TrichologySettings,
@@ -41,30 +38,6 @@ export const TrichologyService = {
 
   cancel: async (companyId: string, contactId: string, id: string, reason?: string) =>
     (await api.post<AssessmentDetail>(`${exam(companyId, contactId, id)}/cancel`, { reason })).data,
-
-  quizDefinition: async (companyId: string, contactId: string) =>
-    (await api.get<QuizDefinition>(`${base(companyId, contactId)}/quiz-definition`)).data,
-
-  quizLink: async (companyId: string, contactId: string, id: string) =>
-    (
-      await api.post<{ url: string; expiresAt: string }>(
-        `${exam(companyId, contactId, id)}/quiz-link`,
-      )
-    ).data,
-
-  saveQuiz: async (
-    companyId: string,
-    contactId: string,
-    id: string,
-    answers: QuizAnswers,
-    complete: boolean,
-  ) =>
-    (
-      await api.put<AssessmentDetail>(`${exam(companyId, contactId, id)}/quiz`, {
-        answers,
-        complete,
-      })
-    ).data,
 
   capture: async (
     companyId: string,
@@ -233,22 +206,6 @@ async function toResult<T>(response: Response, parse: boolean): Promise<PublicRe
 }
 
 export const PublicTrichologyService = {
-  quiz: async (token: string) =>
-    toResult<PublicQuizView>(
-      await fetch(`${PUBLIC_BASE}/quiz/${encodeURIComponent(token)}`, { cache: "no-store" }),
-      true,
-    ),
-
-  submitQuiz: async (token: string, answers: QuizAnswers, website: string) =>
-    toResult<void>(
-      await fetch(`${PUBLIC_BASE}/quiz/${encodeURIComponent(token)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers, website }),
-      }),
-      false,
-    ),
-
   verify: async (code: string) =>
     toResult<VerifyView>(
       await fetch(`${PUBLIC_BASE}/verify/${encodeURIComponent(code)}`, { cache: "no-store" }),

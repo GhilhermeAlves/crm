@@ -11,7 +11,7 @@ import {
   type PublicForm,
   PublicFormService,
 } from "../services/public-form.service";
-import type { PatientAnamnesisAnswers } from "../types/patient-anamnesis.types";
+import { withPrefill, type PatientAnamnesisAnswers } from "../types/patient-anamnesis.types";
 import { AnamnesisFields, missingRequired, orderedSections } from "./AnamnesisFields";
 import { SignaturePad } from "./SignaturePad";
 
@@ -69,6 +69,7 @@ export function PublicPatientForm({
       if (!active) return;
       if (result.ok) {
         setState({ kind: "ready", form: result.data });
+        setAnswers(withPrefill(null, result.data.prefill));
       } else if (result.status === 410) {
         setState({
           kind: "error",

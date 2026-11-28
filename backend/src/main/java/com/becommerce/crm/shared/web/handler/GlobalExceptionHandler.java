@@ -1199,7 +1199,7 @@ public class GlobalExceptionHandler {
             .body(Map.of(
                 "status", 500,
                 "error", "Internal Server Error",
-                "message", "An unexpected error occurred",
+                "message", "Não foi possível concluir a ação. Tente novamente.",
                 "timestamp", LocalDateTime.now().toString()
             ));
     }

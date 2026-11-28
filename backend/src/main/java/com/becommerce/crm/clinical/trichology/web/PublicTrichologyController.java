@@ -1,7 +1,5 @@
 package com.becommerce.crm.clinical.trichology.web;
 
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.PublicQuizSubmit;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.PublicQuizView;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.VerifyView;
 import com.becommerce.crm.clinical.trichology.application.service.PublicTrichologyService;
 import com.becommerce.crm.masterdata.contact.registration.domain.exception.RegistrationRateLimitException;
@@ -29,21 +27,6 @@ public class PublicTrichologyController {
     public PublicTrichologyController(PublicTrichologyService service, RegistrationRateLimiter rateLimiter) {
         this.service = service;
         this.rateLimiter = rateLimiter;
-    }
-
-    @GetMapping("/quiz/{token}")
-    public PublicQuizView quiz(@PathVariable String token,
-                               @RequestHeader(value = "X-Real-IP", required = false) String realIp) {
-        checkRate(realIp);
-        return service.quiz(token);
-    }
-
-    @PostMapping("/quiz/{token}")
-    public ResponseEntity<Void> submitQuiz(@PathVariable String token, @RequestBody PublicQuizSubmit submit,
-                                           @RequestHeader(value = "X-Real-IP", required = false) String realIp) {
-        checkRate(realIp);
-        service.submit(token, submit);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/verify/{code}")
