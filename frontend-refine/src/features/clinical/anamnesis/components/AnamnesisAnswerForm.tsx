@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSavePatientAnamnesis } from "../hooks/usePatientAnamnesis";
-import type {
-  PatientAnamnesisAnswers,
-  PatientAnamnesisResponse,
+import {
+  withPrefill,
+  type PatientAnamnesisAnswers,
+  type PatientAnamnesisResponse,
 } from "../types/patient-anamnesis.types";
 import { AnamnesisFields, orderedSections } from "./AnamnesisFields";
 
@@ -22,9 +23,9 @@ export function AnamnesisAnswerForm({
   complete?: boolean;
 }) {
   const saveMutation = useSavePatientAnamnesis(companyId, contactId);
-  const [answers, setAnswers] = useState<PatientAnamnesisAnswers>(() => ({
-    ...(anamnesis.answers ?? {}),
-  }));
+  const [answers, setAnswers] = useState<PatientAnamnesisAnswers>(() =>
+    withPrefill(anamnesis.answers, anamnesis.prefill),
+  );
 
   const submit = (finish: boolean) => {
     saveMutation.mutate({ anamnesisId: anamnesis.id, payload: { answers, complete: finish } });

@@ -18,7 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthorization } from "@/features/identity/auth/hooks/useAuthorization";
 import { useAssessment, useAssessmentMutations, useCopilot } from "../hooks/useTrichology";
 import { STATUS_LABELS } from "../types/trichology.types";
-import { CaptureStep, ClinicalStep, LabsStep, QuizStep } from "./AssessmentSteps";
+import Link from "next/link";
+import { CaptureStep, ClinicalStep, LabsStep } from "./AssessmentSteps";
 import { CopilotPanel } from "./CopilotPanel";
 import { ReportStep } from "./ReportStep";
 
@@ -85,19 +86,33 @@ export function AssessmentWorkspace({
           {assessment.chiefComplaint}
         </p>
       )}
+      <p className="text-sm">
+        <span className="text-muted-foreground">Anamnese: </span>
+        {assessment.anamnesisCompletedAt ? (
+          <>
+            concluída em {format(new Date(assessment.anamnesisCompletedAt), "dd/MM/yyyy")} ·{" "}
+            <Link className="underline" href={`/patients/${contactId}/anamnese`}>
+              ver respostas
+            </Link>
+          </>
+        ) : (
+          <>
+            sem anamnese concluída ·{" "}
+            <Link className="underline" href={`/patients/${contactId}/anamnese`}>
+              enviar anamnese
+            </Link>
+          </>
+        )}
+      </p>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Tabs defaultValue={assessment.report ? "report" : "capture"}>
           <TabsList className="flex w-full flex-wrap justify-start">
-            <TabsTrigger value="quiz">Quiz</TabsTrigger>
             <TabsTrigger value="capture">Captura</TabsTrigger>
             <TabsTrigger value="clinical">Clínico</TabsTrigger>
             <TabsTrigger value="labs">Laboratório</TabsTrigger>
             <TabsTrigger value="report">Relatório</TabsTrigger>
           </TabsList>
-          <TabsContent value="quiz" className="pt-4">
-            <QuizStep {...step} />
-          </TabsContent>
           <TabsContent value="capture" className="pt-4">
             <CaptureStep {...step} />
           </TabsContent>

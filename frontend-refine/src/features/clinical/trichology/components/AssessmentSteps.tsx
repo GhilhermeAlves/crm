@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import { format } from "date-fns";
-import { Camera, CheckCircle2, Copy, Link2, Loader2, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { useId, useState } from "react";
+import { Camera, Loader2, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,17 +24,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { TrichoscopyCamera } from "@/features/clinical/trichoscopy/components/TrichoscopyCamera";
 import type { useAssessmentMutations } from "../hooks/useTrichology";
-import { useQuizDefinition, useTrichologySettings } from "../hooks/useTrichology";
+import { useTrichologySettings } from "../hooks/useTrichology";
 import type {
   AssessmentDetail,
   AssessmentImageView,
   CopilotView,
   PullTestSite,
-  QuizAnswers,
 } from "../types/trichology.types";
 import { QUALITY_LABELS } from "../types/trichology.types";
 import { ImageReviewDialog } from "./ImageReviewDialog";
-import { QuizForm, missingRequired } from "./QuizForm";
 
 type Mutations = ReturnType<typeof useAssessmentMutations>;
 type StepProps = {
@@ -46,117 +42,6 @@ type StepProps = {
   editable: boolean;
   mutations: Mutations;
 };
-
-// ------------------------------------------------------------------ quiz
-
-export function QuizStep({ companyId, contactId, assessment, editable, mutations }: StepProps) {
-  const definition = useQuizDefinition(companyId, contactId);
-  const [answers, setAnswers] = useState<QuizAnswers>(assessment.quizAnswers ?? {});
-  const [showMissing, setShowMissing] = useState(false);
-  const [link, setLink] = useState<string | null>(null);
-
-  useEffect(() => {
-    setAnswers(assessment.quizAnswers ?? {});
-  }, [assessment.quizAnswers]);
-
-  if (!definition.data) return <p className="text-sm text-muted-foreground">Carregando quiz…</p>;
-  const questions = definition.data.questions;
-
-  const complete = () => {
-    if (missingRequired(questions, answers).length > 0) {
-      setShowMissing(true);
-      toast.error("Responda as perguntas obrigatórias.");
-      return;
-    }
-    mutations.saveQuiz.mutate({ answers, complete: true });
-  };
-
-  const generateLink = () =>
-    mutations.quizLink.mutate(undefined, {
-      onSuccess: (data) => {
-        setLink(data.url);
-        void navigator.clipboard?.writeText(data.url).then(
-          () => toast.success("Link copiado. Envie ao paciente."),
-          () => undefined,
-        );
-      },
-    });
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {assessment.quizCompletedAt ? (
-          <Badge variant="secondary">
-            <CheckCircle2 className="mr-1 h-3 w-3" /> Respondido em{" "}
-            {format(new Date(assessment.quizCompletedAt), "dd/MM/yyyy HH:mm")}
-          </Badge>
-        ) : (
-          <Badge variant="outline">Não respondido</Badge>
-        )}
-        {editable && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={generateLink}
-            disabled={mutations.quizLink.isPending}
-          >
-            <Link2 className="mr-2 h-4 w-4" /> Link para o paciente responder
-          </Button>
-        )}
-      </div>
-      {(link || assessment.quizLinkExpiresAt) && !assessment.quizCompletedAt && (
-        <div className="rounded-md border bg-muted/40 p-3 text-sm">
-          {link ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <code className="break-all">{link}</code>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                aria-label="Copiar link"
-                onClick={() => void navigator.clipboard?.writeText(link)}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <span>Link enviado ao paciente.</span>
-          )}
-          {assessment.quizLinkExpiresAt && (
-            <p className="text-xs text-muted-foreground">
-              Válido até {format(new Date(assessment.quizLinkExpiresAt), "dd/MM/yyyy HH:mm")}. Gerar
-              outro link invalida o anterior.
-            </p>
-          )}
-        </div>
-      )}
-      <QuizForm
-        questions={questions}
-        answers={answers}
-        onChange={setAnswers}
-        disabled={!editable}
-        showMissing={showMissing}
-      />
-      {editable && (
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={complete} disabled={mutations.saveQuiz.isPending}>
-            {mutations.saveQuiz.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Concluir quiz
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => mutations.saveQuiz.mutate({ answers, complete: false })}
-            disabled={mutations.saveQuiz.isPending}
-          >
-            Salvar parcial
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ------------------------------------------------------------------ captura
 

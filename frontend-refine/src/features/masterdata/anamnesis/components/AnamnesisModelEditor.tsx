@@ -12,10 +12,23 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { useCompanyId } from "@/features/identity/auth/hooks/useCompanyId";
+import { useCompanyModules } from "@/features/identity/modules/hooks/useCompanyModules";
+import {
+  BINDING_GROUP_LABELS,
+  bindingInfo,
+  bindingsFor,
+  invalidOptionValues,
+  usedBindings,
+  type AnamnesisBinding,
+} from "../lib/bindings";
 import {
   ANAMNESIS_COMPLEMENT_TRIGGER_LABELS,
   ANAMNESIS_QUESTION_TYPE_LABELS,
@@ -26,7 +39,8 @@ import {
   type UpdateAnamnesisModelRequest,
 } from "../types/anamnesis.types";
 
-type OptionDraft = { id: string; label: string };
+/** {@code value} guarda o código da opção (ex.: F/M) para os vínculos; novas opções usam o rótulo. */
+type OptionDraft = { id: string; label: string; value?: string };
 
 type QuestionDraft = {
   id: string;
@@ -39,6 +53,7 @@ type QuestionDraft = {
   complementTrigger: AnamnesisComplementTrigger;
   complementOptionValue: string;
   options: OptionDraft[];
+  binding: AnamnesisBinding | null;
 };
 
 type SectionDraft = {
@@ -75,7 +90,12 @@ function toEditorState(model: AnamnesisModel): EditorState {
         complementLabel: question.complementLabel ?? "",
         complementTrigger: question.complementTrigger,
         complementOptionValue: question.complementOptionValue ?? "",
-        options: question.options.map((option) => ({ id: option.id, label: option.label })),
+        options: question.options.map((option) => ({
+          id: option.id,
+          label: option.label,
+          value: option.value,
+        })),
+        binding: question.binding ?? null,
       })),
     })),
   };
@@ -93,7 +113,14 @@ function emptyQuestion(): QuestionDraft {
     complementTrigger: "YES",
     complementOptionValue: "",
     options: [],
+    binding: null,
   };
+}
+
+/** Código salvo da opção: o original quando o vínculo usa códigos; senão o próprio rótulo. */
+function optionValue(option: OptionDraft, binding: AnamnesisBinding | null): string {
+  if (bindingInfo(binding)?.codes) return option.value?.trim() || option.label.trim();
+  return option.label.trim();
 }
 
 function toRequest(state: EditorState): UpdateAnamnesisModelRequest {
@@ -127,9 +154,10 @@ function toRequest(state: EditorState): UpdateAnamnesisModelRequest {
                 .map((option) => ({
                   id: option.id,
                   label: option.label.trim(),
-                  value: option.label.trim(),
+                  value: optionValue(option, question.binding),
                 }))
             : undefined,
+          binding: question.binding,
         };
       }),
     })),
@@ -145,6 +173,30 @@ type Props = {
 
 export function AnamnesisModelEditor({ model, isSaving, onSave, onBack }: Props) {
   const [state, setState] = useState<EditorState>(() => toEditorState(model));
+  const companyId = useCompanyId();
+  const { data: modules } = useCompanyModules(companyId);
+  const trichologyEnabled = Boolean(modules?.enabledModules.includes("TRICHOLOGY"));
+  const used = usedBindings(state.sections);
+
+  /** Troca o vínculo; se ele tem códigos e a pergunta ainda não tem opções, já cria as opções. */
+  const setBinding = (sectionId: string, questionId: string, binding: AnamnesisBinding | null) => {
+    const question = findQuestion(state, sectionId, questionId);
+    if (!question) return;
+    const info = bindingInfo(binding);
+    const empty = question.options.every((o) => !o.label.trim());
+    patchQuestion(sectionId, questionId, {
+      binding,
+      ...(info?.codes && empty
+        ? {
+            options: info.codes.map((c) => ({
+              id: crypto.randomUUID(),
+              label: c.label,
+              value: c.value,
+            })),
+          }
+        : {}),
+    });
+  };
 
   useEffect(() => {
     setState(toEditorState(model));
@@ -240,6 +292,21 @@ export function AnamnesisModelEditor({ model, isSaving, onSave, onBack }: Props)
         }
         if (isSelectable(question.type) && question.options.every((o) => !o.label.trim())) {
           toast.error(`A pergunta “${question.text}” precisa de pelo menos uma opção.`);
+          return;
+        }
+        const invalid = invalidOptionValues(
+          question.binding,
+          question.options
+            .filter((o) => o.label.trim())
+            .map((o) => optionValue(o, question.binding)),
+        );
+        if (invalid.length > 0) {
+          const expected = bindingInfo(question.binding)
+            ?.codes?.map((c) => c.value)
+            .join(", ");
+          toast.error(
+            `A pergunta “${question.text}” tem opções fora do vínculo (${invalid.join(", ")}). Use: ${expected}.`,
+          );
           return;
         }
         if (question.allowComplement && question.complementTrigger === "OPTION") {
@@ -351,7 +418,12 @@ export function AnamnesisModelEditor({ model, isSaving, onSave, onBack }: Props)
                   <Select
                     value={question.type}
                     onValueChange={(value: AnamnesisQuestionType) =>
-                      patchQuestion(section.id, question.id, { type: value })
+                      patchQuestion(section.id, question.id, {
+                        type: value,
+                        binding: bindingInfo(question.binding)?.types.includes(value)
+                          ? question.binding
+                          : null,
+                      })
                     }
                   >
                     <SelectTrigger className="w-48">
@@ -365,6 +437,48 @@ export function AnamnesisModelEditor({ model, isSaving, onSave, onBack }: Props)
                       ))}
                     </SelectContent>
                   </Select>
+                  <Select
+                    value={question.binding ?? "NONE"}
+                    onValueChange={(value) =>
+                      setBinding(
+                        section.id,
+                        question.id,
+                        value === "NONE" ? null : (value as AnamnesisBinding),
+                      )
+                    }
+                  >
+                    <SelectTrigger className="w-52" aria-label="Vincular a">
+                      <SelectValue placeholder="Vincular a" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NONE">Sem vínculo</SelectItem>
+                      {(["PERSON", "TRICHO"] as const).map((group) => {
+                        const options = bindingsFor(question.type, trichologyEnabled).filter(
+                          (b) => b.group === group,
+                        );
+                        if (options.length === 0) return null;
+                        return (
+                          <SelectGroup key={group}>
+                            <SelectLabel>{BINDING_GROUP_LABELS[group]}</SelectLabel>
+                            {options.map((b) => (
+                              <SelectItem
+                                key={b.value}
+                                value={b.value}
+                                disabled={used.has(b.value) && question.binding !== b.value}
+                              >
+                                {b.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {question.binding && (
+                    <Badge variant="secondary">
+                      {BINDING_GROUP_LABELS[bindingInfo(question.binding)?.group ?? "PERSON"]}
+                    </Badge>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -484,6 +598,15 @@ export function AnamnesisModelEditor({ model, isSaving, onSave, onBack }: Props)
                     <p className="text-xs font-semibold text-muted-foreground">
                       Opções de resposta
                     </p>
+                    {bindingInfo(question.binding)?.codes && (
+                      <p className="text-xs text-muted-foreground">
+                        Vínculo “{bindingInfo(question.binding)?.label}”: as opções usam os códigos{" "}
+                        {bindingInfo(question.binding)
+                          ?.codes?.map((c) => c.value)
+                          .join(", ")}
+                        .
+                      </p>
+                    )}
                     {question.options.map((option) => (
                       <div key={option.id} className="flex items-center gap-2">
                         <Input

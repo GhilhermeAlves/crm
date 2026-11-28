@@ -112,7 +112,8 @@ export function AssessmentList({ companyId, contactId, canWrite, onOpen }: Props
           <DialogHeader>
             <DialogTitle>Novo exame tricológico</DialogTitle>
             <DialogDescription>
-              O exame reúne quiz, fotos por região, exame clínico, laboratório e relatório.
+              O exame usa a anamnese do paciente e reúne fotos por região, exame clínico,
+              laboratório e relatório.
             </DialogDescription>
           </DialogHeader>
           {protocols.length > 1 && (

@@ -77,7 +77,7 @@ export function ReportStep({
     return (
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          O rascunho usa só os achados aceitos, as medidas confirmadas, o quiz e o laboratório.
+          O rascunho usa só os achados aceitos, as medidas confirmadas, a anamnese e o laboratório.
           Números e quadros são montados pelo sistema; a IA redige o texto para você revisar.
         </p>
         {editable && (

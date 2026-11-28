@@ -25,8 +25,6 @@ export const PUBLIC_PATHS = [
   "/cadastro",
   // Formulário (anamnese) que o paciente responde pelo link ou no tablet da recepção.
   "/f",
-  // Quiz capilar do exame de tricologia (link enviado ao paciente).
-  "/quiz-capilar",
   // Verificação pública do relatório de tricologia pelo código do PDF.
   "/verificar-relatorio",
   // Página de apresentação (marketing) do CRM.

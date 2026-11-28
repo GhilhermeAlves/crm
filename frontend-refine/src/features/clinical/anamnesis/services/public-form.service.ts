@@ -11,6 +11,8 @@ export type PublicForm = {
   formName: string;
   form: AnamnesisModel;
   mode: "LINK" | "RECEPTION" | "OPEN";
+  /** Valores do cadastro para perguntas vinculadas. */
+  prefill?: Record<string, unknown>;
 };
 
 /** O status HTTP decide a tela (404 inválido, 410 usado/expirado, 429 limite). */
