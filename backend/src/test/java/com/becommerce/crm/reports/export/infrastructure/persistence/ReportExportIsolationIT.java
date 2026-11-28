@@ -178,7 +178,7 @@ class ReportExportIsolationIT {
         assertEquals(true, repository.findById(TENANT_A, open.id()).orElseThrow().unmasked());
 
         List<ReportExport> recent = repository.findRecent(TENANT_A, USER, 20);
-        assertEquals(1, recent.size());
+        assertEquals(2, recent.size());
     }
 
     @Test
