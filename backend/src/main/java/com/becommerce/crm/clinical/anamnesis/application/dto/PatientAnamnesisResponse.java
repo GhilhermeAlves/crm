@@ -25,5 +25,16 @@ public record PatientAnamnesisResponse(
         String completedByName,
         LocalDateTime completedAt,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+        LocalDateTime updatedAt,
+        /** Valores do cadastro para perguntas vinculadas (só em rascunho). */
+        Map<UUID, Object> prefill) {
+
+    public PatientAnamnesisResponse(UUID id, UUID contactId, UUID modelId, String modelName, int modelVersion,
+                                    AnamnesisModelResponse snapshot, Map<UUID, PatientAnamnesisAnswer> answers,
+                                    List<String> alerts, PatientAnamnesisStatus status, UUID createdBy,
+                                    String createdByName, UUID completedBy, String completedByName,
+                                    LocalDateTime completedAt, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this(id, contactId, modelId, modelName, modelVersion, snapshot, answers, alerts, status, createdBy,
+                createdByName, completedBy, completedByName, completedAt, createdAt, updatedAt, Map.of());
+    }
 }
