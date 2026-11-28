@@ -88,7 +88,10 @@ public class ExamCopilotService {
         return assessmentService.inTenant(companyId, () -> {
             TrichologyAssessment a = assessmentService.require(companyId, contactId, id);
             List<AssessmentImage> linked = images.listByAssessment(companyId, id);
-            List<Hypothesis> hypotheses = hypotheses(a, linked);
+            boolean fromAnamnesis = assessmentService.linkedAnamnesis(a).isPresent();
+            List<Hypothesis> hypotheses = fromAnamnesis
+                    ? hypotheses(a, linked, assessmentService.clinicalAnswers(a), "Anamnese: ")
+                    : hypotheses(a, linked);
             return new CopilotView(pending(a, linked), hypotheses, suggestedExams(companyId, a, hypotheses),
                     evolution(companyId, a, linked), DISCLAIMER);
         });
@@ -97,8 +100,8 @@ public class ExamCopilotService {
     List<String> pending(TrichologyAssessment a, List<AssessmentImage> linked) {
         var s = a.state();
         List<String> pending = new ArrayList<>();
-        if (s.quizCompletedAt() == null) {
-            pending.add("Quiz do paciente não respondido.");
+        if (s.quizCompletedAt() == null && assessmentService.linkedAnamnesis(a).isEmpty()) {
+            pending.add("Sem anamnese concluída.");
         }
         CaptureProtocol protocol = assessmentService.protocolOf(a);
         if (protocol != null) {
@@ -140,8 +143,14 @@ public class ExamCopilotService {
         return pending;
     }
 
+    /** Exames antigos: respostas do quiz gravado. */
     static List<Hypothesis> hypotheses(TrichologyAssessment a, List<AssessmentImage> linked) {
-        Map<String, Object> quiz = a.state().quizAnswers() == null ? Map.of() : a.state().quizAnswers();
+        return hypotheses(a, linked, a.state().quizAnswers() == null ? Map.of() : a.state().quizAnswers(), "Quiz: ");
+    }
+
+    static List<Hypothesis> hypotheses(TrichologyAssessment a, List<AssessmentImage> linked,
+                                       Map<String, Object> answers, String answerLabel) {
+        Map<String, Object> quiz = answers == null ? Map.of() : answers;
         Set<String> accepted = new LinkedHashSet<>();
         Map<String, String> acceptedLabels = new LinkedHashMap<>();
         for (AssessmentImage image : linked) {
@@ -168,7 +177,7 @@ public class ExamCopilotService {
                 Object answer = quiz.get(entry.getKey());
                 for (String value : values(answer)) {
                     if (entry.getValue().contains(value)) {
-                        support.add("Quiz: " + entry.getKey() + " = " + value);
+                        support.add(answerLabel + entry.getKey() + " = " + value);
                         quizHits++;
                     }
                 }

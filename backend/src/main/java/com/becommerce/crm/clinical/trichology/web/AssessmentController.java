@@ -12,9 +12,6 @@ import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.Ima
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.LabsRequest;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.LinkImageRequest;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.OpenAssessmentRequest;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.QuizDefinition;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.QuizLinkResponse;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.QuizRequest;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.ReportPdf;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.ReportUpdateRequest;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.ReviewImageRequest;
@@ -90,28 +87,6 @@ public class AssessmentController {
                                    @PathVariable UUID id, @RequestBody(required = false) CancelRequest request,
                                    @AuthenticationPrincipal CurrentUser user) {
         return assessments.cancel(companyId, contactId, id, request, user.userId());
-    }
-
-    @GetMapping("/quiz-definition")
-    @PreAuthorize("hasAuthority('trichology:read')")
-    public QuizDefinition quizDefinition(@CurrentCompanyId(OWN_COMPANY) UUID companyId,
-                                         @PathVariable UUID contactId) {
-        return assessments.quizDefinition();
-    }
-
-    @PostMapping("/assessments/{id}/quiz-link")
-    @PreAuthorize("hasAuthority('trichology:write')")
-    public QuizLinkResponse quizLink(@CurrentCompanyId(OWN_COMPANY) UUID companyId, @PathVariable UUID contactId,
-                                     @PathVariable UUID id, @AuthenticationPrincipal CurrentUser user) {
-        return assessments.quizLink(companyId, contactId, id, user.userId());
-    }
-
-    @PutMapping("/assessments/{id}/quiz")
-    @PreAuthorize("hasAuthority('trichology:write')")
-    public AssessmentDetail quiz(@CurrentCompanyId(OWN_COMPANY) UUID companyId, @PathVariable UUID contactId,
-                                 @PathVariable UUID id, @RequestBody QuizRequest request,
-                                 @AuthenticationPrincipal CurrentUser user) {
-        return assessments.saveQuiz(companyId, contactId, id, request, user.userId());
     }
 
     @PostMapping(value = "/assessments/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 @Service
 public class ReportService {
 
-    static final String PROMPT_VERSION = "report-1";
+    static final String PROMPT_VERSION = "report-2";
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy")
             .withZone(ZoneId.of("America/Sao_Paulo"));
     private static final String TO_FILL = "A preencher pelo profissional.";
@@ -128,7 +128,9 @@ public class ReportService {
                 throw new TrichologyStateException("Aguarde a análise das fotos terminar antes de gerar o relatório.");
             }
             CaptureProtocol protocol = core.protocolOf(a);
-            List<Hypothesis> hypotheses = ExamCopilotService.hypotheses(a, linked);
+            List<Hypothesis> hypotheses = core.linkedAnamnesis(a).isPresent()
+                    ? ExamCopilotService.hypotheses(a, linked, core.clinicalAnswers(a), "Anamnese: ")
+                    : ExamCopilotService.hypotheses(a, linked);
             Evolution evolution = copilot.evolution(companyId, a, linked);
             Map<String, Object> facts = facts(a, linked, protocol, hypotheses, evolution);
             Map<String, String> aiText = generate(companyId, a, facts, userId);
@@ -284,7 +286,7 @@ public class ReportService {
         var s = a.state();
         List<String> done = new ArrayList<>();
         List<String> notDone = new ArrayList<>();
-        (s.quizCompletedAt() != null ? done : notDone).add("Questionário tricológico");
+        (s.quizCompletedAt() != null || core.linkedAnamnesis(a).isPresent() ? done : notDone).add("Anamnese");
         (s.trichoscopyPerformed() ? done : notDone).add("Tricoscopia digital");
         (s.pullTest() != null ? done : notDone).add("Pull test");
         (s.labResults() != null && !s.labResults().isEmpty() ? done : notDone).add("Exames laboratoriais");
@@ -373,7 +375,15 @@ public class ReportService {
         }
         var s = a.state();
         Map<String, Object> input = new LinkedHashMap<>();
-        input.put("quiz", s.quizAnswers() == null ? Map.of() : s.quizAnswers());
+        var anamnesis = core.linkedAnamnesis(a);
+        if (anamnesis.isPresent()) {
+            // perguntas e respostas da anamnese, sem as vinculadas ao cadastro (nada identificável)
+            input.put("anamnesis", anamnesis.get().answers().stream()
+                    .map(qa -> Map.of("section", qa.section(), "question", qa.question(), "answer", qa.answer()))
+                    .toList());
+        } else {
+            input.put("quiz", s.quizAnswers() == null ? Map.of() : s.quizAnswers());
+        }
         input.put("chiefComplaint", s.chiefComplaint());
         input.put("clinicalNotes", s.clinicalNotes());
         input.put("trichoscopyPerformed", s.trichoscopyPerformed());
@@ -381,7 +391,7 @@ public class ReportService {
         input.remove("identificationText");
         String system = """
                 Você redige seções de um relatório de avaliação tricológica para o profissional revisar.
-                Use SOMENTE os dados fornecidos (achados aceitos pelo profissional, quiz, laboratório).
+                Use SOMENTE os dados fornecidos (achados aceitos pelo profissional, anamnese ou quiz, laboratório).
                 Não invente achados, números ou exames. Não afirme diagnóstico: fale em hipóteses a investigar.
                 Não prescreva medicamentos nem doses. Se a tricoscopia não foi realizada, não a mencione como feita.
                 Português do Brasil, frases curtas, tom técnico.

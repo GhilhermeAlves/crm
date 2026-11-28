@@ -109,8 +109,6 @@ class SecurityAnnotationArchTest {
             // TODO revisar: rota pública /api/v1/public/registration/{token}, validada por token e rate limit por IP
             "RegistrationLinkController#submit",
             // rota pública /api/v1/public/trichology/quiz/{token}: token com hash na policy RLS e rate limit por IP
-            "PublicTrichologyController#quiz",
-            "PublicTrichologyController#submitQuiz",
             // verificação pública do relatório: função SECURITY DEFINER sem dados clínicos, rate limit por IP
             "PublicTrichologyController#verify"
     );

@@ -14,9 +14,6 @@ import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.Ima
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.LabsRequest;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.LinkImageRequest;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.OpenAssessmentRequest;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.QuizDefinition;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.QuizLinkResponse;
-import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.QuizRequest;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.RegionProgress;
 import com.becommerce.crm.clinical.trichology.application.dto.TrichologyDtos.ReviewImageRequest;
 import com.becommerce.crm.clinical.trichology.application.port.out.TrichologyRepositories.AssessmentImageRepository;
@@ -30,7 +27,6 @@ import com.becommerce.crm.clinical.trichology.domain.CaptureProtocol;
 import com.becommerce.crm.clinical.trichology.domain.CatalogItems.FindingCatalogItem;
 import com.becommerce.crm.clinical.trichology.domain.CatalogItems.Settings;
 import com.becommerce.crm.clinical.trichology.domain.Finding;
-import com.becommerce.crm.clinical.trichology.domain.QuizEngine;
 import com.becommerce.crm.clinical.trichology.domain.RpsCalculator;
 import com.becommerce.crm.clinical.trichology.domain.TrichologyAssessment;
 import com.becommerce.crm.clinical.trichology.domain.exception.TrichologyNotFoundException;
@@ -107,6 +103,37 @@ public class AssessmentService {
         this.publicBaseUrl = publicBaseUrl == null ? "" : publicBaseUrl.replaceAll("/+$", "");
     }
 
+    private com.becommerce.crm.clinical.trichology.application.port.AnamnesisClinicalView clinicalView;
+    private AssessmentAnamnesisLinks anamnesisLinks;
+
+    /** Opcional: o exame lê a anamnese concluída do paciente. */
+    @Autowired(required = false)
+    public void setAnamnesis(com.becommerce.crm.clinical.trichology.application.port.AnamnesisClinicalView clinicalView,
+                             AssessmentAnamnesisLinks anamnesisLinks) {
+        this.clinicalView = clinicalView;
+        this.anamnesisLinks = anamnesisLinks;
+    }
+
+    /** Anamnese ligada ao exame (concluída), se houver. */
+    java.util.Optional<com.becommerce.crm.clinical.trichology.application.port.AnamnesisClinicalView.ClinicalAnamnesis>
+            linkedAnamnesis(TrichologyAssessment a) {
+        if (clinicalView == null || anamnesisLinks == null) {
+            return java.util.Optional.empty();
+        }
+        var s = a.state();
+        return anamnesisLinks.anamnesisOf(s.companyId(), s.id())
+                .flatMap(id -> clinicalView.byId(s.companyId(), s.contactId(), id));
+    }
+
+    /** Respostas clínicas: da anamnese ligada; exames antigos usam o quiz gravado. */
+    public Map<String, Object> clinicalAnswers(TrichologyAssessment a) {
+        var linked = linkedAnamnesis(a);
+        if (linked.isPresent()) {
+            return linked.get().quizLike();
+        }
+        return a.state().quizAnswers() == null ? Map.of() : a.state().quizAnswers();
+    }
+
     @Autowired(required = false)
     public void setPatientTimelineRecorder(PatientTimelineRecorder timeline) {
         this.timeline = timeline;
@@ -122,8 +149,19 @@ public class AssessmentService {
             catalog.protocol(companyId, protocolId)
                     .filter(CaptureProtocol::active)
                     .orElseThrow(() -> new TrichologyValidationException("Protocolo de captura inválido."));
+            var anamnesis = clinicalView == null ? java.util.Optional
+                    .<com.becommerce.crm.clinical.trichology.application.port.AnamnesisClinicalView.ClinicalAnamnesis>empty()
+                    : clinicalView.latestCompleted(companyId, contactId);
+            String complaint = request.chiefComplaint();
+            if ((complaint == null || complaint.isBlank()) && anamnesis.isPresent()
+                    && anamnesis.get().quizLike().get("chief_complaint") instanceof String fromAnamnesis) {
+                complaint = fromAnamnesis;
+            }
             TrichologyAssessment saved = assessments.save(TrichologyAssessment.open(companyId, contactId, userId,
-                    protocolId, request.consentGiven(), request.chiefComplaint(), userId, now()));
+                    protocolId, request.consentGiven(), complaint, userId, now()));
+            if (anamnesis.isPresent() && anamnesisLinks != null) {
+                anamnesisLinks.link(companyId, saved.getId(), anamnesis.get().anamnesisId());
+            }
             note(companyId, contactId, "Exame tricológico aberto.", userId);
             audit(companyId, AuditAction.CREATE, saved.getId(), "TRICHOLOGY_ASSESSMENT_OPENED", userId,
                     Map.of("contactId", contactId.toString()));
@@ -154,37 +192,6 @@ public class AssessmentService {
             a.cancel(request == null ? null : request.reason(), now());
             TrichologyAssessment saved = assessments.save(a);
             audit(companyId, AuditAction.UPDATE, id, "TRICHOLOGY_ASSESSMENT_CANCELLED", userId, Map.of());
-            return detail(saved);
-        });
-    }
-
-    // ------------------------------------------------------------ quiz
-
-    public QuizDefinition quizDefinition() {
-        return new QuizDefinition(QuizEngine.VERSION, QuizEngine.questions());
-    }
-
-    @Transactional
-    public QuizLinkResponse quizLink(UUID companyId, UUID contactId, UUID id, UUID userId) {
-        return inTenant(companyId, () -> {
-            TrichologyAssessment a = require(companyId, contactId, id);
-            String token = RegistrationLink.generateToken();
-            Instant expires = now().plus(access.quizLinkDays(), ChronoUnit.DAYS);
-            a.setQuizLink(RegistrationLink.hash(token), expires, now());
-            assessments.save(a);
-            audit(companyId, AuditAction.CREATE, id, "TRICHOLOGY_QUIZ_LINK_CREATED", userId, Map.of());
-            return new QuizLinkResponse(publicBaseUrl + "/quiz-capilar/" + token, expires);
-        });
-    }
-
-    @Transactional
-    public AssessmentDetail saveQuiz(UUID companyId, UUID contactId, UUID id, QuizRequest request, UUID userId) {
-        return inTenant(companyId, () -> {
-            TrichologyAssessment a = require(companyId, contactId, id);
-            Map<String, Object> answers = QuizEngine.sanitize(request.answers(), request.complete());
-            a.completeQuiz(answers, (String) answers.get("chief_complaint"), now());
-            TrichologyAssessment saved = assessments.save(a);
-            audit(companyId, AuditAction.UPDATE, id, "TRICHOLOGY_QUIZ_SAVED", userId, Map.of());
             return detail(saved);
         });
     }
@@ -340,7 +347,8 @@ public class AssessmentService {
                     .toLocalDate().plusDays(1))) {
                 throw new TrichologyValidationException("A data da coleta não pode ser futura.");
             }
-            String sex = a.state().quizAnswers() == null ? null : (String) a.state().quizAnswers().get("sex");
+            Object sexAnswer = clinicalAnswers(a).get("sex");
+            String sex = sexAnswer == null ? null : String.valueOf(sexAnswer);
             RpsSummary rps = RpsCalculator.calculate(results, catalog.markers(companyId), sex);
             a.loadLabs(results, request.collectedOn(), rps, now());
             audit(companyId, AuditAction.UPDATE, id, "TRICHOLOGY_LABS_LOADED", userId, Map.of());
@@ -366,6 +374,7 @@ public class AssessmentService {
 
     AssessmentDetail detail(TrichologyAssessment a) {
         var s = a.state();
+        var anamnesis = linkedAnamnesis(a);
         CaptureProtocol protocol = protocolOf(a);
         BigDecimal min = minConfidence(s.companyId());
         Map<UUID, PatientTrichoscopyImage> photos = new HashMap<>();
@@ -376,11 +385,13 @@ public class AssessmentService {
                 .map(i -> view(s.companyId(), i, protocol, min, photos.get(i.imageId()))).toList();
         return new AssessmentDetail(s.id(), s.contactId(), s.status().name(), s.reportVersion(), s.supersedesId(),
                 protocol, progress(protocol, linked, s.skippedRegions()), s.consentAt(), s.chiefComplaint(),
-                s.quizAnswers(), s.quizCompletedAt(), s.quizFormExpiresAt(), s.clinicalNotes(), s.pullTest(),
+                anamnesis.isPresent() ? anamnesis.get().quizLike() : s.quizAnswers(), s.quizCompletedAt(),
+                s.quizFormExpiresAt(), s.clinicalNotes(), s.pullTest(),
                 s.pullTest() != null && s.pullTest().positive(), s.trichoscopyPerformed(), imageViews,
                 s.requestedExams(), s.labResults(), s.labCollectedOn(), s.rpsSummary(), s.finalReportPayload(),
                 s.verificationCode(), s.professionalName(), s.professionalRegistry(), s.reviewedAt(),
-                s.publishedAt(), s.cancelledAt(), s.cancelReason(), s.createdAt(), s.updatedAt());
+                s.publishedAt(), s.cancelledAt(), s.cancelReason(), s.createdAt(), s.updatedAt(),
+                anamnesis.map(x -> x.anamnesisId()).orElse(null), anamnesis.map(x -> x.completedAt()).orElse(null));
     }
 
     ImageView view(UUID companyId, AssessmentImage i, CaptureProtocol protocol, BigDecimal minConfidence,
