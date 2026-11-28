@@ -198,6 +198,7 @@ export const SEGMENT_DEFAULT_MODULES: Record<CompanySegment, CompanyModuleName[]
     "AUDIT",
   ],
   TRICHOLOGY: [
+    "TRICHOLOGY",
     "PEOPLE",
     "SUPPLIERS",
     "EMPLOYEES",
@@ -255,7 +256,10 @@ export const ALL_COMPANY_MODULES: CompanyModuleName[] = MODULE_OPTIONS.map(
 
 /** Módulos agrupados como no menu lateral (navigation.ts). */
 export const MODULE_GROUPS: { title: string; modules: CompanyModuleName[] }[] = [
-  { title: "Principal", modules: ["AGENDA", "PATIENTS", "FINANCE", "TASKS", "ASSISTANT"] },
+  {
+    title: "Principal",
+    modules: ["AGENDA", "PATIENTS", "TRICHOLOGY", "FINANCE", "TASKS", "ASSISTANT"],
+  },
   { title: "Pessoas", modules: ["PEOPLE", "SUPPLIERS", "EMPLOYEES", "LOCATIONS"] },
   { title: "Financeiro", modules: ["CREDIT_SIMULATOR", "CARD_FEES", "PATIENT_BILLING"] },
   { title: "Comercial", modules: ["CRM"] },
