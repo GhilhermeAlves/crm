@@ -69,6 +69,7 @@ public class StorageRepositoryImpl implements StorageRepository {
         e.setData(o.getData());
         e.setCreatedBy(o.getCreatedBy());
         e.setCreatedAt(o.getCreatedAt());
+        e.setTemporary(o.isTemporary());
         return e;
     }
 
@@ -76,6 +77,6 @@ public class StorageRepositoryImpl implements StorageRepository {
         return StorageObject.reconstitute(
                 e.getId(), e.getCompanyId(), e.getContactId(), e.getObjectKey(), e.getFileName(),
                 e.getContentType(), e.getSizeBytes(), e.getData(),
-                e.getCreatedBy(), e.getCreatedAt());
+                e.getCreatedBy(), e.getCreatedAt(), e.isTemporary());
     }
 }

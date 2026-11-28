@@ -9,16 +9,26 @@ import com.becommerce.crm.reports.export.application.dto.BudgetsDataset;
 import com.becommerce.crm.reports.export.application.dto.BudgetsDataset.StatusSummary;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset;
 import com.becommerce.crm.reports.export.application.dto.CashFlowDataset.CashFlowDay;
+import com.becommerce.crm.reports.export.application.dto.ActivitiesDataset;
+import com.becommerce.crm.reports.export.application.dto.ActivitiesDataset.TypeCount;
+import com.becommerce.crm.reports.export.application.dto.ContactsDataset;
+import com.becommerce.crm.reports.export.application.dto.LeadsDataset;
+import com.becommerce.crm.reports.export.application.dto.LeadsDataset.StatusCount;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreGroup;
 import com.becommerce.crm.reports.export.application.dto.MonthlyDreDataset.DreLine;
 import com.becommerce.crm.reports.export.application.dto.TransactionsDataset;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.AppointmentRow;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.ActivityRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.BudgetRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.CategoryTotalRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.DailyTotalRow;
+import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.LeadRow;
 import com.becommerce.crm.reports.export.application.port.out.ReportDataGateway.TransactionRow;
+import com.becommerce.crm.reports.export.domain.exception.ReportExportTooLargeException;
+import com.becommerce.crm.sales.activity.domain.ActivityType;
+import com.becommerce.crm.sales.lead.domain.LeadStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -62,6 +72,9 @@ public class ReportDatasetBuilder {
     static final String FINANCIAL_GROUP = "Resultado financeiro";
     static final String CARD_FEES = "Taxas de cartão/maquininha";
 
+    static final String TOO_LARGE_MESSAGE =
+            "O relatório excede o limite de 50.000 linhas. Reduza o período.";
+
     private final ReportDataGateway gateway;
 
     public ReportDatasetBuilder(ReportDataGateway gateway) {
@@ -77,15 +90,49 @@ public class ReportDatasetBuilder {
     }
 
     public TransactionsDataset transactions(UUID companyId, LocalDate from, LocalDate to) {
-        return transactions(gateway.transactions(companyId, from, to));
+        return transactions(limited(gateway.transactions(companyId, from, to)));
     }
 
     public AgendaDataset agenda(UUID companyId, LocalDate from, LocalDate to) {
-        return agenda(gateway.appointments(companyId, from, to));
+        return agenda(limited(gateway.appointments(companyId, from, to)));
     }
 
     public BudgetsDataset budgets(UUID companyId, LocalDate from, LocalDate to) {
-        return budgets(gateway.budgets(companyId, from, to));
+        return budgets(limited(gateway.budgets(companyId, from, to)));
+    }
+
+    public LeadsDataset leads(UUID companyId, LocalDate from, LocalDate to) {
+        return leads(limited(gateway.leads(companyId, from, to)));
+    }
+
+    public ContactsDataset contacts(UUID companyId, LocalDate from, LocalDate to) {
+        return new ContactsDataset(limited(gateway.contacts(companyId, from, to)));
+    }
+
+    public ActivitiesDataset activities(UUID companyId, LocalDate from, LocalDate to) {
+        return activities(limited(gateway.activities(companyId, from, to)));
+    }
+
+    /** Contagem na ordem do enum ActivityType, incluindo tipos sem atividades. */
+    static ActivitiesDataset activities(List<ActivityRow> rows) {
+        Map<String, long[]> counts = new LinkedHashMap<>();
+        for (ActivityType type : ActivityType.values()) {
+            counts.put(type.name(), new long[1]);
+        }
+        for (ActivityRow row : rows) {
+            counts.computeIfAbsent(row.type(), t -> new long[1])[0]++;
+        }
+        List<TypeCount> byType = new ArrayList<>();
+        counts.forEach((type, c) -> byType.add(new TypeCount(type, c[0])));
+        return new ActivitiesDataset(byType, rows);
+    }
+
+    /** Falha a exportação quando a consulta passa de {@link ReportDataGateway#MAX_ROWS}. */
+    static <T> List<T> limited(List<T> rows) {
+        if (rows.size() > ReportDataGateway.MAX_ROWS) {
+            throw new ReportExportTooLargeException(TOO_LARGE_MESSAGE);
+        }
+        return rows;
     }
 
     /** Resumo na ordem do fluxo do orçamento: rascunho → aprovado → perdido. */
@@ -102,6 +149,20 @@ public class ReportDatasetBuilder {
         List<StatusSummary> byStatus = new ArrayList<>();
         totals.forEach((status, t) -> byStatus.add(new StatusSummary(status, t[0], t[1])));
         return new BudgetsDataset(byStatus, rows);
+    }
+
+    /** Contagem na ordem do funil (LeadStatus), incluindo status sem leads. */
+    static LeadsDataset leads(List<LeadRow> rows) {
+        Map<String, long[]> counts = new LinkedHashMap<>();
+        for (LeadStatus status : LeadStatus.values()) {
+            counts.put(status.name(), new long[1]);
+        }
+        for (LeadRow row : rows) {
+            counts.computeIfAbsent(row.status(), s -> new long[1])[0]++;
+        }
+        List<StatusCount> byStatus = new ArrayList<>();
+        counts.forEach((status, c) -> byStatus.add(new StatusCount(status, c[0])));
+        return new LeadsDataset(byStatus, rows);
     }
 
     static MonthlyDreDataset dre(List<CategoryTotalRow> rows) {

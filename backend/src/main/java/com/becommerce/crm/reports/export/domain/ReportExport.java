@@ -6,7 +6,9 @@ import java.util.UUID;
 
 /**
  * Pedido de exportação de relatório. Nasce PENDING e termina READY (arquivo no
- * storage) ou FAILED (mensagem de erro); estados terminais não mudam mais.
+ * storage) ou FAILED (mensagem de erro). Um READY vira EXPIRED quando o
+ * arquivo é expurgado após a retenção. Um PENDING pode ser CANCELED pelo
+ * autor; FAILED, EXPIRED e CANCELED não mudam mais.
  */
 public class ReportExport {
 
@@ -25,6 +27,10 @@ public class ReportExport {
     private UUID storageObjectId;
     private String errorMessage;
     private Instant finishedAt;
+    /** Linhas de dados do arquivo gerado; preenchido ao ficar READY. */
+    private Integer rowCount;
+    /** Solicitante podia ver dados pessoais sem máscara (LGPD); decidido no pedido. */
+    private boolean unmasked;
 
     public ReportExport(UUID id, UUID companyId, UUID requestedBy, ReportExportType type, ExportFormat format,
                         LocalDate periodFrom, LocalDate periodTo, ReportExportStatus status, String fileName,
@@ -44,14 +50,44 @@ public class ReportExport {
         this.finishedAt = finishedAt;
     }
 
+    public ReportExport(UUID id, UUID companyId, UUID requestedBy, ReportExportType type, ExportFormat format,
+                        LocalDate periodFrom, LocalDate periodTo, ReportExportStatus status, String fileName,
+                        UUID storageObjectId, String errorMessage, Instant createdAt, Instant finishedAt,
+                        Integer rowCount) {
+        this(id, companyId, requestedBy, type, format, periodFrom, periodTo, status, fileName, storageObjectId,
+                errorMessage, createdAt, finishedAt);
+        this.rowCount = rowCount;
+    }
+
+    public ReportExport(UUID id, UUID companyId, UUID requestedBy, ReportExportType type, ExportFormat format,
+                        LocalDate periodFrom, LocalDate periodTo, ReportExportStatus status, String fileName,
+                        UUID storageObjectId, String errorMessage, Instant createdAt, Instant finishedAt,
+                        Integer rowCount, boolean unmasked) {
+        this(id, companyId, requestedBy, type, format, periodFrom, periodTo, status, fileName, storageObjectId,
+                errorMessage, createdAt, finishedAt, rowCount);
+        this.unmasked = unmasked;
+    }
+
+    /** Pedido mascarado (padrão seguro). */
     public static ReportExport pending(UUID companyId, UUID requestedBy, ReportExportType type,
                                        ExportFormat format, LocalDate periodFrom, LocalDate periodTo) {
+        return pending(companyId, requestedBy, type, format, periodFrom, periodTo, false);
+    }
+
+    public static ReportExport pending(UUID companyId, UUID requestedBy, ReportExportType type,
+                                       ExportFormat format, LocalDate periodFrom, LocalDate periodTo,
+                                       boolean unmasked) {
         return new ReportExport(UUID.randomUUID(), companyId, requestedBy, type, format, periodFrom, periodTo,
-                ReportExportStatus.PENDING, null, null, null, Instant.now(), null);
+                ReportExportStatus.PENDING, null, null, null, Instant.now(), null, null, unmasked);
     }
 
     public void markReady(UUID storageObjectId, String fileName) {
+        markReady(storageObjectId, fileName, null);
+    }
+
+    public void markReady(UUID storageObjectId, String fileName, Integer rowCount) {
         requirePending();
+        this.rowCount = rowCount;
         this.status = ReportExportStatus.READY;
         this.storageObjectId = storageObjectId;
         this.fileName = fileName;
@@ -64,6 +100,25 @@ public class ReportExport {
         this.status = ReportExportStatus.FAILED;
         this.errorMessage = text.length() > MAX_ERROR ? text.substring(0, MAX_ERROR) : text;
         this.finishedAt = Instant.now();
+    }
+
+    /** Cancelamento pelo autor: só enquanto a geração não terminou. */
+    public void markCanceled() {
+        requirePending();
+        this.status = ReportExportStatus.CANCELED;
+        this.finishedAt = Instant.now();
+    }
+
+    /**
+     * Expira uma exportação pronta cujo arquivo já foi removido do storage. O
+     * {@code fileName} e o {@code finishedAt} ficam para o histórico.
+     */
+    public void markExpired() {
+        if (status != ReportExportStatus.READY) {
+            throw new IllegalStateException("Exportação " + id + " não está pronta (" + status + ").");
+        }
+        this.status = ReportExportStatus.EXPIRED;
+        this.storageObjectId = null;
     }
 
     private void requirePending() {
@@ -122,5 +177,13 @@ public class ReportExport {
 
     public Instant finishedAt() {
         return finishedAt;
+    }
+
+    public Integer rowCount() {
+        return rowCount;
+    }
+
+    public boolean unmasked() {
+        return unmasked;
     }
 }

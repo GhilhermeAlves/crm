@@ -88,6 +88,11 @@ public final class PdfReportLayout {
         writer.setPageEvent(new Footer(report));
         document.open();
         header(document, report, logo(logoUrl));
+        if (report.notice() != null) {
+            Paragraph notice = new Paragraph(report.notice(), META_STRONG);
+            notice.setSpacingAfter(8);
+            document.add(notice);
+        }
         for (ReportTable table : report.sections()) {
             if (table.heading() != null) {
                 Paragraph heading = new Paragraph(table.heading(), HEADING);

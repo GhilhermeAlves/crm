@@ -84,6 +84,30 @@ class StorageServiceTest {
     }
 
     @Test
+    void shouldUploadTemporaryWithoutCheckingQuota() {
+        byte[] data = new byte[2048];
+        when(storageRepository.save(any(StorageObject.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        StorageResponse response = storageService.uploadTemporary(companyId, "relatorio.pdf", "application/pdf",
+                data, UUID.randomUUID());
+
+        assertEquals(2048L, response.sizeBytes());
+        verify(quotaService, never()).assertCanAddSpace(any(), anyLong());
+        verify(storageRepository).save(argThat(o -> o.isTemporary() && o.getContactId() == null));
+    }
+
+    @Test
+    void shouldUploadRegularFileAsPermanent() {
+        byte[] data = new byte[10];
+        doNothing().when(quotaService).assertCanAddSpace(companyId, data.length);
+        when(storageRepository.save(any(StorageObject.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        storageService.upload(companyId, "a.pdf", "application/pdf", data, UUID.randomUUID());
+
+        verify(storageRepository).save(argThat(o -> !o.isTemporary()));
+    }
+
+    @Test
     void shouldListObjectsOfCompany() {
         StorageObject obj = StorageObject.reconstitute(
                 UUID.randomUUID(), companyId, "k", "a.txt", "text/plain", 3, null, UUID.randomUUID(), null);
