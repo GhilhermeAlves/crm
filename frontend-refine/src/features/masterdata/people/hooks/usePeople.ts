@@ -30,7 +30,6 @@ export function peopleKeys(companyId: string | null): unknown[][] {
     ["customers", companyId],
     ["suppliers", companyId],
     ["employees", companyId],
-    ["person-duplicates", companyId],
     ["patients", companyId],
     ["patient", companyId],
     ["contacts", companyId],
@@ -142,15 +141,6 @@ export function useTeamUsers(enabled: boolean) {
   return useQuery({
     queryKey: ["team-users", companyId],
     queryFn: () => PeopleService.teamUsers(companyId as string),
-    enabled: !!companyId && enabled,
-  });
-}
-
-export function useDuplicates(enabled: boolean) {
-  const companyId = useCompanyId();
-  return useQuery({
-    queryKey: ["person-duplicates", companyId],
-    queryFn: () => PeopleService.duplicates(companyId as string),
     enabled: !!companyId && enabled,
   });
 }

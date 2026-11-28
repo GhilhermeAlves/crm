@@ -234,11 +234,6 @@ export default function PersonPage() {
         >
           <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
           Este cadastro tem pendência de CPF da migração (repetido ou inválido).
-          {perms.canMerge && (
-            <Link className="font-semibold underline" href={ROUTES.PEOPLE_DUPLICATES}>
-              Ver em Duplicados
-            </Link>
-          )}
         </div>
       )}
 
