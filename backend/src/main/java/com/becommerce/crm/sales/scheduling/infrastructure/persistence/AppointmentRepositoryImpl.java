@@ -20,7 +20,9 @@ public class AppointmentRepositoryImpl implements AppointmentRepository {
 
     @Override
     public Appointment save(Appointment appointment) {
-        return toDomain(jpa.save(toEntity(appointment)));
+        // Flush: procedimentos e marcadores são gravados por JDBC logo em seguida e
+        // a FK deles exige o agendamento já no banco.
+        return toDomain(jpa.saveAndFlush(toEntity(appointment)));
     }
 
     @Override
